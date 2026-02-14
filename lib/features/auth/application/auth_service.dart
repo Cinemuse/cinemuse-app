@@ -1,96 +1,94 @@
-
+import 'package:cinemuse_app/core/services/supabase_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-// User Model
-class User {
-  final String uid;
-  final String email;
-  final String idToken;
-
-  User({required this.uid, required this.email, required this.idToken});
-}
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Auth State Provider
 final authProvider = StateNotifierProvider<AuthService, AsyncValue<User?>>((ref) {
   return AuthService();
 });
 
-// Auth Actions Provider (for UI to call sign in/out)
+// Auth Actions Provider
 final authActionsProvider = Provider<AuthService>((ref) {
   return ref.watch(authProvider.notifier);
 });
 
 class AuthService extends StateNotifier<AsyncValue<User?>> {
   AuthService() : super(const AsyncValue.loading()) {
-    _loadUser();
+    _init();
   }
 
-  Future<void> _loadUser() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final email = prefs.getString('auth_email');
-      final uid = prefs.getString('auth_uid');
+  void _init() {
+    // 1. Set initial state used cached session
+    final session = supabase.auth.currentSession;
+    state = AsyncValue.data(session?.user);
 
-      if (email != null && uid != null) {
-        state = AsyncValue.data(User(uid: uid, email: email, idToken: 'mock_token'));
-      } else {
+    // 2. Listen to auth changes
+    supabase.auth.onAuthStateChange.listen((data) {
+      final AuthChangeEvent event = data.event;
+      final Session? session = data.session;
+      
+      state = AsyncValue.data(session?.user);
+      
+      if (event == AuthChangeEvent.signedOut) {
         state = const AsyncValue.data(null);
       }
-    } catch (e) {
-      state = const AsyncValue.data(null);
-    }
+    });
   }
 
   Future<void> signIn(String email, String password) async {
     state = const AsyncValue.loading();
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    // Mock successful login
-    final user = User(
-      uid: 'mock_user_123',
-      email: email,
-      idToken: 'mock_token_abc123',
-    );
-    await _saveSession(user);
+    try {
+      final response = await supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      if (response.user == null) {
+        throw 'Sign in failed';
+      }
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      // Reset state to current user (likely null) after error
+      // But riverpod might handle error state. 
+      // Ideally we want to show error then go back to idle.
+      // For now, let's re-emit the current user after a slight delay or just let the error stand?
+      // Better: Throw so UI can catch it, but keep state as is?
+      // The listen() will update state on success. On failure, we throw.
+      // We should reset loading state.
+       state = AsyncValue.data(supabase.auth.currentUser);
+       rethrow;
+    }
   }
 
   Future<void> signUp(String email, String password) async {
     state = const AsyncValue.loading();
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    final user = User(
-      uid: 'mock_user_${DateTime.now().millisecondsSinceEpoch}',
-      email: email,
-      idToken: 'mock_token_xyz789',
-    );
-    await _saveSession(user);
+    try {
+      final response = await supabase.auth.signUp(
+        email: email,
+        password: password,
+      );
+      if (response.user == null) {
+        throw 'Sign up failed';
+      }
+    } catch (e, st) {
+       state = AsyncValue.data(supabase.auth.currentUser); 
+       rethrow;
+    }
   }
   
   Future<void> debugSignIn() async {
-    return signIn('dev@cinemuse.com', 'password');
-  }
-
-  Future<void> _saveSession(User user) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('auth_token', user.idToken);
-    await prefs.setString('auth_email', user.email);
-    await prefs.setString('auth_uid', user.uid);
-
-    state = AsyncValue.data(user);
+    // Not applicable with real auth usually, or use a hardcoded test account
+    // For now, let's remove or implement with a real test account if user wants
+    state = const AsyncValue.loading();
   }
 
   Future<void> signOut() async {
     state = const AsyncValue.loading();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    state = const AsyncValue.data(null);
+    await supabase.auth.signOut();
   }
 
   void resetError() {
     if (state.hasError) {
-      state = const AsyncValue.data(null);
+      state = AsyncValue.data(supabase.auth.currentUser);
     }
   }
 }

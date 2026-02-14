@@ -42,6 +42,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
             const SizedBox(height: 30),
 
+            // 3. Continue Watching (Supabase)
+            const _ContinueWatchingRow(), // New widget
+
+            const SizedBox(height: 30),
+
             // 5. Popular Movies
             _MediaRow(title: "Popular Movies", asyncData: popularMoviesAsync),
 
@@ -361,129 +366,139 @@ class _MediaRow extends StatelessWidget {
   }
 }
 
-class _ResumeWatchingRow extends StatelessWidget {
-  final List<Map<String, dynamic>> items;
-
-  const _ResumeWatchingRow({required this.items});
+class _ContinueWatchingRow extends ConsumerWidget {
+  const _ContinueWatchingRow();
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-          child: Row(
-            children: [
-              Text(
-                "Continue Watching",
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.chevron_right, color: AppTheme.textMuted),
-            ],
-          ),
-        ),
-        SizedBox(
-          height: 180, // Height for card + text
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            scrollDirection: Axis.horizontal,
-            itemCount: items.length,
-            separatorBuilder: (c, i) => const SizedBox(width: 16),
-            itemBuilder: (context, index) {
-              final item = items[index];
-              final title = item['title'] ?? 'Unknown';
-              final double percentage = (item['percentage'] ?? 0.0).toDouble();
-              final backdrop = item['backdrop_path'];
-              
-              return GestureDetector(
-                onTap: () {
-                   // Calculate start time
-                   // For now, just open player. In real impl, we pass startTime.
-                   Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => VideoPlayerScreen(
-                            queryId: item['id'].toString(), 
-                            type: item['type'],
-                            season: item['season'],
-                            episode: item['episode'],
-                          ),
-                   ));
-                },
-                child: SizedBox(
-                  width: 280,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Card Image
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Colors.grey[900],
-                            border: Border.all(color: Colors.white.withOpacity(0.1)),
-                            image: backdrop != null 
-                                ? DecorationImage(
-                                    image: NetworkImage('https://image.tmdb.org/t/p/w500$backdrop'),
-                                    fit: BoxFit.cover,
-                                    colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.2), BlendMode.darken),
-                                  )
-                                : null,
-                          ),
-                          child: Stack(
-                            children: [
-                               // Center Play Icon (Overlay)
-                               Center(
-                                 child: Icon(Icons.play_circle_outline, color: Colors.white.withOpacity(0.8), size: 48),
-                               ),
-                               
-                               // Progress Bar
-                               Positioned(
-                                 bottom: 0, 
-                                 left: 0, 
-                                 right: 0,
-                                 child: LinearProgressIndicator(
-                                   value: percentage / 100,
-                                   backgroundColor: Colors.white.withOpacity(0.2),
-                                   valueColor: const AlwaysStoppedAnimation<Color>(Colors.redAccent),
-                                   minHeight: 4,
-                                 ),
-                               )
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Title
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      // Type/Season info
-                      Text(
-                         item['type'] == 'tv' 
-                          ? "S${item['season']} E${item['episode']}" 
-                          : "Movie",
-                         style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                      ),
-                    ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final historyAsync = ref.watch(continueWatchingProvider);
+
+    return historyAsync.when(
+      data: (items) {
+        if (items.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+              child: Row(
+                children: [
+                  Text(
+                    "Continue Watching",
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+                  const SizedBox(width: 8),
+                  const Icon(Icons.chevron_right, color: AppTheme.textMuted),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 180, // Height for card + text
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                scrollDirection: Axis.horizontal,
+                itemCount: items.length,
+                separatorBuilder: (c, i) => const SizedBox(width: 16),
+                itemBuilder: (context, index) {
+                  final historyItem = items[index];
+                  final media = historyItem.media;
+                  final title = media?.title ?? 'Unknown';
+                  final percentage = (historyItem.totalDuration != null && historyItem.totalDuration! > 0)
+                      ? (historyItem.progressSeconds / historyItem.totalDuration!)
+                      : 0.0;
+                  
+                  final backdrop = media?.backdropPath;
+                  final imageUrl = backdrop != null ? "https://image.tmdb.org/t/p/w500$backdrop" : null;
+                  
+                  return GestureDetector(
+                    onTap: () {
+                         Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => VideoPlayerScreen(
+                            queryId: historyItem.tmdbId.toString(), 
+                            type: historyItem.mediaType.name,
+                            // TODO: Pass saved position to resume
+                          ),
+                        ));
+                    },
+                    child: SizedBox(
+                      width: 280,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Card Image
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.grey[900],
+                                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                image: imageUrl != null 
+                                    ? DecorationImage(
+                                        image: NetworkImage(imageUrl),
+                                        fit: BoxFit.cover,
+                                        colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.2), BlendMode.darken),
+                                      )
+                                    : null,
+                              ),
+                              child: Stack(
+                                children: [
+                                   // Center Play Icon (Overlay)
+                                   Center(
+                                     child: Icon(Icons.play_circle_outline, color: Colors.white.withOpacity(0.8), size: 48),
+                                   ),
+                                   
+                                   // Progress Bar
+                                   Positioned(
+                                     bottom: 0, 
+                                     left: 0, 
+                                     right: 0,
+                                     child: LinearProgressIndicator(
+                                       value: percentage,
+                                       backgroundColor: Colors.white.withOpacity(0.2),
+                                       valueColor: const AlwaysStoppedAnimation<Color>(Colors.redAccent),
+                                       minHeight: 4,
+                                     ),
+                                   )
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Title
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          // Type info
+                          Text(
+                             media?.mediaType == 'episode' 
+                              ? "Episode" // TODO: Add Season/Episode info to cache/history
+                              : "Movie",
+                             style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+      loading: () => const SizedBox.shrink(), // Don't show loading for continue watching to avoid jump
+      error: (e, s) => const SizedBox.shrink(),
     );
   }
 }
