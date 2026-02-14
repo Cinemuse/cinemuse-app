@@ -1,5 +1,6 @@
 
 import 'dart:async';
+import 'package:cinemuse_app/core/services/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/stream_resolver.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:media_kit/media_kit.dart';
@@ -65,9 +66,10 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       const rdKey = "7XQSMICUQBIR7QB52AJWUVAQBNV4ZG55BEKNT5SNFAI566BXMFFQ"; 
 
       final resolver = ref.read(streamResolverProvider);
+      final tmdbService = ref.read(tmdbServiceProvider);
       
       // 1. Fetch Media Details (for history)
-      _mediaDetails = await resolver.getMediaDetails(params.queryId, params.type);
+      _mediaDetails = await tmdbService.getMediaDetails(params.queryId, params.type);
       
       // 2. Search streams
       final streams = await resolver.searchStreams(

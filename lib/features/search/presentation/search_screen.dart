@@ -5,6 +5,7 @@ import 'package:cinemuse_app/features/search/application/search_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -36,7 +37,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final searchResultsAsync = ref.watch(searchResultsProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black, // bg-primary
+      backgroundColor: AppTheme.primary, // bg-primary
       body: SafeArea(
         child: Column(
           children: [
@@ -47,9 +48,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               child: TextField(
                 controller: _controller,
                 onChanged: _onSearchChanged,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: AppTheme.textWhite),
                 decoration: InputDecoration(
-                  hintText: 'Search movies, series...',
+                  hintText: AppLocalizations.of(context)!.searchPlaceholder,
                   hintStyle: const TextStyle(color: AppTheme.textMuted),
                   prefixIcon: const Icon(Icons.search, color: AppTheme.textMuted),
                   suffixIcon: _controller.text.isNotEmpty 
@@ -62,7 +63,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       )
                     : null,
                   filled: true,
-                  fillColor: Colors.white.withOpacity(0.05),
+                  fillColor: AppTheme.textWhite.withOpacity(0.05),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -79,7 +80,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   if (results.isEmpty && _controller.text.isNotEmpty) {
                     return Center(
                       child: Text(
-                        'No results found for "${_controller.text}"',
+                        AppLocalizations.of(context)!.searchNoResults(_controller.text),
                         style: const TextStyle(color: AppTheme.textMuted),
                       ),
                     );
@@ -90,10 +91,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.movie_filter_outlined, size: 64, color: Colors.white12),
+                          Icon(Icons.movie_filter_outlined, size: 64, color: AppTheme.textWhite.withOpacity(0.12)),
                           const SizedBox(height: 16),
                           Text(
-                            'Find your next favorite story',
+                            AppLocalizations.of(context)!.searchEmptyStateTitle,
                             style: GoogleFonts.outfit(fontSize: 18, color: AppTheme.textMuted),
                           ),
                         ],
@@ -129,7 +130,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               child: Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(8),
-                                  color: Colors.grey[900],
+                                  color: AppTheme.surface,
                                   image: posterPath != null
                                       ? DecorationImage(
                                           image: NetworkImage('https://image.tmdb.org/t/p/w500$posterPath'),
@@ -138,7 +139,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                       : null,
                                 ),
                                 child: posterPath == null
-                                    ? const Center(child: Icon(Icons.broken_image, color: Colors.white24))
+                                    ? Center(child: Icon(Icons.broken_image, color: AppTheme.textWhite.withOpacity(0.24)))
                                     : null,
                               ),
                             ),
@@ -148,13 +149,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.outfit(
-                                color: Colors.white,
+                                color: AppTheme.textWhite,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
                             ),
                             Text(
-                              year,
+                              AppLocalizations.of(context)!.searchItemYear(year),
                               style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
                             ),
                           ],
@@ -164,7 +165,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, s) => Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red))),
+                error: (e, s) => Center(child: Text('${AppLocalizations.of(context)!.commonError}: $e', style: TextStyle(color: Theme.of(context).colorScheme.error))),
               ),
             ),
           ],

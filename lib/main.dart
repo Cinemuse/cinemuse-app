@@ -10,6 +10,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cinemuse_app/core/services/supabase_service.dart';
 
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+
+import 'package:stack_trace/stack_trace.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
@@ -21,7 +26,21 @@ void main() async {
     anonKey: SupabaseConfig.anonKey,
   );
   
-  runApp(const ProviderScope(child: CinemuseApp()));
+  Chain.capture((() {
+    runApp(const ProviderScope(child: CinemuseApp()));
+  }), onError: (error, stackChain) {
+    // This will print the error and the clean stack trace
+    print(error);
+    print(stackChain.terse);
+  });
+
+  // Custom error handling for Flutter errors to use terse stack traces
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    if (details.stack != null) {
+      print(Chain.forTrace(details.stack!).terse);
+    }
+  };
 }
 
 class CinemuseApp extends ConsumerWidget {
@@ -35,6 +54,13 @@ class CinemuseApp extends ConsumerWidget {
       title: 'Cinemuse',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       home: authState.when(
         data: (user) => user != null ? const AppShell() : const AuthScreen(),
         loading: () => const Scaffold(

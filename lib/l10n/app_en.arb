@@ -1,0 +1,33 @@
+{
+  "navHome": "Home",
+  "navSearch": "Search",
+  "navSettings": "Settings",
+  "navLibrary": "Library",
+
+  "commonLoading": "Loading...",
+  "commonError": "Error",
+  "commonRetry": "Retry",
+  "commonCancel": "Cancel",
+  "commonConfirm": "Confirm",
+  
+  "searchPlaceholder": "Search movies, series...",
+  "searchNoResults": "No results found for \"{query}\"",
+  "searchEmptyStateTitle": "Find your next favorite story",
+  "searchItemYear": "{year}",
+  
+  "detailsEpisodes": "Episodes",
+  "detailsCast": "Cast",
+  "detailsPlay": "Play",
+  "detailsMyList": "My List",
+  "detailsErrorLoading": "Error loading details: {error}",
+  "seasonLabel": "Season {number}",
+  
+  "playerSettings": "Settings",
+  "playerQuality": "Quality",
+  "playerAudio": "Audio",
+  "playerSelectQuality": "Select Quality",
+  "playerSelectAudio": "Select Audio Track",
+  "playerResolving": "Resolving stream with Real-Debrid...",
+  "playerErrorResolving": "Error resolving stream:\n{error}",
+  "playerNoAudioFound": "No audio tracks found"
+}

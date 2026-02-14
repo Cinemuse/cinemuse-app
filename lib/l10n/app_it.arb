@@ -1,0 +1,33 @@
+{
+  "navHome": "Home",
+  "navSearch": "Cerca",
+  "navSettings": "Impostazioni",
+  "navLibrary": "Libreria",
+
+  "commonLoading": "Caricamento...",
+  "commonError": "Errore",
+  "commonRetry": "Riprova",
+  "commonCancel": "Annulla",
+  "commonConfirm": "Conferma",
+  
+  "searchPlaceholder": "Cerca film, serie...",
+  "searchNoResults": "Nessun risultato trovato per \"{query}\"",
+  "searchEmptyStateTitle": "Trova la tua prossima storia preferita",
+  "searchItemYear": "{year}",
+  
+  "detailsEpisodes": "EPISODI",
+  "detailsCast": "CAST",
+  "detailsPlay": "Riproduci",
+  "detailsMyList": "La mia lista",
+  "detailsErrorLoading": "Errore nel caricamento dei dettagli: {error}",
+  "seasonLabel": "Stagione {number}",
+  
+  "playerSettings": "Impostazioni",
+  "playerQuality": "Qualità",
+  "playerAudio": "Audio",
+  "playerSelectQuality": "Seleziona Qualità",
+  "playerSelectAudio": "Seleziona Traccia Audio",
+  "playerResolving": "Risoluzione stream con Real-Debrid...",
+  "playerErrorResolving": "Errore nella risoluzione dello stream:\n{error}",
+  "playerNoAudioFound": "Nessuna traccia audio trovata"
+}

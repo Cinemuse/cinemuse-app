@@ -1,17 +1,19 @@
 
+import 'package:cinemuse_app/core/services/tmdb_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// TODO: Move to a config file or env
-const String tmdbApiKey = '32a33723c01e47809f0325026ecf01b1'; 
 const String rdApiUrl = "https://api.real-debrid.com/rest/1.0";
 
-final streamResolverProvider = Provider((ref) => StreamResolver(Dio()));
+final streamResolverProvider = Provider((ref) {
+  return StreamResolver(Dio(), ref.read(tmdbServiceProvider));
+});
 
 class StreamResolver {
   final Dio _dio;
+  final TmdbService _tmdbService;
 
-  StreamResolver(this._dio);
+  StreamResolver(this._dio, this._tmdbService);
 
   /// Main entry point to get a stream URL
   /// Search for available streams (torrents)
@@ -32,7 +34,7 @@ class StreamResolver {
         // Assume TMDB ID
         final tmdbId = int.tryParse(queryId);
         if (tmdbId == null) throw Exception("Invalid ID format");
-        imdbId = await _getImdbId(tmdbId, type);
+        imdbId = await _tmdbService.getImdbId(tmdbId, type);
       }
 
       if (imdbId == null) throw Exception("Could not resolve IMDB ID");
@@ -78,107 +80,10 @@ class StreamResolver {
     return _resolveRealDebrid(magnet, rdKey);
   }
 
-  Future<String?> _getImdbId(int tmdbId, String type) async {
-    final endpoint = type == 'movie' ? 'movie' : 'tv';
-    try {
-      final res = await _dio.get(
-        'https://api.themoviedb.org/3/$endpoint/$tmdbId/external_ids',
-        queryParameters: {'api_key': tmdbApiKey},
-      );
-      return res.data['imdb_id'] as String?;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /// Fetch Trending Movies/TV
-  Future<List<Map<String, dynamic>>> getTrending() async {
-    try {
-      final res = await _dio.get(
-        'https://api.themoviedb.org/3/trending/all/week',
-        queryParameters: {'api_key': tmdbApiKey, 'language': 'en-US'},
-      );
-      return List<Map<String, dynamic>>.from(res.data['results']);
-    } catch (e) {
-      return [];
-    }
-  }
-
-  /// Fetch Popular Movies
-  Future<List<Map<String, dynamic>>> getPopularMovies() async {
-    try {
-      final res = await _dio.get(
-        'https://api.themoviedb.org/3/movie/popular',
-        queryParameters: {'api_key': tmdbApiKey, 'language': 'en-US'},
-      );
-      return List<Map<String, dynamic>>.from(res.data['results']);
-    } catch (e) {
-      return [];
-    }
-  }
-
-  /// Fetch Popular Series
-  Future<List<Map<String, dynamic>>> getPopularSeries() async {
-    try {
-      final res = await _dio.get(
-        'https://api.themoviedb.org/3/tv/popular',
-        queryParameters: {'api_key': tmdbApiKey, 'language': 'en-US'},
-      );
-      return List<Map<String, dynamic>>.from(res.data['results']);
-    } catch (e) {
-      return [];
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> searchMulti(String query) async {
-    try {
-      if (query.isEmpty) return [];
-      final res = await _dio.get(
-        'https://api.themoviedb.org/3/search/multi',
-        queryParameters: {
-          'api_key': tmdbApiKey, 
-          'language': 'en-US',
-          'query': query,
-          'include_adult': false,
-        },
-      );
-      // Filter out 'person' results for now
-      final results = List<Map<String, dynamic>>.from(res.data['results']);
-      return results.where((item) => item['media_type'] != 'person').toList();
-    } catch (e) {
-      return [];
-    }
-  }
-
-  /// Get Media Details (Movie/TV)
-  Future<Map<String, dynamic>?> getMediaDetails(String id, String type) async {
-    try {
-      // If IMDB ID, find TMDB ID first (or just search find)
-      String tmdbId = id;
-      if (id.startsWith('tt')) {
-         final findRes = await _dio.get(
-          'https://api.themoviedb.org/3/find/$id',
-          queryParameters: {'api_key': tmdbApiKey, 'external_source': 'imdb_id'},
-        );
-        final data = findRes.data;
-        if (type == 'movie' && data['movie_results'].isNotEmpty) {
-           tmdbId = data['movie_results'][0]['id'].toString();
-        } else if (type == 'tv' && data['tv_results'].isNotEmpty) {
-           tmdbId = data['tv_results'][0]['id'].toString();
-        } else {
-           return null;
-        }
-      }
-
-      final res = await _dio.get(
-        'https://api.themoviedb.org/3/$type/$tmdbId',
-        queryParameters: {'api_key': tmdbApiKey, 'language': 'en-US'},
-      );
-      return res.data;
-    } catch (e) {
-      return null;
-    }
-  }
+  // Delegated Methods to TmdbService
+  Future<List<Map<String, dynamic>>> getTrending() => _tmdbService.getTrending();
+  Future<List<Map<String, dynamic>>> getPopularMovies() => _tmdbService.getPopularMovies();
+  Future<List<Map<String, dynamic>>> getPopularSeries() => _tmdbService.getPopularSeries();
 
   Future<List<Map<String, dynamic>>> _searchStreams(
     String imdbId,

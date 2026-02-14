@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
+import 'package:cinemuse_app/features/media/presentation/details/media_details_screen.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -217,9 +218,9 @@ class _HeroSection extends StatelessWidget {
                          // Play Logic
                          Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => VideoPlayerScreen(
-                                queryId: media!['id'].toString(), 
-                                type: media!['media_type'] ?? 'movie',
+                              builder: (_) => MediaDetailsScreen(
+                                mediaId: media!['id'].toString(), 
+                                mediaType: media!['media_type'] ?? 'movie',
                               ),
                             ),
                           );
@@ -303,12 +304,11 @@ class _MediaRow extends StatelessWidget {
                   final year = date.toString().split('-').first;
 
                   return GestureDetector(
-                     onTap: () {
-                        // Navigate to Player for now
+                      onTap: () {
                         Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => VideoPlayerScreen(
-                            queryId: item['id'].toString(), 
-                            type: item['media_type'] ?? (title.contains("Series") ? "tv" : "movie"),
+                          builder: (_) => MediaDetailsScreen(
+                            mediaId: item['id'].toString(), 
+                            mediaType: item['media_type'] ?? (title.contains("Series") ? "tv" : "movie"),
                           ),
                         ));
                      },
@@ -418,10 +418,9 @@ class _ContinueWatchingRow extends ConsumerWidget {
                   return GestureDetector(
                     onTap: () {
                          Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => VideoPlayerScreen(
-                            queryId: historyItem.tmdbId.toString(), 
-                            type: historyItem.mediaType.name,
-                            // TODO: Pass saved position to resume
+                          builder: (_) => MediaDetailsScreen(
+                            mediaId: historyItem.tmdbId.toString(), 
+                            mediaType: historyItem.mediaType.name,
                           ),
                         ));
                     },

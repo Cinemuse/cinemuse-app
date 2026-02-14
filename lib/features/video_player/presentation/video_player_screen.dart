@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:media_kit_video/media_kit_video.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class VideoPlayerScreen extends ConsumerWidget {
   final String queryId;
@@ -26,7 +29,7 @@ class VideoPlayerScreen extends ConsumerWidget {
     final playerState = ref.watch(playerControllerProvider(params));
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTheme.primary,
       body: playerState.when(
         data: (state) => Stack(
           children: [
@@ -38,7 +41,7 @@ class VideoPlayerScreen extends ConsumerWidget {
               top: 40,
               left: 20,
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                icon: const Icon(Icons.arrow_back, color: AppTheme.textWhite),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
@@ -47,7 +50,7 @@ class VideoPlayerScreen extends ConsumerWidget {
               top: 40,
               right: 20,
               child: IconButton(
-                icon: const Icon(Icons.settings, color: Colors.white),
+                icon: const Icon(Icons.settings, color: AppTheme.textWhite),
                 onPressed: () => _showSettings(context, ref, state, params),
               ),
             ),
@@ -57,30 +60,30 @@ class VideoPlayerScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error, color: Colors.red, size: 48),
+              Icon(Icons.error, color: Theme.of(context).colorScheme.error, size: 48),
               const SizedBox(height: 16),
               Text(
-                "Error resolving stream:\n$err",
-                style: const TextStyle(color: Colors.white),
+                AppLocalizations.of(context)!.playerErrorResolving(err.toString()),
+                style: const TextStyle(color: AppTheme.textWhite),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => ref.refresh(playerControllerProvider(params)),
-                child: const Text('Retry'),
+                child: Text(AppLocalizations.of(context)!.commonRetry),
               )
             ],
           ),
         ),
-        loading: () => const Center(
+        loading: () => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
               Text(
-                "Resolving stream with Real-Debrid...",
-                style: TextStyle(color: Colors.white70),
+                AppLocalizations.of(context)!.playerResolving,
+                style: const TextStyle(color: AppTheme.textMuted),
               )
             ],
           ),
@@ -92,7 +95,7 @@ class VideoPlayerScreen extends ConsumerWidget {
   void _showSettings(BuildContext context, WidgetRef ref, CinemaPlayerState state, PlayerParams params) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.grey[900],
+      backgroundColor: AppTheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -100,16 +103,16 @@ class VideoPlayerScreen extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text("Settings", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(AppLocalizations.of(context)!.playerSettings, style: const TextStyle(color: AppTheme.textWhite, fontSize: 18, fontWeight: FontWeight.bold)),
             ),
             ListTile(
-              leading: const Icon(Icons.high_quality, color: Colors.white),
-              title: const Text('Quality', style: TextStyle(color: Colors.white)),
+              leading: const Icon(Icons.high_quality, color: AppTheme.textWhite),
+              title: Text(AppLocalizations.of(context)!.playerQuality, style: const TextStyle(color: AppTheme.textWhite)),
               subtitle: Text(
                 state.currentStream['title'] ?? 'Unknown', 
-                style: const TextStyle(color: Colors.white70),
+                style: const TextStyle(color: AppTheme.textMuted),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -119,11 +122,11 @@ class VideoPlayerScreen extends ConsumerWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.audiotrack, color: Colors.white),
-              title: const Text('Audio', style: TextStyle(color: Colors.white)),
+              leading: const Icon(Icons.audiotrack, color: AppTheme.textWhite),
+              title: Text(AppLocalizations.of(context)!.playerAudio, style: const TextStyle(color: AppTheme.textWhite)),
               subtitle: Text(
                 state.controller.player.state.track.audio.toString(),
-                style: const TextStyle(color: Colors.white70),
+                style: const TextStyle(color: AppTheme.textMuted),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -141,7 +144,7 @@ class VideoPlayerScreen extends ConsumerWidget {
   void _showQualitySelector(BuildContext context, WidgetRef ref, CinemaPlayerState state, PlayerParams params) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.grey[900],
+      backgroundColor: AppTheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -153,9 +156,9 @@ class VideoPlayerScreen extends ConsumerWidget {
         builder: (context, scrollController) {
           return Column(
             children: [
-               const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text("Select Quality", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+               Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(AppLocalizations.of(context)!.playerSelectQuality, style: const TextStyle(color: AppTheme.textWhite, fontSize: 18, fontWeight: FontWeight.bold)),
               ),
               Expanded(
                 child: ListView.builder(
@@ -168,15 +171,15 @@ class VideoPlayerScreen extends ConsumerWidget {
                       title: Text(
                         stream['title'] ?? "Unknown",
                         style: TextStyle(
-                          color: isSelected ? Colors.blue : Colors.white,
+                          color: isSelected ? AppTheme.accent : AppTheme.textWhite,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                       subtitle: Text(
                         "${stream['cached'] == true ? '⚡ Cached' : '⏳ Uncached'} • Seeds: ${stream['seeds']}",
-                        style: const TextStyle(color: Colors.white70),
+                        style: const TextStyle(color: AppTheme.textMuted),
                       ),
-                      trailing: isSelected ? const Icon(Icons.check, color: Colors.blue) : null,
+                      trailing: isSelected ? const Icon(Icons.check, color: AppTheme.accent) : null,
                       onTap: () {
                         Navigator.pop(ctx);
                         if (!isSelected) {
@@ -201,7 +204,7 @@ class VideoPlayerScreen extends ConsumerWidget {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.grey[900],
+      backgroundColor: AppTheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -209,14 +212,14 @@ class VideoPlayerScreen extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text("Select Audio Track", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(AppLocalizations.of(context)!.playerSelectAudio, style: const TextStyle(color: AppTheme.textWhite, fontSize: 18, fontWeight: FontWeight.bold)),
             ),
             if (tracks.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text("No audio tracks found", style: TextStyle(color: Colors.white70)),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(AppLocalizations.of(context)!.playerNoAudioFound, style: const TextStyle(color: AppTheme.textMuted)),
               )
             else
               ...tracks.map((track) {
@@ -225,11 +228,11 @@ class VideoPlayerScreen extends ConsumerWidget {
                   title: Text(
                     track.id == 'auto' ? 'Auto' : (track.title ?? track.language ?? track.id),
                     style: TextStyle(
-                      color: isSelected ? Colors.blue : Colors.white,
+                      color: isSelected ? AppTheme.accent : AppTheme.textWhite,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
-                  trailing: isSelected ? const Icon(Icons.check, color: Colors.blue) : null,
+                  trailing: isSelected ? const Icon(Icons.check, color: AppTheme.accent) : null,
                   onTap: () {
                      player.setAudioTrack(track);
                      Navigator.pop(ctx);
