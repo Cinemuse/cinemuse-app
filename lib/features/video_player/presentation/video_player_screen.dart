@@ -1,5 +1,5 @@
-
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_video_controls.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
@@ -32,30 +32,16 @@ class VideoPlayerScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppTheme.primary,
       body: playerState.when(
-        data: (state) => Stack(
-          children: [
-            Center(
-              child: Video(controller: state.controller),
+        data: (state) => Center(
+          child: Video(
+            controller: state.controller,
+            controls: (videoState) => CustomVideoControls(
+              videoState: videoState,
+              playerState: state,
+              params: params,
+              onSettingsPressed: () => _showSettings(context, ref, state, params),
             ),
-            // Back Button
-            Positioned(
-              top: 40,
-              left: 20,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppTheme.textWhite),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-            // Settings Button
-            Positioned(
-              top: 40,
-              right: 20,
-              child: IconButton(
-                icon: const Icon(Icons.settings, color: AppTheme.textWhite),
-                onPressed: () => _showSettings(context, ref, state, params),
-              ),
-            ),
-          ],
+          ),
         ),
         error: (err, stack) => Center(
           child: Column(

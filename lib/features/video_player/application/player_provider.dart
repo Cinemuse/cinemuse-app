@@ -187,6 +187,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
             controller: _controller!,
             availableStreams: streams,
             currentStream: initialStream,
+            title: initialStream['title'] ?? 'YouTube Video',
           ));
         }
         return;
@@ -304,6 +305,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           controller: _controller!,
           availableStreams: streams,
           currentStream: initialStream,
+          title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? 'Unknown',
         ));
       }
     } catch (e, st) {
@@ -418,22 +420,26 @@ class CinemaPlayerState {
   final VideoController controller;
   final List<Map<String, dynamic>> availableStreams;
   final Map<String, dynamic> currentStream;
+  final String title;
 
   CinemaPlayerState({
     required this.controller,
     required this.availableStreams,
     required this.currentStream,
+    required this.title,
   });
 
   CinemaPlayerState copyWith({
     VideoController? controller,
     List<Map<String, dynamic>>? availableStreams,
     Map<String, dynamic>? currentStream,
+    String? title,
   }) {
     return CinemaPlayerState(
       controller: controller ?? this.controller,
       availableStreams: availableStreams ?? this.availableStreams,
       currentStream: currentStream ?? this.currentStream,
+      title: title ?? this.title,
     );
   }
 }
