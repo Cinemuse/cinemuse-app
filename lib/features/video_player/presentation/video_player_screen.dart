@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
@@ -13,6 +12,7 @@ class VideoPlayerScreen extends ConsumerWidget {
   final String type;
   final int? season;
   final int? episode;
+  final int startPosition;
 
   const VideoPlayerScreen({
     super.key,
@@ -20,12 +20,13 @@ class VideoPlayerScreen extends ConsumerWidget {
     required this.type,
     this.season,
     this.episode,
+    this.startPosition = 0,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Construct params
-    final params = PlayerParams(queryId, type, season: season, episode: episode);
+    final params = PlayerParams(queryId, type, season: season, episode: episode, startPosition: startPosition);
     final playerState = ref.watch(playerControllerProvider(params));
 
     return Scaffold(
@@ -175,10 +176,12 @@ class VideoPlayerScreen extends ConsumerWidget {
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
-                      subtitle: Text(
-                        "${stream['cached'] == true ? '⚡ Cached' : '⏳ Uncached'} • Seeds: ${stream['seeds']}",
-                        style: const TextStyle(color: AppTheme.textMuted),
-                      ),
+                      subtitle: stream['tag'] == 'youtube' 
+                        ? null 
+                        : Text(
+                            "${stream['cached'] == true ? '⚡ Cached' : '⏳ Uncached'} • Seeds: ${stream['seeds']}",
+                            style: const TextStyle(color: AppTheme.textMuted),
+                          ),
                       trailing: isSelected ? const Icon(Icons.check, color: AppTheme.accent) : null,
                       onTap: () {
                         Navigator.pop(ctx);

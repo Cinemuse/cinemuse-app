@@ -29,7 +29,7 @@ class MediaRepository {
   }
 
   Future<void> saveMediaItem(MediaItem item) async {
-    await _client.from('media_cache').upsert(item.toJson());
+    await _client.from('media_cache').upsert(item.toDbJson());
   }
   
   // Future: Method to batch save items

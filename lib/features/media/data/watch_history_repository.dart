@@ -25,21 +25,27 @@ class WatchHistoryRepository {
     return (response as List).map((e) => WatchHistory.fromJson(e)).toList();
   }
 
+  /// Ensures a media item exists in the cache. 
+  /// Should be called during "natural" retrieval (e.g., when initializing details or player).
+  Future<void> ensureMediaCached(MediaItem media) async {
+    try {
+      await _client.from('media_cache').upsert(media.toDbJson());
+    } catch (e) {
+      print('Error caching media: $e'); 
+    }
+  }
+
   Future<void> updateProgress({
     required String userId,
     required MediaItem media,
     required int progressSeconds,
     required int totalDuration,
+    int? season,
+    int? episode,
   }) async {
-    // 1. Ensure media is in cache (fire and forget usually, or await)
-    // For safety, we verify it exists or upsert it.
-    // In a real app we might rely on a separate sync, but here we lazy-cache.
-    /* 
-    await _client.from('media_cache').upsert(media.toJson()); 
-    */
-    // Assuming media exists or is inserted by caller (e.g. MediaRepository)
-    // But since foreign key constraint exists, we MUST ensure it exists.
-    // The previous implementation of `saveMediaItem` is upsert.
+    // Note: We no longer automatically upsert to media_cache here 
+    // to avoid redundant network hits during frequent progress saves.
+    // The caller should call ensureMediaCached() once during initialization.
 
     await _client.from('watch_history').upsert({
       'user_id': userId,
@@ -48,6 +54,8 @@ class WatchHistoryRepository {
       'status': 'watching',
       'progress_seconds': progressSeconds,
       'total_duration': totalDuration,
+      'season': season,
+      'episode': episode,
       'last_watched_at': DateTime.now().toIso8601String(),
     });
   }
@@ -65,5 +73,53 @@ class WatchHistoryRepository {
       'logged_at': DateTime.now().toIso8601String(),
       'duration_watched_seconds': durationWatched,
     });
+  }
+
+  Future<WatchHistory?> getHistoryItem(String userId, String tmdbId) async {
+    final response = await _client
+        .from('watch_history')
+        .select('*, media_cache(*)')
+        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId)
+        .maybeSingle();
+
+    if (response == null) return null;
+    return WatchHistory.fromJson(response);
+  }
+
+  // Stream all watch history for the user (Global Store Listener)
+  Stream<List<WatchHistory>> watchAllHistory(String userId) {
+    return _client
+        .from('watch_history')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .order('last_watched_at', ascending: false)
+        .asyncMap((event) async {
+          // Since stream doesn't support joins easily, we fetch full details if needed
+          // Or we can rely on basic data. For now, let's fetch linked media items
+          // This is a bit heavy, but ensures we have media details.
+          // Alternative: We can fetch media_cache separately or rely on client-side join.
+          // Optimization: Fetch all media_cache items once and join in memory? 
+          // For now simplicity: Let's refetch current snapshot with join
+          
+          final ids = event.map((e) => e['tmdb_id'] as int).toList();
+          if (ids.isEmpty) return [];
+
+          final response = await _client
+            .from('watch_history')
+            .select('*, media_cache(*)')
+            .eq('user_id', userId)
+            .inFilter('tmdb_id', ids)
+            .order('last_watched_at', ascending: false);
+            
+          return (response as List).map((e) => WatchHistory.fromJson(e)).toList();
+        });
+  }
+  Future<void> removeFromContinueWatching(String userId, int tmdbId) async {
+    await _client
+        .from('watch_history')
+        .delete()
+        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId);
   }
 }

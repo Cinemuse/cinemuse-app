@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/home/presentation/home_screen.dart';
-import 'package:cinemuse_app/features/search/presentation/search_screen.dart';
-import 'package:cinemuse_app/core/presentation/widgets/navbar.dart';
+import 'package:cinemuse_app/features/explore/presentation/pages/explore_screen.dart';
+import 'package:cinemuse_app/features/navigation/navbar.dart';
+import 'package:cinemuse_app/features/profile/presentation/profile_hub.dart';
+import 'package:cinemuse_app/features/settings/presentation/settings_screen.dart';
+import 'package:cinemuse_app/features/auth/application/auth_service.dart';
+import 'package:cinemuse_app/features/search/presentation/search_overlay.dart';
+import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
@@ -12,17 +18,18 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  int _currentIndex = 0;
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const SearchScreen(), // Explore/Search tab
+    const ExploreScreen(),
     const Center(child: Text("Live TV (Todo)")),
-    const Center(child: Text("Profile (Todo)")),
+    const ProfileHub(),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final currentIndex = ref.watch(navIndexProvider);
+
     return Scaffold(
       backgroundColor: Colors.black, // Match "bg-primary"
       body: Stack(
@@ -30,7 +37,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           // Main Content
           Positioned.fill(
             child: IndexedStack(
-              index: _currentIndex,
+              index: currentIndex,
               children: _screens,
             ),
           ),
@@ -41,12 +48,19 @@ class _AppShellState extends ConsumerState<AppShell> {
             left: 0,
             right: 0,
             child: AppNavbar(
-              currentIndex: _currentIndex,
+              currentIndex: currentIndex,
               onTap: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
+                ref.read(navIndexProvider.notifier).state = index;
               },
+              onSettingsTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
+              },
+              onLogoutTap: () {
+                ref.read(authProvider.notifier).signOut();
+              },
+              onSearchTap: () => SearchOverlay.show(context),
             ),
           ),
         ],
