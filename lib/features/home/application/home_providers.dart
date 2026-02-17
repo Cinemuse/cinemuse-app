@@ -25,9 +25,20 @@ final continueWatchingProvider = StreamProvider<List<WatchHistory>>((ref) {
   
   return historyMapAsync.when(
     data: (historyMap) {
-      final list = historyMap.values
+      final allWatching = historyMap.values
           .where((item) => item.status == WatchStatus.watching)
           .toList();
+      
+      // Filter: Only keep the latest progress for each tmdb_id (Series or Movie)
+      final latestItems = <int, WatchHistory>{};
+      for (final item in allWatching) {
+        final existing = latestItems[item.tmdbId];
+        if (existing == null || item.lastWatchedAt.isAfter(existing.lastWatchedAt)) {
+          latestItems[item.tmdbId] = item;
+        }
+      }
+
+      final list = latestItems.values.toList();
       
       // Sort by last watched (descending)
       list.sort((a, b) => b.lastWatchedAt.compareTo(a.lastWatchedAt));

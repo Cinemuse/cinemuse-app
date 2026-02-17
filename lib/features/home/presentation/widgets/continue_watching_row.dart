@@ -151,14 +151,14 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
                     title: title,
                     backdropPath: backdrop,
                     progress: percentage,
-                    infoText: media?.mediaType == MediaKind.episode 
-                              ? "Episode" 
+                    infoText: historyItem.mediaType == MediaKind.tv 
+                              ? "S${historyItem.season} E${historyItem.episode}" 
                               : "Movie",
                     onTap: () {
                        Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => MediaDetailsScreen(
                           mediaId: historyItem.tmdbId.toString(), 
-                          mediaType: historyItem.mediaType == MediaKind.episode ? 'tv' : 'movie',
+                          mediaType: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
                         ),
                       ));
                     },

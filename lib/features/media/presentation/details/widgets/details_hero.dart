@@ -15,9 +15,11 @@ class DetailsHero extends StatelessWidget {
   final double contentPadding;
   final bool isFavorite;
   final bool isInWatchlist;
+  final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})? seriesWatchStatus;
   final VoidCallback onHeartTap;
   final VoidCallback onBookmarkTap;
   final VoidCallback onListTap;
+  final VoidCallback? onTrackTap;
 
   const DetailsHero({
     super.key,
@@ -30,9 +32,11 @@ class DetailsHero extends StatelessWidget {
     this.contentPadding = 24.0,
     this.isFavorite = false,
     this.isInWatchlist = false,
+    this.seriesWatchStatus,
     required this.onHeartTap,
     required this.onBookmarkTap,
     required this.onListTap,
+    this.onTrackTap,
   });
 
   @override
@@ -292,45 +296,67 @@ class DetailsHero extends StatelessWidget {
                     ),
                     const SizedBox(width: 16),
 
-                    // Social Group
-                    _SocialGroup(
-                      isFavorite: isFavorite,
-                      isInWatchlist: isInWatchlist,
-                      onHeartTap: onHeartTap,
-                      onBookmarkTap: onBookmarkTap,
-                      onListTap: onListTap,
-                    ),
+                      _SocialGroup(
+                        isFavorite: isFavorite,
+                        isInWatchlist: isInWatchlist,
+                        onHeartTap: onHeartTap,
+                        onBookmarkTap: onBookmarkTap,
+                        onListTap: onListTap,
+                      ),
                     const SizedBox(width: 16),
 
                     // Track Button
-                    MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {},
-                        child: HoverScale(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
-                            decoration: BoxDecoration(
-                              color: AppTheme.textWhite.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppTheme.textWhite.withOpacity(0.05)),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.tv_outlined, color: AppTheme.textWhite, size: 24),
-                                SizedBox(width: 12),
-                                Text(
-                                  'Track',
-                                  style: TextStyle(color: AppTheme.textWhite, fontSize: 16, fontWeight: FontWeight.bold),
+                    if (onTrackTap != null)
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: onTrackTap,
+                          child: HoverScale(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
+                              decoration: BoxDecoration(
+                                color: (seriesWatchStatus?.isFullyWatched ?? false)
+                                    ? Colors.green.withOpacity(0.15)
+                                    : AppTheme.textWhite.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: (seriesWatchStatus?.isFullyWatched ?? false)
+                                      ? Colors.green.withOpacity(0.3)
+                                      : AppTheme.textWhite.withOpacity(0.05)
                                 ),
-                              ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    seriesWatchStatus?.isFullyWatched ?? false 
+                                        ? Icons.check_circle 
+                                        : (seriesWatchStatus?.isPartiallyWatched ?? false ? Icons.check_circle_outline : Icons.add_task),
+                                    color: (seriesWatchStatus?.isFullyWatched ?? false)
+                                        ? Colors.green
+                                        : AppTheme.textWhite,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    seriesWatchStatus?.isFullyWatched ?? false 
+                                        ? (seriesWatchStatus!.minWatchCount > 1 ? 'Watched x${seriesWatchStatus!.minWatchCount}' : 'Watched')
+                                        : (seriesWatchStatus?.isPartiallyWatched ?? false ? 'Finish Series' : 'Track'),
+                                    style: TextStyle(
+                                      color: (seriesWatchStatus?.isFullyWatched ?? false)
+                                          ? Colors.green
+                                          : AppTheme.textWhite, 
+                                      fontSize: 16, 
+                                      fontWeight: FontWeight.bold
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 ),
 
@@ -447,13 +473,15 @@ class _SocialIcon extends StatefulWidget {
   final Color? color;
   final VoidCallback onTap;
   final bool showArrow;
+  final String? label;
 
   const _SocialIcon({
     super.key,
     required this.icon, 
     this.color,
     required this.onTap, 
-    this.showArrow = false
+    this.showArrow = false,
+    this.label,
   });
 
   @override
@@ -544,12 +572,22 @@ class _SocialIconState extends State<_SocialIcon> with SingleTickerProviderState
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 150),
                     transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
-                    child: Icon(
-                      effectiveIcon, 
-                      key: ValueKey(effectiveIcon),
-                      color: effectiveColor, 
-                      size: 24
-                    ),
+                    child: widget.label != null
+                        ? Text(
+                            widget.label!,
+                            key: ValueKey(widget.label),
+                            style: TextStyle(
+                              color: effectiveColor,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : Icon(
+                            effectiveIcon, 
+                            key: ValueKey(effectiveIcon),
+                            color: effectiveColor, 
+                            size: 24
+                          ),
                   ),
                 ),
                 if (widget.showArrow) ...[

@@ -4,6 +4,7 @@ import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/core/services/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Family provider to fetch details for a specific media item
@@ -36,11 +37,66 @@ final seasonDetailsProvider = FutureProvider.family<Map<String, dynamic>?, ({int
   return tmdbService.getSeasonDetails(args.tmdbId, args.seasonNumber);
 });
 
-// State provider for the currently selected season number
-final selectedSeasonProvider = StateProvider.autoDispose<int>((ref) => 1);
+// Family state provider for the currently selected season number of a specific series
+final selectedSeasonProvider = StateProvider.family<int, String>((ref, mediaId) => 1);
 
 // Family provider to fetch watch history for a specific media item (Derived from Store)
 final mediaWatchHistoryProvider = Provider.family<AsyncValue<WatchHistory?>, String>((ref, tmdbId) {
   final store = ref.watch(watchHistoryStoreProvider);
   return store.whenData((map) => map[tmdbId]);
+});
+
+// Stream all watch logs for a specific series to track episodic history
+final seriesWatchLogsProvider = StreamProvider.family<List<Map<String, dynamic>>, int>((ref, tmdbId) {
+  final userId = supabase.auth.currentUser?.id;
+  if (userId == null) return Stream.value([]);
+  
+  final repository = ref.watch(watchHistoryRepositoryProvider);
+  return repository.watchSeriesLogs(userId, tmdbId);
+});
+
+// Helper provider to get a map of "season-episode" -> watch_count for the series
+final watchedEpisodesMapProvider = Provider.family<Map<String, int>, int>((ref, tmdbId) {
+  final logsAsync = ref.watch(seriesWatchLogsProvider(tmdbId));
+  return logsAsync.maybeWhen(
+    data: (logs) {
+      final counts = <String, int>{};
+      for (final log in logs) {
+        final s = log['season'];
+        final e = log['episode'];
+        if (s != null && e != null) {
+          final key = '$s-$e';
+          counts[key] = (counts[key] ?? 0) + 1;
+        }
+      }
+      return counts;
+    },
+    orElse: () => <String, int>{},
+  );
+});
+// Helper provider to get global series watch status
+final seriesWatchStatusProvider = Provider.family<({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount}), ({int tmdbId, int totalEpisodes})>((ref, args) {
+  final counts = ref.watch(watchedEpisodesMapProvider(args.tmdbId));
+  if (counts.isEmpty) return (isFullyWatched: false, isPartiallyWatched: false, minWatchCount: 0);
+
+  int watchedInSeries = 0;
+  int minCount = -1;
+
+  counts.forEach((key, count) {
+    if (count > 0) {
+      watchedInSeries++;
+      if (minCount == -1 || count < minCount) {
+        minCount = count;
+      }
+    }
+  });
+
+  final isFullyWatched = watchedInSeries >= args.totalEpisodes;
+  final isPartiallyWatched = watchedInSeries > 0 && !isFullyWatched;
+
+  return (
+    isFullyWatched: isFullyWatched,
+    isPartiallyWatched: isPartiallyWatched,
+    minWatchCount: isFullyWatched ? (minCount == -1 ? 0 : minCount) : 0,
+  );
 });

@@ -43,20 +43,36 @@ class WatchHistoryRepository {
     int? season,
     int? episode,
   }) async {
-    // Note: We no longer automatically upsert to media_cache here 
-    // to avoid redundant network hits during frequent progress saves.
-    // The caller should call ensureMediaCached() once during initialization.
-
     await _client.from('watch_history').upsert({
       'user_id': userId,
-      'tmdb_id': media.tmdbId,
+      'tmdb_id': media.tmdbId, 
       'media_type': media.mediaType.name,
       'status': 'watching',
       'progress_seconds': progressSeconds,
       'total_duration': totalDuration,
+      'season': season ?? 0,
+      'episode': episode ?? 0,
+      'last_watched_at': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<void> logEpisodeWatch({
+    required String userId,
+    required int tmdbId,
+    required String mediaType,
+    required int season,
+    required int episode,
+    DateTime? loggedAt,
+    int? durationWatched,
+  }) async {
+    await _client.from('watch_logs').insert({
+      'user_id': userId,
+      'tmdb_id': tmdbId,
+      'media_type': mediaType,
       'season': season,
       'episode': episode,
-      'last_watched_at': DateTime.now().toIso8601String(),
+      'logged_at': (loggedAt ?? DateTime.now()).toIso8601String(),
+      'duration_watched_seconds': durationWatched,
     });
   }
 
@@ -64,13 +80,15 @@ class WatchHistoryRepository {
     required String userId,
     required MediaItem media,
     required int durationWatched,
+    DateTime? loggedAt,
   }) async {
-    // Insert into Logs -> Trigger updates History
+    final now = (loggedAt ?? DateTime.now()).toIso8601String();
+
     await _client.from('watch_logs').insert({
       'user_id': userId,
       'tmdb_id': media.tmdbId,
       'media_type': media.mediaType.name,
-      'logged_at': DateTime.now().toIso8601String(),
+      'logged_at': now,
       'duration_watched_seconds': durationWatched,
     });
   }
@@ -91,7 +109,7 @@ class WatchHistoryRepository {
   Stream<List<WatchHistory>> watchAllHistory(String userId) {
     return _client
         .from('watch_history')
-        .stream(primaryKey: ['id'])
+        .stream(primaryKey: ['user_id', 'tmdb_id', 'media_type', 'season', 'episode'])
         .eq('user_id', userId)
         .order('last_watched_at', ascending: false)
         .asyncMap((event) async {
@@ -115,6 +133,124 @@ class WatchHistoryRepository {
           return (response as List).map((e) => WatchHistory.fromJson(e)).toList();
         });
   }
+
+  // Stream series logs for a specific user and tmdbId
+  Stream<List<Map<String, dynamic>>> watchSeriesLogs(String userId, int tmdbId) {
+    return _client
+        .from('watch_logs')
+        .stream(primaryKey: ['id'])
+        .eq('tmdb_id', tmdbId)
+        .order('logged_at', ascending: false)
+        .map((list) => list.where((item) => 
+            item['user_id'] == userId && 
+            item['media_type'] == 'tv'
+        ).toList());
+  }
+
+  // Get all watch logs for a specific series
+  Future<List<Map<String, dynamic>>> getSeriesWatchLogs(String userId, int tmdbId) async {
+    final response = await _client
+        .from('watch_logs')
+        .select('season, episode, logged_at')
+        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId)
+        .eq('media_type', 'tv')
+        .order('logged_at', ascending: false);
+    
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  Future<void> deleteLatestEpisodeLog({
+    required String userId,
+    required int tmdbId,
+    required int season,
+    required int episode,
+  }) async {
+    // 1. Get the latest log ID for this specific episode
+    final response = await _client
+        .from('watch_logs')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId)
+        .eq('season', season)
+        .eq('episode', episode)
+        .order('logged_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+
+    if (response != null && response['id'] != null) {
+      // 2. Delete that specific log entry
+      await _client
+          .from('watch_logs')
+          .delete()
+          .eq('id', response['id']);
+    }
+  }
+
+  Future<void> deleteAllEpisodeLogs({
+    required String userId,
+    required int tmdbId,
+    required int season,
+    required int episode,
+  }) async {
+    await _client
+        .from('watch_logs')
+        .delete()
+        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId)
+        .eq('season', season)
+        .eq('episode', episode);
+  }
+
+  Future<void> logMultipleEpisodes({
+    required String userId,
+    required int tmdbId,
+    required List<({int season, int episode})> episodes,
+    DateTime? loggedAt,
+  }) async {
+    if (episodes.isEmpty) return;
+
+    final now = (loggedAt ?? DateTime.now()).toIso8601String();
+
+    final logs = episodes.map((e) => {
+      'user_id': userId,
+      'tmdb_id': tmdbId,
+      'media_type': 'tv',
+      'season': e.season,
+      'episode': e.episode,
+      'logged_at': now,
+    }).toList();
+
+    await _client.from('watch_logs').insert(logs);
+
+    // 3. Update history for all marked episodes to completed
+    final historyUpdates = episodes.map((e) => {
+      'user_id': userId,
+      'tmdb_id': tmdbId,
+      'media_type': 'tv',
+      'status': 'completed',
+      'progress_seconds': 0, // We set to 0/0 or matching if 0 is treated as finished
+      'total_duration': 0,
+      'season': e.season,
+      'episode': e.episode,
+      'last_watched_at': now,
+    }).toList();
+
+    await _client.from('watch_history').upsert(historyUpdates);
+  }
+
+  Future<void> deleteAllSeriesLogs({
+    required String userId,
+    required int tmdbId,
+  }) async {
+    await _client
+        .from('watch_logs')
+        .delete()
+        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId)
+        .eq('media_type', 'tv');
+  }
+
   Future<void> removeFromContinueWatching(String userId, int tmdbId) async {
     await _client
         .from('watch_history')

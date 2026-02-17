@@ -264,16 +264,18 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
       // 4.5 Ensure media is cached (Natural retrieval point)
       final repo = ref.read(watchHistoryRepositoryProvider);
-      final mediaItem = MediaItem(
+      
+      // Cache the main media (Movie or TV show)
+      final mainMediaItem = MediaItem(
         tmdbId: int.parse(params.queryId),
-        mediaType: params.type == 'movie' ? MediaKind.movie : MediaKind.episode,
+        mediaType: params.type == 'movie' ? MediaKind.movie : MediaKind.tv,
         title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? 'Unknown',
         posterPath: _mediaDetails?['poster_path'],
         backdropPath: _mediaDetails?['backdrop_path'],
         releaseDate: DateTime.tryParse(_mediaDetails?['release_date'] ?? _mediaDetails?['first_air_date'] ?? ''),
         updatedAt: DateTime.now(),
       );
-      await repo.ensureMediaCached(mediaItem);
+      await repo.ensureMediaCached(mainMediaItem);
 
       // 5. Initialize Player
       if (_player == null) {
@@ -329,8 +331,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     try {
       final repo = ref.read(watchHistoryRepositoryProvider);
       
-      // Determine MediaKind (using episode for TV series as we track episodes)
-      final mediaType = params.type == 'movie' ? MediaKind.movie : MediaKind.episode;
+      // Determine MediaKind
+      final mediaType = params.type == 'movie' ? MediaKind.movie : MediaKind.tv;
 
       final mediaItem = MediaItem(
         tmdbId: int.parse(params.queryId),
