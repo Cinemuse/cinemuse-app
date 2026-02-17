@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/features/media/presentation/details/media_details_screen.dart';
-import 'package:cinemuse_app/features/media/presentation/details/person_details_screen.dart';
+import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
+import 'package:cinemuse_app/features/media/presentation/person_details_screen.dart';
 import 'package:cinemuse_app/features/search/application/search_provider.dart';
 import 'package:cinemuse_app/features/search/application/search_state.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
-import 'package:cinemuse_app/features/media/presentation/details/media_details_screen.dart';
+import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 
 class HorizontalMediaList extends StatelessWidget {
   final List<MediaItem> items;

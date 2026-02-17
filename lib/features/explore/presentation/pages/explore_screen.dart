@@ -6,7 +6,7 @@ import '../../../../shared/widgets/media_card.dart';
 import '../../application/explore_providers.dart';
 import '../widgets/media_type_selector.dart';
 import '../widgets/explore_filter_panel.dart';
-import 'package:cinemuse_app/features/media/presentation/details/media_details_screen.dart';
+import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import '../widgets/active_filters_list.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {

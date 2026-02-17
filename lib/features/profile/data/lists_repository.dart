@@ -72,14 +72,15 @@ class ListsRepository {
     required int tmdbId,
     required String mediaType,
   }) async {
-    final typesToDelete = (mediaType == 'series' || mediaType == 'tv') ? ['series', 'tv'] : [mediaType];
+    // Normalize type to ensure we match the DB enum (movie, tv, episode)
+    final normalizedType = (mediaType == 'series' || mediaType == 'tv') ? 'tv' : mediaType;
 
     await _client
         .from('list_items')
         .delete()
         .eq('list_id', listId)
         .eq('media_tmdb_id', tmdbId)
-        .filter('media_type', 'in', '(${typesToDelete.map((t) => '"$t"').join(',')})');
+        .eq('media_type', normalizedType);
   }
 
   /// Delete a list.

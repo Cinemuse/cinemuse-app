@@ -1,5 +1,5 @@
 import 'package:cinemuse_app/core/services/tmdb_service.dart';
-import 'package:cinemuse_app/features/media/application/store/watch_history_store.dart';
+import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
@@ -38,7 +38,16 @@ final seasonDetailsProvider = FutureProvider.family<Map<String, dynamic>?, ({int
 });
 
 // Family state provider for the currently selected season number of a specific series
-final selectedSeasonProvider = StateProvider.family<int, String>((ref, mediaId) => 1);
+final selectedSeasonProvider = StateProvider.family<int, String>((ref, mediaId) {
+  // We want to default to the season of the next unwatched episode (or resume point).
+  // But we can't easily access async watchHistory here without potential loops or waiting.
+  // However, we can use `ref.watch(mediaWatchHistoryProvider(mediaId))` BUT that might not be ready.
+  // A better approach: Initialize this provider with 1, but in the UI (MediaDetailsScreen),
+  // use a `useEffect` or `listen` to update this provider once history is loaded.
+  // OR, we can make this provider depend on history? but then it's not a simple StateProvider for UI toggling.
+  // Let's keep it as StateProvider(1) and handle the "initial set" in the Widget.
+  return 1;
+});
 
 // Family provider to fetch watch history for a specific media item (Derived from Store)
 final mediaWatchHistoryProvider = Provider.family<AsyncValue<WatchHistory?>, String>((ref, tmdbId) {
@@ -46,13 +55,75 @@ final mediaWatchHistoryProvider = Provider.family<AsyncValue<WatchHistory?>, Str
   return store.whenData((map) => map[tmdbId]);
 });
 
-// Stream all watch logs for a specific series to track episodic history
-final seriesWatchLogsProvider = StreamProvider.family<List<Map<String, dynamic>>, int>((ref, tmdbId) {
-  final userId = supabase.auth.currentUser?.id;
-  if (userId == null) return Stream.value([]);
-  
-  final repository = ref.watch(watchHistoryRepositoryProvider);
-  return repository.watchSeriesLogs(userId, tmdbId);
+// StateNotifier for managing series logs with optimistic updates
+class OptimisticSeriesLogs extends FamilyStreamNotifier<List<Map<String, dynamic>>, int> {
+  // Store local optimistic updates: 'season-episode' -> isWatched (true=add, false=remove)
+  // We use a map to handle multiple rapid updates
+  final Map<String, bool> _optimisticUpdates = {};
+
+  @override
+  Stream<List<Map<String, dynamic>>> build(int arg) {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return Stream.value([]);
+    
+    final repository = ref.watch(watchHistoryRepositoryProvider);
+    return repository.watchSeriesLogs(userId, arg);
+  }
+
+  // Apply an optimistic update
+  void addOptimisticUpdate(int season, int episode, bool isWatched) {
+    final key = '$season-$episode';
+    _optimisticUpdates[key] = isWatched;
+    
+    // Force a rebuild with current state + optimistic changes
+    state = state.whenData((logs) => _applyOptimisticUpdates(logs));
+  }
+
+  // Clear optimistic updates (usually after a successful server sync or error)
+  void clearOptimisticUpdates() {
+    _optimisticUpdates.clear();
+    // Revert to original stream state (or let stream update naturally)
+    ref.invalidateSelf();
+  }
+
+  List<Map<String, dynamic>> _applyOptimisticUpdates(List<Map<String, dynamic>> currentLogs) {
+    // Create a mutable copy
+    final List<Map<String, dynamic>> updatedLogs = List.from(currentLogs);
+    final Set<String> currentKeys = currentLogs
+        .map((l) => '${l['season']}-${l['episode']}')
+        .toSet();
+
+    _optimisticUpdates.forEach((key, isWatched) {
+      final parts = key.split('-');
+      final s = int.parse(parts[0]);
+      final e = int.parse(parts[1]);
+      
+      if (isWatched) {
+        // optimistically add log if not present
+        if (!currentKeys.contains(key)) {
+          updatedLogs.add({
+            'season': s,
+            'episode': e,
+            'media_type': 'tv',
+            'logged_at': DateTime.now().toIso8601String(), // Temporary timestamp
+            'is_optimistic': true,
+          });
+          currentKeys.add(key);
+        }
+      } else {
+        // optimistically remove log
+        updatedLogs.removeWhere((l) => l['season'] == s && l['episode'] == e);
+        currentKeys.remove(key);
+      }
+    });
+
+    return updatedLogs;
+  }
+}
+
+// Provider for the optimistic logs
+final seriesWatchLogsProvider = StreamNotifierProvider.family<OptimisticSeriesLogs, List<Map<String, dynamic>>, int>(() {
+  return OptimisticSeriesLogs();
 });
 
 // Helper provider to get a map of "season-episode" -> watch_count for the series
@@ -99,4 +170,21 @@ final seriesWatchStatusProvider = Provider.family<({bool isFullyWatched, bool is
     isPartiallyWatched: isPartiallyWatched,
     minWatchCount: isFullyWatched ? (minCount == -1 ? 0 : minCount) : 0,
   );
+});
+
+// Helper provider to get a map of "season-episode" -> WatchHistory (progress) for the series
+final episodeProgressMapProvider = StreamProvider.family<Map<String, WatchHistory>, int>((ref, tmdbId) {
+  final userId = supabase.auth.currentUser?.id;
+  if (userId == null) return Stream.value({});
+
+  final repository = ref.watch(watchHistoryRepositoryProvider);
+  return repository.watchSeriesHistory(userId, tmdbId).map((historyList) {
+    final map = <String, WatchHistory>{};
+    for (final h in historyList) {
+      if (h.season != null && h.episode != null) {
+        map['${h.season}-${h.episode}'] = h;
+      }
+    }
+    return map;
+  });
 });

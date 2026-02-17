@@ -452,6 +452,36 @@ abstract class AppLocalizations {
   /// **'Production DNA'**
   String get detailsProductionDNA;
 
+  /// No description provided for @detailsRate.
+  ///
+  /// In en, this message translates to:
+  /// **'RATE'**
+  String get detailsRate;
+
+  /// No description provided for @detailsMarkRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark Remaining'**
+  String get detailsMarkRemaining;
+
+  /// No description provided for @detailsMarkAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark All'**
+  String get detailsMarkAll;
+
+  /// No description provided for @detailsRewatchSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewatch Series'**
+  String get detailsRewatchSeries;
+
+  /// No description provided for @detailsRemoveAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove All'**
+  String get detailsRemoveAll;
+
   /// No description provided for @detailsBudget.
   ///
   /// In en, this message translates to:

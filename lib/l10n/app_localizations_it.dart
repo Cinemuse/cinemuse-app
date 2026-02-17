@@ -196,6 +196,21 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsProductionDNA => 'DNA di Produzione';
 
   @override
+  String get detailsRate => 'RATE';
+
+  @override
+  String get detailsMarkRemaining => 'Mark Remaining';
+
+  @override
+  String get detailsMarkAll => 'Mark All';
+
+  @override
+  String get detailsRewatchSeries => 'Rewatch Series';
+
+  @override
+  String get detailsRemoveAll => 'Remove All';
+
+  @override
   String get detailsBudget => 'Budget';
 
   @override

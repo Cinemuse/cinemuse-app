@@ -8,7 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
-import 'package:cinemuse_app/features/media/presentation/details/media_details_screen.dart';
+import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/shared/widgets/backdrop_card.dart';
 
 class ContinueWatchingRow extends ConsumerStatefulWidget {

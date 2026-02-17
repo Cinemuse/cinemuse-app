@@ -1,5 +1,5 @@
 import 'package:cinemuse_app/core/services/stream_resolver.dart';
-import 'package:cinemuse_app/features/media/application/store/watch_history_store.dart';
+import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

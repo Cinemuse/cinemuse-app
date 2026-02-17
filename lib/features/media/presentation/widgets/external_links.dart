@@ -41,12 +41,6 @@ class ExternalLinks extends StatelessWidget {
                     url: 'https://instagram.com/${externalIds!['instagram_id']}',
                     label: 'Instagram',
                   ),
-                if (externalIds!['twitter_id'] != null)
-                  _SocialLink(
-                    icon: FontAwesomeIcons.twitter,
-                    url: 'https://twitter.com/${externalIds!['twitter_id']}',
-                    label: 'Twitter',
-                  ),
                 if (externalIds!['facebook_id'] != null)
                   _SocialLink(
                     icon: FontAwesomeIcons.facebook,

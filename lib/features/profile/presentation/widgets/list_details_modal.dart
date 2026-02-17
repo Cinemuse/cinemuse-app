@@ -1,5 +1,5 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/features/media/presentation/details/media_details_screen.dart';
+import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:flutter/material.dart';

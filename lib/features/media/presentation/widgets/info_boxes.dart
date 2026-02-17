@@ -90,14 +90,14 @@ class VerdictBox extends StatelessWidget {
                 behavior: HitTestBehavior.opaque,
                 onTap: onShowUserReviewModal,
                 child: HoverScale(
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.star_outline, size: 14, color: AppTheme.accent),
                       SizedBox(width: 4),
                       Text(
-                        'RATE',
-                        style: TextStyle(color: AppTheme.accent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                        l10n.detailsRate,
+                        style: const TextStyle(color: AppTheme.accent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2),
                       ),
                     ],
                   ),
@@ -199,7 +199,7 @@ class FinancesBox extends StatelessWidget {
             label: l10n.detailsBudget.toUpperCase(),
             value: budget > 0 ? '\$${(budget / 1000000).toStringAsFixed(1)}M' : 'Unknown',
             progress: 0.5,
-            color: Colors.grey,
+            color: AppTheme.textMuted,
           ),
           const SizedBox(height: 20),
           _FinanceItem(

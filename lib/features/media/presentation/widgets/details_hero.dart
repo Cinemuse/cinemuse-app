@@ -1,23 +1,24 @@
+import 'package:cinemuse_app/features/media/presentation/widgets/series_progress_bar.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/social_actions_group.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DetailsHero extends StatelessWidget {
+class DetailsHero extends ConsumerWidget {
   final Map<String, dynamic> media;
   final Map<String, dynamic> details;
   final Map<String, dynamic>? resumeData;
-  final Map<String, dynamic>? watchedData;
   final VoidCallback onPlayClick;
   final Function(Map<String, dynamic>) onDeepSearch;
   final double contentPadding;
   final bool isFavorite;
   final bool isInWatchlist;
   final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})? seriesWatchStatus;
-  final VoidCallback onHeartTap;
-  final VoidCallback onBookmarkTap;
   final VoidCallback onListTap;
   final VoidCallback? onTrackTap;
 
@@ -26,21 +27,18 @@ class DetailsHero extends StatelessWidget {
     required this.media,
     required this.details,
     this.resumeData,
-    this.watchedData,
     required this.onPlayClick,
     required this.onDeepSearch,
     this.contentPadding = 24.0,
     this.isFavorite = false,
     this.isInWatchlist = false,
     this.seriesWatchStatus,
-    required this.onHeartTap,
-    required this.onBookmarkTap,
     required this.onListTap,
     this.onTrackTap,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final type = media['type'] ?? (details['title'] != null ? 'movie' : 'series');
     final title = details['title'] ?? details['name'] ?? media['title'] ?? '';
@@ -57,7 +55,18 @@ class DetailsHero extends StatelessWidget {
         ? details['runtime']
         : (details['episode_run_time'] as List?)?.firstOrNull ?? details['runtime'];
 
-    return Container(
+    final mediaItem = MediaItem(
+      tmdbId: int.parse(media['id'].toString()),
+      mediaType: MediaItem.fromString(type),
+      title: title,
+      posterPath: details['poster_path'],
+      backdropPath: details['backdrop_path'],
+      voteAverage: voteAverage?.toDouble(),
+      releaseDate: DateTime.tryParse(details['release_date'] ?? details['first_air_date'] ?? ''),
+      updatedAt: DateTime.now(),
+    );
+
+    return SizedBox(
       height: MediaQuery.of(context).size.height * 0.7,
       width: double.infinity,
       child: Stack(
@@ -78,7 +87,7 @@ class DetailsHero extends StatelessWidget {
                 end: Alignment.topCenter,
                 colors: [
                   AppTheme.primary,
-                  AppTheme.primary, // Reinforced solid bottom
+                  AppTheme.primary,
                   AppTheme.primary.withOpacity(0.3),
                   Colors.transparent,
                 ],
@@ -87,7 +96,6 @@ class DetailsHero extends StatelessWidget {
             ),
           ),
           
-          // Bottom Seal (prevents hairline backdrop leaks during scrolling)
           Positioned(
             bottom: -1,
             left: 0,
@@ -201,7 +209,7 @@ class DetailsHero extends StatelessWidget {
                       ),
                       const _DotSeparator(),
                       Text(
-                        '${details['number_of_episodes']} Episodes',
+                        '${details['number_of_episodes']} ${l10n.detailsEpisodes}',
                         style: TextStyle(color: AppTheme.textWhite.withOpacity(0.6), fontSize: 13),
                       ),
                       if (details['status'] != null) ...[
@@ -281,11 +289,7 @@ class DetailsHero extends StatelessWidget {
                                 const Icon(Icons.play_arrow_outlined, color: AppTheme.textWhite, size: 24),
                                 const SizedBox(width: 12),
                                 Text(
-                                  resumeData != null
-                                      ? (resumeData!['type'] == 'tv'
-                                          ? l10n.detailsResumeEpisode(resumeData!['season'], resumeData!['episode'])
-                                          : l10n.detailsResume)
-                                      : l10n.detailsPlayNow,
+                                  _getPlayButtonLabel(l10n, type, resumeData),
                                   style: const TextStyle(color: AppTheme.textWhite, fontSize: 16, fontWeight: FontWeight.bold),
                                 ),
                               ],
@@ -296,13 +300,13 @@ class DetailsHero extends StatelessWidget {
                     ),
                     const SizedBox(width: 16),
 
-                      _SocialGroup(
-                        isFavorite: isFavorite,
-                        isInWatchlist: isInWatchlist,
-                        onHeartTap: onHeartTap,
-                        onBookmarkTap: onBookmarkTap,
-                        onListTap: onListTap,
-                      ),
+                    // Social Actions (extracted)
+                    SocialActionsGroup(
+                      mediaItem: mediaItem,
+                      isFavorite: isFavorite,
+                      isInWatchlist: isInWatchlist,
+                      onListTap: onListTap,
+                    ),
                     const SizedBox(width: 16),
 
                     // Track Button
@@ -360,9 +364,9 @@ class DetailsHero extends StatelessWidget {
                   ],
                 ),
 
-                // Series Progress Bar
+                // Series Progress Bar (extracted)
                 if (type == 'series' || type == 'tv') 
-                   _SeriesProgressBar(details: details, watchedData: watchedData),
+                   SeriesProgressBar(details: details),
               ],
             ),
           ),
@@ -374,36 +378,35 @@ class DetailsHero extends StatelessWidget {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'Ended':
-        return Colors.grey;
+        return AppTheme.textMuted;
       case 'Canceled':
-        return Colors.redAccent;
+        return Colors.redAccent; // Keep red for canceled
       case 'Returning Series':
-        return Colors.greenAccent;
+        return Colors.greenAccent; // Keep green for good status
       default:
-        return Colors.blueAccent;
+        return AppTheme.accent;
     }
   }
-}
 
-class _MetadataLink extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
+  String _getPlayButtonLabel(AppLocalizations l10n, String type, Map<String, dynamic>? resumeData) {
+    if (resumeData != null) {
+      if (resumeData['type'] == 'tv') {
+        // AppLocalizations generates arguments alphabetically: (episode, season)
+        final progress = resumeData['progress'] as int? ?? 0;
+        final label = progress > 0 
+           ? l10n.detailsResumeEpisode(resumeData['episode'], resumeData['season'])
+           : "${l10n.detailsPlay} S${resumeData['season']} E${resumeData['episode']}";
+        return label;
+      }
+      return l10n.detailsResume;
+    }
+    
+    // If no resume data, check if it's a series to show "Play S1 E1" (or localized Play)
+    if (type == 'series' || type == 'tv') {
+       return "${l10n.detailsPlay} S1 E1";
+    }
 
-  const _MetadataLink({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Text(
-        label,
-        style: GoogleFonts.firaCode(
-          color: AppTheme.textWhite.withAlpha(204), // 0.8 opacity
-          fontWeight: FontWeight.w500,
-          fontSize: 14,
-        ),
-      ),
-    );
+    return l10n.detailsPlayNow;
   }
 }
 
@@ -415,298 +418,6 @@ class _DotSeparator extends StatelessWidget {
     return Text(
       '•',
       style: TextStyle(color: AppTheme.textWhite.withOpacity(0.2), fontSize: 16),
-    );
-  }
-}
-
-class _SocialGroup extends StatelessWidget {
-  final bool isFavorite;
-  final bool isInWatchlist;
-  final VoidCallback onHeartTap;
-  final VoidCallback onBookmarkTap;
-  final VoidCallback onListTap;
-
-  const _SocialGroup({
-    required this.isFavorite,
-    required this.isInWatchlist,
-    required this.onHeartTap,
-    required this.onBookmarkTap,
-    required this.onListTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.textWhite.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.textWhite.withOpacity(0.05)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _SocialIcon(
-            icon: isFavorite ? Icons.favorite : Icons.favorite_border, 
-            color: isFavorite ? AppTheme.favorites : AppTheme.textWhite,
-            onTap: onHeartTap
-          ),
-          _VerticalDivider(),
-          _SocialIcon(
-            icon: isInWatchlist ? Icons.bookmark : Icons.bookmark_border, 
-            color: isInWatchlist ? AppTheme.watchlist : AppTheme.textWhite,
-            onTap: onBookmarkTap
-          ),
-          _VerticalDivider(),
-          _SocialIcon(
-            icon: Icons.format_list_bulleted, 
-            onTap: onListTap, 
-            showArrow: true
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SocialIcon extends StatefulWidget {
-  final IconData icon;
-  final Color? color;
-  final VoidCallback onTap;
-  final bool showArrow;
-  final String? label;
-
-  const _SocialIcon({
-    super.key,
-    required this.icon, 
-    this.color,
-    required this.onTap, 
-    this.showArrow = false,
-    this.label,
-  });
-
-  @override
-  State<_SocialIcon> createState() => _SocialIconState();
-}
-
-class _SocialIconState extends State<_SocialIcon> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  bool? _isOptimisticActive;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    );
-    _scaleAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
-    ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-  }
-
-  @override
-  void didUpdateWidget(_SocialIcon oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Reset optimistic state when the actual data arrives from the parent
-    if (oldWidget.icon != widget.icon || oldWidget.color != widget.color) {
-      _isOptimisticActive = null;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  // Derive the current state (either optimistic or from parent)
-  bool get isActive => _isOptimisticActive ?? (widget.color != null && widget.color != AppTheme.textWhite);
-
-  @override
-  Widget build(BuildContext context) {
-    // Determine effective icon based on active state
-    IconData effectiveIcon = widget.icon;
-    if (_isOptimisticActive != null) {
-      if (widget.icon == Icons.favorite || widget.icon == Icons.favorite_border) {
-        effectiveIcon = _isOptimisticActive! ? Icons.favorite : Icons.favorite_border;
-      } else if (widget.icon == Icons.bookmark || widget.icon == Icons.bookmark_border) {
-        effectiveIcon = _isOptimisticActive! ? Icons.bookmark : Icons.bookmark_border;
-      }
-    }
-
-    // Determine effective color
-    Color effectiveColor = widget.color ?? AppTheme.textWhite;
-    if (_isOptimisticActive != null) {
-      if (widget.icon == Icons.favorite || widget.icon == Icons.favorite_border) {
-        effectiveColor = _isOptimisticActive! ? AppTheme.favorites : AppTheme.textWhite;
-      } else if (widget.icon == Icons.bookmark || widget.icon == Icons.bookmark_border) {
-        effectiveColor = _isOptimisticActive! ? AppTheme.watchlist : AppTheme.textWhite;
-      }
-    }
-
-    return HoverScale(
-      scale: 1.2,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            // Only toggle for heart/bookmark
-            if (widget.icon != Icons.format_list_bulleted) {
-              setState(() {
-                _isOptimisticActive = !isActive;
-              });
-            }
-            _controller.forward(from: 0.0);
-            widget.onTap();
-          },
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: widget.showArrow ? 12 : 18, vertical: 15),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 150),
-                    transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
-                    child: widget.label != null
-                        ? Text(
-                            widget.label!,
-                            key: ValueKey(widget.label),
-                            style: TextStyle(
-                              color: effectiveColor,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        : Icon(
-                            effectiveIcon, 
-                            key: ValueKey(effectiveIcon),
-                            color: effectiveColor, 
-                            size: 24
-                          ),
-                  ),
-                ),
-                if (widget.showArrow) ...[
-                  const SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down, color: (effectiveColor).withOpacity(0.5), size: 14),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _VerticalDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 24,
-      width: 1,
-      color: AppTheme.textWhite.withOpacity(0.1),
-    );
-  }
-}
-
-class _SeriesProgressBar extends StatelessWidget {
-  final Map<String, dynamic> details;
-  final Map<String, dynamic>? watchedData;
-
-  const _SeriesProgressBar({required this.details, this.watchedData});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final progress = _calculateProgress();
-    if (progress == null) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                l10n.detailsSeriesProgress.toUpperCase(),
-                style: GoogleFonts.firaCode(
-                  color: AppTheme.textMuted,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              Text(
-                '${progress.percentage}% (${progress.watchedCount}/${progress.totalCount})',
-                style: GoogleFonts.firaCode(
-                  color: AppTheme.textMuted,
-                  fontSize: 10,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: progress.percentage / 100,
-              backgroundColor: AppTheme.textWhite.withOpacity(0.1),
-              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accent),
-              minHeight: 6,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  ({int percentage, int watchedCount, int totalCount})? _calculateProgress() {
-    final seasons = details['seasons'] as List?;
-    if (seasons == null) return null;
-
-    int totalEpisodes = 0;
-    int watchedEpisodesCount = 0;
-
-    final now = DateTime.now();
-    final lastAired = details['last_episode_to_air'];
-
-    for (var season in seasons) {
-      if (season['season_number'] > 0 && season['episode_count'] != null) {
-        if (season['air_date'] == null) continue;
-        final airDate = DateTime.tryParse(season['air_date']);
-        if (airDate == null || airDate.isAfter(now)) continue;
-
-        if (lastAired != null && season['season_number'] == lastAired['season_number']) {
-          totalEpisodes += (lastAired['episode_number'] as int);
-        } else if (lastAired == null || (season['season_number'] as int) < (lastAired['season_number'] as int)) {
-          totalEpisodes += (season['episode_count'] as int);
-        }
-      }
-    }
-
-    if (watchedData != null && watchedData!['s'] != null) {
-      final watchedSeasons = watchedData!['s'] as Map;
-      for (var seasonValue in watchedSeasons.values) {
-        if (seasonValue is Map) {
-          final episodes = seasonValue.keys.where((k) => k != 'c').toList();
-          watchedEpisodesCount += episodes.length;
-        }
-      }
-    }
-
-    if (totalEpisodes == 0) return null;
-
-    return (
-      percentage: ((watchedEpisodesCount / totalEpisodes) * 100).round().clamp(0, 100),
-      watchedCount: watchedEpisodesCount,
-      totalCount: totalEpisodes,
     );
   }
 }
