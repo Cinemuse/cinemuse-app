@@ -17,7 +17,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  final _idController = TextEditingController(text: 'tt1375666'); 
 
   @override
   Widget build(BuildContext context) {
@@ -78,54 +77,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(height: 50),
                    
-                   // Manual Entry (Tool) - Kept for dev parity
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("DEV TOOLS", style: GoogleFonts.outfit(color: AppTheme.textMuted, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 10),
-                         Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                 child: TextField(
-                                  controller: _idController,
-                                  style: const TextStyle(color: Colors.white),
-                                  decoration: const InputDecoration(
-                                    isDense: true,
-                                    border: OutlineInputBorder(),
-                                    hintText: 'TMDB/IMDB ID',
-                                    hintStyle: TextStyle(color: Colors.white30),
-                                    labelText: "Test Playback ID",
-                                    labelStyle: TextStyle(color: AppTheme.textMuted),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
-                                icon: const Icon(Icons.play_arrow, color: Colors.white),
-                                label: const Text("Test Play", style: TextStyle(color: Colors.white)),
-                                onPressed: () {
-                                   if (_idController.text.isNotEmpty) {
-                                      Navigator.of(context).push(MaterialPageRoute(
-                                        builder: (_) => VideoPlayerScreen(queryId: _idController.text.trim(), type: 'movie'),
-                                      ));
-                                   }
-                                },
-                              )
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 100), // Bottom padding for scrolling
+                  const SizedBox(height: 40), // Standard bottom padding
                 ],
               ),
             ),
