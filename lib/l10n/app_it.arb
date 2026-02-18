@@ -67,13 +67,15 @@
   "seasonLabel": "Stagione {number}",
   
   "playerSettings": "Impostazioni",
-  "playerQuality": "Qualità",
+  "playerQuality": "Sorgente",
   "playerAudio": "Audio",
-  "playerSelectQuality": "Seleziona Qualità",
+  "playerSelectQuality": "Seleziona Sorgente",
   "playerSelectAudio": "Seleziona Traccia Audio",
   "playerResolving": "Risoluzione stream con Real-Debrid...",
   "playerErrorResolving": "Errore nella risoluzione dello stream:\n{error}",
   "playerNoAudioFound": "Nessuna traccia audio trovata",
+  "playerSubtitles": "Sottotitoli",
+  "playerSelectSubtitle": "Seleziona Sottotitoli",
 
   "settingsTitle": "Impostazioni",
   "settingsIdentity": "Identità e Accesso",

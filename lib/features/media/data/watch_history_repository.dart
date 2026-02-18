@@ -43,7 +43,77 @@ class WatchHistoryRepository {
     required int totalDuration,
     int? season,
     int? episode,
+    Map<String, dynamic>? seriesDetails,
+    int actualSecondsWatched = 0,
+    int? initialPosition,
   }) async {
+    if (totalDuration <= 0) return;
+
+    final progressPercentage = progressSeconds / totalDuration;
+    final remainingSeconds = totalDuration - progressSeconds;
+
+    // Intent Detection: Determine if this watch should count as a "log" (checkmark)
+    // Rule: Must watch 10% of total OR 5 minutes OR 50% of the portion they starting with.
+    bool hasIntent = false;
+    if (actualSecondsWatched > 300) {
+      hasIntent = true; // Watched > 5 mins
+    } else if (actualSecondsWatched > (totalDuration * 0.1)) {
+      hasIntent = true; // Watched > 10% of total
+    } else if (initialPosition != null) {
+      final totalRemainingWhenStarted = totalDuration - initialPosition;
+      if (totalRemainingWhenStarted > 0 && actualSecondsWatched > (totalRemainingWhenStarted * 0.5)) {
+        hasIntent = true; // Watched > 50% of what was left
+      }
+    }
+
+    // 1. Check for Finished State
+    // Remaining < 180s OR Progress > 95%
+    if (remainingSeconds < 180 || progressPercentage > 0.95) {
+      // Remove from "Continue Watching"
+      final deleted = await _client.from('watch_history').delete().match({
+        'user_id': userId,
+        'tmdb_id': media.tmdbId,
+        'media_type': media.mediaType.name,
+        'season': season ?? 0,
+        'episode': episode ?? 0,
+      }).select();
+
+      // Only proceed if we actually deleted something (prevents double logs)
+      if ((deleted as List).isEmpty) return;
+
+      // Mark as Completed in logs ONLY if intent is met
+      if (hasIntent) {
+        await logEpisodeWatch(
+          userId: userId,
+          tmdbId: media.tmdbId,
+          mediaType: media.mediaType.name,
+          season: season ?? 0,
+          episode: episode ?? 0,
+          durationWatched: progressSeconds,
+        );
+      }
+
+      // Auto-advance to next episode if series details are provided
+      if (media.mediaType == MediaKind.tv && season != null && episode != null && seriesDetails != null) {
+        await upsertNextEpisode(
+          userId: userId,
+          tmdbId: media.tmdbId,
+          currentSeason: season,
+          currentEpisode: episode,
+          seriesDetails: seriesDetails,
+        );
+      }
+      return;
+    }
+
+    // 2. Check for Peeking State
+    // Watched < 120s AND Watched < 10%
+    if (progressSeconds < 120 && progressPercentage < 0.10) {
+      // Do nothing, don't save to history
+      return;
+    }
+
+    // 3. Watching State (Implicitly: Progress > 120s OR Progress > 10%)
     await _client.from('watch_history').upsert({
       'user_id': userId,
       'tmdb_id': media.tmdbId, 
@@ -152,11 +222,11 @@ class WatchHistoryRepository {
     return _client
         .from('watch_logs')
         .stream(primaryKey: ['id'])
-        .eq('tmdb_id', tmdbId)
+        .eq('user_id', userId)
         .order('logged_at', ascending: false)
         .transform(_debounceTransformer(const Duration(milliseconds: 300)))
         .map((list) => list.where((item) => 
-            item['user_id'] == userId && 
+            item['tmdb_id'] == tmdbId && 
             item['media_type'] == 'tv'
         ).toList());
   }

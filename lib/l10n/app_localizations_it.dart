@@ -269,13 +269,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playerSettings => 'Impostazioni';
 
   @override
-  String get playerQuality => 'Qualità';
+  String get playerQuality => 'Sorgente';
 
   @override
   String get playerAudio => 'Audio';
 
   @override
-  String get playerSelectQuality => 'Seleziona Qualità';
+  String get playerSelectQuality => 'Seleziona Sorgente';
 
   @override
   String get playerSelectAudio => 'Seleziona Traccia Audio';
@@ -290,6 +290,12 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get playerNoAudioFound => 'Nessuna traccia audio trovata';
+
+  @override
+  String get playerSubtitles => 'Sottotitoli';
+
+  @override
+  String get playerSelectSubtitle => 'Seleziona Sottotitoli';
 
   @override
   String get settingsTitle => 'Impostazioni';

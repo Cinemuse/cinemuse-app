@@ -593,7 +593,7 @@ abstract class AppLocalizations {
   /// No description provided for @playerQuality.
   ///
   /// In en, this message translates to:
-  /// **'Quality'**
+  /// **'Source'**
   String get playerQuality;
 
   /// No description provided for @playerAudio.
@@ -605,7 +605,7 @@ abstract class AppLocalizations {
   /// No description provided for @playerSelectQuality.
   ///
   /// In en, this message translates to:
-  /// **'Select Quality'**
+  /// **'Select Source'**
   String get playerSelectQuality;
 
   /// No description provided for @playerSelectAudio.
@@ -631,6 +631,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No audio tracks found'**
   String get playerNoAudioFound;
+
+  /// No description provided for @playerSubtitles.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitles'**
+  String get playerSubtitles;
+
+  /// No description provided for @playerSelectSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Subtitle Track'**
+  String get playerSelectSubtitle;
 
   /// No description provided for @settingsTitle.
   ///

@@ -7,6 +7,7 @@ import 'package:cinemuse_app/core/services/youtube_service.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
@@ -19,9 +20,15 @@ class PlayerParams {
   final String type;
   final int? season;
   final int? episode;
+  final String? episodeTitle;
   final int startPosition;
 
-  const PlayerParams(this.queryId, this.type, {this.season, this.episode, this.startPosition = 0});
+  const PlayerParams(this.queryId, this.type, {
+    this.season, 
+    this.episode, 
+    this.episodeTitle,
+    this.startPosition = 0,
+  });
 
   @override
   bool operator ==(Object other) =>
@@ -32,10 +39,11 @@ class PlayerParams {
           type == other.type &&
           season == other.season &&
           episode == other.episode &&
+          episodeTitle == other.episodeTitle &&
           startPosition == other.startPosition;
 
   @override
-  int get hashCode => Object.hash(queryId, type, season, episode, startPosition);
+  int get hashCode => Object.hash(queryId, type, season, episode, episodeTitle, startPosition);
 }
 
 // Convert back to StateNotifierProvider for compatibility/simplicity
@@ -53,6 +61,10 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   Timer? _saveTimer;
   Map<String, dynamic>? _mediaDetails;
   int _lastSavedPosition = 0;
+  int _actualSecondsWatched = 0;
+  int _lastPlaybackTick = -1;
+  late int _initialPosition;
+  bool _isCompletionLogged = false;
   File? _audioTempFile;
 
   // YouTube CDN requires proper headers to serve video streams
@@ -61,6 +73,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   };
 
   PlayerController(this.ref, this.params) : super(const AsyncValue.loading()) {
+    _initialPosition = params.startPosition;
     _initialize();
   }
 
@@ -284,8 +297,20 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         
         // Setup Progress Listener
         _posSub = _player!.stream.position.listen((duration) {
-          // Save every 15 seconds if position changed significantly
           final seconds = duration.inSeconds;
+
+          // Intent Detection: Track actual time watched
+          if (_lastPlaybackTick != -1) {
+            final delta = seconds - _lastPlaybackTick;
+            // Standard playback delta is positive and small (~1s between emits usually, 
+            // but we allow up to 2s for jitter/speedup). Seeking will produce large deltas.
+            if (delta > 0 && delta <= 2) {
+              _actualSecondsWatched += delta;
+            }
+          }
+          _lastPlaybackTick = seconds;
+
+          // Save every 15 seconds if position changed significantly
           if (seconds - _lastSavedPosition > 15 || seconds < _lastSavedPosition) { // Forward or Rewind
               _saveProgress();
               _lastSavedPosition = seconds;
@@ -302,13 +327,64 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         await _player!.seek(Duration(seconds: params.startPosition));
       }
 
+      // 6. Calculate Next Episode
+      NextEpisodeInfo? nextEpisode;
+      if (params.type == 'tv' && params.season != null && params.episode != null) {
+        final seasons = _mediaDetails?['seasons'] as List? ?? [];
+        final currentSeasonData = seasons.firstWhere(
+          (s) => s['season_number'] == params.season,
+          orElse: () => null,
+        );
+        
+        if (currentSeasonData != null) {
+          final episodeCount = currentSeasonData['episode_count'] as int? ?? 0;
+          if (params.episode! < episodeCount) {
+            // Get current season details for the episode title
+            final seasonDetails = await tmdbService.getSeasonDetails(int.parse(params.queryId), params.season!);
+            final episodes = seasonDetails?['episodes'] as List? ?? [];
+            final nextEpData = episodes.firstWhere(
+              (e) => e['episode_number'] == params.episode! + 1,
+              orElse: () => null,
+            );
+            
+            nextEpisode = NextEpisodeInfo(
+              season: params.season!, 
+              episode: params.episode! + 1,
+              title: nextEpData?['name'],
+            );
+          } else {
+            // Check if there is a next season
+            final nextSeasonData = seasons.firstWhere(
+              (s) => s['season_number'] == params.season! + 1,
+              orElse: () => null,
+            );
+            if (nextSeasonData != null) {
+              // Fetch next season details for the first episode title
+              final nextSeasonDetails = await tmdbService.getSeasonDetails(int.parse(params.queryId), params.season! + 1);
+              final episodes = nextSeasonDetails?['episodes'] as List? ?? [];
+              final firstEpData = episodes.isNotEmpty ? episodes[0] : null;
+
+              nextEpisode = NextEpisodeInfo(
+                season: params.season! + 1, 
+                episode: 1,
+                title: firstEpData?['name'],
+              );
+            }
+          }
+        }
+      }
+
       if (mounted) {
         state = AsyncValue.data(CinemaPlayerState(
           controller: _controller!,
           availableStreams: streams,
           currentStream: initialStream,
           title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? 'Unknown',
+          nextEpisode: nextEpisode,
         ));
+        
+        // Apply language preference after state is set and tracks are likely loaded
+        _applyLanguagePreference().then((_) => _applySubtitlePreference());
       }
     } catch (e, st) {
       if (mounted) {
@@ -351,7 +427,26 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         totalDuration: duration,
         season: params.season,
         episode: params.episode,
+        seriesDetails: params.type == 'tv' ? _mediaDetails : null,
+        actualSecondsWatched: _actualSecondsWatched,
+        initialPosition: _initialPosition,
       );
+
+      // 10. Proactively invalidate details screen providers if we just finished
+      // This ensures that when the user goes back, the markers are already updated
+      // even if the real-time stream hasn't pushed yet.
+      final isFinished = (duration - position < 180) || (position / duration > 0.95);
+      if (isFinished && !_isCompletionLogged) {
+        _isCompletionLogged = true; // Lock in for this session
+        
+        if (params.type == 'tv') {
+          final tmdbIdInt = int.tryParse(params.queryId);
+          if (tmdbIdInt != null) {
+            ref.invalidate(seriesWatchLogsProvider(tmdbIdInt));
+            ref.invalidate(watchedEpisodesMapProvider(tmdbIdInt));
+          }
+        }
+      }
     } catch (e) {
       print("Error saving progress: $e");
     }
@@ -411,11 +506,145 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           state = AsyncValue.data(currentState.copyWith(
             currentStream: newStream,
           ));
+          
+          _applyLanguagePreference().then((_) => _applySubtitlePreference());
        }
     } catch (e) {
       print("Error changing source: $e");
     }
   }
+
+  Future<void> _applyLanguagePreference() async {
+    if (_player == null) return;
+    
+    // Retry loop to wait for tracks to be parsed by the engine
+    int attempts = 0;
+    List<AudioTrack> tracks = [];
+    while (attempts < 6) { // 6 * 500ms = 3s max wait
+       tracks = _player!.state.tracks.audio;
+       // Filter out 'no' and 'auto' tracks
+       final hasRealTracks = tracks.any((t) => t.id != 'no' && t.id != 'auto');
+       if (hasRealTracks) break;
+       
+       await Future.delayed(const Duration(milliseconds: 500));
+       attempts++;
+    }
+
+    if (tracks.isEmpty) return;
+    
+    final settings = ref.read(settingsProvider);
+    final prefLang = settings.playerLanguage.toLowerCase();
+    
+    // 1. Try to find a match for preferred language
+    AudioTrack? bestMatch;
+    for (final track in tracks) {
+      if (track.id == 'no' || track.id == 'auto') continue;
+      
+      final title = (track.title ?? '').toLowerCase();
+      final lang = (track.language ?? '').toLowerCase();
+      
+      if (title.contains(prefLang) || lang.contains(prefLang)) {
+        bestMatch = track;
+        break;
+      }
+      
+      if (prefLang == 'it' && (title.contains('ita') || title.contains('italian'))) {
+        bestMatch = track;
+        break;
+      }
+      if (prefLang == 'en' && (title.contains('eng') || title.contains('english'))) {
+        bestMatch = track;
+        break;
+      }
+    }
+    
+    // 2. Fallback: select the first available real track if no match found
+    if (bestMatch == null) {
+      bestMatch = tracks.firstWhere((t) => t.id != 'no' && t.id != 'auto', orElse: () => tracks.first);
+    }
+    
+    if (bestMatch != null && bestMatch.id != 'auto') {
+      print('Proactively selecting audio track: ${bestMatch.title ?? bestMatch.language ?? bestMatch.id}');
+      await _player!.setAudioTrack(bestMatch);
+    }
+  }
+
+  Future<void> _applySubtitlePreference() async {
+    if (_player == null) return;
+    
+    // Wait for tracks if not already populated (re-using the logic from audio might be better but let's be safe)
+    int attempts = 0;
+    List<SubtitleTrack> tracks = [];
+    while (attempts < 6) {
+       tracks = _player!.state.tracks.subtitle;
+       final hasRealTracks = tracks.any((t) => t.id != 'no' && t.id != 'auto');
+       if (hasRealTracks) break;
+       await Future.delayed(const Duration(milliseconds: 500));
+       attempts++;
+    }
+
+    if (tracks.isEmpty) return;
+    
+    final settings = ref.read(settingsProvider);
+    final prefLang = settings.playerLanguage.toLowerCase();
+    
+    // Check current audio language
+    final currentAudio = _player!.state.track.audio;
+    final audioTitle = (currentAudio.title ?? '').toLowerCase();
+    final audioLang = (currentAudio.language ?? '').toLowerCase();
+    final audioId = currentAudio.id.toLowerCase();
+
+    bool audioMatch = audioTitle.contains(prefLang) || audioLang.contains(prefLang) || audioId == prefLang;
+    // Special check for ITA/Italian
+    if (prefLang == 'it' && (audioTitle.contains('ita') || audioTitle.contains('italian'))) audioMatch = true;
+    if (prefLang == 'en' && (audioTitle.contains('eng') || audioTitle.contains('english'))) audioMatch = true;
+
+    // If audio matches preference, we usually don't need subtitles
+    if (audioMatch) {
+      print('Audio matches preference ($prefLang), disabling subtitles.');
+      await _player!.setSubtitleTrack(SubtitleTrack.no());
+      return;
+    }
+
+    // Otherwise, try to find a subtitle track for the preferred language
+    SubtitleTrack? bestMatch;
+    for (final track in tracks) {
+      if (track.id == 'no' || track.id == 'auto') continue;
+      
+      final title = (track.title ?? '').toLowerCase();
+      final lang = (track.language ?? '').toLowerCase();
+      
+      if (title.contains(prefLang) || lang.contains(prefLang)) {
+        bestMatch = track;
+        break;
+      }
+      
+      if (prefLang == 'it' && (title.contains('ita') || title.contains('italian'))) {
+        bestMatch = track;
+        break;
+      }
+      if (prefLang == 'en' && (title.contains('eng') || title.contains('english'))) {
+        bestMatch = track;
+        break;
+      }
+    }
+    
+    if (bestMatch != null) {
+      print('Auto-enabling subtitle track: ${bestMatch.title ?? bestMatch.language ?? bestMatch.id}');
+      await _player!.setSubtitleTrack(bestMatch);
+    } else {
+      print('No matching subtitle found for $prefLang.');
+    }
+  }
+
+}
+
+class NextEpisodeInfo {
+  final int season;
+  final int episode;
+  final String? title;
+
+  NextEpisodeInfo({required this.season, required this.episode, this.title});
 }
 
 class CinemaPlayerState {
@@ -423,12 +652,14 @@ class CinemaPlayerState {
   final List<Map<String, dynamic>> availableStreams;
   final Map<String, dynamic> currentStream;
   final String title;
+  final NextEpisodeInfo? nextEpisode;
 
   CinemaPlayerState({
     required this.controller,
     required this.availableStreams,
     required this.currentStream,
     required this.title,
+    this.nextEpisode,
   });
 
   CinemaPlayerState copyWith({
@@ -436,12 +667,14 @@ class CinemaPlayerState {
     List<Map<String, dynamic>>? availableStreams,
     Map<String, dynamic>? currentStream,
     String? title,
+    NextEpisodeInfo? nextEpisode,
   }) {
     return CinemaPlayerState(
       controller: controller ?? this.controller,
       availableStreams: availableStreams ?? this.availableStreams,
       currentStream: currentStream ?? this.currentStream,
       title: title ?? this.title,
+      nextEpisode: nextEpisode ?? this.nextEpisode,
     );
   }
 }

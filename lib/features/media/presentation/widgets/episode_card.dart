@@ -11,7 +11,7 @@ class EpisodeCard extends StatefulWidget {
   final bool isWatched;
   final int watchCount;
   final double? resumePercentage;
-  final Function(int, int)? onEpisodeTap;
+  final Function(int, int, String)? onEpisodeTap;
   final Function(int, int, DateTime?)? onMarkWatched;
   final Function(int, int) onTrackOptions;
   final List<({int season, int episode})> Function(int, int) onFindMissingPreceding;
@@ -57,7 +57,7 @@ class _EpisodeCardState extends State<EpisodeCard> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => widget.onEpisodeTap?.call(widget.seasonNumber, epNumber),
+          onTap: () => widget.onEpisodeTap?.call(widget.seasonNumber, epNumber, name),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Row(

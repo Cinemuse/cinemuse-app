@@ -86,13 +86,15 @@
   "personMovie": "Movie",
   
   "playerSettings": "Settings",
-  "playerQuality": "Quality",
+  "playerQuality": "Source",
   "playerAudio": "Audio",
-  "playerSelectQuality": "Select Quality",
+  "playerSelectQuality": "Select Source",
   "playerSelectAudio": "Select Audio Track",
   "playerResolving": "Resolving stream with Real-Debrid...",
   "playerErrorResolving": "Error resolving stream:\n{error}",
   "playerNoAudioFound": "No audio tracks found",
+  "playerSubtitles": "Subtitles",
+  "playerSelectSubtitle": "Select Subtitle Track",
 
   "settingsTitle": "Settings",
   "settingsIdentity": "Identity & Access",

@@ -13,7 +13,7 @@ class EpisodeList extends ConsumerStatefulWidget {
   final Map<String, dynamic>? watchedData;
   final Map<String, int>? watchedEpisodesCount;
   final Map<String, WatchHistory>? episodeProgress;
-  final Function(int season, int episode)? onEpisodeTap;
+  final Function(int season, int episode, String name)? onEpisodeTap;
   final int? initialScrollIndex;
 
   const EpisodeList({

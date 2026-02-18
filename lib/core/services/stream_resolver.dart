@@ -58,11 +58,19 @@ class StreamResolver {
             }
           }
 
-          // Re-sort to put cached first
+          // Re-sort to put cached first while maintaining score order
           torrents.sort((a, b) {
             final aCached = (a['cached'] == true) ? 1 : 0;
             final bCached = (b['cached'] == true) ? 1 : 0;
-            return bCached - aCached;
+            
+            if (aCached != bCached) {
+              return bCached - aCached;
+            }
+            
+            // Stable sort: Use the pre-calculated score as tie-breaker
+            final aScore = a['score'] as int? ?? 0;
+            final bScore = b['score'] as int? ?? 0;
+            return bScore - aScore;
           });
         }
       } catch (e) {
@@ -96,76 +104,195 @@ class StreamResolver {
       queryId = "$imdbId:$season:$episode";
     }
 
-    // 1. Try Torrentio
+    final List<Future<List<Map<String, dynamic>>>> providerFutures = [];
+
+    // 1. Torrentio
+    providerFutures.add(_fetchTorrentio(type, queryId));
+
+    // 2. KnightCrawler
+    providerFutures.add(_fetchKnightCrawler(type, queryId));
+
+    // 3. YTS (Movies only)
+    if (type == 'movie') {
+      providerFutures.add(_fetchYts(imdbId));
+    }
+
+    final results = await Future.wait(providerFutures);
+    final allStreams = results.expand((x) => x).toList();
+
+    // Deduplicate by infoHash
+    final Map<String, Map<String, dynamic>> uniqueStreams = {};
+    for (var stream in allStreams) {
+      final hash = (stream['infoHash'] as String?)?.toLowerCase();
+      if (hash != null) {
+        if (!uniqueStreams.containsKey(hash)) {
+          uniqueStreams[hash] = stream;
+        } else {
+          // Keep the one with more seeds if duplicate
+          if ((stream['seeds'] ?? 0) > (uniqueStreams[hash]!['seeds'] ?? 0)) {
+            uniqueStreams[hash] = stream;
+          }
+        }
+      }
+    }
+
+    final streams = uniqueStreams.values.toList();
+
+    // 2. Hard Exclusion (Remove CAM, 3D, Screener immediately)
+    final filteredStreams = streams.where((s) {
+      final t = (s['title'] as String).toLowerCase();
+      return !(t.contains('cam') || 
+               t.contains(' ts ') || 
+               t.contains('hdcam') || 
+               t.contains('screener') || 
+               t.contains(' scr ') ||
+               t.contains(' 3d ') ||
+               t.contains('sbs'));
+    }).toList();
+
+    // 3. Score and Sort
+    final List<Map<String, dynamic>> scoredStreams = filteredStreams.map((str) {
+      int score(Map<String, dynamic> str) {
+        int s = 0;
+        final t = (str['title'] as String).toLowerCase();
+        
+        // Language detection
+        final isItalian = t.contains('ita') || t.contains('italian') || t.contains('italy') || t.contains(RegExp(r'\bit\b')) || t.contains('🇮🇹');
+        final isEnglish = t.contains('eng') || t.contains('english') || t.contains(RegExp(r'\ben\b')) || t.contains('🇬🇧') || t.contains('🇺🇸');
+        final isMulti = t.contains('multi') || (isItalian && isEnglish);
+
+        // Language prioritization
+        if (isItalian) s += 100;
+        if (isEnglish) s += 20;
+        if (isMulti) s += 150; // Massively boost ITA+ENG / Multi
+
+        // Negative scoring for non-preferred languages
+        if (t.contains(' rus') || t.contains('.ru.') || t.contains('russian') || t.contains('lostfilm') || t.contains('hdrezka') || t.contains('syncmer')) s -= 500;
+        if (t.contains(' ukr') || t.contains('ukrainian')) s -= 500;
+        if (t.contains(' fra') || t.contains('french')) s -= 200;
+        if (t.contains(' ger') || t.contains('german')) s -= 200;
+        if (t.contains(' spa') || t.contains('spanish')) s -= 200;
+        
+        // Specifically penalize common Russian release groups if Italian is not present
+        if (!isItalian && (t.contains('lostfilm') || t.contains('hdrezka') || t.contains('syncmer') || t.contains('newcomers'))) s -= 800;
+        
+        // Video quality & 10-bit
+        if (t.contains('10bit') || t.contains('hevc') || t.contains('x265') || t.contains('h265')) s += 30;
+        if (t.contains('hdr') || t.contains(' dv ') || t.contains('dovi')) s += 25;
+        
+        // Resolution & Penalization
+        if (t.contains('2160p') || t.contains('4k')) s += 50;
+        else if (t.contains('1080p')) s += 30;
+        else if (t.contains('720p')) s += 10;
+        else if (t.contains('480p')) s -= 50; // Penalize SD
+        else s -= 30; // Unknown or other resolution penalty
+
+        // Penalize "Other" types (DVDRip, HDRip, etc.)
+        if (t.contains('dvdrip') || t.contains('hdrip') || t.contains('bdrip') || t.contains('dvdscr')) s -= 40;
+
+        // Seeders impact (logarithmic-ish)
+        final seeds = str['seeds'] as int? ?? 0;
+        if (seeds > 100) s += 20;
+        else if (seeds > 50) s += 15;
+        else if (seeds > 10) s += 10;
+        else if (seeds > 0) s += 5;
+
+        // Penalize older codecs for 4K if not HEVC (rare but possible)
+        if (t.contains('2160p') && !t.contains('hevc') && !t.contains('x265')) s -= 20;
+
+        return s;
+      }
+      
+      final s = score(str);
+      return {
+        ...str,
+        'score': s,
+        'metadata': _parseMetadata(str['title'] as String),
+      };
+    }).toList();
+
+    scoredStreams.sort((a, b) {
+      final aScore = a['score'] as int;
+      final bScore = b['score'] as int;
+      return bScore - aScore;
+    });
+
+    return scoredStreams;
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchTorrentio(String type, String queryId) async {
     try {
       final url = "https://torrentio.strem.fun/stream/$type/$queryId.json";
-      final res = await _dio.get(url);
+      final res = await _dio.get(url, options: Options(receiveTimeout: const Duration(seconds: 5)));
       if (res.statusCode == 200 && res.data['streams'] != null) {
         final streamsData = res.data['streams'] as List;
-        final streams = streamsData.map((s) {
+        return streamsData.map((s) {
           return {
             'title': (s['title'] ?? "").replaceAll('\n', " "),
             'infoHash': s['infoHash'],
             'magnet': "magnet:?xt=urn:btih:${s['infoHash']}&dn=${Uri.encodeComponent(s['title'] ?? "")}",
             'seeds': s['seeds'] ?? 0,
+            'provider': 'Torrentio',
           };
         }).toList();
-
-        // Sort logic
-        streams.sort((a, b) {
-          int score(Map<String, dynamic> str) {
-            int s = 0;
-            final t = (str['title'] as String).toLowerCase();
-            if (t.contains('ita') || t.contains('italian')) s += 50;
-            if (t.contains('multi')) s += 20;
-            if (t.contains('eng') || t.contains('english')) s += 5;
-            if (t.contains('aac')) s += 10;
-            if (t.contains('x265') || t.contains('h265') || t.contains('hevc')) s += 2;
-            if (t.contains('x264') || t.contains('h264')) s += 3;
-            if (t.contains('1080p')) s += 2;
-            if (t.contains('7.1') || t.contains('truehd') || t.contains('dts')) s -= 5;
-            return s;
-          }
-          return score(b) - score(a);
-        });
-        return streams.cast<Map<String, dynamic>>();
       }
     } catch (e) {
-      // Ignore
+      print('Torrentio fetch failed: $e');
     }
+    return [];
+  }
 
-    // 2. Try YTS (Movies only) - Fallback
-    if (type == 'movie') {
-      try {
-        final url = "https://yts.mx/api/v2/list_movies.json?query_term=$imdbId";
-        final res = await _dio.get(url);
-        final data = res.data;
-        if (data['status'] == 'ok' && data['data']['movies'] != null) {
-          final movies = data['data']['movies'] as List;
-          if (movies.isNotEmpty) {
-            final movie = movies[0];
-            if (movie['torrents'] != null) {
-              final torrents = (movie['torrents'] as List).map((t) => {
-                'title': "${movie['title']} ${movie['year']} ${t['quality']} ${t['type']}",
-                'infoHash': t['hash'],
-                'magnet': "magnet:?xt=urn:btih:${t['hash']}&dn=${Uri.encodeComponent(movie['title'])}&tr=udp://open.demonii.com:1337/announce",
-                'seeds': t['seeds'] ?? 0,
-              }).toList();
-              
-              torrents.sort((a, b) {
-                 if (b['seeds'] != a['seeds']) return (b['seeds'] as int) - (a['seeds'] as int);
-                 return 0;
-              });
+  Future<List<Map<String, dynamic>>> _fetchKnightCrawler(String type, String queryId) async {
+    try {
+      final url = "https://knightcrawler.elfhosted.com/stream/$type/$queryId.json";
+      final res = await _dio.get(url, options: Options(
+        receiveTimeout: const Duration(seconds: 5),
+        responseType: ResponseType.json,
+      ));
+      
+      final data = res.data;
+      if (res.statusCode == 200 && data is Map && data['streams'] != null) {
+        final streamsData = data['streams'] as List;
+        return streamsData.map((s) {
+          final title = (s['title'] ?? "").replaceAll('\n', " ");
+          return {
+            'title': title,
+            'infoHash': s['infoHash'],
+            'magnet': "magnet:?xt=urn:btih:${s['infoHash']}&dn=${Uri.encodeComponent(title)}",
+            'seeds': s['seeds'] ?? 0,
+            'provider': 'KnightCrawler',
+          };
+        }).toList();
+      }
+    } catch (e) {
+       print('KnightCrawler fetch failed: $e');
+    }
+    return [];
+  }
 
-              return torrents.cast<Map<String, dynamic>>();
-            }
+  Future<List<Map<String, dynamic>>> _fetchYts(String imdbId) async {
+    try {
+      final url = "https://yts.mx/api/v2/list_movies.json?query_term=$imdbId";
+      final res = await _dio.get(url, options: Options(receiveTimeout: const Duration(seconds: 5)));
+      final data = res.data;
+      if (data['status'] == 'ok' && data['data']['movies'] != null) {
+        final movies = data['data']['movies'] as List;
+        if (movies.isNotEmpty) {
+          final movie = movies[0];
+          if (movie['torrents'] != null) {
+            return (movie['torrents'] as List).map((t) => {
+              'title': "${movie['title']} ${movie['year']} ${t['quality']} ${t['type']}",
+              'infoHash': t['hash'],
+              'magnet': "magnet:?xt=urn:btih:${t['hash']}&dn=${Uri.encodeComponent(movie['title'])}&tr=udp://open.demonii.com:1337/announce",
+              'seeds': t['seeds'] ?? 0,
+              'provider': 'YTS',
+            }).toList().cast<Map<String, dynamic>>();
           }
         }
-      } catch (e) {
-        // Ignore
       }
+    } catch (e) {
+      print('YTS fetch failed: $e');
     }
-
     return [];
   }
 
@@ -245,6 +372,56 @@ class StreamResolver {
     return null;
   }
   
+  Map<String, dynamic> _parseMetadata(String title) {
+    final t = title.toLowerCase();
+    
+    // 1. Resolution
+    String? resolution;
+    if (t.contains('2160p') || t.contains('4k')) resolution = '4K';
+    else if (t.contains('1080p')) resolution = '1080p';
+    else if (t.contains('720p')) resolution = '720p';
+    else if (t.contains('480p')) resolution = '480p';
+
+    // 2. Quality/Source
+    final List<String> qualityIndicators = [];
+    if (t.contains('bluray') || t.contains('bdrip')) qualityIndicators.add('BluRay');
+    else if (t.contains('web-dl') || t.contains('webrip') || t.contains(' amzn ') || t.contains(' nf ')) qualityIndicators.add('WEB-DL');
+    else if (t.contains('hdtv')) qualityIndicators.add('HDTV');
+    
+    if (t.contains('remux')) qualityIndicators.add('REMUX');
+    if (t.contains('10bit')) qualityIndicators.add('10bit');
+    if (t.contains('hdr') || t.contains(' dv ') || t.contains('dovi')) qualityIndicators.add('HDR');
+
+    // 3. Codecs
+    String? codec;
+    if (t.contains('hevc') || t.contains('x265') || t.contains('h265')) codec = 'HEVC';
+    else if (t.contains('x264') || t.contains('h264') || t.contains('avc')) codec = 'x264';
+
+    // 4. Audio
+    final List<String> audioFeatures = [];
+    if (t.contains('atmos')) audioFeatures.add('Atmos');
+    else if (t.contains('dts')) audioFeatures.add('DTS');
+    else if (t.contains('aac')) audioFeatures.add('AAC');
+    else if (t.contains('ac3') || t.contains('dd5.1') || t.contains('ddp')) audioFeatures.add('DD');
+
+    // 5. Languages
+    final List<String> languages = [];
+    final isItalian = t.contains('ita') || t.contains('italian') || t.contains('italy') || t.contains(RegExp(r'\bit\b')) || t.contains('🇮🇹');
+    final isEnglish = t.contains('eng') || t.contains('english') || t.contains(RegExp(r'\ben\b')) || t.contains('🇬🇧') || t.contains('🇺🇸');
+    
+    if (isItalian) languages.add('ITA');
+    if (isEnglish) languages.add('ENG');
+    if (t.contains('multi') && languages.isEmpty) languages.add('MULTI');
+
+    return {
+      'resolution': resolution,
+      'quality': qualityIndicators,
+      'codec': codec,
+      'audio': audioFeatures,
+      'languages': languages,
+    };
+  }
+
   Future<List<String>> _checkInstantAvailability(List<String> hashes, String apiKey) async {
     if (hashes.isEmpty) return [];
     

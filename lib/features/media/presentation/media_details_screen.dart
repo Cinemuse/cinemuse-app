@@ -404,13 +404,14 @@ class _SeriesEpisodesSection extends ConsumerWidget {
               watchedEpisodesCount: watchedEpisodesMap,
               episodeProgress: episodeProgressMap,
               initialScrollIndex: initialIndex,
-              onEpisodeTap: (s, e) {
+              onEpisodeTap: (s, e, name) {
                 Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => VideoPlayerScreen(
                     queryId: mediaId,
                     type: 'tv',
                     season: s,
                     episode: e,
+                    episodeTitle: name,
                   ),
                 ));
               },
