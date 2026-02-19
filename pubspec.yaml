@@ -37,6 +37,7 @@ dependencies:
   media_kit: ^1.2.6
   media_kit_video: ^2.0.1
   media_kit_libs_video: ^1.0.7
+  cast: ^2.1.0
   flutter_riverpod: ^2.6.1
   dio: ^5.9.1
   shared_preferences: ^2.5.3
@@ -130,3 +131,6 @@ flutter_launcher_icons:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+dependency_overrides:
+  bonsoir: 5.0.1

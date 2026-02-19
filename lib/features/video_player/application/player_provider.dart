@@ -14,37 +14,12 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 
-// Simple data class for params
-class PlayerParams {
-  final String queryId;
-  final String type;
-  final int? season;
-  final int? episode;
-  final String? episodeTitle;
-  final int startPosition;
-
-  const PlayerParams(this.queryId, this.type, {
-    this.season, 
-    this.episode, 
-    this.episodeTitle,
-    this.startPosition = 0,
-  });
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is PlayerParams &&
-          runtimeType == other.runtimeType &&
-          queryId == other.queryId &&
-          type == other.type &&
-          season == other.season &&
-          episode == other.episode &&
-          episodeTitle == other.episodeTitle &&
-          startPosition == other.startPosition;
-
-  @override
-  int get hashCode => Object.hash(queryId, type, season, episode, episodeTitle, startPosition);
-}
+import 'package:cast/cast.dart';
+import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:cinemuse_app/features/video_player/application/handlers/youtube_handler.dart';
+import 'package:cinemuse_app/features/video_player/application/handlers/rd_handler.dart';
+import 'package:cinemuse_app/features/video_player/application/handlers/cast_handler.dart';
+import 'package:cinemuse_app/features/video_player/application/handlers/preference_handler.dart';
 
 // Convert back to StateNotifierProvider for compatibility/simplicity
 final playerControllerProvider = StateNotifierProvider.family.autoDispose<PlayerController, AsyncValue<CinemaPlayerState>, PlayerParams>(
@@ -65,15 +40,19 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   int _lastPlaybackTick = -1;
   late int _initialPosition;
   bool _isCompletionLogged = false;
-  File? _audioTempFile;
-
-  // YouTube CDN requires proper headers to serve video streams
-  static const _ytHeaders = {
-    'User-Agent': 'com.google.android.youtube/19.02.39 (Linux; U; Android 14) gzip',
-  };
+  late final YoutubeHandler _youtubeHandler;
+  late final RdHandler _rdHandler;
+  late final CastHandler _castHandler;
+  late final PreferenceHandler _preferenceHandler;
 
   PlayerController(this.ref, this.params) : super(const AsyncValue.loading()) {
     _initialPosition = params.startPosition;
+    
+    // Initialize Handlers
+    _youtubeHandler = YoutubeHandler(ref.read(youtubeServiceProvider));
+    _rdHandler = RdHandler(ref.read(streamResolverProvider), ref.read(settingsProvider).realDebridKey);
+    _castHandler = CastHandler(ref.read(streamResolverProvider), ref.read(settingsProvider).realDebridKey);
+    
     _initialize();
   }
 
@@ -83,33 +62,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     _saveTimer?.cancel();
     _posSub?.cancel();
     _player?.dispose();
-    _cleanupAudioTempFile();
+    _youtubeHandler.dispose();
     super.dispose();
-  }
-
-  void _cleanupAudioTempFile() {
-    try {
-      _audioTempFile?.deleteSync();
-      _audioTempFile = null;
-    } catch (_) {}
-  }
-
-
-
-  /// Downloads the audio stream to a local temp file using youtube_explode_dart's
-  /// authenticated stream client. Raw YouTube URLs return 403 when accessed directly
-  /// by the player as external tracks (due to missing headers).
-  Future<String> _downloadAudioToTempFile() async {
-    _cleanupAudioTempFile();
-    
-    final tempDir = Directory.systemTemp;
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    _audioTempFile = File('${tempDir.path}${Platform.pathSeparator}yt_audio_$timestamp.webm');
-    
-    final ytService = ref.read(youtubeServiceProvider);
-    await ytService.downloadAudioToFile(_audioTempFile!.path);
-    
-    return _audioTempFile!.path;
   }
 
   Future<void> _initialize() async {
@@ -160,39 +114,34 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         if (_player == null) {
           _player = Player();
           _controller = VideoController(_player!);
+          _preferenceHandler = PreferenceHandler(_player!);
           
           // Add debug listeners
           _player!.stream.error.listen((event) { 
             print('YT-DEBUG: Player Error: $event'); 
           });
           _player!.stream.log.listen((event) {
-             // Filter out noisy logs, keep warnings/errors
              if (event.level == 'error' || event.level == 'warn') {
                print('YT-DEBUG: Player Log: ${event.prefix} ${event.level} ${event.text}');
              }
           });
         }
 
-        // For video-only HD streams, download audio to a local temp file
-        // using youtube_explode_dart's authenticated stream client.
         String? localAudioPath;
         if (initialStream['needsAudio'] == true) {
-          localAudioPath = await _downloadAudioToTempFile();
+          localAudioPath = await _youtubeHandler.downloadAudioToTempFile();
         }
 
-        // Open video PAUSED with YouTube headers
         await _player!.open(
-          Media(initialStream['url'], httpHeaders: _ytHeaders),
+          Media(initialStream['url'], httpHeaders: _youtubeHandler.youtubeHeaders),
           play: false,
         );
         
-        // Attach local audio file if we downloaded one
         if (localAudioPath != null) {
           print('YT-DEBUG: Setting Audio Track from local file: $localAudioPath');
           await _player!.setAudioTrack(AudioTrack.uri(localAudioPath));
         }
 
-        // Now start playback
         await _player!.play();
         
         if (mounted) {
@@ -294,6 +243,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       if (_player == null) {
         _player = Player();
         _controller = VideoController(_player!);
+        _preferenceHandler = PreferenceHandler(_player!);
         
         // Setup Progress Listener
         _posSub = _player!.stream.position.listen((duration) {
@@ -378,13 +328,14 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         state = AsyncValue.data(CinemaPlayerState(
           controller: _controller!,
           availableStreams: streams,
-          currentStream: initialStream,
+          currentStream: {...initialStream, ...streamData!},
           title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? 'Unknown',
           nextEpisode: nextEpisode,
         ));
         
         // Apply language preference after state is set and tracks are likely loaded
-        _applyLanguagePreference().then((_) => _applySubtitlePreference());
+        _preferenceHandler.applyLanguagePreference(ref.read(settingsProvider).playerLanguage)
+            .then((_) => _preferenceHandler.applySubtitlePreference(ref.read(settingsProvider).playerLanguage));
       }
     } catch (e, st) {
       if (mounted) {
@@ -460,21 +411,18 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         if (params.type == 'youtube') {
           final position = _player!.state.position;
           
-          // Download audio to temp file for video-only streams
           String? localAudioPath;
           if (newStream['needsAudio'] == true) {
-            localAudioPath = await _downloadAudioToTempFile();
+            localAudioPath = await _youtubeHandler.downloadAudioToTempFile();
           } else {
-            _cleanupAudioTempFile();
+            _youtubeHandler.cleanup();
           }
 
-          // Open new stream PAUSED with YouTube headers
           await _player!.open(
-            Media(newStream['url'] as String, httpHeaders: _ytHeaders),
+            Media(newStream['url'] as String, httpHeaders: _youtubeHandler.youtubeHeaders),
             play: false,
           );
           
-          // Attach local audio file
           if (localAudioPath != null) {
             print('YT-DEBUG: Changing Audio Track from local file: $localAudioPath');
             await _player!.setAudioTrack(AudioTrack.uri(localAudioPath));
@@ -489,192 +437,61 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           return;
         }
 
-       final rdKey = ref.read(settingsProvider).realDebridKey;
-       if (rdKey.isEmpty) {
-         throw Exception("Real-Debrid API Key is missing");
-       }
-       final resolver = ref.read(streamResolverProvider);
-
-       // Resolve new URL
-       final streamData = await resolver.resolveStream(newStream['magnet'], rdKey);
-       if (streamData != null && streamData['url'] != null) {
+       final resolvedStream = await _rdHandler.resolveAndMerge(newStream);
+       if (resolvedStream != null) {
           final position = _player!.state.position;
           
-          await _player!.open(Media(streamData['url'] as String), play: true);
+          await _player!.open(Media(resolvedStream['url'] as String), play: true);
           await _player!.seek(position);
 
           state = AsyncValue.data(currentState.copyWith(
-            currentStream: newStream,
+            currentStream: resolvedStream,
           ));
           
-          _applyLanguagePreference().then((_) => _applySubtitlePreference());
+          _preferenceHandler.applyLanguagePreference(ref.read(settingsProvider).playerLanguage)
+              .then((_) => _preferenceHandler.applySubtitlePreference(ref.read(settingsProvider).playerLanguage));
        }
     } catch (e) {
       print("Error changing source: $e");
     }
   }
 
-  Future<void> _applyLanguagePreference() async {
-    if (_player == null) return;
-    
-    // Retry loop to wait for tracks to be parsed by the engine
-    int attempts = 0;
-    List<AudioTrack> tracks = [];
-    while (attempts < 6) { // 6 * 500ms = 3s max wait
-       tracks = _player!.state.tracks.audio;
-       // Filter out 'no' and 'auto' tracks
-       final hasRealTracks = tracks.any((t) => t.id != 'no' && t.id != 'auto');
-       if (hasRealTracks) break;
-       
-       await Future.delayed(const Duration(milliseconds: 500));
-       attempts++;
-    }
+  Future<void> startCasting(CastDevice device) async {
+    try {
+      if (state.value == null) return;
+      
+      state = AsyncValue.data(state.value!.copyWith(
+        isCasting: true,
+        selectedCastDevice: device,
+      ));
 
-    if (tracks.isEmpty) return;
-    
-    final settings = ref.read(settingsProvider);
-    final prefLang = settings.playerLanguage.toLowerCase();
-    
-    // 1. Try to find a match for preferred language
-    AudioTrack? bestMatch;
-    for (final track in tracks) {
-      if (track.id == 'no' || track.id == 'auto') continue;
-      
-      final title = (track.title ?? '').toLowerCase();
-      final lang = (track.language ?? '').toLowerCase();
-      
-      if (title.contains(prefLang) || lang.contains(prefLang)) {
-        bestMatch = track;
-        break;
-      }
-      
-      if (prefLang == 'it' && (title.contains('ita') || title.contains('italian'))) {
-        bestMatch = track;
-        break;
-      }
-      if (prefLang == 'en' && (title.contains('eng') || title.contains('english'))) {
-        bestMatch = track;
-        break;
-      }
-    }
-    
-    // 2. Fallback: select the first available real track if no match found
-    if (bestMatch == null) {
-      bestMatch = tracks.firstWhere((t) => t.id != 'no' && t.id != 'auto', orElse: () => tracks.first);
-    }
-    
-    if (bestMatch != null && bestMatch.id != 'auto') {
-      print('Proactively selecting audio track: ${bestMatch.title ?? bestMatch.language ?? bestMatch.id}');
-      await _player!.setAudioTrack(bestMatch);
+      await _castHandler.startCasting(
+        device, 
+        state.value!.currentStream, 
+        state.value!.title, 
+        _player?.state.position ?? Duration.zero,
+        (resolvedStream) {
+          if (mounted) {
+            state = AsyncValue.data(state.value!.copyWith(currentStream: resolvedStream));
+          }
+        },
+      );
+
+      _player?.pause();
+    } catch (e) {
+      print('PlayerController: Error starting cast: $e');
+      stopCasting();
     }
   }
 
-  Future<void> _applySubtitlePreference() async {
-    if (_player == null) return;
-    
-    // Wait for tracks if not already populated (re-using the logic from audio might be better but let's be safe)
-    int attempts = 0;
-    List<SubtitleTrack> tracks = [];
-    while (attempts < 6) {
-       tracks = _player!.state.tracks.subtitle;
-       final hasRealTracks = tracks.any((t) => t.id != 'no' && t.id != 'auto');
-       if (hasRealTracks) break;
-       await Future.delayed(const Duration(milliseconds: 500));
-       attempts++;
+  Future<void> stopCasting() async {
+    _castHandler.stopCasting();
+    if (state.value != null) {
+      state = AsyncValue.data(state.value!.copyWith(
+        isCasting: false,
+        selectedCastDevice: null,
+      ));
     }
-
-    if (tracks.isEmpty) return;
-    
-    final settings = ref.read(settingsProvider);
-    final prefLang = settings.playerLanguage.toLowerCase();
-    
-    // Check current audio language
-    final currentAudio = _player!.state.track.audio;
-    final audioTitle = (currentAudio.title ?? '').toLowerCase();
-    final audioLang = (currentAudio.language ?? '').toLowerCase();
-    final audioId = currentAudio.id.toLowerCase();
-
-    bool audioMatch = audioTitle.contains(prefLang) || audioLang.contains(prefLang) || audioId == prefLang;
-    // Special check for ITA/Italian
-    if (prefLang == 'it' && (audioTitle.contains('ita') || audioTitle.contains('italian'))) audioMatch = true;
-    if (prefLang == 'en' && (audioTitle.contains('eng') || audioTitle.contains('english'))) audioMatch = true;
-
-    // If audio matches preference, we usually don't need subtitles
-    if (audioMatch) {
-      print('Audio matches preference ($prefLang), disabling subtitles.');
-      await _player!.setSubtitleTrack(SubtitleTrack.no());
-      return;
-    }
-
-    // Otherwise, try to find a subtitle track for the preferred language
-    SubtitleTrack? bestMatch;
-    for (final track in tracks) {
-      if (track.id == 'no' || track.id == 'auto') continue;
-      
-      final title = (track.title ?? '').toLowerCase();
-      final lang = (track.language ?? '').toLowerCase();
-      
-      if (title.contains(prefLang) || lang.contains(prefLang)) {
-        bestMatch = track;
-        break;
-      }
-      
-      if (prefLang == 'it' && (title.contains('ita') || title.contains('italian'))) {
-        bestMatch = track;
-        break;
-      }
-      if (prefLang == 'en' && (title.contains('eng') || title.contains('english'))) {
-        bestMatch = track;
-        break;
-      }
-    }
-    
-    if (bestMatch != null) {
-      print('Auto-enabling subtitle track: ${bestMatch.title ?? bestMatch.language ?? bestMatch.id}');
-      await _player!.setSubtitleTrack(bestMatch);
-    } else {
-      print('No matching subtitle found for $prefLang.');
-    }
-  }
-
-}
-
-class NextEpisodeInfo {
-  final int season;
-  final int episode;
-  final String? title;
-
-  NextEpisodeInfo({required this.season, required this.episode, this.title});
-}
-
-class CinemaPlayerState {
-  final VideoController controller;
-  final List<Map<String, dynamic>> availableStreams;
-  final Map<String, dynamic> currentStream;
-  final String title;
-  final NextEpisodeInfo? nextEpisode;
-
-  CinemaPlayerState({
-    required this.controller,
-    required this.availableStreams,
-    required this.currentStream,
-    required this.title,
-    this.nextEpisode,
-  });
-
-  CinemaPlayerState copyWith({
-    VideoController? controller,
-    List<Map<String, dynamic>>? availableStreams,
-    Map<String, dynamic>? currentStream,
-    String? title,
-    NextEpisodeInfo? nextEpisode,
-  }) {
-    return CinemaPlayerState(
-      controller: controller ?? this.controller,
-      availableStreams: availableStreams ?? this.availableStreams,
-      currentStream: currentStream ?? this.currentStream,
-      title: title ?? this.title,
-      nextEpisode: nextEpisode ?? this.nextEpisode,
-    );
+    _player?.play();
   }
 }
