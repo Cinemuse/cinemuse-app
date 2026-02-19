@@ -54,43 +54,44 @@ class AppNavbar extends StatelessWidget {
                 ),
               ),
 
-              // Nav Items (Centered Pill)
-              Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.surface.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+              // Nav Items (Centered Pill) - Visible only on Desktop
+              if (MediaQuery.of(context).size.width >= 600)
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  ),
+                  padding: const EdgeInsets.all(4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _NavItem(
+                        label: l10n.navHome,
+                        isSelected: currentIndex == 0,
+                        onTap: () => onTap(0),
+                      ),
+                      const SizedBox(width: 4),
+                      _NavItem(
+                        label: l10n.navExplore, // Explore
+                        isSelected: currentIndex == 1,
+                        onTap: () => onTap(1),
+                      ),
+                      const SizedBox(width: 4),
+                      _NavItem(
+                        label: "Live TV", // TODO: Add to localizations
+                        isSelected: currentIndex == 2,
+                        onTap: () => onTap(2),
+                      ),
+                      const SizedBox(width: 4),
+                      _NavItem(
+                        label: l10n.navLibrary, // Profile/Library
+                        isSelected: currentIndex == 3,
+                        onTap: () => onTap(3),
+                      ),
+                    ],
+                  ),
                 ),
-                padding: const EdgeInsets.all(4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _NavItem(
-                      label: l10n.navHome,
-                      isSelected: currentIndex == 0,
-                      onTap: () => onTap(0),
-                    ),
-                    const SizedBox(width: 4),
-                    _NavItem(
-                      label: l10n.navExplore, // Explore
-                      isSelected: currentIndex == 1,
-                      onTap: () => onTap(1),
-                    ),
-                    const SizedBox(width: 4),
-                    _NavItem(
-                      label: "Live TV", // TODO: Add to localizations
-                      isSelected: currentIndex == 2,
-                      onTap: () => onTap(2),
-                    ),
-                    const SizedBox(width: 4),
-                    _NavItem(
-                      label: l10n.navLibrary, // Profile/Library
-                      isSelected: currentIndex == 3,
-                      onTap: () => onTap(3),
-                    ),
-                  ],
-                ),
-              ),
 
               // Actions (Right)
               Row(

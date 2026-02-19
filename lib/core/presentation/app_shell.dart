@@ -8,6 +8,7 @@ import 'package:cinemuse_app/features/settings/presentation/settings_screen.dart
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/search/presentation/search_overlay.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/features/navigation/bottom_navbar.dart';
 
 
 class AppShell extends ConsumerStatefulWidget {
@@ -29,6 +30,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(navIndexProvider);
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
       backgroundColor: Colors.black, // Match "bg-primary"
@@ -36,9 +38,14 @@ class _AppShellState extends ConsumerState<AppShell> {
         children: [
           // Main Content
           Positioned.fill(
-            child: IndexedStack(
-              index: currentIndex,
-              children: _screens,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: isMobile ? 80 : 0, // Space for bottom navbar
+              ),
+              child: IndexedStack(
+                index: currentIndex,
+                children: _screens,
+              ),
             ),
           ),
           
@@ -63,6 +70,20 @@ class _AppShellState extends ConsumerState<AppShell> {
               onSearchTap: () => SearchOverlay.show(context),
             ),
           ),
+
+          // Bottom Navbar (Floating) - Visible only on Mobile
+          if (isMobile)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: AppBottomNavbar(
+                currentIndex: currentIndex,
+                onTap: (index) {
+                  ref.read(navIndexProvider.notifier).state = index;
+                },
+              ),
+            ),
         ],
       ),
     );
