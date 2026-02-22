@@ -58,6 +58,7 @@
   "detailsSeriesProgress": "Series Progress",
   "detailsCreativeVision": "Creative Vision",
   "detailsVerdict": "Verdict",
+  "detailsReviews": "Reviews",
   "detailsReviewsAll": "Read all reviews",
   "detailsFinances": "Finances",
   "detailsProductionDNA": "Production DNA",
@@ -69,6 +70,8 @@
   "detailsBudget": "Budget",
   "detailsRevenue": "Revenue",
   "detailsExternalLinks": "External Links",
+  "detailsVideos": "Videos",
+  "detailsLinks": "Links",
   "seasonLabel": "Season {number}",
   
   "personBiography": "Biography",

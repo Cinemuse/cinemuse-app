@@ -119,12 +119,14 @@ class VerdictBox extends StatelessWidget {
                   child: Text(featuredReview['author']?[0]?.toUpperCase() ?? '?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(featuredReview['author'] ?? 'Anonymous', style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13)),
-                    const Text('Featured Critic', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(featuredReview['author'] ?? 'Anonymous', style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
+                      const Text('Featured Critic', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                    ],
+                  ),
                 ),
               ],
             ),

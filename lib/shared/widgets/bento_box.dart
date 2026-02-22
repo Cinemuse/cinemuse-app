@@ -25,11 +25,13 @@ class BentoBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return Container(
       height: height,
       decoration: BoxDecoration(
         color: backgroundColor ?? AppTheme.secondary.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(isMobile ? 16 : 24),
         border: showBorder
             ? Border.all(
                 color: AppTheme.border.withOpacity(0.1),
@@ -44,7 +46,12 @@ class BentoBox extends StatelessWidget {
         children: [
           if (title.isNotEmpty || icon != null || action != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 16 : 24, 
+                isMobile ? 16 : 24, 
+                isMobile ? 16 : 24, 
+                isMobile ? 12 : 16,
+              ),
               child: Row(
                 children: [
                   if (icon != null) ...[
@@ -69,7 +76,12 @@ class BentoBox extends StatelessWidget {
           // We use flexible child handling: if height is set, we pad and potentially scroll/clip.
           // If no height, we just padding and wrap.
           Padding(
-            padding: padding ?? const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            padding: padding ?? EdgeInsets.fromLTRB(
+              isMobile ? 16 : 24, 
+              0, 
+              isMobile ? 16 : 24, 
+              isMobile ? 16 : 24,
+            ),
             child: height != null 
                 ? SizedBox(
                     height: height! - (title.isNotEmpty ? 62 : 0), 

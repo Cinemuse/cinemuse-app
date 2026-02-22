@@ -126,7 +126,9 @@ class AppTheme {
   }
 
   static double getResponsiveHorizontalPadding(BuildContext context) {
-    return MediaQuery.of(context).size.width * 0.05;
+    final width = MediaQuery.of(context).size.width;
+    if (width < 600) return 16;
+    return width * 0.05;
   }
 }
 

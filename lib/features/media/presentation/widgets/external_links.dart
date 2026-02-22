@@ -33,7 +33,9 @@ class ExternalLinks extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (externalIds != null) ...[
-            Row(
+            Wrap(
+              spacing: 16,
+              runSpacing: 12,
               children: [
                 if (externalIds!['instagram_id'] != null)
                   _SocialLink(

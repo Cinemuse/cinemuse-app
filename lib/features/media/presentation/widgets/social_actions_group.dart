@@ -108,6 +108,10 @@ class _SocialIconState extends State<_SocialIcon> with SingleTickerProviderState
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Use 600px breakpoint to match mobile layout switching
+    final horizontalPadding = screenWidth < 600 ? 12.0 : (widget.showArrow ? 12.0 : 18.0);
+
     IconData effectiveIcon = widget.icon;
     if (_isOptimisticActive != null) {
       if (widget.icon == Icons.favorite || widget.icon == Icons.favorite_border) {
@@ -142,38 +146,42 @@ class _SocialIconState extends State<_SocialIcon> with SingleTickerProviderState
             widget.onTap();
           },
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: widget.showArrow ? 12 : 18, vertical: 15),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 150),
-                    transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
-                    child: widget.label != null
-                        ? Text(
-                            widget.label!,
-                            key: ValueKey(widget.label),
-                            style: TextStyle(
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 15),
+            // FittedBox scales down contents if they still exceed the container width
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 150),
+                      transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+                      child: widget.label != null
+                          ? Text(
+                              widget.label!,
+                              key: ValueKey(widget.label),
+                              style: TextStyle(
+                                color: effectiveColor,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : Icon(
+                              effectiveIcon,
+                              key: ValueKey(effectiveIcon),
                               color: effectiveColor,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
+                              size: 24,
                             ),
-                          )
-                        : Icon(
-                            effectiveIcon,
-                            key: ValueKey(effectiveIcon),
-                            color: effectiveColor,
-                            size: 24,
-                          ),
+                    ),
                   ),
-                ),
-                if (widget.showArrow) ...[
-                  const SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down, color: effectiveColor.withOpacity(0.5), size: 14),
+                  if (widget.showArrow) ...[
+                    const SizedBox(width: 4),
+                    Icon(Icons.keyboard_arrow_down, color: effectiveColor.withOpacity(0.5), size: 14),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

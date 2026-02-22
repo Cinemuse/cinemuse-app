@@ -17,6 +17,8 @@ import 'package:cinemuse_app/features/video_player/presentation/video_player_scr
 import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_modal.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/details_tab_nav.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/responsive_details_layout.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class MediaDetailsScreen extends ConsumerStatefulWidget {
@@ -35,6 +37,7 @@ class MediaDetailsScreen extends ConsumerStatefulWidget {
 
 class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
   bool _hasInitializedSeason = false;
+  DetailsTab? _activeTab;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +46,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     final detailsAsync = ref.watch(mediaDetailsProvider((id: widget.mediaId, type: typeForTmdb)));
     final controller = ref.read(mediaDetailsControllerProvider.notifier);
     final responsivePadding = AppTheme.getResponsiveHorizontalPadding(context);
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
       backgroundColor: AppTheme.primary,
@@ -139,6 +143,10 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                   totalEpisodes: details['number_of_episodes'] as int? ?? 0,
                 )))
               : null;
+          final hasFinances = (details['budget'] as int? ?? 0) > 0 || (details['revenue'] as int? ?? 0) > 0;
+
+          // Set default tab if not set
+          _activeTab ??= isTV ? DetailsTab.episodes : DetailsTab.cast;
 
           return CustomScrollView(
             slivers: [
@@ -165,76 +173,125 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
               ),
               
               SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: responsivePadding, vertical: 48),
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsivePadding, 
+                  vertical: isMobile ? 24 : 48,
+                ),
                 sliver: SliverToBoxAdapter(
-                  child: Row(
+                child: ResponsiveDetailsLayout(
+                  mainContent: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Left Column (2/3)
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (isTV && (details['number_of_seasons'] ?? 0) > 0) ...[
-                              _SeriesEpisodesSection(mediaId: widget.mediaId, details: details),
-                              const SizedBox(height: 32),
-                            ],
-
-                            BentoBox(
-                              title: l10n.detailsSynopsis,
-                              icon: LucideIcons.terminal,
-                              child: Text(
-                                details['overview'] ?? '',
-                                style: DesktopTypography.bodyPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-
-                            CastCarousel(credits: details['credits']),
-                            const SizedBox(height: 24),
-
-                            VideosCarousel(videos: details['videos']),
-                          ],
+                      BentoBox(
+                        title: l10n.detailsSynopsis,
+                        icon: LucideIcons.terminal,
+                        child: Text(
+                          details['overview'] ?? '',
+                          style: DesktopTypography.bodyPrimary,
                         ),
                       ),
-                      const SizedBox(width: 24),
-                      
-                      // Right Column (Sidebar)
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(minWidth: 320, maxWidth: 420),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CreativeVisionBox(details: details, isSeries: isTV),
-                            const SizedBox(height: 24),
-                            VerdictBox(
-                              reviews: details['reviews']?['results'] ?? [],
-                              onShowUserReviewModal: () {},
-                              onShowReviewsModal: () {},
-                            ),
-                            const SizedBox(height: 24),
-                            ExternalLinks(
-                              externalIds: details['external_ids'],
-                              title: details['title'] ?? details['name'] ?? '',
-                              homepage: details['homepage'],
-                              type: typeForTmdb,
-                              tmdbId: details['id'],
-                            ),
-                            if (details['budget'] != null && details['budget'] > 0) ...[
-                              const SizedBox(height: 24),
-                              FinancesBox(budget: details['budget'] ?? 0, revenue: details['revenue'] ?? 0),
-                            ],
-                            const SizedBox(height: 24),
-                            ProductionDNA(
-                              productionCompanies: details['production_companies'] ?? [],
-                              onCompanyClick: (_) {},
-                            ),
-                          ],
+                      SizedBox(height: isMobile ? 24 : 32),
+
+                      if (isMobile) ...[
+                        DetailsTabNav(
+                          activeTab: _activeTab!,
+                          onTabChanged: (tab) => setState(() => _activeTab = tab),
+                          isTV: isTV,
+                          numberOfSeasons: details['number_of_seasons'] ?? 0,
+                          hasFinances: hasFinances,
                         ),
+                        const SizedBox(height: 24),
+
+                        // Mobile Tab Content
+                        if (_activeTab == DetailsTab.episodes && isTV)
+                          _SeriesEpisodesSection(mediaId: widget.mediaId, details: details),
+                        
+                        if (_activeTab == DetailsTab.cast) ...[
+                          CreativeVisionBox(details: details, isSeries: isTV),
+                          const SizedBox(height: 24),
+                          CastCarousel(credits: details['credits']),
+                          const SizedBox(height: 24),
+                          ProductionDNA(
+                            productionCompanies: details['production_companies'] ?? [],
+                            onCompanyClick: _handleDeepSearch,
+                          ),
+                        ],
+
+                        if (_activeTab == DetailsTab.reviews)
+                          VerdictBox(
+                            reviews: details['reviews']?['results'] ?? [],
+                            onShowUserReviewModal: () {},
+                            onShowReviewsModal: () {},
+                          ),
+
+                        if (_activeTab == DetailsTab.videos)
+                          VideosCarousel(videos: details['videos']),
+
+                        if (_activeTab == DetailsTab.finances)
+                          FinancesBox(
+                            budget: details['budget'] as int? ?? 0,
+                            revenue: details['revenue'] as int? ?? 0,
+                          ),
+
+                        if (_activeTab == DetailsTab.links)
+                          ExternalLinks(
+                            externalIds: details['external_ids'],
+                            title: details['title'] ?? details['name'] ?? '',
+                            homepage: details['homepage'],
+                            type: typeForTmdb,
+                            tmdbId: details['id'],
+                          ),
+                      ] else ...[
+                        // Desktop Content
+                        if (isTV && (details['number_of_seasons'] ?? 0) > 0) ...[
+                          _SeriesEpisodesSection(mediaId: widget.mediaId, details: details),
+                          SizedBox(height: 32),
+                        ],
+
+                        CastCarousel(credits: details['credits']),
+                        SizedBox(height: 32),
+
+                        VideosCarousel(videos: details['videos']),
+                      ],
+                    ],
+                  ),
+                  sidebar: isMobile ? const SizedBox.shrink() : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CreativeVisionBox(details: details, isSeries: isTV),
+                      const SizedBox(height: 24),
+
+                      VerdictBox(
+                        reviews: details['reviews']?['results'] ?? [],
+                        onShowUserReviewModal: () {},
+                        onShowReviewsModal: () {},
+                      ),
+                      const SizedBox(height: 24),
+
+                      if (hasFinances) ...[
+                        FinancesBox(
+                          budget: details['budget'] as int? ?? 0,
+                          revenue: details['revenue'] as int? ?? 0,
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
+                      ProductionDNA(
+                        productionCompanies: details['production_companies'] ?? [],
+                        onCompanyClick: _handleDeepSearch,
+                      ),
+                      const SizedBox(height: 24),
+
+                      ExternalLinks(
+                        externalIds: details['external_ids'],
+                        title: details['title'] ?? details['name'] ?? '',
+                        homepage: details['homepage'],
+                        type: typeForTmdb,
+                        tmdbId: details['id'],
                       ),
                     ],
                   ),
+                ),
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
@@ -254,7 +311,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       episode = watchHistory?.episode ?? 1;
     }
 
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
       builder: (_) => VideoPlayerScreen(
         queryId: widget.mediaId,
         type: type,
@@ -405,7 +462,7 @@ class _SeriesEpisodesSection extends ConsumerWidget {
               episodeProgress: episodeProgressMap,
               initialScrollIndex: initialIndex,
               onEpisodeTap: (s, e, name) {
-                Navigator.of(context).push(MaterialPageRoute(
+                Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
                   builder: (_) => VideoPlayerScreen(
                     queryId: mediaId,
                     type: 'tv',

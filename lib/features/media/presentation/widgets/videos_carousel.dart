@@ -44,7 +44,7 @@ class VideosCarousel extends StatelessWidget {
                   youtubeKey: key,
                   name: name,
                   onTap: () {
-                    Navigator.of(context).push(
+                    Navigator.of(context, rootNavigator: true).push(
                       MaterialPageRoute(
                         builder: (context) => VideoPlayerScreen(
                           queryId: key,

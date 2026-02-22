@@ -434,6 +434,12 @@ abstract class AppLocalizations {
   /// **'Verdict'**
   String get detailsVerdict;
 
+  /// No description provided for @detailsReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews'**
+  String get detailsReviews;
+
   /// No description provided for @detailsReviewsAll.
   ///
   /// In en, this message translates to:
@@ -499,6 +505,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'External Links'**
   String get detailsExternalLinks;
+
+  /// No description provided for @detailsVideos.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get detailsVideos;
+
+  /// No description provided for @detailsLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Links'**
+  String get detailsLinks;
 
   /// No description provided for @seasonLabel.
   ///

@@ -187,6 +187,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsVerdict => 'Verdetto';
 
   @override
+  String get detailsReviews => 'Recensioni';
+
+  @override
   String get detailsReviewsAll => 'Leggi tutte le recensioni';
 
   @override
@@ -218,6 +221,12 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get detailsExternalLinks => 'Link Esterni';
+
+  @override
+  String get detailsVideos => 'Video';
+
+  @override
+  String get detailsLinks => 'Link';
 
   @override
   String seasonLabel(Object number) {

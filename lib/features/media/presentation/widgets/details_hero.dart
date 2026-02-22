@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/features/media/presentation/widgets/series_progress_bar.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/social_actions_group.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/responsive_action_buttons.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -264,104 +265,16 @@ class DetailsHero extends ConsumerWidget {
 
                 const SizedBox(height: 24),
 
-                // Action Buttons
-                Row(
-                  children: [
-                    // Play Button
-                    MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: onPlayClick,
-                        child: HoverScale(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 15),
-                            decoration: BoxDecoration(
-                              color: AppTheme.accent,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(color: AppTheme.accent.withOpacity(0.4), blurRadius: 25, offset: const Offset(0, 8)),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.play_arrow_outlined, color: AppTheme.textWhite, size: 24),
-                                const SizedBox(width: 12),
-                                Text(
-                                  _getPlayButtonLabel(l10n, type, resumeData),
-                                  style: const TextStyle(color: AppTheme.textWhite, fontSize: 16, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-
-                    // Social Actions (extracted)
-                    SocialActionsGroup(
-                      mediaItem: mediaItem,
-                      isFavorite: isFavorite,
-                      isInWatchlist: isInWatchlist,
-                      onListTap: onListTap,
-                    ),
-                    const SizedBox(width: 16),
-
-                    // Track Button
-                    if (onTrackTap != null)
-                      MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: onTrackTap,
-                          child: HoverScale(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
-                              decoration: BoxDecoration(
-                                color: (seriesWatchStatus?.isFullyWatched ?? false)
-                                    ? Colors.green.withOpacity(0.15)
-                                    : AppTheme.textWhite.withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: (seriesWatchStatus?.isFullyWatched ?? false)
-                                      ? Colors.green.withOpacity(0.3)
-                                      : AppTheme.textWhite.withOpacity(0.05)
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    seriesWatchStatus?.isFullyWatched ?? false 
-                                        ? Icons.check_circle 
-                                        : (seriesWatchStatus?.isPartiallyWatched ?? false ? Icons.check_circle_outline : Icons.add_task),
-                                    color: (seriesWatchStatus?.isFullyWatched ?? false)
-                                        ? Colors.green
-                                        : AppTheme.textWhite,
-                                    size: 24,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    seriesWatchStatus?.isFullyWatched ?? false 
-                                        ? (seriesWatchStatus!.minWatchCount > 1 ? 'Watched x${seriesWatchStatus!.minWatchCount}' : 'Watched')
-                                        : (seriesWatchStatus?.isPartiallyWatched ?? false ? 'Finish Series' : 'Track'),
-                                    style: TextStyle(
-                                      color: (seriesWatchStatus?.isFullyWatched ?? false)
-                                          ? Colors.green
-                                          : AppTheme.textWhite, 
-                                      fontSize: 16, 
-                                      fontWeight: FontWeight.bold
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+                // Action Buttons (Responsive)
+                ResponsiveActionButtons(
+                  onPlayClick: onPlayClick,
+                  playButtonLabel: _getPlayButtonLabel(l10n, type, resumeData),
+                  mediaItem: mediaItem,
+                  isFavorite: isFavorite,
+                  isInWatchlist: isInWatchlist,
+                  onListTap: onListTap,
+                  onTrackTap: onTrackTap,
+                  seriesWatchStatus: seriesWatchStatus,
                 ),
 
                 // Series Progress Bar (extracted)

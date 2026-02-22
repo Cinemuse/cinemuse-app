@@ -16,6 +16,8 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/core/application/locale_service.dart';
 
 import 'package:stack_trace/stack_trace.dart';
+import 'package:cinemuse_app/core/presentation/intents.dart';
+import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
 
 void main() {
   Chain.capture(() async {
@@ -54,9 +56,7 @@ void main() {
   });
 }
 
-class BackIntent extends Intent {
-  const BackIntent();
-}
+// BackIntent moved to lib/core/presentation/intents.dart
 
 class CinemuseApp extends ConsumerWidget {
   const CinemuseApp({super.key});
@@ -77,6 +77,14 @@ class CinemuseApp extends ConsumerWidget {
         actions: <Type, Action<Intent>>{
           BackIntent: CallbackAction<BackIntent>(
             onInvoke: (intent) {
+              // 1. Try popping the shell navigator (nested) first
+              final shellNavigator = ref.read(shellNavigatorKeyProvider).currentState;
+              if (shellNavigator != null && shellNavigator.canPop()) {
+                shellNavigator.pop();
+                return null;
+              }
+
+              // 2. Fallback to popping the root navigator
               final navigator = navigatorKey.currentState;
               if (navigator != null && navigator.canPop()) {
                 navigator.pop();

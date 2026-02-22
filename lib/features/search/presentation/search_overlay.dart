@@ -11,16 +11,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class SearchOverlay extends ConsumerStatefulWidget {
-  const SearchOverlay({super.key});
+  final NavigatorState? navigator;
+  const SearchOverlay({super.key, this.navigator});
 
-  static Future<void> show(BuildContext context) {
+  static Future<void> show(BuildContext context, {NavigatorState? navigator}) {
     return showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Search',
       barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 200),
-      pageBuilder: (context, animation, secondaryAnimation) => const SearchOverlay(),
+      pageBuilder: (context, animation, secondaryAnimation) => SearchOverlay(navigator: navigator),
       transitionBuilder: (context, animation, secondaryAnimation, child) {
         return FadeTransition(
           opacity: animation,
@@ -93,16 +94,16 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay> with SingleTicker
      
       Navigator.of(context).pop();
 
+      final nav = widget.navigator ?? Navigator.of(context);
+      
       if (type == 'person') {
-        Navigator.push(
-          context,
+        nav.push(
           MaterialPageRoute(
             builder: (context) => PersonDetailsScreen(personId: int.parse(id)),
           ),
         );
       } else {
-        Navigator.push(
-          context,
+        nav.push(
           MaterialPageRoute(
             builder: (context) => MediaDetailsScreen(
               mediaId: id,
