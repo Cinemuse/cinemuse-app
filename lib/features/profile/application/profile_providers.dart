@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/services/supabase_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/profile/data/profile_repository.dart';
@@ -33,7 +34,15 @@ final watchHistoryStreamProvider = StreamProvider<List<WatchHistory>>((ref) {
   final userId = ref.watch(userIdProvider);
   if (userId == null) return Stream.value([]);
   
-  return ref.watch(watchHistoryRepositoryProvider).watchAllHistory(userId);
+  return ref.watch(watchHistoryRepositoryProvider).watchAllHistory(userId)
+      .handleError((error, stackTrace) {
+    // On expired JWT or channel errors, return empty list.
+    // The session refresh will eventually trigger a rebuild via authProvider.
+    if (error is RealtimeSubscribeException) {
+      return <WatchHistory>[];
+    }
+    throw error;
+  });
 });
 
 // 4. Computed Stats Provider
@@ -42,7 +51,7 @@ final profileStatsProvider = Provider<ProfileStats>((ref) {
   final profileAsync = ref.watch(profileStreamProvider);
 
   // Default to empty if loading or error
-  final history = historyAsync.value ?? [];
+  final history = historyAsync.valueOrNull ?? [];
   final profile = profileAsync.value;
 
   // Use DB stats for totals if available (faster/reliable for all-time)

@@ -14,6 +14,7 @@ class ProfileOverview extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(watchHistoryStreamProvider);
+    final history = historyAsync.valueOrNull ?? [];
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(AppTheme.getResponsiveHorizontalPadding(context)),
@@ -30,10 +31,10 @@ class ProfileOverview extends ConsumerWidget {
           _RecentMediaContainer(
             title: 'RECENT MOVIES',
             icon: LucideIcons.film,
-            items: historyAsync.value
-                    ?.where((h) => h.mediaType == MediaKind.movie)
+            items: history
+                    .where((h) => h.mediaType == MediaKind.movie)
                     .take(10)
-                    .toList() ?? [],
+                    .toList(),
           ),
 
           const SizedBox(height: 24),
@@ -42,10 +43,10 @@ class ProfileOverview extends ConsumerWidget {
           _RecentMediaContainer(
             title: 'RECENT SERIES',
             icon: LucideIcons.tv,
-            items: historyAsync.value
-                    ?.where((h) => h.mediaType == MediaKind.tv)
+            items: history
+                    .where((h) => h.mediaType == MediaKind.tv)
                     .take(10)
-                    .toList() ?? [],
+                    .toList(),
           ),
           
           const SizedBox(height: 32),
