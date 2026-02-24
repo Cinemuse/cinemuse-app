@@ -937,6 +937,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Profile'**
   String get settingsProfile;
+
+  /// No description provided for @navLiveTV.
+  ///
+  /// In en, this message translates to:
+  /// **'Live TV'**
+  String get navLiveTV;
+
+  /// No description provided for @liveTvTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Live TV'**
+  String get liveTvTitle;
+
+  /// No description provided for @liveTvSelectChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a channel to start watching'**
+  String get liveTvSelectChannel;
+
+  /// No description provided for @liveTvNow.
+  ///
+  /// In en, this message translates to:
+  /// **'NOW'**
+  String get liveTvNow;
+
+  /// No description provided for @liveTvNext.
+  ///
+  /// In en, this message translates to:
+  /// **'NEXT'**
+  String get liveTvNext;
+
+  /// No description provided for @liveTvLive.
+  ///
+  /// In en, this message translates to:
+  /// **'LIVE'**
+  String get liveTvLive;
+
+  /// No description provided for @liveTvNoEpg.
+  ///
+  /// In en, this message translates to:
+  /// **'No program information available'**
+  String get liveTvNoEpg;
+
+  /// No description provided for @liveTvLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading channels...'**
+  String get liveTvLoading;
+
+  /// No description provided for @liveTvError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load channels'**
+  String get liveTvError;
+
+  /// No description provided for @liveTvAllChannels.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get liveTvAllChannels;
+
+  /// No description provided for @liveTvHd.
+  ///
+  /// In en, this message translates to:
+  /// **'HD'**
+  String get liveTvHd;
+
+  /// No description provided for @liveTvNoChannels.
+  ///
+  /// In en, this message translates to:
+  /// **'No channels found'**
+  String get liveTvNoChannels;
+
+  /// No description provided for @settingsLiveTvRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Live TV Region'**
+  String get settingsLiveTvRegion;
+
+  /// No description provided for @settingsLiveTvRegionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your local region for regional channels.'**
+  String get settingsLiveTvRegionDesc;
+
+  /// No description provided for @settingsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get settingsNone;
 }
 
 class _AppLocalizationsDelegate

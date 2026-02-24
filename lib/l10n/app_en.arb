@@ -147,5 +147,21 @@
   "settingsSaved": "Saved",
   "settingsBack": "Back to Settings",
   "settingsLogout": "Log out",
-  "settingsProfile": "Profile"
+  "settingsProfile": "Profile",
+
+  "navLiveTV": "Live TV",
+  "liveTvTitle": "Live TV",
+  "liveTvSelectChannel": "Select a channel to start watching",
+  "liveTvNow": "NOW",
+  "liveTvNext": "NEXT",
+  "liveTvLive": "LIVE",
+  "liveTvNoEpg": "No program information available",
+  "liveTvLoading": "Loading channels...",
+  "liveTvError": "Failed to load channels",
+  "liveTvAllChannels": "All",
+  "liveTvHd": "HD",
+  "liveTvNoChannels": "No channels found",
+  "settingsLiveTvRegion": "Live TV Region",
+  "settingsLiveTvRegionDesc": "Select your local region for regional channels.",
+  "settingsNone": "None"
 }

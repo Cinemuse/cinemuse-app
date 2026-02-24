@@ -12,6 +12,8 @@ import 'package:cinemuse_app/features/video_player/presentation/widgets/video_to
 import 'package:cinemuse_app/features/video_player/presentation/widgets/video_bottom_bar.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/next_episode_overlay.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/cast_device_selector.dart';
+import 'package:cinemuse_app/core/presentation/widgets/buffering_indicator.dart';
+import 'package:cinemuse_app/core/presentation/widgets/play_pause_overlay.dart';
 
 class CustomVideoControls extends ConsumerStatefulWidget {
   final VideoState videoState;
@@ -274,39 +276,9 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                       ),
                     ),
 
-                    Center(
-                      child: StreamBuilder<bool>(
-                        stream: player.stream.buffering,
-                        initialData: player.state.buffering,
-                        builder: (context, bufferingSnapshot) {
-                          final isBuffering = bufferingSnapshot.data == true;
-                          if (isBuffering) {
-                            return const CircularProgressIndicator(color: AppTheme.accent);
-                          }
-                          return StreamBuilder<bool>(
-                            stream: player.stream.playing,
-                            initialData: player.state.playing,
-                            builder: (context, playingSnapshot) {
-                              final isPlaying = playingSnapshot.data ?? player.state.playing;
-                              if (!isPlaying && _visible) {
-                                return IgnorePointer(
-                                  ignoring: true,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.black45,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.play_arrow, color: Colors.white, size: 48),
-                                  ),
-                                );
-                              }
-                              return const SizedBox.shrink();
-                            },
-                          );
-                        },
-                      ),
-                    ),
+                    // Buffering / play-pause center overlay
+                    BufferingIndicator(player: player),
+                    PlayPauseOverlay(player: player, visible: _visible),
 
                     Positioned(
                       bottom: 0,

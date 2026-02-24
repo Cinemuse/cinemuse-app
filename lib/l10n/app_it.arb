@@ -128,5 +128,21 @@
   "settingsSaved": "Salvato",
   "settingsBack": "Torna alle Impostazioni",
   "settingsLogout": "Esci",
-  "settingsProfile": "Profilo"
+  "settingsProfile": "Profilo",
+
+  "navLiveTV": "TV in Diretta",
+  "liveTvTitle": "TV in Diretta",
+  "liveTvSelectChannel": "Seleziona un canale per iniziare a guardare",
+  "liveTvNow": "ORA",
+  "liveTvNext": "DOPO",
+  "liveTvLive": "IN DIRETTA",
+  "liveTvNoEpg": "Nessun dato programma disponibile",
+  "liveTvLoading": "Caricamento canali...",
+  "liveTvError": "Errore nel caricamento dei canali",
+  "liveTvAllChannels": "Tutti",
+  "liveTvHd": "HD",
+  "liveTvNoChannels": "Nessun canale trovato",
+  "settingsLiveTvRegion": "Regione Live TV",
+  "settingsLiveTvRegionDesc": "Seleziona la tua regione per i canali locali.",
+  "settingsNone": "Nessuna"
 }

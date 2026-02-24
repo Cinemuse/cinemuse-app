@@ -450,4 +450,50 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsProfile => 'Profile';
+
+  @override
+  String get navLiveTV => 'Live TV';
+
+  @override
+  String get liveTvTitle => 'Live TV';
+
+  @override
+  String get liveTvSelectChannel => 'Select a channel to start watching';
+
+  @override
+  String get liveTvNow => 'NOW';
+
+  @override
+  String get liveTvNext => 'NEXT';
+
+  @override
+  String get liveTvLive => 'LIVE';
+
+  @override
+  String get liveTvNoEpg => 'No program information available';
+
+  @override
+  String get liveTvLoading => 'Loading channels...';
+
+  @override
+  String get liveTvError => 'Failed to load channels';
+
+  @override
+  String get liveTvAllChannels => 'All';
+
+  @override
+  String get liveTvHd => 'HD';
+
+  @override
+  String get liveTvNoChannels => 'No channels found';
+
+  @override
+  String get settingsLiveTvRegion => 'Live TV Region';
+
+  @override
+  String get settingsLiveTvRegionDesc =>
+      'Select your local region for regional channels.';
+
+  @override
+  String get settingsNone => 'None';
 }

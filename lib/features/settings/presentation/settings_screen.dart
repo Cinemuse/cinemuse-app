@@ -249,6 +249,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                        ),
                      ],
                    ),
+                    const SizedBox(height: 24),
+                    const Divider(color: Colors.white10),
+                    const SizedBox(height: 24),
+
+                   Text(l10n.settingsLiveTvRegion.toUpperCase(), style: const TextStyle(color: AppTheme.textMuted, fontWeight: FontWeight.bold, fontSize: 12)),
+                   const SizedBox(height: 4),
+                   Text(l10n.settingsLiveTvRegionDesc, style: TextStyle(color: AppTheme.textMuted, fontSize: 14)),
+                   const SizedBox(height: 16),
+                   
+                   _RegionSelector(
+                     selectedRegion: userSettings.liveTvRegion,
+                     onChanged: (region) => settingsNotifier.updateSettings({'liveTvRegion': region}),
+                   ),
                 ],
               ),
              ),
@@ -488,6 +501,62 @@ class _LanguageButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _RegionSelector extends StatelessWidget {
+  final String? selectedRegion;
+  final ValueChanged<String?> onChanged;
+
+  const _RegionSelector({
+    required this.selectedRegion,
+    required this.onChanged,
+  });
+
+  static const regions = {
+    'abruzzo': 'Abruzzo',
+    'basilicata': 'Basilicata',
+    'bolzano': 'Bolzano',
+    'calabria': 'Calabria',
+    'campania': 'Campania',
+    'er': 'Emilia-Romagna',
+    'fvg': 'Friuli-Venezia Giulia',
+    'lazio': 'Lazio',
+    'liguria': 'Liguria',
+    'lombardia': 'Lombardia',
+    'marche': 'Marche',
+    'molise': 'Molise',
+    'piemonte': 'Piemonte',
+    'puglia': 'Puglia',
+    'sardegna': 'Sardegna',
+    'sicilia': 'Sicilia',
+    'toscana': 'Toscana',
+    'trento': 'Trento',
+    'umbria': 'Umbria',
+    'vda': 'Valle d\'Aosta',
+    'veneto': 'Veneto',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _LanguageButton(
+          label: l10n.settingsNone,
+          isSelected: selectedRegion == null || selectedRegion!.isEmpty,
+          onTap: () => onChanged(null),
+        ),
+        ...regions.entries.map((e) => _LanguageButton(
+          label: e.value,
+          isSelected: selectedRegion == e.key,
+          onTap: () => onChanged(e.key),
+        )),
+      ],
     );
   }
 }

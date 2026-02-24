@@ -16,6 +16,7 @@ class UserSettings {
   final String playerSecondaryColor;
   final bool showDebugPanel;
   final bool smartSearchFilter;
+  final String? liveTvRegion;
 
   const UserSettings({
     this.displayName = '',
@@ -27,6 +28,7 @@ class UserSettings {
     this.playerSecondaryColor = '',
     this.showDebugPanel = false,
     this.smartSearchFilter = true,
+    this.liveTvRegion,
   });
 
   factory UserSettings.fromProfile(Profile profile) {
@@ -41,6 +43,7 @@ class UserSettings {
       playerSecondaryColor: prefs['playerSecondaryColor'] ?? '',
       showDebugPanel: prefs['showDebugPanel'] ?? false,
       smartSearchFilter: prefs['smartSearchFilter'] ?? true,
+      liveTvRegion: prefs['liveTvRegion'],
     );
   }
 
@@ -54,6 +57,7 @@ class UserSettings {
     String? playerSecondaryColor,
     bool? showDebugPanel,
     bool? smartSearchFilter,
+    String? liveTvRegion,
   }) {
     return UserSettings(
       displayName: displayName ?? this.displayName,
@@ -65,6 +69,7 @@ class UserSettings {
       playerSecondaryColor: playerSecondaryColor ?? this.playerSecondaryColor,
       showDebugPanel: showDebugPanel ?? this.showDebugPanel,
       smartSearchFilter: smartSearchFilter ?? this.smartSearchFilter,
+      liveTvRegion: liveTvRegion ?? this.liveTvRegion,
     );
   }
 
@@ -78,6 +83,7 @@ class UserSettings {
       'playerSecondaryColor': playerSecondaryColor,
       'showDebugPanel': showDebugPanel,
       'smartSearchFilter': smartSearchFilter,
+      'liveTvRegion': liveTvRegion,
     };
   }
 }
@@ -117,6 +123,7 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       playerSecondaryColor: updates['playerSecondaryColor'],
       showDebugPanel: updates['showDebugPanel'],
       smartSearchFilter: updates['smartSearchFilter'],
+      liveTvRegion: updates['liveTvRegion'],
     );
 
     // Sync app language to localeProvider if updated

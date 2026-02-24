@@ -452,4 +452,51 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get settingsProfile => 'Profilo';
+
+  @override
+  String get navLiveTV => 'TV in Diretta';
+
+  @override
+  String get liveTvTitle => 'TV in Diretta';
+
+  @override
+  String get liveTvSelectChannel =>
+      'Seleziona un canale per iniziare a guardare';
+
+  @override
+  String get liveTvNow => 'ORA';
+
+  @override
+  String get liveTvNext => 'DOPO';
+
+  @override
+  String get liveTvLive => 'IN DIRETTA';
+
+  @override
+  String get liveTvNoEpg => 'Nessun dato programma disponibile';
+
+  @override
+  String get liveTvLoading => 'Caricamento canali...';
+
+  @override
+  String get liveTvError => 'Errore nel caricamento dei canali';
+
+  @override
+  String get liveTvAllChannels => 'Tutti';
+
+  @override
+  String get liveTvHd => 'HD';
+
+  @override
+  String get liveTvNoChannels => 'Nessun canale trovato';
+
+  @override
+  String get settingsLiveTvRegion => 'Regione Live TV';
+
+  @override
+  String get settingsLiveTvRegionDesc =>
+      'Seleziona la tua regione per i canali locali.';
+
+  @override
+  String get settingsNone => 'Nessuna';
 }

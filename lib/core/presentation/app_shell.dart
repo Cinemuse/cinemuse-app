@@ -12,6 +12,7 @@ import 'package:cinemuse_app/features/search/presentation/search_overlay.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/features/navigation/bottom_navbar.dart';
 import 'package:cinemuse_app/features/settings/presentation/settings_screen.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/live_tv_screen.dart';
 
 
 class AppShell extends ConsumerStatefulWidget {
@@ -26,7 +27,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const ExploreScreen(),
-    const Center(child: Text("Live TV (Todo)")),
+    const LiveTvScreen(),
     const ProfileHub(),
   ];
 
