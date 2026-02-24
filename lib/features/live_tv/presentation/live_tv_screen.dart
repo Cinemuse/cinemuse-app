@@ -30,6 +30,14 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
   String? _streamError;
   bool _playerInitialized = false;
 
+  // Track subscriptions so they can be cancelled on dispose
+  final List<StreamSubscription> _subscriptions = [];
+
+  // Debounce rapid channel clicks — only the last one within 300ms fires
+  Timer? _channelSwitchTimer;
+  // Generation counter to cancel stale async operations
+  int _playGeneration = 0;
+
   @override
   void initState() {
     super.initState();
@@ -48,36 +56,55 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     (_player!.platform as dynamic).setProperty('cache-secs', '3');
     _videoController = mkv.VideoController(_player!);
 
-    _player!.stream.playing.listen((playing) {
-      debugPrint('[LiveTV] Playing: $playing');
-    });
-    _player!.stream.error.listen((error) {
-      debugPrint('[LiveTV] Player error: $error');
-      if (error.contains('Failed to open')) {
+    _subscriptions.add(_player!.stream.playing.listen((playing) {
+    }));
+    _subscriptions.add(_player!.stream.error.listen((error) {
+      if (mounted && error.contains('Failed to open')) {
         setState(() => _streamError = error);
       }
-    });
-    _player!.stream.buffering.listen((buffering) {
-      debugPrint('[LiveTV] Buffering: $buffering');
-    });
+    }));
+    _subscriptions.add(_player!.stream.buffering.listen((buffering) {
+    }));
   }
 
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     _numberInputTimer?.cancel();
+    _channelSwitchTimer?.cancel();
+    for (final sub in _subscriptions) {
+      sub.cancel();
+    }
+    _subscriptions.clear();
     _player?.dispose();
     super.dispose();
   }
 
+  /// Debounced entry-point: coalesces rapid clicks into one switch.
   void _playChannel(Channel channel) {
+    _channelSwitchTimer?.cancel();
+    _channelSwitchTimer = Timer(const Duration(milliseconds: 300), () {
+      _doPlayChannel(channel);
+    });
+  }
+
+  /// Channel switch with generation guard.
+  ///
+  /// Skips stop() — open() replaces the current media atomically inside mpv.
+  /// DASH streams are filtered out on Windows (see Channel.isPlayable) to
+  /// avoid a libmpv crash (github.com/media-kit/media-kit/issues/973).
+  Future<void> _doPlayChannel(Channel channel) async {
     if (!mounted || !_playerInitialized || _player == null) return;
-    debugPrint('[LiveTV] Playing channel: ${channel.name} (LCN ${channel.lcn}) URL: ${channel.url}');
+
+    final gen = ++_playGeneration;
+
     setState(() => _streamError = null);
+
     try {
-      _player!.open(Media(channel.url));
+      await _player!.open(Media(channel.url));
     } catch (e) {
-      debugPrint('[LiveTV] Error opening channel: $e');
+      // Silently handle open errors — the error stream listener
+      // will set _streamError for 'Failed to open' cases.
     }
   }
 

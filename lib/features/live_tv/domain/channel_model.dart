@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 /// Model representing a TV channel from zappr.stream.
 class Channel {
   final int lcn;
@@ -35,11 +37,15 @@ class Channel {
   });
 
   /// Whether this channel can be played by media_kit (HLS/DASH without DRM).
+  ///
+  /// On Windows, DASH streams are excluded because libmpv's DASH demuxer
+  /// corrupts process-global state — after opening a .mpd stream, subsequent
+  /// open() calls crash with an access violation (0xc0000005).
   bool get isPlayable =>
       !isDisabled &&
       !isRadio &&
       !isAdult &&
-      (type == 'hls' || type == 'dash') &&
+      (type == 'hls' || (type == 'dash' && !Platform.isWindows)) &&
       !url.startsWith('zappr://');
 
   /// Full URL to the channel's logo on Supabase Storage.

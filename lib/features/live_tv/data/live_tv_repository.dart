@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
@@ -29,7 +28,6 @@ class LiveTvRepository {
       final List<dynamic> allChannelsJson = [];
 
       // 1. Fetch National Channels
-      debugPrint('[LiveTV] Fetching channels from $_channelsUrl');
       final nationalResponse = await _dio.get(_channelsUrl);
       final nationalData = _parseResponse(nationalResponse.data) as Map<String, dynamic>;
       allChannelsJson.addAll(nationalData['channels'] as List<dynamic>);
@@ -38,16 +36,13 @@ class LiveTvRepository {
       if (region != null && region.isNotEmpty) {
         final regionalUrl = 'https://raw.githubusercontent.com/ZapprTV/channels/refs/heads/main/it/dtt/regional/$region.json';
         try {
-          debugPrint('[LiveTV] Fetching regional channels from $regionalUrl');
           final regionalResponse = await _dio.get(regionalUrl);
           final regionalData = _parseResponse(regionalResponse.data) as Map<String, dynamic>;
           allChannelsJson.addAll(regionalData['channels'] as List<dynamic>);
-        } catch (e) {
-          debugPrint('[LiveTV] Error fetching regional channels: $e');
+        } catch (_) {
         }
       }
 
-      debugPrint('[LiveTV] Total channels in JSON: ${allChannelsJson.length}');
 
       // ── Build channel map ──
       // First pass: add all playable channels to the map.
@@ -63,8 +58,7 @@ class LiveTvRepository {
               channelMap[channel.lcn] = channel;
             }
           }
-        } catch (e) {
-          debugPrint('[LiveTV] Skipping channel: $e');
+        } catch (_) {
         }
       }
 
@@ -100,7 +94,7 @@ class LiveTvRepository {
             isRadio: ch.isRadio,
             isAdult: ch.isAdult,
           );
-          debugPrint('[LiveTV] Inherited URL for ${ch.name} (LCN ${ch.lcn}) from ${donor.name} (LCN ${donor.lcn})');
+
         }
       }
 
@@ -108,11 +102,9 @@ class LiveTvRepository {
       
       // Sort by LCN for natural channel ordering
       channels.sort((a, b) => a.lcn.compareTo(b.lcn));
-      debugPrint('[LiveTV] Playable channels: ${channels.length}');
+
       return channels;
-    } catch (e, stackTrace) {
-      debugPrint('[LiveTV] Error fetching channels: $e');
-      debugPrint('[LiveTV] Stack trace: $stackTrace');
+    } catch (e) {
       rethrow;
     }
   }
@@ -135,7 +127,6 @@ class LiveTvRepository {
   /// Returns a map: `{ "source": { "channelId": [EpgProgram, ...] } }`
   Future<Map<String, Map<String, List<EpgProgram>>>> fetchEpg() async {
     try {
-      debugPrint('[LiveTV] Fetching EPG from $_epgUrl');
       final response = await _dio.get(_epgUrl);
       final data = _parseResponse(response.data) as Map<String, dynamic>;
       final result = <String, Map<String, List<EpgProgram>>>{};
@@ -165,10 +156,9 @@ class LiveTvRepository {
         result[sourceEntry.key] = sourceMap;
       }
 
-      debugPrint('[LiveTV] EPG loaded: ${result.length} sources');
+
       return result;
-    } catch (e) {
-      debugPrint('[LiveTV] Error fetching EPG: $e');
+    } catch (_) {
       // EPG is optional — return empty if unavailable
       return {};
     }
