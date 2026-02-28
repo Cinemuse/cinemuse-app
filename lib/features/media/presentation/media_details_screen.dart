@@ -144,7 +144,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           final seriesWatchStatus = isTV
               ? ref.watch(seriesWatchStatusProvider((
                   tmdbId: tmdbId,
-                  totalEpisodes: details['number_of_episodes'] as int? ?? 0,
+                  totalEpisodes: _calculateReleasedEpisodes(details),
                 )))
               : null;
           final hasFinances = (details['budget'] as int? ?? 0) > 0 || (details['revenue'] as int? ?? 0) > 0;
@@ -374,11 +374,24 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     final seasons = details['seasons'] as List? ?? [];
     
     final watchedMap = ref.read(watchedEpisodesMapProvider(tmdbId));
+    final now = DateTime.now();
+    final lastAired = details['last_episode_to_air'];
 
     for (var season in seasons) {
       final sNum = season['season_number'] as int? ?? 0;
       if (sNum == 0) continue;
-      final epCount = season['episode_count'] as int? ?? 0;
+      
+      if (season['air_date'] == null) continue;
+      final airDate = DateTime.tryParse(season['air_date'].toString());
+      if (airDate == null || airDate.isAfter(now)) continue;
+      
+      int epCount = 0;
+      if (lastAired != null && sNum == lastAired['season_number']) {
+        epCount = lastAired['episode_number'] as int;
+      } else if (lastAired == null || sNum < (lastAired['season_number'] as int)) {
+        epCount = season['episode_count'] as int? ?? 0;
+      }
+
       for (int e = 1; e <= epCount; e++) {
         if (onlyRemaining && (watchedMap['$sNum-$e'] ?? 0) > 0) continue;
         episodesToMark.add((season: sNum, episode: e));
@@ -387,6 +400,31 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
 
     if (episodesToMark.isEmpty) return;
     controller.logMultipleEpisodes(tmdbId: tmdbId, episodes: episodesToMark, loggedAt: date);
+  }
+
+  int _calculateReleasedEpisodes(Map<String, dynamic> details) {
+    int total = 0;
+    final seasons = details['seasons'] as List?;
+    if (seasons == null) return 0;
+    
+    final now = DateTime.now();
+    final lastAired = details['last_episode_to_air'];
+    
+    for (var season in seasons) {
+      final seasonNum = season['season_number'] as int? ?? 0;
+      if (seasonNum > 0 && season['episode_count'] != null) {
+        if (season['air_date'] == null) continue;
+        final airDate = DateTime.tryParse(season['air_date'].toString());
+        if (airDate == null || airDate.isAfter(now)) continue;
+
+        if (lastAired != null && seasonNum == lastAired['season_number']) {
+          total += (lastAired['episode_number'] as int);
+        } else if (lastAired == null || seasonNum < (lastAired['season_number'] as int)) {
+          total += (season['episode_count'] as int);
+        }
+      }
+    }
+    return total;
   }
 }
 

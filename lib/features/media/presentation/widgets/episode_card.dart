@@ -4,6 +4,7 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart' show DateFormat;
 
 class EpisodeCard extends StatefulWidget {
   final Map<String, dynamic> episode;
@@ -48,6 +49,11 @@ class _EpisodeCardState extends State<EpisodeCard> {
     final overview = widget.episode['overview'] ?? '';
     final stillPath = widget.episode['still_path'];
     final runtime = widget.episode['runtime'];
+    final airDateStr = widget.episode['air_date']?.toString();
+    final DateTime? airDate = airDateStr != null ? DateTime.tryParse(airDateStr) : null;
+    final formattedAirDate = airDate != null 
+        ? DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(airDate)
+        : null;
 
     return Container(
       decoration: BoxDecoration(
@@ -191,6 +197,17 @@ class _EpisodeCardState extends State<EpisodeCard> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (formattedAirDate != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          formattedAirDate,
+                          style: TextStyle(
+                            color: AppTheme.textMuted.withOpacity(0.8),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 4),
                       
                       // Expandable Overview

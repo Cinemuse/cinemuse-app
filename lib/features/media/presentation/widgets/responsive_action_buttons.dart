@@ -187,7 +187,7 @@ class _TrackButton extends StatelessWidget {
                 Flexible(
                   child: Text(
                     isFullyWatched 
-                        ? (minWatchCount > 1 ? 'Watched x$minWatchCount' : 'Watched')
+                        ? (minWatchCount > 1 ? 'Up to date x$minWatchCount' : 'Up to date')
                         : (isPartiallyWatched ? 'Finish Series' : 'Track'),
                     style: TextStyle(
                       color: isFullyWatched

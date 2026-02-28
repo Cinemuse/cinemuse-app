@@ -87,7 +87,7 @@ class _CastCard extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: SizedBox(
-          width: 180,
+          width: 120,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

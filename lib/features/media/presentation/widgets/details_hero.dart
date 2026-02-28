@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart' show DateFormat;
 
 class DetailsHero extends ConsumerWidget {
   final Map<String, dynamic> media;
@@ -46,10 +47,11 @@ class DetailsHero extends ConsumerWidget {
     final tagline = details['tagline'];
     final backdropPath = details['backdrop_path'] ?? media['backdrop_path'];
     final voteAverage = details['vote_average'] as num?;
-    final year = (details['release_date'] ?? details['first_air_date'] ?? media['release_date'] ?? '')
-        .toString()
-        .split('-')
-        .first;
+    final releaseDateStr = (details['release_date'] ?? details['first_air_date'] ?? media['release_date'] ?? '').toString();
+    final DateTime? releaseDate = DateTime.tryParse(releaseDateStr);
+    final formattedDate = releaseDate != null
+        ? DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(releaseDate)
+        : '';
     final genres = (details['genres'] as List?) ?? [];
     
     final runtime = type == 'movie'
@@ -165,7 +167,7 @@ class DetailsHero extends ConsumerWidget {
                   runSpacing: 8,
                   children: [
                     Text(
-                      year,
+                      formattedDate,
                       style: DesktopTypography.captionMeta,
                     ),
                     if (runtime != null) ...[
