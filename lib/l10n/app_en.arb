@@ -3,7 +3,7 @@
   "navSearch": "Search",
   "navExplore": "Explore",
   "navSettings": "Settings",
-  "navLibrary": "Profile",
+  "navLibrary": "Library",
 
   "commonLoading": "Loading...",
   "commonError": "Error",
@@ -184,7 +184,7 @@
   
   "settingsTotalDocSize": "Total Document Size",
   "settingsTotalDocSizeDesc": "Total size of all your stored data.",
-  "settingsUserProfile": "User Profile",
+  "settingsUserProfile": "User Library",
   "settingsWatchedMovies": "Watched Movies",
   "settingsWatchedSeries": "Watched Series",
   "settingsLists": "Lists",
@@ -194,7 +194,14 @@
   "settingsSaved": "Saved",
   "settingsBack": "Back to Settings",
   "settingsLogout": "Log out",
-  "settingsProfile": "Profile",
+  "settingsProfile": "Library",
+  "profileOverview": "OVERVIEW",
+  "profileCollections": "COLLECTIONS",
+  "profileActivity": "ACTIVITY",
+  "profileActivityComingSoon": "Activity Coming Soon",
+  "profileUserDashboard": "User Library",
+  "profileErrorLoading": "Error loading library",
+  "profileMemberSince": "Member since {year}",
 
   "navLiveTV": "Live TV",
   "liveTvTitle": "Live TV",

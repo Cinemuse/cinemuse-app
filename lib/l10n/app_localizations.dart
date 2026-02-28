@@ -125,7 +125,7 @@ abstract class AppLocalizations {
   /// No description provided for @navLibrary.
   ///
   /// In en, this message translates to:
-  /// **'Profile'**
+  /// **'Library'**
   String get navLibrary;
 
   /// No description provided for @commonLoading.
@@ -1163,7 +1163,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsUserProfile.
   ///
   /// In en, this message translates to:
-  /// **'User Profile'**
+  /// **'User Library'**
   String get settingsUserProfile;
 
   /// No description provided for @settingsWatchedMovies.
@@ -1217,8 +1217,50 @@ abstract class AppLocalizations {
   /// No description provided for @settingsProfile.
   ///
   /// In en, this message translates to:
-  /// **'Profile'**
+  /// **'Library'**
   String get settingsProfile;
+
+  /// No description provided for @profileOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'OVERVIEW'**
+  String get profileOverview;
+
+  /// No description provided for @profileCollections.
+  ///
+  /// In en, this message translates to:
+  /// **'COLLECTIONS'**
+  String get profileCollections;
+
+  /// No description provided for @profileActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIVITY'**
+  String get profileActivity;
+
+  /// No description provided for @profileActivityComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity Coming Soon'**
+  String get profileActivityComingSoon;
+
+  /// No description provided for @profileUserDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'User Library'**
+  String get profileUserDashboard;
+
+  /// No description provided for @profileErrorLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading library'**
+  String get profileErrorLoading;
+
+  /// No description provided for @profileMemberSince.
+  ///
+  /// In en, this message translates to:
+  /// **'Member since {year}'**
+  String profileMemberSince(Object year);
 
   /// No description provided for @navLiveTV.
   ///

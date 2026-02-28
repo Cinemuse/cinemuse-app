@@ -3,7 +3,7 @@
   "navSearch": "Cerca",
   "navExplore": "Esplora",
   "navSettings": "Impostazioni",
-  "navLibrary": "Profilo",
+  "navLibrary": "Libreria",
 
   "commonLoading": "Caricamento...",
   "commonError": "Errore",
@@ -126,7 +126,7 @@
   
   "settingsTotalDocSize": "Dimensione Totale Documenti",
   "settingsTotalDocSizeDesc": "Dimensione totale di tutti i dati memorizzati.",
-  "settingsUserProfile": "Profilo Utente",
+  "settingsUserProfile": "Libreria Utente",
   "settingsWatchedMovies": "Film Guardati",
   "settingsWatchedSeries": "Serie Guardate",
   "settingsLists": "Liste",
@@ -136,7 +136,14 @@
   "settingsSaved": "Salvato",
   "settingsBack": "Torna alle Impostazioni",
   "settingsLogout": "Esci",
-  "settingsProfile": "Profilo",
+  "settingsProfile": "Libreria",
+  "profileOverview": "PANORAMICA",
+  "profileCollections": "COLLEZIONI",
+  "profileActivity": "ATTIVITÀ",
+  "profileActivityComingSoon": "Attività in arrivo",
+  "profileUserDashboard": "Libreria Utente",
+  "profileErrorLoading": "Errore nel caricamento della libreria",
+  "profileMemberSince": "Membro dal {year}",
 
   "navLiveTV": "TV in Diretta",
   "liveTvTitle": "TV in Diretta",

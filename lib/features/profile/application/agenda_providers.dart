@@ -2,13 +2,19 @@ import 'package:cinemuse_app/core/services/supabase_service.dart';
 import 'package:cinemuse_app/core/services/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
+import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
+import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
 import 'package:cinemuse_app/features/profile/data/agenda_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/agenda_event.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final agendaRepositoryProvider = Provider<AgendaRepository>((ref) {
-  return AgendaRepository(supabase, ref.watch(tmdbServiceProvider));
+  return AgendaRepository(
+    supabase, 
+    ref.watch(tmdbServiceProvider),
+    ref.watch(watchHistoryRepositoryProvider),
+  );
 });
 
 enum AgendaGroup {
@@ -36,9 +42,12 @@ final agendaProvider = FutureProvider<GroupedAgenda>((ref) async {
   // 1. Get IDs
   final followed = await repo.getFollowedIds(userId);
   
-  // 2. Fetch from TMDB
+  // 2. Fetch from TMDB & Sync New Episodes
   final movies = await repo.fetchUpcomingMovies(followed.keys.contains(MediaKind.movie) ? followed[MediaKind.movie]! : {});
-  final episodes = await repo.fetchUpcomingEpisodes(followed.keys.contains(MediaKind.tv) ? followed[MediaKind.tv]! : {});
+  final episodes = await repo.fetchUpcomingEpisodes(
+    userId,
+    followed.keys.contains(MediaKind.tv) ? followed[MediaKind.tv]! : {},
+  );
   
   final allEvents = [...movies, ...episodes];
   allEvents.sort((a, b) => a.releaseDate.compareTo(b.releaseDate));

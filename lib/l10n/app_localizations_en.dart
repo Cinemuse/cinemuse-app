@@ -21,7 +21,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSettings => 'Settings';
 
   @override
-  String get navLibrary => 'Profile';
+  String get navLibrary => 'Library';
 
   @override
   String get commonLoading => 'Loading...';
@@ -579,7 +579,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTotalDocSizeDesc => 'Total size of all your stored data.';
 
   @override
-  String get settingsUserProfile => 'User Profile';
+  String get settingsUserProfile => 'User Library';
 
   @override
   String get settingsWatchedMovies => 'Watched Movies';
@@ -606,7 +606,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLogout => 'Log out';
 
   @override
-  String get settingsProfile => 'Profile';
+  String get settingsProfile => 'Library';
+
+  @override
+  String get profileOverview => 'OVERVIEW';
+
+  @override
+  String get profileCollections => 'COLLECTIONS';
+
+  @override
+  String get profileActivity => 'ACTIVITY';
+
+  @override
+  String get profileActivityComingSoon => 'Activity Coming Soon';
+
+  @override
+  String get profileUserDashboard => 'User Library';
+
+  @override
+  String get profileErrorLoading => 'Error loading library';
+
+  @override
+  String profileMemberSince(Object year) {
+    return 'Member since $year';
+  }
 
   @override
   String get navLiveTV => 'Live TV';

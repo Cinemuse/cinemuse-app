@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +10,7 @@ class ProfileHero extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(profileStreamProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return profileAsync.when(
       data: (profile) {
@@ -56,7 +58,7 @@ class ProfileHero extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    profile?.username ?? 'User Dashboard',
+                    profile?.username ?? l10n.profileUserDashboard,
                     style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w900,
@@ -68,7 +70,7 @@ class ProfileHero extends ConsumerWidget {
                   // Optional subtext or join date
                   if (profile != null)
                     Text(
-                      'Member since ${profile.createdAt.year}',
+                      l10n.profileMemberSince(profile.createdAt.year.toString()),
                       style: const TextStyle(
                         color: Colors.grey,
                         fontSize: 14,
@@ -81,7 +83,7 @@ class ProfileHero extends ConsumerWidget {
         );
       },
       loading: () => const SizedBox(height: 80, child: Center(child: CircularProgressIndicator())),
-      error: (err, stack) => const Text('Error loading profile', style: TextStyle(color: Colors.red)),
+      error: (err, stack) => Text(l10n.profileErrorLoading, style: const TextStyle(color: Colors.red)),
     );
   }
 }

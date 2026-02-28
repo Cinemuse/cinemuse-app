@@ -473,6 +473,46 @@ class WatchHistoryRepository {
     }
     
     if (nextSeason != null && nextEpisode != null) {
+      // 2. Check if next episode has already aired
+      final lastAired = seriesDetails['last_episode_to_air'];
+      if (lastAired != null) {
+        final lastS = lastAired['season_number'] as int? ?? 0;
+        final lastE = lastAired['episode_number'] as int? ?? 0;
+        
+        if (nextSeason > lastS || (nextSeason == lastS && nextEpisode > lastE)) {
+          // Next episode hasn't aired yet.
+          // Mark the CURRENT episode as 'completed' in watch_history so we have a record for the sync service.
+          final caughtUpEntry = {
+            'user_id': userId,
+            'tmdb_id': tmdbId,
+            'media_type': 'tv',
+            'season': currentSeason,
+            'episode': currentEpisode,
+            'status': 'completed',
+            'progress_seconds': 0,
+            'total_duration': 0,
+            'last_watched_at': DateTime.now().toIso8601String(),
+          };
+
+          // Update Local
+          await _db.upsertWatchHistory(LocalWatchHistoriesCompanion(
+            userId: Value(userId),
+            tmdbId: Value(tmdbId),
+            mediaType: Value('tv'),
+            season: Value(currentSeason),
+            episode: Value(currentEpisode),
+            status: Value('completed'),
+            progressSeconds: Value(0),
+            totalDuration: Value(0),
+            lastWatchedAt: Value(DateTime.now()),
+          ));
+
+          // Update Remote
+          await _client.from('watch_history').upsert(caughtUpEntry);
+          return;
+        }
+      }
+
       final entry = {
         'user_id': userId,
         'tmdb_id': tmdbId,
