@@ -37,15 +37,15 @@ class _ProfileHubState extends ConsumerState<ProfileHub> with SingleTickerProvid
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.only(
-                  top: 120, 
+                  top: 60, 
                   left: AppTheme.getResponsiveHorizontalPadding(context), 
                   right: AppTheme.getResponsiveHorizontalPadding(context), 
-                  bottom: 24
+                  bottom: 0
                 ),
                 child: Column(
                   children: [
                     const ProfileHero(),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     // Navigation Tabs
                     TabBar(
                       controller: _tabController,

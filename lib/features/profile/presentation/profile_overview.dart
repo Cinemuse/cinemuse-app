@@ -18,7 +18,12 @@ class ProfileOverview extends ConsumerWidget {
     final history = historyAsync.valueOrNull ?? [];
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(AppTheme.getResponsiveHorizontalPadding(context)),
+      padding: EdgeInsets.only(
+        top: 24,
+        left: AppTheme.getResponsiveHorizontalPadding(context),
+        right: AppTheme.getResponsiveHorizontalPadding(context),
+        bottom: AppTheme.getResponsiveHorizontalPadding(context),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
