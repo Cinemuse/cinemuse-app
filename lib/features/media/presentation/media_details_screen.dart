@@ -467,6 +467,7 @@ class _SeriesEpisodesSection extends ConsumerWidget {
               episodeProgress: episodeProgressMap,
               initialScrollIndex: initialIndex,
               onEpisodeTap: (s, e, name) {
+                final progress = episodeProgressMap?['$s-$e']?.progressSeconds ?? 0;
                 Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
                   builder: (_) => VideoPlayerScreen(
                     queryId: mediaId,
@@ -474,6 +475,7 @@ class _SeriesEpisodesSection extends ConsumerWidget {
                     season: s,
                     episode: e,
                     episodeTitle: name,
+                    startPosition: progress,
                   ),
                 ));
               },

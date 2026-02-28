@@ -362,6 +362,24 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String detailsEpisodeNumber(Object num) {
+    return 'EP $num';
+  }
+
+  @override
+  String get detailsReadMore => 'Leggi di più';
+
+  @override
+  String get detailsShowLess => 'Mostra meno';
+
+  @override
+  String get detailsTooltipWatched => 'Visto';
+
+  @override
+  String get detailsTooltipMarkWatched =>
+      'Segna come visto (Tieni premuto per la data)';
+
+  @override
   String get personBiography => 'Biografia';
 
   @override

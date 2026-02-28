@@ -413,12 +413,22 @@ class StreamResolver {
     if (isEnglish) languages.add('ENG');
     if (t.contains('multi') && languages.isEmpty) languages.add('MULTI');
 
+    // 6. File Size
+    String? size;
+    // Regex matches numbers followed by units (GB, MB, GiB, etc.) 
+    // but uses a negative lookahead to ensure we don't match something like "10bit"
+    final sizeMatch = RegExp(r'(\d+(?:\.\d+)?)\s*(GB|MB|GiB|MiB|KB|B)(?!bit)', caseSensitive: false).firstMatch(title);
+    if (sizeMatch != null) {
+      size = "${sizeMatch.group(1)} ${sizeMatch.group(2)}".toUpperCase();
+    }
+
     return {
       'resolution': resolution,
       'quality': qualityIndicators,
       'codec': codec,
       'audio': audioFeatures,
       'languages': languages,
+      'size': size,
     };
   }
 

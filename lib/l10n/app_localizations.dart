@@ -758,6 +758,36 @@ abstract class AppLocalizations {
   /// **'Season {number}'**
   String seasonLabel(Object number);
 
+  /// No description provided for @detailsEpisodeNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'EP {num}'**
+  String detailsEpisodeNumber(Object num);
+
+  /// No description provided for @detailsReadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Read more'**
+  String get detailsReadMore;
+
+  /// No description provided for @detailsShowLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get detailsShowLess;
+
+  /// No description provided for @detailsTooltipWatched.
+  ///
+  /// In en, this message translates to:
+  /// **'Watched'**
+  String get detailsTooltipWatched;
+
+  /// No description provided for @detailsTooltipMarkWatched.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as Watched (Long press for date)'**
+  String get detailsTooltipMarkWatched;
+
   /// No description provided for @personBiography.
   ///
   /// In en, this message translates to:

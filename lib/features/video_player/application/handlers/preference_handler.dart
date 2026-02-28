@@ -1,53 +1,50 @@
 import 'package:media_kit/media_kit.dart';
+import 'dart:async';
 
 class PreferenceHandler {
   final Player _player;
 
   PreferenceHandler(this._player);
 
-  Future<void> applyLanguagePreference(String prefLang) async {
+  /// Applies both audio and subtitle preferences, waiting for tracks to be loaded if necessary.
+  Future<void> applyPreferences(String prefLang) async {
     if (prefLang.isEmpty) return;
+    final term = prefLang.toLowerCase();
 
-    final tracks = _player.state.tracks.audio;
-    AudioTrack? bestMatch;
+    try {
+      // Wait for tracks to be available (up to 5 seconds). 
+      // Media-kit sometimes emits an empty list initially while probing.
+      final tracks = await _player.stream.tracks.firstWhere(
+        (t) => t.audio.isNotEmpty,
+      ).timeout(const Duration(seconds: 5), onTimeout: () => _player.state.tracks);
 
-    for (var track in tracks) {
-      final title = track.title?.toLowerCase() ?? '';
-      final lang = track.language?.toLowerCase() ?? '';
-      final term = prefLang.toLowerCase();
+      // 1. Audio Tracking
+      for (var track in tracks.audio) {
+        if (track.id == 'auto' || track.id == 'no') continue;
+        final title = track.title?.toLowerCase() ?? '';
+        final lang = track.language?.toLowerCase() ?? '';
 
-      if (title.contains(term) || lang.contains(term)) {
-        bestMatch = track;
-        break;
+        if (title.contains(term) || lang.contains(term)) {
+          print('PreferenceHandler: Auto-enabling audio: ${track.title ?? track.language ?? track.id}');
+          await _player.setAudioTrack(track);
+          break;
+        }
       }
-    }
-    
-    if (bestMatch != null) {
-      print('PreferenceHandler: Auto-enabling audio track: ${bestMatch.title ?? bestMatch.language ?? bestMatch.id}');
-      await _player.setAudioTrack(bestMatch);
-    }
-  }
 
-  Future<void> applySubtitlePreference(String prefLang) async {
-    if (prefLang.isEmpty) return;
+      // 2. Subtitle Tracking
+      for (var track in tracks.subtitle) {
+        if (track.id == 'auto' || track.id == 'no') continue;
+        final title = track.title?.toLowerCase() ?? '';
+        final lang = track.language?.toLowerCase() ?? '';
 
-    final tracks = _player.state.tracks.subtitle;
-    SubtitleTrack? bestMatch;
-
-    for (var track in tracks) {
-      final title = track.title?.toLowerCase() ?? '';
-      final lang = track.language?.toLowerCase() ?? '';
-      final term = prefLang.toLowerCase();
-
-      if (title.contains(term) || lang.contains(term)) {
-        bestMatch = track;
-        break;
+        if (title.contains(term) || lang.contains(term)) {
+          print('PreferenceHandler: Auto-enabling subtitle: ${track.title ?? track.language ?? track.id}');
+          await _player.setSubtitleTrack(track);
+          break;
+        }
       }
-    }
-    
-    if (bestMatch != null) {
-      print('PreferenceHandler: Auto-enabling subtitle track: ${bestMatch.title ?? bestMatch.language ?? bestMatch.id}');
-      await _player.setSubtitleTrack(bestMatch);
+    } catch (e) {
+      print('PreferenceHandler: Error applying preferences: $e');
     }
   }
 }

@@ -345,9 +345,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           nextEpisode: nextEpisode,
         ));
         
-        // Apply language preference after state is set and tracks are likely loaded
-        _preferenceHandler.applyLanguagePreference(ref.read(settingsProvider).playerLanguage)
-            .then((_) => _preferenceHandler.applySubtitlePreference(ref.read(settingsProvider).playerLanguage));
+        // Apply user preferences (language/subtitles) once tracks are resolved
+        _preferenceHandler.applyPreferences(ref.read(settingsProvider).playerLanguage);
       }
     } catch (e, st) {
       if (mounted) {
@@ -440,7 +439,11 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
             await _player!.setAudioTrack(AudioTrack.uri(localAudioPath));
           }
           
-          await _player!.seek(position);
+          // Wait for duration to be available before seeking
+          final newDuration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
+          final seekTo = position.inSeconds < newDuration.inSeconds ? position : Duration(seconds: newDuration.inSeconds - 2);
+          
+          await _player!.seek(seekTo.isNegative ? Duration.zero : seekTo);
           await _player!.play();
 
           state = AsyncValue.data(currentState.copyWith(
@@ -454,14 +457,18 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           final position = _player!.state.position;
           
           await _player!.open(Media(resolvedStream['url'] as String), play: true);
-          await _player!.seek(position);
+          
+          // Wait for duration to be available before seeking
+          final newDuration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
+          final seekTo = position.inSeconds < newDuration.inSeconds ? position : Duration(seconds: newDuration.inSeconds - 2);
+          
+          await _player!.seek(seekTo.isNegative ? Duration.zero : seekTo);
 
           state = AsyncValue.data(currentState.copyWith(
             currentStream: resolvedStream,
           ));
           
-          _preferenceHandler.applyLanguagePreference(ref.read(settingsProvider).playerLanguage)
-              .then((_) => _preferenceHandler.applySubtitlePreference(ref.read(settingsProvider).playerLanguage));
+          _preferenceHandler.applyPreferences(ref.read(settingsProvider).playerLanguage);
        }
     } catch (e) {
       print("Error changing source: $e");

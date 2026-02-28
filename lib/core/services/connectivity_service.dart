@@ -1,18 +1,44 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart'; // For defaultTargetPlatform
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final connectivityProvider = StreamProvider<ConnectivityResult>((ref) async* {
   final connectivity = Connectivity();
   
-  // Get initial state
-  final initial = await connectivity.checkConnectivity();
-  yield initial.first; // connectivity_plus 6.0 returns a List<ConnectivityResult>
+  // 1. Initial Assumption: Assume connected (wifi) to avoid an immediate "Offline Screen" flicker.
+  // This follows the "Fail-Open" UX principle: assume it works until proven otherwise.
+  ConnectivityResult lastResult = ConnectivityResult.wifi; 
 
-  // Listen for changes
-  await for (final List<ConnectivityResult> results in connectivity.onConnectivityChanged) {
-    if (results.isNotEmpty) {
-      yield results.first;
+  // 2. Windows-Specific Stabilization: Only apply the delay on Windows to handle 
+  // its specific NetworkManager quirks during startup/hot-reload.
+  if (defaultTargetPlatform == TargetPlatform.windows) {
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
+  
+  // 3. Initial Check
+  try {
+    final initial = await connectivity.checkConnectivity();
+    if (initial.isNotEmpty) {
+      lastResult = initial.first;
+      yield lastResult;
     }
+  } catch (e) {
+    // Fail-open: if the platform check crashes or is unavailable, 
+    // we yield our assumed state (wifi) and let actual API calls handle failures.
+    yield lastResult;
+  }
+
+  // 4. Continuous Listening
+  try {
+    await for (final List<ConnectivityResult> results in connectivity.onConnectivityChanged) {
+      if (results.isNotEmpty) {
+        lastResult = results.first;
+        yield lastResult;
+      }
+    }
+  } catch (e) {
+    // Stop gracefully without forcing an offline state on platform errors
+    yield lastResult;
   }
 });
 
