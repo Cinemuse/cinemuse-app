@@ -1291,6 +1291,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'None'**
   String get settingsNone;
+
+  /// No description provided for @agendaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Agenda'**
+  String get agendaTitle;
+
+  /// No description provided for @agendaSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming releases from your library'**
+  String get agendaSubtitle;
+
+  /// No description provided for @agendaLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates...'**
+  String get agendaLoading;
+
+  /// No description provided for @agendaNoEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming releases found'**
+  String get agendaNoEvents;
+
+  /// No description provided for @agendaToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get agendaToday;
+
+  /// No description provided for @agendaTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get agendaTomorrow;
+
+  /// No description provided for @agendaThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This Week'**
+  String get agendaThisWeek;
+
+  /// No description provided for @agendaNextWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Week'**
+  String get agendaNextWeek;
+
+  /// No description provided for @agendaLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get agendaLater;
+
+  /// No description provided for @agendaMovie.
+  ///
+  /// In en, this message translates to:
+  /// **'Movie'**
+  String get agendaMovie;
+
+  /// No description provided for @agendaSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'Series'**
+  String get agendaSeries;
+
+  /// No description provided for @agendaRecentlyReleased.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently Released'**
+  String get agendaRecentlyReleased;
+
+  /// No description provided for @agendaTbd.
+  ///
+  /// In en, this message translates to:
+  /// **'TBD / Coming Soon'**
+  String get agendaTbd;
+
+  /// No description provided for @agendaTbdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'TBD'**
+  String get agendaTbdLabel;
 }
 
 class _AppLocalizationsDelegate

@@ -3,6 +3,7 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/stats_display.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/agenda_widget.dart';
 import 'package:cinemuse_app/shared/widgets/horizontal_media_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,8 +25,6 @@ class ProfileOverview extends ConsumerWidget {
           // Stats
           const StatsDisplay(),
           const SizedBox(height: 32),
-
-
 
           // Recent Movies Container
           _RecentMediaContainer(
@@ -49,6 +48,10 @@ class ProfileOverview extends ConsumerWidget {
                     .toList(),
           ),
           
+          const SizedBox(height: 32),
+
+          // Agenda
+          const AgendaWidget(),
           const SizedBox(height: 32),
         ],
       ),

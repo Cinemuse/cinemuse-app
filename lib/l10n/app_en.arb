@@ -207,5 +207,19 @@
   "liveTvNoChannels": "No channels found",
   "settingsLiveTvRegion": "Live TV Region",
   "settingsLiveTvRegionDesc": "Select your local region for regional channels.",
-  "settingsNone": "None"
+  "settingsNone": "None",
+  "agendaTitle": "Agenda",
+  "agendaSubtitle": "Upcoming releases from your library",
+  "agendaLoading": "Checking for updates...",
+  "agendaNoEvents": "No upcoming releases found",
+  "agendaToday": "Today",
+  "agendaTomorrow": "Tomorrow",
+  "agendaThisWeek": "This Week",
+  "agendaNextWeek": "Next Week",
+  "agendaLater": "Later",
+  "agendaMovie": "Movie",
+  "agendaSeries": "Series",
+  "agendaRecentlyReleased": "Recently Released",
+  "agendaTbd": "TBD / Coming Soon",
+  "agendaTbdLabel": "TBD"
 }

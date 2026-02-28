@@ -645,4 +645,46 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get settingsNone => 'Nessuna';
+
+  @override
+  String get agendaTitle => 'Agenda';
+
+  @override
+  String get agendaSubtitle => 'Prossime uscite dalla tua libreria';
+
+  @override
+  String get agendaLoading => 'Controllo aggiornamenti...';
+
+  @override
+  String get agendaNoEvents => 'Nessuna prossima uscita trovata';
+
+  @override
+  String get agendaToday => 'Oggi';
+
+  @override
+  String get agendaTomorrow => 'Domani';
+
+  @override
+  String get agendaThisWeek => 'Questa settimana';
+
+  @override
+  String get agendaNextWeek => 'Settimana prossima';
+
+  @override
+  String get agendaLater => 'In seguito';
+
+  @override
+  String get agendaMovie => 'Film';
+
+  @override
+  String get agendaSeries => 'Serie';
+
+  @override
+  String get agendaRecentlyReleased => 'Rilasciati di recente';
+
+  @override
+  String get agendaTbd => 'TBD / Prossimamente';
+
+  @override
+  String get agendaTbdLabel => 'TBD';
 }

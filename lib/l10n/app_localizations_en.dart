@@ -642,4 +642,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsNone => 'None';
+
+  @override
+  String get agendaTitle => 'Agenda';
+
+  @override
+  String get agendaSubtitle => 'Upcoming releases from your library';
+
+  @override
+  String get agendaLoading => 'Checking for updates...';
+
+  @override
+  String get agendaNoEvents => 'No upcoming releases found';
+
+  @override
+  String get agendaToday => 'Today';
+
+  @override
+  String get agendaTomorrow => 'Tomorrow';
+
+  @override
+  String get agendaThisWeek => 'This Week';
+
+  @override
+  String get agendaNextWeek => 'Next Week';
+
+  @override
+  String get agendaLater => 'Later';
+
+  @override
+  String get agendaMovie => 'Movie';
+
+  @override
+  String get agendaSeries => 'Series';
+
+  @override
+  String get agendaRecentlyReleased => 'Recently Released';
+
+  @override
+  String get agendaTbd => 'TBD / Coming Soon';
+
+  @override
+  String get agendaTbdLabel => 'TBD';
 }

@@ -206,5 +206,19 @@
   "settingsErrorSaving": "Errore nel salvataggio: {error}",
   "settingsLiveTvRegion": "Regione Live TV",
   "settingsLiveTvRegionDesc": "Seleziona la tua regione per i canali locali.",
-  "settingsNone": "Nessuna"
+  "settingsNone": "Nessuna",
+  "agendaTitle": "Agenda",
+  "agendaSubtitle": "Prossime uscite dalla tua libreria",
+  "agendaLoading": "Controllo aggiornamenti...",
+  "agendaNoEvents": "Nessuna prossima uscita trovata",
+  "agendaToday": "Oggi",
+  "agendaTomorrow": "Domani",
+  "agendaThisWeek": "Questa settimana",
+  "agendaNextWeek": "Settimana prossima",
+  "agendaLater": "In seguito",
+  "agendaMovie": "Film",
+  "agendaSeries": "Serie",
+  "agendaRecentlyReleased": "Rilasciati di recente",
+  "agendaTbd": "TBD / Prossimamente",
+  "agendaTbdLabel": "TBD"
 }
