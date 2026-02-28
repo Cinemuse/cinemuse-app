@@ -61,6 +61,7 @@ dependencies:
   youtube_player_iframe: ^5.2.2
   youtube_explode_dart: ^3.0.5
   flutter_svg: ^2.2.3
+  connectivity_plus: ^7.0.0
 
 dev_dependencies:
   flutter_test:

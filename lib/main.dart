@@ -16,8 +16,11 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/core/application/locale_service.dart';
 
 import 'package:stack_trace/stack_trace.dart';
-import 'package:cinemuse_app/core/presentation/intents.dart';
 import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
+import 'package:cinemuse_app/core/presentation/intents.dart';
+import 'package:cinemuse_app/core/presentation/widgets/offline_error_screen.dart';
+import 'package:cinemuse_app/core/services/connectivity_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 void main() {
   Chain.capture(() async {
@@ -106,7 +109,20 @@ class CinemuseApp extends ConsumerWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) => ExcludeSemantics(child: child ?? const SizedBox()),
+          builder: (context, child) {
+            final connectivity = ref.watch(connectivityProvider);
+            
+            return connectivity.when(
+              data: (result) {
+                if (result == ConnectivityResult.none) {
+                  return const OfflineErrorScreen();
+                }
+                return ExcludeSemantics(child: child ?? const SizedBox());
+              },
+              loading: () => ExcludeSemantics(child: child ?? const SizedBox()),
+              error: (_, __) => ExcludeSemantics(child: child ?? const SizedBox()),
+            );
+          },
           home: authState.when(
             data: (user) => user != null ? const AppShell() : const AuthScreen(),
             loading: () => const Scaffold(
