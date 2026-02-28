@@ -3,7 +3,14 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 enum WatchStatus {
   watching,
   completed,
-  dropped,
+  dropped;
+
+  static WatchStatus fromJson(String value) {
+    return WatchStatus.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => WatchStatus.watching,
+    );
+  }
 }
 
 class WatchHistory {

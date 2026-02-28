@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// SmartCache - Local caching utility for Firestore data
+/// SmartCache - Local caching utility for Supabase and API data
 /// 
-/// Mirrors the web app's useSmartCache hook.
-/// Provides immediate data from cache while Firestore streams update.
+/// Provides immediate data from cache while remote streams update.
 class SmartCache {
   final String _key;
   SharedPreferences? _prefs;
@@ -45,9 +44,9 @@ class SmartCache {
 
     final updatedAt = cachedData['updatedAt'];
     
-    // Handle Firestore Timestamp format (seconds)
-    if (updatedAt is Map && updatedAt.containsKey('seconds')) {
-      return DateTime.fromMillisecondsSinceEpoch(updatedAt['seconds'] * 1000);
+    // Handle numeric timestamp (milliseconds)
+    if (updatedAt is int) {
+      return DateTime.fromMillisecondsSinceEpoch(updatedAt);
     }
     
     // Handle ISO string

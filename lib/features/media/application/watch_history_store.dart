@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:cinemuse_app/core/error/supabase_error_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
@@ -11,12 +12,17 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 // Listeners (UI) update instantly when the database changes.
 
 final watchHistoryStoreProvider = StreamProvider<Map<String, WatchHistory>>((ref) {
-  final userId = Supabase.instance.client.auth.currentUser?.id;
-  if (userId == null) return Stream.value({});
+  final user = ref.watch(authProvider).valueOrNull;
+  if (user == null) return Stream.value({});
 
   final repository = ref.watch(watchHistoryRepositoryProvider);
   
-  return repository.watchAllHistory(userId).map((list) {
+  // Trigger background sync on initialization to update local Drift from Supabase
+  repository.syncWatchHistory(user.id).catchError((e) {
+    print('WatchHistoryStore: Background sync failed: $e');
+  });
+
+  return repository.watchHistory(user.id).map((list) {
     final map = <String, WatchHistory>{};
     
     // Sort by last watched (ascending) so later entries (more recent) overwrite in our loop for the base key
@@ -36,11 +42,5 @@ final watchHistoryStoreProvider = StreamProvider<Map<String, WatchHistory>>((ref
       }
     }
     return map;
-  }).handleError((error) {
-    // Graceful degradation for realtime timeouts
-    if (error is AppException && error.type == AppExceptionType.realtime) {
-      return <String, WatchHistory>{}; 
-    }
-    throw error;
   });
 });

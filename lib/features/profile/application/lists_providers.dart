@@ -4,32 +4,32 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/profile/data/lists_repository.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
+import 'package:cinemuse_app/core/data/database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final listsRepositoryProvider = Provider<ListsRepository>((ref) {
-  return ListsRepository(supabase);
+  return ListsRepository(supabase, ref.watch(appDatabaseProvider));
 });
 
 /// A notifier that manages all user lists (Watchlist, Favorites, and Custom).
-/// It provides a centralized way to toggle items and refresh the UI globally.
-class UserListsNotifier extends AsyncNotifier<List<UserList>> {
+/// It now uses a stream from the local database for offline-first responsiveness.
+class UserListsNotifier extends StreamNotifier<List<UserList>> {
   @override
-  Future<List<UserList>> build() async {
-    final userAsync = ref.watch(authProvider);
-    final user = userAsync.value;
-    
-    if (user == null) return [];
+  Stream<List<UserList>> build() {
+    final user = ref.watch(authProvider).valueOrNull;
+    if (user == null) return Stream.value([]);
     
     final repo = ref.watch(listsRepositoryProvider);
-    return repo.getUserLists(user.id);
+
+    // Background sync
+    repo.syncUserLists(user.id).catchError((e) => print('UserListsNotifier: Sync failed: $e'));
+
+    return repo.watchUserLists(user.id);
   }
 
   /// Toggles an item in a system list (Watchlist or Favorites).
   Future<void> toggleSystemList(MediaItem media, ListType type) async {
-    final user = ref.read(authProvider).value;
-    if (user == null) return;
-
-    final lists = await future; // Ensure we have latest data
+    final lists = state.value ?? []; 
     
     // Find the specific list of this type
     var targetList = lists.firstWhere(
@@ -71,9 +71,8 @@ class UserListsNotifier extends AsyncNotifier<List<UserList>> {
         },
       );
     }
-    
-    // Refresh the state
-    ref.invalidateSelf();
+    // No need to invalidateSelf(), the repository updates the local Drift DB 
+    // which automatically triggers a new event in our stream.
   }
 
   Future<void> toggleWatchlist(MediaItem media) async {
@@ -95,8 +94,6 @@ class UserListsNotifier extends AsyncNotifier<List<UserList>> {
       type: ListType.custom,
       description: description,
     );
-    
-    ref.invalidateSelf();
   }
 
   Future<void> updateList(String listId, String name, String? description) async {
@@ -106,7 +103,6 @@ class UserListsNotifier extends AsyncNotifier<List<UserList>> {
       name: name,
       description: description,
     );
-    ref.invalidateSelf();
   }
 
   Future<void> addItemToCustomList(String listId, MediaItem media) async {
@@ -128,7 +124,6 @@ class UserListsNotifier extends AsyncNotifier<List<UserList>> {
         'year': media.releaseDate?.year,
       },
     );
-    ref.invalidateSelf();
   }
 
   /// Helper to check if a specific item is in the Watchlist.
@@ -148,6 +143,6 @@ class UserListsNotifier extends AsyncNotifier<List<UserList>> {
   }
 }
 
-final userListsProvider = AsyncNotifierProvider<UserListsNotifier, List<UserList>>(() {
+final userListsProvider = StreamNotifierProvider<UserListsNotifier, List<UserList>>(() {
   return UserListsNotifier();
 });
