@@ -5,6 +5,7 @@ import 'package:cinemuse_app/shared/widgets/bento_box.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class VideosCarousel extends StatelessWidget {
   final Map<String, dynamic>? videos;
@@ -23,6 +24,8 @@ class VideosCarousel extends StatelessWidget {
         .toList() ?? [];
 
     if (trailers.isEmpty) return const SizedBox.shrink();
+
+    final l10n = AppLocalizations.of(context);
 
     return BentoBox(
       title: 'Visual Archives',
@@ -49,6 +52,8 @@ class VideosCarousel extends StatelessWidget {
                         builder: (context) => VideoPlayerScreen(
                           queryId: key,
                           type: 'youtube',
+                          loadingMessage: l10n?.playerResolvingYoutube,
+                          errorMessage: l10n?.playerErrorResolvingYoutube(''),
                         ),
                       ),
                     );

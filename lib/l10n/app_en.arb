@@ -138,10 +138,13 @@
   "playerSelectQuality": "Select Source",
   "playerSelectAudio": "Select Audio Track",
   "playerResolving": "Resolving stream with Real-Debrid...",
+  "playerResolvingYoutube": "Loading YouTube video...",
   "playerErrorResolving": "Error resolving stream:\n{error}",
+  "playerErrorResolvingYoutube": "Error loading YouTube video:\n{error}",
   "playerNoAudioFound": "No audio tracks found",
   "playerSubtitles": "Subtitles",
   "playerSelectSubtitle": "Select Subtitle Track",
+  "commonGoBack": "Go Back",
 
   "settingsTitle": "Settings",
   "settingsIdentity": "Identity & Access",

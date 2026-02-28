@@ -439,8 +439,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playerResolving => 'Resolving stream with Real-Debrid...';
 
   @override
+  String get playerResolvingYoutube => 'Loading YouTube video...';
+
+  @override
   String playerErrorResolving(Object error) {
     return 'Error resolving stream:\n$error';
+  }
+
+  @override
+  String playerErrorResolvingYoutube(Object error) {
+    return 'Error loading YouTube video:\n$error';
   }
 
   @override
@@ -451,6 +459,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playerSelectSubtitle => 'Select Subtitle Track';
+
+  @override
+  String get commonGoBack => 'Go Back';
 
   @override
   String get settingsTitle => 'Settings';

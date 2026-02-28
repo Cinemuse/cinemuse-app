@@ -15,6 +15,8 @@ class VideoPlayerScreen extends ConsumerWidget {
   final int? episode;
   final String? episodeTitle;
   final int startPosition;
+  final String? loadingMessage;
+  final String? errorMessage;
 
   const VideoPlayerScreen({
     super.key,
@@ -24,6 +26,8 @@ class VideoPlayerScreen extends ConsumerWidget {
     this.episode,
     this.episodeTitle,
     this.startPosition = 0,
+    this.loadingMessage,
+    this.errorMessage,
   });
 
   @override
@@ -63,7 +67,7 @@ class VideoPlayerScreen extends ConsumerWidget {
                       episodeTitle: next.title,
                     ),
                   ),
-                );
+                 );
               } : null,
             ),
           ),
@@ -75,26 +79,42 @@ class VideoPlayerScreen extends ConsumerWidget {
               Icon(Icons.error, color: Theme.of(context).colorScheme.error, size: 48),
               const SizedBox(height: 16),
               Text(
-                AppLocalizations.of(context)!.playerErrorResolving(err.toString()),
+                errorMessage ?? AppLocalizations.of(context)!.playerErrorResolving(err.toString()),
                 style: const TextStyle(color: AppTheme.textWhite),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.refresh(playerControllerProvider(params)),
-                child: Text(AppLocalizations.of(context)!.commonRetry),
-              )
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textWhite,
+                      side: const BorderSide(color: Colors.white54),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                    ),
+                    child: Text(AppLocalizations.of(context)!.commonGoBack),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: () => ref.refresh(playerControllerProvider(params)),
+                    child: Text(AppLocalizations.of(context)!.commonRetry),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
         loading: () => Center(
-          child: Column(
+           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const CircularProgressIndicator(),
               const SizedBox(height: 16),
               Text(
-                AppLocalizations.of(context)!.playerResolving,
+                loadingMessage ?? AppLocalizations.of(context)!.playerResolving,
                 style: const TextStyle(color: AppTheme.textMuted),
               )
             ],

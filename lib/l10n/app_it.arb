@@ -80,10 +80,13 @@
   "playerSelectQuality": "Seleziona Sorgente",
   "playerSelectAudio": "Seleziona Traccia Audio",
   "playerResolving": "Risoluzione stream con Real-Debrid...",
+  "playerResolvingYoutube": "Caricamento video YouTube...",
   "playerErrorResolving": "Errore nella risoluzione dello stream:\n{error}",
+  "playerErrorResolvingYoutube": "Errore nel caricamento del video YouTube:\n{error}",
   "playerNoAudioFound": "Nessuna traccia audio trovata",
   "playerSubtitles": "Sottotitoli",
   "playerSelectSubtitle": "Seleziona Sottotitoli",
+  "commonGoBack": "Indietro",
 
   "settingsTitle": "Impostazioni",
   "settingsIdentity": "Identità e Accesso",

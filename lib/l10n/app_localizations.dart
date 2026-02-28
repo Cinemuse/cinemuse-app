@@ -902,11 +902,23 @@ abstract class AppLocalizations {
   /// **'Resolving stream with Real-Debrid...'**
   String get playerResolving;
 
+  /// No description provided for @playerResolvingYoutube.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading YouTube video...'**
+  String get playerResolvingYoutube;
+
   /// No description provided for @playerErrorResolving.
   ///
   /// In en, this message translates to:
   /// **'Error resolving stream:\n{error}'**
   String playerErrorResolving(Object error);
+
+  /// No description provided for @playerErrorResolvingYoutube.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading YouTube video:\n{error}'**
+  String playerErrorResolvingYoutube(Object error);
 
   /// No description provided for @playerNoAudioFound.
   ///
@@ -925,6 +937,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select Subtitle Track'**
   String get playerSelectSubtitle;
+
+  /// No description provided for @commonGoBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Go Back'**
+  String get commonGoBack;
 
   /// No description provided for @settingsTitle.
   ///
