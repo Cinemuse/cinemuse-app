@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cinemuse_app/core/services/supabase_service.dart';
@@ -13,23 +14,19 @@ class ProfileRepository {
   ProfileRepository(this._client);
 
   Future<Profile?> getProfile(String userId) async {
-    try {
-      final response = await _client
-          .from('profiles')
-          .select()
-          .eq('id', userId)
-          .maybeSingle();
+    final response = await _client
+        .from('profiles')
+        .select()
+        .eq('id', userId)
+        .maybeSingle()
+        .withErrorHandling();
 
-      if (response == null) return null;
-      return Profile.fromJson(response);
-    } catch (e) {
-      // TODO: Handle specific errors (network, etc)
-      rethrow;
-    }
+    if (response == null) return null;
+    return Profile.fromJson(response);
   }
 
   Future<void> updateProfile(String userId, Map<String, dynamic> updates) async {
-    await _client.from('profiles').update(updates).eq('id', userId);
+    await _client.from('profiles').update(updates).eq('id', userId).withErrorHandling();
   }
   
   // Note: Profile creation is handled by Database Trigger on auth.users insert
@@ -43,6 +40,6 @@ class ProfileRepository {
       'id': id,
       'username': username,
       'avatar_url': avatarUrl,
-    });
+    }).withErrorHandling();
   }
 }

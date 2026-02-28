@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/tracking_modals.dart';
 import 'package:flutter/material.dart';
@@ -52,7 +53,10 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       backgroundColor: AppTheme.primary,
       body: detailsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.accent)),
-        error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.white))),
+        error: (err, stack) {
+          final message = err is AppException ? err.message : err.toString();
+          return Center(child: Text('Error: $message', style: const TextStyle(color: Colors.white)));
+        },
         data: (details) {
           if (details == null) return const Center(child: Text('Not found', style: TextStyle(color: Colors.white)));
 

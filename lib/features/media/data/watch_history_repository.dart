@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cinemuse_app/core/services/supabase_service.dart';
@@ -21,7 +22,8 @@ class WatchHistoryRepository {
         .select('*, media_cache(*)') // Join with media_cache
         .eq('user_id', userId)
         .eq('status', 'watching')
-        .order('last_watched_at', ascending: false);
+        .order('last_watched_at', ascending: false)
+        .withErrorHandling();
 
     return (response as List).map((e) => WatchHistory.fromJson(e)).toList();
   }
@@ -30,7 +32,7 @@ class WatchHistoryRepository {
   /// Should be called during "natural" retrieval (e.g., when initializing details or player).
   Future<void> ensureMediaCached(MediaItem media) async {
     try {
-      await _client.from('media_cache').upsert(media.toDbJson());
+      await _client.from('media_cache').upsert(media.toDbJson()).withErrorHandling();
     } catch (e) {
       print('Error caching media: $e'); 
     }
@@ -76,7 +78,7 @@ class WatchHistoryRepository {
         'media_type': media.mediaType.name,
         'season': season ?? 0,
         'episode': episode ?? 0,
-      }).select();
+      }).select().withErrorHandling();
 
       // Only proceed if we actually deleted something (prevents double logs)
       if ((deleted as List).isEmpty) return;
@@ -124,7 +126,7 @@ class WatchHistoryRepository {
       'season': season ?? 0,
       'episode': episode ?? 0,
       'last_watched_at': DateTime.now().toIso8601String(),
-    });
+    }).withErrorHandling();
   }
 
   Future<void> logEpisodeWatch({
@@ -144,7 +146,7 @@ class WatchHistoryRepository {
       'episode': episode,
       'logged_at': (loggedAt ?? DateTime.now()).toIso8601String(),
       'duration_watched_seconds': durationWatched,
-    });
+    }).withErrorHandling();
   }
 
   Future<void> markAsCompleted({
@@ -161,7 +163,7 @@ class WatchHistoryRepository {
       'media_type': media.mediaType.name,
       'logged_at': now,
       'duration_watched_seconds': durationWatched,
-    });
+    }).withErrorHandling();
   }
 
   Future<WatchHistory?> getHistoryItem(String userId, String tmdbId) async {
@@ -170,19 +172,20 @@ class WatchHistoryRepository {
         .select('*, media_cache(*)')
         .eq('user_id', userId)
         .eq('tmdb_id', tmdbId)
-        .maybeSingle();
+        .maybeSingle()
+        .withErrorHandling();
 
     if (response == null) return null;
     return WatchHistory.fromJson(response);
   }
 
-  // Stream all watch history for the user (Global Store Listener)
   Stream<List<WatchHistory>> watchAllHistory(String userId) {
     return _client
         .from('watch_history')
         .stream(primaryKey: ['user_id', 'tmdb_id', 'media_type', 'season', 'episode'])
         .eq('user_id', userId)
         .order('last_watched_at', ascending: false)
+        .withErrorHandling()
         .transform(_debounceTransformer(const Duration(milliseconds: 300)))
         .asyncMap((event) async {
           if (event.isEmpty) return <WatchHistory>[];
@@ -224,6 +227,7 @@ class WatchHistoryRepository {
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
         .order('logged_at', ascending: false)
+        .withErrorHandling()
         .transform(_debounceTransformer(const Duration(milliseconds: 300)))
         .map((list) => list.where((item) => 
             item['tmdb_id'] == tmdbId && 
@@ -237,6 +241,7 @@ class WatchHistoryRepository {
         .from('watch_history')
         .stream(primaryKey: ['user_id', 'tmdb_id', 'media_type', 'season', 'episode'])
         .eq('user_id', userId)
+        .withErrorHandling()
         .map((list) => list
             .where((e) => e['tmdb_id'] == tmdbId)
             .map((e) => WatchHistory.fromJson(e))

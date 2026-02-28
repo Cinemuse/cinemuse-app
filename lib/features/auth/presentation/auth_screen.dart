@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +46,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         }
       } catch (e) {
         setState(() {
-          errorMessage = e.toString();
+          errorMessage = e is AppException ? e.message : e.toString();
         });
       } finally {
         if (mounted) {

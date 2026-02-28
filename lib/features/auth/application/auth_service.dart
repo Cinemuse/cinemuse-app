@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/error/supabase_error_handler.dart';
 import 'package:cinemuse_app/core/services/supabase_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -46,16 +47,9 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
         throw 'Sign in failed';
       }
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      // Reset state to current user (likely null) after error
-      // But riverpod might handle error state. 
-      // Ideally we want to show error then go back to idle.
-      // For now, let's re-emit the current user after a slight delay or just let the error stand?
-      // Better: Throw so UI can catch it, but keep state as is?
-      // The listen() will update state on success. On failure, we throw.
-      // We should reset loading state.
-       state = AsyncValue.data(supabase.auth.currentUser);
-       rethrow;
+      final appEx = SupabaseErrorHandler.handleError(e);
+      state = AsyncValue.data(supabase.auth.currentUser);
+      throw appEx;
     }
   }
 
@@ -70,8 +64,9 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
         throw 'Sign up failed';
       }
     } catch (e, st) {
-       state = AsyncValue.data(supabase.auth.currentUser); 
-       rethrow;
+      final appEx = SupabaseErrorHandler.handleError(e);
+      state = AsyncValue.data(supabase.auth.currentUser); 
+      throw appEx;
     }
   }
   

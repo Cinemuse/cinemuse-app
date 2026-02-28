@@ -1,3 +1,6 @@
+import 'package:cinemuse_app/core/error/app_exception.dart';
+import 'package:cinemuse_app/core/error/supabase_error_handler.dart';
+import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 import 'package:cinemuse_app/core/services/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
@@ -67,7 +70,12 @@ class OptimisticSeriesLogs extends FamilyStreamNotifier<List<Map<String, dynamic
     if (userId == null) return Stream.value([]);
     
     final repository = ref.watch(watchHistoryRepositoryProvider);
-    return repository.watchSeriesLogs(userId, arg);
+    return repository.watchSeriesLogs(userId, arg).handleError((error) {
+      if (error is AppException && error.type == AppExceptionType.realtime) {
+        return <Map<String, dynamic>>[];
+      }
+      throw error;
+    });
   }
 
   // Apply an optimistic update
@@ -178,7 +186,7 @@ final episodeProgressMapProvider = StreamProvider.family<Map<String, WatchHistor
   if (userId == null) return Stream.value({});
 
   final repository = ref.watch(watchHistoryRepositoryProvider);
-  return repository.watchSeriesHistory(userId, tmdbId).map((historyList) {
+  return repository.watchSeriesHistory(userId, tmdbId).withErrorHandling().map((historyList) {
     final map = <String, WatchHistory>{};
     for (final h in historyList) {
       if (h.season != null && h.episode != null) {
@@ -186,5 +194,10 @@ final episodeProgressMapProvider = StreamProvider.family<Map<String, WatchHistor
       }
     }
     return map;
+  }).handleError((error) {
+    if (error is AppException && error.type == AppExceptionType.realtime) {
+      return <String, WatchHistory>{};
+    }
+    throw error;
   });
 });

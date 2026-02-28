@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 import 'package:cinemuse_app/core/services/supabase_service.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,18 +10,15 @@ class ListsRepository {
 
   /// Fetch all lists for a user, including their items.
   Future<List<UserList>> getUserLists(String userId) async {
-    try {
-      final response = await _client
-          .from('lists')
-          .select('*, list_items(*)')
-          .eq('user_id', userId)
-          .order('sort_order', ascending: true);
-      
-      final data = response as List<dynamic>;
-      return data.map((json) => UserList.fromJson(json)).toList();
-    } catch (e) {
-      return [];
-    }
+    final response = await _client
+        .from('lists')
+        .select('*, list_items(*)')
+        .eq('user_id', userId)
+        .order('sort_order', ascending: true)
+        .withErrorHandling();
+    
+    final data = response as List<dynamic>;
+    return data.map((json) => UserList.fromJson(json)).toList();
   }
 
   /// Create a new list (system or custom).
@@ -41,7 +39,8 @@ class ListsRepository {
           'sort_order': sortOrder,
         })
         .select()
-        .single();
+        .single()
+        .withErrorHandling();
     
     return UserList.fromJson(response);
   }
@@ -63,7 +62,7 @@ class ListsRepository {
       'media_type': normalizedType,
       'meta': meta,
       'sort_order': sortOrder ?? 0,
-    }, onConflict: 'list_id,media_tmdb_id,media_type');
+    }, onConflict: 'list_id,media_tmdb_id,media_type').withErrorHandling();
   }
 
   /// Remove an item from a list.
@@ -80,12 +79,13 @@ class ListsRepository {
         .delete()
         .eq('list_id', listId)
         .eq('media_tmdb_id', tmdbId)
-        .eq('media_type', normalizedType);
+        .eq('media_type', normalizedType)
+        .withErrorHandling();
   }
 
   /// Delete a list.
   Future<void> deleteList(String listId) async {
-    await _client.from('lists').delete().eq('id', listId);
+    await _client.from('lists').delete().eq('id', listId).withErrorHandling();
   }
 
   /// Update a list's basic info.
@@ -103,6 +103,7 @@ class ListsRepository {
     await _client
         .from('lists')
         .update(updates)
-        .eq('id', listId);
+        .eq('id', listId)
+        .withErrorHandling();
   }
 }

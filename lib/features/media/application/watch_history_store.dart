@@ -1,3 +1,5 @@
+import 'package:cinemuse_app/core/error/app_exception.dart';
+import 'package:cinemuse_app/core/error/supabase_error_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
@@ -34,5 +36,11 @@ final watchHistoryStoreProvider = StreamProvider<Map<String, WatchHistory>>((ref
       }
     }
     return map;
+  }).handleError((error) {
+    // Graceful degradation for realtime timeouts
+    if (error is AppException && error.type == AppExceptionType.realtime) {
+      return <String, WatchHistory>{}; 
+    }
+    throw error;
   });
 });
