@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -54,7 +55,13 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     (_player!.platform as dynamic).setProperty('demuxer-readahead-secs', '3');
     (_player!.platform as dynamic).setProperty('cache', 'yes');
     (_player!.platform as dynamic).setProperty('cache-secs', '3');
-    _videoController = mkv.VideoController(_player!);
+    _videoController = mkv.VideoController(
+      _player!,
+      configuration: mkv.VideoControllerConfiguration(
+        hwdec: io.Platform.isAndroid ? 'mediacodec' : 'auto',
+        vo: io.Platform.isAndroid ? 'gpu' : null,
+      ),
+    );
 
     _subscriptions.add(_player!.stream.playing.listen((playing) {
     }));

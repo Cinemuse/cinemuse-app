@@ -1,6 +1,6 @@
 
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' as io;
 import 'package:cinemuse_app/core/services/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/stream_resolver.dart';
 import 'package:cinemuse_app/core/services/youtube_service.dart';
@@ -113,7 +113,13 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
         if (_player == null) {
           _player = Player();
-          _controller = VideoController(_player!);
+          _controller = VideoController(
+            _player!,
+            configuration: VideoControllerConfiguration(
+              hwdec: io.Platform.isAndroid ? 'mediacodec' : 'auto',
+              vo: io.Platform.isAndroid ? 'gpu' : null,
+            ),
+          );
           _preferenceHandler = PreferenceHandler(_player!);
           
           // Add debug listeners
@@ -242,7 +248,13 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       // 5. Initialize Player
       if (_player == null) {
         _player = Player();
-        _controller = VideoController(_player!);
+        _controller = VideoController(
+          _player!,
+          configuration: VideoControllerConfiguration(
+            hwdec: io.Platform.isAndroid ? 'mediacodec' : 'auto',
+            vo: io.Platform.isAndroid ? 'gpu' : null,
+          ),
+        );
         _preferenceHandler = PreferenceHandler(_player!);
         
         // Setup Progress Listener

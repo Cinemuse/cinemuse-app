@@ -47,6 +47,7 @@ class LivePlayerSection extends StatelessWidget {
             : videoController != null && player != null
                 ? mkv.Video(
                     controller: videoController!,
+                    filterQuality: FilterQuality.none,
                     controls: (videoState) => LiveVideoControls(
                       player: player!,
                       channel: channel,

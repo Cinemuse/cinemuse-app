@@ -45,6 +45,7 @@ class VideoPlayerScreen extends ConsumerWidget {
         data: (state) => Center(
           child: Video(
             controller: state.controller,
+            filterQuality: FilterQuality.none,
             controls: (videoState) => CustomVideoControls(
               videoState: videoState,
               playerState: state,
