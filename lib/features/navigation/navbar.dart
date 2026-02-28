@@ -115,46 +115,31 @@ class AppNavbar extends StatelessWidget {
                       ),
                     ),
                     child: PopupMenuButton<int>(
-                      tooltip: l10n.settingsProfile,
+                      tooltip: l10n.settingsTitle,
                       offset: const Offset(0, 48),
-                      icon: const Icon(Icons.person_outline, color: AppTheme.textMuted, size: 24),
+                      constraints: const BoxConstraints(minWidth: 160),
+                      icon: const Icon(Icons.more_vert, color: AppTheme.textMuted, size: 24),
                       itemBuilder: (context) => [
                         PopupMenuItem(
-                          value: 3,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.person, size: 20, color: AppTheme.textMuted),
-                              const SizedBox(width: 12),
-                              Text(l10n.settingsProfile),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem(
                           value: -1,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.settings, size: 20, color: AppTheme.textMuted),
-                              const SizedBox(width: 12),
-                              Text(l10n.settingsTitle),
-                            ],
+                          height: 40,
+                          child: Center(
+                            child: Text(l10n.settingsTitle),
                           ),
                         ),
-                        const PopupMenuDivider(),
                         PopupMenuItem(
                           value: -2,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.logout, size: 20, color: Colors.redAccent),
-                              const SizedBox(width: 12),
-                              Text(l10n.settingsLogout, style: const TextStyle(color: Colors.redAccent)),
-                            ],
+                          height: 40,
+                          child: Center(
+                            child: Text(
+                              l10n.settingsLogout,
+                              style: const TextStyle(color: Colors.redAccent),
+                            ),
                           ),
                         ),
                       ],
                       onSelected: (value) {
-                        if (value == 3) {
-                          onTap(3);
-                        } else if (value == -1) {
+                        if (value == -1) {
                           onSettingsTap?.call();
                         } else if (value == -2) {
                           onLogoutTap?.call();
