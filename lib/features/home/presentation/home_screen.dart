@@ -5,6 +5,7 @@ import 'package:cinemuse_app/features/home/presentation/widgets/continue_watchin
 import 'package:cinemuse_app/features/home/presentation/widgets/hero_section.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/media_row.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -20,6 +21,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final trendingAsync = ref.watch(trendingProvider);
     final popularMoviesAsync = ref.watch(popularMoviesProvider);
     final popularSeriesAsync = ref.watch(popularSeriesProvider);
@@ -39,7 +41,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               error: (err, stack) => SizedBox(
                 height: MediaQuery.of(context).size.height * 0.6, 
-                child: const Center(child: Text('Error loading features'))
+                child: Center(child: Text('${l10n.homeErrorLoadingFeatures}: $err')),
               ),
             ),
             
@@ -59,21 +61,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   // Trending List
                   FocusTraversalGroup(
                     policy: OrderedTraversalPolicy(),
-                    child: MediaRow(title: "Trending Now", asyncData: trendingAsync, skipFirst: true),
+                    child: MediaRow(title: l10n.homeTrendingNow, asyncData: trendingAsync, skipFirst: true),
                   ),
                   const SizedBox(height: 30),
 
                   // Popular Movies
                   FocusTraversalGroup(
                     policy: OrderedTraversalPolicy(),
-                    child: MediaRow(title: "Popular Movies", asyncData: popularMoviesAsync),
+                    child: MediaRow(title: l10n.homePopularMovies, asyncData: popularMoviesAsync),
                   ),
                   const SizedBox(height: 30),
 
                   // Popular Series
                   FocusTraversalGroup(
                     policy: OrderedTraversalPolicy(),
-                    child: MediaRow(title: "Popular Series", asyncData: popularSeriesAsync),
+                    child: MediaRow(title: l10n.homePopularSeries, asyncData: popularSeriesAsync),
                   ),
                   const SizedBox(height: 50),
                    

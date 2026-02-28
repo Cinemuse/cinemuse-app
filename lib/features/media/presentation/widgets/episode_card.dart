@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -41,6 +42,7 @@ class _EpisodeCardState extends State<EpisodeCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final epNumber = widget.episode['episode_number'];
     final name = widget.episode['name'] ?? 'Episode $epNumber';
     final overview = widget.episode['overview'] ?? '';
@@ -114,7 +116,7 @@ class _EpisodeCardState extends State<EpisodeCard> {
                             border: Border.all(color: AppTheme.textWhite.withOpacity(0.1)),
                           ),
                           child: Text(
-                            'EP $epNumber',
+                            l10n.detailsEpisodeNumber(epNumber),
                             style: GoogleFonts.firaCode(
                               color: AppTheme.textWhite,
                               fontSize: 9,
@@ -234,7 +236,7 @@ class _EpisodeCardState extends State<EpisodeCard> {
                                     child: Padding(
                                       padding: const EdgeInsets.only(top: 4),
                                       child: Text(
-                                        _isExpanded ? 'Show less' : 'Read more',
+                                        _isExpanded ? l10n.detailsShowLess : l10n.detailsReadMore,
                                         style: const TextStyle(
                                           color: AppTheme.accent,
                                           fontSize: 11,
@@ -322,8 +324,9 @@ class MarkWatchedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Tooltip(
-      message: isWatched ? 'Watched' : 'Mark as Watched (Long press for date)',
+      message: isWatched ? l10n.detailsTooltipWatched : l10n.detailsTooltipMarkWatched,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: GestureDetector(

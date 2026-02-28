@@ -7,6 +7,7 @@ import 'package:cinemuse_app/features/profile/presentation/widgets/edit_list_mod
 import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_modal.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/system_list_card.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -45,6 +46,7 @@ class ProfileCollections extends ConsumerWidget {
   }
 
   void _showListDetails(BuildContext context, WidgetRef ref, UserList list) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => ListDetailsModal(
@@ -59,16 +61,16 @@ class ProfileCollections extends ConsumerWidget {
             context: context,
             builder: (context) => AlertDialog(
               backgroundColor: AppTheme.surface,
-              title: const Text("Delete List?", style: TextStyle(color: Colors.white)),
-              content: Text("Are you sure you want to delete '${list.name}'?", style: const TextStyle(color: Colors.white70)),
+              title: Text(l10n.detailsDeleteListTitle, style: const TextStyle(color: Colors.white)),
+              content: Text(l10n.detailsDeleteListConfirm(list.name), style: const TextStyle(color: Colors.white70)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text("Cancel"),
+                  child: Text(l10n.commonCancel),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: const Text("Delete", style: TextStyle(color: Colors.redAccent)),
+                  child: Text(l10n.commonDelete, style: const TextStyle(color: Colors.redAccent)),
                 ),
               ],
             ),
@@ -87,6 +89,7 @@ class ProfileCollections extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final listsAsync = ref.watch(userListsProvider);
 
     return listsAsync.when(
@@ -137,9 +140,9 @@ class ProfileCollections extends ConsumerWidget {
                         children: [
                           const Icon(LucideIcons.list, color: Colors.white, size: 20),
                           const SizedBox(width: 8),
-                          const Text(
-                            "Collections",
-                            style: TextStyle(
+                          Text(
+                            l10n.detailsCollectionsTitle,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -149,7 +152,7 @@ class ProfileCollections extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "Your custom themed lists.",
+                        l10n.detailsCollectionsDesc,
                         style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14),
                       ),
                     ],
@@ -157,9 +160,9 @@ class ProfileCollections extends ConsumerWidget {
                   TextButton.icon(
                     onPressed: () => _showCreateListModal(context, ref),
                     icon: const Icon(LucideIcons.plus, size: 16, color: Color(0xFFC026D3)), // Matches the purple color in image
-                    label: const Text(
-                      "New Collection",
-                      style: TextStyle(
+                    label: Text(
+                      l10n.detailsNewCollection,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -186,7 +189,7 @@ class ProfileCollections extends ConsumerWidget {
                   ),
                   child: Center(
                     child: Text(
-                      "No Collections yet. Create one to start organizing!",
+                      l10n.detailsNoCollections,
                       style: TextStyle(color: Colors.white.withOpacity(0.3)),
                     ),
                   ),
@@ -216,7 +219,7 @@ class ProfileCollections extends ConsumerWidget {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, stack) => Center(
-        child: Text('Error: $err', style: const TextStyle(color: Colors.red)),
+        child: Text('${l10n.commonError}: $err', style: const TextStyle(color: Colors.red)),
       ),
     );
   }

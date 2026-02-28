@@ -158,6 +158,36 @@ abstract class AppLocalizations {
   /// **'Confirm'**
   String get commonConfirm;
 
+  /// No description provided for @commonCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get commonCreate;
+
+  /// No description provided for @commonDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get commonDelete;
+
+  /// No description provided for @commonFeatured.
+  ///
+  /// In en, this message translates to:
+  /// **'FEATURED'**
+  String get commonFeatured;
+
+  /// No description provided for @commonUnexpectedError.
+  ///
+  /// In en, this message translates to:
+  /// **'An unexpected error occurred'**
+  String get commonUnexpectedError;
+
+  /// No description provided for @commonOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get commonOk;
+
   /// No description provided for @searchPlaceholder.
   ///
   /// In en, this message translates to:
@@ -331,6 +361,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Filtered by studio'**
   String get searchFilteredByStudio;
+
+  /// No description provided for @detailsErrorLoadingSeason.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading season: {error}'**
+  String detailsErrorLoadingSeason(Object error);
+
+  /// No description provided for @detailsSeasonNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Season details not found'**
+  String get detailsSeasonNotFound;
+
+  /// No description provided for @detailsDeleteListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete List?'**
+  String get detailsDeleteListTitle;
+
+  /// No description provided for @detailsDeleteListConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \'{name}\'?'**
+  String detailsDeleteListConfirm(Object name);
+
+  /// No description provided for @detailsCollectionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Collections'**
+  String get detailsCollectionsTitle;
+
+  /// No description provided for @detailsCollectionsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Your custom themed lists.'**
+  String get detailsCollectionsDesc;
+
+  /// No description provided for @detailsNewCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'New Collection'**
+  String get detailsNewCollection;
+
+  /// No description provided for @detailsNoCollections.
+  ///
+  /// In en, this message translates to:
+  /// **'No Collections yet. Create one to start organizing!'**
+  String get detailsNoCollections;
+
+  /// No description provided for @detailsAddToList.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to List'**
+  String get detailsAddToList;
+
+  /// No description provided for @detailsNoCustomLists.
+  ///
+  /// In en, this message translates to:
+  /// **'No custom lists yet'**
+  String get detailsNoCustomLists;
+
+  /// No description provided for @detailsCreateNewList.
+  ///
+  /// In en, this message translates to:
+  /// **'Create New List'**
+  String get detailsCreateNewList;
+
+  /// No description provided for @detailsMarkPreviousTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark previous?'**
+  String get detailsMarkPreviousTitle;
+
+  /// No description provided for @detailsMarkPreviousDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'You marked Episode {episode}. Do you also want to mark the {count} previous unwatched episode(s) as watched?'**
+  String detailsMarkPreviousDesc(Object count, Object episode);
+
+  /// No description provided for @detailsOnlyThisOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Only this one'**
+  String get detailsOnlyThisOne;
+
+  /// No description provided for @detailsCollectionNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection Name (e.g., \'Sci-Fi Gems\')'**
+  String get detailsCollectionNameHint;
+
+  /// No description provided for @homeErrorLoadingFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading features'**
+  String get homeErrorLoadingFeatures;
+
+  /// No description provided for @homeMoreInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'More Info'**
+  String get homeMoreInfo;
+
+  /// No description provided for @homeTrendingNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Trending Now'**
+  String get homeTrendingNow;
+
+  /// No description provided for @homePopularMovies.
+  ///
+  /// In en, this message translates to:
+  /// **'Popular Movies'**
+  String get homePopularMovies;
+
+  /// No description provided for @homePopularSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'Popular Series'**
+  String get homePopularSeries;
+
+  /// No description provided for @authContinueGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue as Guest'**
+  String get authContinueGuest;
+
+  /// No description provided for @authWelcomeBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome Back'**
+  String get authWelcomeBack;
+
+  /// No description provided for @authJoinCineMuse.
+  ///
+  /// In en, this message translates to:
+  /// **'Join CineMuse'**
+  String get authJoinCineMuse;
+
+  /// No description provided for @authEnterCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your credentials to access your account'**
+  String get authEnterCredentials;
+
+  /// No description provided for @authCreateAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account to start watching'**
+  String get authCreateAccount;
+
+  /// No description provided for @authEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'EMAIL'**
+  String get authEmail;
+
+  /// No description provided for @authPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'PASSWORD'**
+  String get authPassword;
+
+  /// No description provided for @authSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get authSignIn;
+
+  /// No description provided for @authCreateAccountAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Account'**
+  String get authCreateAccountAction;
+
+  /// No description provided for @authNoAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account?'**
+  String get authNoAccount;
+
+  /// No description provided for @authHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account?'**
+  String get authHaveAccount;
+
+  /// No description provided for @authOr.
+  ///
+  /// In en, this message translates to:
+  /// **'OR'**
+  String get authOr;
+
+  /// No description provided for @authDebugLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Debug Login'**
+  String get authDebugLogin;
+
+  /// No description provided for @settingsErrorSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving: {error}'**
+  String settingsErrorSaving(Object error);
 
   /// No description provided for @detailsEpisodes.
   ///

@@ -83,7 +83,7 @@ class _SettingInputState extends State<SettingInput> {
           _isSaving = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.settingsErrorSaving(e.toString()))),
         );
       }
     }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class EpisodeList extends ConsumerStatefulWidget {
   final List<dynamic> episodes;
@@ -74,6 +75,7 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
   @override
   Widget build(BuildContext context) {
     final controller = ref.read(mediaDetailsControllerProvider.notifier);
+    final l10n = AppLocalizations.of(context)!;
     final tmdbId = int.parse(widget.media['id'].toString());
 
     return ListView.separated(
@@ -150,15 +152,16 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
   }
 
   void _showMarkPrecedingModal(BuildContext context, MediaDetailsController controller, int tmdbId, int season, int episode, List<({int season, int episode})> missing) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.secondary,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Mark previous?', style: TextStyle(color: Colors.white)),
+        title: Text(l10n.detailsMarkPreviousTitle, style: const TextStyle(color: Colors.white)),
         content: Text(
-          'You marked Episode $episode. Do you also want to mark the ${missing.length} previous unwatched episode(s) as watched?',
+          l10n.detailsMarkPreviousDesc(episode.toString(), missing.length.toString()),
           style: const TextStyle(color: AppTheme.textMuted),
         ),
         actions: [
@@ -167,7 +170,7 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
               Navigator.pop(context);
               controller.logEpisodeWatch(tmdbId: tmdbId, season: season, episode: episode);
             },
-            child: const Text('Only this one', style: TextStyle(color: AppTheme.textMuted)),
+            child: Text(l10n.detailsOnlyThisOne, style: const TextStyle(color: AppTheme.textMuted)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -180,7 +183,7 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Mark all'),
+            child: Text(l10n.detailsMarkAll),
           ),
         ],
       ),

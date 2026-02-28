@@ -39,6 +39,21 @@ class AppLocalizationsIt extends AppLocalizations {
   String get commonConfirm => 'Conferma';
 
   @override
+  String get commonCreate => 'Crea';
+
+  @override
+  String get commonDelete => 'Elimina';
+
+  @override
+  String get commonFeatured => 'IN PRIMO PIANO';
+
+  @override
+  String get commonUnexpectedError => 'Si è verificato un errore imprevisto';
+
+  @override
+  String get commonOk => 'OK';
+
+  @override
   String get searchPlaceholder => 'Cerca film, serie...';
 
   @override
@@ -130,6 +145,119 @@ class AppLocalizationsIt extends AppLocalizations {
   String get searchFilteredByStudio => 'Filtrato per studio';
 
   @override
+  String detailsErrorLoadingSeason(Object error) {
+    return 'Errore nel caricamento della stagione: $error';
+  }
+
+  @override
+  String get detailsSeasonNotFound => 'Dettagli stagione non trovati';
+
+  @override
+  String get detailsDeleteListTitle => 'Eliminare la lista?';
+
+  @override
+  String detailsDeleteListConfirm(Object name) {
+    return 'Sei sicuro di voler eliminare \'$name\'?';
+  }
+
+  @override
+  String get detailsCollectionsTitle => 'Collezioni';
+
+  @override
+  String get detailsCollectionsDesc => 'Le tue liste personalizzate.';
+
+  @override
+  String get detailsNewCollection => 'Nuova Collezione';
+
+  @override
+  String get detailsNoCollections =>
+      'Nessuna Collezione ancora. Creane una per iniziare a organizzare!';
+
+  @override
+  String get detailsAddToList => 'Aggiungi alla lista';
+
+  @override
+  String get detailsNoCustomLists => 'Nessuna lista personalizzata ancora';
+
+  @override
+  String get detailsCreateNewList => 'Crea Nuova Lista';
+
+  @override
+  String get detailsMarkPreviousTitle => 'Segna precedenti?';
+
+  @override
+  String detailsMarkPreviousDesc(Object count, Object episode) {
+    return 'Hai segnato l\'Episodio $episode. Vuoi segnare anche i $count episodi precedenti non visti come visti?';
+  }
+
+  @override
+  String get detailsOnlyThisOne => 'Solo questo';
+
+  @override
+  String get detailsCollectionNameHint =>
+      'Nome Collezione (es., \'Gemme Sci-Fi\')';
+
+  @override
+  String get homeErrorLoadingFeatures => 'Errore nel caricamento dei contenuti';
+
+  @override
+  String get homeMoreInfo => 'Più Info';
+
+  @override
+  String get homeTrendingNow => 'Di Tendenza';
+
+  @override
+  String get homePopularMovies => 'Film Popolari';
+
+  @override
+  String get homePopularSeries => 'Serie Popolari';
+
+  @override
+  String get authContinueGuest => 'Continua come Ospite';
+
+  @override
+  String get authWelcomeBack => 'Bentornato';
+
+  @override
+  String get authJoinCineMuse => 'Unisciti a CineMuse';
+
+  @override
+  String get authEnterCredentials =>
+      'Inserisci le tue credenziali per accedere';
+
+  @override
+  String get authCreateAccount => 'Crea un account per iniziare a guardare';
+
+  @override
+  String get authEmail => 'EMAIL';
+
+  @override
+  String get authPassword => 'PASSWORD';
+
+  @override
+  String get authSignIn => 'Accedi';
+
+  @override
+  String get authCreateAccountAction => 'Crea Account';
+
+  @override
+  String get authNoAccount => 'Non hai un account?';
+
+  @override
+  String get authHaveAccount => 'Hai già un account?';
+
+  @override
+  String get authOr => 'OPPURE';
+
+  @override
+  String get authDebugLogin => 'Accesso Debug';
+
+  @override
+  String settingsErrorSaving(Object error) {
+    return 'Errore nel salvataggio: $error';
+  }
+
+  @override
   String get detailsEpisodes => 'EPISODI';
 
   @override
@@ -199,19 +327,19 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsProductionDNA => 'DNA di Produzione';
 
   @override
-  String get detailsRate => 'RATE';
+  String get detailsRate => 'VALUTA';
 
   @override
-  String get detailsMarkRemaining => 'Mark Remaining';
+  String get detailsMarkRemaining => 'Segna Rimanenti';
 
   @override
-  String get detailsMarkAll => 'Mark All';
+  String get detailsMarkAll => 'Segna Tutti';
 
   @override
-  String get detailsRewatchSeries => 'Rewatch Series';
+  String get detailsRewatchSeries => 'Riguarda Serie';
 
   @override
-  String get detailsRemoveAll => 'Remove All';
+  String get detailsRemoveAll => 'Rimuovi Tutti';
 
   @override
   String get detailsBudget => 'Budget';
@@ -234,45 +362,45 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get personBiography => 'Biography';
+  String get personBiography => 'Biografia';
 
   @override
-  String get personKnownFor => 'Known For';
+  String get personKnownFor => 'Conosciuto per';
 
   @override
-  String get personFilmography => 'Filmography';
+  String get personFilmography => 'Filmografia';
 
   @override
-  String get personSeen => 'Seen';
+  String get personSeen => 'Visto';
 
   @override
-  String get personYearsOld => 'years old';
+  String get personYearsOld => 'anni';
 
   @override
-  String get personNoImage => 'No image available';
+  String get personNoImage => 'Nessuna immagine disponibile';
 
   @override
-  String get personShowMore => 'Show More';
+  String get personShowMore => 'Mostra altro';
 
   @override
-  String get personShowLess => 'Show Less';
+  String get personShowLess => 'Mostra meno';
 
   @override
-  String get personShowHidden => 'Show Hidden';
+  String get personShowHidden => 'Mostra nascosti';
 
   @override
   String personShowingCredits(Object total, Object visible) {
-    return 'Showing $visible of $total credits';
+    return 'Visualizzati $visible di $total crediti';
   }
 
   @override
-  String get personNoImg => 'No image';
+  String get personNoImg => 'Nessuna immagine';
 
   @override
-  String get personSeries => 'Series';
+  String get personSeries => 'Serie';
 
   @override
-  String get personMovie => 'Movie';
+  String get personMovie => 'Film';
 
   @override
   String get playerSettings => 'Impostazioni';

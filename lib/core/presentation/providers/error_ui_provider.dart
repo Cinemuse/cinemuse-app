@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/core/error/app_exception.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,7 +9,8 @@ final errorUiProvider = Provider<ErrorUiHandler>((ref) {
 
 class ErrorUiHandler {
   void showError(BuildContext context, dynamic error) {
-    String message = 'An unexpected error occurred';
+    final l10n = AppLocalizations.of(context)!;
+    String message = l10n.commonUnexpectedError;
     
     if (error is AppException) {
       message = error.message;
@@ -25,7 +27,7 @@ class ErrorUiHandler {
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 4),
         action: SnackBarAction(
-          label: 'OK',
+          label: l10n.commonOk,
           textColor: Colors.white,
           onPressed: () {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();

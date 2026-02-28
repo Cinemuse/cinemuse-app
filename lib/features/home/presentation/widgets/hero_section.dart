@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class HeroSection extends StatelessWidget {
   final Map<String, dynamic>? media;
@@ -11,6 +12,7 @@ class HeroSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (media == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context)!;
 
     final backdrop = media!['backdrop_path'];
     final imageUrl = backdrop != null ? "https://image.tmdb.org/t/p/original$backdrop" : null;
@@ -98,9 +100,9 @@ class HeroSection extends StatelessWidget {
                      borderRadius: BorderRadius.circular(4),
                      border: Border.all(color: AppTheme.accent.withOpacity(0.5)),
                    ),
-                   child: const Text(
-                    "FEATURED",
-                    style: TextStyle(
+                   child: Text(
+                    l10n.commonFeatured,
+                    style: const TextStyle(
                       color: AppTheme.accent,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 2,
@@ -157,7 +159,7 @@ class HeroSection extends StatelessWidget {
                             );
                         },
                         icon: const Icon(Icons.play_arrow_rounded, size: 28),
-                        label: const Text("Play Now"),
+                        label: Text(l10n.detailsPlayNow),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.accent,
                           foregroundColor: Colors.white,
@@ -181,7 +183,7 @@ class HeroSection extends StatelessWidget {
                             );
                         },
                         icon: const Icon(Icons.info_outline_rounded, size: 28),
-                        label: const Text("More Info"),
+                        label: Text(l10n.homeMoreInfo),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
                           side: BorderSide(color: Colors.white.withOpacity(0.2), width: 2),

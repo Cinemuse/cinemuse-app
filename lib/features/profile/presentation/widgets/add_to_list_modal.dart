@@ -3,6 +3,7 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/create_list_modal.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -17,6 +18,7 @@ class AddToListModal extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final listsAsync = ref.watch(userListsProvider);
 
     return Dialog(
@@ -38,9 +40,9 @@ class AddToListModal extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Add to List',
-                  style: TextStyle(
+                Text(
+                  l10n.detailsAddToList,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -67,7 +69,7 @@ class AddToListModal extends ConsumerWidget {
                           Icon(LucideIcons.list, color: Colors.white.withOpacity(0.2), size: 48),
                           const SizedBox(height: 16),
                           Text(
-                            "No custom lists yet",
+                            l10n.detailsNoCustomLists,
                             style: TextStyle(color: Colors.white.withOpacity(0.5)),
                           ),
                         ],
@@ -146,9 +148,9 @@ class AddToListModal extends ConsumerWidget {
                 );
               },
               icon: const Icon(LucideIcons.plus, size: 18, color: AppTheme.accent),
-              label: const Text(
-                'Create New List',
-                style: TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold),
+              label: Text(
+                l10n.detailsCreateNewList,
+                style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold),
               ),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),

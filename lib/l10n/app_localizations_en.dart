@@ -39,6 +39,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonConfirm => 'Confirm';
 
   @override
+  String get commonCreate => 'Create';
+
+  @override
+  String get commonDelete => 'Delete';
+
+  @override
+  String get commonFeatured => 'FEATURED';
+
+  @override
+  String get commonUnexpectedError => 'An unexpected error occurred';
+
+  @override
+  String get commonOk => 'OK';
+
+  @override
   String get searchPlaceholder => 'Search movies, series, people...';
 
   @override
@@ -128,6 +143,119 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchFilteredByStudio => 'Filtered by studio';
+
+  @override
+  String detailsErrorLoadingSeason(Object error) {
+    return 'Error loading season: $error';
+  }
+
+  @override
+  String get detailsSeasonNotFound => 'Season details not found';
+
+  @override
+  String get detailsDeleteListTitle => 'Delete List?';
+
+  @override
+  String detailsDeleteListConfirm(Object name) {
+    return 'Are you sure you want to delete \'$name\'?';
+  }
+
+  @override
+  String get detailsCollectionsTitle => 'Collections';
+
+  @override
+  String get detailsCollectionsDesc => 'Your custom themed lists.';
+
+  @override
+  String get detailsNewCollection => 'New Collection';
+
+  @override
+  String get detailsNoCollections =>
+      'No Collections yet. Create one to start organizing!';
+
+  @override
+  String get detailsAddToList => 'Add to List';
+
+  @override
+  String get detailsNoCustomLists => 'No custom lists yet';
+
+  @override
+  String get detailsCreateNewList => 'Create New List';
+
+  @override
+  String get detailsMarkPreviousTitle => 'Mark previous?';
+
+  @override
+  String detailsMarkPreviousDesc(Object count, Object episode) {
+    return 'You marked Episode $episode. Do you also want to mark the $count previous unwatched episode(s) as watched?';
+  }
+
+  @override
+  String get detailsOnlyThisOne => 'Only this one';
+
+  @override
+  String get detailsCollectionNameHint =>
+      'Collection Name (e.g., \'Sci-Fi Gems\')';
+
+  @override
+  String get homeErrorLoadingFeatures => 'Error loading features';
+
+  @override
+  String get homeMoreInfo => 'More Info';
+
+  @override
+  String get homeTrendingNow => 'Trending Now';
+
+  @override
+  String get homePopularMovies => 'Popular Movies';
+
+  @override
+  String get homePopularSeries => 'Popular Series';
+
+  @override
+  String get authContinueGuest => 'Continue as Guest';
+
+  @override
+  String get authWelcomeBack => 'Welcome Back';
+
+  @override
+  String get authJoinCineMuse => 'Join CineMuse';
+
+  @override
+  String get authEnterCredentials =>
+      'Enter your credentials to access your account';
+
+  @override
+  String get authCreateAccount => 'Create an account to start watching';
+
+  @override
+  String get authEmail => 'EMAIL';
+
+  @override
+  String get authPassword => 'PASSWORD';
+
+  @override
+  String get authSignIn => 'Sign In';
+
+  @override
+  String get authCreateAccountAction => 'Create Account';
+
+  @override
+  String get authNoAccount => 'Don\'t have an account?';
+
+  @override
+  String get authHaveAccount => 'Already have an account?';
+
+  @override
+  String get authOr => 'OR';
+
+  @override
+  String get authDebugLogin => 'Debug Login';
+
+  @override
+  String settingsErrorSaving(Object error) {
+    return 'Error saving: $error';
+  }
 
   @override
   String get detailsEpisodes => 'Episodes';

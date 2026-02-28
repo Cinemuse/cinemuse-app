@@ -55,10 +55,10 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.accent)),
         error: (err, stack) {
           final message = err is AppException ? err.message : err.toString();
-          return Center(child: Text('Error: $message', style: const TextStyle(color: Colors.white)));
+          return Center(child: Text('${l10n.commonError}: $message', style: const TextStyle(color: Colors.white)));
         },
         data: (details) {
-          if (details == null) return const Center(child: Text('Not found', style: TextStyle(color: Colors.white)));
+          if (details == null) return Center(child: Text(l10n.commonError, style: const TextStyle(color: Colors.white)));
 
           final tmdbId = int.parse(widget.mediaId);
           final isTV = typeForTmdb == 'tv';
@@ -355,11 +355,12 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})? status,
   ) {
     if (status == null) return;
+    final l10n = AppLocalizations.of(context)!;
 
     showDialog(
       context: context,
       builder: (context) => SeriesTrackModal(
-        title: details['name'] ?? 'Series',
+        title: details['name'] ?? l10n.searchSeries,
         status: status,
         onMarkRemaining: (date) => _markAllEpisodes(controller, tmdbId, details, date, onlyRemaining: true),
         onMarkAll: (date) => _markAllEpisodes(controller, tmdbId, details, date, onlyRemaining: false),
@@ -413,9 +414,9 @@ class _SeriesEpisodesSection extends ConsumerWidget {
         constraints: const BoxConstraints(minHeight: 500, maxHeight: 500),
         child: seasonDetailsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accent)),
-          error: (err, _) => Center(child: Text('Error loading season: $err')),
+          error: (err, _) => Center(child: Text(l10n.detailsErrorLoadingSeason(err.toString()))),
           data: (season) {
-            if (season == null) return const Center(child: Text('Season details not found'));
+            if (season == null) return Center(child: Text(l10n.detailsSeasonNotFound));
             final episodes = season['episodes'] as List? ?? [];
             
             // Calculate initial scroll index (first unwatched episode)
@@ -493,6 +494,7 @@ class _SeasonSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final seasons = (media['seasons'] as List? ?? [])
         .where((s) => (s['season_number'] as int? ?? 0) > 0)
         .toList();
@@ -516,7 +518,7 @@ class _SeasonSelector extends ConsumerWidget {
               children: [
                 Flexible(
                   child: Text(
-                    'Season $selectedSeason',
+                    l10n.detailsSeasonNumber(selectedSeason),
                     style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -529,7 +531,7 @@ class _SeasonSelector extends ConsumerWidget {
         ),
         itemBuilder: (context) => seasons.map((s) => PopupMenuItem<int>(
           value: s['season_number'] as int, 
-          child: Text('Season ${s['season_number']}', style: const TextStyle(fontSize: 13))
+          child: Text(l10n.detailsSeasonNumber(s['season_number']), style: const TextStyle(fontSize: 13))
         )).toList(),
       ),
     );

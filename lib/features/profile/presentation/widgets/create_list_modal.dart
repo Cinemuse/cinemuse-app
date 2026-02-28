@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 class CreateListModal extends StatefulWidget {
@@ -35,6 +36,7 @@ class _CreateListModalState extends State<CreateListModal> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Dialog(
       backgroundColor: AppTheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Colors.white10)),
@@ -44,9 +46,9 @@ class _CreateListModalState extends State<CreateListModal> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "New Collection",
-              style: TextStyle(
+            Text(
+              l10n.detailsNewCollection,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -59,7 +61,7 @@ class _CreateListModalState extends State<CreateListModal> {
               maxLength: 32,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: "Collection Name (e.g., 'Sci-Fi Gems')",
+                hintText: l10n.detailsCollectionNameHint,
                 hintStyle: const TextStyle(color: Colors.white38),
                 filled: true,
                 fillColor: Colors.black.withOpacity(0.3),
@@ -86,7 +88,7 @@ class _CreateListModalState extends State<CreateListModal> {
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text("Cancel", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                    child: Text(l10n.commonCancel, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -104,7 +106,7 @@ class _CreateListModalState extends State<CreateListModal> {
                       disabledBackgroundColor: AppTheme.accent.withOpacity(0.3),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text("Create"),
+                    child: Text(l10n.commonCreate),
                   ),
                 ),
               ],

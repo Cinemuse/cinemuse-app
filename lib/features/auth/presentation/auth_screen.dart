@@ -3,7 +3,10 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/main.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -60,6 +63,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // Show error snackbar
     if (errorMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -116,7 +120,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
                   // Title
                   Text(
-                    isLogin ? 'Welcome Back' : 'Join CineMuse',
+                    isLogin ? l10n.authWelcomeBack : l10n.authJoinCineMuse,
                     style: GoogleFonts.outfit(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
@@ -126,8 +130,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   const SizedBox(height: 8),
                   Text(
                     isLogin 
-                      ? 'Enter your credentials to access your account' 
-                      : 'Create an account to start watching',
+                      ? l10n.authEnterCredentials
+                      : l10n.authCreateAccount,
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: AppTheme.textMuted),
                   ),
@@ -137,7 +141,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                    Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'EMAIL', 
+                      l10n.authEmail, 
                       style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textMuted)
                     ),
                   ),
@@ -157,7 +161,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                    Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'PASSWORD', 
+                      l10n.authPassword, 
                       style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textMuted)
                     ),
                   ),
@@ -181,7 +185,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       onPressed: isLoading ? null : _submit,
                       child: isLoading 
                         ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) 
-                        : Text(isLogin ? 'Sign In' : 'Create Account'),
+                        : Text(isLogin ? l10n.authSignIn : l10n.authCreateAccountAction),
                     ),
                   ),
                   
@@ -193,7 +197,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                        setState(() => isLogin = !isLogin);
                     },
                     child: Text(
-                      isLogin ? "Don't have an account?" : "Already have an account?",
+                      isLogin ? l10n.authNoAccount : l10n.authHaveAccount,
                       style: const TextStyle(color: AppTheme.textMuted),
                     ),
                   ),
@@ -201,14 +205,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   const SizedBox(height: 16),
                   
                   // Divider
-                  const Row(
+                   Row(
                     children: [
-                      Expanded(child: Divider(color: AppTheme.border)),
+                      const Expanded(child: Divider(color: AppTheme.border)),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Text("OR", style: TextStyle(color: Colors.white24, fontSize: 12, fontWeight: FontWeight.bold)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(l10n.authOr, style: const TextStyle(color: Colors.white24, fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
-                      Expanded(child: Divider(color: AppTheme.border)),
+                      const Expanded(child: Divider(color: AppTheme.border)),
                     ],
                   ),
                   
@@ -218,8 +222,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                    SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      icon: const Icon(Icons.person_outline),
-                      label: const Text('Continue as Guest'),
+                      icon: const Icon(LucideIcons.user),
+                      label: Text(l10n.authContinueGuest),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.textMuted,
                         side: const BorderSide(color: AppTheme.border),
@@ -235,7 +239,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     width: double.infinity,
                     child: TextButton.icon(
                       icon: const Icon(Icons.developer_mode, color: Colors.amber),
-                      label: const Text('Debug Login', style: TextStyle(color: Colors.amber)),
+                      label: Text(l10n.authDebugLogin, style: const TextStyle(color: Colors.amber)),
                       onPressed: () {
                         ref.read(authActionsProvider).debugSignIn();
                       },
