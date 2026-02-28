@@ -5,7 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Auth State Provider
 final authProvider = StateNotifierProvider<AuthService, AsyncValue<User?>>((ref) {
-  return AuthService();
+  return AuthService(supabase);
 });
 
 // Auth Actions Provider
@@ -14,17 +14,19 @@ final authActionsProvider = Provider<AuthService>((ref) {
 });
 
 class AuthService extends StateNotifier<AsyncValue<User?>> {
-  AuthService() : super(const AsyncValue.loading()) {
+  final SupabaseClient _supabaseClient;
+
+  AuthService(this._supabaseClient) : super(const AsyncValue.loading()) {
     _init();
   }
 
   void _init() {
     // 1. Set initial state used cached session
-    final session = supabase.auth.currentSession;
+    final session = _supabaseClient.auth.currentSession;
     state = AsyncValue.data(session?.user);
 
     // 2. Listen to auth changes
-    supabase.auth.onAuthStateChange.listen((data) {
+    _supabaseClient.auth.onAuthStateChange.listen((data) {
       final AuthChangeEvent event = data.event;
       final Session? session = data.session;
       
@@ -39,7 +41,7 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
   Future<void> signIn(String email, String password) async {
     state = const AsyncValue.loading();
     try {
-      final response = await supabase.auth.signInWithPassword(
+      final response = await _supabaseClient.auth.signInWithPassword(
         email: email,
         password: password,
       );
@@ -48,7 +50,7 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
       }
     } catch (e, st) {
       final appEx = SupabaseErrorHandler.handleError(e);
-      state = AsyncValue.data(supabase.auth.currentUser);
+      state = AsyncValue.data(_supabaseClient.auth.currentUser);
       throw appEx;
     }
   }
@@ -56,7 +58,7 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
   Future<void> signUp(String email, String password) async {
     state = const AsyncValue.loading();
     try {
-      final response = await supabase.auth.signUp(
+      final response = await _supabaseClient.auth.signUp(
         email: email,
         password: password,
       );
@@ -65,25 +67,23 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
       }
     } catch (e, st) {
       final appEx = SupabaseErrorHandler.handleError(e);
-      state = AsyncValue.data(supabase.auth.currentUser); 
+      state = AsyncValue.data(_supabaseClient.auth.currentUser); 
       throw appEx;
     }
   }
   
   Future<void> debugSignIn() async {
-    // Not applicable with real auth usually, or use a hardcoded test account
-    // For now, let's remove or implement with a real test account if user wants
-    state = const AsyncValue.loading();
+    await signIn('aaa@aaa.aa', 'Password');
   }
 
   Future<void> signOut() async {
     state = const AsyncValue.loading();
-    await supabase.auth.signOut();
+    await _supabaseClient.auth.signOut();
   }
 
   void resetError() {
     if (state.hasError) {
-      state = AsyncValue.data(supabase.auth.currentUser);
+      state = AsyncValue.data(_supabaseClient.auth.currentUser);
     }
   }
 }
