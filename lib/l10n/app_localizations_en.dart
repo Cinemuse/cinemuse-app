@@ -718,4 +718,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agendaTbdLabel => 'TBD';
+
+  @override
+  String get updateAvailable => 'Update Available';
+
+  @override
+  String get updateDialogTitle => 'New version available';
+
+  @override
+  String get updateDialogMessage =>
+      'A new version of Cinemuse is available. Would you like to update now?';
+
+  @override
+  String get updateNow => 'Update Now';
+
+  @override
+  String get later => 'Later';
+
+  @override
+  String downloadingUpdate(Object progress) {
+    return 'Downloading update $progress%';
+  }
+
+  @override
+  String get updateFailed => 'Update failed. Please try again later.';
 }

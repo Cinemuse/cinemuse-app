@@ -1435,6 +1435,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'TBD'**
   String get agendaTbdLabel;
+
+  /// No description provided for @updateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Available'**
+  String get updateAvailable;
+
+  /// No description provided for @updateDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New version available'**
+  String get updateDialogTitle;
+
+  /// No description provided for @updateDialogMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version of Cinemuse is available. Would you like to update now?'**
+  String get updateDialogMessage;
+
+  /// No description provided for @updateNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Now'**
+  String get updateNow;
+
+  /// No description provided for @later.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get later;
+
+  /// No description provided for @downloadingUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading update {progress}%'**
+  String downloadingUpdate(Object progress);
+
+  /// No description provided for @updateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Update failed. Please try again later.'**
+  String get updateFailed;
 }
 
 class _AppLocalizationsDelegate
