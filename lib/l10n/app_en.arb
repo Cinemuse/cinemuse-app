@@ -142,6 +142,8 @@
   "playerErrorResolving": "Error resolving stream:\n{error}",
   "playerErrorResolvingYoutube": "Error loading YouTube video:\n{error}",
   "playerNoAudioFound": "No audio tracks found",
+  "playerFiles": "Files",
+  "playerSelectFile": "Select File",
   "playerSubtitles": "Subtitles",
   "playerSelectSubtitle": "Select Subtitle Track",
   "commonGoBack": "Go Back",

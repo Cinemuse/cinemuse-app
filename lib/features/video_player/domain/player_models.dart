@@ -49,6 +49,8 @@ class CinemaPlayerState {
   final NextEpisodeInfo? nextEpisode;
   final bool isCasting;
   final CastDevice? selectedCastDevice;
+  final List<Map<String, dynamic>> activeTorrentFiles;
+  final int? activeFileId;
 
   CinemaPlayerState({
     required this.controller,
@@ -58,6 +60,8 @@ class CinemaPlayerState {
     this.nextEpisode,
     this.isCasting = false,
     this.selectedCastDevice,
+    this.activeTorrentFiles = const [],
+    this.activeFileId,
   });
 
   CinemaPlayerState copyWith({
@@ -68,6 +72,8 @@ class CinemaPlayerState {
     NextEpisodeInfo? nextEpisode,
     bool? isCasting,
     CastDevice? selectedCastDevice,
+    List<Map<String, dynamic>>? activeTorrentFiles,
+    int? activeFileId,
   }) {
     return CinemaPlayerState(
       controller: controller ?? this.controller,
@@ -77,6 +83,8 @@ class CinemaPlayerState {
       nextEpisode: nextEpisode ?? this.nextEpisode,
       isCasting: isCasting ?? this.isCasting,
       selectedCastDevice: selectedCastDevice ?? this.selectedCastDevice,
+      activeTorrentFiles: activeTorrentFiles ?? this.activeTorrentFiles,
+      activeFileId: activeFileId ?? this.activeFileId,
     );
   }
 }

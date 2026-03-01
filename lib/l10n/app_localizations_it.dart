@@ -455,6 +455,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playerNoAudioFound => 'Nessuna traccia audio trovata';
 
   @override
+  String get playerFiles => 'File';
+
+  @override
+  String get playerSelectFile => 'Seleziona File';
+
+  @override
   String get playerSubtitles => 'Sottotitoli';
 
   @override

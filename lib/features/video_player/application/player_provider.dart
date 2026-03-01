@@ -19,7 +19,7 @@ import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/application/handlers/youtube_handler.dart';
 import 'package:cinemuse_app/features/video_player/application/handlers/rd_handler.dart';
 import 'package:cinemuse_app/features/video_player/application/handlers/cast_handler.dart';
-import 'package:cinemuse_app/features/video_player/application/handlers/preference_handler.dart';
+import 'package:cinemuse_app/features/video_player/application/language_mapper.dart';
 
 // Convert back to StateNotifierProvider for compatibility/simplicity
 final playerControllerProvider = StateNotifierProvider.family.autoDispose<PlayerController, AsyncValue<CinemaPlayerState>, PlayerParams>(
@@ -43,7 +43,6 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   late final YoutubeHandler _youtubeHandler;
   late final RdHandler _rdHandler;
   late final CastHandler _castHandler;
-  late final PreferenceHandler _preferenceHandler;
 
   PlayerController(this.ref, this.params) : super(const AsyncValue.loading()) {
     _initialPosition = params.startPosition;
@@ -116,11 +115,11 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           _controller = VideoController(
             _player!,
             configuration: VideoControllerConfiguration(
-              hwdec: io.Platform.isAndroid ? 'mediacodec' : 'auto',
               vo: io.Platform.isAndroid ? 'gpu' : null,
             ),
           );
-          _preferenceHandler = PreferenceHandler(_player!);
+          
+          _applyEnginePreferences();
           
           // Add debug listeners
           _player!.stream.error.listen((event) { 
@@ -212,7 +211,12 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
       while (retryCount < maxRetries) {
         try {
-          streamData = await resolver.resolveStream(initialStream['magnet'], rdKey);
+          streamData = await resolver.resolveStream(
+            initialStream['magnet'], 
+            rdKey,
+            season: params.season,
+            episode: params.episode,
+          );
           if (streamData != null && streamData['url'] != null) {
             break; // Success
           }
@@ -243,9 +247,6 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         releaseDate: DateTime.tryParse(_mediaDetails?['release_date'] ?? _mediaDetails?['first_air_date'] ?? ''),
         updatedAt: DateTime.now(),
       );
-      await repo.ensureMediaCached(mainMediaItem);
-
-      // 5. Initialize Player
       if (_player == null) {
         _player = Player();
         _controller = VideoController(
@@ -255,7 +256,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
             vo: io.Platform.isAndroid ? 'gpu' : null,
           ),
         );
-        _preferenceHandler = PreferenceHandler(_player!);
+        
+        _applyEnginePreferences();
         
         // Setup Progress Listener
         _posSub = _player!.stream.position.listen((duration) {
@@ -281,7 +283,10 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       }
 
       print('Opening media: ${streamData['url']}');
-      await _player!.open(Media(streamData['url'] as String), play: true); // Start playing
+      await _player!.open(Media(streamData['url'] as String), play: true);
+      
+      // Reactive preference check (backup for custom names)
+      unawaited(_ensurePreferredTrack());
       
       if (params.startPosition > 0) {
         // Wait for usage duration to be available
@@ -343,10 +348,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           currentStream: {...initialStream, ...streamData!},
           title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? 'Unknown',
           nextEpisode: nextEpisode,
+          activeTorrentFiles: streamData['files'] != null ? List<Map<String, dynamic>>.from(streamData['files']) : const [],
+          activeFileId: streamData['activeFileId'] as int?,
         ));
-        
-        // Apply user preferences (language/subtitles) once tracks are resolved
-        _preferenceHandler.applyPreferences(ref.read(settingsProvider).playerLanguage);
       }
     } catch (e, st) {
       if (mounted) {
@@ -420,6 +424,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
     try {
         if (params.type == 'youtube') {
+          // ... existing youtube logic ...
           final position = _player!.state.position;
           
           String? localAudioPath;
@@ -452,11 +457,17 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           return;
         }
 
-       final resolvedStream = await _rdHandler.resolveAndMerge(newStream);
+       final resolvedStream = await _rdHandler.resolveAndMerge(
+         newStream,
+         season: params.season,
+         episode: params.episode,
+       );
        if (resolvedStream != null) {
           final position = _player!.state.position;
           
           await _player!.open(Media(resolvedStream['url'] as String), play: true);
+          
+          unawaited(_ensurePreferredTrack());
           
           // Wait for duration to be available before seeking
           final newDuration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
@@ -466,9 +477,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
           state = AsyncValue.data(currentState.copyWith(
             currentStream: resolvedStream,
+            activeTorrentFiles: resolvedStream['files'] != null ? List<Map<String, dynamic>>.from(resolvedStream['files']) : const [],
+            activeFileId: resolvedStream['activeFileId'] as int?,
           ));
-          
-          _preferenceHandler.applyPreferences(ref.read(settingsProvider).playerLanguage);
        }
     } catch (e) {
       print("Error changing source: $e");
@@ -491,15 +502,50 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         _player?.state.position ?? Duration.zero,
         (resolvedStream) {
           if (mounted) {
-            state = AsyncValue.data(state.value!.copyWith(currentStream: resolvedStream));
+            state = AsyncValue.data(state.value!.copyWith(
+              currentStream: resolvedStream,
+              activeTorrentFiles: resolvedStream['files'] != null ? List<Map<String, dynamic>>.from(resolvedStream['files']) : const [],
+              activeFileId: resolvedStream['activeFileId'] as int?,
+            ));
           }
         },
+        season: params.season,
+        episode: params.episode,
       );
 
       _player?.pause();
     } catch (e) {
       print('PlayerController: Error starting cast: $e');
       stopCasting();
+    }
+  }
+
+  Future<void> changeFile(int fileId) async {
+    final currentState = state.value;
+    if (currentState == null || _player == null) return;
+
+    try {
+      final resolvedStream = await _rdHandler.resolveAndMerge(
+        currentState.currentStream,
+        fileId: fileId,
+      );
+
+      if (resolvedStream != null) {
+        // Keep current position when switching files in same torrent (might be useful for split releases)
+        // or starting from beginning if it's a completely different episode.
+        // Usually, if a user manually picks a file, it's because auto-match failed.
+        // Let's reset position if it's a manual switch in a pack.
+        await _player!.open(Media(resolvedStream['url'] as String), play: true);
+        
+        unawaited(_ensurePreferredTrack());
+        
+        state = AsyncValue.data(currentState.copyWith(
+          currentStream: resolvedStream,
+          activeFileId: fileId,
+        ));
+      }
+    } catch (e) {
+      print("Error changing file: $e");
     }
   }
 
@@ -512,5 +558,96 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       ));
     }
     _player?.play();
+  }
+
+  void _applyEnginePreferences() {
+    if (_player == null) return;
+    final lang = ref.read(settingsProvider).playerLanguage.toLowerCase();
+    if (lang.isEmpty) return;
+
+    final langCodes = LanguageMapper.getCodes(lang);
+    final codesJoined = langCodes.join(',');
+
+    try {
+      // Set engine properties for instant matching (if codes are in metadata)
+      (_player!.platform as dynamic).setProperty('alang', codesJoined);
+      (_player!.platform as dynamic).setProperty('slang', codesJoined);
+      print('PlayerController: Set engine preferences: $codesJoined');
+    } catch (e) {
+      print('PlayerController: Error setting engine props: $e');
+    }
+  }
+
+  /// Backup logic for custom names (e.g. "English [Crunchyroll]")
+  Future<void> _ensurePreferredTrack() async {
+    if (_player == null) return;
+    final lang = ref.read(settingsProvider).playerLanguage.toLowerCase();
+    if (lang.isEmpty) return;
+
+    try {
+       // Wait short time for tracks to appear stabilizer
+       await Future.delayed(const Duration(milliseconds: 500));
+       await _player!.stream.tracks.firstWhere((t) => t.audio.isNotEmpty)
+           .timeout(const Duration(seconds: 3));
+           
+       // Second small delay to ensure metadata (titles/langs) are parsed
+       await Future.delayed(const Duration(milliseconds: 200));
+           
+       final tracks = _player!.state.tracks;
+       
+       // 1. Audio Check
+       bool audioMatched = false;
+       for (var track in tracks.audio) {
+         if (track.id == 'auto' || track.id == 'no') continue;
+         if (LanguageMapper.isMatch(track, lang)) {
+           print('PlayerController: Explicitly Selecting Audio Match: ${track.title} [${track.id}]');
+           await _player!.setAudioTrack(track);
+           audioMatched = true;
+           break;
+         }
+       }
+
+       // If no match found and we are on 'auto', force the first real track for determinism
+       if (!audioMatched && _player!.state.track.audio.id == 'auto') {
+         final firstReal = tracks.audio.firstWhere((t) => t.id != 'auto' && t.id != 'no', orElse: () => _player!.state.track.audio);
+         if (firstReal.id != 'auto') {
+           print('PlayerController: No match, falling back to first audio track: ${firstReal.title}');
+           await _player!.setAudioTrack(firstReal);
+         }
+       }
+
+       // 2. Subtitle Check
+       bool subtitleMatched = false;
+       for (var track in tracks.subtitle) {
+         if (track.id == 'auto' || track.id == 'no') continue;
+         if (LanguageMapper.isMatch(track, lang)) {
+           print('PlayerController: Direct Match Subtitle: ${track.title}');
+           await _player!.setSubtitleTrack(track);
+           subtitleMatched = true;
+           break;
+         }
+       }
+       
+       // Fallback for subtitles if on 'auto' but no match
+       if (!subtitleMatched && _player!.state.track.subtitle.id == 'auto') {
+         // Subtitles usually default to 'no' if no match, which is fine
+         // But let's be explicit if it's stuck on 'auto'
+          final firstReal = tracks.subtitle.firstWhere((t) => t.id != 'auto' && t.id != 'no', orElse: () => _player!.state.track.subtitle);
+          if (firstReal.id != 'auto') {
+             print('PlayerController: No match, falling back to first subtitle: ${firstReal.title}');
+             await _player!.setSubtitleTrack(firstReal);
+          }
+       }
+    } catch (_) {
+      // Timeout or no tracks, ignore
+    }
+  }
+
+  bool _isLangMatch(dynamic track, String lang) {
+    return LanguageMapper.isMatch(track, lang);
+  }
+
+  List<String> _getLanguageCodes(String lang) {
+    return LanguageMapper.getCodes(lang);
   }
 }

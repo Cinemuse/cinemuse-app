@@ -84,8 +84,14 @@ class StreamResolver {
   }
 
   /// Resolve a specific magnet link to a direct stream URL
-  Future<Map<String, dynamic>?> resolveStream(String magnet, String rdKey) async {
-    return _resolveRealDebrid(magnet, rdKey);
+  Future<Map<String, dynamic>?> resolveStream(
+    String magnet, 
+    String rdKey, {
+    int? season, 
+    int? episode,
+    int? fileId,
+  }) async {
+    return _resolveRealDebrid(magnet, rdKey, season: season, episode: episode, fileId: fileId);
   }
 
   // Delegated Methods to TmdbService
@@ -296,7 +302,13 @@ class StreamResolver {
     return [];
   }
 
-  Future<Map<String, dynamic>?> _resolveRealDebrid(String magnet, String apiKey) async {
+  Future<Map<String, dynamic>?> _resolveRealDebrid(
+    String magnet, 
+    String apiKey, {
+    int? season, 
+    int? episode,
+    int? fileId,
+  }) async {
     final headers = { "Authorization": "Bearer $apiKey" };
 
     final addFormData = FormData.fromMap({ "magnet": magnet });
@@ -314,22 +326,68 @@ class StreamResolver {
     );
     var info = infoRes.data;
 
-    if (info['status'] == 'waiting_files_selection') {
-      final files = info['files'] as List;
-      final videoFiles = files.where((f) {
-        final path = (f['path'] as String).toLowerCase();
-        return path.endsWith('.mp4') || path.endsWith('.mkv') || path.endsWith('.avi') || 
-               path.endsWith('.mov') || path.endsWith('.m4v') || path.endsWith('.webm') ||
-               path.endsWith('.flv') || path.endsWith('.wmv');
-      }).toList();
+    // Filter and map video files first to use in selection logic
+    final List<Map<String, dynamic>> allVideoFiles = (info['files'] as List? ?? [])
+        .where((f) {
+          final path = (f['path'] as String? ?? '').toLowerCase();
+          return path.endsWith('.mp4') || path.endsWith('.mkv') || path.endsWith('.avi') || 
+                 path.endsWith('.mov') || path.endsWith('.m4v') || path.endsWith('.webm') ||
+                 path.endsWith('.flv') || path.endsWith('.wmv');
+        })
+        .map((f) => <String, dynamic>{
+          'id': f['id'] as int,
+          'path': f['path'] as String,
+          'bytes': f['bytes'] as int? ?? 0,
+          'selected': f['selected'] == 1,
+        }).toList();
 
-      videoFiles.sort((a, b) => (b['bytes'] as int) - (a['bytes'] as int));
+    print('CINEMUSE-DEBUG: RD Torrent $torrentId files found: ${allVideoFiles.length}');
 
-      if (videoFiles.isEmpty) throw Exception("No video files found in torrent");
+    int? selectedId = fileId;
+    if (selectedId == null && season != null && episode != null) {
+      final sStr = season.toString().padLeft(2, '0');
+      final eStr = episode.toString().padLeft(2, '0');
+      
+      final patterns = [
+        RegExp('s$sStr\\s*e$eStr', caseSensitive: false),
+        RegExp('${season}x$eStr', caseSensitive: false),
+        RegExp('e$eStr\\b', caseSensitive: false),
+        RegExp('[\\s\\._-]${episode}[\\s\\._-]', caseSensitive: false),
+      ];
 
-      final fileId = videoFiles[0]['id'];
+      for (final pattern in patterns) {
+        Map<String, dynamic>? foundMatch;
+        for (final f in allVideoFiles) {
+          if (pattern.hasMatch(f['path'])) {
+            foundMatch = f;
+            break;
+          }
+        }
+        
+        if (foundMatch != null) {
+          selectedId = foundMatch['id'] as int;
+          print('CINEMUSE-DEBUG: Auto-matched S${season}E${episode} -> ${foundMatch['path']}');
+          break;
+        }
+      }
+    }
 
-      final selFormData = FormData.fromMap({ "files": fileId.toString() });
+    // Default to largest if still null
+    if (selectedId == null && allVideoFiles.isNotEmpty) {
+      final sorted = List<Map<String, dynamic>>.from(allVideoFiles);
+      sorted.sort((a, b) => (b['bytes'] as int) - (a['bytes'] as int));
+      selectedId = sorted[0]['id'] as int;
+      print('CINEMUSE-DEBUG: Fallback to largest file: ${sorted[0]['path']}');
+    }
+
+    // Check if we need to (re)select files
+    final List currentlySelected = (info['files'] as List? ?? []).where((f) => f['selected'] == 1).toList();
+    final bool selectionMismatch = selectedId != null && 
+        (currentlySelected.length != 1 || currentlySelected[0]['id'] != selectedId);
+
+    if (info['status'] == 'waiting_files_selection' || (selectionMismatch && info['status'] == 'downloaded')) {
+      print('CINEMUSE-DEBUG: Selecting file $selectedId (status: ${info['status']})');
+      final selFormData = FormData.fromMap({ "files": selectedId.toString() });
 
       await _dio.post(
         "$rdApiUrl/torrents/selectFiles/$torrentId",
@@ -345,6 +403,8 @@ class StreamResolver {
     }
 
     if (info['links'] != null && (info['links'] as List).isNotEmpty) {
+      // Find the link corresponding to our selected file if possible
+      // Real-Debrid tends to return links in the order of selected files
       final link = info['links'][0];
       final unrestrictFormData = FormData.fromMap({ "link": link });
 
@@ -366,6 +426,8 @@ class StreamResolver {
         'mimeType': unrestrictData['mimeType'],
         'filename': unrestrictData['filename'],
         'originalUrl': finalUrl,
+        'files': allVideoFiles,
+        'activeFileId': selectedId,
       };
     }
 

@@ -15,8 +15,10 @@ class CastHandler {
     Map<String, dynamic> currentStream, 
     String title, 
     Duration currentPosition,
-    Function(Map<String, dynamic>) onStreamResolved,
-  ) async {
+    Function(Map<String, dynamic>) onStreamResolved, {
+    int? season,
+    int? episode,
+  }) async {
     try {
       _castSession = await CastSessionManager().startSession(device);
       
@@ -25,7 +27,12 @@ class CastHandler {
       // Lazy resolution if URL is missing (e.g. magnet source)
       if (urlToCasting == null && currentStream.containsKey('magnet')) {
         print('CastHandler: URL missing, attempting lazy resolution...');
-        final streamData = await _resolver.resolveStream(currentStream['magnet'], _rdKey);
+        final streamData = await _resolver.resolveStream(
+          currentStream['magnet'], 
+          _rdKey,
+          season: season,
+          episode: episode,
+        );
         if (streamData != null) {
           urlToCasting = streamData['url'];
           onStreamResolved({...currentStream, ...streamData});

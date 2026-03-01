@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
+import 'package:cinemuse_app/features/video_player/application/language_mapper.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class PlayerSettingsBottomSheet extends ConsumerWidget {
@@ -173,41 +175,52 @@ class _QualitySubtitle extends StatelessWidget {
   }
 }
 
-class _TrackSubtitle extends StatelessWidget {
+class _TrackSubtitle extends ConsumerWidget {
   final Player player;
   final bool isSubtitle;
   const _TrackSubtitle({required this.player, required this.isSubtitle});
 
   @override
-  Widget build(BuildContext context) {
-    final track = isSubtitle ? player.state.track.subtitle : player.state.track.audio;
-    final tracks = isSubtitle ? player.state.tracks.subtitle : player.state.tracks.audio;
-    
-    if (track.id == 'auto' || track.id == 'no') {
-      if (track.id == 'no') return const Text('Off/None', style: TextStyle(color: AppTheme.textMuted));
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (isSubtitle) {
+      final track = player.state.track.subtitle;
+      final pref = ref.watch(settingsProvider).playerLanguage.toLowerCase();
       
-      // If auto, try to find first real track for display
-      final realTracks = tracks.where((t) => t.id != 'no' && t.id != 'auto');
-      if (realTracks.isNotEmpty) {
-        final first = realTracks.first;
-        return Text(
-          _LanguageHelper.getName(first.title ?? first.language ?? first.id),
-          style: const TextStyle(color: AppTheme.textMuted),
-        );
+      if (track.id == 'no' || track.id == 'auto') {
+        if (track.id == 'no') return const Text('Off/None', style: TextStyle(color: AppTheme.textMuted));
+        
+        // If Auto, find matching sub or default to first
+        final subs = player.state.tracks.subtitle;
+        final matched = subs.firstWhere((t) => t.id != 'auto' && t.id != 'no' && LanguageMapper.isMatch(t, pref), orElse: () => subs.firstOrNull ?? track);
+        
+        final name = LanguageMapper.getDisplayLanguage(matched.title ?? matched.language ?? matched.id);
+        return Text(name, style: const TextStyle(color: AppTheme.textMuted));
       }
-      return const Text('Auto', style: TextStyle(color: AppTheme.textMuted));
+      
+      final name = LanguageMapper.getDisplayLanguage(track.title ?? track.language ?? track.id);
+      return Text(name, style: const TextStyle(color: AppTheme.textMuted), maxLines: 1, overflow: TextOverflow.ellipsis);
+    } else {
+      final track = player.state.track.audio;
+      final pref = ref.watch(settingsProvider).playerLanguage.toLowerCase();
+      
+      if (track.id == 'no' || track.id == 'auto') {
+        if (track.id == 'no') return const Text('Off/None', style: TextStyle(color: AppTheme.textMuted));
+        
+        // If Auto, find matching audio or default to first
+        final audio = player.state.tracks.audio;
+        final matched = audio.firstWhere((t) => t.id != 'auto' && t.id != 'no' && LanguageMapper.isMatch(t, pref), orElse: () => audio.firstOrNull ?? track);
+        
+        final name = LanguageMapper.getDisplayLanguage(matched.title ?? matched.language ?? matched.id);
+        return Text(name, style: const TextStyle(color: AppTheme.textMuted));
+      }
+      
+      final name = LanguageMapper.getDisplayLanguage(track.title ?? track.language ?? track.id);
+      return Text(name, style: const TextStyle(color: AppTheme.textMuted), maxLines: 1, overflow: TextOverflow.ellipsis);
     }
-    
-    return Text(
-      _LanguageHelper.getName(track.title ?? track.language ?? track.id),
-      style: const TextStyle(color: AppTheme.textMuted),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
   }
 }
 
-class _QualitySelector extends ConsumerWidget {
+class _QualitySelector extends ConsumerStatefulWidget {
   final CinemaPlayerState state;
   final PlayerParams params;
 
@@ -224,7 +237,25 @@ class _QualitySelector extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_QualitySelector> createState() => _QualitySelectorState();
+}
+
+class _QualitySelectorState extends ConsumerState<_QualitySelector> {
+  bool _filesExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = widget.state;
+    final params = widget.params;
+    
+    // Sort files alphabetically by filename
+    final sortedFiles = List<Map<String, dynamic>>.from(state.activeTorrentFiles);
+    sortedFiles.sort((a, b) {
+      final nameA = (a['path'] as String? ?? '').split('/').last.toLowerCase();
+      final nameB = (b['path'] as String? ?? '').split('/').last.toLowerCase();
+      return nameA.compareTo(nameB);
+    });
+
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
       child: DraggableScrollableSheet(
@@ -274,79 +305,197 @@ class _QualitySelector extends ConsumerWidget {
                   ),
                 ),
                 Expanded(
-                  child: ListView.separated(
+                  child: ListView(
                     controller: scrollController,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    itemCount: state.availableStreams.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final stream = state.availableStreams[index];
-                      final meta = stream['metadata'] as Map<String, dynamic>? ?? {};
-                      final isSelected = stream['infoHash'] == state.currentStream['infoHash'] || (stream['url'] != null && stream['url'] == state.currentStream['url']);
-                      
-                      return Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
-                          onTap: () {
-                            Navigator.pop(context);
-                            ref.read(playerControllerProvider(params).notifier).changeSource(stream);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: isSelected ? AppTheme.accent.withOpacity(0.1) : Colors.white.withOpacity(0.03),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isSelected ? AppTheme.accent.withOpacity(0.5) : Colors.white.withOpacity(0.05),
-                                width: 1,
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Wrap(
-                                        spacing: 8,
-                                        runSpacing: 4,
-                                        crossAxisAlignment: WrapCrossAlignment.center,
-                                        children: [
-                                          if (stream['cached'] == true) _Badge(text: 'CACHED', color: Colors.greenAccent),
-                                          if (meta['resolution'] != null) _Badge(text: meta['resolution'], color: Colors.blueAccent),
-                                          if (meta['size'] != null) _Badge(text: meta['size'], color: Colors.cyanAccent),
-                                          if (meta['quality'] != null) ...(meta['quality'] as List).map((q) => _Badge(text: q.toString(), color: Colors.orangeAccent)),
-                                          if (meta['languages'] != null) ...(meta['languages'] as List).map((l) => _Badge(text: l.toString(), color: Colors.white70)),
-                                        ],
-                                      ),
+                    children: [
+                      // Files Section (Accordion)
+                      if (state.activeTorrentFiles.isNotEmpty) ...[
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => setState(() => _filesExpanded = !_filesExpanded),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.folder_open_rounded, color: AppTheme.accent, size: 20),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          l10n.playerFiles.toUpperCase(),
+                                          style: const TextStyle(
+                                            color: AppTheme.textWhite, 
+                                            fontSize: 13, 
+                                            fontWeight: FontWeight.bold, 
+                                            letterSpacing: 1.2,
+                                          ),
+                                        ),
+                                        Text(
+                                          "${state.activeTorrentFiles.length} files available",
+                                          style: TextStyle(color: AppTheme.textMuted.withOpacity(0.5), fontSize: 11),
+                                        ),
+                                      ],
                                     ),
-                                    if (isSelected) const Icon(Icons.check_circle_rounded, color: AppTheme.accent, size: 20),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  stream['title'] ?? 'Unknown',
-                                  style: TextStyle(
-                                    color: isSelected ? Colors.white : AppTheme.textMuted, 
-                                    fontSize: 13, 
-                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                    height: 1.4,
                                   ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  stream['provider'] ?? 'Unknown Provider', 
-                                  style: TextStyle(color: AppTheme.textMuted.withOpacity(0.5), fontSize: 11, fontWeight: FontWeight.w500),
-                                ),
-                              ],
+                                  Icon(
+                                    _filesExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                                    color: AppTheme.textMuted,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      );
-                    },
+                        
+                        if (_filesExpanded) ...[
+                          const SizedBox(height: 8),
+                          ...sortedFiles.map((file) {
+                            final isSelected = file['id'] == state.activeFileId;
+                            final fileName = (file['path'] as String).split('/').last;
+                            final size = (file['bytes'] as int? ?? 0) / (1024 * 1024 * 1024); // GB
+                            
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    ref.read(playerControllerProvider(params).notifier).changeFile(file['id']);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? AppTheme.accent.withOpacity(0.12) : Colors.white.withOpacity(0.04),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: isSelected ? AppTheme.accent.withOpacity(0.6) : Colors.white.withOpacity(0.08),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                fileName,
+                                                style: TextStyle(
+                                                  color: isSelected ? Colors.white : AppTheme.textWhite.withOpacity(0.7),
+                                                  fontSize: 13,
+                                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                "${size.toStringAsFixed(2)} GB",
+                                                style: TextStyle(color: AppTheme.textMuted.withOpacity(0.5), fontSize: 10),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (isSelected) const Icon(Icons.check_circle_rounded, color: AppTheme.accent, size: 18),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                        const Divider(color: Colors.white10, height: 32),
+                      ],
+
+                      // Sources Section
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8, bottom: 8, top: 12),
+                        child: Text(
+                          l10n.playerQuality.toUpperCase(),
+                          style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
+                        ),
+                      ),
+                      ...List.generate(state.availableStreams.length, (index) {
+                        final stream = state.availableStreams[index];
+                        final meta = stream['metadata'] as Map<String, dynamic>? ?? {};
+                        final isSelected = stream['infoHash'] == state.currentStream['infoHash'] || (stream['url'] != null && stream['url'] == state.currentStream['url']);
+                        
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () {
+                                Navigator.pop(context);
+                                ref.read(playerControllerProvider(params).notifier).changeSource(stream);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppTheme.accent.withOpacity(0.1) : Colors.white.withOpacity(0.03),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isSelected ? AppTheme.accent.withOpacity(0.5) : Colors.white.withOpacity(0.05),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Wrap(
+                                            spacing: 8,
+                                            runSpacing: 4,
+                                            crossAxisAlignment: WrapCrossAlignment.center,
+                                            children: [
+                                              if (stream['cached'] == true) _Badge(text: 'CACHED', color: Colors.greenAccent),
+                                              if (meta['resolution'] != null) _Badge(text: meta['resolution'], color: Colors.blueAccent),
+                                              if (meta['size'] != null) _Badge(text: meta['size'], color: Colors.cyanAccent),
+                                              if (meta['quality'] != null) ...(meta['quality'] as List).map((q) => _Badge(text: q.toString(), color: Colors.orangeAccent)),
+                                              if (meta['languages'] != null) ...(meta['languages'] as List).map((l) => _Badge(text: l.toString(), color: Colors.white70)),
+                                            ],
+                                          ),
+                                        ),
+                                        if (isSelected) const Icon(Icons.check_circle_rounded, color: AppTheme.accent, size: 20),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      stream['title'] ?? 'Unknown',
+                                      style: TextStyle(
+                                        color: isSelected ? Colors.white : AppTheme.textMuted, 
+                                        fontSize: 13, 
+                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                        height: 1.4,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      stream['provider'] ?? 'Unknown Provider', 
+                                      style: TextStyle(color: AppTheme.textMuted.withOpacity(0.5), fontSize: 11, fontWeight: FontWeight.w500),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 40),
+                    ],
                   ),
                 ),
               ],
@@ -358,7 +507,7 @@ class _QualitySelector extends ConsumerWidget {
   }
 }
 
-class _TrackSelector extends StatelessWidget {
+class _TrackSelector extends ConsumerWidget {
   final Player player;
   final bool isSubtitle;
 
@@ -375,9 +524,10 @@ class _TrackSelector extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tracks = isSubtitle ? player.state.tracks.subtitle : player.state.tracks.audio;
     final selectedTrack = isSubtitle ? player.state.track.subtitle : player.state.track.audio;
+    final pref = ref.watch(settingsProvider).playerLanguage.toLowerCase();
     
     final regularTracks = tracks.where((t) => t.id != 'no' && t.id != 'auto').toList();
     final noTrack = tracks.where((t) => t.id == 'no').firstOrNull ?? (isSubtitle ? SubtitleTrack.no() : AudioTrack.no());
@@ -435,6 +585,7 @@ class _TrackSelector extends StatelessWidget {
                     controller: scrollController,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     children: [
+                      const SizedBox(height: 12),
                       if (regularTracks.isEmpty)
                         Padding(
                           padding: const EdgeInsets.all(24.0),
@@ -446,17 +597,23 @@ class _TrackSelector extends StatelessWidget {
                           ),
                         )
                       else
-                        ...regularTracks.map((track) => _TrackTile(
-                          player: player,
-                          track: track,
-                          isSelected: selectedTrack == track,
-                          isSubtitle: isSubtitle,
-                        )),
+                        ...regularTracks.map((track) {
+                          // Logic for highlighting when still in 'auto' mode
+                          final isSelected = selectedTrack.id == track.id || 
+                                           (selectedTrack.id == 'auto' && LanguageMapper.isMatch(track, pref));
+                          
+                          return _TrackTile(
+                            player: player,
+                            track: track,
+                            isSelected: isSelected,
+                            isSubtitle: isSubtitle,
+                          );
+                        }),
                       const Divider(color: Colors.white10, height: 32, indent: 16, endIndent: 16),
                       _TrackTile(
                         player: player,
                         track: noTrack,
-                        isSelected: selectedTrack == noTrack,
+                        isSelected: selectedTrack.id == 'no',
                         isSubtitle: isSubtitle,
                         customTitle: isSubtitle ? "Off / Disable" : "No Audio / Mute",
                         color: AppTheme.textMuted,
@@ -493,23 +650,15 @@ class _TrackTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = customTitle ?? _LanguageHelper.getName(track.title ?? track.language ?? track.id);
+    final title = customTitle ?? LanguageMapper.getDisplayLanguage(track.title ?? track.language ?? track.id);
     
-    // Improved selection check for audio (handling auto)
-    bool isActuallySelected = isSelected;
-    if (!isSubtitle) {
-       final currentAudio = player.state.track.audio;
-       isActuallySelected = isSelected || 
-          (currentAudio.id == 'auto' && track.id != 'no' && track.id != 'auto' && track == player.state.tracks.audio.firstWhere((t) => t.id != 'no' && t.id != 'auto', orElse: () => track));
-    }
-
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        color: isActuallySelected ? AppTheme.accent.withOpacity(0.1) : Colors.white.withOpacity(0.02),
+        color: isSelected ? AppTheme.accent.withOpacity(0.1) : Colors.white.withOpacity(0.02),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isActuallySelected ? AppTheme.accent.withOpacity(0.5) : Colors.white.withOpacity(0.05),
+          color: isSelected ? AppTheme.accent.withOpacity(0.5) : Colors.white.withOpacity(0.05),
           width: 1,
         ),
       ),
@@ -518,12 +667,12 @@ class _TrackTile extends StatelessWidget {
         title: Text(
           title,
           style: TextStyle(
-            color: isActuallySelected ? (color ?? AppTheme.textWhite) : AppTheme.textWhite.withOpacity(0.7),
-            fontWeight: isActuallySelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected ? (color ?? AppTheme.textWhite) : AppTheme.textWhite.withOpacity(0.7),
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             fontSize: 15,
           ),
         ),
-        trailing: isActuallySelected 
+        trailing: isSelected 
             ? Icon(Icons.check_circle_rounded, color: color ?? AppTheme.accent, size: 20) 
             : null,
         onTap: () {
@@ -563,27 +712,5 @@ class _Badge extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _LanguageHelper {
-  static String getName(String lang) {
-    final l = lang.toLowerCase();
-    const map = {
-      'it': 'Italiano', 'ita': 'Italiano', 'italian': 'Italiano',
-      'en': 'English', 'eng': 'English', 'english': 'English',
-      'fr': 'Français', 'fra': 'Français', 'fre': 'Français', 'french': 'Français',
-      'de': 'Deutsch', 'deu': 'Deutsch', 'ger': 'Deutsch', 'german': 'Deutsch',
-      'es': 'Español', 'spa': 'Español', 'spanish': 'Español',
-      'ru': 'Русский', 'rus': 'Русский', 'russian': 'Русский',
-      'ja': '日本語', 'jpn': '日本語', 'japanese': '日本語',
-      'ko': '한국어', 'kor': '한국어', 'korean': '한국어',
-      'zh': '中文', 'chi': '中文', 'zho': '中文', 'chinese': '中文',
-      'sdh': 'SDH (Hard of Hearing)',
-    };
-    final mapped = map[l];
-    if (mapped != null) return mapped;
-    if (RegExp(r'^\d+$').hasMatch(lang)) return 'Track $lang';
-    return lang;
   }
 }

@@ -84,6 +84,8 @@
   "playerErrorResolving": "Errore nella risoluzione dello stream:\n{error}",
   "playerErrorResolvingYoutube": "Errore nel caricamento del video YouTube:\n{error}",
   "playerNoAudioFound": "Nessuna traccia audio trovata",
+  "playerFiles": "File",
+  "playerSelectFile": "Seleziona File",
   "playerSubtitles": "Sottotitoli",
   "playerSelectSubtitle": "Seleziona Sottotitoli",
   "commonGoBack": "Indietro",

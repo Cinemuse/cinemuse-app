@@ -926,6 +926,18 @@ abstract class AppLocalizations {
   /// **'No audio tracks found'**
   String get playerNoAudioFound;
 
+  /// No description provided for @playerFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get playerFiles;
+
+  /// No description provided for @playerSelectFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Select File'**
+  String get playerSelectFile;
+
   /// No description provided for @playerSubtitles.
   ///
   /// In en, this message translates to:
