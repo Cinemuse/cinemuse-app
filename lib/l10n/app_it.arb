@@ -230,5 +230,12 @@
   "agendaSeries": "Serie",
   "agendaRecentlyReleased": "Rilasciati di recente",
   "agendaTbd": "TBD / Prossimamente",
-  "agendaTbdLabel": "TBD"
+  "agendaTbdLabel": "TBD",
+  "updateAvailable": "Aggiornamento disponibile",
+  "updateDialogTitle": "Nuova versione disponibile",
+  "updateDialogMessage": "Una nuova versione di Cinemuse è disponibile. Vuoi aggiornare ora?",
+  "updateNow": "Aggiorna ora",
+  "later": "Più tardi",
+  "downloadingUpdate": "Download aggiornamento {progress}%",
+  "updateFailed": "Aggiornamento fallito. Riprova più tardi."
 }

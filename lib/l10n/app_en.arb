@@ -231,5 +231,12 @@
   "agendaSeries": "Series",
   "agendaRecentlyReleased": "Recently Released",
   "agendaTbd": "TBD / Coming Soon",
-  "agendaTbdLabel": "TBD"
+  "agendaTbdLabel": "TBD",
+  "updateAvailable": "Update Available",
+  "updateDialogTitle": "New version available",
+  "updateDialogMessage": "A new version of Cinemuse is available. Would you like to update now?",
+  "updateNow": "Update Now",
+  "later": "Later",
+  "downloadingUpdate": "Downloading update {progress}%",
+  "updateFailed": "Update failed. Please try again later."
 }

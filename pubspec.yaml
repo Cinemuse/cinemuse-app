@@ -60,6 +60,9 @@ dependencies:
   flutter_inappwebview: ^6.1.0
   youtube_player_iframe: ^5.2.2
   youtube_explode_dart: ^3.0.5
+  ota_update: ^7.1.0
+  package_info_plus: ^8.1.1
+
   flutter_svg: ^2.2.3
   connectivity_plus: ^7.0.0
   drift: ^2.28.2

@@ -13,6 +13,9 @@ import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/features/navigation/bottom_navbar.dart';
 import 'package:cinemuse_app/features/settings/presentation/settings_screen.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/live_tv_screen.dart';
+import 'package:cinemuse_app/core/services/update_service.dart';
+import 'package:cinemuse_app/core/presentation/widgets/update_overlay.dart';
+
 
 
 class AppShell extends ConsumerStatefulWidget {
@@ -32,7 +35,16 @@ class _AppShellState extends ConsumerState<AppShell> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(updateProvider.notifier).checkForUpdates();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+
     final currentIndex = ref.watch(navIndexProvider);
     final isMobile = MediaQuery.of(context).size.width < 600;
     final shellNavigatorKey = ref.watch(shellNavigatorKeyProvider);
@@ -123,8 +135,17 @@ class _AppShellState extends ConsumerState<AppShell> {
                   },
                 ),
               ),
+
+            // Update Notification Overlay
+            const Positioned(
+              top: 80, // Just below the top navbar
+              left: 0,
+              right: 0,
+              child: UpdateOverlay(),
+            ),
           ],
         ),
+
       ),
     );
   }
