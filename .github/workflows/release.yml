@@ -40,13 +40,13 @@ jobs:
         run: |
           flutter build windows --release
           # Rename for clarity
-          cd build/windows/runner/Release
+          cd build/windows/x64/runner/Release
           move cinemuse_app.exe cinemuse-windows.exe
 
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/app/outputs/flutter-apk/app-release.apk,build/windows/runner/Release/cinemuse-windows.exe"
+          artifacts: "build/app/outputs/flutter-apk/app-release.apk,build/windows/x64/runner/Release/cinemuse-windows.exe"
           token: ${{ secrets.GITHUB_TOKEN }}
           generateReleaseNotes: true
           tag: ${{ github.ref_name }}
