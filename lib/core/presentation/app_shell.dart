@@ -15,6 +15,7 @@ import 'package:cinemuse_app/features/settings/presentation/settings_screen.dart
 import 'package:cinemuse_app/features/live_tv/presentation/live_tv_screen.dart';
 import 'package:cinemuse_app/core/services/update_service.dart';
 import 'package:cinemuse_app/core/presentation/widgets/update_overlay.dart';
+import 'package:cinemuse_app/core/services/anime_mapping_sync_service.dart';
 
 
 
@@ -39,6 +40,8 @@ class _AppShellState extends ConsumerState<AppShell> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(updateProvider.notifier).checkForUpdates();
+      // Background sync for anime mappings
+      ref.read(animeMappingSyncServiceProvider).checkAndSync();
     });
   }
 

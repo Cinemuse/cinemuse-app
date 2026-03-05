@@ -1,4 +1,5 @@
 
+import 'package:cinemuse_app/core/services/kitsu_mapping_service.dart';
 import 'package:cinemuse_app/core/services/tmdb_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,14 +7,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 const String rdApiUrl = "https://api.real-debrid.com/rest/1.0";
 
 final streamResolverProvider = Provider((ref) {
-  return StreamResolver(Dio(), ref.read(tmdbServiceProvider));
+  return StreamResolver(
+    Dio(), 
+    ref.read(tmdbServiceProvider),
+    ref.read(kitsuMappingServiceProvider),
+  );
 });
 
 class StreamResolver {
   final Dio _dio;
   final TmdbService _tmdbService;
+  final KitsuMappingService _kitsuMappingService;
 
-  StreamResolver(this._dio, this._tmdbService);
+  StreamResolver(this._dio, this._tmdbService, this._kitsuMappingService);
 
   /// Main entry point to get a stream URL
   /// Search for available streams (torrents)
@@ -27,20 +33,34 @@ class StreamResolver {
     try {
       String? imdbId;
 
-      // 1. Detect ID type
-      if (queryId.startsWith('tt')) {
-        imdbId = queryId;
-      } else {
-        // Assume TMDB ID
-        final tmdbId = int.tryParse(queryId);
-        if (tmdbId == null) throw Exception("Invalid ID format");
+      // 1. Resolve IDs and detect Anime
+      int? tmdbId;
+      if (!queryId.startsWith('tt')) {
+        tmdbId = int.tryParse(queryId);
+      }
+
+      final details = await _tmdbService.getMediaDetails(queryId, type);
+      if (details == null) throw Exception("Could not fetch media details");
+
+      imdbId = details['external_ids']?['imdb_id'] ?? details['imdb_id'];
+      if (imdbId == null && tmdbId != null) {
         imdbId = await _tmdbService.getImdbId(tmdbId, type);
       }
 
       if (imdbId == null) throw Exception("Could not resolve IMDB ID");
 
+      KitsuMapping? kitsuMapping;
+      if (TmdbService.isAnime(details) && tmdbId != null) {
+        kitsuMapping = await _kitsuMappingService.getMapping(
+          tmdbId: tmdbId,
+          type: type,
+          season: season,
+          episode: episode,
+        );
+      }
+
       // 2. Search Torrents
-      var torrents = await _searchStreams(imdbId, type, season, episode);
+      var torrents = await _searchStreams(imdbId, type, season, episode, kitsuMapping: kitsuMapping);
       if (torrents.isEmpty) return [];
 
       // 3. Mark Cached Status
@@ -89,9 +109,17 @@ class StreamResolver {
     String rdKey, {
     int? season, 
     int? episode,
+    int? absoluteEpisode,
     int? fileId,
   }) async {
-    return _resolveRealDebrid(magnet, rdKey, season: season, episode: episode, fileId: fileId);
+    return _resolveRealDebrid(
+      magnet, 
+      rdKey, 
+      season: season, 
+      episode: episode, 
+      absoluteEpisode: absoluteEpisode,
+      fileId: fileId,
+    );
   }
 
   // Delegated Methods to TmdbService
@@ -103,20 +131,29 @@ class StreamResolver {
     String imdbId,
     String type,
     int? season,
-    int? episode,
-  ) async {
+    int? episode, {
+    KitsuMapping? kitsuMapping,
+  }) async {
     String queryId = imdbId;
     if (type == 'tv' && season != null && episode != null) {
       queryId = "$imdbId:$season:$episode";
     }
 
+    final absoluteEpisode = kitsuMapping?.absoluteEpisode;
+
     final List<Future<List<Map<String, dynamic>>>> providerFutures = [];
 
     // 1. Torrentio
-    providerFutures.add(_fetchTorrentio(type, queryId));
+    if (kitsuMapping != null) {
+      // Use Kitsu if available (better coverage for anime)
+      providerFutures.add(_fetchTorrentioKitsu(type, kitsuMapping));
+    } else {
+      // Standard IMDB fetch
+      providerFutures.add(_fetchTorrentio(type, queryId, absoluteEpisode));
+    }
 
     // 2. KnightCrawler
-    providerFutures.add(_fetchKnightCrawler(type, queryId));
+    providerFutures.add(_fetchKnightCrawler(type, queryId, absoluteEpisode));
 
     // 3. YTS (Movies only)
     if (type == 'movie') {
@@ -226,10 +263,12 @@ class StreamResolver {
     return scoredStreams;
   }
 
-  Future<List<Map<String, dynamic>>> _fetchTorrentio(String type, String queryId) async {
+  Future<List<Map<String, dynamic>>> _fetchTorrentio(String type, String queryId, [int? absoluteEpisode]) async {
     try {
-      final url = "https://torrentio.strem.fun/stream/$type/$queryId.json";
-      final res = await _dio.get(url, options: Options(receiveTimeout: const Duration(seconds: 5)));
+      final torrentioType = type == 'tv' ? 'series' : type;
+      final url = "https://torrentio.strem.fun/stream/$torrentioType/$queryId.json";
+      print('StreamResolver: Fetching Torrentio: $url');
+      final res = await _dio.get(url, options: Options(receiveTimeout: const Duration(seconds: 15)));
       if (res.statusCode == 200 && res.data['streams'] != null) {
         final streamsData = res.data['streams'] as List;
         return streamsData.map((s) {
@@ -239,6 +278,7 @@ class StreamResolver {
             'magnet': "magnet:?xt=urn:btih:${s['infoHash']}&dn=${Uri.encodeComponent(s['title'] ?? "")}",
             'seeds': s['seeds'] ?? 0,
             'provider': 'Torrentio',
+            'absoluteEpisode': absoluteEpisode,
           };
         }).toList();
       }
@@ -248,11 +288,46 @@ class StreamResolver {
     return [];
   }
 
-  Future<List<Map<String, dynamic>>> _fetchKnightCrawler(String type, String queryId) async {
+  Future<List<Map<String, dynamic>>> _fetchTorrentioKitsu(String type, KitsuMapping mapping) async {
+    try {
+      // Torrentio supports 'movie', 'series', and 'anime' types.
+      // For Kitsu, 'anime' is the official type in the manifest for series.
+      final torrentioType = type == 'movie' ? 'movie' : 'anime';
+      
+      String queryId = "kitsu:${mapping.kitsuId}";
+      if (torrentioType == 'anime') {
+        final ep = mapping.absoluteEpisode ?? 1;
+        queryId = "kitsu:${mapping.kitsuId}:$ep";
+      }
+      
+      final url = "https://torrentio.strem.fun/stream/$torrentioType/$queryId.json";
+      print('StreamResolver: Fetching Torrentio (Kitsu): $url');
+      final res = await _dio.get(url, options: Options(receiveTimeout: const Duration(seconds: 15)));
+      
+      if (res.statusCode == 200 && res.data['streams'] != null) {
+        final streamsData = res.data['streams'] as List;
+        return streamsData.map((s) {
+          return {
+            'title': " (Kitsu) ${(s['title'] ?? "").replaceAll('\n', " ")}",
+            'infoHash': s['infoHash'],
+            'magnet': "magnet:?xt=urn:btih:${s['infoHash']}&dn=${Uri.encodeComponent(s['title'] ?? "")}",
+            'seeds': s['seeds'] ?? 0,
+            'provider': 'Torrentio (Kitsu)',
+            'absoluteEpisode': mapping.absoluteEpisode,
+          };
+        }).toList();
+      }
+    } catch (e) {
+      print('Torrentio Kitsu fetch failed: $e');
+    }
+    return [];
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchKnightCrawler(String type, String queryId, [int? absoluteEpisode]) async {
     try {
       final url = "https://knightcrawler.elfhosted.com/stream/$type/$queryId.json";
       final res = await _dio.get(url, options: Options(
-        receiveTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 15),
         responseType: ResponseType.json,
       ));
       
@@ -267,6 +342,7 @@ class StreamResolver {
             'magnet': "magnet:?xt=urn:btih:${s['infoHash']}&dn=${Uri.encodeComponent(title)}",
             'seeds': s['seeds'] ?? 0,
             'provider': 'KnightCrawler',
+            'absoluteEpisode': absoluteEpisode,
           };
         }).toList();
       }
@@ -307,6 +383,7 @@ class StreamResolver {
     String apiKey, {
     int? season, 
     int? episode,
+    int? absoluteEpisode,
     int? fileId,
   }) async {
     final headers = { "Authorization": "Bearer $apiKey" };
@@ -352,8 +429,16 @@ class StreamResolver {
         RegExp('s$sStr\\s*e$eStr', caseSensitive: false),
         RegExp('${season}x$eStr', caseSensitive: false),
         RegExp('e$eStr\\b', caseSensitive: false),
-        RegExp('[\\s\\._-]${episode}[\\s\\._-]', caseSensitive: false),
+        RegExp('\\b${episode}\\b', caseSensitive: false),
       ];
+
+      // If absolute episode is available (anime), add more specific patterns
+      if (absoluteEpisode != null) {
+        final absStr = absoluteEpisode.toString().padLeft(2, '0');
+        patterns.insert(0, RegExp(' - $absStr\\b', caseSensitive: false)); // Common Erai-raws/SubsPlease format
+        patterns.insert(1, RegExp('episode $absStr\\b', caseSensitive: false));
+        patterns.insert(2, RegExp('\\b$absStr\\b', caseSensitive: false));
+      }
 
       for (final pattern in patterns) {
         Map<String, dynamic>? foundMatch;
@@ -366,8 +451,21 @@ class StreamResolver {
         
         if (foundMatch != null) {
           selectedId = foundMatch['id'] as int;
-          print('CINEMUSE-DEBUG: Auto-matched S${season}E${episode} -> ${foundMatch['path']}');
+          print('CINEMUSE-DEBUG: Auto-matched S${season}E${episode} (abs: $absoluteEpisode) -> ${foundMatch['path']}');
           break;
+        }
+      }
+
+      // Index-based fallback for season packs/anime packs
+      if (selectedId == null && allVideoFiles.length > 1) {
+        // Sort files by path to ensure predictable order
+        final sortedByPath = List<Map<String, dynamic>>.from(allVideoFiles);
+        sortedByPath.sort((a, b) => (a['path'] as String).compareTo(b['path'] as String));
+        
+        final targetIndex = absoluteEpisode != null ? absoluteEpisode - 1 : episode - 1;
+        if (targetIndex >= 0 && targetIndex < sortedByPath.length) {
+          selectedId = sortedByPath[targetIndex]['id'] as int;
+          print('CINEMUSE-DEBUG: Index-based match ($targetIndex) -> ${sortedByPath[targetIndex]['path']}');
         }
       }
     }

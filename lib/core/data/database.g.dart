@@ -2154,6 +2154,698 @@ class CachedListItemsCompanion extends UpdateCompanion<CachedListItem> {
   }
 }
 
+class $AnimeExternalMappingsTable extends AnimeExternalMappings
+    with TableInfo<$AnimeExternalMappingsTable, AnimeExternalMapping> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AnimeExternalMappingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _anilistIdMeta = const VerificationMeta(
+    'anilistId',
+  );
+  @override
+  late final GeneratedColumn<int> anilistId = GeneratedColumn<int>(
+    'anilist_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tmdbShowIdMeta = const VerificationMeta(
+    'tmdbShowId',
+  );
+  @override
+  late final GeneratedColumn<int> tmdbShowId = GeneratedColumn<int>(
+    'tmdb_show_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tmdbMovieIdMeta = const VerificationMeta(
+    'tmdbMovieId',
+  );
+  @override
+  late final GeneratedColumn<int> tmdbMovieId = GeneratedColumn<int>(
+    'tmdb_movie_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tvdbIdMeta = const VerificationMeta('tvdbId');
+  @override
+  late final GeneratedColumn<int> tvdbId = GeneratedColumn<int>(
+    'tvdb_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _mappingsDataMeta = const VerificationMeta(
+    'mappingsData',
+  );
+  @override
+  late final GeneratedColumn<String> mappingsData = GeneratedColumn<String>(
+    'mappings_data',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    anilistId,
+    tmdbShowId,
+    tmdbMovieId,
+    tvdbId,
+    mappingsData,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'anime_external_mappings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AnimeExternalMapping> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('anilist_id')) {
+      context.handle(
+        _anilistIdMeta,
+        anilistId.isAcceptableOrUnknown(data['anilist_id']!, _anilistIdMeta),
+      );
+    }
+    if (data.containsKey('tmdb_show_id')) {
+      context.handle(
+        _tmdbShowIdMeta,
+        tmdbShowId.isAcceptableOrUnknown(
+          data['tmdb_show_id']!,
+          _tmdbShowIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('tmdb_movie_id')) {
+      context.handle(
+        _tmdbMovieIdMeta,
+        tmdbMovieId.isAcceptableOrUnknown(
+          data['tmdb_movie_id']!,
+          _tmdbMovieIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('tvdb_id')) {
+      context.handle(
+        _tvdbIdMeta,
+        tvdbId.isAcceptableOrUnknown(data['tvdb_id']!, _tvdbIdMeta),
+      );
+    }
+    if (data.containsKey('mappings_data')) {
+      context.handle(
+        _mappingsDataMeta,
+        mappingsData.isAcceptableOrUnknown(
+          data['mappings_data']!,
+          _mappingsDataMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {anilistId};
+  @override
+  AnimeExternalMapping map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AnimeExternalMapping(
+      anilistId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}anilist_id'],
+          )!,
+      tmdbShowId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tmdb_show_id'],
+      ),
+      tmdbMovieId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tmdb_movie_id'],
+      ),
+      tvdbId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tvdb_id'],
+      ),
+      mappingsData: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mappings_data'],
+      ),
+    );
+  }
+
+  @override
+  $AnimeExternalMappingsTable createAlias(String alias) {
+    return $AnimeExternalMappingsTable(attachedDatabase, alias);
+  }
+}
+
+class AnimeExternalMapping extends DataClass
+    implements Insertable<AnimeExternalMapping> {
+  final int anilistId;
+  final int? tmdbShowId;
+  final int? tmdbMovieId;
+  final int? tvdbId;
+  final String? mappingsData;
+  const AnimeExternalMapping({
+    required this.anilistId,
+    this.tmdbShowId,
+    this.tmdbMovieId,
+    this.tvdbId,
+    this.mappingsData,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['anilist_id'] = Variable<int>(anilistId);
+    if (!nullToAbsent || tmdbShowId != null) {
+      map['tmdb_show_id'] = Variable<int>(tmdbShowId);
+    }
+    if (!nullToAbsent || tmdbMovieId != null) {
+      map['tmdb_movie_id'] = Variable<int>(tmdbMovieId);
+    }
+    if (!nullToAbsent || tvdbId != null) {
+      map['tvdb_id'] = Variable<int>(tvdbId);
+    }
+    if (!nullToAbsent || mappingsData != null) {
+      map['mappings_data'] = Variable<String>(mappingsData);
+    }
+    return map;
+  }
+
+  AnimeExternalMappingsCompanion toCompanion(bool nullToAbsent) {
+    return AnimeExternalMappingsCompanion(
+      anilistId: Value(anilistId),
+      tmdbShowId:
+          tmdbShowId == null && nullToAbsent
+              ? const Value.absent()
+              : Value(tmdbShowId),
+      tmdbMovieId:
+          tmdbMovieId == null && nullToAbsent
+              ? const Value.absent()
+              : Value(tmdbMovieId),
+      tvdbId:
+          tvdbId == null && nullToAbsent ? const Value.absent() : Value(tvdbId),
+      mappingsData:
+          mappingsData == null && nullToAbsent
+              ? const Value.absent()
+              : Value(mappingsData),
+    );
+  }
+
+  factory AnimeExternalMapping.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AnimeExternalMapping(
+      anilistId: serializer.fromJson<int>(json['anilistId']),
+      tmdbShowId: serializer.fromJson<int?>(json['tmdbShowId']),
+      tmdbMovieId: serializer.fromJson<int?>(json['tmdbMovieId']),
+      tvdbId: serializer.fromJson<int?>(json['tvdbId']),
+      mappingsData: serializer.fromJson<String?>(json['mappingsData']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'anilistId': serializer.toJson<int>(anilistId),
+      'tmdbShowId': serializer.toJson<int?>(tmdbShowId),
+      'tmdbMovieId': serializer.toJson<int?>(tmdbMovieId),
+      'tvdbId': serializer.toJson<int?>(tvdbId),
+      'mappingsData': serializer.toJson<String?>(mappingsData),
+    };
+  }
+
+  AnimeExternalMapping copyWith({
+    int? anilistId,
+    Value<int?> tmdbShowId = const Value.absent(),
+    Value<int?> tmdbMovieId = const Value.absent(),
+    Value<int?> tvdbId = const Value.absent(),
+    Value<String?> mappingsData = const Value.absent(),
+  }) => AnimeExternalMapping(
+    anilistId: anilistId ?? this.anilistId,
+    tmdbShowId: tmdbShowId.present ? tmdbShowId.value : this.tmdbShowId,
+    tmdbMovieId: tmdbMovieId.present ? tmdbMovieId.value : this.tmdbMovieId,
+    tvdbId: tvdbId.present ? tvdbId.value : this.tvdbId,
+    mappingsData: mappingsData.present ? mappingsData.value : this.mappingsData,
+  );
+  AnimeExternalMapping copyWithCompanion(AnimeExternalMappingsCompanion data) {
+    return AnimeExternalMapping(
+      anilistId: data.anilistId.present ? data.anilistId.value : this.anilistId,
+      tmdbShowId:
+          data.tmdbShowId.present ? data.tmdbShowId.value : this.tmdbShowId,
+      tmdbMovieId:
+          data.tmdbMovieId.present ? data.tmdbMovieId.value : this.tmdbMovieId,
+      tvdbId: data.tvdbId.present ? data.tvdbId.value : this.tvdbId,
+      mappingsData:
+          data.mappingsData.present
+              ? data.mappingsData.value
+              : this.mappingsData,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnimeExternalMapping(')
+          ..write('anilistId: $anilistId, ')
+          ..write('tmdbShowId: $tmdbShowId, ')
+          ..write('tmdbMovieId: $tmdbMovieId, ')
+          ..write('tvdbId: $tvdbId, ')
+          ..write('mappingsData: $mappingsData')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(anilistId, tmdbShowId, tmdbMovieId, tvdbId, mappingsData);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AnimeExternalMapping &&
+          other.anilistId == this.anilistId &&
+          other.tmdbShowId == this.tmdbShowId &&
+          other.tmdbMovieId == this.tmdbMovieId &&
+          other.tvdbId == this.tvdbId &&
+          other.mappingsData == this.mappingsData);
+}
+
+class AnimeExternalMappingsCompanion
+    extends UpdateCompanion<AnimeExternalMapping> {
+  final Value<int> anilistId;
+  final Value<int?> tmdbShowId;
+  final Value<int?> tmdbMovieId;
+  final Value<int?> tvdbId;
+  final Value<String?> mappingsData;
+  const AnimeExternalMappingsCompanion({
+    this.anilistId = const Value.absent(),
+    this.tmdbShowId = const Value.absent(),
+    this.tmdbMovieId = const Value.absent(),
+    this.tvdbId = const Value.absent(),
+    this.mappingsData = const Value.absent(),
+  });
+  AnimeExternalMappingsCompanion.insert({
+    this.anilistId = const Value.absent(),
+    this.tmdbShowId = const Value.absent(),
+    this.tmdbMovieId = const Value.absent(),
+    this.tvdbId = const Value.absent(),
+    this.mappingsData = const Value.absent(),
+  });
+  static Insertable<AnimeExternalMapping> custom({
+    Expression<int>? anilistId,
+    Expression<int>? tmdbShowId,
+    Expression<int>? tmdbMovieId,
+    Expression<int>? tvdbId,
+    Expression<String>? mappingsData,
+  }) {
+    return RawValuesInsertable({
+      if (anilistId != null) 'anilist_id': anilistId,
+      if (tmdbShowId != null) 'tmdb_show_id': tmdbShowId,
+      if (tmdbMovieId != null) 'tmdb_movie_id': tmdbMovieId,
+      if (tvdbId != null) 'tvdb_id': tvdbId,
+      if (mappingsData != null) 'mappings_data': mappingsData,
+    });
+  }
+
+  AnimeExternalMappingsCompanion copyWith({
+    Value<int>? anilistId,
+    Value<int?>? tmdbShowId,
+    Value<int?>? tmdbMovieId,
+    Value<int?>? tvdbId,
+    Value<String?>? mappingsData,
+  }) {
+    return AnimeExternalMappingsCompanion(
+      anilistId: anilistId ?? this.anilistId,
+      tmdbShowId: tmdbShowId ?? this.tmdbShowId,
+      tmdbMovieId: tmdbMovieId ?? this.tmdbMovieId,
+      tvdbId: tvdbId ?? this.tvdbId,
+      mappingsData: mappingsData ?? this.mappingsData,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (anilistId.present) {
+      map['anilist_id'] = Variable<int>(anilistId.value);
+    }
+    if (tmdbShowId.present) {
+      map['tmdb_show_id'] = Variable<int>(tmdbShowId.value);
+    }
+    if (tmdbMovieId.present) {
+      map['tmdb_movie_id'] = Variable<int>(tmdbMovieId.value);
+    }
+    if (tvdbId.present) {
+      map['tvdb_id'] = Variable<int>(tvdbId.value);
+    }
+    if (mappingsData.present) {
+      map['mappings_data'] = Variable<String>(mappingsData.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnimeExternalMappingsCompanion(')
+          ..write('anilistId: $anilistId, ')
+          ..write('tmdbShowId: $tmdbShowId, ')
+          ..write('tmdbMovieId: $tmdbMovieId, ')
+          ..write('tvdbId: $tvdbId, ')
+          ..write('mappingsData: $mappingsData')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $AnimeKitsuMappingsTable extends AnimeKitsuMappings
+    with TableInfo<$AnimeKitsuMappingsTable, AnimeKitsuMapping> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AnimeKitsuMappingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _anilistIdMeta = const VerificationMeta(
+    'anilistId',
+  );
+  @override
+  late final GeneratedColumn<int> anilistId = GeneratedColumn<int>(
+    'anilist_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _kitsuIdMeta = const VerificationMeta(
+    'kitsuId',
+  );
+  @override
+  late final GeneratedColumn<String> kitsuId = GeneratedColumn<String>(
+    'kitsu_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _episodeCountMeta = const VerificationMeta(
+    'episodeCount',
+  );
+  @override
+  late final GeneratedColumn<int> episodeCount = GeneratedColumn<int>(
+    'episode_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    anilistId,
+    kitsuId,
+    episodeCount,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'anime_kitsu_mappings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AnimeKitsuMapping> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('anilist_id')) {
+      context.handle(
+        _anilistIdMeta,
+        anilistId.isAcceptableOrUnknown(data['anilist_id']!, _anilistIdMeta),
+      );
+    }
+    if (data.containsKey('kitsu_id')) {
+      context.handle(
+        _kitsuIdMeta,
+        kitsuId.isAcceptableOrUnknown(data['kitsu_id']!, _kitsuIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kitsuIdMeta);
+    }
+    if (data.containsKey('episode_count')) {
+      context.handle(
+        _episodeCountMeta,
+        episodeCount.isAcceptableOrUnknown(
+          data['episode_count']!,
+          _episodeCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {anilistId};
+  @override
+  AnimeKitsuMapping map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AnimeKitsuMapping(
+      anilistId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}anilist_id'],
+          )!,
+      kitsuId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}kitsu_id'],
+          )!,
+      episodeCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}episode_count'],
+      ),
+      updatedAt:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}updated_at'],
+          )!,
+    );
+  }
+
+  @override
+  $AnimeKitsuMappingsTable createAlias(String alias) {
+    return $AnimeKitsuMappingsTable(attachedDatabase, alias);
+  }
+}
+
+class AnimeKitsuMapping extends DataClass
+    implements Insertable<AnimeKitsuMapping> {
+  final int anilistId;
+  final String kitsuId;
+  final int? episodeCount;
+  final DateTime updatedAt;
+  const AnimeKitsuMapping({
+    required this.anilistId,
+    required this.kitsuId,
+    this.episodeCount,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['anilist_id'] = Variable<int>(anilistId);
+    map['kitsu_id'] = Variable<String>(kitsuId);
+    if (!nullToAbsent || episodeCount != null) {
+      map['episode_count'] = Variable<int>(episodeCount);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  AnimeKitsuMappingsCompanion toCompanion(bool nullToAbsent) {
+    return AnimeKitsuMappingsCompanion(
+      anilistId: Value(anilistId),
+      kitsuId: Value(kitsuId),
+      episodeCount:
+          episodeCount == null && nullToAbsent
+              ? const Value.absent()
+              : Value(episodeCount),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory AnimeKitsuMapping.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AnimeKitsuMapping(
+      anilistId: serializer.fromJson<int>(json['anilistId']),
+      kitsuId: serializer.fromJson<String>(json['kitsuId']),
+      episodeCount: serializer.fromJson<int?>(json['episodeCount']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'anilistId': serializer.toJson<int>(anilistId),
+      'kitsuId': serializer.toJson<String>(kitsuId),
+      'episodeCount': serializer.toJson<int?>(episodeCount),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  AnimeKitsuMapping copyWith({
+    int? anilistId,
+    String? kitsuId,
+    Value<int?> episodeCount = const Value.absent(),
+    DateTime? updatedAt,
+  }) => AnimeKitsuMapping(
+    anilistId: anilistId ?? this.anilistId,
+    kitsuId: kitsuId ?? this.kitsuId,
+    episodeCount: episodeCount.present ? episodeCount.value : this.episodeCount,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  AnimeKitsuMapping copyWithCompanion(AnimeKitsuMappingsCompanion data) {
+    return AnimeKitsuMapping(
+      anilistId: data.anilistId.present ? data.anilistId.value : this.anilistId,
+      kitsuId: data.kitsuId.present ? data.kitsuId.value : this.kitsuId,
+      episodeCount:
+          data.episodeCount.present
+              ? data.episodeCount.value
+              : this.episodeCount,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnimeKitsuMapping(')
+          ..write('anilistId: $anilistId, ')
+          ..write('kitsuId: $kitsuId, ')
+          ..write('episodeCount: $episodeCount, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(anilistId, kitsuId, episodeCount, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AnimeKitsuMapping &&
+          other.anilistId == this.anilistId &&
+          other.kitsuId == this.kitsuId &&
+          other.episodeCount == this.episodeCount &&
+          other.updatedAt == this.updatedAt);
+}
+
+class AnimeKitsuMappingsCompanion extends UpdateCompanion<AnimeKitsuMapping> {
+  final Value<int> anilistId;
+  final Value<String> kitsuId;
+  final Value<int?> episodeCount;
+  final Value<DateTime> updatedAt;
+  const AnimeKitsuMappingsCompanion({
+    this.anilistId = const Value.absent(),
+    this.kitsuId = const Value.absent(),
+    this.episodeCount = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  AnimeKitsuMappingsCompanion.insert({
+    this.anilistId = const Value.absent(),
+    required String kitsuId,
+    this.episodeCount = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  }) : kitsuId = Value(kitsuId);
+  static Insertable<AnimeKitsuMapping> custom({
+    Expression<int>? anilistId,
+    Expression<String>? kitsuId,
+    Expression<int>? episodeCount,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (anilistId != null) 'anilist_id': anilistId,
+      if (kitsuId != null) 'kitsu_id': kitsuId,
+      if (episodeCount != null) 'episode_count': episodeCount,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  AnimeKitsuMappingsCompanion copyWith({
+    Value<int>? anilistId,
+    Value<String>? kitsuId,
+    Value<int?>? episodeCount,
+    Value<DateTime>? updatedAt,
+  }) {
+    return AnimeKitsuMappingsCompanion(
+      anilistId: anilistId ?? this.anilistId,
+      kitsuId: kitsuId ?? this.kitsuId,
+      episodeCount: episodeCount ?? this.episodeCount,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (anilistId.present) {
+      map['anilist_id'] = Variable<int>(anilistId.value);
+    }
+    if (kitsuId.present) {
+      map['kitsu_id'] = Variable<String>(kitsuId.value);
+    }
+    if (episodeCount.present) {
+      map['episode_count'] = Variable<int>(episodeCount.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnimeKitsuMappingsCompanion(')
+          ..write('anilistId: $anilistId, ')
+          ..write('kitsuId: $kitsuId, ')
+          ..write('episodeCount: $episodeCount, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2168,6 +2860,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CachedListItemsTable cachedListItems = $CachedListItemsTable(
     this,
   );
+  late final $AnimeExternalMappingsTable animeExternalMappings =
+      $AnimeExternalMappingsTable(this);
+  late final $AnimeKitsuMappingsTable animeKitsuMappings =
+      $AnimeKitsuMappingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2177,6 +2873,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     localWatchHistories,
     cachedUserLists,
     cachedListItems,
+    animeExternalMappings,
+    animeKitsuMappings,
   ];
 }
 
@@ -3335,6 +4033,435 @@ typedef $$CachedListItemsTableProcessedTableManager =
       CachedListItem,
       PrefetchHooks Function()
     >;
+typedef $$AnimeExternalMappingsTableCreateCompanionBuilder =
+    AnimeExternalMappingsCompanion Function({
+      Value<int> anilistId,
+      Value<int?> tmdbShowId,
+      Value<int?> tmdbMovieId,
+      Value<int?> tvdbId,
+      Value<String?> mappingsData,
+    });
+typedef $$AnimeExternalMappingsTableUpdateCompanionBuilder =
+    AnimeExternalMappingsCompanion Function({
+      Value<int> anilistId,
+      Value<int?> tmdbShowId,
+      Value<int?> tmdbMovieId,
+      Value<int?> tvdbId,
+      Value<String?> mappingsData,
+    });
+
+class $$AnimeExternalMappingsTableFilterComposer
+    extends Composer<_$AppDatabase, $AnimeExternalMappingsTable> {
+  $$AnimeExternalMappingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get anilistId => $composableBuilder(
+    column: $table.anilistId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get tmdbShowId => $composableBuilder(
+    column: $table.tmdbShowId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get tmdbMovieId => $composableBuilder(
+    column: $table.tmdbMovieId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get tvdbId => $composableBuilder(
+    column: $table.tvdbId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mappingsData => $composableBuilder(
+    column: $table.mappingsData,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AnimeExternalMappingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AnimeExternalMappingsTable> {
+  $$AnimeExternalMappingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get anilistId => $composableBuilder(
+    column: $table.anilistId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get tmdbShowId => $composableBuilder(
+    column: $table.tmdbShowId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get tmdbMovieId => $composableBuilder(
+    column: $table.tmdbMovieId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get tvdbId => $composableBuilder(
+    column: $table.tvdbId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mappingsData => $composableBuilder(
+    column: $table.mappingsData,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AnimeExternalMappingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AnimeExternalMappingsTable> {
+  $$AnimeExternalMappingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get anilistId =>
+      $composableBuilder(column: $table.anilistId, builder: (column) => column);
+
+  GeneratedColumn<int> get tmdbShowId => $composableBuilder(
+    column: $table.tmdbShowId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get tmdbMovieId => $composableBuilder(
+    column: $table.tmdbMovieId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get tvdbId =>
+      $composableBuilder(column: $table.tvdbId, builder: (column) => column);
+
+  GeneratedColumn<String> get mappingsData => $composableBuilder(
+    column: $table.mappingsData,
+    builder: (column) => column,
+  );
+}
+
+class $$AnimeExternalMappingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AnimeExternalMappingsTable,
+          AnimeExternalMapping,
+          $$AnimeExternalMappingsTableFilterComposer,
+          $$AnimeExternalMappingsTableOrderingComposer,
+          $$AnimeExternalMappingsTableAnnotationComposer,
+          $$AnimeExternalMappingsTableCreateCompanionBuilder,
+          $$AnimeExternalMappingsTableUpdateCompanionBuilder,
+          (
+            AnimeExternalMapping,
+            BaseReferences<
+              _$AppDatabase,
+              $AnimeExternalMappingsTable,
+              AnimeExternalMapping
+            >,
+          ),
+          AnimeExternalMapping,
+          PrefetchHooks Function()
+        > {
+  $$AnimeExternalMappingsTableTableManager(
+    _$AppDatabase db,
+    $AnimeExternalMappingsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () => $$AnimeExternalMappingsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer:
+              () => $$AnimeExternalMappingsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer:
+              () => $$AnimeExternalMappingsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> anilistId = const Value.absent(),
+                Value<int?> tmdbShowId = const Value.absent(),
+                Value<int?> tmdbMovieId = const Value.absent(),
+                Value<int?> tvdbId = const Value.absent(),
+                Value<String?> mappingsData = const Value.absent(),
+              }) => AnimeExternalMappingsCompanion(
+                anilistId: anilistId,
+                tmdbShowId: tmdbShowId,
+                tmdbMovieId: tmdbMovieId,
+                tvdbId: tvdbId,
+                mappingsData: mappingsData,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> anilistId = const Value.absent(),
+                Value<int?> tmdbShowId = const Value.absent(),
+                Value<int?> tmdbMovieId = const Value.absent(),
+                Value<int?> tvdbId = const Value.absent(),
+                Value<String?> mappingsData = const Value.absent(),
+              }) => AnimeExternalMappingsCompanion.insert(
+                anilistId: anilistId,
+                tmdbShowId: tmdbShowId,
+                tmdbMovieId: tmdbMovieId,
+                tvdbId: tvdbId,
+                mappingsData: mappingsData,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AnimeExternalMappingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AnimeExternalMappingsTable,
+      AnimeExternalMapping,
+      $$AnimeExternalMappingsTableFilterComposer,
+      $$AnimeExternalMappingsTableOrderingComposer,
+      $$AnimeExternalMappingsTableAnnotationComposer,
+      $$AnimeExternalMappingsTableCreateCompanionBuilder,
+      $$AnimeExternalMappingsTableUpdateCompanionBuilder,
+      (
+        AnimeExternalMapping,
+        BaseReferences<
+          _$AppDatabase,
+          $AnimeExternalMappingsTable,
+          AnimeExternalMapping
+        >,
+      ),
+      AnimeExternalMapping,
+      PrefetchHooks Function()
+    >;
+typedef $$AnimeKitsuMappingsTableCreateCompanionBuilder =
+    AnimeKitsuMappingsCompanion Function({
+      Value<int> anilistId,
+      required String kitsuId,
+      Value<int?> episodeCount,
+      Value<DateTime> updatedAt,
+    });
+typedef $$AnimeKitsuMappingsTableUpdateCompanionBuilder =
+    AnimeKitsuMappingsCompanion Function({
+      Value<int> anilistId,
+      Value<String> kitsuId,
+      Value<int?> episodeCount,
+      Value<DateTime> updatedAt,
+    });
+
+class $$AnimeKitsuMappingsTableFilterComposer
+    extends Composer<_$AppDatabase, $AnimeKitsuMappingsTable> {
+  $$AnimeKitsuMappingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get anilistId => $composableBuilder(
+    column: $table.anilistId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kitsuId => $composableBuilder(
+    column: $table.kitsuId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get episodeCount => $composableBuilder(
+    column: $table.episodeCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AnimeKitsuMappingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AnimeKitsuMappingsTable> {
+  $$AnimeKitsuMappingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get anilistId => $composableBuilder(
+    column: $table.anilistId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kitsuId => $composableBuilder(
+    column: $table.kitsuId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get episodeCount => $composableBuilder(
+    column: $table.episodeCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AnimeKitsuMappingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AnimeKitsuMappingsTable> {
+  $$AnimeKitsuMappingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get anilistId =>
+      $composableBuilder(column: $table.anilistId, builder: (column) => column);
+
+  GeneratedColumn<String> get kitsuId =>
+      $composableBuilder(column: $table.kitsuId, builder: (column) => column);
+
+  GeneratedColumn<int> get episodeCount => $composableBuilder(
+    column: $table.episodeCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$AnimeKitsuMappingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AnimeKitsuMappingsTable,
+          AnimeKitsuMapping,
+          $$AnimeKitsuMappingsTableFilterComposer,
+          $$AnimeKitsuMappingsTableOrderingComposer,
+          $$AnimeKitsuMappingsTableAnnotationComposer,
+          $$AnimeKitsuMappingsTableCreateCompanionBuilder,
+          $$AnimeKitsuMappingsTableUpdateCompanionBuilder,
+          (
+            AnimeKitsuMapping,
+            BaseReferences<
+              _$AppDatabase,
+              $AnimeKitsuMappingsTable,
+              AnimeKitsuMapping
+            >,
+          ),
+          AnimeKitsuMapping,
+          PrefetchHooks Function()
+        > {
+  $$AnimeKitsuMappingsTableTableManager(
+    _$AppDatabase db,
+    $AnimeKitsuMappingsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () => $$AnimeKitsuMappingsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer:
+              () => $$AnimeKitsuMappingsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer:
+              () => $$AnimeKitsuMappingsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> anilistId = const Value.absent(),
+                Value<String> kitsuId = const Value.absent(),
+                Value<int?> episodeCount = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => AnimeKitsuMappingsCompanion(
+                anilistId: anilistId,
+                kitsuId: kitsuId,
+                episodeCount: episodeCount,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> anilistId = const Value.absent(),
+                required String kitsuId,
+                Value<int?> episodeCount = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => AnimeKitsuMappingsCompanion.insert(
+                anilistId: anilistId,
+                kitsuId: kitsuId,
+                episodeCount: episodeCount,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AnimeKitsuMappingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AnimeKitsuMappingsTable,
+      AnimeKitsuMapping,
+      $$AnimeKitsuMappingsTableFilterComposer,
+      $$AnimeKitsuMappingsTableOrderingComposer,
+      $$AnimeKitsuMappingsTableAnnotationComposer,
+      $$AnimeKitsuMappingsTableCreateCompanionBuilder,
+      $$AnimeKitsuMappingsTableUpdateCompanionBuilder,
+      (
+        AnimeKitsuMapping,
+        BaseReferences<
+          _$AppDatabase,
+          $AnimeKitsuMappingsTable,
+          AnimeKitsuMapping
+        >,
+      ),
+      AnimeKitsuMapping,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3347,6 +4474,10 @@ class $AppDatabaseManager {
       $$CachedUserListsTableTableManager(_db, _db.cachedUserLists);
   $$CachedListItemsTableTableManager get cachedListItems =>
       $$CachedListItemsTableTableManager(_db, _db.cachedListItems);
+  $$AnimeExternalMappingsTableTableManager get animeExternalMappings =>
+      $$AnimeExternalMappingsTableTableManager(_db, _db.animeExternalMappings);
+  $$AnimeKitsuMappingsTableTableManager get animeKitsuMappings =>
+      $$AnimeKitsuMappingsTableTableManager(_db, _db.animeKitsuMappings);
 }
 
 // **************************************************************************

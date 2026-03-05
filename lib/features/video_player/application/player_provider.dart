@@ -216,6 +216,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
             rdKey,
             season: params.season,
             episode: params.episode,
+            absoluteEpisode: initialStream['absoluteEpisode'],
           );
           if (streamData != null && streamData['url'] != null) {
             break; // Success
@@ -461,6 +462,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
          newStream,
          season: params.season,
          episode: params.episode,
+         absoluteEpisode: newStream['absoluteEpisode'],
        );
        if (resolvedStream != null) {
           final position = _player!.state.position;
@@ -511,6 +513,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         },
         season: params.season,
         episode: params.episode,
+        absoluteEpisode: state.value!.currentStream['absoluteEpisode'],
       );
 
       _player?.pause();
@@ -525,10 +528,14 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     if (currentState == null || _player == null) return;
 
     try {
+      print('PlayerController: Changing file to $fileId');
       final resolvedStream = await _rdHandler.resolveAndMerge(
         currentState.currentStream,
+        absoluteEpisode: currentState.currentStream['absoluteEpisode'],
         fileId: fileId,
       );
+      
+      print('PlayerController: Resolved stream for file change: ${resolvedStream != null}');
 
       if (resolvedStream != null) {
         // Keep current position when switching files in same torrent (might be useful for split releases)

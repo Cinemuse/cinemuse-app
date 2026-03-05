@@ -220,4 +220,25 @@ class TmdbService {
       return {'results': [], 'total_pages': 0};
     }
   }
+
+  /// Helper to check if a media item is an anime.
+  static bool isAnime(Map<String, dynamic> details) {
+    try {
+      final genres = details['genres'] as List?;
+      final isAnimation = genres?.any((g) {
+            if (g is Map) return g['id'] == 16;
+            if (g is int) return g == 16;
+            return false;
+          }) ??
+          false;
+
+      final originalLanguage = details['original_language'] as String?;
+      final originCountry = details['origin_country'] as List?;
+
+      // Anime is Japanese Animation
+      return isAnimation && (originalLanguage == 'ja' || (originCountry?.contains('JP') ?? false));
+    } catch (e) {
+      return false;
+    }
+  }
 }

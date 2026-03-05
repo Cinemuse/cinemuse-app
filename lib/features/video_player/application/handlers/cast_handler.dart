@@ -18,6 +18,7 @@ class CastHandler {
     Function(Map<String, dynamic>) onStreamResolved, {
     int? season,
     int? episode,
+    int? absoluteEpisode,
   }) async {
     try {
       _castSession = await CastSessionManager().startSession(device);
@@ -32,6 +33,7 @@ class CastHandler {
           _rdKey,
           season: season,
           episode: episode,
+          absoluteEpisode: absoluteEpisode,
         );
         if (streamData != null) {
           urlToCasting = streamData['url'];

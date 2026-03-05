@@ -10,6 +10,7 @@ class RdHandler {
     Map<String, dynamic> stream, {
     int? season, 
     int? episode, 
+    int? absoluteEpisode,
     int? fileId,
   }) async {
     int retryCount = 0;
@@ -23,6 +24,7 @@ class RdHandler {
           _rdKey,
           season: season,
           episode: episode,
+          absoluteEpisode: absoluteEpisode,
           fileId: fileId,
         );
         if (streamData != null && streamData['url'] != null) {

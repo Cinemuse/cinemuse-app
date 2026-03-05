@@ -64,20 +64,56 @@ class CachedListItems extends Table {
   Set<Column> get primaryKey => {listId, mediaTmdbId, mediaType};
 }
 
-@DriftDatabase(tables: [CachedMediaItems, LocalWatchHistories, CachedUserLists, CachedListItems])
+class AnimeExternalMappings extends Table {
+  IntColumn get anilistId => integer()();
+  IntColumn get tmdbShowId => integer().nullable()();
+  IntColumn get tmdbMovieId => integer().nullable()();
+  IntColumn get tvdbId => integer().nullable()();
+  TextColumn get mappingsData => text().nullable()(); // JSON string for tmdb_mappings or tvdb_mappings
+
+  @override
+  Set<Column> get primaryKey => {anilistId};
+}
+
+class AnimeKitsuMappings extends Table {
+  IntColumn get anilistId => integer()();
+  TextColumn get kitsuId => text()();
+  IntColumn get episodeCount => integer().nullable()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {anilistId};
+}
+
+@DriftDatabase(tables: [
+  CachedMediaItems,
+  LocalWatchHistories,
+  CachedUserLists,
+  CachedListItems,
+  AnimeExternalMappings,
+  AnimeKitsuMappings,
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onUpgrade: (m, from, to) async {
           if (from < 2) {
-            // Create the new tables added in version 2
             await m.createTable(cachedUserLists);
             await m.createTable(cachedListItems);
+          }
+          if (from < 3) {
+            await m.createTable(animeExternalMappings);
+            await m.createTable(animeKitsuMappings);
+          }
+          if (from < 4) {
+             try {
+                await m.addColumn(animeKitsuMappings, animeKitsuMappings.episodeCount);
+             } catch (_) {}
           }
         },
         beforeOpen: (details) async {
@@ -85,6 +121,40 @@ class AppDatabase extends _$AppDatabase {
           // await customStatement('PRAGMA foreign_keys = ON');
         },
       );
+
+  // --- Anime Mappings ---
+
+  Future<void> replaceAnimeExternalMappings(List<AnimeExternalMappingsCompanion> mappings) async {
+    await transaction(() async {
+      await delete(animeExternalMappings).go();
+      await batch((batch) {
+        batch.insertAll(animeExternalMappings, mappings);
+      });
+    });
+  }
+
+  Future<List<AnimeExternalMapping>> getAnimeMappingsByTmdbShow(int tmdbShowId) {
+    return (select(animeExternalMappings)..where((t) => t.tmdbShowId.equals(tmdbShowId))).get();
+  }
+
+  Future<List<AnimeExternalMapping>> getAnimeMappingsByTmdbMovie(int tmdbMovieId) {
+    return (select(animeExternalMappings)..where((t) => t.tmdbMovieId.equals(tmdbMovieId))).get();
+  }
+
+  Future<void> upsertKitsuMapping(AnimeKitsuMappingsCompanion mapping) {
+    return into(animeKitsuMappings).insertOnConflictUpdate(mapping);
+  }
+
+  Future<AnimeKitsuMapping?> getKitsuMapping(int anilistId) {
+    return (select(animeKitsuMappings)..where((t) => t.anilistId.equals(anilistId))).getSingleOrNull();
+  }
+
+  Future<int> getAnimeExternalMappingsCount() async {
+    final countExp = animeExternalMappings.anilistId.count();
+    final query = selectOnly(animeExternalMappings)..addColumns([countExp]);
+    final result = await query.map((row) => row.read(countExp)).getSingle();
+    return result ?? 0;
+  }
 
   // Helper to upsert a media item
   Future<void> upsertMediaItem(CachedMediaItemsCompanion item) async {
