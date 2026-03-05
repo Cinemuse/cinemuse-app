@@ -1,4 +1,4 @@
-
+import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:cinemuse_app/core/services/kitsu_mapping_service.dart';
 import 'package:cinemuse_app/core/services/tmdb_service.dart';
 import 'package:dio/dio.dart';
@@ -8,7 +8,7 @@ const String rdApiUrl = "https://api.real-debrid.com/rest/1.0";
 
 final streamResolverProvider = Provider((ref) {
   return StreamResolver(
-    Dio(), 
+    ref.read(dioProvider), 
     ref.read(tmdbServiceProvider),
     ref.read(kitsuMappingServiceProvider),
   );
@@ -60,7 +60,8 @@ class StreamResolver {
       }
 
       // 2. Search Torrents
-      var torrents = await _searchStreams(imdbId, type, season, episode, kitsuMapping: kitsuMapping);
+      final isAnime = TmdbService.isAnime(details);
+      var torrents = await _searchStreams(imdbId, type, season, episode, kitsuMapping: kitsuMapping, isAnime: isAnime);
       if (torrents.isEmpty) return [];
 
       // 3. Mark Cached Status
@@ -133,6 +134,7 @@ class StreamResolver {
     int? season,
     int? episode, {
     KitsuMapping? kitsuMapping,
+    bool isAnime = false,
   }) async {
     String queryId = imdbId;
     if (type == 'tv' && season != null && episode != null) {
@@ -150,14 +152,6 @@ class StreamResolver {
     } else {
       // Standard IMDB fetch
       providerFutures.add(_fetchTorrentio(type, queryId, absoluteEpisode));
-    }
-
-    // 2. KnightCrawler
-    providerFutures.add(_fetchKnightCrawler(type, queryId, absoluteEpisode));
-
-    // 3. YTS (Movies only)
-    if (type == 'movie') {
-      providerFutures.add(_fetchYts(imdbId));
     }
 
     final results = await Future.wait(providerFutures);
@@ -268,7 +262,7 @@ class StreamResolver {
       final torrentioType = type == 'tv' ? 'series' : type;
       final url = "https://torrentio.strem.fun/stream/$torrentioType/$queryId.json";
       print('StreamResolver: Fetching Torrentio: $url');
-      final res = await _dio.get(url, options: Options(receiveTimeout: const Duration(seconds: 15)));
+      final res = await _dio.get(url, options: Options(receiveTimeout: const Duration(seconds: 25)));
       if (res.statusCode == 200 && res.data['streams'] != null) {
         final streamsData = res.data['streams'] as List;
         return streamsData.map((s) {
@@ -302,7 +296,7 @@ class StreamResolver {
       
       final url = "https://torrentio.strem.fun/stream/$torrentioType/$queryId.json";
       print('StreamResolver: Fetching Torrentio (Kitsu): $url');
-      final res = await _dio.get(url, options: Options(receiveTimeout: const Duration(seconds: 15)));
+      final res = await _dio.get(url, options: Options(receiveTimeout: const Duration(seconds: 25)));
       
       if (res.statusCode == 200 && res.data['streams'] != null) {
         final streamsData = res.data['streams'] as List;
@@ -319,61 +313,6 @@ class StreamResolver {
       }
     } catch (e) {
       print('Torrentio Kitsu fetch failed: $e');
-    }
-    return [];
-  }
-
-  Future<List<Map<String, dynamic>>> _fetchKnightCrawler(String type, String queryId, [int? absoluteEpisode]) async {
-    try {
-      final url = "https://knightcrawler.elfhosted.com/stream/$type/$queryId.json";
-      final res = await _dio.get(url, options: Options(
-        receiveTimeout: const Duration(seconds: 15),
-        responseType: ResponseType.json,
-      ));
-      
-      final data = res.data;
-      if (res.statusCode == 200 && data is Map && data['streams'] != null) {
-        final streamsData = data['streams'] as List;
-        return streamsData.map((s) {
-          final title = (s['title'] ?? "").replaceAll('\n', " ");
-          return {
-            'title': title,
-            'infoHash': s['infoHash'],
-            'magnet': "magnet:?xt=urn:btih:${s['infoHash']}&dn=${Uri.encodeComponent(title)}",
-            'seeds': s['seeds'] ?? 0,
-            'provider': 'KnightCrawler',
-            'absoluteEpisode': absoluteEpisode,
-          };
-        }).toList();
-      }
-    } catch (e) {
-       print('KnightCrawler fetch failed: $e');
-    }
-    return [];
-  }
-
-  Future<List<Map<String, dynamic>>> _fetchYts(String imdbId) async {
-    try {
-      final url = "https://yts.mx/api/v2/list_movies.json?query_term=$imdbId";
-      final res = await _dio.get(url, options: Options(receiveTimeout: const Duration(seconds: 5)));
-      final data = res.data;
-      if (data['status'] == 'ok' && data['data']['movies'] != null) {
-        final movies = data['data']['movies'] as List;
-        if (movies.isNotEmpty) {
-          final movie = movies[0];
-          if (movie['torrents'] != null) {
-            return (movie['torrents'] as List).map((t) => {
-              'title': "${movie['title']} ${movie['year']} ${t['quality']} ${t['type']}",
-              'infoHash': t['hash'],
-              'magnet': "magnet:?xt=urn:btih:${t['hash']}&dn=${Uri.encodeComponent(movie['title'])}&tr=udp://open.demonii.com:1337/announce",
-              'seeds': t['seeds'] ?? 0,
-              'provider': 'YTS',
-            }).toList().cast<Map<String, dynamic>>();
-          }
-        }
-      }
-    } catch (e) {
-      print('YTS fetch failed: $e');
     }
     return [];
   }

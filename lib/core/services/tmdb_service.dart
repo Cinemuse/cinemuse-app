@@ -1,9 +1,10 @@
+import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 final tmdbServiceProvider = Provider<TmdbService>((ref) {
-  return TmdbService(Dio());
+  return TmdbService(ref.read(dioProvider));
 });
 
 class TmdbService {

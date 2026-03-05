@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cinemuse_app/core/data/database.dart';
+import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +14,7 @@ class KitsuMapping {
 
 final kitsuMappingServiceProvider = Provider((ref) {
   return KitsuMappingService(
-    Dio(),
+    ref.read(dioProvider),
     ref.read(appDatabaseProvider),
   );
 });

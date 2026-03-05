@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cinemuse_app/core/data/database.dart';
+import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 final animeMappingSyncServiceProvider = Provider((ref) {
   return AnimeMappingSyncService(
-    Dio(),
+    ref.read(dioProvider),
     ref.read(appDatabaseProvider),
   );
 });
