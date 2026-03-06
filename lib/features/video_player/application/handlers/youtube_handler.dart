@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:cinemuse_app/core/services/youtube_service.dart';
+import 'package:cinemuse_app/core/services/video/youtube_service.dart';
 
 class YoutubeHandler {
   final YoutubeService _ytService;

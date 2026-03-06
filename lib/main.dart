@@ -9,7 +9,7 @@ import 'package:cinemuse_app/features/auth/presentation/auth_screen.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:cinemuse_app/core/services/supabase_service.dart';
+import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -19,7 +19,7 @@ import 'package:stack_trace/stack_trace.dart';
 import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
 import 'package:cinemuse_app/core/presentation/intents.dart';
 import 'package:cinemuse_app/core/presentation/widgets/offline_error_screen.dart';
-import 'package:cinemuse_app/core/services/connectivity_service.dart';
+import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 void main() {

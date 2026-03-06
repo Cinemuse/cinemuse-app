@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/services/tmdb_service.dart';
+import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import '../presentation/widgets/explore_filters.dart';
 import '../presentation/widgets/media_type_selector.dart';
 

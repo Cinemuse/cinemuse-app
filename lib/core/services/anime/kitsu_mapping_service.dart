@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
+import 'package:cinemuse_app/core/services/system/smart_cache.dart';
+import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -161,10 +163,10 @@ class KitsuMappingService {
     return data?.kitsuId;
   }
 
-  Future<({String kitsuId, int? episodeCount})?> _getKitsuData(int anilistId) async {
+  Future<({int? episodeCount, String kitsuId})?> _getKitsuData(int anilistId) async {
     final cached = await _db.getKitsuMapping(anilistId);
     if (cached != null) {
-      return (kitsuId: cached.kitsuId, episodeCount: cached.episodeCount);
+      return (episodeCount: cached.episodeCount, kitsuId: cached.kitsuId);
     }
 
     final url = 'https://kitsu.io/api/edge/mappings?filter[external_id]=$anilistId&filter[external_site]=anilist/anime&include=item';
@@ -172,12 +174,11 @@ class KitsuMappingService {
       final res = await _dio.get(url);
       if (res.statusCode == 200 && res.data['data'] != null && (res.data['data'] as List).isNotEmpty) {
         final data = res.data['data'][0];
-        final kitsuId = data['relationships']?['item']?['data']?['id']?.toString();
+        final String? kitsuId = data['relationships']?['item']?['data']?['id']?.toString();
         
         int? epCount;
         final included = res.data['included'] as List?;
         if (included != null && included.isNotEmpty) {
-          // Look for the anime object in included to get episodeCount
           for (var item in included) {
             if (item['type'] == 'anime') {
                epCount = item['attributes']?['episodeCount'];
@@ -192,7 +193,7 @@ class KitsuMappingService {
             kitsuId: Value(kitsuId),
             episodeCount: Value(epCount),
           ));
-          return (kitsuId: kitsuId, episodeCount: epCount);
+          return (episodeCount: epCount, kitsuId: kitsuId);
         }
       }
     } catch (e) {

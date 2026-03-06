@@ -1,10 +1,10 @@
 
 import 'dart:async';
 import 'dart:io' as io;
-import 'package:cinemuse_app/core/services/tmdb_service.dart';
+import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
-import 'package:cinemuse_app/core/services/youtube_service.dart';
+import 'package:cinemuse_app/core/services/video/youtube_service.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';

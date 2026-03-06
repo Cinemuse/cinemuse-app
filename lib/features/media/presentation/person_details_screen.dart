@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/core/services/tmdb_service.dart';
+import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/external_links.dart';

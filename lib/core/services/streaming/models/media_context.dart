@@ -1,4 +1,4 @@
-import 'package:cinemuse_app/core/services/kitsu_mapping_service.dart';
+import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
 
 class MediaContext {
   final String tmdbId;

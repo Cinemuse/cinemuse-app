@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:cinemuse_app/core/services/tmdb_service.dart';
+import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/features/search/application/search_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

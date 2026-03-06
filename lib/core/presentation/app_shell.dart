@@ -13,9 +13,9 @@ import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/features/navigation/bottom_navbar.dart';
 import 'package:cinemuse_app/features/settings/presentation/settings_screen.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/live_tv_screen.dart';
-import 'package:cinemuse_app/core/services/update_service.dart';
+import 'package:cinemuse_app/core/services/updates/update_service.dart';
 import 'package:cinemuse_app/core/presentation/widgets/update_overlay.dart';
-import 'package:cinemuse_app/core/services/anime_mapping_sync_service.dart';
+import 'package:cinemuse_app/core/services/anime/anime_mapping_sync_service.dart';
 
 
 

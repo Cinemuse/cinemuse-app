@@ -4,7 +4,8 @@ import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
 
 /// A simple mock source to demonstrate how easy it is to add new providers.
 class DummySource extends BaseSource {
-  DummySource() : super('DummySource');
+  @override
+  String get name => 'DummySource';
 
   @override
   Future<List<StreamCandidate>> search(MediaContext context) async {

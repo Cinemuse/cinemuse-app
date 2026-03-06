@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
+import 'package:cinemuse_app/core/services/system/batch_manager.dart';
+import 'package:cinemuse_app/core/services/system/supabase_service.dart';
+import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -1,4 +1,4 @@
-import 'package:cinemuse_app/core/services/supabase_service.dart';
+import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';

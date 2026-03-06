@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:cinemuse_app/core/services/supabase_service.dart';
+import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:drift/drift.dart';

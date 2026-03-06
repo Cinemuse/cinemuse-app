@@ -1,5 +1,5 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/core/services/connectivity_service.dart';
+import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';

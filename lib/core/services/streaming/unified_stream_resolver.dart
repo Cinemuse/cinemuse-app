@@ -9,8 +9,8 @@ import 'package:cinemuse_app/features/settings/application/settings_service.dart
 import 'package:cinemuse_app/core/services/streaming/sources/stremio_source.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/dummy_source.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/real_debrid_service.dart';
-import 'package:cinemuse_app/core/services/tmdb_service.dart';
-import 'package:cinemuse_app/core/services/kitsu_mapping_service.dart';
+import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
+import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
 
 final unifiedStreamResolverProvider = Provider((ref) {
   final settings = ref.watch(settingsProvider);

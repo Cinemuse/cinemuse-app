@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
-import 'package:cinemuse_app/core/services/supabase_service.dart';
+import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

@@ -3,7 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:cinemuse_app/core/data/database.dart' hide MediaItem; // Hide conflicting name if any
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:cinemuse_app/core/services/supabase_service.dart';
+import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
 final mediaRepositoryProvider = Provider<MediaRepository>((ref) {
