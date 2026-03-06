@@ -2,7 +2,8 @@
 import 'dart:async';
 import 'dart:io' as io;
 import 'package:cinemuse_app/core/services/tmdb_service.dart';
-import 'package:cinemuse_app/core/services/stream_resolver.dart';
+import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/youtube_service.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
@@ -49,8 +50,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     
     // Initialize Handlers
     _youtubeHandler = YoutubeHandler(ref.read(youtubeServiceProvider));
-    _rdHandler = RdHandler(ref.read(streamResolverProvider), ref.read(settingsProvider).realDebridKey);
-    _castHandler = CastHandler(ref.read(streamResolverProvider), ref.read(settingsProvider).realDebridKey);
+    _rdHandler = RdHandler(ref.read(unifiedStreamResolverProvider));
+    _castHandler = CastHandler(ref.read(unifiedStreamResolverProvider));
     
     _initialize();
   }
@@ -182,57 +183,39 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         throw Exception("Real-Debrid API Key is missing. Please check your settings.");
       }
 
-      final resolver = ref.read(streamResolverProvider);
+      final resolver = ref.read(unifiedStreamResolverProvider);
       final tmdbService = ref.read(tmdbServiceProvider);
       
       // 1. Fetch Media Details (for history)
       _mediaDetails = await tmdbService.getMediaDetails(params.queryId, params.type);
       
       // 2. Search streams
-      final streams = await resolver.searchStreams(
+      final candidates = await resolver.searchStreams(
         params.queryId, 
         params.type, 
-        rdKey, 
         season: params.season, 
         episode: params.episode
       );
 
-      if (streams.isEmpty) {
+      if (candidates.isEmpty) {
         throw Exception("No streams found");
       }
 
+      // Convert candidates to legacy maps for UI compatibility
+      final streams = candidates.map((c) => c.toLegacyMap()).toList();
+
       // 3. Select initial stream (first cached, or first available)
-      final initialStream = streams.first;
+      final initialCandidate = candidates.first;
 
-      // 4. Resolve stream with retry
-      Map<String, dynamic>? streamData;
-      int retryCount = 0;
-      const maxRetries = 3;
-
-      while (retryCount < maxRetries) {
-        try {
-          streamData = await resolver.resolveStream(
-            initialStream['magnet'], 
-            rdKey,
-            season: params.season,
-            episode: params.episode,
-            absoluteEpisode: initialStream['absoluteEpisode'],
-          );
-          if (streamData != null && streamData['url'] != null) {
-            break; // Success
-          }
-        } catch (e) {
-          print('Stream resolution attempt ${retryCount + 1} failed: $e');
-        }
-        
-        retryCount++;
-        if (retryCount < maxRetries) {
-          await Future.delayed(Duration(seconds: retryCount)); // Exponential backoff-ish
-        }
-      }
+      // 4. Resolve stream
+      final streamData = await resolver.resolveStream(
+        initialCandidate,
+        season: params.season,
+        episode: params.episode,
+      );
 
       if (streamData == null || streamData['url'] == null) {
-        throw Exception("Could not resolve initial stream after $maxRetries attempts");
+        throw Exception("Could not resolve initial stream");
       }
 
       // 4.5 Ensure media is cached (Natural retrieval point)
@@ -346,7 +329,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         state = AsyncValue.data(CinemaPlayerState(
           controller: _controller!,
           availableStreams: streams,
-          currentStream: {...initialStream, ...streamData!},
+          currentStream: {...initialCandidate.toLegacyMap(), ...streamData!},
           title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? 'Unknown',
           nextEpisode: nextEpisode,
           activeTorrentFiles: streamData['files'] != null ? List<Map<String, dynamic>>.from(streamData['files']) : const [],
@@ -458,12 +441,14 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           return;
         }
 
+       final candidate = StreamCandidate.fromLegacyMap(newStream);
        final resolvedStream = await _rdHandler.resolveAndMerge(
-         newStream,
+         candidate,
          season: params.season,
          episode: params.episode,
-         absoluteEpisode: newStream['absoluteEpisode'],
+         absoluteEpisode: candidate.absoluteEpisode,
        );
+
        if (resolvedStream != null) {
           final position = _player!.state.position;
           
@@ -499,7 +484,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
       await _castHandler.startCasting(
         device, 
-        state.value!.currentStream, 
+        StreamCandidate.fromLegacyMap(state.value!.currentStream), 
         state.value!.title, 
         _player?.state.position ?? Duration.zero,
         (resolvedStream) {
@@ -529,9 +514,10 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
     try {
       print('PlayerController: Changing file to $fileId');
+      final candidate = StreamCandidate.fromLegacyMap(currentState.currentStream);
       final resolvedStream = await _rdHandler.resolveAndMerge(
-        currentState.currentStream,
-        absoluteEpisode: currentState.currentStream['absoluteEpisode'],
+        candidate,
+        absoluteEpisode: candidate.absoluteEpisode,
         fileId: fileId,
       );
       

@@ -1,43 +1,31 @@
-import 'package:cinemuse_app/core/services/stream_resolver.dart';
+import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 
 class RdHandler {
-  final StreamResolver _resolver;
-  final String _rdKey;
+  final UnifiedStreamResolver _resolver;
 
-  RdHandler(this._resolver, this._rdKey);
+  RdHandler(this._resolver);
 
   Future<Map<String, dynamic>?> resolveAndMerge(
-    Map<String, dynamic> stream, {
+    StreamCandidate candidate, {
     int? season, 
     int? episode, 
     int? absoluteEpisode,
     int? fileId,
   }) async {
-    int retryCount = 0;
-    const maxRetries = 3;
-    Map<String, dynamic>? streamData;
-
-    while (retryCount < maxRetries) {
-      try {
-        streamData = await _resolver.resolveStream(
-          stream['magnet'], 
-          _rdKey,
-          season: season,
-          episode: episode,
-          absoluteEpisode: absoluteEpisode,
-          fileId: fileId,
-        );
-        if (streamData != null && streamData['url'] != null) {
-          return {...stream, ...streamData};
-        }
-      } catch (e) {
-        print('RdHandler: Stream resolution attempt ${retryCount + 1} failed: $e');
-      }
+    try {
+      final streamData = await _resolver.resolveStream(
+        candidate,
+        season: season,
+        episode: episode,
+        fileId: fileId,
+      );
       
-      retryCount++;
-      if (retryCount < maxRetries) {
-        await Future.delayed(Duration(seconds: retryCount));
+      if (streamData != null) {
+        return {...candidate.toLegacyMap(), ...streamData};
       }
+    } catch (e) {
+      print('RdHandler: Resolve failed: $e');
     }
 
     return null;

@@ -1,18 +1,18 @@
 import 'package:cast/cast.dart';
-import 'package:cinemuse_app/core/services/stream_resolver.dart';
+import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 
 class CastHandler {
   CastSession? _castSession;
-  final StreamResolver _resolver;
-  final String _rdKey;
+  final UnifiedStreamResolver _resolver;
 
-  CastHandler(this._resolver, this._rdKey);
+  CastHandler(this._resolver);
 
   bool get isCasting => _castSession != null;
 
   Future<void> startCasting(
     CastDevice device, 
-    Map<String, dynamic> currentStream, 
+    StreamCandidate candidate, 
     String title, 
     Duration currentPosition,
     Function(Map<String, dynamic>) onStreamResolved, {
@@ -23,27 +23,19 @@ class CastHandler {
     try {
       _castSession = await CastSessionManager().startSession(device);
       
-      String? urlToCasting = currentStream['url'];
+      // Attempt to resolve if it's just a magnet
+      final streamData = await _resolver.resolveStream(
+        candidate,
+        season: season,
+        episode: episode,
+      );
 
-      // Lazy resolution if URL is missing (e.g. magnet source)
-      if (urlToCasting == null && currentStream.containsKey('magnet')) {
-        print('CastHandler: URL missing, attempting lazy resolution...');
-        final streamData = await _resolver.resolveStream(
-          currentStream['magnet'], 
-          _rdKey,
-          season: season,
-          episode: episode,
-          absoluteEpisode: absoluteEpisode,
-        );
-        if (streamData != null) {
-          urlToCasting = streamData['url'];
-          onStreamResolved({...currentStream, ...streamData});
-        }
-      }
-
-      if (urlToCasting == null) {
+      if (streamData == null || streamData['url'] == null) {
         throw Exception("No castable URL found");
       }
+
+      final urlToCasting = streamData['url'];
+      onStreamResolved({...candidate.toLegacyMap(), ...streamData});
 
       _castSession!.sendMessage('Media', {
         'type': 'LOAD',
