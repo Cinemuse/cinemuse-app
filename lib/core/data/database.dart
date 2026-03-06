@@ -66,6 +66,7 @@ class CachedListItems extends Table {
 
 class AnimeExternalMappings extends Table {
   IntColumn get anilistId => integer()();
+  IntColumn get anidbId => integer().nullable()();
   IntColumn get tmdbShowId => integer().nullable()();
   IntColumn get tmdbMovieId => integer().nullable()();
   IntColumn get tvdbId => integer().nullable()();
@@ -97,7 +98,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -114,6 +115,11 @@ class AppDatabase extends _$AppDatabase {
              try {
                 await m.addColumn(animeKitsuMappings, animeKitsuMappings.episodeCount);
              } catch (_) {}
+          }
+          if (from < 5) {
+            try {
+              await m.addColumn(animeExternalMappings, animeExternalMappings.anidbId);
+            } catch (_) {}
           }
         },
         beforeOpen: (details) async {
@@ -152,6 +158,15 @@ class AppDatabase extends _$AppDatabase {
   Future<int> getAnimeExternalMappingsCount() async {
     final countExp = animeExternalMappings.anilistId.count();
     final query = selectOnly(animeExternalMappings)..addColumns([countExp]);
+    final result = await query.map((row) => row.read(countExp)).getSingle();
+    return result ?? 0;
+  }
+
+  Future<int> getAnimeMappingsMissingAnidbCount() async {
+    final countExp = animeExternalMappings.anilistId.count();
+    final query = selectOnly(animeExternalMappings)
+      ..addColumns([countExp])
+      ..where(animeExternalMappings.anidbId.isNull());
     final result = await query.map((row) => row.read(countExp)).getSingle();
     return result ?? 0;
   }

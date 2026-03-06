@@ -2171,6 +2171,17 @@ class $AnimeExternalMappingsTable extends AnimeExternalMappings
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _anidbIdMeta = const VerificationMeta(
+    'anidbId',
+  );
+  @override
+  late final GeneratedColumn<int> anidbId = GeneratedColumn<int>(
+    'anidb_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _tmdbShowIdMeta = const VerificationMeta(
     'tmdbShowId',
   );
@@ -2216,6 +2227,7 @@ class $AnimeExternalMappingsTable extends AnimeExternalMappings
   @override
   List<GeneratedColumn> get $columns => [
     anilistId,
+    anidbId,
     tmdbShowId,
     tmdbMovieId,
     tvdbId,
@@ -2237,6 +2249,12 @@ class $AnimeExternalMappingsTable extends AnimeExternalMappings
       context.handle(
         _anilistIdMeta,
         anilistId.isAcceptableOrUnknown(data['anilist_id']!, _anilistIdMeta),
+      );
+    }
+    if (data.containsKey('anidb_id')) {
+      context.handle(
+        _anidbIdMeta,
+        anidbId.isAcceptableOrUnknown(data['anidb_id']!, _anidbIdMeta),
       );
     }
     if (data.containsKey('tmdb_show_id')) {
@@ -2286,6 +2304,10 @@ class $AnimeExternalMappingsTable extends AnimeExternalMappings
             DriftSqlType.int,
             data['${effectivePrefix}anilist_id'],
           )!,
+      anidbId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}anidb_id'],
+      ),
       tmdbShowId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}tmdb_show_id'],
@@ -2314,12 +2336,14 @@ class $AnimeExternalMappingsTable extends AnimeExternalMappings
 class AnimeExternalMapping extends DataClass
     implements Insertable<AnimeExternalMapping> {
   final int anilistId;
+  final int? anidbId;
   final int? tmdbShowId;
   final int? tmdbMovieId;
   final int? tvdbId;
   final String? mappingsData;
   const AnimeExternalMapping({
     required this.anilistId,
+    this.anidbId,
     this.tmdbShowId,
     this.tmdbMovieId,
     this.tvdbId,
@@ -2329,6 +2353,9 @@ class AnimeExternalMapping extends DataClass
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['anilist_id'] = Variable<int>(anilistId);
+    if (!nullToAbsent || anidbId != null) {
+      map['anidb_id'] = Variable<int>(anidbId);
+    }
     if (!nullToAbsent || tmdbShowId != null) {
       map['tmdb_show_id'] = Variable<int>(tmdbShowId);
     }
@@ -2347,6 +2374,10 @@ class AnimeExternalMapping extends DataClass
   AnimeExternalMappingsCompanion toCompanion(bool nullToAbsent) {
     return AnimeExternalMappingsCompanion(
       anilistId: Value(anilistId),
+      anidbId:
+          anidbId == null && nullToAbsent
+              ? const Value.absent()
+              : Value(anidbId),
       tmdbShowId:
           tmdbShowId == null && nullToAbsent
               ? const Value.absent()
@@ -2371,6 +2402,7 @@ class AnimeExternalMapping extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return AnimeExternalMapping(
       anilistId: serializer.fromJson<int>(json['anilistId']),
+      anidbId: serializer.fromJson<int?>(json['anidbId']),
       tmdbShowId: serializer.fromJson<int?>(json['tmdbShowId']),
       tmdbMovieId: serializer.fromJson<int?>(json['tmdbMovieId']),
       tvdbId: serializer.fromJson<int?>(json['tvdbId']),
@@ -2382,6 +2414,7 @@ class AnimeExternalMapping extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'anilistId': serializer.toJson<int>(anilistId),
+      'anidbId': serializer.toJson<int?>(anidbId),
       'tmdbShowId': serializer.toJson<int?>(tmdbShowId),
       'tmdbMovieId': serializer.toJson<int?>(tmdbMovieId),
       'tvdbId': serializer.toJson<int?>(tvdbId),
@@ -2391,12 +2424,14 @@ class AnimeExternalMapping extends DataClass
 
   AnimeExternalMapping copyWith({
     int? anilistId,
+    Value<int?> anidbId = const Value.absent(),
     Value<int?> tmdbShowId = const Value.absent(),
     Value<int?> tmdbMovieId = const Value.absent(),
     Value<int?> tvdbId = const Value.absent(),
     Value<String?> mappingsData = const Value.absent(),
   }) => AnimeExternalMapping(
     anilistId: anilistId ?? this.anilistId,
+    anidbId: anidbId.present ? anidbId.value : this.anidbId,
     tmdbShowId: tmdbShowId.present ? tmdbShowId.value : this.tmdbShowId,
     tmdbMovieId: tmdbMovieId.present ? tmdbMovieId.value : this.tmdbMovieId,
     tvdbId: tvdbId.present ? tvdbId.value : this.tvdbId,
@@ -2405,6 +2440,7 @@ class AnimeExternalMapping extends DataClass
   AnimeExternalMapping copyWithCompanion(AnimeExternalMappingsCompanion data) {
     return AnimeExternalMapping(
       anilistId: data.anilistId.present ? data.anilistId.value : this.anilistId,
+      anidbId: data.anidbId.present ? data.anidbId.value : this.anidbId,
       tmdbShowId:
           data.tmdbShowId.present ? data.tmdbShowId.value : this.tmdbShowId,
       tmdbMovieId:
@@ -2421,6 +2457,7 @@ class AnimeExternalMapping extends DataClass
   String toString() {
     return (StringBuffer('AnimeExternalMapping(')
           ..write('anilistId: $anilistId, ')
+          ..write('anidbId: $anidbId, ')
           ..write('tmdbShowId: $tmdbShowId, ')
           ..write('tmdbMovieId: $tmdbMovieId, ')
           ..write('tvdbId: $tvdbId, ')
@@ -2430,13 +2467,20 @@ class AnimeExternalMapping extends DataClass
   }
 
   @override
-  int get hashCode =>
-      Object.hash(anilistId, tmdbShowId, tmdbMovieId, tvdbId, mappingsData);
+  int get hashCode => Object.hash(
+    anilistId,
+    anidbId,
+    tmdbShowId,
+    tmdbMovieId,
+    tvdbId,
+    mappingsData,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is AnimeExternalMapping &&
           other.anilistId == this.anilistId &&
+          other.anidbId == this.anidbId &&
           other.tmdbShowId == this.tmdbShowId &&
           other.tmdbMovieId == this.tmdbMovieId &&
           other.tvdbId == this.tvdbId &&
@@ -2446,12 +2490,14 @@ class AnimeExternalMapping extends DataClass
 class AnimeExternalMappingsCompanion
     extends UpdateCompanion<AnimeExternalMapping> {
   final Value<int> anilistId;
+  final Value<int?> anidbId;
   final Value<int?> tmdbShowId;
   final Value<int?> tmdbMovieId;
   final Value<int?> tvdbId;
   final Value<String?> mappingsData;
   const AnimeExternalMappingsCompanion({
     this.anilistId = const Value.absent(),
+    this.anidbId = const Value.absent(),
     this.tmdbShowId = const Value.absent(),
     this.tmdbMovieId = const Value.absent(),
     this.tvdbId = const Value.absent(),
@@ -2459,6 +2505,7 @@ class AnimeExternalMappingsCompanion
   });
   AnimeExternalMappingsCompanion.insert({
     this.anilistId = const Value.absent(),
+    this.anidbId = const Value.absent(),
     this.tmdbShowId = const Value.absent(),
     this.tmdbMovieId = const Value.absent(),
     this.tvdbId = const Value.absent(),
@@ -2466,6 +2513,7 @@ class AnimeExternalMappingsCompanion
   });
   static Insertable<AnimeExternalMapping> custom({
     Expression<int>? anilistId,
+    Expression<int>? anidbId,
     Expression<int>? tmdbShowId,
     Expression<int>? tmdbMovieId,
     Expression<int>? tvdbId,
@@ -2473,6 +2521,7 @@ class AnimeExternalMappingsCompanion
   }) {
     return RawValuesInsertable({
       if (anilistId != null) 'anilist_id': anilistId,
+      if (anidbId != null) 'anidb_id': anidbId,
       if (tmdbShowId != null) 'tmdb_show_id': tmdbShowId,
       if (tmdbMovieId != null) 'tmdb_movie_id': tmdbMovieId,
       if (tvdbId != null) 'tvdb_id': tvdbId,
@@ -2482,6 +2531,7 @@ class AnimeExternalMappingsCompanion
 
   AnimeExternalMappingsCompanion copyWith({
     Value<int>? anilistId,
+    Value<int?>? anidbId,
     Value<int?>? tmdbShowId,
     Value<int?>? tmdbMovieId,
     Value<int?>? tvdbId,
@@ -2489,6 +2539,7 @@ class AnimeExternalMappingsCompanion
   }) {
     return AnimeExternalMappingsCompanion(
       anilistId: anilistId ?? this.anilistId,
+      anidbId: anidbId ?? this.anidbId,
       tmdbShowId: tmdbShowId ?? this.tmdbShowId,
       tmdbMovieId: tmdbMovieId ?? this.tmdbMovieId,
       tvdbId: tvdbId ?? this.tvdbId,
@@ -2501,6 +2552,9 @@ class AnimeExternalMappingsCompanion
     final map = <String, Expression>{};
     if (anilistId.present) {
       map['anilist_id'] = Variable<int>(anilistId.value);
+    }
+    if (anidbId.present) {
+      map['anidb_id'] = Variable<int>(anidbId.value);
     }
     if (tmdbShowId.present) {
       map['tmdb_show_id'] = Variable<int>(tmdbShowId.value);
@@ -2521,6 +2575,7 @@ class AnimeExternalMappingsCompanion
   String toString() {
     return (StringBuffer('AnimeExternalMappingsCompanion(')
           ..write('anilistId: $anilistId, ')
+          ..write('anidbId: $anidbId, ')
           ..write('tmdbShowId: $tmdbShowId, ')
           ..write('tmdbMovieId: $tmdbMovieId, ')
           ..write('tvdbId: $tvdbId, ')
@@ -4036,6 +4091,7 @@ typedef $$CachedListItemsTableProcessedTableManager =
 typedef $$AnimeExternalMappingsTableCreateCompanionBuilder =
     AnimeExternalMappingsCompanion Function({
       Value<int> anilistId,
+      Value<int?> anidbId,
       Value<int?> tmdbShowId,
       Value<int?> tmdbMovieId,
       Value<int?> tvdbId,
@@ -4044,6 +4100,7 @@ typedef $$AnimeExternalMappingsTableCreateCompanionBuilder =
 typedef $$AnimeExternalMappingsTableUpdateCompanionBuilder =
     AnimeExternalMappingsCompanion Function({
       Value<int> anilistId,
+      Value<int?> anidbId,
       Value<int?> tmdbShowId,
       Value<int?> tmdbMovieId,
       Value<int?> tvdbId,
@@ -4061,6 +4118,11 @@ class $$AnimeExternalMappingsTableFilterComposer
   });
   ColumnFilters<int> get anilistId => $composableBuilder(
     column: $table.anilistId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get anidbId => $composableBuilder(
+    column: $table.anidbId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4099,6 +4161,11 @@ class $$AnimeExternalMappingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get anidbId => $composableBuilder(
+    column: $table.anidbId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get tmdbShowId => $composableBuilder(
     column: $table.tmdbShowId,
     builder: (column) => ColumnOrderings(column),
@@ -4131,6 +4198,9 @@ class $$AnimeExternalMappingsTableAnnotationComposer
   });
   GeneratedColumn<int> get anilistId =>
       $composableBuilder(column: $table.anilistId, builder: (column) => column);
+
+  GeneratedColumn<int> get anidbId =>
+      $composableBuilder(column: $table.anidbId, builder: (column) => column);
 
   GeneratedColumn<int> get tmdbShowId => $composableBuilder(
     column: $table.tmdbShowId,
@@ -4198,12 +4268,14 @@ class $$AnimeExternalMappingsTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> anilistId = const Value.absent(),
+                Value<int?> anidbId = const Value.absent(),
                 Value<int?> tmdbShowId = const Value.absent(),
                 Value<int?> tmdbMovieId = const Value.absent(),
                 Value<int?> tvdbId = const Value.absent(),
                 Value<String?> mappingsData = const Value.absent(),
               }) => AnimeExternalMappingsCompanion(
                 anilistId: anilistId,
+                anidbId: anidbId,
                 tmdbShowId: tmdbShowId,
                 tmdbMovieId: tmdbMovieId,
                 tvdbId: tvdbId,
@@ -4212,12 +4284,14 @@ class $$AnimeExternalMappingsTableTableManager
           createCompanionCallback:
               ({
                 Value<int> anilistId = const Value.absent(),
+                Value<int?> anidbId = const Value.absent(),
                 Value<int?> tmdbShowId = const Value.absent(),
                 Value<int?> tmdbMovieId = const Value.absent(),
                 Value<int?> tvdbId = const Value.absent(),
                 Value<String?> mappingsData = const Value.absent(),
               }) => AnimeExternalMappingsCompanion.insert(
                 anilistId: anilistId,
+                anidbId: anidbId,
                 tmdbShowId: tmdbShowId,
                 tmdbMovieId: tmdbMovieId,
                 tvdbId: tvdbId,

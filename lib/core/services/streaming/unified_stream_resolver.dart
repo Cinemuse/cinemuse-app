@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/media_context.dart';
+import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/ranking/stream_ranker.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/stremio_source.dart';
+import 'package:cinemuse_app/core/services/streaming/sources/animetosho_source.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/dummy_source.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/real_debrid_service.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
@@ -18,6 +20,7 @@ final unifiedStreamResolverProvider = Provider((ref) {
 
   final sources = [
     StremioSource(dio, "https://torrentio.strem.fun", name: 'Torrentio'),
+    AnimeToshoSource(dio),
     // DummySource(), // Ready to be un-commented for testing modularity or adding new ones
   ];
 
@@ -147,7 +150,7 @@ class UnifiedStreamResolver {
     }
   }
 
-  Future<Map<String, dynamic>?> resolveStream(
+  Future<ResolvedStream?> resolveStream(
     StreamCandidate candidate, {
     int? season,
     int? episode,
@@ -169,10 +172,9 @@ class UnifiedStreamResolver {
     for (final service in sortedDebrid) {
       try {
         final result = await service.resolve(
-          candidate.magnet,
+          candidate,
           season: season,
           episode: episode,
-          absoluteEpisode: candidate.absoluteEpisode,
           fileId: fileId,
         );
         if (result != null) return result;

@@ -1,3 +1,5 @@
+import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cast/cast.dart';
 
@@ -43,14 +45,14 @@ class NextEpisodeInfo {
 
 class CinemaPlayerState {
   final VideoController controller;
-  final List<Map<String, dynamic>> availableStreams;
-  final Map<String, dynamic> currentStream;
+  final List<StreamCandidate> availableStreams;
+  final ResolvedStream? currentStream;
   final String title;
   final NextEpisodeInfo? nextEpisode;
   final bool isCasting;
+  final bool isResolving;
+  final String? error;
   final CastDevice? selectedCastDevice;
-  final List<Map<String, dynamic>> activeTorrentFiles;
-  final int? activeFileId;
 
   CinemaPlayerState({
     required this.controller,
@@ -59,32 +61,34 @@ class CinemaPlayerState {
     required this.title,
     this.nextEpisode,
     this.isCasting = false,
+    this.isResolving = false,
+    this.error,
     this.selectedCastDevice,
-    this.activeTorrentFiles = const [],
-    this.activeFileId,
   });
 
   CinemaPlayerState copyWith({
     VideoController? controller,
-    List<Map<String, dynamic>>? availableStreams,
-    Map<String, dynamic>? currentStream,
+    List<StreamCandidate>? availableStreams,
+    Object? currentStream = _sentinel,
     String? title,
-    NextEpisodeInfo? nextEpisode,
+    Object? nextEpisode = _sentinel,
     bool? isCasting,
-    CastDevice? selectedCastDevice,
-    List<Map<String, dynamic>>? activeTorrentFiles,
-    int? activeFileId,
+    bool? isResolving,
+    Object? error = _sentinel,
+    Object? selectedCastDevice = _sentinel,
   }) {
     return CinemaPlayerState(
       controller: controller ?? this.controller,
       availableStreams: availableStreams ?? this.availableStreams,
-      currentStream: currentStream ?? this.currentStream,
+      currentStream: currentStream == _sentinel ? this.currentStream : (currentStream as ResolvedStream?),
       title: title ?? this.title,
-      nextEpisode: nextEpisode ?? this.nextEpisode,
+      nextEpisode: nextEpisode == _sentinel ? this.nextEpisode : (nextEpisode as NextEpisodeInfo?),
       isCasting: isCasting ?? this.isCasting,
-      selectedCastDevice: selectedCastDevice ?? this.selectedCastDevice,
-      activeTorrentFiles: activeTorrentFiles ?? this.activeTorrentFiles,
-      activeFileId: activeFileId ?? this.activeFileId,
+      isResolving: isResolving ?? this.isResolving,
+      error: error == _sentinel ? this.error : (error as String?),
+      selectedCastDevice: selectedCastDevice == _sentinel ? this.selectedCastDevice : (selectedCastDevice as CastDevice?),
     );
   }
 }
+
+const Object _sentinel = Object();

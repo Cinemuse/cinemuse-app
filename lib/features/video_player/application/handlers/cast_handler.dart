@@ -1,6 +1,7 @@
 import 'package:cast/cast.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 
 class CastHandler {
   CastSession? _castSession;
@@ -15,7 +16,7 @@ class CastHandler {
     StreamCandidate candidate, 
     String title, 
     Duration currentPosition,
-    Function(Map<String, dynamic>) onStreamResolved, {
+    Function(ResolvedStream) onStreamResolved, {
     int? season,
     int? episode,
     int? absoluteEpisode,
@@ -24,18 +25,18 @@ class CastHandler {
       _castSession = await CastSessionManager().startSession(device);
       
       // Attempt to resolve if it's just a magnet
-      final streamData = await _resolver.resolveStream(
+      final resolvedStream = await _resolver.resolveStream(
         candidate,
         season: season,
         episode: episode,
       );
 
-      if (streamData == null || streamData['url'] == null) {
+      if (resolvedStream == null) {
         throw Exception("No castable URL found");
       }
-
-      final urlToCasting = streamData['url'];
-      onStreamResolved({...candidate.toLegacyMap(), ...streamData});
+ 
+      final urlToCasting = resolvedStream.url;
+      onStreamResolved(resolvedStream);
 
       _castSession!.sendMessage('Media', {
         'type': 'LOAD',

@@ -31,6 +31,8 @@ class PlayerSettingsBottomSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch state dynamically to reflect changes (though this main sheet is mostly static)
+    final currentState = ref.watch(playerControllerProvider(params)).value ?? state;
     final l10n = AppLocalizations.of(context)!;
     
     return BackdropFilter(
@@ -70,25 +72,25 @@ class PlayerSettingsBottomSheet extends ConsumerWidget {
               _SettingsTile(
                 icon: Icons.high_quality_rounded,
                 title: l10n.playerQuality,
-                subtitle: _QualitySubtitle(state: state),
+                subtitle: _QualitySubtitle(state: currentState),
                 onTap: () {
-                  _QualitySelector.show(context, state, params);
+                  _QualitySelector.show(context, currentState, params);
                 },
               ),
               _SettingsTile(
                 icon: Icons.audiotrack_rounded,
                 title: l10n.playerAudio,
-                subtitle: _TrackSubtitle(player: state.controller.player, isSubtitle: false),
+                subtitle: _TrackSubtitle(player: currentState.controller.player, isSubtitle: false),
                 onTap: () {
-                  _TrackSelector.show(context, state.controller.player, isSubtitle: false);
+                  _TrackSelector.show(context, currentState.controller.player, isSubtitle: false);
                 },
               ),
               _SettingsTile(
                 icon: Icons.subtitles_rounded,
                 title: l10n.playerSubtitles,
-                subtitle: _TrackSubtitle(player: state.controller.player, isSubtitle: true),
+                subtitle: _TrackSubtitle(player: currentState.controller.player, isSubtitle: true),
                 onTap: () {
-                  _TrackSelector.show(context, state.controller.player, isSubtitle: true);
+                  _TrackSelector.show(context, currentState.controller.player, isSubtitle: true);
                 },
               ),
             ],
@@ -146,11 +148,13 @@ class _QualitySubtitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentStream = state.currentStream;
-    final meta = currentStream['metadata'] as Map<String, dynamic>?;
+    if (currentStream == null) return const SizedBox.shrink();
     
-    if (meta == null || currentStream['tag'] == 'youtube') {
+    final meta = currentStream.candidate.metadata;
+    
+    if (meta == null) {
       return Text(
-        currentStream['title'] ?? 'Unknown', 
+        currentStream.candidate.title, 
         style: const TextStyle(color: AppTheme.textMuted),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
@@ -245,11 +249,12 @@ class _QualitySelectorState extends ConsumerState<_QualitySelector> {
 
   @override
   Widget build(BuildContext context) {
-    final state = widget.state;
+    // Watch state dynamically to reflect resolving/error changes
     final params = widget.params;
-    
+    final currentState = ref.watch(playerControllerProvider(params)).value ?? widget.state;
+
     // Sort files alphabetically by filename
-    final sortedFiles = List<Map<String, dynamic>>.from(state.activeTorrentFiles);
+    final sortedFiles = List<Map<String, dynamic>>.from(currentState.currentStream?.files ?? []);
     sortedFiles.sort((a, b) {
       final nameA = (a['path'] as String? ?? '').split('/').last.toLowerCase();
       final nameB = (b['path'] as String? ?? '').split('/').last.toLowerCase();
@@ -271,139 +276,224 @@ class _QualitySelectorState extends ConsumerState<_QualitySelector> {
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               border: Border.all(color: AppTheme.border.withOpacity(0.1), width: 1.5),
             ),
-            child: Column(
+            child: Stack(
               children: [
-                const SizedBox(height: 12),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 12, top: 12, right: 24, bottom: 12),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
-                        onPressed: () => Navigator.pop(context),
-                        splashRadius: 24,
+                Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        l10n.playerSelectQuality.toUpperCase(), 
-                        style: TextStyle(
-                          color: AppTheme.textWhite.withOpacity(0.9), 
-                          fontSize: 14, 
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: ListView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    children: [
-                      // Files Section (Accordion)
-                      if (state.activeTorrentFiles.isNotEmpty) ...[
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => setState(() => _filesExpanded = !_filesExpanded),
-                            borderRadius: BorderRadius.circular(12),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.folder_open_rounded, color: AppTheme.accent, size: 20),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          l10n.playerFiles.toUpperCase(),
-                                          style: const TextStyle(
-                                            color: AppTheme.textWhite, 
-                                            fontSize: 13, 
-                                            fontWeight: FontWeight.bold, 
-                                            letterSpacing: 1.2,
-                                          ),
-                                        ),
-                                        Text(
-                                          "${state.activeTorrentFiles.length} files available",
-                                          style: TextStyle(color: AppTheme.textMuted.withOpacity(0.5), fontSize: 11),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Icon(
-                                    _filesExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                                    color: AppTheme.textMuted,
-                                  ),
-                                ],
-                              ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12, top: 12, right: 24, bottom: 12),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
+                            onPressed: () => Navigator.pop(context),
+                            splashRadius: 24,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            l10n.playerSelectQuality.toUpperCase(), 
+                            style: TextStyle(
+                              color: AppTheme.textWhite.withOpacity(0.9), 
+                              fontSize: 14, 
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
                             ),
                           ),
-                        ),
-                        
-                        if (_filesExpanded) ...[
-                          const SizedBox(height: 8),
-                          ...sortedFiles.map((file) {
-                            final isSelected = file['id'] == state.activeFileId;
-                            final fileName = (file['path'] as String).split('/').last;
-                            final size = (file['bytes'] as int? ?? 0) / (1024 * 1024 * 1024); // GB
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        children: [
+                          // Files Section (Accordion)
+                          if (currentState.currentStream?.files.isNotEmpty ?? false) ...[
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => setState(() => _filesExpanded = !_filesExpanded),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.folder_open_rounded, color: AppTheme.accent, size: 20),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              l10n.playerFiles.toUpperCase(),
+                                              style: const TextStyle(
+                                                color: AppTheme.textWhite, 
+                                                fontSize: 13, 
+                                                fontWeight: FontWeight.bold, 
+                                                letterSpacing: 1.2,
+                                              ),
+                                            ),
+                                            Text(
+                                              "${currentState.currentStream?.files.length} files available",
+                                              style: TextStyle(color: AppTheme.textMuted.withAlpha(128), fontSize: 11),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        _filesExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                                        color: AppTheme.textMuted,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            
+                            if (_filesExpanded) ...[
+                              const SizedBox(height: 8),
+                              ...sortedFiles.map((file) {
+                                final isSelected = file['id'] == currentState.currentStream?.activeFileId;
+                                final fileName = (file['path'] as String).split('/').last;
+                                final size = (file['bytes'] as int? ?? 0) / (1024 * 1024 * 1024); // GB
+                                
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(12),
+                                      onTap: () {
+                                        ref.read(playerControllerProvider(params).notifier).changeFile(file['id']);
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          color: isSelected ? AppTheme.accent.withOpacity(0.12) : Colors.white.withOpacity(0.04),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: isSelected ? AppTheme.accent.withOpacity(0.6) : Colors.white.withOpacity(0.08),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    fileName,
+                                                    style: TextStyle(
+                                                      color: isSelected ? Colors.white : AppTheme.textWhite.withOpacity(0.7),
+                                                      fontSize: 13,
+                                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    "${size.toStringAsFixed(2)} GB",
+                                                    style: TextStyle(color: AppTheme.textMuted.withOpacity(0.5), fontSize: 10),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            if (isSelected) const Icon(Icons.check_circle_rounded, color: AppTheme.accent, size: 18),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
+                            const Divider(color: Colors.white10, height: 32),
+                          ],
+
+                          // Sources Section
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8, bottom: 8, top: 12),
+                            child: Text(
+                              l10n.playerQuality.toUpperCase(),
+                              style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
+                            ),
+                          ),
+                          ...List.generate(currentState.availableStreams.length, (index) {
+                            final stream = currentState.availableStreams[index];
+                            final meta = stream.metadata ?? {};
+                            
+                            final isSelected = currentState.currentStream?.candidate.infoHash == stream.infoHash &&
+                                             currentState.currentStream?.candidate.provider == stream.provider;
                             
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),
                               child: Material(
                                 color: Colors.transparent,
                                 child: InkWell(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(16),
                                   onTap: () {
-                                    Navigator.pop(context);
-                                    ref.read(playerControllerProvider(params).notifier).changeFile(file['id']);
+                                    ref.read(playerControllerProvider(params).notifier).changeSource(stream);
                                   },
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
-                                      color: isSelected ? AppTheme.accent.withOpacity(0.12) : Colors.white.withOpacity(0.04),
-                                      borderRadius: BorderRadius.circular(12),
+                                      color: isSelected ? AppTheme.accent.withOpacity(0.1) : Colors.white.withOpacity(0.03),
+                                      borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
-                                        color: isSelected ? AppTheme.accent.withOpacity(0.6) : Colors.white.withOpacity(0.08),
+                                        color: isSelected ? AppTheme.accent.withOpacity(0.5) : Colors.white.withOpacity(0.05),
                                         width: 1,
                                       ),
                                     ),
-                                    child: Row(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                fileName,
-                                                style: TextStyle(
-                                                  color: isSelected ? Colors.white : AppTheme.textWhite.withOpacity(0.7),
-                                                  fontSize: 13,
-                                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Wrap(
+                                                spacing: 8,
+                                                runSpacing: 4,
+                                                crossAxisAlignment: WrapCrossAlignment.center,
+                                                children: [
+                                                  if (stream.isCached) _Badge(text: 'CACHED', color: Colors.greenAccent),
+                                                  if (meta['resolution'] != null) _Badge(text: meta['resolution'], color: Colors.blueAccent),
+                                                  if (meta['size'] != null) _Badge(text: meta['size'], color: Colors.cyanAccent),
+                                                  if (meta['quality'] != null) ...(meta['quality'] as List).map((q) => _Badge(text: q.toString(), color: Colors.orangeAccent)),
+                                                  if (meta['languages'] != null) ...(meta['languages'] as List).map((l) => _Badge(text: l.toString(), color: Colors.white70)),
+                                                ],
                                               ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                "${size.toStringAsFixed(2)} GB",
-                                                style: TextStyle(color: AppTheme.textMuted.withOpacity(0.5), fontSize: 10),
-                                              ),
-                                            ],
-                                          ),
+                                            ),
+                                            if (isSelected) const Icon(Icons.check_circle_rounded, color: AppTheme.accent, size: 20),
+                                          ],
                                         ),
-                                        if (isSelected) const Icon(Icons.check_circle_rounded, color: AppTheme.accent, size: 18),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          stream.title,
+                                          style: TextStyle(
+                                            color: isSelected ? Colors.white : AppTheme.textMuted, 
+                                            fontSize: 13, 
+                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                            height: 1.4,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          stream.provider, 
+                                          style: TextStyle(color: AppTheme.textMuted.withAlpha(128), fontSize: 11, fontWeight: FontWeight.w500),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -411,93 +501,89 @@ class _QualitySelectorState extends ConsumerState<_QualitySelector> {
                               ),
                             );
                           }),
+                          const SizedBox(height: 40),
                         ],
-                        const Divider(color: Colors.white10, height: 32),
-                      ],
-
-                      // Sources Section
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8, bottom: 8, top: 12),
-                        child: Text(
-                          l10n.playerQuality.toUpperCase(),
-                          style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
-                        ),
                       ),
-                      ...List.generate(state.availableStreams.length, (index) {
-                        final stream = state.availableStreams[index];
-                        final meta = stream['metadata'] as Map<String, dynamic>? ?? {};
-                        final isSelected = stream['infoHash'] == state.currentStream['infoHash'] || (stream['url'] != null && stream['url'] == state.currentStream['url']);
-                        
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(16),
-                              onTap: () {
-                                Navigator.pop(context);
-                                ref.read(playerControllerProvider(params).notifier).changeSource(stream);
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: isSelected ? AppTheme.accent.withOpacity(0.1) : Colors.white.withOpacity(0.03),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: isSelected ? AppTheme.accent.withOpacity(0.5) : Colors.white.withOpacity(0.05),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Wrap(
-                                            spacing: 8,
-                                            runSpacing: 4,
-                                            crossAxisAlignment: WrapCrossAlignment.center,
-                                            children: [
-                                              if (stream['cached'] == true) _Badge(text: 'CACHED', color: Colors.greenAccent),
-                                              if (meta['resolution'] != null) _Badge(text: meta['resolution'], color: Colors.blueAccent),
-                                              if (meta['size'] != null) _Badge(text: meta['size'], color: Colors.cyanAccent),
-                                              if (meta['quality'] != null) ...(meta['quality'] as List).map((q) => _Badge(text: q.toString(), color: Colors.orangeAccent)),
-                                              if (meta['languages'] != null) ...(meta['languages'] as List).map((l) => _Badge(text: l.toString(), color: Colors.white70)),
-                                            ],
-                                          ),
-                                        ),
-                                        if (isSelected) const Icon(Icons.check_circle_rounded, color: AppTheme.accent, size: 20),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      stream['title'] ?? 'Unknown',
-                                      style: TextStyle(
-                                        color: isSelected ? Colors.white : AppTheme.textMuted, 
-                                        fontSize: 13, 
-                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                        height: 1.4,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      stream['provider'] ?? 'Unknown Provider', 
-                                      style: TextStyle(color: AppTheme.textMuted.withOpacity(0.5), fontSize: 11, fontWeight: FontWeight.w500),
-                                    ),
-                                  ],
-                                ),
+                    ),
+                  ],
+                ),
+                
+                // Loading Overlay
+                if (currentState.isResolving)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const CircularProgressIndicator(color: AppTheme.accent),
+                            const SizedBox(height: 20),
+                            Text(
+                              "Resolving Stream...",
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ),
-                        );
-                      }),
-                      const SizedBox(height: 40),
-                    ],
+                            const SizedBox(height: 8),
+                            Text(
+                              "Checking debrid cache",
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.5),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+
+                // Error Banner
+                if (currentState.error != null)
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: 24,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              currentState.error!,
+                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 18),
+                            onPressed: () => ref.read(playerControllerProvider(params).notifier).clearError(),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            splashRadius: 18,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
           );

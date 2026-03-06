@@ -1,4 +1,7 @@
+import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
+import 'package:cinemuse_app/core/utils/media_parser.dart';
 import 'package:dio/dio.dart';
 
 class RealDebridService implements BaseDebridService {
@@ -31,7 +34,10 @@ class RealDebridService implements BaseDebridService {
       final result = <String, bool>{};
       
       data.forEach((hash, variants) {
-        final isAvailable = variants is Map && variants['rd'] != null && (variants['rd'] as List).isNotEmpty;
+        final isAvailable = variants is Map && 
+                           variants['rd'] != null && 
+                           variants['rd'] is List &&
+                           (variants['rd'] as List).isNotEmpty;
         result[hash.toLowerCase()] = isAvailable;
       });
       return result;
@@ -42,14 +48,15 @@ class RealDebridService implements BaseDebridService {
   }
 
   @override
-  Future<Map<String, dynamic>?> resolve(
-    String magnet, {
+  Future<ResolvedStream?> resolve(
+    StreamCandidate candidate, {
     int? season,
     int? episode,
-    int? absoluteEpisode,
     int? fileId,
   }) async {
     if (!isEnabled) return null;
+    final magnet = candidate.magnet;
+    final absoluteEpisode = candidate.absoluteEpisode;
 
     try {
       // 1. Add Magnet
@@ -59,13 +66,24 @@ class RealDebridService implements BaseDebridService {
         data: addFormData,
         options: Options(headers: _headers),
       );
+      
+      if (addRes.data == null || addRes.data['id'] == null) {
+        throw Exception("Failed to add magnet to Real-Debrid (No ID returned)");
+      }
+
       final torrentId = addRes.data['id'];
+      print('RealDebridService: Added magnet, torrentId: $torrentId');
 
       // 2. Get Info
       final infoRes = await _dio.get(
         "$_rdApiUrl/torrents/info/$torrentId",
         options: Options(headers: _headers),
       );
+      
+      if (infoRes.data == null) {
+        throw Exception("Failed to fetch torrent info from Real-Debrid (Empty response)");
+      }
+      
       var info = infoRes.data;
 
       // 3. File Selection Logic
@@ -82,10 +100,12 @@ class RealDebridService implements BaseDebridService {
             'bytes': f['bytes'] as int? ?? 0,
             'selected': f['selected'] == 1,
           }).toList();
+      print('RealDebridService: Found ${allVideoFiles.length} video files');
 
       int? selectedId = fileId;
       if (selectedId == null && season != null && episode != null) {
         selectedId = _findBestFileMatch(allVideoFiles, season, episode, absoluteEpisode);
+        print('RealDebridService: _findBestFileMatch result: $selectedId');
       }
 
       // Default to largest if still null
@@ -108,14 +128,39 @@ class RealDebridService implements BaseDebridService {
           options: Options(headers: _headers),
         );
 
-         final infoRes2 = await _dio.get(
+        final updatedInfoRes = await _dio.get(
           "$_rdApiUrl/torrents/info/$torrentId",
           options: Options(headers: _headers),
         );
-        info = infoRes2.data;
+        info = updatedInfoRes.data;
       }
 
-      // 5. Unrestrict Link
+      // 5. Link Unrestricting with Retry Logic
+      // Sometimes links are not immediately available even for cached torrents after selection
+      int retryCount = 0;
+      while ((info['links'] == null || (info['links'] as List).isEmpty) && retryCount < 5) {
+        if (info['status'] == 'downloading' || info['status'] == 'compressing' || info['status'] == 'uploading') {
+          // If it's actually downloading, it's not "instantly" available even if marked as such
+          // or we selected a file that wasn't in the cache variant we checked.
+          break; 
+        }
+        
+        print('RealDebridService: No links found yet for $torrentId, retrying (${retryCount + 1}/5)...');
+        await Future.delayed(const Duration(milliseconds: 1000));
+        
+        final retryRes = await _dio.get(
+          "$_rdApiUrl/torrents/info/$torrentId",
+          options: Options(headers: _headers),
+        );
+        info = retryRes.data;
+        retryCount++;
+      }
+
+      if (info['status'] != 'downloaded') {
+        print('RealDebridService: Stream is not instantly available (Status: ${info['status']})');
+        return null;
+      }
+
       if (info['links'] != null && (info['links'] as List).isNotEmpty) {
         final link = info['links'][0];
         final unrestrictFormData = FormData.fromMap({ "link": link });
@@ -132,16 +177,17 @@ class RealDebridService implements BaseDebridService {
            throw Exception("Resolved URL is an archive (RAR/ZIP), skipping.");
         }
 
-        return {
-          'url': finalUrl,
-          'mimeType': unrestrictData['mimeType'],
-          'filename': unrestrictData['filename'],
-          'originalUrl': finalUrl,
-          'files': allVideoFiles,
-          'activeFileId': selectedId,
-          'provider': name,
-        };
+        return ResolvedStream(
+          url: finalUrl,
+          mimeType: unrestrictData['mimeType'],
+          filename: unrestrictData['filename'],
+          files: allVideoFiles,
+          activeFileId: selectedId,
+          provider: name,
+          candidate: candidate,
+        );
       }
+      print('RealDebridService: Final check: No links found for torrentId: $torrentId (Status: ${info['status']})');
     } catch (e) {
       print('RealDebridService: Resolve failed: $e');
     }
@@ -149,30 +195,19 @@ class RealDebridService implements BaseDebridService {
   }
 
   int? _findBestFileMatch(List<Map<String, dynamic>> files, int season, int episode, int? absoluteEpisode) {
-    final sStr = season.toString().padLeft(2, '0');
-    final eStr = episode.toString().padLeft(2, '0');
-    
-    final patterns = [
-      RegExp('s$sStr\\s*e$eStr', caseSensitive: false),
-      RegExp('${season}x$eStr', caseSensitive: false),
-      RegExp('e$eStr\\b', caseSensitive: false),
-      RegExp('\\b${episode}\\b', caseSensitive: false),
-    ];
-
-    if (absoluteEpisode != null) {
-      final absStr = absoluteEpisode.toString().padLeft(2, '0');
-      patterns.insert(0, RegExp(' - $absStr\\b', caseSensitive: false));
-      patterns.insert(1, RegExp('episode $absStr\\b', caseSensitive: false));
-      patterns.insert(2, RegExp('\\b$absStr\\b', caseSensitive: false));
-    }
-
-    for (final pattern in patterns) {
-      for (final f in files) {
-        if (pattern.hasMatch(f['path'])) return f['id'] as int;
+    // 1. Precise Match
+    for (final f in files) {
+      if (MediaParser.matches(
+        f['path'],
+        targetSeason: season,
+        targetEpisode: episode,
+        targetAbsoluteEpisode: absoluteEpisode,
+      )) {
+        return f['id'] as int;
       }
     }
 
-    // Index-based fallback
+    // 2. Index-based fallback (if multiple files exist)
     if (files.length > 1) {
       final sortedByPath = List<Map<String, dynamic>>.from(files);
       sortedByPath.sort((a, b) => (a['path'] as String).compareTo(b['path'] as String));

@@ -10,8 +10,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class KitsuMapping {
   final String kitsuId;
   final int? absoluteEpisode;
+  final int? anidbId;
 
-  KitsuMapping({required this.kitsuId, this.absoluteEpisode});
+  KitsuMapping({required this.kitsuId, this.absoluteEpisode, this.anidbId});
 }
 
 final kitsuMappingServiceProvider = Provider((ref) {
@@ -64,7 +65,7 @@ class KitsuMappingService {
              if (result != null) {
                print('KitsuMappingService: Found specific range match: $range -> Episode $result for AniList ${mapping.anilistId}');
                final kitsuId = await _getKitsuId(mapping.anilistId);
-               if (kitsuId != null) return KitsuMapping(kitsuId: kitsuId, absoluteEpisode: result);
+               if (kitsuId != null) return KitsuMapping(kitsuId: kitsuId, absoluteEpisode: result, anidbId: mapping.anidbId);
              }
           }
         }
@@ -107,7 +108,7 @@ class KitsuMappingService {
 
           if (remainingEpisode <= count) {
             print('KitsuMappingService: Successfully mapped to Kitsu ${kitsuData.kitsuId} Episode $remainingEpisode');
-            return KitsuMapping(kitsuId: kitsuData.kitsuId, absoluteEpisode: remainingEpisode);
+            return KitsuMapping(kitsuId: kitsuData.kitsuId, absoluteEpisode: remainingEpisode, anidbId: mapping.anidbId);
           } else {
             print('KitsuMappingService: Episode $remainingEpisode overflows Kitsu ${kitsuData.kitsuId} (max $count)');
             remainingEpisode -= count;
@@ -121,7 +122,7 @@ class KitsuMappingService {
     final targetAnilistId = candidates.first.anilistId;
     final kitsuId = await _getKitsuId(targetAnilistId);
     if (kitsuId != null) {
-      return KitsuMapping(kitsuId: kitsuId, absoluteEpisode: episode);
+      return KitsuMapping(kitsuId: kitsuId, absoluteEpisode: episode, anidbId: candidates.first.anidbId);
     }
 
     return null;

@@ -1,4 +1,4 @@
-import 'package:cinemuse_app/core/services/kitsu_mapping_service.dart';
+import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:cinemuse_app/core/data/database.dart';
@@ -22,6 +22,7 @@ void main() {
     test('Calculates absolute episode for simple range (e1-e26)', () async {
       final mapping = AnimeExternalMapping(
         anilistId: 101922,
+        anidbId: 1000,
         tmdbShowId: 85937,
         mappingsData: '{"s1": "e1-e26"}',
       );
@@ -42,6 +43,7 @@ void main() {
       // Demon Slayer S2 maps to anilist 129874 (Entertainment District Arc)
       final mapping = AnimeExternalMapping(
         anilistId: 129874,
+        anidbId: 1001,
         tmdbShowId: 85937,
         mappingsData: '{"s2": "e8-e18"}', // TMDB S2 E8 is Kitsu Arc E1
       );
@@ -62,6 +64,7 @@ void main() {
     test('Handles open-ended ranges (e1089-)', () async {
       final mapping = AnimeExternalMapping(
         anilistId: 21,
+        anidbId: 69,
         tmdbShowId: 37854,
         mappingsData: '{"s21": "e892-"}',
       );

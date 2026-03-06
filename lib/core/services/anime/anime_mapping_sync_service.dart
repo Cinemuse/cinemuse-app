@@ -30,13 +30,17 @@ class AnimeMappingSyncService {
     final lastSyncStr = prefs.getString(_lastSyncKey);
     final lastSync = lastSyncStr != null ? DateTime.tryParse(lastSyncStr) : null;
     
-    // Check if we have data at all
+    // Check if we have data at all and if it's missing the new anidb_id column data
     final count = await _db.getAnimeExternalMappingsCount();
+    final missingAnidbCount = await _db.getAnimeMappingsMissingAnidbCount();
     final isEmpty = count == 0;
+    final needsMigration = count > 0 && missingAnidbCount > 0; // Trigger sync if ANY ID is missing
 
-    if (isEmpty || lastSync == null || DateTime.now().difference(lastSync).inHours > 24) {
+    if (isEmpty || needsMigration || lastSync == null || DateTime.now().difference(lastSync).inHours > 24) {
       if (isEmpty) {
         print('AnimeMappingSyncService: Mapping table is empty, forcing sync...');
+      } else if (needsMigration) {
+        print('AnimeMappingSyncService: Missing AniDB IDs detected ($missingAnidbCount/$count), forcing sync...');
       } else {
         print('AnimeMappingSyncService: Starting daily sync...');
       }
@@ -67,6 +71,7 @@ class AnimeMappingSyncService {
         final map = value as Map<String, dynamic>;
         
         // Extract IDs
+        final anidbId = _extractInt(map['anidb_id']);
         final tmdbShowId = _extractInt(map['tmdb_show_id']);
         final tmdbMovieId = _extractInt(map['tmdb_movie_id']);
         final tvdbId = _extractInt(map['tvdb_id']);
@@ -78,6 +83,7 @@ class AnimeMappingSyncService {
         if (tmdbShowId != null || tmdbMovieId != null || tvdbId != null) {
           companions.add(AnimeExternalMappingsCompanion(
             anilistId: Value(anilistId),
+            anidbId: Value(anidbId),
             tmdbShowId: Value(tmdbShowId),
             tmdbMovieId: Value(tmdbMovieId),
             tvdbId: Value(tvdbId),

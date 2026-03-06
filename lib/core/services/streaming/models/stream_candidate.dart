@@ -39,32 +39,4 @@ class StreamCandidate {
       cachedOn: cachedOn ?? this.cachedOn,
     );
   }
-
-  factory StreamCandidate.fromLegacyMap(Map<String, dynamic> map) {
-    return StreamCandidate(
-      title: map['title'] ?? '',
-      infoHash: map['infoHash'] ?? '',
-      magnet: map['magnet'] ?? '',
-      seeds: map['seeds'] ?? 0,
-      provider: map['provider'] ?? '',
-      absoluteEpisode: map['absoluteEpisode'],
-      metadata: map['metadata'],
-      score: map['score'] ?? 0,
-      cachedOn: map['cached'] == true ? {map['provider'] ?? 'Unknown': true} : {},
-    );
-  }
-
-  Map<String, dynamic> toLegacyMap() {
-    return {
-      'title': title,
-      'infoHash': infoHash,
-      'magnet': magnet,
-      'seeds': seeds,
-      'provider': provider,
-      'absoluteEpisode': absoluteEpisode,
-      'metadata': metadata,
-      'score': score,
-      'cached': isCached,
-    };
-  }
 }

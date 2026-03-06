@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 
@@ -6,7 +7,7 @@ class RdHandler {
 
   RdHandler(this._resolver);
 
-  Future<Map<String, dynamic>?> resolveAndMerge(
+  Future<ResolvedStream?> resolveAndMerge(
     StreamCandidate candidate, {
     int? season, 
     int? episode, 
@@ -22,7 +23,7 @@ class RdHandler {
       );
       
       if (streamData != null) {
-        return {...candidate.toLegacyMap(), ...streamData};
+        return streamData;
       }
     } catch (e) {
       print('RdHandler: Resolve failed: $e');

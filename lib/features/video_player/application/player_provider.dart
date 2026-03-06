@@ -2,8 +2,9 @@
 import 'dart:async';
 import 'dart:io' as io;
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
-import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/core/services/video/youtube_service.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
@@ -150,11 +151,30 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
         await _player!.play();
         
+        final youtubeCandidates = streams.map((s) => StreamCandidate(
+          title: s['title'] ?? 'YouTube Stream',
+          infoHash: s['url'], // Use URL as hash for uniqueness
+          magnet: s['url'],
+          provider: 'YouTube',
+          metadata: s,
+        )).toList();
+
+        final initialCandidate = youtubeCandidates.firstWhere(
+          (c) => c.infoHash == initialStream['url'],
+          orElse: () => youtubeCandidates.first,
+        );
+
+        final resolvedInitial = ResolvedStream(
+          url: initialStream['url'],
+          provider: 'YouTube',
+          candidate: initialCandidate,
+        );
+
         if (mounted) {
           state = AsyncValue.data(CinemaPlayerState(
             controller: _controller!,
-            availableStreams: streams,
-            currentStream: initialStream,
+            availableStreams: youtubeCandidates,
+            currentStream: resolvedInitial,
             title: initialStream['title'] ?? 'YouTube Video',
           ));
         }
@@ -201,20 +221,17 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         throw Exception("No streams found");
       }
 
-      // Convert candidates to legacy maps for UI compatibility
-      final streams = candidates.map((c) => c.toLegacyMap()).toList();
-
       // 3. Select initial stream (first cached, or first available)
       final initialCandidate = candidates.first;
 
       // 4. Resolve stream
-      final streamData = await resolver.resolveStream(
+      final resolvedStream = await resolver.resolveStream(
         initialCandidate,
         season: params.season,
         episode: params.episode,
       );
 
-      if (streamData == null || streamData['url'] == null) {
+      if (resolvedStream == null) {
         throw Exception("Could not resolve initial stream");
       }
 
@@ -266,8 +283,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         });
       }
 
-      print('Opening media: ${streamData['url']}');
-      await _player!.open(Media(streamData['url'] as String), play: true);
+      print('Opening media: ${resolvedStream.url}');
+      await _player!.open(Media(resolvedStream.url), play: true);
       
       // Reactive preference check (backup for custom names)
       unawaited(_ensurePreferredTrack());
@@ -328,12 +345,10 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       if (mounted) {
         state = AsyncValue.data(CinemaPlayerState(
           controller: _controller!,
-          availableStreams: streams,
-          currentStream: {...initialCandidate.toLegacyMap(), ...streamData!},
+          availableStreams: candidates,
+          currentStream: resolvedStream,
           title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? 'Unknown',
           nextEpisode: nextEpisode,
-          activeTorrentFiles: streamData['files'] != null ? List<Map<String, dynamic>>.from(streamData['files']) : const [],
-          activeFileId: streamData['activeFileId'] as int?,
         ));
       }
     } catch (e, st) {
@@ -402,46 +417,14 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     }
   }
 
-  Future<void> changeSource(Map<String, dynamic> newStream) async {
-    final currentState = state.value;
-    if (currentState == null || _player == null) return;
+  Future<void> changeSource(StreamCandidate candidate) async {
+    if (state.value == null || _player == null) return;
+
+    state = AsyncValue.data(state.value!.copyWith(isResolving: true, error: null));
+    
+    print('PlayerController: changeSource requested for ${candidate.title} (Provider: ${candidate.provider})');
 
     try {
-        if (params.type == 'youtube') {
-          // ... existing youtube logic ...
-          final position = _player!.state.position;
-          
-          String? localAudioPath;
-          if (newStream['needsAudio'] == true) {
-            localAudioPath = await _youtubeHandler.downloadAudioToTempFile();
-          } else {
-            _youtubeHandler.cleanup();
-          }
-
-          await _player!.open(
-            Media(newStream['url'] as String, httpHeaders: _youtubeHandler.youtubeHeaders),
-            play: false,
-          );
-          
-          if (localAudioPath != null) {
-            print('YT-DEBUG: Changing Audio Track from local file: $localAudioPath');
-            await _player!.setAudioTrack(AudioTrack.uri(localAudioPath));
-          }
-          
-          // Wait for duration to be available before seeking
-          final newDuration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
-          final seekTo = position.inSeconds < newDuration.inSeconds ? position : Duration(seconds: newDuration.inSeconds - 2);
-          
-          await _player!.seek(seekTo.isNegative ? Duration.zero : seekTo);
-          await _player!.play();
-
-          state = AsyncValue.data(currentState.copyWith(
-            currentStream: newStream,
-          ));
-          return;
-        }
-
-       final candidate = StreamCandidate.fromLegacyMap(newStream);
        final resolvedStream = await _rdHandler.resolveAndMerge(
          candidate,
          season: params.season,
@@ -449,27 +432,72 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
          absoluteEpisode: candidate.absoluteEpisode,
        );
 
+       final latestState = state.value;
+       if (latestState == null) return;
+
        if (resolvedStream != null) {
           final position = _player!.state.position;
           
-          await _player!.open(Media(resolvedStream['url'] as String), play: true);
-          
-          unawaited(_ensurePreferredTrack());
-          
-          // Wait for duration to be available before seeking
-          final newDuration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
-          final seekTo = position.inSeconds < newDuration.inSeconds ? position : Duration(seconds: newDuration.inSeconds - 2);
-          
-          await _player!.seek(seekTo.isNegative ? Duration.zero : seekTo);
+          if (candidate.provider == 'YouTube') {
+            final meta = candidate.metadata ?? {};
+             String? localAudioPath;
+             if (meta['needsAudio'] == true) {
+               localAudioPath = await _youtubeHandler.downloadAudioToTempFile();
+             } else {
+               _youtubeHandler.cleanup();
+             }
 
-          state = AsyncValue.data(currentState.copyWith(
+             await _player!.open(
+               Media(resolvedStream.url, httpHeaders: _youtubeHandler.youtubeHeaders),
+               play: false,
+             );
+             
+             if (localAudioPath != null) {
+               await _player!.setAudioTrack(AudioTrack.uri(localAudioPath));
+             }
+             
+             final newDuration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
+             final seekTo = position.inSeconds < newDuration.inSeconds ? position : Duration(seconds: newDuration.inSeconds - 2);
+             
+             await _player!.seek(seekTo.isNegative ? Duration.zero : seekTo);
+             await _player!.play();
+          } else {
+            print('PlayerController: Opening new resolved URL: ${resolvedStream.url}');
+            await _player!.open(Media(resolvedStream.url), play: true);
+            unawaited(_ensurePreferredTrack());
+            
+            final newDuration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
+            final seekTo = position.inSeconds < newDuration.inSeconds ? position : Duration(seconds: newDuration.inSeconds - 2);
+            
+            await _player!.seek(seekTo.isNegative ? Duration.zero : seekTo);
+          }
+
+          state = AsyncValue.data(state.value!.copyWith(
             currentStream: resolvedStream,
-            activeTorrentFiles: resolvedStream['files'] != null ? List<Map<String, dynamic>>.from(resolvedStream['files']) : const [],
-            activeFileId: resolvedStream['activeFileId'] as int?,
+            isResolving: false,
+            error: null,
           ));
+       } else {
+         print('PlayerController: Resolution failed (returned null)');
+         state = AsyncValue.data(state.value!.copyWith(
+           isResolving: false,
+           error: "Failed to resolve stream. Link not available in Real-Debrid cache.",
+         ));
        }
     } catch (e) {
       print("Error changing source: $e");
+      if (state.value != null) {
+        state = AsyncValue.data(state.value!.copyWith(
+          isResolving: false,
+          error: "Resolution Error: ${e.toString()}",
+        ));
+      }
+    }
+  }
+
+  void clearError() {
+    if (state.value != null) {
+      state = AsyncValue.data(state.value!.copyWith(error: null));
     }
   }
 
@@ -484,21 +512,16 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
       await _castHandler.startCasting(
         device, 
-        StreamCandidate.fromLegacyMap(state.value!.currentStream), 
+        state.value!.currentStream!.candidate, 
         state.value!.title, 
         _player?.state.position ?? Duration.zero,
-        (resolvedStream) {
-          if (mounted) {
-            state = AsyncValue.data(state.value!.copyWith(
-              currentStream: resolvedStream,
-              activeTorrentFiles: resolvedStream['files'] != null ? List<Map<String, dynamic>>.from(resolvedStream['files']) : const [],
-              activeFileId: resolvedStream['activeFileId'] as int?,
-            ));
-          }
+        (ResolvedStream resolvedStream) {
+           // We can update state here if needed, but startCasting already sets isCasting: true
+           print('PlayerController: Cast stream resolved: ${resolvedStream.url}');
         },
         season: params.season,
         episode: params.episode,
-        absoluteEpisode: state.value!.currentStream['absoluteEpisode'],
+        absoluteEpisode: state.value!.currentStream?.candidate.absoluteEpisode,
       );
 
       _player?.pause();
@@ -509,36 +532,43 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   }
 
   Future<void> changeFile(int fileId) async {
-    final currentState = state.value;
-    if (currentState == null || _player == null) return;
+    if (state.value == null || _player == null || state.value!.currentStream == null) return;
+
+    state = AsyncValue.data(state.value!.copyWith(isResolving: true, error: null));
 
     try {
       print('PlayerController: Changing file to $fileId');
-      final candidate = StreamCandidate.fromLegacyMap(currentState.currentStream);
       final resolvedStream = await _rdHandler.resolveAndMerge(
-        candidate,
-        absoluteEpisode: candidate.absoluteEpisode,
+        state.value!.currentStream!.candidate,
+        absoluteEpisode: state.value!.currentStream!.candidate.absoluteEpisode,
         fileId: fileId,
       );
       
       print('PlayerController: Resolved stream for file change: ${resolvedStream != null}');
 
       if (resolvedStream != null) {
-        // Keep current position when switching files in same torrent (might be useful for split releases)
-        // or starting from beginning if it's a completely different episode.
-        // Usually, if a user manually picks a file, it's because auto-match failed.
-        // Let's reset position if it's a manual switch in a pack.
-        await _player!.open(Media(resolvedStream['url'] as String), play: true);
-        
+        await _player!.open(Media(resolvedStream.url), play: true);
         unawaited(_ensurePreferredTrack());
         
-        state = AsyncValue.data(currentState.copyWith(
+        state = AsyncValue.data(state.value!.copyWith(
           currentStream: resolvedStream,
-          activeFileId: fileId,
+          isResolving: false,
+          error: null,
+        ));
+      } else {
+        state = AsyncValue.data(state.value!.copyWith(
+          isResolving: false,
+          error: "Failed to resolve the selected file.",
         ));
       }
     } catch (e) {
       print("Error changing file: $e");
+      if (state.value != null) {
+        state = AsyncValue.data(state.value!.copyWith(
+          isResolving: false,
+          error: "Error changing file: ${e.toString()}",
+        ));
+      }
     }
   }
 
