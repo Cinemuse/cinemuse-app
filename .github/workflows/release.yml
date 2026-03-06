@@ -38,17 +38,19 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
-      - name: Build Windows
+      - name: Build Windows MSIX
         run: |
           flutter build windows --release
-          # Rename for clarity
+          dart run msix:create --display-name="Cinemuse" --publisher-display-name="Cinemuse" --identity-name="com.cinemuse.app" --publisher="CN=Cinemuse, O=Cinemuse, L=Rome, S=Lazio, C=IT" --install-certificate=false
+          # The MSIX is created in build/windows/x64/runner/Release/
+          # We rename it for the release artifact
           cd build/windows/x64/runner/Release
-          move cinemuse_app.exe cinemuse-windows.exe
+          move *.msix cinemuse-windows.msix
 
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/app/outputs/flutter-apk/app-release.apk,build/windows/x64/runner/Release/cinemuse-windows.exe"
+          artifacts: "build/app/outputs/flutter-apk/app-release.apk,build/windows/x64/runner/Release/cinemuse-windows.msix"
           token: ${{ secrets.GITHUB_TOKEN }}
           generateReleaseNotes: true
           tag: ${{ github.ref_name }}
