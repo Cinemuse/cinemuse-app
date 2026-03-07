@@ -387,8 +387,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       
       int epCount = 0;
       if (lastAired != null && sNum == lastAired['season_number']) {
-        epCount = lastAired['episode_number'] as int;
-      } else if (lastAired == null || sNum < (lastAired['season_number'] as int)) {
+        epCount = (lastAired['episode_number'] as int? ?? 0);
+      } else if (lastAired == null || sNum < (lastAired['season_number'] as int? ?? 0)) {
         epCount = season['episode_count'] as int? ?? 0;
       }
 

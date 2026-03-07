@@ -11,6 +11,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:cinemuse_app/core/data/sqlite_workaround.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/core/application/locale_service.dart';
@@ -24,7 +26,9 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 void main() {
   Chain.capture(() async {
+    setupSqlite();
     WidgetsFlutterBinding.ensureInitialized();
+    await initializeDateFormatting();
     MediaKit.ensureInitialized();
     
     await dotenv.load(fileName: ".env");
@@ -47,15 +51,15 @@ void main() {
     FlutterError.onError = (details) {
       FlutterError.presentError(details);
       if (details.stack != null) {
-        print(Chain.forTrace(details.stack!).terse);
+        debugPrint(Chain.forTrace(details.stack!).terse.toString());
       }
     };
 
     runApp(const ProviderScope(child: CinemuseApp()));
   }, onError: (error, stackChain) {
     // This will print the error and the clean stack trace
-    print(error);
-    print(stackChain.terse);
+    debugPrint(error.toString());
+    debugPrint(stackChain.terse.toString());
   });
 }
 

@@ -49,9 +49,15 @@ class DetailsHero extends ConsumerWidget {
     final voteAverage = details['vote_average'] as num?;
     final releaseDateStr = (details['release_date'] ?? details['first_air_date'] ?? media['release_date'] ?? '').toString();
     final DateTime? releaseDate = DateTime.tryParse(releaseDateStr);
-    final formattedDate = releaseDate != null
-        ? DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(releaseDate)
-        : '';
+    String formattedDate = '';
+    if (releaseDate != null) {
+      try {
+        formattedDate = DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(releaseDate);
+      } catch (e) {
+        // Fallback to default locale if current locale fails
+        formattedDate = DateFormat.yMMMd().format(releaseDate);
+      }
+    }
     final genres = (details['genres'] as List?) ?? [];
     
     final runtime = type == 'movie'
@@ -207,14 +213,14 @@ class DetailsHero extends ConsumerWidget {
                     spacing: 12,
                     children: [
                       Text(
-                        '${details['number_of_seasons']} ${l10n.detailsSeasonLabel}${details['number_of_seasons'] != 1 ? 's' : ''}',
-                        style: TextStyle(color: AppTheme.textWhite.withOpacity(0.6), fontSize: 13),
-                      ),
-                      const _DotSeparator(),
-                      Text(
-                        '${details['number_of_episodes']} ${l10n.detailsEpisodes}',
-                        style: TextStyle(color: AppTheme.textWhite.withOpacity(0.6), fontSize: 13),
-                      ),
+                      '${details['number_of_seasons'] ?? 0} ${l10n.detailsSeasonLabel}${details['number_of_seasons'] != 1 ? 's' : ''}',
+                      style: TextStyle(color: AppTheme.textWhite.withOpacity(0.6), fontSize: 13),
+                    ),
+                    const _DotSeparator(),
+                    Text(
+                      '${details['number_of_episodes'] ?? 0} ${l10n.detailsEpisodes}',
+                      style: TextStyle(color: AppTheme.textWhite.withOpacity(0.6), fontSize: 13),
+                    ),
                       if (details['status'] != null) ...[
                         const _DotSeparator(),
                         Text(
