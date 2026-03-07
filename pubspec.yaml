@@ -85,7 +85,6 @@ dev_dependencies:
   flutter_launcher_icons: ^0.13.1
   drift_dev: ^2.28.0
   mocktail: ^1.0.4
-  msix: ^3.16.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -147,14 +146,3 @@ flutter_launcher_icons:
 
 dependency_overrides:
   bonsoir: 5.0.1
-
-msix_config:
-  display_name: Cinemuse
-  publisher_display_name: Cinemuse
-  publisher: CN=Cinemuse, O=Cinemuse, L=Rome, S=Lazio, C=IT
-  identity_name: com.cinemuse.app
-  msix_version: 1.0.0.0
-  logo_path: assets/logo.png
-  # We should use a real certificate for production, but for now we'll let it self-sign
-  # or use --install to test locally. In GitHub Actions, we'll use --install for validation
-  # and the .msix for the release.

@@ -107,11 +107,12 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
       );
       return apk?['browser_download_url'];
     } else if (Platform.isWindows) {
-      final exe = assets.firstWhere(
-        (a) => (a['name'] as String).endsWith('.exe') || (a['name'] as String).endsWith('.msix'),
+      // Look for the ZIP bundle first
+      final zip = assets.firstWhere(
+        (a) => (a['name'] as String).endsWith('.zip'),
         orElse: () => null,
       );
-      return exe?['browser_download_url'];
+      return zip?['browser_download_url'];
     }
     return null;
   }
@@ -179,9 +180,9 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
     state = state.copyWith(status: UpdateStatus.downloading, progress: 0);
 
     try {
-      final tempDir = await getTemporaryDirectory();
+      final tempDir = await getDownloadsDirectory(); 
       final fileName = state.downloadUrl!.split('/').last;
-      final filePath = '${tempDir.path}\\$fileName';
+      final filePath = '${tempDir!.path}\\$fileName';
 
       await _dio.download(
         state.downloadUrl!,
@@ -195,15 +196,10 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
 
       state = state.copyWith(status: UpdateStatus.readyToInstall);
 
-      // Launch installer silently if possible
-      // For NSIS installers /S, for MSI /quiet
-      final isMsi = fileName.endsWith('.msix') || fileName.endsWith('.msi');
-      final args = isMsi ? ['/quiet'] : ['/S'];
+      // For a portable app, the safest "update" is to open the downloaded ZIP
+      // and let the user replace the files.
+      await Process.run('cmd', ['/c', 'start', '', filePath]);
       
-      await Process.start(filePath, args, mode: ProcessStartMode.detached);
-      
-      // The app will likely be closed by the installer, but we can exit just in case
-      // Or let the user know they need to restart if it's not silent.
     } catch (e) {
       state = state.copyWith(status: UpdateStatus.error, error: e.toString());
     }
