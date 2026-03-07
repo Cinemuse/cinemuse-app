@@ -30,17 +30,12 @@ class AnimeMappingSyncService {
     final lastSyncStr = prefs.getString(_lastSyncKey);
     final lastSync = lastSyncStr != null ? DateTime.tryParse(lastSyncStr) : null;
     
-    // Check if we have data at all and if it's missing the new anidb_id column data
     final count = await _db.getAnimeExternalMappingsCount();
-    final missingAnidbCount = await _db.getAnimeMappingsMissingAnidbCount();
     final isEmpty = count == 0;
-    final needsMigration = count > 0 && missingAnidbCount > 0; // Trigger sync if ANY ID is missing
 
-    if (isEmpty || needsMigration || lastSync == null || DateTime.now().difference(lastSync).inHours > 24) {
+    if (isEmpty || lastSync == null || DateTime.now().difference(lastSync).inHours > 24) {
       if (isEmpty) {
         print('AnimeMappingSyncService: Mapping table is empty, forcing sync...');
-      } else if (needsMigration) {
-        print('AnimeMappingSyncService: Missing AniDB IDs detected ($missingAnidbCount/$count), forcing sync...');
       } else {
         print('AnimeMappingSyncService: Starting daily sync...');
       }
