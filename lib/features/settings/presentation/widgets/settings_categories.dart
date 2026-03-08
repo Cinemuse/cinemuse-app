@@ -205,6 +205,7 @@ class IntegrationsSettings extends ConsumerWidget {
             SettingInput(
               label: l10n.settingsRealDebridKey,
               value: userSettings.realDebridKey,
+              isPassword: true,
               onSave: (val) => settingsNotifier.updateSettings({'realDebridKey': val}),
             ),
             const SizedBox(height: 16),
@@ -224,6 +225,7 @@ class IntegrationsSettings extends ConsumerWidget {
               description: l10n.settingsMediafusionUrlDesc,
               value: userSettings.mediafusionUrl,
               placeholder: l10n.settingsMediafusionHint,
+              isPassword: true,
               onSave: (val) async {
                 try {
                   await settingsNotifier.validateAndSaveMediafusionUrl(val);

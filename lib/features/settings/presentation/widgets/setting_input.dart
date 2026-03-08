@@ -7,6 +7,7 @@ class SettingInput extends StatefulWidget {
   final String? description;
   final String value;
   final String placeholder;
+  final bool isPassword;
   final Future<void> Function(String) onSave;
 
   const SettingInput({
@@ -15,6 +16,7 @@ class SettingInput extends StatefulWidget {
     this.description,
     required this.value,
     this.placeholder = '',
+    this.isPassword = false,
     required this.onSave,
   });
 
@@ -27,12 +29,14 @@ class _SettingInputState extends State<SettingInput> {
   bool _isDirty = false;
   bool _isSaving = false;
   bool _showSuccess = false;
+  late bool _isObscured;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.value);
     _controller.addListener(_checkForChanges);
+    _isObscured = widget.isPassword;
   }
 
   @override
@@ -134,11 +138,26 @@ class _SettingInputState extends State<SettingInput> {
               Expanded(
                 child: TextField(
                   controller: _controller,
+                  obscureText: _isObscured,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: widget.placeholder,
                     filled: true,
                     fillColor: Colors.black.withOpacity(0.3),
+                    suffixIcon: widget.isPassword
+                        ? IconButton(
+                            icon: Icon(
+                              _isObscured ? Icons.visibility_off : Icons.visibility,
+                              color: AppTheme.textMuted,
+                              size: 20,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isObscured = !_isObscured;
+                              });
+                            },
+                          )
+                        : null,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
