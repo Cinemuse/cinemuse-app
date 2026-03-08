@@ -1,9 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:cinemuse_app/core/utils/url_utils.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/stremio_source.dart';
 
 void main() {
   group('StremioSource URL Cleaning', () {
-    test('cleanBaseUrl should strip /manifest.json and everything after it', () {
+    test('UrlUtils.cleanStremioBaseUrl should strip /manifest.json and everything after it', () {
       final testCases = {
         "https://addon.com/manifest.json": "https://addon.com",
         "https://addon.com/manifest.json/": "https://addon.com",
@@ -14,7 +15,7 @@ void main() {
       };
 
       testCases.forEach((input, expected) {
-        expect(StremioSource.cleanBaseUrl(input), equals(expected));
+        expect(UrlUtils.cleanStremioBaseUrl(input), equals(expected));
       });
     });
   });

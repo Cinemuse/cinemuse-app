@@ -547,6 +547,18 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsMediafusionHint => 'https://.../manifest.json';
 
   @override
+  String get settingsMediafusionInvalidFormat =>
+      'Formato URL non valido. Deve iniziare con http:// o https://';
+
+  @override
+  String get settingsMediafusionUnreachable =>
+      'Impossibile raggiungere il server Mediafusion. Controlla la connessione o l\'URL.';
+
+  @override
+  String get settingsMediafusionInvalidManifest =>
+      'L\'URL non punta a un manifest Stremio valido.';
+
+  @override
   String get settingsLanguage => 'Lingua';
 
   @override

@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/utils/url_utils.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -168,6 +169,47 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
     dbUpdates['preferences'] = state.toPreferencesJson();
 
     await _profileRepository.updateProfile(user.id, dbUpdates);
+  }
+
+  Future<void> validateAndSaveMediafusionUrl(String url) async {
+    final cleaned = UrlUtils.cleanStremioBaseUrl(url);
+
+    if (cleaned.isEmpty) {
+      await updateSettings({'mediafusionUrl': ''});
+      return;
+    }
+
+    if (!UrlUtils.isSecureUrl(cleaned)) {
+      throw 'invalid_format';
+    }
+
+    final dio = Dio();
+    try {
+      final manifestUrl = "$cleaned/manifest.json";
+      final response = await dio.get(
+        manifestUrl, 
+        options: Options(
+          receiveTimeout: const Duration(seconds: 10),
+          sendTimeout: const Duration(seconds: 10),
+        ),
+      );
+      
+      if (response.statusCode != 200) {
+        throw 'unreachable';
+      }
+
+      final data = response.data;
+      if (data is! Map || data['id'] == null || data['resources'] == null) {
+        throw 'invalid_manifest';
+      }
+
+      await updateSettings({'mediafusionUrl': cleaned});
+    } on DioException {
+      throw 'unreachable';
+    } catch (e) {
+      if (e is String) rethrow;
+      throw 'unexpected';
+    }
   }
 }
 

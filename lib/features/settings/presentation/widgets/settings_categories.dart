@@ -224,7 +224,20 @@ class IntegrationsSettings extends ConsumerWidget {
               description: l10n.settingsMediafusionUrlDesc,
               value: userSettings.mediafusionUrl,
               placeholder: l10n.settingsMediafusionHint,
-              onSave: (val) => settingsNotifier.updateSettings({'mediafusionUrl': val}),
+              onSave: (val) async {
+                try {
+                  await settingsNotifier.validateAndSaveMediafusionUrl(val);
+                } catch (e) {
+                  if (e == 'invalid_format') {
+                    throw l10n.settingsMediafusionInvalidFormat;
+                  } else if (e == 'unreachable') {
+                    throw l10n.settingsMediafusionUnreachable;
+                  } else if (e == 'invalid_manifest') {
+                    throw l10n.settingsMediafusionInvalidManifest;
+                  }
+                  rethrow;
+                }
+              },
             ),
           ],
         ),

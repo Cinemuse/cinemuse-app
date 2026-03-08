@@ -1094,6 +1094,24 @@ abstract class AppLocalizations {
   /// **'https://.../manifest.json'**
   String get settingsMediafusionHint;
 
+  /// No description provided for @settingsMediafusionInvalidFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid URL format. Must start with http:// or https://'**
+  String get settingsMediafusionInvalidFormat;
+
+  /// No description provided for @settingsMediafusionUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reach the Mediafusion server. Check your internet connection or the URL.'**
+  String get settingsMediafusionUnreachable;
+
+  /// No description provided for @settingsMediafusionInvalidManifest.
+  ///
+  /// In en, this message translates to:
+  /// **'The URL does not point to a valid Stremio manifest.'**
+  String get settingsMediafusionInvalidManifest;
+
   /// No description provided for @settingsLanguage.
   ///
   /// In en, this message translates to:

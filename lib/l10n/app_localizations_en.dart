@@ -546,6 +546,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsMediafusionHint => 'https://.../manifest.json';
 
   @override
+  String get settingsMediafusionInvalidFormat =>
+      'Invalid URL format. Must start with http:// or https://';
+
+  @override
+  String get settingsMediafusionUnreachable =>
+      'Could not reach the Mediafusion server. Check your internet connection or the URL.';
+
+  @override
+  String get settingsMediafusionInvalidManifest =>
+      'The URL does not point to a valid Stremio manifest.';
+
+  @override
   String get settingsLanguage => 'Language';
 
   @override
