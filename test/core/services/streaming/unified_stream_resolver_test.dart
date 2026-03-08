@@ -8,6 +8,7 @@ import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/models/media_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
+import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
 
 class MockSource extends Mock implements BaseSource {}
 
@@ -85,7 +86,42 @@ void main() {
       });
       when(() => mockSource.search(any())).thenThrow(Exception('Source down'));
 
-      expect(() => resolver.searchStreams('123', 'movie'), throwsException);
+      expect(() => resolver.searchStreams('123', 'movie'), throwsA(isA<StreamingException>()));
+    });
+
+    test('Should throw NoProvidersEnabledException when sources list is empty', () async {
+      final emptyResolver = UnifiedStreamResolver(
+        sources: [],
+        debridServices: [mockDebrid],
+        tmdbService: mockTmdb,
+        kitsuMappingService: mockKitsu,
+      );
+
+      expect(() => emptyResolver.searchStreams('123', 'movie'), throwsA(isA<NoProvidersEnabledException>()));
+    });
+
+    test('Should throw MediaDetailsResolutionException when details are null', () async {
+      when(() => mockTmdb.getMediaDetails(any(), any())).thenAnswer((_) async => null);
+
+      expect(() => resolver.searchStreams('123', 'movie'), throwsA(isA<MediaDetailsResolutionException>()));
+    });
+
+    test('Should throw ImdbIdResolutionException when IMDB ID is missing', () async {
+      when(() => mockTmdb.getMediaDetails(any(), any())).thenAnswer((_) async => {
+        'id': 123,
+      });
+      when(() => mockTmdb.getImdbId(any(), any())).thenAnswer((_) async => null);
+
+      expect(() => resolver.searchStreams('123', 'movie'), throwsA(isA<ImdbIdResolutionException>()));
+    });
+
+    test('Should throw NoResultsFoundException when no streams are found', () async {
+      when(() => mockTmdb.getMediaDetails(any(), any())).thenAnswer((_) async => {
+        'id': 123, 'imdb_id': 'tt123',
+      });
+      when(() => mockSource.search(any())).thenAnswer((_) async => []);
+
+      expect(() => resolver.searchStreams('123', 'movie'), throwsA(isA<NoResultsFoundException>()));
     });
   });
 

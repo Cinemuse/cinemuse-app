@@ -926,6 +926,48 @@ abstract class AppLocalizations {
   /// **'No audio tracks found'**
   String get playerNoAudioFound;
 
+  /// No description provided for @streamingErrorNoProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'No streaming providers are enabled. Please check your settings.'**
+  String get streamingErrorNoProviders;
+
+  /// No description provided for @streamingErrorNoAnimeProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'No anime providers are enabled. Please check your settings.'**
+  String get streamingErrorNoAnimeProviders;
+
+  /// No description provided for @streamingErrorNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found across providers.'**
+  String get streamingErrorNoResults;
+
+  /// No description provided for @streamingErrorDebridKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-Debrid API Key is missing. Please check your settings.'**
+  String get streamingErrorDebridKey;
+
+  /// No description provided for @streamingErrorResolutionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to resolve the selected stream. Link might not be available in cache.'**
+  String get streamingErrorResolutionFailed;
+
+  /// No description provided for @streamingErrorMediaDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not fetch media details.'**
+  String get streamingErrorMediaDetails;
+
+  /// No description provided for @streamingErrorImdbId.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not resolve IMDB ID.'**
+  String get streamingErrorImdbId;
+
   /// No description provided for @playerFiles.
   ///
   /// In en, this message translates to:

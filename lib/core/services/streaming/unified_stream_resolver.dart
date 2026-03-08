@@ -14,6 +14,7 @@ import 'package:cinemuse_app/core/services/streaming/sources/dummy_source.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/real_debrid_service.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
+import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
 
 final unifiedStreamResolverProvider = Provider((ref) {
   final settings = ref.watch(settingsProvider);
@@ -79,9 +80,13 @@ class UnifiedStreamResolver {
     int? episode,
   }) async {
     try {
+      if (_sources.isEmpty) {
+        throw NoProvidersEnabledException();
+      }
+
       // 1. Resolve Media Details and IDs
       final details = await _tmdbService.getMediaDetails(queryId, type);
-      if (details == null) throw Exception("Could not fetch media details");
+      if (details == null) throw MediaDetailsResolutionException();
 
       final tmdbId = int.tryParse(queryId) ?? int.tryParse(details['id'].toString());
       String? imdbId = details['external_ids']?['imdb_id'] ?? details['imdb_id'];
@@ -89,7 +94,7 @@ class UnifiedStreamResolver {
         imdbId = await _tmdbService.getImdbId(tmdbId, type);
       }
 
-      if (imdbId == null) throw Exception("Could not resolve IMDB ID");
+      if (imdbId == null) throw ImdbIdResolutionException();
 
       // 2. Resolve Anime Mapping if needed
       KitsuMapping? kitsuMapping;
@@ -122,7 +127,12 @@ class UnifiedStreamResolver {
       final rawResults = await Future.wait(searchFutures);
       final allCandidates = rawResults.expand((x) => x).toList();
 
-      if (allCandidates.isEmpty) return [];
+      if (allCandidates.isEmpty) {
+        if (context.isAnime && _sources.every((s) => s.name == 'Mediafusion')) {
+           throw NoAnimeProvidersEnabledException();
+        }
+        throw NoResultsFoundException();
+      }
 
       // 4. Deduplicate
       final uniqueMap = <String, StreamCandidate>{};
@@ -171,7 +181,8 @@ class UnifiedStreamResolver {
       return StreamRanker.rank(candidates);
     } catch (e) {
       print('UnifiedStreamResolver: Search failed: $e');
-      rethrow;
+      if (e is StreamingException) rethrow;
+      throw StreamResolutionFailedException(e.toString());
     }
   }
 

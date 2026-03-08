@@ -22,6 +22,9 @@ import 'package:cinemuse_app/features/video_player/application/handlers/youtube_
 import 'package:cinemuse_app/features/video_player/application/handlers/rd_handler.dart';
 import 'package:cinemuse_app/features/video_player/application/handlers/cast_handler.dart';
 import 'package:cinemuse_app/features/video_player/application/language_mapper.dart';
+import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
+import 'package:cinemuse_app/core/application/l10n_provider.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 // Convert back to StateNotifierProvider for compatibility/simplicity
 final playerControllerProvider = StateNotifierProvider.family.autoDispose<PlayerController, AsyncValue<CinemaPlayerState>, PlayerParams>(
@@ -353,9 +356,39 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       }
     } catch (e, st) {
       if (mounted) {
-        state = AsyncValue.error(e, st);
+        state = AsyncValue.error(_mapExceptionToMessage(e), st);
       }
     }
+  }
+
+  String _mapExceptionToMessage(Object e) {
+    // 0. Use localizationsProvider (ref is available in the controller)
+    final l10n = ref.read(localizationsProvider);
+
+    if (e is StreamingException) {
+      switch (e) {
+        case NoProvidersEnabledException():
+          return l10n.streamingErrorNoProviders;
+        case NoAnimeProvidersEnabledException():
+          return l10n.streamingErrorNoAnimeProviders;
+        case NoResultsFoundException():
+          return l10n.streamingErrorNoResults;
+        case DebridKeyNotSpecifiedException():
+          return l10n.streamingErrorDebridKey;
+        case StreamResolutionFailedException():
+          return l10n.streamingErrorResolutionFailed;
+        case MediaDetailsResolutionException():
+          return l10n.streamingErrorMediaDetails;
+        case ImdbIdResolutionException():
+          return l10n.streamingErrorImdbId;
+        default:
+          return e.message;
+      }
+    }
+    
+    // Fallback for regular exceptions
+    final msg = e.toString().replaceFirst('Exception: ', '');
+    return l10n.playerErrorResolving(msg);
   }
 
   Future<void> _saveProgress({bool force = false}) async {
@@ -481,7 +514,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
          print('PlayerController: Resolution failed (returned null)');
          state = AsyncValue.data(state.value!.copyWith(
            isResolving: false,
-           error: "Failed to resolve stream. Link not available in Real-Debrid cache.",
+           error: ref.read(localizationsProvider).streamingErrorResolutionFailed,
          ));
        }
     } catch (e) {
@@ -489,7 +522,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       if (state.value != null) {
         state = AsyncValue.data(state.value!.copyWith(
           isResolving: false,
-          error: "Resolution Error: ${e.toString()}",
+          error: _mapExceptionToMessage(e),
         ));
       }
     }

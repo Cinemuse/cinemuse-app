@@ -455,6 +455,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playerNoAudioFound => 'No audio tracks found';
 
   @override
+  String get streamingErrorNoProviders =>
+      'No streaming providers are enabled. Please check your settings.';
+
+  @override
+  String get streamingErrorNoAnimeProviders =>
+      'No anime providers are enabled. Please check your settings.';
+
+  @override
+  String get streamingErrorNoResults => 'No results found across providers.';
+
+  @override
+  String get streamingErrorDebridKey =>
+      'Real-Debrid API Key is missing. Please check your settings.';
+
+  @override
+  String get streamingErrorResolutionFailed =>
+      'Failed to resolve the selected stream. Link might not be available in cache.';
+
+  @override
+  String get streamingErrorMediaDetails => 'Could not fetch media details.';
+
+  @override
+  String get streamingErrorImdbId => 'Could not resolve IMDB ID.';
+
+  @override
   String get playerFiles => 'Files';
 
   @override
