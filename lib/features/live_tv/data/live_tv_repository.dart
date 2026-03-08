@@ -9,7 +9,7 @@ class LiveTvRepository {
   static const _channelsUrl =
       'https://raw.githubusercontent.com/ZapprTV/channels/refs/heads/main/it/dtt/national.json';
   static const _epgUrl =
-      'https://epg-57v9m5qem-quelmitchs-projects.vercel.app/output/it/dtt/national.json';
+      'https://epg.zappr.stream/it/dtt/national.json';
 
   LiveTvRepository(this._dio);
 
