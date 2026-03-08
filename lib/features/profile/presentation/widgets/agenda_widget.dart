@@ -8,22 +8,153 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
-class AgendaWidget extends ConsumerWidget {
-  const AgendaWidget({super.key});
+class AgendaWidget extends ConsumerStatefulWidget {
+  final bool isExpanded;
+  const AgendaWidget({super.key, this.isExpanded = false});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final agendaAsync = ref.watch(agendaProvider);
+  ConsumerState<AgendaWidget> createState() => _AgendaWidgetState();
+}
+
+class _AgendaWidgetState extends ConsumerState<AgendaWidget> {
+  final ScrollController _scrollController = ScrollController();
+  final Map<AgendaGroup, GlobalKey> _groupKeys = {
+    for (var group in AgendaGroup.values) group: GlobalKey(),
+  };
+  bool _hasInitialScrolled = false;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToPriorityGroup(Map<AgendaGroup, List<AgendaEvent>> groups) {
+    if (_hasInitialScrolled || !mounted) return;
+
+    // Ordered priority list of target groups (Recently Released is excluded to hide it initially)
+    final priorityTargets = [
+      AgendaGroup.today,
+      AgendaGroup.tomorrow,
+      AgendaGroup.thisWeek,
+      AgendaGroup.nextWeek,
+      AgendaGroup.later,
+      AgendaGroup.tbd,
+    ];
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      for (final target in priorityTargets) {
+        if (groups.containsKey(target) && groups[target]!.isNotEmpty) {
+          final key = _groupKeys[target];
+          if (key?.currentContext != null) {
+            Scrollable.ensureVisible(
+              key!.currentContext!,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              alignment: 0.0,
+            );
+            _hasInitialScrolled = true;
+            break;
+          }
+        }
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final agendaAsync = ref.watch(agendaProvider);
+
+    Widget buildContent() {
+      return agendaAsync.when(
+        data: (groups) {
+          if (groups.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: Text(
+                  l10n.agendaNoEvents,
+                  style: DesktopTypography.bodySecondary.copyWith(color: AppTheme.textMuted),
+                ),
+              ),
+            );
+          }
+
+          // Trigger initial scroll calculation
+          _scrollToPriorityGroup(groups);
+
+          final slivers = <Widget>[];
+          for (final entry in groups.entries) {
+            final group = entry.key;
+            final events = entry.value;
+
+            slivers.add(
+              SliverMainAxisGroup(
+                key: _groupKeys[group],
+                slivers: [
+                  // Sticky Header for the group
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _StickyHeaderDelegate(
+                      title: _getGroupTitle(context, group).toUpperCase(),
+                      backgroundColor: AppTheme.surface,
+                    ),
+                  ),
+
+                  // List of events in the group
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final event = events[index];
+                        return Column(
+                          children: [
+                            _AgendaEventItem(event: event),
+                            if (index < events.length - 1)
+                              Divider(height: 1, color: Colors.white.withOpacity(0.05)),
+                          ],
+                        );
+                      },
+                      childCount: events.length,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return CustomScrollView(
+            controller: _scrollController,
+            slivers: slivers,
+          );
+        },
+        loading: () => const Padding(
+          padding: EdgeInsets.all(48),
+          child: Center(child: CircularProgressIndicator(color: AppTheme.accent)),
+        ),
+        error: (err, stack) => Padding(
+          padding: const EdgeInsets.all(24),
+          child: Center(
+            child: Text(
+              l10n.commonError,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: widget.isExpanded ? MainAxisSize.max : MainAxisSize.min,
         children: [
           // Header
           Padding(
@@ -51,40 +182,11 @@ class AgendaWidget extends ConsumerWidget {
           ),
 
           // Content
-          agendaAsync.when(
-            data: (groups) {
-              if (groups.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Center(
-                    child: Text(
-                      l10n.agendaNoEvents,
-                      style: DesktopTypography.bodySecondary.copyWith(color: AppTheme.textMuted),
-                    ),
-                  ),
-                );
-              }
-
-              return Column(
-                children: groups.entries.map((entry) {
-                  return _GroupSection(group: entry.key, events: entry.value);
-                }).toList(),
-              );
-            },
-            loading: () => const Padding(
-              padding: EdgeInsets.all(48),
-              child: Center(child: CircularProgressIndicator(color: AppTheme.accent)),
-            ),
-            error: (err, stack) => Padding(
-              padding: const EdgeInsets.all(24),
-              child: Center(
-                child: Text(
-                  l10n.commonError,
-                  style: const TextStyle(color: Colors.redAccent),
-                ),
-              ),
-            ),
-          ),
+          if (widget.isExpanded)
+            Expanded(child: buildContent())
+          else
+            buildContent(),
+          
           const SizedBox(height: 16),
         ],
       ),
@@ -92,13 +194,7 @@ class AgendaWidget extends ConsumerWidget {
   }
 }
 
-class _GroupSection extends StatelessWidget {
-  final AgendaGroup group;
-  final List<AgendaEvent> events;
-
-  const _GroupSection({required this.group, required this.events});
-
-  String _getGroupTitle(BuildContext context) {
+  String _getGroupTitle(BuildContext context, AgendaGroup group) {
     final l10n = AppLocalizations.of(context)!;
     switch (group) {
       case AgendaGroup.recentlyReleased: return l10n.agendaRecentlyReleased;
@@ -111,34 +207,47 @@ class _GroupSection extends StatelessWidget {
     }
   }
 
+class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final String title;
+  final Color backgroundColor;
+
+  _StickyHeaderDelegate({required this.title, required this.backgroundColor});
+
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+  double get minExtent => 36.0;
+  @override
+  double get maxExtent => 36.0;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      width: double.infinity,
+      height: 36.0,
+      color: backgroundColor, // Background color is essential for sticky effect to hide background content
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.05),
-          child: Text(
-            _getGroupTitle(context).toUpperCase(),
-            style: DesktopTypography.captionMeta.copyWith(
-              color: AppTheme.accent,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-              letterSpacing: 1.2,
-            ),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text(
+          title,
+          style: DesktopTypography.captionMeta.copyWith(
+            color: AppTheme.accent,
+            fontWeight: FontWeight.bold,
+            fontSize: 10,
+            letterSpacing: 1.2,
           ),
         ),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: events.length,
-          separatorBuilder: (context, index) => Divider(height: 1, color: Colors.white.withOpacity(0.05)),
-          itemBuilder: (context, index) => _AgendaEventItem(event: events[index]),
-        ),
-      ],
+      ),
     );
+  }
+
+  @override
+  bool shouldRebuild(_StickyHeaderDelegate oldDelegate) {
+    return title != oldDelegate.title || backgroundColor != oldDelegate.backgroundColor;
   }
 }
 

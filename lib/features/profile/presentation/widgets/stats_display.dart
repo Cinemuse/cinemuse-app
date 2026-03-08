@@ -33,11 +33,11 @@ class StatsDisplay extends ConsumerWidget {
             // Let's render the Full Cards vertically for mobile to ensure all data is visible without interaction complexity first.
             return Column(
                 children: [
-                    _TimeBreakdownCard(stats: stats, formatDuration: formatDuration),
+                    TimeBreakdownCard(stats: stats, formatDuration: formatDuration),
                     const SizedBox(height: 16),
-                    _MoviesStatsCard(stats: stats),
+                    MoviesStatsCard(stats: stats),
                     const SizedBox(height: 16),
-                    _SeriesStatsCard(stats: stats),
+                    SeriesStatsCard(stats: stats),
                 ],
             );
         }
@@ -45,11 +45,11 @@ class StatsDisplay extends ConsumerWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _TimeBreakdownCard(stats: stats, formatDuration: formatDuration)),
+            Expanded(child: TimeBreakdownCard(stats: stats, formatDuration: formatDuration)),
             const SizedBox(width: 24),
-            Expanded(child: _MoviesStatsCard(stats: stats)),
+            Expanded(child: MoviesStatsCard(stats: stats)),
             const SizedBox(width: 24),
-            Expanded(child: _SeriesStatsCard(stats: stats)),
+            Expanded(child: SeriesStatsCard(stats: stats)),
           ],
         );
       },
@@ -58,15 +58,15 @@ class StatsDisplay extends ConsumerWidget {
 }
 
 // --- Card 1: Time Breakdown ---
-class _TimeBreakdownCard extends StatelessWidget {
+class TimeBreakdownCard extends StatelessWidget {
   final ProfileStats stats;
   final String Function(int) formatDuration;
 
-  const _TimeBreakdownCard({required this.stats, required this.formatDuration});
+  const TimeBreakdownCard({super.key, required this.stats, required this.formatDuration});
 
   @override
   Widget build(BuildContext context) {
-    return _BaseCard(
+    return BaseCard(
       icon: LucideIcons.clock,
       title: 'TIME BREAKDOWN',
       iconColor: Colors.blue,
@@ -142,14 +142,14 @@ class _TimeBreakdownCard extends StatelessWidget {
 }
 
 // --- Card 2: Movies Stats ---
-class _MoviesStatsCard extends StatelessWidget {
+class MoviesStatsCard extends StatelessWidget {
   final ProfileStats stats;
 
-  const _MoviesStatsCard({required this.stats});
+  const MoviesStatsCard({super.key, required this.stats});
 
   @override
   Widget build(BuildContext context) {
-    return _BaseCard(
+    return BaseCard(
       icon: LucideIcons.film,
       title: 'MOVIES STATS',
       iconColor: AppTheme.accent,
@@ -201,14 +201,14 @@ class _MoviesStatsCard extends StatelessWidget {
 }
 
 // --- Card 3: Series Stats ---
-class _SeriesStatsCard extends StatelessWidget {
+class SeriesStatsCard extends StatelessWidget {
   final ProfileStats stats;
 
-  const _SeriesStatsCard({required this.stats});
+  const SeriesStatsCard({super.key, required this.stats});
 
   @override
   Widget build(BuildContext context) {
-    return _BaseCard(
+    return BaseCard(
       icon: LucideIcons.tv,
       title: 'SERIES STATS',
       iconColor: Colors.green,
@@ -285,13 +285,13 @@ class _SeriesStatsCard extends StatelessWidget {
 
 // --- Shared Components ---
 
-class _BaseCard extends StatelessWidget {
+class BaseCard extends StatelessWidget {
     final IconData icon;
     final String title;
     final Color iconColor;
     final Widget child;
 
-    const _BaseCard({required this.icon, required this.title, required this.iconColor, required this.child});
+    const BaseCard({super.key, required this.icon, required this.title, required this.iconColor, required this.child});
 
     @override
     Widget build(BuildContext context) {
