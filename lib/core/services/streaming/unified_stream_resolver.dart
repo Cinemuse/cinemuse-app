@@ -21,8 +21,11 @@ final unifiedStreamResolverProvider = Provider((ref) {
   final sources = [
     StremioSource(dio, "https://torrentio.strem.fun", name: 'Torrentio'),
     AnimeToshoSource(dio),
-    // DummySource(), // Ready to be un-commented for testing modularity or adding new ones
   ];
+
+  if (settings.mediafusionUrl.isNotEmpty) {
+    sources.add(StremioSource(dio, settings.mediafusionUrl, name: 'Mediafusion'));
+  }
 
   final debridServices = <BaseDebridService>[];
   if (settings.enableRealDebrid && settings.realDebridKey.isNotEmpty) {
@@ -82,7 +85,6 @@ class UnifiedStreamResolver {
           episode: episode,
         );
       }
-
       final context = MediaContext(
         tmdbId: tmdbId.toString(),
         type: type,
@@ -94,18 +96,28 @@ class UnifiedStreamResolver {
       );
 
       // 3. Search All Sources
-      final searchFutures = _sources.map((source) => source.search(context));
+      final searchFutures = _sources.map((source) {
+        // Skip Mediafusion if it's anime
+        if (source.name == 'Mediafusion' && context.isAnime) {
+          return Future.value(<StreamCandidate>[]);
+        }
+        return source.search(context);
+      });
       final rawResults = await Future.wait(searchFutures);
       final allCandidates = rawResults.expand((x) => x).toList();
 
       if (allCandidates.isEmpty) return [];
 
-      // 4. Deduplicate by InfoHash
+      // 4. Deduplicate
       final uniqueMap = <String, StreamCandidate>{};
       for (var c in allCandidates) {
-        final hash = c.infoHash.toLowerCase();
-        if (!uniqueMap.containsKey(hash) || c.seeds > uniqueMap[hash]!.seeds) {
-          uniqueMap[hash] = c;
+        // Use infoHash if available, otherwise use URL or provider+title
+        final dedupeKey = c.infoHash.isNotEmpty 
+            ? c.infoHash.toLowerCase() 
+            : (c.url ?? "${c.provider}:${c.title}").toLowerCase();
+            
+        if (!uniqueMap.containsKey(dedupeKey) || c.seeds > uniqueMap[dedupeKey]!.seeds) {
+          uniqueMap[dedupeKey] = c;
         }
       }
       var candidates = uniqueMap.values.toList();
@@ -156,6 +168,15 @@ class UnifiedStreamResolver {
     int? episode,
     int? fileId,
   }) async {
+    // 0. If candidate already has a direct URL (like Mediafusion), return it immediately
+    if (candidate.url != null && candidate.url!.isNotEmpty) {
+      return ResolvedStream(
+        url: candidate.url!,
+        provider: candidate.provider,
+        candidate: candidate,
+      );
+    }
+
     // 1. Prioritize providers where it's already cached
     final cachedProviders = candidate.cachedOn.entries
         .where((e) => e.value)

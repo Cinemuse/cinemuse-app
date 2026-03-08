@@ -526,6 +526,16 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsRealDebridKey => 'Chiave API Real-Debrid';
 
   @override
+  String get settingsMediafusionUrl => 'URL Mediafusion';
+
+  @override
+  String get settingsMediafusionUrlDesc =>
+      'URL per il provider Mediafusion (si trova nella configurazione del manifest).';
+
+  @override
+  String get settingsMediafusionHint => 'https://.../manifest.json';
+
+  @override
   String get settingsLanguage => 'Lingua';
 
   @override

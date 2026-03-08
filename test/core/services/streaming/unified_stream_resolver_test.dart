@@ -3,10 +3,11 @@ import 'package:mocktail/mocktail.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
-import 'package:cinemuse_app/core/services/tmdb_service.dart';
-import 'package:cinemuse_app/core/services/kitsu_mapping_service.dart';
+import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
+import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/models/media_context.dart';
+import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 
 class MockSource extends Mock implements BaseSource {}
 
@@ -27,6 +28,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(FakeMediaContext());
+    registerFallbackValue(StreamCandidate(title: '', infoHash: '', magnet: '', provider: ''));
   });
 
   setUp(() {
@@ -110,21 +112,19 @@ void main() {
         any(), 
         season: any(named: 'season'), 
         episode: any(named: 'episode'), 
-        absoluteEpisode: any(named: 'absoluteEpisode'),
         fileId: any(named: 'fileId'),
-      )).thenAnswer((_) async => {'url': 'url1'});
+      )).thenAnswer((_) async => ResolvedStream(url: 'url1', provider: 'D1', candidate: candidate));
 
       when(() => mockDebrid2.resolve(
         any(), 
         season: any(named: 'season'), 
         episode: any(named: 'episode'), 
-        absoluteEpisode: any(named: 'absoluteEpisode'),
         fileId: any(named: 'fileId'),
-      )).thenAnswer((_) async => {'url': 'url2'});
+      )).thenAnswer((_) async => ResolvedStream(url: 'url2', provider: 'D2', candidate: candidate));
 
       final result = await resolverWithMany.resolveStream(candidate);
 
-      expect(result?['url'], equals('url2'), reason: 'Should pick D2 because it is cached there');
+      expect(result?.url, equals('url2'), reason: 'Should pick D2 because it is cached there');
     });
   });
 }

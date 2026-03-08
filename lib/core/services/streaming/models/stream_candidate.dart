@@ -8,6 +8,7 @@ class StreamCandidate {
   final Map<String, dynamic>? metadata;
   final int score;
   final Map<String, bool> cachedOn; // Provider Name -> Cached Status
+  final String? url; // Direct playback URL
 
   StreamCandidate({
     required this.title,
@@ -19,6 +20,7 @@ class StreamCandidate {
     this.metadata,
     this.score = 0,
     this.cachedOn = const {},
+    this.url,
   });
 
   bool get isCached => cachedOn.values.any((v) => v);
@@ -37,6 +39,7 @@ class StreamCandidate {
       metadata: metadata,
       score: score ?? this.score,
       cachedOn: cachedOn ?? this.cachedOn,
+      url: url,
     );
   }
 }

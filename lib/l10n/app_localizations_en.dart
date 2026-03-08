@@ -526,6 +526,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsRealDebridKey => 'Real-Debrid API Key';
 
   @override
+  String get settingsMediafusionUrl => 'Mediafusion URL';
+
+  @override
+  String get settingsMediafusionUrlDesc =>
+      'URL for Mediafusion provider (found in manifest configuration).';
+
+  @override
+  String get settingsMediafusionHint => 'https://.../manifest.json';
+
+  @override
   String get settingsLanguage => 'Language';
 
   @override

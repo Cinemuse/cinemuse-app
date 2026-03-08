@@ -236,7 +236,6 @@ class TmdbService {
       final originalLanguage = details['original_language'] as String?;
       final originCountry = details['origin_country'] as List?;
 
-      // Anime is Japanese Animation
       return isAnimation && (originalLanguage == 'ja' || (originCountry?.contains('JP') ?? false));
     } catch (e) {
       return false;

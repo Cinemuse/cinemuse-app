@@ -1058,6 +1058,24 @@ abstract class AppLocalizations {
   /// **'Real-Debrid API Key'**
   String get settingsRealDebridKey;
 
+  /// No description provided for @settingsMediafusionUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Mediafusion URL'**
+  String get settingsMediafusionUrl;
+
+  /// No description provided for @settingsMediafusionUrlDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'URL for Mediafusion provider (found in manifest configuration).'**
+  String get settingsMediafusionUrlDesc;
+
+  /// No description provided for @settingsMediafusionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'https://.../manifest.json'**
+  String get settingsMediafusionHint;
+
   /// No description provided for @settingsLanguage.
   ///
   /// In en, this message translates to:

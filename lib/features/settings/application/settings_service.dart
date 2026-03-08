@@ -17,6 +17,7 @@ class UserSettings {
   final bool showDebugPanel;
   final bool smartSearchFilter;
   final String? liveTvRegion;
+  final String mediafusionUrl;
 
   const UserSettings({
     this.displayName = '',
@@ -29,6 +30,7 @@ class UserSettings {
     this.showDebugPanel = false,
     this.smartSearchFilter = true,
     this.liveTvRegion,
+    this.mediafusionUrl = '',
   });
 
   factory UserSettings.fromProfile(Profile profile) {
@@ -44,6 +46,7 @@ class UserSettings {
       showDebugPanel: prefs['showDebugPanel'] ?? false,
       smartSearchFilter: prefs['smartSearchFilter'] ?? true,
       liveTvRegion: prefs['liveTvRegion'],
+      mediafusionUrl: prefs['mediafusionUrl'] ?? '',
     );
   }
 
@@ -58,6 +61,7 @@ class UserSettings {
     bool? showDebugPanel,
     bool? smartSearchFilter,
     String? liveTvRegion,
+    String? mediafusionUrl,
   }) {
     return UserSettings(
       displayName: displayName ?? this.displayName,
@@ -70,6 +74,7 @@ class UserSettings {
       showDebugPanel: showDebugPanel ?? this.showDebugPanel,
       smartSearchFilter: smartSearchFilter ?? this.smartSearchFilter,
       liveTvRegion: liveTvRegion ?? this.liveTvRegion,
+      mediafusionUrl: mediafusionUrl ?? this.mediafusionUrl,
     );
   }
 
@@ -84,6 +89,7 @@ class UserSettings {
       'showDebugPanel': showDebugPanel,
       'smartSearchFilter': smartSearchFilter,
       'liveTvRegion': liveTvRegion,
+      'mediafusionUrl': mediafusionUrl,
     };
   }
 }
@@ -124,6 +130,7 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       showDebugPanel: updates['showDebugPanel'],
       smartSearchFilter: updates['smartSearchFilter'],
       liveTvRegion: updates['liveTvRegion'],
+      mediafusionUrl: updates['mediafusionUrl'],
     );
 
     // Sync app language to localeProvider if updated

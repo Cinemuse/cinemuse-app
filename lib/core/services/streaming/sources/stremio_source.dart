@@ -35,15 +35,24 @@ class StremioSource implements BaseSource {
       if (res.statusCode == 200 && res.data['streams'] != null) {
         final streamsData = res.data['streams'] as List;
         return streamsData.map((s) {
-          final title = (s['title'] ?? "").replaceAll('\n', " ");
+          final rawTitle = (s['title'] ?? s['description'] ?? "").replaceAll('\n', " ");
+          final name = s['name'] != null ? "[${s['name']}] " : "";
+          final title = "$name$rawTitle";
+          
+          final infoHash = s['infoHash'] ?? "";
+          final url = s['url'];
+
           return StreamCandidate(
             title: context.kitsuMapping != null ? " (Kitsu) $title" : title,
-            infoHash: s['infoHash'] ?? "",
-            magnet: "magnet:?xt=urn:btih:${s['infoHash']}&dn=${Uri.encodeComponent(title)}",
+            infoHash: infoHash,
+            magnet: infoHash.isNotEmpty 
+                ? "magnet:?xt=urn:btih:$infoHash&dn=${Uri.encodeComponent(title)}"
+                : "",
             seeds: s['seeds'] ?? 0,
-            provider: name,
+            provider: this.name,
             absoluteEpisode: context.kitsuMapping?.absoluteEpisode,
             metadata: StreamRanker.parseMetadata(title),
+            url: url,
           );
         }).toList();
       }
