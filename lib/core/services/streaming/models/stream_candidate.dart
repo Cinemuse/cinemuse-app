@@ -25,6 +25,16 @@ class StreamCandidate {
 
   bool get isCached => cachedOn.values.any((v) => v);
 
+  /// A robust unique identifier for the stream.
+  /// Priority: infoHash > url > fallback (provider:title)
+  String get uniqueId {
+    if (infoHash.isNotEmpty) return infoHash.toLowerCase();
+    if (url != null && url!.isNotEmpty) return url!.toLowerCase();
+    // Normalize title for fallback identification
+    final normalizedTitle = title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    return "${provider.toLowerCase()}:$normalizedTitle";
+  }
+
   StreamCandidate copyWith({
     int? score,
     Map<String, bool>? cachedOn,

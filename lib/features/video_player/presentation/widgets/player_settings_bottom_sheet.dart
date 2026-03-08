@@ -433,8 +433,7 @@ class _QualitySelectorState extends ConsumerState<_QualitySelector> {
                             final stream = currentState.availableStreams[index];
                             final meta = stream.metadata ?? {};
                             
-                            final isSelected = currentState.currentStream?.candidate.infoHash == stream.infoHash &&
-                                             currentState.currentStream?.candidate.provider == stream.provider;
+                            final isSelected = currentState.currentStream?.candidate.uniqueId == stream.uniqueId;
                             
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),

@@ -1022,6 +1022,24 @@ abstract class AppLocalizations {
   /// **'Transfer your data to and from other services.'**
   String get settingsImportDesc;
 
+  /// No description provided for @settingsProvidersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Streaming Providers'**
+  String get settingsProvidersTitle;
+
+  /// No description provided for @settingsProvidersDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage and reorder your content sources.'**
+  String get settingsProvidersDesc;
+
+  /// No description provided for @settingsProvidersReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold and drag to reorder providers.'**
+  String get settingsProvidersReorder;
+
   /// No description provided for @settingsDisplayName.
   ///
   /// In en, this message translates to:

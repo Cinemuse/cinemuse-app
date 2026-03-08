@@ -101,6 +101,9 @@
   "settingsDataDesc": "Gestisci i tuoi dati locali e la cache.",
   "settingsImport": "Importa ed Esporta",
   "settingsImportDesc": "Trasferisci i tuoi dati da e verso altri servizi.",
+  "settingsProvidersTitle": "Provider Streaming",
+  "settingsProvidersDesc": "Gestisci e riordina le tue sorgenti di contenuto.",
+  "settingsProvidersReorder": "Tieni premuto e trascina per riordinare i provider.",
   
   "settingsDisplayName": "Nome Visualizzato",
   "settingsDisplayNameDesc": "Il tuo nome visualizzato pubblico.",

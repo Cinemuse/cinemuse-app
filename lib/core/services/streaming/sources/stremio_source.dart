@@ -1,3 +1,4 @@
+import 'package:meta/meta.dart';
 import 'package:cinemuse_app/core/services/streaming/models/media_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
@@ -6,11 +7,32 @@ import 'package:dio/dio.dart';
 
 class StremioSource implements BaseSource {
   final Dio _dio;
-  final String _baseUrl;
+  String _baseUrl;
   @override
   final String name;
 
-  StremioSource(this._dio, this._baseUrl, {this.name = 'Torrentio'});
+  StremioSource(this._dio, String baseUrl, {this.name = 'Torrentio'}) : _baseUrl = cleanBaseUrl(baseUrl);
+
+  @visibleForTesting
+  static String cleanBaseUrl(String url) {
+    var cleaned = url.trim();
+    // Strip manifest.json and anything that follows (like /stream/...)
+    final manifestIndex = cleaned.toLowerCase().indexOf('/manifest.json');
+    if (manifestIndex != -1) {
+      cleaned = cleaned.substring(0, manifestIndex);
+    }
+    
+    // Also handle cases without a leading slash if any
+    if (cleaned.toLowerCase().endsWith('manifest.json')) {
+      cleaned = cleaned.substring(0, cleaned.length - 'manifest.json'.length);
+    }
+
+    // Remove trailing slashes
+    while (cleaned.endsWith('/')) {
+      cleaned = cleaned.substring(0, cleaned.length - 1);
+    }
+    return cleaned;
+  }
 
   @override
   Future<List<StreamCandidate>> search(MediaContext context) async {

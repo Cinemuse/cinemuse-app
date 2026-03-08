@@ -6,6 +6,7 @@ import 'package:cinemuse_app/features/settings/presentation/widgets/setting_togg
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_input.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/settings_widgets.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/presentation/widgets/provider_management_settings.dart';
 
 class IdentitySettings extends ConsumerWidget {
   const IdentitySettings({super.key});
@@ -225,6 +226,20 @@ class IntegrationsSettings extends ConsumerWidget {
               placeholder: l10n.settingsMediafusionHint,
               onSave: (val) => settingsNotifier.updateSettings({'mediafusionUrl': val}),
             ),
+          ],
+        ),
+        SettingsCard(
+          children: [
+            Text(
+              l10n.settingsProvidersTitle.toUpperCase(),
+              style: const TextStyle(
+                color: AppTheme.textMuted,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const ProviderManagementSettings(),
           ],
         ),
       ],

@@ -159,6 +159,9 @@
   "settingsDataDesc": "Manage your local data and cache.",
   "settingsImport": "Import & Export",
   "settingsImportDesc": "Transfer your data to and from other services.",
+  "settingsProvidersTitle": "Streaming Providers",
+  "settingsProvidersDesc": "Manage and reorder your content sources.",
+  "settingsProvidersReorder": "Hold and drag to reorder providers.",
   
   "settingsDisplayName": "Display Name",
   "settingsDisplayNameDesc": "Your public display name.",

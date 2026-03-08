@@ -1,5 +1,8 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:meta/meta.dart';
+import 'package:cinemuse_app/core/services/streaming/models/streaming_provider_config.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/profile/data/profile_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/profile.dart';
@@ -18,6 +21,7 @@ class UserSettings {
   final bool smartSearchFilter;
   final String? liveTvRegion;
   final String mediafusionUrl;
+  final List<StreamingProviderConfig> streamingProviders;
 
   const UserSettings({
     this.displayName = '',
@@ -31,6 +35,11 @@ class UserSettings {
     this.smartSearchFilter = true,
     this.liveTvRegion,
     this.mediafusionUrl = '',
+    this.streamingProviders = const [
+      StreamingProviderConfig(id: 'torrentio', name: 'Torrentio', priority: 0),
+      StreamingProviderConfig(id: 'animetosho', name: 'AnimeTosho', priority: 1),
+      StreamingProviderConfig(id: 'mediafusion', name: 'Mediafusion', priority: 2),
+    ],
   });
 
   factory UserSettings.fromProfile(Profile profile) {
@@ -47,6 +56,12 @@ class UserSettings {
       smartSearchFilter: prefs['smartSearchFilter'] ?? true,
       liveTvRegion: prefs['liveTvRegion'],
       mediafusionUrl: prefs['mediafusionUrl'] ?? '',
+      streamingProviders: (prefs['streamingProviders'] as List?)?.map((e) => StreamingProviderConfig.fromJson(e as Map<String, dynamic>)).toList() ?? 
+        const [
+          StreamingProviderConfig(id: 'torrentio', name: 'Torrentio', priority: 0),
+          StreamingProviderConfig(id: 'animetosho', name: 'AnimeTosho', priority: 1),
+          StreamingProviderConfig(id: 'mediafusion', name: 'Mediafusion', priority: 2),
+        ],
     );
   }
 
@@ -62,6 +77,7 @@ class UserSettings {
     bool? smartSearchFilter,
     String? liveTvRegion,
     String? mediafusionUrl,
+    List<StreamingProviderConfig>? streamingProviders,
   }) {
     return UserSettings(
       displayName: displayName ?? this.displayName,
@@ -75,6 +91,7 @@ class UserSettings {
       smartSearchFilter: smartSearchFilter ?? this.smartSearchFilter,
       liveTvRegion: liveTvRegion ?? this.liveTvRegion,
       mediafusionUrl: mediafusionUrl ?? this.mediafusionUrl,
+      streamingProviders: streamingProviders ?? this.streamingProviders,
     );
   }
 
@@ -90,6 +107,7 @@ class UserSettings {
       'smartSearchFilter': smartSearchFilter,
       'liveTvRegion': liveTvRegion,
       'mediafusionUrl': mediafusionUrl,
+      'streamingProviders': streamingProviders.map((e) => e.toJson()).toList(),
     };
   }
 }
@@ -99,10 +117,11 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
   final Ref _ref;
 
   SettingsNotifier(this._profileRepository, this._ref) : super(const UserSettings()) {
-    _init();
+    initSettings();
   }
 
-  Future<void> _init() async {
+  @visibleForTesting
+  Future<void> initSettings() async {
     final user = _ref.read(authProvider).value;
     if (user != null) {
       final profile = await _profileRepository.getProfile(user.id);
@@ -131,6 +150,7 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       smartSearchFilter: updates['smartSearchFilter'],
       liveTvRegion: updates['liveTvRegion'],
       mediafusionUrl: updates['mediafusionUrl'],
+      streamingProviders: updates['streamingProviders'],
     );
 
     // Sync app language to localeProvider if updated

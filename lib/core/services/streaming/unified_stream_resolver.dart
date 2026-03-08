@@ -1,3 +1,4 @@
+import 'package:meta/meta.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/media_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
@@ -18,13 +19,25 @@ final unifiedStreamResolverProvider = Provider((ref) {
   final settings = ref.watch(settingsProvider);
   final dio = ref.read(dioProvider);
 
-  final sources = [
-    StremioSource(dio, "https://torrentio.strem.fun", name: 'Torrentio'),
-    AnimeToshoSource(dio),
-  ];
-
-  if (settings.mediafusionUrl.isNotEmpty) {
-    sources.add(StremioSource(dio, settings.mediafusionUrl, name: 'Mediafusion'));
+  final configs = [...settings.streamingProviders]..sort((a, b) => a.priority.compareTo(b.priority));
+  
+  final sources = <BaseSource>[];
+  for (final config in configs) {
+    if (!config.enabled) continue;
+    
+    switch (config.id) {
+      case 'torrentio':
+        sources.add(StremioSource(dio, "https://torrentio.strem.fun", name: 'Torrentio'));
+        break;
+      case 'animetosho':
+        sources.add(AnimeToshoSource(dio));
+        break;
+      case 'mediafusion':
+        if (settings.mediafusionUrl.isNotEmpty) {
+          sources.add(StremioSource(dio, settings.mediafusionUrl, name: 'Mediafusion'));
+        }
+        break;
+    }
   }
 
   final debridServices = <BaseDebridService>[];
@@ -45,6 +58,9 @@ class UnifiedStreamResolver {
   final List<BaseDebridService> _debridServices;
   final TmdbService _tmdbService;
   final KitsuMappingService _kitsuMappingService;
+
+  @visibleForTesting
+  List<BaseSource> get sources => _sources;
 
   UnifiedStreamResolver({
     required List<BaseSource> sources,
@@ -111,10 +127,7 @@ class UnifiedStreamResolver {
       // 4. Deduplicate
       final uniqueMap = <String, StreamCandidate>{};
       for (var c in allCandidates) {
-        // Use infoHash if available, otherwise use URL or provider+title
-        final dedupeKey = c.infoHash.isNotEmpty 
-            ? c.infoHash.toLowerCase() 
-            : (c.url ?? "${c.provider}:${c.title}").toLowerCase();
+        final dedupeKey = c.uniqueId;
             
         if (!uniqueMap.containsKey(dedupeKey) || c.seeds > uniqueMap[dedupeKey]!.seeds) {
           uniqueMap[dedupeKey] = c;

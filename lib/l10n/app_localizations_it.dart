@@ -507,6 +507,17 @@ class AppLocalizationsIt extends AppLocalizations {
       'Trasferisci i tuoi dati da e verso altri servizi.';
 
   @override
+  String get settingsProvidersTitle => 'Provider Streaming';
+
+  @override
+  String get settingsProvidersDesc =>
+      'Gestisci e riordina le tue sorgenti di contenuto.';
+
+  @override
+  String get settingsProvidersReorder =>
+      'Tieni premuto e trascina per riordinare i provider.';
+
+  @override
   String get settingsDisplayName => 'Nome Visualizzato';
 
   @override
