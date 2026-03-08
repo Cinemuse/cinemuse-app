@@ -7,11 +7,22 @@ import 'package:dio/dio.dart';
 
 class StremioSource implements BaseSource {
   final Dio _dio;
-  String _baseUrl;
+  final String _baseUrl;
+  
   @override
   final String name;
+  
+  @override
+  final Set<String> supportedCategories;
 
-  StremioSource(this._dio, String baseUrl, {this.name = 'Torrentio'}) : _baseUrl = UrlUtils.cleanStremioBaseUrl(baseUrl);
+  StremioSource(
+    Dio dio, 
+    String baseUrl, 
+    {
+      this.name = 'Torrentio', 
+      this.supportedCategories = const {'movie', 'tv', 'anime'}
+    }
+  ) : _dio = dio, _baseUrl = UrlUtils.cleanStremioBaseUrl(baseUrl);
 
   @override
   Future<List<StreamCandidate>> search(MediaContext context) async {

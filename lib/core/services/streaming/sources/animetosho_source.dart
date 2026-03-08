@@ -15,6 +15,9 @@ class AnimeToshoSource extends BaseSource {
   AnimeToshoSource(this._dio, {this.name = 'AnimeTosho'});
 
   @override
+  Set<String> get supportedCategories => {'anime'};
+
+  @override
   Future<List<StreamCandidate>> search(MediaContext context) async {
     // Only search AnimeTosho if it's actually an anime and we have an AniDB ID
     if (!context.isAnime || context.kitsuMapping?.anidbId == null) {

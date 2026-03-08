@@ -1,8 +1,8 @@
-
 import 'dart:async';
 import 'dart:io' as io;
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/core/services/video/youtube_service.dart';
@@ -356,40 +356,12 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       }
     } catch (e, st) {
       if (mounted) {
-        state = AsyncValue.error(_mapExceptionToMessage(e), st);
+        final mapped = ref.read(errorMapperProvider).map(e);
+        state = AsyncValue.error(mapped.message, st);
       }
     }
   }
 
-  String _mapExceptionToMessage(Object e) {
-    // 0. Use localizationsProvider (ref is available in the controller)
-    final l10n = ref.read(localizationsProvider);
-
-    if (e is StreamingException) {
-      switch (e) {
-        case NoProvidersEnabledException():
-          return l10n.streamingErrorNoProviders;
-        case NoAnimeProvidersEnabledException():
-          return l10n.streamingErrorNoAnimeProviders;
-        case NoResultsFoundException():
-          return l10n.streamingErrorNoResults;
-        case DebridKeyNotSpecifiedException():
-          return l10n.streamingErrorDebridKey;
-        case StreamResolutionFailedException():
-          return l10n.streamingErrorResolutionFailed;
-        case MediaDetailsResolutionException():
-          return l10n.streamingErrorMediaDetails;
-        case ImdbIdResolutionException():
-          return l10n.streamingErrorImdbId;
-        default:
-          return e.message;
-      }
-    }
-    
-    // Fallback for regular exceptions
-    final msg = e.toString().replaceFirst('Exception: ', '');
-    return l10n.playerErrorResolving(msg);
-  }
 
   Future<void> _saveProgress({bool force = false}) async {
     if (_player == null || _mediaDetails == null) return;
@@ -522,7 +494,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       if (state.value != null) {
         state = AsyncValue.data(state.value!.copyWith(
           isResolving: false,
-          error: _mapExceptionToMessage(e),
+          error: ref.read(errorMapperProvider).map(e).message,
         ));
       }
     }

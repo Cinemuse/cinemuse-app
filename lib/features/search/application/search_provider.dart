@@ -1,18 +1,23 @@
 import 'dart:async';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:cinemuse_app/core/error/error_service.dart';
 import 'package:cinemuse_app/features/search/application/search_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final searchProvider = StateNotifierProvider<SearchNotifier, SearchState>((ref) {
-  return SearchNotifier(ref.read(tmdbServiceProvider));
+  return SearchNotifier(ref);
 });
 
 class SearchNotifier extends StateNotifier<SearchState> {
+  final Ref _ref;
   final TmdbService _tmdbService;
   Timer? _debounce;
   bool _isLoadingMore = false;
 
-  SearchNotifier(this._tmdbService) : super(const SearchState());
+  SearchNotifier(this._ref) 
+    : _tmdbService = _ref.read(tmdbServiceProvider),
+      super(const SearchState());
 
   @override
   void dispose() {
@@ -61,9 +66,10 @@ class SearchNotifier extends StateNotifier<SearchState> {
         hasMore: results.length >= 20, 
       );
     } catch (e) {
+      final mapped = _ref.read(errorMapperProvider).map(e);
       state = state.copyWith(
         status: SearchStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: mapped.message,
       );
     }
   }
@@ -91,7 +97,8 @@ class SearchNotifier extends StateNotifier<SearchState> {
         );
       }
     } catch (e) {
-      // Silent error on load more? Or show snackbar? For now just stop loading.
+      // Report load more errors globally via toast
+      _ref.read(errorServiceProvider.notifier).handle(e);
       state = state.copyWith(hasMore: false);
     } finally {
       _isLoadingMore = false;

@@ -10,6 +10,8 @@ import 'package:cinemuse_app/features/home/application/home_providers.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/shared/widgets/backdrop_card.dart';
+import 'package:cinemuse_app/shared/widgets/error_card.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 
 class ContinueWatchingRow extends ConsumerStatefulWidget {
   const ContinueWatchingRow({super.key});
@@ -171,7 +173,19 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (e, s) => const SizedBox.shrink(),
+      error: (e, s) {
+        final mapped = ref.read(errorMapperProvider).map(e);
+        return Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppTheme.getResponsiveHorizontalPadding(context),
+            vertical: 16,
+          ),
+          child: ErrorCard(
+            message: mapped.message,
+            type: mapped.type,
+          ),
+        );
+      },
     );
   }
 }

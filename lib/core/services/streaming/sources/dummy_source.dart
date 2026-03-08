@@ -8,6 +8,9 @@ class DummySource extends BaseSource {
   String get name => 'DummySource';
 
   @override
+  Set<String> get supportedCategories => {'movie', 'tv'};
+
+  @override
   Future<List<StreamCandidate>> search(MediaContext context) async {
     // Simulate finding a high quality stream for any search
     return [

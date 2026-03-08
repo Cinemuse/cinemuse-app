@@ -459,15 +459,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'No streaming providers are enabled. Please check your settings.';
 
   @override
-  String get streamingErrorNoAnimeProviders =>
-      'No anime providers are enabled. Please check your settings.';
+  String streamingErrorCapabilityMissing(Object category) {
+    return 'No enabled provider supports $category. Please check your settings.';
+  }
 
   @override
   String get streamingErrorNoResults => 'No results found across providers.';
 
   @override
-  String get streamingErrorDebridKey =>
-      'Real-Debrid API Key is missing. Please check your settings.';
+  String streamingErrorDebridKey(Object debridName) {
+    return '$debridName API Key is missing. Please check your settings.';
+  }
 
   @override
   String get streamingErrorResolutionFailed =>
@@ -478,6 +480,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get streamingErrorImdbId => 'Could not resolve IMDB ID.';
+
+  @override
+  String streamingErrorProviderSearchFailed(Object providerName) {
+    return 'Search failed for provider: $providerName.';
+  }
 
   @override
   String get playerFiles => 'Files';

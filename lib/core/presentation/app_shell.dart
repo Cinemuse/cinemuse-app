@@ -16,6 +16,8 @@ import 'package:cinemuse_app/features/live_tv/presentation/live_tv_screen.dart';
 import 'package:cinemuse_app/core/services/updates/update_service.dart';
 import 'package:cinemuse_app/core/presentation/widgets/update_overlay.dart';
 import 'package:cinemuse_app/core/services/anime/anime_mapping_sync_service.dart';
+import 'package:cinemuse_app/core/error/error_service.dart';
+import 'package:cinemuse_app/shared/widgets/error_toast.dart';
 
 
 
@@ -51,6 +53,30 @@ class _AppShellState extends ConsumerState<AppShell> {
     final currentIndex = ref.watch(navIndexProvider);
     final isMobile = MediaQuery.of(context).size.width < 600;
     final shellNavigatorKey = ref.watch(shellNavigatorKeyProvider);
+
+    // Global Error Listener
+    ref.listen(errorServiceProvider, (previous, next) {
+      if (next != null) {
+        final scaffoldMessenger = ScaffoldMessenger.of(context);
+        scaffoldMessenger.hideCurrentSnackBar();
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: ErrorToast(
+              message: next.message,
+              type: next.type,
+              onDismiss: () => scaffoldMessenger.hideCurrentSnackBar(),
+            ),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+            padding: EdgeInsets.zero,
+          ),
+        );
+        // Consume the error so it doesn't re-trigger
+        ref.read(errorServiceProvider.notifier).consume();
+      }
+    });
 
     return PopScope(
       canPop: false,

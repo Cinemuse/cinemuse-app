@@ -932,11 +932,11 @@ abstract class AppLocalizations {
   /// **'No streaming providers are enabled. Please check your settings.'**
   String get streamingErrorNoProviders;
 
-  /// No description provided for @streamingErrorNoAnimeProviders.
+  /// No description provided for @streamingErrorCapabilityMissing.
   ///
   /// In en, this message translates to:
-  /// **'No anime providers are enabled. Please check your settings.'**
-  String get streamingErrorNoAnimeProviders;
+  /// **'No enabled provider supports {category}. Please check your settings.'**
+  String streamingErrorCapabilityMissing(Object category);
 
   /// No description provided for @streamingErrorNoResults.
   ///
@@ -947,8 +947,8 @@ abstract class AppLocalizations {
   /// No description provided for @streamingErrorDebridKey.
   ///
   /// In en, this message translates to:
-  /// **'Real-Debrid API Key is missing. Please check your settings.'**
-  String get streamingErrorDebridKey;
+  /// **'{debridName} API Key is missing. Please check your settings.'**
+  String streamingErrorDebridKey(Object debridName);
 
   /// No description provided for @streamingErrorResolutionFailed.
   ///
@@ -967,6 +967,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not resolve IMDB ID.'**
   String get streamingErrorImdbId;
+
+  /// No description provided for @streamingErrorProviderSearchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Search failed for provider: {providerName}.'**
+  String streamingErrorProviderSearchFailed(Object providerName);
 
   /// No description provided for @playerFiles.
   ///

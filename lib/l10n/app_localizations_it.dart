@@ -459,16 +459,18 @@ class AppLocalizationsIt extends AppLocalizations {
       'Nessun provider di streaming abilitato. Controlla le tue impostazioni.';
 
   @override
-  String get streamingErrorNoAnimeProviders =>
-      'Nessun provider anime abilitato. Controlla le tue impostazioni.';
+  String streamingErrorCapabilityMissing(Object category) {
+    return 'Nessun provider abilitato supporta $category. Controlla le tue impostazioni.';
+  }
 
   @override
   String get streamingErrorNoResults =>
       'Nessun risultato trovato tra i provider.';
 
   @override
-  String get streamingErrorDebridKey =>
-      'Chiave API Real-Debrid mancante. Controlla le tue impostazioni.';
+  String streamingErrorDebridKey(Object debridName) {
+    return 'Chiave API $debridName mancante. Controlla le tue impostazioni.';
+  }
 
   @override
   String get streamingErrorResolutionFailed =>
@@ -480,6 +482,11 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get streamingErrorImdbId => 'Impossibile risolvere l\'ID IMDB.';
+
+  @override
+  String streamingErrorProviderSearchFailed(Object providerName) {
+    return 'Ricerca fallita per il provider: $providerName.';
+  }
 
   @override
   String get playerFiles => 'File';

@@ -4,8 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/horizontal_media_list.dart';
+import 'package:cinemuse_app/shared/widgets/error_card.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 
-class MediaRow extends StatelessWidget {
+class MediaRow extends ConsumerWidget {
   final String title;
   final AsyncValue<List<Map<String, dynamic>>> asyncData;
   final bool skipFirst;
@@ -18,7 +20,7 @@ class MediaRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -78,7 +80,13 @@ class MediaRow extends StatelessWidget {
               );
             },
              loading: () => const Center(child: CircularProgressIndicator()),
-             error: (e, s) => const Center(child: Text("Error loading row", style: TextStyle(color: Colors.red))),
+             error: (e, s) {
+               final mapped = ref.read(errorMapperProvider).map(e);
+               return ErrorCard(
+                 message: mapped.message,
+                 type: mapped.type,
+               );
+             },
           ),
         ),
       ],

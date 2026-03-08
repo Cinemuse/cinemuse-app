@@ -3,5 +3,6 @@ import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dar
 
 abstract class BaseSource {
   String get name;
+  Set<String> get supportedCategories;
   Future<List<StreamCandidate>> search(MediaContext context);
 }

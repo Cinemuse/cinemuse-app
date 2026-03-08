@@ -3,12 +3,14 @@ class StreamingProviderConfig {
   final String name;
   final bool enabled;
   final int priority;
+  final Set<String>? supportedCategories;
 
   const StreamingProviderConfig({
     required this.id,
     required this.name,
     this.enabled = true,
     required this.priority,
+    this.supportedCategories,
   });
 
   StreamingProviderConfig copyWith({
@@ -16,12 +18,14 @@ class StreamingProviderConfig {
     String? name,
     bool? enabled,
     int? priority,
+    Set<String>? supportedCategories,
   }) {
     return StreamingProviderConfig(
       id: id ?? this.id,
       name: name ?? this.name,
       enabled: enabled ?? this.enabled,
       priority: priority ?? this.priority,
+      supportedCategories: supportedCategories ?? this.supportedCategories,
     );
   }
 
@@ -31,6 +35,7 @@ class StreamingProviderConfig {
       'name': name,
       'enabled': enabled,
       'priority': priority,
+      'supportedCategories': supportedCategories?.toList(),
     };
   }
 
@@ -40,6 +45,9 @@ class StreamingProviderConfig {
       name: json['name'] as String,
       enabled: json['enabled'] as bool? ?? true,
       priority: json['priority'] as int,
+      supportedCategories: json['supportedCategories'] != null 
+        ? (json['supportedCategories'] as List).map((e) => e as String).toSet() 
+        : null,
     );
   }
 }

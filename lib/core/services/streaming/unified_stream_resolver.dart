@@ -28,14 +28,24 @@ final unifiedStreamResolverProvider = Provider((ref) {
     
     switch (config.id) {
       case 'torrentio':
-        sources.add(StremioSource(dio, "https://torrentio.strem.fun", name: 'Torrentio'));
+        sources.add(StremioSource(
+          dio, 
+          "https://torrentio.strem.fun", 
+          name: 'Torrentio',
+          supportedCategories: config.supportedCategories ?? {'movie', 'tv', 'anime'},
+        ));
         break;
       case 'animetosho':
         sources.add(AnimeToshoSource(dio));
         break;
       case 'mediafusion':
         if (settings.mediafusionUrl.isNotEmpty) {
-          sources.add(StremioSource(dio, settings.mediafusionUrl, name: 'Mediafusion'));
+          sources.add(StremioSource(
+            dio, 
+            settings.mediafusionUrl, 
+            name: 'Mediafusion',
+            supportedCategories: config.supportedCategories ?? {'movie', 'tv'},
+          ));
         }
         break;
     }
@@ -118,18 +128,28 @@ class UnifiedStreamResolver {
 
       // 3. Search All Sources
       final searchFutures = _sources.map((source) {
-        // Skip Mediafusion if it's anime
-        if (source.name == 'Mediafusion' && context.isAnime) {
+        // Capability check: If the provider doesn't support the requested category, skip it.
+        final targetCategory = context.isAnime ? 'anime' : (context.type == 'tv' ? 'tv' : 'movie');
+        if (!source.supportedCategories.contains(targetCategory)) {
           return Future.value(<StreamCandidate>[]);
         }
-        return source.search(context);
+
+        return source.search(context).catchError((e) {
+          print('UnifiedStreamResolver: Source ${source.name} failed: $e');
+          // We don't throw here to allow other sources to succeed, 
+          // but we log it for the "ProviderSearchException" pattern if we were to aggregate errors.
+          return <StreamCandidate>[];
+        });
       });
       final rawResults = await Future.wait(searchFutures);
       final allCandidates = rawResults.expand((x) => x).toList();
 
       if (allCandidates.isEmpty) {
-        if (context.isAnime && _sources.every((s) => s.name == 'Mediafusion')) {
-           throw NoAnimeProvidersEnabledException();
+        final targetCategory = context.isAnime ? 'anime' : (context.type == 'tv' ? 'tv' : 'movie');
+        final hasCapableProvider = _sources.any((s) => s.supportedCategories.contains(targetCategory));
+        
+        if (!hasCapableProvider) {
+          throw CapabilityMissingException(targetCategory);
         }
         throw NoResultsFoundException();
       }

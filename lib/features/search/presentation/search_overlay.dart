@@ -6,9 +6,12 @@ import 'package:cinemuse_app/features/search/application/search_provider.dart';
 import 'package:cinemuse_app/features/search/application/search_state.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
+import 'package:cinemuse_app/shared/widgets/error_view_state.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:cinemuse_app/core/error/app_exception.dart';
 
 class SearchOverlay extends ConsumerStatefulWidget {
   final NavigatorState? navigator;
@@ -253,6 +256,14 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay> with SingleTicker
                  const Text("Start typing to search...", style: TextStyle(color: AppTheme.textMuted)),
               ],
            ),
+        );
+     }
+     
+     if (state.status == SearchStatus.error) {
+        return ErrorViewState(
+          title: "Search Error",
+          message: state.errorMessage ?? "An unexpected error occurred",
+          onRetry: () => ref.read(searchProvider.notifier).search(state.query),
         );
      }
      

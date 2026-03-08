@@ -37,9 +37,9 @@ class UserSettings {
     this.liveTvRegion,
     this.mediafusionUrl = '',
     this.streamingProviders = const [
-      StreamingProviderConfig(id: 'torrentio', name: 'Torrentio', priority: 0),
-      StreamingProviderConfig(id: 'animetosho', name: 'AnimeTosho', priority: 1),
-      StreamingProviderConfig(id: 'mediafusion', name: 'Mediafusion', priority: 2),
+      StreamingProviderConfig(id: 'torrentio', name: 'Torrentio', priority: 0, supportedCategories: {'movie', 'tv', 'anime'}),
+      StreamingProviderConfig(id: 'animetosho', name: 'AnimeTosho', priority: 1, supportedCategories: {'anime'}),
+      StreamingProviderConfig(id: 'mediafusion', name: 'Mediafusion', priority: 2, supportedCategories: {'movie', 'tv'}),
     ],
   });
 
@@ -59,9 +59,9 @@ class UserSettings {
       mediafusionUrl: prefs['mediafusionUrl'] ?? '',
       streamingProviders: (prefs['streamingProviders'] as List?)?.map((e) => StreamingProviderConfig.fromJson(e as Map<String, dynamic>)).toList() ?? 
         const [
-          StreamingProviderConfig(id: 'torrentio', name: 'Torrentio', priority: 0),
-          StreamingProviderConfig(id: 'animetosho', name: 'AnimeTosho', priority: 1),
-          StreamingProviderConfig(id: 'mediafusion', name: 'Mediafusion', priority: 2),
+          StreamingProviderConfig(id: 'torrentio', name: 'Torrentio', priority: 0, supportedCategories: {'movie', 'tv', 'anime'}),
+          StreamingProviderConfig(id: 'animetosho', name: 'AnimeTosho', priority: 1, supportedCategories: {'anime'}),
+          StreamingProviderConfig(id: 'mediafusion', name: 'Mediafusion', priority: 2, supportedCategories: {'movie', 'tv'}),
         ],
     );
   }
