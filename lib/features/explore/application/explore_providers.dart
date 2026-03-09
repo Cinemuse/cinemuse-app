@@ -48,6 +48,8 @@ class ExploreResultsNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
         maxVotes: filters.voteCount.end.round(),
         minRuntime: filters.runtime.start.round(),
         maxRuntime: filters.runtime.end.round(),
+        watchProviders: filters.watchProviders,
+        watchRegion: filters.watchRegion,
       );
       _hasMore = _currentPage < (res['total_pages'] ?? 0);
       return List<Map<String, dynamic>>.from(res['results'] ?? []);
@@ -78,3 +80,14 @@ class ExploreResultsNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
     ref.invalidateSelf();
   }
 }
+
+final watchProvidersListProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final tmdbService = ref.read(tmdbServiceProvider);
+  final mediaType = ref.watch(exploreMediaTypeProvider);
+  final watchRegion = ref.watch(exploreFiltersProvider.select((f) => f.watchRegion));
+  
+  return tmdbService.getWatchProviders(
+    mediaType == MediaType.movie ? 'movie' : 'tv',
+    watchRegion,
+  );
+});

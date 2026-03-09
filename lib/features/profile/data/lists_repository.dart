@@ -33,31 +33,49 @@ class ListsRepository {
 
   /// Watch user lists locally
   Stream<List<UserList>> watchUserLists(String userId) {
-    return _db.watchUserLists(userId).asyncMap((dbLists) async {
-      final userLists = <UserList>[];
-      for (final dbList in dbLists) {
-        final dbItems = await (_db.select(_db.cachedListItems)..where((t) => t.listId.equals(dbList.id))).get();
-        final items = dbItems.map((i) => UserListItem(
-          listId: i.listId,
-          tmdbId: i.mediaTmdbId,
-          mediaType: MediaItem.fromString(i.mediaType),
-          sortOrder: i.sortOrder,
-          meta: i.meta != null ? jsonDecode(i.meta!) as Map<String, dynamic> : {},
-          addedAt: i.addedAt,
-        )).toList();
+    // Using a join ensures the stream triggers when either table changes
+    final query = _db.select(_db.cachedUserLists).join([
+      leftOuterJoin(
+        _db.cachedListItems,
+        _db.cachedListItems.listId.equalsExp(_db.cachedUserLists.id),
+      ),
+    ])..where(_db.cachedUserLists.userId.equals(userId))
+      ..orderBy([OrderingTerm.asc(_db.cachedUserLists.sortOrder)]);
 
-        userLists.add(UserList(
+    return query.watch().asyncMap((rows) async {
+      // Group items by list ID to reconstruct the UserList objects
+      final listMap = <String, List<UserListItem>>{};
+      final dbLists = <String, CachedUserList>{};
+
+      for (final row in rows) {
+        final list = row.readTable(_db.cachedUserLists);
+        dbLists[list.id] = list;
+
+        final item = row.readTableOrNull(_db.cachedListItems);
+        if (item != null) {
+          listMap.putIfAbsent(list.id, () => []).add(UserListItem(
+            listId: item.listId,
+            tmdbId: item.mediaTmdbId,
+            mediaType: MediaItem.fromString(item.mediaType),
+            sortOrder: item.sortOrder,
+            meta: item.meta != null ? jsonDecode(item.meta!) as Map<String, dynamic> : {},
+            addedAt: item.addedAt,
+          ));
+        }
+      }
+
+      return dbLists.values.map((dbList) {
+        return UserList(
           id: dbList.id,
           userId: dbList.userId,
           name: dbList.name,
           type: ListType.values.firstWhere((e) => e.name == dbList.type),
           description: dbList.description,
           sortOrder: dbList.sortOrder,
-          items: items,
+          items: listMap[dbList.id] ?? [],
           createdAt: dbList.createdAt,
-        ));
-      }
-      return userLists;
+        );
+      }).toList();
     });
   }
 

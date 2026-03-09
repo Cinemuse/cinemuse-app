@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import '../../../../core/presentation/theme/app_theme.dart';
+import '../../../../shared/widgets/hover_scale.dart';
 
 enum MediaType { movie, tv, person }
 
@@ -76,13 +77,14 @@ class _TypeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return HoverScale(
       onTap: onTap,
+      scale: 1.05,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected ? Colors.white : Colors.white.withOpacity(0.02),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(

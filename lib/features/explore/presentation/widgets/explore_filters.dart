@@ -8,6 +8,8 @@ class ExploreFilters {
   final RangeValues year;
   final RangeValues voteCount;
   final RangeValues runtime;
+  final List<int> watchProviders;
+  final String watchRegion;
 
   const ExploreFilters({
     this.sortBy = 'popularity.desc',
@@ -15,8 +17,10 @@ class ExploreFilters {
     this.languages = const [],
     this.rating = const RangeValues(0, 10),
     this.year = const RangeValues(1900, 2025),
-    this.voteCount = const RangeValues(0, 20000),
+    this.voteCount = const RangeValues(100, 20000),
     this.runtime = const RangeValues(0, 240),
+    this.watchProviders = const [],
+    this.watchRegion = 'IT',
   });
 
   ExploreFilters copyWith({
@@ -27,6 +31,8 @@ class ExploreFilters {
     RangeValues? year,
     RangeValues? voteCount,
     RangeValues? runtime,
+    List<int>? watchProviders,
+    String? watchRegion,
   }) {
     return ExploreFilters(
       sortBy: sortBy ?? this.sortBy,
@@ -36,6 +42,8 @@ class ExploreFilters {
       year: year ?? this.year,
       voteCount: voteCount ?? this.voteCount,
       runtime: runtime ?? this.runtime,
+      watchProviders: watchProviders ?? this.watchProviders,
+      watchRegion: watchRegion ?? this.watchRegion,
     );
   }
 
@@ -50,6 +58,7 @@ class ExploreFilters {
         voteCount.start != 0 ||
         voteCount.end != 20000 ||
         runtime.start != 0 ||
-        runtime.end != 240;
+        runtime.end != 240 ||
+        watchProviders.isNotEmpty;
   }
 }

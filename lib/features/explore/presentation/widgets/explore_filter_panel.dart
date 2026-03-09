@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import '../../../../core/presentation/theme/app_theme.dart';
 import '../../../../core/constants/tmdb_constants.dart';
 import 'explore_filters.dart';
 import 'filter_range_slider.dart';
 
-class ExploreFilterPanel extends StatefulWidget {
+import 'package:cinemuse_app/features/explore/application/explore_providers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../shared/widgets/premium_hover_text.dart';
+import '../../../../shared/widgets/hover_scale.dart';
+
+class ExploreFilterPanel extends ConsumerStatefulWidget {
   final bool show;
   final ExploreFilters filters;
   final ValueChanged<ExploreFilters> onChanged;
@@ -20,10 +26,10 @@ class ExploreFilterPanel extends StatefulWidget {
   });
 
   @override
-  State<ExploreFilterPanel> createState() => _ExploreFilterPanelState();
+  ConsumerState<ExploreFilterPanel> createState() => _ExploreFilterPanelState();
 }
 
-class _ExploreFilterPanelState extends State<ExploreFilterPanel> {
+class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
   final TextEditingController _langSearchController = TextEditingController();
   bool _isLangOpen = false;
 
@@ -51,6 +57,16 @@ class _ExploreFilterPanelState extends State<ExploreFilterPanel> {
     widget.onChanged(widget.filters.copyWith(languages: newLangs));
   }
 
+  void _toggleWatchProvider(int providerId) {
+    final newProviders = List<int>.from(widget.filters.watchProviders);
+    if (newProviders.contains(providerId)) {
+      newProviders.remove(providerId);
+    } else {
+      newProviders.add(providerId);
+    }
+    widget.onChanged(widget.filters.copyWith(watchProviders: newProviders));
+  }
+
   @override
   void dispose() {
     _langSearchController.dispose();
@@ -62,12 +78,12 @@ class _ExploreFilterPanelState extends State<ExploreFilterPanel> {
     if (!widget.show) return const SizedBox.shrink();
 
     final l10n = AppLocalizations.of(context)!;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
         children: [
-          Container(height: 1, color: Colors.white.withOpacity(0.1)),
+          Container(height: 1, color: AppTheme.textWhite.withOpacity(0.1)),
           const SizedBox(height: 32),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -108,6 +124,10 @@ class _ExploreFilterPanelState extends State<ExploreFilterPanel> {
                         _buildSectionLabel(l10n.searchGenres, subtitle: l10n.searchMatchAll),
                         const SizedBox(height: 16),
                         _buildGenreGrid(),
+                        const SizedBox(height: 32),
+                        _buildSectionLabel(l10n.searchWatchProviders),
+                        const SizedBox(height: 12),
+                        _buildWatchProviders(),
                       ],
                     ),
                   ),
@@ -144,7 +164,7 @@ class _ExploreFilterPanelState extends State<ExploreFilterPanel> {
                           values: widget.filters.voteCount,
                           onChanged: (v) => widget.onChanged(widget.filters.copyWith(voteCount: v)),
                           label: l10n.searchVoteCount,
-                          valueLabel: '${widget.filters.voteCount.start.round()} - ${widget.filters.voteCount.end.round() >= 20000 ? 'Max' : widget.filters.voteCount.end.round()}',
+                          valueLabel: '${widget.filters.voteCount.start.round()} - ${widget.filters.voteCount.end.round() >= 20000 ? l10n.filterMax : widget.filters.voteCount.end.round()}',
                           icon: Icons.thumb_up_outlined,
                         ),
                         const SizedBox(height: 32),
@@ -154,7 +174,7 @@ class _ExploreFilterPanelState extends State<ExploreFilterPanel> {
                           values: widget.filters.runtime,
                           onChanged: (v) => widget.onChanged(widget.filters.copyWith(runtime: v)),
                           label: l10n.searchRuntime,
-                          valueLabel: '${widget.filters.runtime.start.round()}m - ${widget.filters.runtime.end.round() >= 240 ? 'Max' : widget.filters.runtime.end.round().toString() + 'm'}',
+                          valueLabel: '${widget.filters.runtime.start.round()}m - ${widget.filters.runtime.end.round() >= 240 ? l10n.filterMax : widget.filters.runtime.end.round().toString() + 'm'}',
                           icon: Icons.access_time,
                         ),
                       ],
@@ -165,7 +185,7 @@ class _ExploreFilterPanelState extends State<ExploreFilterPanel> {
             },
           ),
           const SizedBox(height: 32),
-          Container(height: 1, color: Colors.white.withOpacity(0.1)),
+          Container(height: 1, color: AppTheme.textWhite.withOpacity(0.1)),
         ],
       ),
     );
@@ -176,13 +196,13 @@ class _ExploreFilterPanelState extends State<ExploreFilterPanel> {
       children: [
         Text(
           label,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+          style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 16),
         ),
         if (subtitle != null) ...[
           const SizedBox(width: 8),
           Text(
             subtitle,
-            style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.normal),
+            style: TextStyle(color: AppTheme.textWhite.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.normal),
           ),
         ],
       ],
@@ -191,24 +211,27 @@ class _ExploreFilterPanelState extends State<ExploreFilterPanel> {
 
   Widget _buildSortOption(String label, String value) {
     final isSelected = widget.filters.sortBy == value;
-    return GestureDetector(
+    return HoverScale(
       onTap: () => widget.onChanged(widget.filters.copyWith(sortBy: value)),
+      scale: 1.02,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected ? AppTheme.textWhite : AppTheme.textWhite.withOpacity(0.02),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isSelected ? Colors.white : Colors.white.withOpacity(0.1)),
+          border: Border.all(
+            color: isSelected ? AppTheme.textWhite : AppTheme.textWhite.withOpacity(0.1),
+          ),
           boxShadow: isSelected ? [
-            BoxShadow(color: Colors.white.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))
+            BoxShadow(color: AppTheme.textWhite.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))
           ] : null,
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.black : Colors.white.withOpacity(0.6),
+            color: isSelected ? AppTheme.primary : AppTheme.textWhite.withOpacity(0.6),
             fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
@@ -224,15 +247,18 @@ class _ExploreFilterPanelState extends State<ExploreFilterPanel> {
       children: TmdbConstants.genresList.map((g) {
         final genreId = g['id'] as int;
         final isSelected = widget.filters.genres.contains(genreId);
-        return GestureDetector(
+        return HoverScale(
           onTap: () => _toggleGenre(genreId),
+          scale: 1.08,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? Colors.white : Colors.transparent,
+              color: isSelected ? Colors.white : Colors.white.withOpacity(0.02),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: isSelected ? Colors.white : Colors.white.withOpacity(0.1)),
+              border: Border.all(
+                color: isSelected ? Colors.white : Colors.white.withOpacity(0.1),
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -240,15 +266,11 @@ class _ExploreFilterPanelState extends State<ExploreFilterPanel> {
                 Text(
                   g['name'] as String,
                   style: TextStyle(
-                    color: isSelected ? Colors.black : Colors.white.withOpacity(0.6),
+                    color: isSelected ? AppTheme.primary : AppTheme.textWhite.withOpacity(0.6),
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
                 ),
-                if (isSelected) ...[
-                  const SizedBox(width: 6),
-                  const CircleAvatar(radius: 3, backgroundColor: AppTheme.accent),
-                ],
               ],
             ),
           ),
@@ -264,14 +286,14 @@ class _ExploreFilterPanelState extends State<ExploreFilterPanel> {
           controller: _langSearchController,
           onTap: () => setState(() => _isLangOpen = true),
           onChanged: (v) => setState(() {}),
-          style: const TextStyle(color: Colors.white, fontSize: 14),
+          style: const TextStyle(color: AppTheme.textWhite, fontSize: 14),
           decoration: InputDecoration(
             hintText: AppLocalizations.of(context)!.searchLanguagePlaceholder,
             prefixIcon: const Icon(Icons.search, size: 20),
             filled: false,
             contentPadding: const EdgeInsets.symmetric(vertical: 8),
             enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
-            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.textWhite)),
           ),
         ),
         if (_isLangOpen) ...[
@@ -309,9 +331,9 @@ class _ExploreFilterPanelState extends State<ExploreFilterPanel> {
         final lang = filtered[index];
         return ListTile(
           dense: true,
-          title: Text(lang['name']!, style: const TextStyle(color: Colors.white70)),
+          title: Text(lang['name']!, style: const TextStyle(color: AppTheme.textSecondary)),
           onTap: () => _handleLanguageSelect(lang['code']!),
-          hoverColor: Colors.white.withOpacity(0.05),
+          hoverColor: AppTheme.textWhite.withOpacity(0.05),
         );
       },
     );
@@ -325,13 +347,92 @@ class _ExploreFilterPanelState extends State<ExploreFilterPanel> {
         final lang = TmdbConstants.languagesList.firstWhere((l) => l['code'] == code);
         return Chip(
           label: Text(lang['name']!, style: const TextStyle(fontSize: 12)),
-          backgroundColor: Colors.white.withOpacity(0.1),
-          side: BorderSide(color: Colors.white.withOpacity(0.1)),
+          backgroundColor: AppTheme.textWhite.withOpacity(0.1),
+          side: BorderSide(color: AppTheme.textWhite.withOpacity(0.1)),
           deleteIcon: const Icon(Icons.close, size: 14),
           onDeleted: () => _removeLanguage(code),
-          labelStyle: const TextStyle(color: Colors.white),
+          labelStyle: const TextStyle(color: AppTheme.textWhite),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildWatchProviders() {
+    final providersAsync = ref.watch(watchProvidersListProvider);
+
+    return providersAsync.when(
+      data: (providers) {
+        // Show only the most common/popular ones to avoid UI clutter
+        final mainProviders = providers.where((p) {
+           final name = p['provider_name']?.toString().toLowerCase() ?? '';
+           return name.contains('netflix') || 
+                  name.contains('disney') || 
+                  name.contains('prime video') ||
+                  name.contains('apple tv') ||
+                  name.contains('now') ||
+                  name.contains('rakuten');
+        }).toList();
+
+        if (mainProviders.isEmpty && providers.isNotEmpty) {
+           // Fallback to first few if no major ones identified by keywords
+           mainProviders.addAll(providers.take(6));
+        }
+
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: mainProviders.map((p) {
+            final id = p['provider_id'] as int;
+            final isSelected = widget.filters.watchProviders.contains(id);
+            final imageUrl = "https://image.tmdb.org/t/p/original${p['logo_path']}";
+
+            return HoverScale(
+              onTap: () => _toggleWatchProvider(id),
+              scale: 1.15,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: isSelected ? AppTheme.textWhite.withOpacity(0.05) : Colors.transparent,
+                      border: Border.all(
+                        color: isSelected ? AppTheme.accent : AppTheme.textWhite.withOpacity(0.1),
+                        width: 2,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 24),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  PremiumHoverText(
+                    text: p['provider_name'] ?? '',
+                    width: 60,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isSelected ? AppTheme.accent : AppTheme.textSecondary,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
+      loading: () => const SizedBox(height: 40, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 }

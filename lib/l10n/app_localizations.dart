@@ -188,6 +188,18 @@ abstract class AppLocalizations {
   /// **'OK'**
   String get commonOk;
 
+  /// No description provided for @commonUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get commonUnknown;
+
+  /// No description provided for @filterMax.
+  ///
+  /// In en, this message translates to:
+  /// **'Max'**
+  String get filterMax;
+
   /// No description provided for @searchPlaceholder.
   ///
   /// In en, this message translates to:
@@ -307,6 +319,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Runtime'**
   String get searchRuntime;
+
+  /// No description provided for @searchWatchProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch Providers'**
+  String get searchWatchProviders;
 
   /// No description provided for @searchClearAll.
   ///

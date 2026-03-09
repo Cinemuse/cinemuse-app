@@ -138,7 +138,6 @@ class TmdbService {
       return [];
     }
   }
-
   Future<Map<String, dynamic>> discover({
     required String type,
     required int page,
@@ -153,9 +152,11 @@ class TmdbService {
     int? maxVotes,
     int? minRuntime,
     int? maxRuntime,
+    List<int>? watchProviders,
+    String? watchRegion,
   }) async {
     try {
-      final queryParams = {
+      final queryParams = <String, dynamic>{
         'api_key': _apiKey,
         'page': page,
         'language': 'en-US',
@@ -175,6 +176,11 @@ class TmdbService {
       if (maxVotes != null) queryParams['vote_count.lte'] = maxVotes;
       if (minRuntime != null) queryParams['with_runtime.gte'] = minRuntime;
       if (maxRuntime != null) queryParams['with_runtime.lte'] = maxRuntime;
+
+      if (watchProviders != null && watchProviders.isNotEmpty) {
+        queryParams['with_watch_providers'] = watchProviders.join('|');
+        queryParams['watch_region'] = watchRegion ?? 'IT';
+      }
 
       final dateField = type == 'movie' ? 'primary_release_date' : 'first_air_date';
       if (minYear != null) queryParams['$dateField.gte'] = '$minYear-01-01';
@@ -219,6 +225,22 @@ class TmdbService {
       return res.data;
     } catch (e) {
       return {'results': [], 'total_pages': 0};
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getWatchProviders(String type, String region) async {
+    try {
+      final res = await _dio.get(
+        '$_baseUrl/watch/providers/${type == 'series' ? 'tv' : 'movie'}',
+        queryParameters: {
+          'api_key': _apiKey,
+          'watch_region': region,
+          'language': 'en-US',
+        },
+      );
+      return List<Map<String, dynamic>>.from(res.data['results']);
+    } catch (e) {
+      return [];
     }
   }
 

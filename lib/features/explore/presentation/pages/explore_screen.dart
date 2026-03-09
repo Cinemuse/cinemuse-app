@@ -8,6 +8,10 @@ import '../widgets/media_type_selector.dart';
 import '../widgets/explore_filter_panel.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import '../widgets/active_filters_list.dart';
+import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/profile/domain/user_list.dart';
+import '../../../../shared/widgets/hover_scale.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
@@ -45,6 +49,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final filters = ref.watch(exploreFiltersProvider);
     final resultsAsync = ref.watch(exploreResultsProvider);
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    const double maxContentWidth = 1600.0;
+    final horizontalPadding = screenWidth > maxContentWidth 
+        ? (screenWidth - maxContentWidth) / 2 + 24
+        : AppTheme.getResponsiveHorizontalPadding(context);
+
     return Scaffold(
       backgroundColor: AppTheme.primary,
       body: CustomScrollView(
@@ -55,9 +65,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             child: RepaintBoundary(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  AppTheme.getResponsiveHorizontalPadding(context), 
-                  100, 
-                  AppTheme.getResponsiveHorizontalPadding(context), 
+                  horizontalPadding, 
+                  20, 
+                  horizontalPadding, 
                   24
                 ),
                 child: Column(
@@ -147,39 +157,18 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             data: (results) {
               if (results.isEmpty) {
                 return SliverFillRemaining(
+                  hasScrollBody: false,
                   child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(l10n.searchNoResultsTitle, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        Text(l10n.searchTryAdjusting, style: TextStyle(color: AppTheme.textMuted)),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              final columns = _getColumnCount(context);
-              final displayCount = (results.length ~/ columns) * columns;
-
-              if (displayCount == 0 && results.isNotEmpty) {
-                // If we have fewer items than a single row, just show what we have
-                return SliverPadding(
-                  padding: EdgeInsets.symmetric(
-                  horizontal: AppTheme.getResponsiveHorizontalPadding(context), 
-                  vertical: 0
-                ),
-                  sliver: SliverGrid(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: columns,
-                      mainAxisSpacing: 24,
-                      crossAxisSpacing: 20,
-                      childAspectRatio: 0.68,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => _buildMediaCard(context, results[index], mediaType),
-                      childCount: results.length,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(l10n.searchNoResultsTitle, style: const TextStyle(color: AppTheme.textWhite, fontSize: 20, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          Text(l10n.searchTryAdjusting, style: const TextStyle(color: AppTheme.textMuted)),
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -187,37 +176,78 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 
               return SliverPadding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: AppTheme.getResponsiveHorizontalPadding(context), 
+                  horizontal: horizontalPadding, 
                   vertical: 0
                 ),
-                sliver: SliverGrid(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: columns,
-                    mainAxisSpacing: 24,
-                    crossAxisSpacing: 20,
-                    childAspectRatio: 0.68,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _buildMediaCard(context, results[index], mediaType),
-                    childCount: displayCount,
-                  ),
+                sliver: SliverLayoutBuilder(
+                  builder: (context, constraints) {
+                    const double itemWidth = 200;
+                    const double spacing = 12;
+                    
+                    // crossAxisExtent is the width available for the grid
+                    final crossAxisCount = ((constraints.crossAxisExtent + spacing) / (itemWidth + spacing)).floor().clamp(2, 12);
+                    
+                    // "Full Row" logic: only show full rows
+                    final displayCount = (results.length ~/ crossAxisCount) * crossAxisCount;
+
+                    if (displayCount == 0 && results.isNotEmpty) {
+                       // If we can't even fill one row, show what we have so it's not empty
+                       return SliverGrid(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: spacing,
+                          childAspectRatio: 0.68,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) => _buildMediaCard(context, results[index], mediaType),
+                          childCount: results.length,
+                        ),
+                      );
+                    }
+
+                    return SliverGrid(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: spacing,
+                        childAspectRatio: 0.68,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => _buildMediaCard(context, results[index], mediaType),
+                        childCount: displayCount,
+                      ),
+                    );
+                  },
                 ),
               );
             },
-            loading: () => const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator(color: AppTheme.accent)),
+            loading: () => SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: const CircularProgressIndicator(color: AppTheme.accent),
+                ),
+              ),
             ),
             error: (err, stack) => SliverFillRemaining(
-              child: Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: Text('${l10n.commonError}: $err', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                ),
+              ),
             ),
           ),
 
           // Loading more indicator
           if (resultsAsync.isLoading && resultsAsync.hasValue && resultsAsync.value!.isNotEmpty)
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.all(24.0),
-                child: Center(child: CircularProgressIndicator(color: AppTheme.accent)),
+                padding: EdgeInsets.fromLTRB(horizontalPadding, 24, horizontalPadding, 24),
+                child: const Center(child: CircularProgressIndicator(color: AppTheme.accent)),
               ),
             ),
             
@@ -227,31 +257,56 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     );
   }
 
-  int _getColumnCount(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    if (width > 1600) return 8;
-    if (width > 1200) return 6;
-    if (width > 900) return 5;
-    if (width > 600) return 4;
-    if (width > 400) return 3;
-    return 2;
-  }
 
-  Widget _buildMediaCard(BuildContext context, Map<String, dynamic> item, MediaType mediaType) {
-    return MediaCard(
-      title: item['title'] ?? item['name'] ?? '',
-      posterPath: item['poster_path'] ?? item['profile_path'],
-      releaseDate: item['release_date'] ?? item['first_air_date'] ?? '',
-      rating: (item['vote_average'] as num?)?.toDouble(),
-      onTap: () {
-        if (mediaType != MediaType.person) {
-          Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => MediaDetailsScreen(
-              mediaId: item['id'].toString(),
-              mediaType: mediaType == MediaType.movie ? 'movie' : 'tv',
-            ),
-          ));
-        }
+  Widget _buildMediaCard(BuildContext context, Map<String, dynamic> media, MediaType mediaTypeEnum) {
+    final title = media['title'] ?? media['name'] ?? AppLocalizations.of(context)!.commonUnknown;
+    final posterPath = media['poster_path'] ?? media['profile_path'];
+    final releaseDate = media['release_date'] ?? media['first_air_date'];
+    final rating = (media['vote_average'] as num?)?.toDouble();
+    final tmdbId = media['id'] as int;
+    final mediaTypeString = mediaTypeEnum == MediaType.movie ? 'movie' : 'tv';
+    final kind = mediaTypeEnum == MediaType.movie ? MediaKind.movie : MediaKind.tv;
+
+    return Consumer(
+      builder: (context, ref, child) {
+        final isWatchlisted = ref.watch(userListsProvider.select((lists) {
+          return lists.valueOrNull
+              ?.where((l) => l.type == ListType.watchlist)
+              .firstOrNull
+              ?.items
+              .any((i) => i.tmdbId == tmdbId && i.mediaType == kind) ?? false;
+        }));
+        
+        return MediaCard(
+          title: title,
+          posterPath: posterPath,
+          releaseDate: releaseDate,
+          rating: rating,
+          isWatchlisted: isWatchlisted,
+          onWatchlistToggle: () {
+            ref.read(userListsProvider.notifier).toggleWatchlist(
+              MediaItem(
+                tmdbId: tmdbId,
+                mediaType: kind,
+                title: title,
+                posterPath: posterPath,
+                releaseDate: releaseDate != null ? DateTime.tryParse(releaseDate) : null,
+                voteAverage: rating,
+                updatedAt: DateTime.now(),
+              ),
+            );
+          },
+          onTap: () {
+            if (mediaTypeEnum != MediaType.person) {
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => MediaDetailsScreen(
+                  mediaId: media['id'].toString(),
+                  mediaType: mediaTypeString,
+                ),
+              ));
+            }
+          },
+        );
       },
     );
   }
@@ -270,15 +325,25 @@ class _FilterToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return HoverScale(
       onTap: onTap,
+      scale: 1.05,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: isOpen ? Colors.white : AppTheme.secondary,
+          color: isOpen ? AppTheme.textWhite : AppTheme.secondary,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isOpen ? Colors.white : AppTheme.border),
+          border: Border.all(
+            color: isOpen ? AppTheme.textWhite : AppTheme.border,
+          ),
+          boxShadow: isOpen ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ] : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -286,13 +351,13 @@ class _FilterToggleButton extends StatelessWidget {
             Icon(
               isOpen ? Icons.tune : Icons.tune_outlined,
               size: 18,
-              color: isOpen ? Colors.black : Colors.white70,
+              color: isOpen ? Colors.black : AppTheme.textSecondary,
             ),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
-                color: isOpen ? Colors.black : Colors.white70,
+                color: isOpen ? Colors.black : AppTheme.textSecondary,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
@@ -301,7 +366,7 @@ class _FilterToggleButton extends StatelessWidget {
             Icon(
               isOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
               size: 16,
-              color: isOpen ? Colors.black : Colors.white70,
+              color: isOpen ? Colors.black : AppTheme.textSecondary,
             ),
           ],
         ),

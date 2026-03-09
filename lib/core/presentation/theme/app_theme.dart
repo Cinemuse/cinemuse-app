@@ -16,6 +16,9 @@ class AppTheme {
   static const Color watchlist = Color(0xFFeab308); // Yellow 500
   static const Color watchlistGlow = Color(0x80eab308);
   
+  static const Color star = Color(0xFFffc107); // Amber 500
+  static const Color starGlow = Color(0x80ffc107);
+  
   static const Color surface = Color(0xFF1a0b2e);
   static const Color border = Color(0x33d946ef); // rgba(217, 70, 239, 0.2)
   static const Color borderHover = Color(0x66d946ef); // rgba(217, 70, 239, 0.4)

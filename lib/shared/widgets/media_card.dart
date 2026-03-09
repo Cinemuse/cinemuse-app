@@ -1,15 +1,18 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/shared/widgets/premium_hover_text.dart';
+import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 
 class MediaCard extends StatefulWidget {
   final String title;
   final String? posterPath;
   final String? releaseDate;
   final double? rating;
+  final bool isWatchlisted;
+  final VoidCallback? onWatchlistToggle;
   final VoidCallback? onTap;
 
   const MediaCard({
@@ -18,6 +21,8 @@ class MediaCard extends StatefulWidget {
     this.posterPath,
     this.releaseDate,
     this.rating,
+    this.isWatchlisted = false,
+    this.onWatchlistToggle,
     this.onTap,
   });
 
@@ -55,10 +60,10 @@ class _MediaCardState extends State<MediaCard> {
         child: GestureDetector(
           onTap: widget.onTap,
           child: AnimatedScale(
-            scale: _isHovered ? 1.05 : 1.0,
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            child: Column(
+              scale: _isHovered ? 1.05 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Poster Image
@@ -136,6 +141,56 @@ class _MediaCardState extends State<MediaCard> {
                               ),
                             ),
                           ),
+
+                          // Watchlist Toggle Button
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: AnimatedOpacity(
+                              opacity: (widget.isWatchlisted || _isHovered) ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 200),
+                              child: IgnorePointer(
+                                ignoring: !(widget.isWatchlisted || _isHovered),
+                                child: HoverScale(
+                                  onTap: widget.onWatchlistToggle,
+                                  scale: 1.2,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.4),
+                                          blurRadius: 10,
+                                          spreadRadius: 2,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      widget.isWatchlisted ? Icons.bookmark : Icons.bookmark_add_outlined,
+                                      color: widget.isWatchlisted 
+                                          ? AppTheme.watchlist 
+                                          : Colors.white,
+                                      size: 24,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black.withOpacity(0.8),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                        Shadow(
+                                          color: Colors.black.withOpacity(0.5),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -143,10 +198,8 @@ class _MediaCardState extends State<MediaCard> {
                 ),
                 const SizedBox(height: 8),
                 // Title
-                Text(
-                  widget.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                PremiumHoverText(
+                  text: widget.title,
                   style: GoogleFonts.outfit(
                     color: _isHovered ? AppTheme.accent : Colors.white,
                     fontWeight: FontWeight.w600,
@@ -157,7 +210,7 @@ class _MediaCardState extends State<MediaCard> {
                 Row(
                   children: [
                     if (widget.rating != null && widget.rating! > 0)
-                      const Icon(Icons.star, size: 12, color: Colors.amber),
+                      const Icon(Icons.star, size: 12, color: AppTheme.star),
                     if (widget.rating != null && widget.rating! > 0)
                       const SizedBox(width: 4),
                     if (widget.rating != null && widget.rating! > 0)

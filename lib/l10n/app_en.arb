@@ -15,6 +15,8 @@
   "commonFeatured": "FEATURED",
   "commonUnexpectedError": "An unexpected error occurred",
   "commonOk": "OK",
+  "commonUnknown": "Unknown",
+  "filterMax": "Max",
   
   "searchPlaceholder": "Search movies, series, people...",
   "searchNoResults": "No results found for \"{query}\"",
@@ -36,6 +38,7 @@
   "searchYearRange": "Year Range",
   "searchVoteCount": "Vote Count",
   "searchRuntime": "Runtime",
+  "searchWatchProviders": "Watch Providers",
   "searchClearAll": "Clear All",
   "searchNoResultsTitle": "No results found",
   "searchTryAdjusting": "Try adjusting your filters",

@@ -5,6 +5,7 @@ class HoverScale extends StatefulWidget {
   final double scale;
   final Duration duration;
   final Curve curve;
+  final VoidCallback? onTap;
 
   const HoverScale({
     super.key,
@@ -12,6 +13,7 @@ class HoverScale extends StatefulWidget {
     this.scale = 1.05,
     this.duration = const Duration(milliseconds: 200),
     this.curve = Curves.easeOutCubic,
+    this.onTap,
   });
 
   @override
@@ -24,13 +26,18 @@ class _HoverScaleState extends State<HoverScale> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedScale(
-        scale: _isHovered ? widget.scale : 1.0,
-        duration: widget.duration,
-        curve: widget.curve,
-        child: widget.child,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _isHovered ? widget.scale : 1.0,
+          duration: widget.duration,
+          curve: widget.curve,
+          child: widget.child,
+        ),
       ),
     );
   }

@@ -54,6 +54,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonOk => 'OK';
 
   @override
+  String get commonUnknown => 'Unknown';
+
+  @override
+  String get filterMax => 'Max';
+
+  @override
   String get searchPlaceholder => 'Search movies, series, people...';
 
   @override
@@ -116,6 +122,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchRuntime => 'Runtime';
+
+  @override
+  String get searchWatchProviders => 'Watch Providers';
 
   @override
   String get searchClearAll => 'Clear All';
