@@ -1,3 +1,5 @@
+import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
+
 class StreamCandidate {
   final String title;
   final String infoHash;

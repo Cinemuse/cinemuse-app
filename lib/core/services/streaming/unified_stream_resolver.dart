@@ -1,6 +1,6 @@
 import 'package:meta/meta.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
-import 'package:cinemuse_app/core/services/streaming/models/media_context.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/ranking/stream_ranker.dart';
@@ -106,24 +106,28 @@ class UnifiedStreamResolver {
 
       if (imdbId == null) throw ImdbIdResolutionException();
 
-      // 2. Resolve Anime Mapping if needed
-      KitsuMapping? kitsuMapping;
-      if (TmdbService.isAnime(details) && tmdbId != null) {
-        kitsuMapping = await _kitsuMappingService.getMapping(
-          tmdbId: tmdbId,
-          type: type,
-          season: season,
-          episode: episode,
-        );
-      }
-      final context = MediaContext(
+      // 2. Resolve Anime Mapping
+      // If a mapping exists, it's an anime. No more heuristics.
+      final kitsuMapping = tmdbId != null 
+          ? await _kitsuMappingService.getMapping(
+              tmdbId: tmdbId,
+              type: type,
+              season: season,
+              episode: episode,
+            )
+          : null;
+
+      final context = StreamSearchContext(
         tmdbId: tmdbId.toString(),
         type: type,
+        title: details['title'] ?? details['name'] ?? 'Unknown',
         imdbId: imdbId,
         season: season,
         episode: episode,
-        kitsuMapping: kitsuMapping,
-        isAnime: TmdbService.isAnime(details),
+        episodeName: details['episode_name'], // Note: details might need checking if it has these
+        seasonName: details['season_name'],
+        mapping: kitsuMapping,
+        isAnime: kitsuMapping != null,
       );
 
       // 3. Search All Sources

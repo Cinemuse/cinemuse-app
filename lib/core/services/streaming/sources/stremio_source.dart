@@ -1,5 +1,5 @@
 import 'package:cinemuse_app/core/utils/url_utils.dart';
-import 'package:cinemuse_app/core/services/streaming/models/media_context.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
 import 'package:cinemuse_app/core/services/streaming/ranking/stream_ranker.dart';
@@ -25,15 +25,15 @@ class StremioSource implements BaseSource {
   ) : _dio = dio, _baseUrl = UrlUtils.cleanStremioBaseUrl(baseUrl);
 
   @override
-  Future<List<StreamCandidate>> search(MediaContext context) async {
+  Future<List<StreamCandidate>> search(StreamSearchContext context) async {
     try {
       String queryId;
       String type;
 
-      if (context.kitsuMapping != null) {
+      if (context.mapping != null) {
         type = context.type == 'movie' ? 'movie' : 'anime';
-        final ep = context.kitsuMapping!.absoluteEpisode ?? 1;
-        queryId = type == 'anime' ? "kitsu:${context.kitsuMapping!.kitsuId}:$ep" : "kitsu:${context.kitsuMapping!.kitsuId}";
+        final ep = context.mapping!.absoluteEpisode ?? 1;
+        queryId = type == 'anime' ? "kitsu:${context.mapping!.kitsuId}:$ep" : "kitsu:${context.mapping!.kitsuId}";
       } else {
         type = context.type == 'tv' ? 'series' : context.type;
         queryId = context.strmiomdbId ?? context.tmdbId;
@@ -55,14 +55,14 @@ class StremioSource implements BaseSource {
           final url = s['url'];
 
           return StreamCandidate(
-            title: context.kitsuMapping != null ? " (Kitsu) $title" : title,
+            title: context.mapping != null ? " (Kitsu) $title" : title,
             infoHash: infoHash,
             magnet: infoHash.isNotEmpty 
                 ? "magnet:?xt=urn:btih:$infoHash&dn=${Uri.encodeComponent(title)}"
                 : "",
             seeds: s['seeds'] ?? 0,
             provider: this.name,
-            absoluteEpisode: context.kitsuMapping?.absoluteEpisode,
+            absoluteEpisode: context.mapping?.absoluteEpisode,
             metadata: StreamRanker.parseMetadata(title),
             url: url,
           );

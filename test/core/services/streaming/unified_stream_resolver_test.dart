@@ -6,7 +6,7 @@ import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
-import 'package:cinemuse_app/core/services/streaming/models/media_context.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
 
@@ -17,8 +17,8 @@ class MockDebridService extends Mock implements BaseDebridService {}
 class MockTmdbService extends Mock implements TmdbService {}
 class MockKitsuMappingService extends Mock implements KitsuMappingService {}
 
-// Register fallback for MediaContext if needed (for any())
-class FakeMediaContext extends Fake implements MediaContext {}
+// Register fallback for StreamSearchContext if needed (for any())
+class FakeStreamSearchContext extends Fake implements StreamSearchContext {}
 
 void main() {
   late UnifiedStreamResolver resolver;
@@ -28,7 +28,7 @@ void main() {
   late MockKitsuMappingService mockKitsu;
 
   setUpAll(() {
-    registerFallbackValue(FakeMediaContext());
+    registerFallbackValue(FakeStreamSearchContext());
     registerFallbackValue(StreamCandidate(title: '', infoHash: '', magnet: '', provider: ''));
   });
 
@@ -39,7 +39,15 @@ void main() {
     mockKitsu = MockKitsuMappingService();
 
     when(() => mockSource.name).thenReturn('MockSource');
+    when(() => mockSource.supportedCategories).thenReturn({'movie', 'tv', 'anime'});
     when(() => mockDebrid.name).thenReturn('MockDebrid');
+
+    when(() => mockKitsu.getMapping(
+      tmdbId: any(named: 'tmdbId'),
+      type: any(named: 'type'),
+      season: any(named: 'season'),
+      episode: any(named: 'episode'),
+    )).thenAnswer((_) async => null);
 
     resolver = UnifiedStreamResolver(
       sources: [mockSource],

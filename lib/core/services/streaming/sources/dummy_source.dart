@@ -1,4 +1,4 @@
-import 'package:cinemuse_app/core/services/streaming/models/media_context.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
 
@@ -11,7 +11,7 @@ class DummySource extends BaseSource {
   Set<String> get supportedCategories => {'movie', 'tv'};
 
   @override
-  Future<List<StreamCandidate>> search(MediaContext context) async {
+  Future<List<StreamCandidate>> search(StreamSearchContext context) async {
     // Simulate finding a high quality stream for any search
     return [
       StreamCandidate(

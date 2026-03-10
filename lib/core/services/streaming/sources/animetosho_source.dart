@@ -1,4 +1,4 @@
-import 'package:cinemuse_app/core/services/streaming/models/media_context.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
 import 'package:cinemuse_app/core/services/streaming/ranking/stream_ranker.dart';
@@ -18,15 +18,15 @@ class AnimeToshoSource extends BaseSource {
   Set<String> get supportedCategories => {'anime'};
 
   @override
-  Future<List<StreamCandidate>> search(MediaContext context) async {
+  Future<List<StreamCandidate>> search(StreamSearchContext context) async {
     // Only search AnimeTosho if it's actually an anime and we have an AniDB ID
-    if (!context.isAnime || context.kitsuMapping?.anidbId == null) {
-      print('AnimeToshoSource: Skipping search. isAnime: ${context.isAnime}, anidbId: ${context.kitsuMapping?.anidbId}');
+    if (!context.isAnime || context.mapping?.anidbId == null) {
+      print('AnimeToshoSource: Skipping search. isAnime: ${context.isAnime}, anidbId: ${context.mapping?.anidbId}');
       return [];
     }
 
-    final anidbId = context.kitsuMapping!.anidbId;
-    final absoluteEpisode = context.kitsuMapping?.absoluteEpisode;
+    final anidbId = context.mapping!.anidbId;
+    final absoluteEpisode = context.mapping?.absoluteEpisode;
     
     // Construct search query
     // aids: filters by Series
