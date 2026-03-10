@@ -53,6 +53,9 @@ class CinemaPlayerState {
   final bool isResolving;
   final String? error;
   final CastDevice? selectedCastDevice;
+  final Duration remotePosition;
+  final Duration remoteDuration;
+  final bool remotePlaying;
 
   CinemaPlayerState({
     required this.controller,
@@ -64,6 +67,9 @@ class CinemaPlayerState {
     this.isResolving = false,
     this.error,
     this.selectedCastDevice,
+    this.remotePosition = Duration.zero,
+    this.remoteDuration = Duration.zero,
+    this.remotePlaying = false,
   });
 
   CinemaPlayerState copyWith({
@@ -76,6 +82,9 @@ class CinemaPlayerState {
     bool? isResolving,
     Object? error = _sentinel,
     Object? selectedCastDevice = _sentinel,
+    Duration? remotePosition,
+    Duration? remoteDuration,
+    bool? remotePlaying,
   }) {
     return CinemaPlayerState(
       controller: controller ?? this.controller,
@@ -87,6 +96,9 @@ class CinemaPlayerState {
       isResolving: isResolving ?? this.isResolving,
       error: error == _sentinel ? this.error : (error as String?),
       selectedCastDevice: selectedCastDevice == _sentinel ? this.selectedCastDevice : (selectedCastDevice as CastDevice?),
+      remotePosition: remotePosition ?? this.remotePosition,
+      remoteDuration: remoteDuration ?? this.remoteDuration,
+      remotePlaying: remotePlaying ?? this.remotePlaying,
     );
   }
 }

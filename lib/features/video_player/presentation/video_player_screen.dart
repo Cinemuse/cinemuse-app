@@ -2,6 +2,7 @@ import 'package:cinemuse_app/features/video_player/application/player_provider.d
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_video_controls.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/player_settings_bottom_sheet.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/cast_remote_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -46,32 +47,42 @@ class VideoPlayerScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppTheme.primary,
       body: playerState.when(
-        data: (state) => Center(
-          child: Video(
-            controller: state.controller,
-            filterQuality: FilterQuality.none,
-            controls: (videoState) => CustomVideoControls(
-              videoState: videoState,
+        data: (state) {
+          if (state.isCasting) {
+            return CastRemoteView(
               playerState: state,
               params: params,
-              onSettingsPressed: () => PlayerSettingsBottomSheet.show(context, state, params),
-              onNextEpisode: state.nextEpisode != null ? () {
-                final next = state.nextEpisode!;
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (_) => VideoPlayerScreen(
-                      queryId: queryId,
-                      type: type,
-                      season: next.season,
-                      episode: next.episode,
-                      episodeTitle: next.title,
+              onBackPressed: () => Navigator.of(context).pop(),
+            );
+          }
+          
+          return Center(
+            child: Video(
+              controller: state.controller,
+              filterQuality: FilterQuality.none,
+              controls: (videoState) => CustomVideoControls(
+                videoState: videoState,
+                playerState: state,
+                params: params,
+                onSettingsPressed: () => PlayerSettingsBottomSheet.show(context, state, params),
+                onNextEpisode: state.nextEpisode != null ? () {
+                  final next = state.nextEpisode!;
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (_) => VideoPlayerScreen(
+                        queryId: queryId,
+                        type: type,
+                        season: next.season,
+                        episode: next.episode,
+                        episodeTitle: next.title,
+                      ),
                     ),
-                  ),
-                 );
-              } : null,
+                   );
+                } : null,
+              ),
             ),
-          ),
-        ),
+          );
+        },
         error: (err, stack) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

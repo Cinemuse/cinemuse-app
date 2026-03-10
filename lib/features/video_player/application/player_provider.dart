@@ -22,8 +22,9 @@ import 'package:cinemuse_app/features/video_player/application/handlers/youtube_
 import 'package:cinemuse_app/features/video_player/application/handlers/rd_handler.dart';
 import 'package:cinemuse_app/features/video_player/application/handlers/cast_handler.dart';
 import 'package:cinemuse_app/features/video_player/application/language_mapper.dart';
-import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
+import 'package:cinemuse_app/features/video_player/application/helpers/player_history_manager.dart';
+import 'package:cinemuse_app/features/video_player/application/helpers/player_progress_tracker.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 // Convert back to StateNotifierProvider for compatibility/simplicity
@@ -37,17 +38,15 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   
   Player? _player;
   VideoController? _controller;
-  StreamSubscription? _posSub;
-  Timer? _saveTimer;
-  Map<String, dynamic>? _mediaDetails;
-  int _lastSavedPosition = 0;
-  int _actualSecondsWatched = 0;
-  int _lastPlaybackTick = -1;
-  late int _initialPosition;
-  bool _isCompletionLogged = false;
   late final YoutubeHandler _youtubeHandler;
   late final RdHandler _rdHandler;
   late final CastHandler _castHandler;
+  
+  Map<String, dynamic>? _mediaDetails;
+  late int _initialPosition;
+  bool _isCompletionLogged = false;
+  PlayerHistoryManager? _historyManager;
+  PlayerProgressTracker? _progressTracker;
 
   PlayerController(this.ref, this.params) : super(const AsyncValue.loading()) {
     _initialPosition = params.startPosition;
@@ -55,16 +54,26 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     // Initialize Handlers
     _youtubeHandler = YoutubeHandler(ref.read(youtubeServiceProvider));
     _rdHandler = RdHandler(ref.read(unifiedStreamResolverProvider));
-    _castHandler = CastHandler(ref.read(unifiedStreamResolverProvider));
+    _castHandler = CastHandler(ref, ref.read(unifiedStreamResolverProvider));
     
+    _castHandler.onStatusSync = (isPlaying, position, duration) {
+       final currentState = state.valueOrNull;
+       if (currentState != null) {
+         state = AsyncValue.data(currentState.copyWith(
+           remotePlaying: isPlaying,
+           remotePosition: position,
+           remoteDuration: duration,
+         ));
+       }
+    };
+
     _initialize();
   }
 
   @override
   void dispose() {
-    _saveProgress(force: true); // Try to save one last time
-    _saveTimer?.cancel();
-    _posSub?.cancel();
+    _saveProgress(force: true);
+    _progressTracker?.dispose();
     _player?.dispose();
     _youtubeHandler.dispose();
     super.dispose();
@@ -211,6 +220,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       
       // 1. Fetch Media Details (for history)
       _mediaDetails = await tmdbService.getMediaDetails(params.queryId, params.type);
+      _historyManager = PlayerHistoryManager(ref, params, _mediaDetails);
       
       // 2. Search streams
       final candidates = await resolver.searchStreams(
@@ -263,27 +273,11 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         
         _applyEnginePreferences();
         
-        // Setup Progress Listener
-        _posSub = _player!.stream.position.listen((duration) {
-          final seconds = duration.inSeconds;
-
-          // Intent Detection: Track actual time watched
-          if (_lastPlaybackTick != -1) {
-            final delta = seconds - _lastPlaybackTick;
-            // Standard playback delta is positive and small (~1s between emits usually, 
-            // but we allow up to 2s for jitter/speedup). Seeking will produce large deltas.
-            if (delta > 0 && delta <= 2) {
-              _actualSecondsWatched += delta;
-            }
-          }
-          _lastPlaybackTick = seconds;
-
-          // Save every 15 seconds if position changed significantly
-          if (seconds - _lastSavedPosition > 15 || seconds < _lastSavedPosition) { // Forward or Rewind
-              _saveProgress();
-              _lastSavedPosition = seconds;
-          }
-        });
+        // Setup Progress Listener via Tracker
+        _progressTracker = PlayerProgressTracker(
+          player: _player!,
+          onProgress: (pos, dur) => _saveProgress(),
+        )..start();
       }
 
       print('Opening media: ${resolvedStream.url}');
@@ -364,62 +358,16 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
 
   Future<void> _saveProgress({bool force = false}) async {
-    if (_player == null || _mediaDetails == null) return;
+    if (_player == null || _historyManager == null) return;
     
-    final user = ref.read(authProvider).value;
-    if (user == null) return;
-
-    final position = _player!.state.position.inSeconds;
-    final duration = _player!.state.duration.inSeconds;
-    
-    if (duration < 60) return;
-
-    try {
-      final repo = ref.read(watchHistoryRepositoryProvider);
-      
-      // Determine MediaKind
-      final mediaType = params.type == 'movie' ? MediaKind.movie : MediaKind.tv;
-
-      final mediaItem = MediaItem(
-        tmdbId: int.parse(params.queryId),
-        mediaType: mediaType,
-        title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? 'Unknown',
-        posterPath: _mediaDetails?['poster_path'],
-        backdropPath: _mediaDetails?['backdrop_path'],
-        releaseDate: DateTime.tryParse(_mediaDetails?['release_date'] ?? _mediaDetails?['first_air_date'] ?? ''),
-        updatedAt: DateTime.now(),
-      );
-
-      await repo.updateProgress(
-        userId: user.id,
-        media: mediaItem,
-        progressSeconds: position,
-        totalDuration: duration,
-        season: params.season,
-        episode: params.episode,
-        seriesDetails: params.type == 'tv' ? _mediaDetails : null,
-        actualSecondsWatched: _actualSecondsWatched,
-        initialPosition: _initialPosition,
-      );
-
-      // 10. Proactively invalidate details screen providers if we just finished
-      // This ensures that when the user goes back, the markers are already updated
-      // even if the real-time stream hasn't pushed yet.
-      final isFinished = (duration - position < 180) || (position / duration > 0.95);
-      if (isFinished && !_isCompletionLogged) {
-        _isCompletionLogged = true; // Lock in for this session
-        
-        if (params.type == 'tv') {
-          final tmdbIdInt = int.tryParse(params.queryId);
-          if (tmdbIdInt != null) {
-            ref.invalidate(seriesWatchLogsProvider(tmdbIdInt));
-            ref.invalidate(watchedEpisodesMapProvider(tmdbIdInt));
-          }
-        }
-      }
-    } catch (e) {
-      print("Error saving progress: $e");
-    }
+    await _historyManager!.saveProgress(
+      position: _player!.state.position.inSeconds,
+      duration: _player!.state.duration.inSeconds,
+      actualSecondsWatched: _progressTracker?.actualSecondsWatched ?? 0,
+      initialPosition: params.startPosition,
+      isCompletionLogged: _isCompletionLogged,
+      onCompletionLogged: (val) => _isCompletionLogged = val,
+    );
   }
 
   Future<void> changeSource(StreamCandidate candidate) async {
@@ -577,12 +525,40 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     }
   }
 
+  Future<void> pause() async {
+    if (state.value?.isCasting == true) {
+      _castHandler.pause();
+    } else {
+      _player?.pause();
+    }
+  }
+
+  Future<void> play() async {
+    if (state.value?.isCasting == true) {
+      _castHandler.play();
+    } else {
+      _player?.play();
+    }
+  }
+
+  Future<void> seek(Duration position) async {
+    if (state.value?.isCasting == true) {
+      _castHandler.seek(position);
+    } else {
+      await _player?.seek(position);
+    }
+  }
+
   Future<void> stopCasting() async {
-    _castHandler.stopCasting();
-    if (state.value != null) {
-      state = AsyncValue.data(state.value!.copyWith(
+    await _castHandler.stopCasting();
+    final currentState = state.valueOrNull;
+    if (currentState != null) {
+      state = AsyncValue.data(currentState.copyWith(
         isCasting: false,
         selectedCastDevice: null,
+        remotePosition: Duration.zero,
+        remoteDuration: Duration.zero,
+        remotePlaying: false,
       ));
     }
     _player?.play();

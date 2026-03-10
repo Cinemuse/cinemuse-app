@@ -81,8 +81,14 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   }
 
   void _togglePlayPause() {
+    final notifier = ref.read(playerControllerProvider(widget.params).notifier);
     final player = widget.playerState.controller.player;
-    player.playOrPause();
+    
+    if (player.state.playing) {
+      notifier.pause();
+    } else {
+      notifier.play();
+    }
     _onHover();
   }
 
@@ -172,7 +178,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
         _lastSkipKey = null;
         
         if (_virtualPosition != null) {
-          player.seek(_virtualPosition!);
+          ref.read(playerControllerProvider(widget.params).notifier).seek(_virtualPosition!);
           
           _clearVirtualPositionTimer?.cancel();
           _clearVirtualPositionTimer = Timer(const Duration(milliseconds: 500), () {
@@ -218,7 +224,8 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     final player = widget.playerState.controller.player;
     final pos = player.state.position;
     final duration = player.state.duration;
-    player.seek(Duration(seconds: (pos.inSeconds + (forward ? 10 : -10)).clamp(0, duration.inSeconds)));
+    final target = Duration(seconds: (pos.inSeconds + (forward ? 10 : -10)).clamp(0, duration.inSeconds));
+    ref.read(playerControllerProvider(widget.params).notifier).seek(target);
     _onHover();
   }
 
@@ -298,7 +305,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                         },
                         onChangeEnd: (value) {
                           final target = Duration(seconds: value.toInt());
-                          player.seek(target);
+                          ref.read(playerControllerProvider(widget.params).notifier).seek(target);
                           setState(() {
                             _dragging = false;
                             _virtualPosition = target;
