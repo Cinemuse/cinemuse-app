@@ -8,6 +8,7 @@ import 'package:cinemuse_app/features/video_player/application/language_mapper.d
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 
 class PlayerSettingsBottomSheet extends ConsumerWidget {
   final CinemaPlayerState state;
@@ -167,12 +168,14 @@ class _QualitySubtitle extends StatelessWidget {
         spacing: 6,
         runSpacing: 4,
         children: [
-          if (meta['resolution'] != null) _Badge(text: meta['resolution'], color: AppTheme.accent),
-          if (meta['size'] != null) _Badge(text: meta['size'], color: Colors.cyanAccent),
-          for (var q in (meta['quality'] as List? ?? [])) _Badge(text: q.toString(), color: Colors.blueGrey),
-          if (meta['codec'] != null) _Badge(text: meta['codec'], color: Colors.teal),
-          for (var a in (meta['audio'] as List? ?? [])) _Badge(text: a.toString(), color: Colors.deepPurpleAccent),
-          for (var l in (meta['languages'] as List? ?? [])) _Badge(text: l.toString(), color: Colors.orange),
+          if (meta.video.resolution != VideoResolution.unknown) _Badge(text: meta.video.resolution.label, color: AppTheme.accent),
+          if (meta.size != null) _Badge(text: meta.size!, color: Colors.cyanAccent),
+          if (meta.video.is10Bit) _Badge(text: '10bit', color: Colors.blueGrey),
+          if (meta.video.isHDR) _Badge(text: 'HDR', color: Colors.blueGrey),
+          if (meta.video.isDV) _Badge(text: 'DV', color: Colors.blueGrey),
+          if (meta.video.codec != VideoCodec.unknown) _Badge(text: meta.video.codec.label, color: Colors.teal),
+          for (var a in meta.audio.formats) _Badge(text: a.label, color: Colors.deepPurpleAccent),
+          for (var l in meta.languages) _Badge(text: l, color: Colors.orange),
         ],
       ),
     );
@@ -431,7 +434,7 @@ class _QualitySelectorState extends ConsumerState<_QualitySelector> {
                           ),
                           ...List.generate(currentState.availableStreams.length, (index) {
                             final stream = currentState.availableStreams[index];
-                            final meta = stream.metadata ?? {};
+                            final meta = stream.metadata;
                             
                             final isSelected = currentState.currentStream?.candidate.uniqueId == stream.uniqueId;
                             
@@ -466,10 +469,16 @@ class _QualitySelectorState extends ConsumerState<_QualitySelector> {
                                                 crossAxisAlignment: WrapCrossAlignment.center,
                                                 children: [
                                                   if (stream.isCached) _Badge(text: 'CACHED', color: Colors.greenAccent),
-                                                  if (meta['resolution'] != null) _Badge(text: meta['resolution'], color: Colors.blueAccent),
-                                                  if (meta['size'] != null) _Badge(text: meta['size'], color: Colors.cyanAccent),
-                                                  if (meta['quality'] != null) ...(meta['quality'] as List).map((q) => _Badge(text: q.toString(), color: Colors.orangeAccent)),
-                                                  if (meta['languages'] != null) ...(meta['languages'] as List).map((l) => _Badge(text: l.toString(), color: Colors.white70)),
+                                                  if (meta is StreamMetadata) ...[
+                                                    if (meta.video.resolution != VideoResolution.unknown) 
+                                                      _Badge(text: meta.video.resolution.label, color: Colors.blueAccent),
+                                                    if (meta.size != null) 
+                                                      _Badge(text: meta.size!, color: Colors.cyanAccent),
+                                                    if (meta.video.isHDR) _Badge(text: 'HDR', color: Colors.orangeAccent),
+                                                    if (meta.video.isDV) _Badge(text: 'DV', color: Colors.orangeAccent),
+                                                    if (meta.video.is10Bit) _Badge(text: '10bit', color: Colors.orangeAccent),
+                                                    for (var l in meta.languages) _Badge(text: l, color: Colors.white70),
+                                                  ],
                                                 ],
                                               ),
                                             ),

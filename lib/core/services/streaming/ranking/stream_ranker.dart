@@ -1,6 +1,15 @@
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
+import 'package:cinemuse_app/core/services/streaming/ranking/stream_parser.dart';
 
+/// A utility class responsible for scoring and ranking [StreamCandidate]s.
+///
+/// It uses [StreamParser] to standardize titles and calculates a quality score 
+/// based on provider-agnostic criteria (resolution, codecs, language, etc.).
 class StreamRanker {
+  /// Sorts a list of candidates based on cache status and calculated score.
+  ///
+  /// Streams cached on debrid services are prioritized first, followed by descending scores.
   static List<StreamCandidate> rank(List<StreamCandidate> candidates) {
     return candidates.map((c) {
       final s = score(c);
@@ -18,112 +27,102 @@ class StreamRanker {
       });
   }
 
+  /// Calculates a numerical score for a [StreamCandidate] based on its metadata.
+  ///
+  /// The final score is the sum of domain-specific scoring functions.
   static int score(StreamCandidate candidate) {
+    final metadata = candidate.metadata ?? StreamParser.parse(candidate.title);
+    
     int s = 0;
-    final t = candidate.title.toLowerCase();
+    s += _scoreLanguage(metadata, candidate.title);
+    s += _scoreVideo(metadata.video, candidate.title);
+    s += _scoreQuality(metadata.quality);
+    s += _scoreReleaseFlags(metadata.flags);
+    s += _scoreHealth(candidate.seeds);
+    
+    return s;
+  }
 
-    // Language detection
-    final isItalian = t.contains('ita') || t.contains('italian') || t.contains('italy') || t.contains(RegExp(r'\bit\b')) || t.contains('🇮🇹');
-    final isEnglish = t.contains('eng') || t.contains('english') || t.contains(RegExp(r'\ben\b')) || t.contains('🇬🇧') || t.contains('🇺🇸');
-    final isMulti = t.contains('multi') || (isItalian && isEnglish);
+  static int _scoreLanguage(StreamMetadata metadata, String title) {
+    int s = 0;
+    final isItalian = metadata.languages.contains('ITA');
+    final isEnglish = metadata.languages.contains('ENG');
+    final isMulti = title.toLowerCase().contains('multi') || (isItalian && isEnglish);
 
-    // Language prioritization
     if (isItalian) s += 100;
     if (isEnglish) s += 20;
-    if (isMulti) s += 150; // Massively boost ITA+ENG / Multi
+    if (isMulti) s += 150;
 
-    // Negative scoring for non-preferred languages
+    final t = title.toLowerCase();
     if (t.contains(' rus') || t.contains('.ru.') || t.contains('russian') || t.contains('lostfilm') || t.contains('hdrezka') || t.contains('syncmer')) s -= 500;
     if (t.contains(' ukr') || t.contains('ukrainian')) s -= 500;
     if (t.contains(' fra') || t.contains('french')) s -= 200;
     if (t.contains(' ger') || t.contains('german')) s -= 200;
     if (t.contains(' spa') || t.contains('spanish')) s -= 200;
 
-    // Specifically penalize common Russian release groups if Italian is not present
     if (!isItalian && (t.contains('lostfilm') || t.contains('hdrezka') || t.contains('syncmer') || t.contains('newcomers'))) s -= 800;
-
-    // Video quality & 10-bit
-    if (t.contains('10bit') || t.contains('hevc') || t.contains('x265') || t.contains('h265')) s += 30;
-    if (t.contains('hdr') || t.contains(' dv ') || t.contains('dovi')) s += 25;
-
-    // Resolution & Penalization
-    if (t.contains('2160p') || t.contains('4k')) s += 50;
-    else if (t.contains('1080p')) s += 30;
-    else if (t.contains('720p')) s += 10;
-    else if (t.contains('480p')) s -= 50; // Penalize SD
-    else s -= 30; // Unknown or other resolution penalty
-
-    // Penalize "Other" types (DVDRip, HDRip, etc.)
-    if (t.contains('dvdrip') || t.contains('hdrip') || t.contains('bdrip') || t.contains('dvdscr')) s -= 40;
-
-    // Seeders impact (logarithmic-ish)
-    final seeds = candidate.seeds;
-    if (seeds > 100) s += 20;
-    else if (seeds > 50) s += 15;
-    else if (seeds > 10) s += 10;
-    else if (seeds > 0) s += 5;
-
-    // Penalize older codecs for 4K if not HEVC (rare but possible)
-    if (t.contains('2160p') && !t.contains('hevc') && !t.contains('x265')) s -= 20;
-
     return s;
   }
 
-  static Map<String, dynamic> parseMetadata(String title) {
-    final t = title.toLowerCase();
+  static int _scoreVideo(VideoMetadata video, String title) {
+    int s = 0;
+    if (video.codec == VideoCodec.hevc || video.is10Bit) s += 30;
+    if (video.isHDR || video.isDV) s += 25;
 
-    // 1. Resolution
-    String? resolution;
-    if (t.contains('2160p') || t.contains('4k')) resolution = '4K';
-    else if (t.contains('1080p')) resolution = '1080p';
-    else if (t.contains('720p')) resolution = '720p';
-    else if (t.contains('480p')) resolution = '480p';
-
-    // 2. Quality/Source
-    final List<String> qualityIndicators = [];
-    if (t.contains('bluray') || t.contains('bdrip')) qualityIndicators.add('BluRay');
-    else if (t.contains('web-dl') || t.contains('webrip') || t.contains(' amzn ') || t.contains(' nf ')) qualityIndicators.add('WEB-DL');
-    else if (t.contains('hdtv')) qualityIndicators.add('HDTV');
-
-    if (t.contains('remux')) qualityIndicators.add('REMUX');
-    if (t.contains('10bit')) qualityIndicators.add('10bit');
-    if (t.contains('hdr') || t.contains(' dv ') || t.contains('dovi')) qualityIndicators.add('HDR');
-
-    // 3. Codecs
-    String? codec;
-    if (t.contains('hevc') || t.contains('x265') || t.contains('h265')) codec = 'HEVC';
-    else if (t.contains('x264') || t.contains('h264') || t.contains('avc')) codec = 'x264';
-
-    // 4. Audio
-    final List<String> audioFeatures = [];
-    if (t.contains('atmos')) audioFeatures.add('Atmos');
-    else if (t.contains('dts')) audioFeatures.add('DTS');
-    else if (t.contains('aac')) audioFeatures.add('AAC');
-    else if (t.contains('ac3') || t.contains('dd5.1') || t.contains('ddp')) audioFeatures.add('DD');
-
-    // 5. Languages
-    final List<String> languages = [];
-    final isItalian = t.contains('ita') || t.contains('italian') || t.contains('italy') || t.contains(RegExp(r'\bit\b')) || t.contains('🇮🇹');
-    final isEnglish = t.contains('eng') || t.contains('english') || t.contains(RegExp(r'\ben\b')) || t.contains('🇬🇧') || t.contains('🇺🇸');
-
-    if (isItalian) languages.add('ITA');
-    if (isEnglish) languages.add('ENG');
-    if (t.contains('multi') && languages.isEmpty) languages.add('MULTI');
-
-    // 6. File Size
-    String? size;
-    final sizeMatch = RegExp(r'(\d+(?:\.\d+)?)\s*(GB|MB|GiB|MiB|KB|B)(?!bit)', caseSensitive: false).firstMatch(title);
-    if (sizeMatch != null) {
-      size = "${sizeMatch.group(1)} ${sizeMatch.group(2)}".toUpperCase();
+    switch (video.resolution) {
+      case VideoResolution.r2160p:
+        s += 50;
+        if (video.codec != VideoCodec.hevc) s -= 20;
+        break;
+      case VideoResolution.r1440p:
+        s += 40;
+        break;
+      case VideoResolution.r1080p:
+        s += 30;
+        break;
+      case VideoResolution.r720p:
+        s += 10;
+        break;
+      case VideoResolution.r480p:
+        s -= 50;
+        break;
+      case VideoResolution.unknown:
+        s -= 30;
+        break;
     }
+    return s;
+  }
 
-    return {
-      'resolution': resolution,
-      'quality': qualityIndicators,
-      'codec': codec,
-      'audio': audioFeatures,
-      'languages': languages,
-      'size': size,
-    };
+  static int _scoreQuality(ReleaseQuality quality) {
+    switch (quality) {
+      case ReleaseQuality.bluray:
+        return 40;
+      case ReleaseQuality.webdl:
+        return 20;
+      case ReleaseQuality.dvdrip:
+        return 5;
+      case ReleaseQuality.telesync:
+        return -1000; // Massive penalty for TS
+      case ReleaseQuality.cam:
+        return -2000; // Even bigger for CAM
+      case ReleaseQuality.unknown:
+        return 0;
+    }
+  }
+
+  static int _scoreReleaseFlags(List<ReleaseFlag> flags) {
+    int s = 0;
+    if (flags.contains(ReleaseFlag.proper)) s += 10;
+    if (flags.contains(ReleaseFlag.repack)) s += 10;
+    if (flags.contains(ReleaseFlag.extended)) s += 5;
+    return s;
+  }
+
+  static int _scoreHealth(int seeds) {
+    if (seeds > 100) return 20;
+    if (seeds > 50) return 15;
+    if (seeds > 10) return 10;
+    if (seeds > 0) return 5;
+    return 0;
   }
 }

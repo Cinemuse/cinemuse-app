@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cinemuse_app/core/services/streaming/ranking/stream_ranker.dart';
+import 'package:cinemuse_app/core/services/streaming/ranking/stream_parser.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 
 void main() {
   group('StreamRanker scoring', () {
@@ -82,25 +84,25 @@ void main() {
 
   group('StreamRanker parsing', () {
     test('Should parse resolution correctly', () {
-      final meta = StreamRanker.parseMetadata('Movie 2160p HDR');
-      expect(meta['resolution'], equals('4K'));
+      final meta = StreamParser.parse('Movie 2160p HDR');
+      expect(meta.video.resolution, equals(VideoResolution.r2160p));
     });
 
     test('Should parse 10bit and HDR', () {
-      final meta = StreamRanker.parseMetadata('Movie.1080p.10bit.HDR.HEVC');
-      expect(meta['quality'], contains('10bit'));
-      expect(meta['quality'], contains('HDR'));
+      final meta = StreamParser.parse('Movie.1080p.10bit.HDR.HEVC');
+      expect(meta.video.is10Bit, isTrue);
+      expect(meta.video.isHDR, isTrue);
     });
 
     test('Should detect languages', () {
-      final meta = StreamRanker.parseMetadata('Movie ITA ENG');
-      expect(meta['languages'], contains('ITA'));
-      expect(meta['languages'], contains('ENG'));
+      final meta = StreamParser.parse('Movie ITA ENG');
+      expect(meta.languages, contains('ITA'));
+      expect(meta.languages, contains('ENG'));
     });
 
     test('Should parse file size', () {
-      final meta = StreamRanker.parseMetadata('Movie [12.5 GB]');
-      expect(meta['size'], equals('12.5 GB'));
+      final meta = StreamParser.parse('Movie [12.5 GB]');
+      expect(meta.size, equals('12.5 GB'));
     });
   });
 

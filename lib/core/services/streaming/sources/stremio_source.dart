@@ -3,6 +3,7 @@ import 'package:cinemuse_app/core/services/streaming/models/stream_search_contex
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
 import 'package:cinemuse_app/core/services/streaming/ranking/stream_ranker.dart';
+import 'package:cinemuse_app/core/services/streaming/ranking/stream_parser.dart';
 import 'package:dio/dio.dart';
 
 class StremioSource implements BaseSource {
@@ -53,6 +54,7 @@ class StremioSource implements BaseSource {
           
           final infoHash = s['infoHash'] ?? "";
           final url = s['url'];
+          final metadata = StreamParser.parse(title);
 
           return StreamCandidate(
             title: context.mapping != null ? " (Kitsu) $title" : title,
@@ -63,7 +65,8 @@ class StremioSource implements BaseSource {
             seeds: s['seeds'] ?? 0,
             provider: this.name,
             absoluteEpisode: context.mapping?.absoluteEpisode,
-            metadata: StreamRanker.parseMetadata(title),
+            metadata: metadata,
+            resolution: metadata.video.resolution.label,
             url: url,
           );
         }).toList();

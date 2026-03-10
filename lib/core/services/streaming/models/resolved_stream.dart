@@ -6,7 +6,7 @@ class ResolvedStream {
   final String? filename;
   final List<Map<String, dynamic>> files;
   final int? activeFileId;
-  final String provider; // The debrid service provider (e.g., "Real-Debrid")
+  final String provider; // The name of the service that resolved this stream
   final StreamCandidate candidate; // The original candidate this came from
 
   ResolvedStream({

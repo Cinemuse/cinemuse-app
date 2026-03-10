@@ -4,6 +4,7 @@ import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/core/services/video/youtube_service.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
@@ -168,7 +169,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           infoHash: s['url'], // Use URL as hash for uniqueness
           magnet: s['url'],
           provider: 'YouTube',
-          metadata: s,
+          metadata: StreamMetadata.empty().copyWithCustom(s),
         )).toList();
 
         final initialCandidate = youtubeCandidates.firstWhere(
@@ -392,9 +393,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           final position = _player!.state.position;
           
           if (candidate.provider == 'YouTube') {
-            final meta = candidate.metadata ?? {};
+            final meta = candidate.metadata;
              String? localAudioPath;
-             if (meta['needsAudio'] == true) {
+             if (meta?.custom?['needsAudio'] == true) {
                localAudioPath = await _youtubeHandler.downloadAudioToTempFile();
              } else {
                _youtubeHandler.cleanup();
