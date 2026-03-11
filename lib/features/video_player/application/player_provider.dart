@@ -306,7 +306,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       final mainMediaItem = MediaItem(
         tmdbId: int.parse(params.queryId),
         mediaType: params.type == 'movie' ? MediaKind.movie : MediaKind.tv,
-        title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? 'Unknown',
+        title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? ref.read(localizationsProvider).commonUnknown,
         posterPath: _mediaDetails?['poster_path'],
         backdropPath: _mediaDetails?['backdrop_path'],
         releaseDate: DateTime.tryParse(_mediaDetails?['release_date'] ?? _mediaDetails?['first_air_date'] ?? ''),
@@ -367,7 +367,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           controller: _controller!,
           availableStreams: candidates,
           currentStream: resolvedStream,
-          title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? 'Unknown',
+          title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? ref.read(localizationsProvider).commonUnknown,
           nextEpisode: nextEpisode,
         ));
       }

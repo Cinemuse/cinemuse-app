@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/application/l10n_provider.dart';
 
-class VideoTopBar extends StatelessWidget {
+class VideoTopBar extends ConsumerWidget {
   final CinemaPlayerState playerState;
   final PlayerParams params;
   final VoidCallback onSettingsPressed;
@@ -18,7 +21,8 @@ class VideoTopBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(localizationsProvider);
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -31,7 +35,7 @@ class VideoTopBar extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: const Icon(Icons.arrow_back, color: AppTheme.textWhite),
             onPressed: onBackPressed,
           ),
           const SizedBox(width: 16),
@@ -43,7 +47,7 @@ class VideoTopBar extends StatelessWidget {
                 Text(
                   playerState.title,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppTheme.textWhite,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -53,9 +57,9 @@ class VideoTopBar extends StatelessWidget {
                 if (params.type == 'tv' && params.season != null && params.episode != null) ...[
                   const SizedBox(height: 2),
                   Text(
-                    'S${params.season.toString().padLeft(2, '0')}E${params.episode.toString().padLeft(2, '0')}${params.episodeTitle != null ? ' - ${params.episodeTitle}' : ''}',
+                    '${l10n.detailsSeasonNumber(params.season!)}, ${l10n.detailsEpisodeNumber(params.episode!)}${params.episodeTitle != null ? ' - ${params.episodeTitle}' : ''}',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: AppTheme.textWhite.withOpacity(0.7),
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
@@ -69,12 +73,12 @@ class VideoTopBar extends StatelessWidget {
           IconButton(
             icon: Icon(
               playerState.isCasting ? Icons.cast_connected : Icons.cast, 
-              color: playerState.isCasting ? Colors.blueAccent : Colors.white
+              color: playerState.isCasting ? Colors.blueAccent : AppTheme.textWhite
             ),
             onPressed: onCastPressed,
           ),
           IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white),
+            icon: const Icon(Icons.settings, color: AppTheme.textWhite),
             onPressed: onSettingsPressed,
           ),
         ],

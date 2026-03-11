@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/video_playback_controls.dart';
-import 'dart:async';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 
 class VideoBottomBar extends StatefulWidget {
   final CinemaPlayerState playerState;
@@ -54,11 +54,11 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
     final player = widget.playerState.controller.player;
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
-          colors: [Colors.black87, Colors.transparent],
+          colors: [AppTheme.primary.withOpacity(0.87), Colors.transparent],
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -100,9 +100,9 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
                                   trackHeight: 2,
                                   thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
                                   overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-                                  activeTrackColor: Colors.white,
-                                  inactiveTrackColor: Colors.white24,
-                                  thumbColor: Colors.white,
+                                  activeTrackColor: AppTheme.textWhite,
+                                  inactiveTrackColor: AppTheme.textWhite.withOpacity(0.24),
+                                  thumbColor: AppTheme.textWhite,
                                 ),
                                 child: Slider(
                                   value: position.inSeconds.toDouble().clamp(0, duration.inSeconds.toDouble()),
@@ -120,13 +120,13 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.8),
+                                      color: AppTheme.primary.withOpacity(0.8),
                                       borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(color: Colors.white24, width: 0.5),
+                                      border: Border.all(color: AppTheme.textWhite.withOpacity(0.24), width: 0.5),
                                     ),
                                     child: Text(
                                       _formatDuration(_hoverDuration!),
-                                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                                      style: const TextStyle(color: AppTheme.textWhite, fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
                                     ),
                                   ),
                                 ),
@@ -139,7 +139,7 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
                   const SizedBox(width: 12),
                   Text(
                     '${_formatDuration(position)} / ${_formatDuration(duration)}',
-                    style: const TextStyle(color: Colors.white70, fontSize: 13, fontFamily: 'monospace'),
+                    style: TextStyle(color: AppTheme.textWhite.withOpacity(0.7), fontSize: 13, fontFamily: 'monospace'),
                   ),
                   const SizedBox(width: 8),
                 ],

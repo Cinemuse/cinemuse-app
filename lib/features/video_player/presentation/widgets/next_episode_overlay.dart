@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:ui';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:cinemuse_app/core/constants/playback_constants.dart';
+import 'package:cinemuse_app/core/application/l10n_provider.dart';
 
-class NextEpisodeOverlay extends StatefulWidget {
+class NextEpisodeOverlay extends ConsumerStatefulWidget {
   final CinemaPlayerState playerState;
   final VoidCallback onNextEpisode;
 
@@ -13,10 +16,10 @@ class NextEpisodeOverlay extends StatefulWidget {
   });
 
   @override
-  State<NextEpisodeOverlay> createState() => _NextEpisodeOverlayState();
+  ConsumerState<NextEpisodeOverlay> createState() => _NextEpisodeOverlayState();
 }
 
-class _NextEpisodeOverlayState extends State<NextEpisodeOverlay> {
+class _NextEpisodeOverlayState extends ConsumerState<NextEpisodeOverlay> {
   bool _isNextButtonHovered = false;
 
   @override
@@ -31,7 +34,7 @@ class _NextEpisodeOverlayState extends State<NextEpisodeOverlay> {
         final pos = snapshot.data?.inSeconds ?? player.state.position.inSeconds;
         final dur = player.state.duration.inSeconds;
         if (dur <= 0) return const SizedBox.shrink();
-        final isFinished = (dur - pos < 180) || (pos / dur > 0.95);
+        final isFinished = (dur - pos < PlaybackThresholds.completionRemainingSeconds) || (pos / dur > PlaybackThresholds.completionPercentage);
 
         return AnimatedPositioned(
           duration: const Duration(milliseconds: 600),
@@ -85,7 +88,7 @@ class _NextEpisodeOverlayState extends State<NextEpisodeOverlay> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Next Episode'.toUpperCase(),
+                            ref.watch(localizationsProvider).playerNextEpisode.toUpperCase(),
                             style: TextStyle(
                               color: Colors.black.withOpacity(0.85),
                               fontSize: 16,

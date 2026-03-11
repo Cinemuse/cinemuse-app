@@ -511,6 +511,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonGoBack => 'Go Back';
 
   @override
+  String get playerNextEpisode => 'Next Episode';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

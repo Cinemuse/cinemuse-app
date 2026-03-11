@@ -513,6 +513,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get commonGoBack => 'Indietro';
 
   @override
+  String get playerNextEpisode => 'Prossimo Episodio';
+
+  @override
   String get settingsTitle => 'Impostazioni';
 
   @override

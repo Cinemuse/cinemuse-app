@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:media_kit/media_kit.dart';
+import 'package:cinemuse_app/core/application/l10n_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/core/presentation/widgets/volume_control.dart';
 import 'package:cinemuse_app/core/presentation/widgets/fullscreen_button.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Bottom-row playback controls for the VOD video player.
 ///
 /// Uses shared [VolumeControl] and [FullscreenButton] widgets.
-class VideoPlaybackControls extends StatelessWidget {
+class VideoPlaybackControls extends ConsumerWidget {
   final CinemaPlayerState playerState;
   final VoidCallback onTogglePlayPause;
   final Function(bool) onSkip;
@@ -28,8 +29,9 @@ class VideoPlaybackControls extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final player = playerState.controller.player;
+    final l10n = ref.watch(localizationsProvider);
 
     return Row(
       children: [
@@ -74,7 +76,7 @@ class VideoPlaybackControls extends StatelessWidget {
             child: IconButton(
               icon: const Icon(Icons.skip_next_rounded, color: Colors.white, size: 28),
               onPressed: onNextEpisode,
-              tooltip: 'Next Episode',
+              tooltip: l10n.playerNextEpisode,
             ),
           ),
 

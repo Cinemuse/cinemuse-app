@@ -4,6 +4,7 @@ import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:cinemuse_app/core/application/l10n_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class PlayerHistoryManager {
@@ -33,7 +34,7 @@ class PlayerHistoryManager {
       final mediaItem = MediaItem(
         tmdbId: int.parse(params.queryId),
         mediaType: mediaType,
-        title: mediaDetails!['title'] ?? mediaDetails!['name'] ?? 'Unknown',
+        title: mediaDetails!['title'] ?? mediaDetails!['name'] ?? ref.read(localizationsProvider).commonUnknown,
         posterPath: mediaDetails!['poster_path'],
         backdropPath: mediaDetails!['backdrop_path'],
         releaseDate: DateTime.tryParse(mediaDetails!['release_date'] ?? mediaDetails!['first_air_date'] ?? ''),

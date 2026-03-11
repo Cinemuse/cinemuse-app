@@ -1022,6 +1022,12 @@ abstract class AppLocalizations {
   /// **'Go Back'**
   String get commonGoBack;
 
+  /// No description provided for @playerNextEpisode.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Episode'**
+  String get playerNextEpisode;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

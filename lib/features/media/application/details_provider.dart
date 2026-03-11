@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/application/l10n_provider.dart';
 import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:cinemuse_app/core/error/supabase_error_handler.dart';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
@@ -21,7 +22,7 @@ final mediaDetailsProvider = FutureProvider.family<Map<String, dynamic>?, ({Stri
     final mediaItem = MediaItem(
       tmdbId: int.parse(args.id),
       mediaType: MediaItem.fromString(args.type),
-      title: details['title'] ?? details['name'] ?? 'Unknown',
+      title: details['title'] ?? details['name'] ?? ref.read(localizationsProvider).commonUnknown,
       posterPath: details['poster_path'],
       backdropPath: details['backdrop_path'],
       releaseDate: DateTime.tryParse(details['release_date'] ?? details['first_air_date'] ?? ''),
