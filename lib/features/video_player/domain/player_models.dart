@@ -2,6 +2,7 @@ import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cast/cast.dart';
+import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
 
 // Simple data class for params
 class PlayerParams {
@@ -56,6 +57,7 @@ class CinemaPlayerState {
   final Duration remotePosition;
   final Duration remoteDuration;
   final bool remotePlaying;
+  final List<ProviderSearchStatus> providerStatuses;
 
   CinemaPlayerState({
     required this.controller,
@@ -70,6 +72,7 @@ class CinemaPlayerState {
     this.remotePosition = Duration.zero,
     this.remoteDuration = Duration.zero,
     this.remotePlaying = false,
+    this.providerStatuses = const [],
   });
 
   CinemaPlayerState copyWith({
@@ -85,6 +88,7 @@ class CinemaPlayerState {
     Duration? remotePosition,
     Duration? remoteDuration,
     bool? remotePlaying,
+    List<ProviderSearchStatus>? providerStatuses,
   }) {
     return CinemaPlayerState(
       controller: controller ?? this.controller,
@@ -99,6 +103,7 @@ class CinemaPlayerState {
       remotePosition: remotePosition ?? this.remotePosition,
       remoteDuration: remoteDuration ?? this.remoteDuration,
       remotePlaying: remotePlaying ?? this.remotePlaying,
+      providerStatuses: providerStatuses ?? this.providerStatuses,
     );
   }
 }

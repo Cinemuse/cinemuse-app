@@ -18,7 +18,7 @@ class ProviderManagementSettings extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.settingsProvidersReorder,
+          AppLocalizations.of(context)!.settingsProvidersDesc,
           style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
         ),
         const SizedBox(height: 16),
@@ -27,26 +27,10 @@ class ProviderManagementSettings extends ConsumerWidget {
             canvasColor: Colors.transparent,
             shadowColor: Colors.transparent,
           ),
-          child: ReorderableListView.builder(
-            buildDefaultDragHandles: false,
+          child: ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: providers.length,
-            onReorder: (oldIndex, newIndex) {
-              if (newIndex > oldIndex) newIndex--;
-              final items = List<StreamingProviderConfig>.from(providers);
-              final item = items.removeAt(oldIndex);
-              items.insert(newIndex, item);
-              
-              // Update priorities
-              final updatedItems = items.asMap().entries.map((e) {
-                return e.value.copyWith(priority: e.key);
-              }).toList();
-              
-              ref.read(settingsProvider.notifier).updateSettings({
-                'streamingProviders': updatedItems,
-              });
-            },
             itemBuilder: (context, index) {
               final provider = providers[index];
               return Padding(
@@ -60,10 +44,6 @@ class ProviderManagementSettings extends ConsumerWidget {
                   ),
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    leading: ReorderableDragStartListener(
-                      index: index,
-                      child: const Icon(Icons.drag_indicator, color: Colors.white30),
-                    ),
                     title: Text(
                       provider.name,
                       style: DesktopTypography.bodySecondary.copyWith(

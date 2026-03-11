@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_video_controls.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/player_settings_bottom_sheet.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/cast_remote_view.dart';
@@ -44,10 +45,105 @@ class VideoPlayerScreen extends ConsumerWidget {
     );
     final playerState = ref.watch(playerControllerProvider(params));
 
+    ref.listen<AsyncValue<CinemaPlayerState>>(
+      playerControllerProvider(params),
+      (previous, next) {
+        if (next is AsyncData<CinemaPlayerState>) {
+          final err = next.value.error;
+          final prevErr = previous?.valueOrNull?.error;
+          if (err != null && err != prevErr) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(err),
+                backgroundColor: Theme.of(context).colorScheme.error,
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+              ),
+            );
+          }
+        }
+      },
+    );
+
     return Scaffold(
       backgroundColor: AppTheme.primary,
       body: playerState.when(
         data: (state) {
+          if (state.isResolving) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 24),
+                  Text(
+                    loadingMessage ?? AppLocalizations.of(context)!.playerResolving,
+                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 16),
+                  ),
+                  if (state.providerStatuses.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: 300,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: state.providerStatuses.map((s) {
+                          final isSearching = s.status == ProviderStatus.searching;
+                          final isFailed = s.status == ProviderStatus.failed;
+                          
+                          Color iconColor = Colors.white54;
+                          IconData iconData = Icons.search;
+                          String trailingText = '${(s.timeElapsed.inMilliseconds / 1000).toStringAsFixed(1)}s';
+                          
+                          if (!isSearching) {
+                            if (isFailed) {
+                              iconData = Icons.error_outline;
+                              iconColor = Colors.redAccent;
+                              trailingText = 'Failed ($trailingText)';
+                            } else {
+                              iconData = Icons.check_circle_outline;
+                              iconColor = Colors.greenAccent;
+                              trailingText = '${s.resultsCount} results ($trailingText)';
+                            }
+                          }
+                          
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Row(
+                              children: [
+                                if (isSearching)
+                                  const SizedBox(
+                                    width: 16, 
+                                    height: 16, 
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accent)
+                                  )
+                                else
+                                  Icon(iconData, size: 16, color: iconColor),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    s.providerName,
+                                    style: TextStyle(
+                                      color: isSearching ? Colors.white : Colors.white70,
+                                      fontWeight: isSearching ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  trailingText,
+                                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }
+
           if (state.isCasting) {
             return CastRemoteView(
               playerState: state,

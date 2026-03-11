@@ -28,17 +28,9 @@ class StremioSource implements BaseSource {
   @override
   Future<List<StreamCandidate>> search(StreamSearchContext context) async {
     try {
-      String queryId;
-      String type;
-
-      if (context.mapping != null) {
-        type = context.type == 'movie' ? 'movie' : 'anime';
-        final ep = context.mapping!.absoluteEpisode ?? 1;
-        queryId = type == 'anime' ? "kitsu:${context.mapping!.kitsuId}:$ep" : "kitsu:${context.mapping!.kitsuId}";
-      } else {
-        type = context.type == 'tv' ? 'series' : context.type;
-        queryId = context.strmiomdbId ?? context.tmdbId;
-      }
+      final params = _resolveRequestParams(context);
+      final type = params.type;
+      final queryId = params.queryId;
 
       final url = "$_baseUrl/stream/$type/$queryId.json";
       print('StremioSource ($name): Fetching: $url');
@@ -75,5 +67,24 @@ class StremioSource implements BaseSource {
       print('StremioSource ($name) fetch failed: $e');
     }
     return [];
+  }
+
+  /// Resolves the Stremio-specific type and query ID based on context.
+  ({String type, String queryId}) _resolveRequestParams(StreamSearchContext context) {
+    if (context.mapping case final mapping?) {
+      final type = context.type == 'movie' ? 'movie' : 'anime';
+      final ep = mapping.absoluteEpisode ?? 1;
+      final id = type == 'anime' ? "kitsu:${mapping.kitsuId}:$ep" : "kitsu:${mapping.kitsuId}";
+      return (type: type, queryId: id);
+    }
+
+    final type = context.type == 'tv' ? 'series' : context.type;
+    final baseId = context.strmiomdbId ?? context.imdbId ?? context.tmdbId;
+    final isEpisodeQuery = type == 'series' && context.season != null && context.episode != null;
+    
+    return (
+      type: type, 
+      queryId: isEpisodeQuery ? "$baseId:${context.season}:${context.episode}" : baseId,
+    );
   }
 }

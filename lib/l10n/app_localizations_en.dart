@@ -551,8 +551,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsProvidersTitle => 'Streaming Providers';
 
   @override
-  String get settingsProvidersDesc =>
-      'Manage and reorder your content sources.';
+  String get settingsProvidersDesc => 'Manage your content sources.';
 
   @override
   String get settingsProvidersReorder => 'Hold and drag to reorder providers.';

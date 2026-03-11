@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:meta/meta.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
+import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
@@ -88,7 +90,9 @@ class UnifiedStreamResolver {
     String type, {
     int? season,
     int? episode,
+    void Function(List<ProviderSearchStatus>)? onStatusUpdate,
   }) async {
+    Timer? statusTimer;
     try {
       if (_sources.isEmpty) {
         throw NoProvidersEnabledException();
@@ -131,30 +135,63 @@ class UnifiedStreamResolver {
       );
 
       // 3. Search All Sources
-      final searchFutures = _sources.map((source) {
-        // Capability check: If the provider doesn't support the requested category, skip it.
-        final targetCategory = context.isAnime ? 'anime' : (context.type == 'tv' ? 'tv' : 'movie');
-        if (!source.supportedCategories.contains(targetCategory)) {
-          return Future.value(<StreamCandidate>[]);
-        }
+      final targetCategory = context.isAnime ? 'anime' : (context.type == 'tv' ? 'tv' : 'movie');
+      final capableSources = _sources.where((s) => s.supportedCategories.contains(targetCategory)).toList();
+      
+      if (capableSources.isEmpty) {
+        throw CapabilityMissingException(targetCategory);
+      }
 
-        return source.search(context).catchError((e) {
+      final statuses = <String, ProviderSearchStatus>{};
+      for (final s in capableSources) {
+        statuses[s.name] = ProviderSearchStatus(providerName: s.name);
+      }
+
+      void emitStatuses() {
+        if (onStatusUpdate != null) {
+          onStatusUpdate(statuses.values.toList());
+        }
+      }
+
+      emitStatuses();
+
+      var elapsedMilliseconds = 0;
+      statusTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+        elapsedMilliseconds += 100;
+        bool changed = false;
+        for (final k in statuses.keys) {
+          if (statuses[k]!.status == ProviderStatus.searching) {
+            statuses[k] = statuses[k]!.copyWith(timeElapsed: Duration(milliseconds: elapsedMilliseconds));
+            changed = true;
+          }
+        }
+        if (changed) emitStatuses();
+      });
+
+      final searchFutures = capableSources.map((source) {
+        return source.search(context).then((results) {
+          statuses[source.name] = statuses[source.name]!.copyWith(
+            status: ProviderStatus.finished,
+            resultsCount: results.length,
+          );
+          emitStatuses();
+          return results;
+        }).catchError((e) {
           print('UnifiedStreamResolver: Source ${source.name} failed: $e');
-          // We don't throw here to allow other sources to succeed, 
-          // but we log it for the "ProviderSearchException" pattern if we were to aggregate errors.
+          statuses[source.name] = statuses[source.name]!.copyWith(
+            status: ProviderStatus.failed,
+            errorMessage: e.toString(),
+          );
+          emitStatuses();
           return <StreamCandidate>[];
         });
       });
       final rawResults = await Future.wait(searchFutures);
+      statusTimer.cancel();
+      
       final allCandidates = rawResults.expand((x) => x).toList();
 
       if (allCandidates.isEmpty) {
-        final targetCategory = context.isAnime ? 'anime' : (context.type == 'tv' ? 'tv' : 'movie');
-        final hasCapableProvider = _sources.any((s) => s.supportedCategories.contains(targetCategory));
-        
-        if (!hasCapableProvider) {
-          throw CapabilityMissingException(targetCategory);
-        }
         throw NoResultsFoundException();
       }
 
@@ -204,6 +241,7 @@ class UnifiedStreamResolver {
       // 7. Rank and Sort
       return StreamRanker.rank(candidates);
     } catch (e) {
+      statusTimer?.cancel();
       print('UnifiedStreamResolver: Search failed: $e');
       if (e is StreamingException) rethrow;
       throw StreamResolutionFailedException(e.toString());

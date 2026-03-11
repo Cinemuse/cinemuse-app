@@ -223,30 +223,78 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       _mediaDetails = await tmdbService.getMediaDetails(params.queryId, params.type);
       _historyManager = PlayerHistoryManager(ref, params, _mediaDetails);
       
+      if (_player == null) {
+        _player = Player();
+        _controller = VideoController(
+          _player!,
+          configuration: VideoControllerConfiguration(
+            hwdec: io.Platform.isAndroid ? 'mediacodec' : 'auto',
+            vo: io.Platform.isAndroid ? 'gpu' : null,
+          ),
+        );
+        _applyEnginePreferences();
+        
+        _progressTracker = PlayerProgressTracker(
+          player: _player!,
+          onProgress: (pos, dur) => _saveProgress(),
+        )..start();
+      }
+
+      if (mounted) {
+        state = AsyncValue.data(CinemaPlayerState(
+          controller: _controller!,
+          availableStreams: const [],
+          currentStream: null,
+          title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? 'Unknown',
+          isResolving: true,
+          providerStatuses: const [],
+        ));
+      }
+      
       // 2. Search streams
       final candidates = await resolver.searchStreams(
         params.queryId, 
         params.type, 
         season: params.season, 
-        episode: params.episode
+        episode: params.episode,
+        onStatusUpdate: (statuses) {
+          if (mounted) {
+            final currentState = state.valueOrNull;
+            if (currentState != null) {
+              state = AsyncValue.data(currentState.copyWith(providerStatuses: statuses));
+            }
+          }
+        }
       );
 
       if (candidates.isEmpty) {
         throw Exception("No streams found");
       }
 
-      // 3. Select initial stream (first cached, or first available)
-      final initialCandidate = candidates.first;
+      // 3 & 4. Iterate over candidates and resolve the first working stream
+      ResolvedStream? resolvedStream;
+      StreamCandidate? initialCandidate;
 
-      // 4. Resolve stream
-      final resolvedStream = await resolver.resolveStream(
-        initialCandidate,
-        season: params.season,
-        episode: params.episode,
-      );
+      for (var candidate in candidates) {
+        try {
+          resolvedStream = await resolver.resolveStream(
+            candidate,
+            season: params.season,
+            episode: params.episode,
+          );
 
-      if (resolvedStream == null) {
-        throw Exception("Could not resolve initial stream");
+          if (resolvedStream != null) {
+            initialCandidate = candidate;
+            break; // Successfully resolved!
+          }
+        } catch (e) {
+          print('PlayerController: Failed to resolve candidate ${candidate.title} (Provider: ${candidate.provider}): $e');
+          // Continue to the next candidate
+        }
+      }
+
+      if (resolvedStream == null || initialCandidate == null) {
+        throw Exception("All streams failed to resolve. Please try a different provider or quality.");
       }
 
       // 4.5 Ensure media is cached (Natural retrieval point)
@@ -262,24 +310,6 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         releaseDate: DateTime.tryParse(_mediaDetails?['release_date'] ?? _mediaDetails?['first_air_date'] ?? ''),
         updatedAt: DateTime.now(),
       );
-      if (_player == null) {
-        _player = Player();
-        _controller = VideoController(
-          _player!,
-          configuration: VideoControllerConfiguration(
-            hwdec: io.Platform.isAndroid ? 'mediacodec' : 'auto',
-            vo: io.Platform.isAndroid ? 'gpu' : null,
-          ),
-        );
-        
-        _applyEnginePreferences();
-        
-        // Setup Progress Listener via Tracker
-        _progressTracker = PlayerProgressTracker(
-          player: _player!,
-          onProgress: (pos, dur) => _saveProgress(),
-        )..start();
-      }
 
       print('Opening media: ${resolvedStream.url}');
       await _player!.open(Media(resolvedStream.url), play: true);

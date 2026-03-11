@@ -553,8 +553,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsProvidersTitle => 'Provider Streaming';
 
   @override
-  String get settingsProvidersDesc =>
-      'Gestisci e riordina le tue sorgenti di contenuto.';
+  String get settingsProvidersDesc => 'Gestisci le tue sorgenti di contenuto.';
 
   @override
   String get settingsProvidersReorder =>

@@ -1097,7 +1097,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsProvidersDesc.
   ///
   /// In en, this message translates to:
-  /// **'Manage and reorder your content sources.'**
+  /// **'Manage your content sources.'**
   String get settingsProvidersDesc;
 
   /// No description provided for @settingsProvidersReorder.
