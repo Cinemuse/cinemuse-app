@@ -3,6 +3,7 @@ import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dar
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cast/cast.dart';
 import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
+import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 
 // Simple data class for params
 class PlayerParams {
@@ -34,14 +35,6 @@ class PlayerParams {
 
   @override
   int get hashCode => Object.hash(queryId, type, season, episode, episodeTitle, startPosition);
-}
-
-class NextEpisodeInfo {
-  final int season;
-  final int episode;
-  final String? title;
-
-  NextEpisodeInfo({required this.season, required this.episode, this.title});
 }
 
 class CinemaPlayerState {

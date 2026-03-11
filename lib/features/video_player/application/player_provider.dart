@@ -8,6 +8,8 @@ import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/core/services/video/youtube_service.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
+import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
+import 'package:cinemuse_app/core/constants/playback_constants.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
@@ -323,47 +325,37 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         await _player!.seek(Duration(seconds: params.startPosition));
       }
 
-      // 6. Calculate Next Episode
+      // 6. Calculate Next Episode using Domain Service
       NextEpisodeInfo? nextEpisode;
-      if (params.type == 'tv' && params.season != null && params.episode != null) {
-        final seasons = _mediaDetails?['seasons'] as List? ?? [];
-        final currentSeasonData = seasons.firstWhere(
-          (s) => s['season_number'] == params.season,
-          orElse: () => null,
+      if (params.type == 'tv' && params.season != null && params.episode != null && _mediaDetails != null) {
+        final result = ref.read(seriesDomainServiceProvider).getNextEpisode(
+          _mediaDetails!, 
+          params.season!, 
+          params.episode!,
         );
         
-        if (currentSeasonData != null) {
-          final episodeCount = currentSeasonData['episode_count'] as int? ?? 0;
-          if (params.episode! < episodeCount) {
-            // Get current season details for the episode title
-            final seasonDetails = await tmdbService.getSeasonDetails(int.parse(params.queryId), params.season!);
+        if (result.isAired) {
+          nextEpisode = result.next;
+          
+          // If we have a next episode, we still might want to fetch its title
+          // though the service doesn't fetch it to keep it synchronous and pure.
+          // We can enrich it here if needed, but for the button visibility, this is enough.
+          if (nextEpisode != null) {
+            final nextSeason = nextEpisode.season;
+            final nextEpNum = nextEpisode.episode;
+            
+            final seasonDetails = await tmdbService.getSeasonDetails(int.parse(params.queryId), nextSeason);
             final episodes = seasonDetails?['episodes'] as List? ?? [];
             final nextEpData = episodes.firstWhere(
-              (e) => e['episode_number'] == params.episode! + 1,
+              (e) => e['episode_number'] == nextEpNum,
               orElse: () => null,
             );
             
-            nextEpisode = NextEpisodeInfo(
-              season: params.season!, 
-              episode: params.episode! + 1,
-              title: nextEpData?['name'],
-            );
-          } else {
-            // Check if there is a next season
-            final nextSeasonData = seasons.firstWhere(
-              (s) => s['season_number'] == params.season! + 1,
-              orElse: () => null,
-            );
-            if (nextSeasonData != null) {
-              // Fetch next season details for the first episode title
-              final nextSeasonDetails = await tmdbService.getSeasonDetails(int.parse(params.queryId), params.season! + 1);
-              final episodes = nextSeasonDetails?['episodes'] as List? ?? [];
-              final firstEpData = episodes.isNotEmpty ? episodes[0] : null;
-
+            if (nextEpData != null) {
               nextEpisode = NextEpisodeInfo(
-                season: params.season! + 1, 
-                episode: 1,
-                title: firstEpData?['name'],
+                season: nextSeason, 
+                episode: nextEpNum,
+                title: nextEpData['name'],
               );
             }
           }

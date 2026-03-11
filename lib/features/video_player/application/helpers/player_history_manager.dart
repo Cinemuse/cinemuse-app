@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/constants/playback_constants.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -51,8 +52,9 @@ class PlayerHistoryManager {
         initialPosition: initialPosition,
       );
 
-      // Handle completion logic
-      final isFinished = (duration - position < 180) || (position / duration > 0.95);
+      // Handle completion logic using centralized constants
+      final isFinished = (duration - position < PlaybackThresholds.completionRemainingSeconds) || 
+                         (position / duration > PlaybackThresholds.completionPercentage);
       if (isFinished && !isCompletionLogged) {
         onCompletionLogged(true);
         if (params.type == 'tv') {

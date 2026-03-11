@@ -8,12 +8,15 @@ import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:drift/drift.dart';
 import 'package:cinemuse_app/core/data/database.dart' hide MediaItem;
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
+import 'package:cinemuse_app/core/constants/playback_constants.dart';
+import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 
 final watchHistoryRepositoryProvider = Provider<WatchHistoryRepository>((ref) {
   return WatchHistoryRepository(
     supabase, 
     ref.watch(mediaRepositoryProvider),
     ref.watch(appDatabaseProvider),
+    ref.watch(seriesDomainServiceProvider),
   );
 });
 
@@ -21,8 +24,9 @@ class WatchHistoryRepository {
   final SupabaseClient _client;
   final MediaRepository _mediaRepo;
   final AppDatabase _db;
+  final SeriesDomainService _seriesService;
 
-  WatchHistoryRepository(this._client, this._mediaRepo, this._db);
+  WatchHistoryRepository(this._client, this._mediaRepo, this._db, this._seriesService);
 
   // Get current "Continue Watching" list (status = watching)
   Future<List<WatchHistory>> getContinueWatching(String userId) async {
@@ -58,23 +62,9 @@ class WatchHistoryRepository {
     final progressPercentage = progressSeconds / totalDuration;
     final remainingSeconds = totalDuration - progressSeconds;
 
-    // Intent Detection: Determine if this watch should count as a "log" (checkmark)
-    // Rule: Must watch 10% of total OR 5 minutes OR 50% of the portion they starting with.
-    bool hasIntent = false;
-    if (actualSecondsWatched > 300) {
-      hasIntent = true; // Watched > 5 mins
-    } else if (actualSecondsWatched > (totalDuration * 0.1)) {
-      hasIntent = true; // Watched > 10% of total
-    } else if (initialPosition != null) {
-      final totalRemainingWhenStarted = totalDuration - initialPosition;
-      if (totalRemainingWhenStarted > 0 && actualSecondsWatched > (totalRemainingWhenStarted * 0.5)) {
-        hasIntent = true; // Watched > 50% of what was left
-      }
-    }
-
-    // 1. Check for Finished State
+    // 1. Check for Completed State
     // Remaining < 180s OR Progress > 95%
-    if (remainingSeconds < 180 || progressPercentage > 0.95) {
+    if (remainingSeconds < PlaybackThresholds.completionRemainingSeconds || progressPercentage > PlaybackThresholds.completionPercentage) {
       // Remove from "Continue Watching"
       final deleted = await _client.from('watch_history').delete().match({
         'user_id': userId,
@@ -85,10 +75,9 @@ class WatchHistoryRepository {
       }).select().withErrorHandling();
 
       // Only proceed if we actually deleted something (prevents double logs)
-      if ((deleted as List).isEmpty) return;
-
-      // Mark as Completed in logs ONLY if intent is met
-      if (hasIntent) {
+      // or if we are marking a new completion without an existing history entry
+      if ((deleted as List).isNotEmpty) {
+        // Mark as Completed in logs (synonymous with checkmark in Cinemuse)
         await logEpisodeWatch(
           userId: userId,
           tmdbId: media.tmdbId,
@@ -97,24 +86,24 @@ class WatchHistoryRepository {
           episode: episode ?? 0,
           durationWatched: progressSeconds,
         );
-      }
 
-      // Auto-advance to next episode if series details are provided
-      if (media.mediaType == MediaKind.tv && season != null && episode != null && seriesDetails != null) {
-        await upsertNextEpisode(
-          userId: userId,
-          tmdbId: media.tmdbId,
-          currentSeason: season,
-          currentEpisode: episode,
-          seriesDetails: seriesDetails,
-        );
+        // Auto-advance to next episode
+        if (media.mediaType == MediaKind.tv && season != null && episode != null && seriesDetails != null) {
+          await upsertNextEpisode(
+            userId: userId,
+            tmdbId: media.tmdbId,
+            currentSeason: season,
+            currentEpisode: episode,
+            seriesDetails: seriesDetails,
+          );
+        }
       }
       return;
     }
 
     // 2. Check for Peeking State
     // Watched < 120s AND Watched < 10%
-    if (progressSeconds < 120 && progressPercentage < 0.10) {
+    if (progressSeconds < PlaybackThresholds.peekingSeconds && progressPercentage < PlaybackThresholds.peekingPercentage) {
       // Do nothing, don't save to history
       return;
     }
@@ -437,88 +426,56 @@ class WatchHistoryRepository {
     required int currentEpisode,
     required Map<String, dynamic> seriesDetails,
   }) async {
-    // 1. Calculate next episode
-    int? nextSeason;
-    int? nextEpisode;
-    
-    final seasons = seriesDetails['seasons'] as List? ?? [];
-    // Find current season info
-    final currentSeasonData = seasons.firstWhere(
-      (s) => s['season_number'] == currentSeason, 
-      orElse: () => null
+    // 1. Calculate next episode using Domain Service
+    final result = _seriesService.getNextEpisode(
+      seriesDetails, 
+      currentSeason, 
+      currentEpisode,
     );
     
-    if (currentSeasonData != null) {
-      final episodeCount = currentSeasonData['episode_count'] as int? ?? 0;
-      if (currentEpisode < episodeCount) {
-        // Next episode in same season
-        nextSeason = currentSeason;
-        nextEpisode = currentEpisode + 1;
-      } else {
-        // Next season?
-        // Find next season number
-        // Assuming seasons are not necessarily sorted or sequential, filter for > currentSeason
-        // and take the smallest one.
-        final nextSeasons = seasons
-            .map((s) => s['season_number'] as int? ?? 0)
-            .where((n) => n > currentSeason)
-            .toList()
-          ..sort();
-          
-        if (nextSeasons.isNotEmpty) {
-          nextSeason = nextSeasons.first;
-          nextEpisode = 1; 
-        }
-      }
-    }
+    final nextEpisodeInfo = result.next;
+    final isAired = result.isAired;
     
-    if (nextSeason != null && nextEpisode != null) {
-      // 2. Check if next episode has already aired
-      final lastAired = seriesDetails['last_episode_to_air'];
-      if (lastAired != null) {
-        final lastS = lastAired['season_number'] as int? ?? 0;
-        final lastE = lastAired['episode_number'] as int? ?? 0;
-        
-        if (nextSeason > lastS || (nextSeason == lastS && nextEpisode > lastE)) {
-          // Next episode hasn't aired yet.
-          // Mark the CURRENT episode as 'completed' in watch_history so we have a record for the sync service.
-          final caughtUpEntry = {
-            'user_id': userId,
-            'tmdb_id': tmdbId,
-            'media_type': 'tv',
-            'season': currentSeason,
-            'episode': currentEpisode,
-            'status': 'completed',
-            'progress_seconds': 0,
-            'total_duration': 0,
-            'last_watched_at': DateTime.now().toIso8601String(),
-          };
+    if (nextEpisodeInfo != null) {
+      if (!isAired) {
+        // Next episode hasn't aired yet.
+        // Mark the CURRENT episode as 'completed' in watch_history so we have a record for the sync service.
+        final caughtUpEntry = {
+          'user_id': userId,
+          'tmdb_id': tmdbId,
+          'media_type': 'tv',
+          'season': currentSeason,
+          'episode': currentEpisode,
+          'status': 'completed',
+          'progress_seconds': 0,
+          'total_duration': 0,
+          'last_watched_at': DateTime.now().toIso8601String(),
+        };
 
-          // Update Local
-          await _db.upsertWatchHistory(LocalWatchHistoriesCompanion(
-            userId: Value(userId),
-            tmdbId: Value(tmdbId),
-            mediaType: Value('tv'),
-            season: Value(currentSeason),
-            episode: Value(currentEpisode),
-            status: Value('completed'),
-            progressSeconds: Value(0),
-            totalDuration: Value(0),
-            lastWatchedAt: Value(DateTime.now()),
-          ));
+        // Update Local
+        await _db.upsertWatchHistory(LocalWatchHistoriesCompanion(
+          userId: Value(userId),
+          tmdbId: Value(tmdbId),
+          mediaType: Value('tv'),
+          season: Value(currentSeason),
+          episode: Value(currentEpisode),
+          status: Value('completed'),
+          progressSeconds: Value(0),
+          totalDuration: Value(0),
+          lastWatchedAt: Value(DateTime.now()),
+        ));
 
-          // Update Remote
-          await _client.from('watch_history').upsert(caughtUpEntry);
-          return;
-        }
+        // Update Remote
+        await _client.from('watch_history').upsert(caughtUpEntry);
+        return;
       }
 
       final entry = {
         'user_id': userId,
         'tmdb_id': tmdbId,
         'media_type': 'tv',
-        'season': nextSeason,
-        'episode': nextEpisode,
+        'season': nextEpisodeInfo.season,
+        'episode': nextEpisodeInfo.episode,
         'status': 'watching',
         'progress_seconds': 0,
         'total_duration': 0,
@@ -530,8 +487,8 @@ class WatchHistoryRepository {
         userId: Value(userId),
         tmdbId: Value(tmdbId),
         mediaType: Value('tv'),
-        season: Value(nextSeason),
-        episode: Value(nextEpisode),
+        season: Value(nextEpisodeInfo.season),
+        episode: Value(nextEpisodeInfo.episode),
         status: Value('watching'),
         progressSeconds: Value(0),
         totalDuration: Value(0),

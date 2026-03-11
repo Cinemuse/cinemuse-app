@@ -12,6 +12,7 @@ import 'package:cinemuse_app/features/video_player/presentation/widgets/video_to
 import 'package:cinemuse_app/features/video_player/presentation/widgets/video_bottom_bar.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/next_episode_overlay.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/cast_device_selector.dart';
+import 'package:cinemuse_app/core/constants/playback_constants.dart';
 import 'package:cinemuse_app/core/presentation/widgets/buffering_indicator.dart';
 import 'package:cinemuse_app/core/presentation/widgets/play_pause_overlay.dart';
 
@@ -166,7 +167,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       } else if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.numpadEnter) {
         final pos = player.state.position.inSeconds;
         final dur = player.state.duration.inSeconds;
-        final isFinished = dur > 0 && (dur - pos < 180 || (pos / dur) > 0.95);
+        final isFinished = dur > 0 && (dur - pos < PlaybackThresholds.completionRemainingSeconds || (pos / dur) > PlaybackThresholds.completionPercentage);
         
         if (isFinished && widget.onNextEpisode != null) {
           widget.onNextEpisode!();

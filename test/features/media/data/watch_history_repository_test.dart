@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
@@ -10,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MockSupabaseClient extends Mock implements SupabaseClient {}
 class MockMediaRepository extends Mock implements MediaRepository {}
+class MockSeriesDomainService extends Mock implements SeriesDomainService {}
 
 class FakeFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
   final T _value;
@@ -44,12 +46,14 @@ void main() {
   late MockSupabaseClient mockSupabase;
   late AppDatabase database;
   late MockMediaRepository mockMediaRepo;
+  late MockSeriesDomainService mockSeriesService;
 
   setUp(() {
     mockSupabase = MockSupabaseClient();
     database = AppDatabase(NativeDatabase.memory());
     mockMediaRepo = MockMediaRepository();
-    repository = WatchHistoryRepository(mockSupabase, mockMediaRepo, database);
+    mockSeriesService = MockSeriesDomainService();
+    repository = WatchHistoryRepository(mockSupabase, mockMediaRepo, database, mockSeriesService);
     
     // Register Fallbacks
     registerFallbackValue(MediaKind.movie);
