@@ -1,12 +1,16 @@
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
+import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/premium_hover_text.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 
-class MediaCard extends StatefulWidget {
+class MediaCard extends ConsumerStatefulWidget {
   final String title;
   final String? posterPath;
   final String? releaseDate;
@@ -14,6 +18,11 @@ class MediaCard extends StatefulWidget {
   final bool isWatchlisted;
   final VoidCallback? onWatchlistToggle;
   final VoidCallback? onTap;
+  
+  // New props for centralized logic
+  final int? tmdbId;
+  final MediaKind? mediaType;
+  final bool showWatchlistButton;
 
   const MediaCard({
     super.key,
@@ -24,13 +33,16 @@ class MediaCard extends StatefulWidget {
     this.isWatchlisted = false,
     this.onWatchlistToggle,
     this.onTap,
+    this.tmdbId,
+    this.mediaType,
+    this.showWatchlistButton = false,
   });
 
   @override
-  State<MediaCard> createState() => _MediaCardState();
+  ConsumerState<MediaCard> createState() => _MediaCardState();
 }
 
-class _MediaCardState extends State<MediaCard> {
+class _MediaCardState extends ConsumerState<MediaCard> {
   bool _isHovered = false;
 
   @override
@@ -143,54 +155,133 @@ class _MediaCardState extends State<MediaCard> {
                           ),
 
                           // Watchlist Toggle Button
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: AnimatedOpacity(
-                              opacity: (widget.isWatchlisted || _isHovered) ? 1.0 : 0.0,
-                              duration: const Duration(milliseconds: 200),
-                              child: IgnorePointer(
-                                ignoring: !(widget.isWatchlisted || _isHovered),
-                                child: HoverScale(
-                                  onTap: widget.onWatchlistToggle,
-                                  scale: 1.2,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.transparent,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.4),
-                                          blurRadius: 10,
-                                          spreadRadius: 2,
+                          if (widget.showWatchlistButton && widget.tmdbId != null && widget.mediaType != null)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Consumer(
+                                builder: (context, ref, child) {
+                                  final isWatchlistedInternal = ref.watch(userListsProvider.select((lists) {
+                                    return lists.valueOrNull
+                                        ?.where((l) => l.type == ListType.watchlist)
+                                        .firstOrNull
+                                        ?.items
+                                        .any((i) => i.tmdbId == widget.tmdbId && i.mediaType == widget.mediaType) ?? false;
+                                  }));
+
+                                  return AnimatedOpacity(
+                                    opacity: (isWatchlistedInternal || _isHovered) ? 1.0 : 0.0,
+                                    duration: const Duration(milliseconds: 200),
+                                    child: IgnorePointer(
+                                      ignoring: !(isWatchlistedInternal || _isHovered),
+                                      child: HoverScale(
+                                        onTap: () {
+                                          if (widget.onWatchlistToggle != null) {
+                                            widget.onWatchlistToggle!.call();
+                                          } else {
+                                            ref.read(userListsProvider.notifier).toggleWatchlist(
+                                              MediaItem(
+                                                tmdbId: widget.tmdbId!,
+                                                mediaType: widget.mediaType!,
+                                                title: widget.title,
+                                                posterPath: widget.posterPath,
+                                                releaseDate: widget.releaseDate != null ? DateTime.tryParse(widget.releaseDate!) : null,
+                                                voteAverage: widget.rating,
+                                                updatedAt: DateTime.now(),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                        scale: 1.2,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.transparent,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(0.4),
+                                                blurRadius: 10,
+                                                spreadRadius: 2,
+                                              ),
+                                            ],
+                                          ),
+                                          child: Icon(
+                                            isWatchlistedInternal ? Icons.bookmark : Icons.bookmark_add_outlined,
+                                            color: isWatchlistedInternal 
+                                                ? AppTheme.watchlist 
+                                                : Colors.white,
+                                            size: 24,
+                                            shadows: [
+                                              Shadow(
+                                                color: Colors.black.withOpacity(0.8),
+                                                blurRadius: 12,
+                                                offset: const Offset(0, 1),
+                                              ),
+                                              Shadow(
+                                                color: Colors.black.withOpacity(0.5),
+                                                blurRadius: 4,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ],
+                                      ),
                                     ),
-                                    child: Icon(
-                                      widget.isWatchlisted ? Icons.bookmark : Icons.bookmark_add_outlined,
-                                      color: widget.isWatchlisted 
-                                          ? AppTheme.watchlist 
-                                          : Colors.white,
-                                      size: 24,
-                                      shadows: [
-                                        Shadow(
-                                          color: Colors.black.withOpacity(0.8),
-                                          blurRadius: 12,
-                                          offset: const Offset(0, 1),
-                                        ),
-                                        Shadow(
-                                          color: Colors.black.withOpacity(0.5),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
+                                  );
+                                },
+                              ),
+                            )
+                          else if (widget.onWatchlistToggle != null)
+                            // Backward compatibility for manual toggle if provided without ID/Type
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: AnimatedOpacity(
+                                opacity: (widget.isWatchlisted || _isHovered) ? 1.0 : 0.0,
+                                duration: const Duration(milliseconds: 200),
+                                child: IgnorePointer(
+                                  ignoring: !(widget.isWatchlisted || _isHovered),
+                                  child: HoverScale(
+                                    onTap: widget.onWatchlistToggle,
+                                    scale: 1.2,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.transparent,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.4),
+                                            blurRadius: 10,
+                                            spreadRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Icon(
+                                        widget.isWatchlisted ? Icons.bookmark : Icons.bookmark_add_outlined,
+                                        color: widget.isWatchlisted 
+                                            ? AppTheme.watchlist 
+                                            : Colors.white,
+                                        size: 24,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black.withOpacity(0.8),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                          Shadow(
+                                            color: Colors.black.withOpacity(0.5),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),

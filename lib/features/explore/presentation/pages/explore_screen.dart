@@ -8,9 +8,7 @@ import '../widgets/media_type_selector.dart';
 import '../widgets/explore_filter_panel.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import '../widgets/active_filters_list.dart';
-import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
-import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import '../../../../shared/widgets/hover_scale.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
@@ -267,46 +265,23 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final mediaTypeString = mediaTypeEnum == MediaType.movie ? 'movie' : 'tv';
     final kind = mediaTypeEnum == MediaType.movie ? MediaKind.movie : MediaKind.tv;
 
-    return Consumer(
-      builder: (context, ref, child) {
-        final isWatchlisted = ref.watch(userListsProvider.select((lists) {
-          return lists.valueOrNull
-              ?.where((l) => l.type == ListType.watchlist)
-              .firstOrNull
-              ?.items
-              .any((i) => i.tmdbId == tmdbId && i.mediaType == kind) ?? false;
-        }));
-        
-        return MediaCard(
-          title: title,
-          posterPath: posterPath,
-          releaseDate: releaseDate,
-          rating: rating,
-          isWatchlisted: isWatchlisted,
-          onWatchlistToggle: () {
-            ref.read(userListsProvider.notifier).toggleWatchlist(
-              MediaItem(
-                tmdbId: tmdbId,
-                mediaType: kind,
-                title: title,
-                posterPath: posterPath,
-                releaseDate: releaseDate != null ? DateTime.tryParse(releaseDate) : null,
-                voteAverage: rating,
-                updatedAt: DateTime.now(),
-              ),
-            );
-          },
-          onTap: () {
-            if (mediaTypeEnum != MediaType.person) {
-              Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => MediaDetailsScreen(
-                  mediaId: media['id'].toString(),
-                  mediaType: mediaTypeString,
-                ),
-              ));
-            }
-          },
-        );
+    return MediaCard(
+      title: title,
+      posterPath: posterPath,
+      releaseDate: releaseDate,
+      rating: rating,
+      tmdbId: tmdbId,
+      mediaType: kind,
+      showWatchlistButton: true,
+      onTap: () {
+        if (mediaTypeEnum != MediaType.person) {
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => MediaDetailsScreen(
+              mediaId: media['id'].toString(),
+              mediaType: mediaTypeString,
+            ),
+          ));
+        }
       },
     );
   }

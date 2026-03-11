@@ -74,6 +74,7 @@ class MediaRow extends ConsumerWidget {
                 items: mediaItems,
                 height: 340,
                 itemWidth: 200,
+                showWatchlistButton: true,
                 padding: EdgeInsets.symmetric(
                   horizontal: AppTheme.getResponsiveHorizontalPadding(context)
                 ),

@@ -8,6 +8,7 @@ class HorizontalMediaList extends StatelessWidget {
   final double height;
   final double itemWidth;
   final EdgeInsets padding;
+  final bool showWatchlistButton;
 
   const HorizontalMediaList({
     super.key,
@@ -15,6 +16,7 @@ class HorizontalMediaList extends StatelessWidget {
     this.height = 340, // Match default MediaRow height
     this.itemWidth = 200,
     this.padding = const EdgeInsets.symmetric(horizontal: 24),
+    this.showWatchlistButton = false,
   });
 
   @override
@@ -43,6 +45,9 @@ class HorizontalMediaList extends StatelessWidget {
               posterPath: item.posterPath,
               releaseDate: item.releaseDate?.year.toString(),
               rating: item.voteAverage,
+              tmdbId: item.tmdbId,
+              mediaType: item.mediaType,
+              showWatchlistButton: showWatchlistButton,
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => MediaDetailsScreen(

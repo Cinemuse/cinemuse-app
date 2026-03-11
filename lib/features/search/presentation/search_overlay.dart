@@ -8,6 +8,7 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/shared/widgets/error_view_state.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -301,12 +302,19 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay> with SingleTicker
            final posterPath = isPerson ? item['profile_path'] : item['poster_path'];
            final releaseDate = isPerson ? item['known_for_department'] : (item['release_date'] ?? item['first_air_date']);
            final rating = isPerson ? null : (item['vote_average'] as num?)?.toDouble();
+           final tmdbId = item['id'] as int;
+           final mediaType = (item['media_type'] == 'tv' || item['first_air_date'] != null || item['name'] != null) 
+               ? MediaKind.tv 
+               : MediaKind.movie;
 
            return MediaCard(
               title: title,
               posterPath: posterPath,
               releaseDate: releaseDate,
               rating: rating,
+              tmdbId: tmdbId,
+              mediaType: mediaType,
+              showWatchlistButton: !isPerson,
               onTap: () => _onMediaTap(item),
            );
         },
