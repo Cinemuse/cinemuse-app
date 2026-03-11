@@ -6,6 +6,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ota_update/ota_update.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:archive/archive.dart';
+import 'package:path/path.dart' as p;
 
 enum UpdateStatus {
   initial,
@@ -79,14 +81,12 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
       );
 
       final latestTag = response.data['tag_name'] as String;
-      final latestVersion = latestTag.replaceAll(RegExp(r'[^0-9.]'), '');
-      
       final downloadUrl = _getDownloadUrl(response.data);
 
-      if (_isNewer(latestVersion, currentVersion)) {
+      if (_isNewer(latestTag, currentVersion, packageInfo.buildNumber)) {
         state = state.copyWith(
           status: UpdateStatus.available,
-          latestVersion: latestVersion,
+          latestVersion: latestTag,
           currentVersion: currentVersion,
           downloadUrl: downloadUrl,
         );
@@ -117,16 +117,28 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
     return null;
   }
 
-  bool _isNewer(String latest, String current) {
-    List<int> latestParts = latest.split('.').map(int.parse).toList();
-    List<int> currentParts = current.split('.').map(int.parse).toList();
+  bool _isNewer(String latestTag, String currentName, String currentBuild) {
+    // Parse latest: v1.0.1+15 -> name: 1.0.1, build: 15
+    final tagMatch = RegExp(r'v?(\d+\.\d+\.\d+)(?:\+(\d+))?').firstMatch(latestTag);
+    if (tagMatch == null) return false;
+
+    final latestName = tagMatch.group(1)!;
+    final latestBuild = int.tryParse(tagMatch.group(2) ?? '0') ?? 0;
+
+    final curBuild = int.tryParse(currentBuild) ?? 0;
+
+    // First compare semantic version names
+    List<int> latestParts = latestName.split('.').map(int.parse).toList();
+    List<int> currentParts = currentName.split('.').map(int.parse).toList();
 
     for (var i = 0; i < latestParts.length; i++) {
       if (i >= currentParts.length) return true;
       if (latestParts[i] > currentParts[i]) return true;
       if (latestParts[i] < currentParts[i]) return false;
     }
-    return false;
+
+    // If semantic names are equal, compare build numbers
+    return latestBuild > curBuild;
   }
 
   Future<void> startUpdate() async {
@@ -180,13 +192,13 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
     state = state.copyWith(status: UpdateStatus.downloading, progress: 0);
 
     try {
-      final tempDir = await getDownloadsDirectory(); 
+      final tempDir = await getTemporaryDirectory();
       final fileName = state.downloadUrl!.split('/').last;
-      final filePath = '${tempDir!.path}\\$fileName';
+      final zipFile = File(p.join(tempDir.path, fileName));
 
       await _dio.download(
         state.downloadUrl!,
-        filePath,
+        zipFile.path,
         onReceiveProgress: (received, total) {
           if (total != -1) {
             state = state.copyWith(progress: (received / total) * 100);
@@ -196,9 +208,43 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
 
       state = state.copyWith(status: UpdateStatus.readyToInstall);
 
-      // For a portable app, the safest "update" is to open the downloaded ZIP
-      // and let the user replace the files.
-      await Process.run('cmd', ['/c', 'start', '', filePath]);
+      // 1. Extract the ZIP to a temporary "update" folder
+      final extractPath = p.join(tempDir.path, 'cinemuse_update');
+      final bytes = zipFile.readAsBytesSync();
+      final archive = ZipDecoder().decodeBytes(bytes);
+
+      for (final file in archive) {
+        final filename = file.name;
+        if (file.isFile) {
+          final data = file.content as List<int>;
+          File(p.join(extractPath, filename))
+            ..createSync(recursive: true)
+            ..writeAsBytesSync(data);
+        } else {
+          Directory(p.join(extractPath, filename)).createSync(recursive: true);
+        }
+      }
+
+      // 2. Create the .bat script to handle the file swap
+      final currentAppDir = p.dirname(Platform.resolvedExecutable);
+      final exeName = p.basename(Platform.resolvedExecutable);
+      final scriptFile = File(p.join(tempDir.path, 'updater.bat'));
+
+      final scriptContent = '''
+@echo off
+timeout /t 3 /nobreak > nul
+xcopy /s /e /y /i "$extractPath\\*" "$currentAppDir"
+start "" "$currentAppDir\\$exeName"
+cd /d %temp%
+rd /s /q "$extractPath"
+del "%~f0"
+''';
+
+      scriptFile.writeAsStringSync(scriptContent);
+
+      // 3. Launch the script and exit
+      await Process.start(scriptFile.path, [], mode: ProcessStartMode.detached);
+      exit(0);
       
     } catch (e) {
       state = state.copyWith(status: UpdateStatus.error, error: e.toString());

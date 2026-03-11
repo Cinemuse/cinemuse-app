@@ -35,12 +35,28 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Parse version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}".TrimStart('v')
+          if ($tag -match '^([0-9]+\.[0-9]+\.[0-9]+)\+([0-9]+)$') {
+            Write-Output "BUILD_NAME=$($Matches[1])" >> $env:GITHUB_OUTPUT
+            Write-Output "BUILD_NUMBER=$($Matches[2])" >> $env:GITHUB_OUTPUT
+          } elseif ($tag -match '^([0-9]+\.[0-9]+\.[0-9]+)$') {
+            Write-Output "BUILD_NAME=$tag" >> $env:GITHUB_OUTPUT
+            Write-Output "BUILD_NUMBER=1" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Output "BUILD_NAME=" >> $env:GITHUB_OUTPUT
+            Write-Output "BUILD_NUMBER=" >> $env:GITHUB_OUTPUT
+          }
+
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --build-name="${{ steps.version.outputs.BUILD_NAME }}" --build-number="${{ steps.version.outputs.BUILD_NUMBER }}"
 
       - name: Build Windows ZIP
         run: |
-          flutter build windows --release
+          flutter build windows --release --build-name="${{ steps.version.outputs.BUILD_NAME }}" --build-number="${{ steps.version.outputs.BUILD_NUMBER }}"
           # ZIP the entire Release folder using PowerShell
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath build/windows/x64/runner/Release/cinemuse-windows.zip
 
