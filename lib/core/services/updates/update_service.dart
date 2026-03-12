@@ -68,9 +68,13 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
   String get _repo => dotenv.env['GITHUB_REPO'] ?? '';
 
   Future<void> checkForUpdates() async {
-    if (_owner.isEmpty || _repo.isEmpty) return;
+    if (_owner.isEmpty || _repo.isEmpty) {
+      print('UpdateService: GITHUB_OWNER or GITHUB_REPO is missing in .env');
+      return;
+    }
 
     state = state.copyWith(status: UpdateStatus.checking);
+    print('UpdateService: Checking for updates for $_owner/$_repo...');
 
     try {
       final packageInfo = await PackageInfo.fromPlatform();
@@ -81,9 +85,14 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
       );
 
       final latestTag = response.data['tag_name'] as String;
+      print('UpdateService: Current version: $currentVersion+${packageInfo.buildNumber}');
+      print('UpdateService: Latest tag from GitHub: $latestTag');
+      
       final downloadUrl = _getDownloadUrl(response.data);
+      print('UpdateService: Download URL: $downloadUrl');
 
       if (_isNewer(latestTag, currentVersion, packageInfo.buildNumber)) {
+        print('UpdateService: New version available!');
         state = state.copyWith(
           status: UpdateStatus.available,
           latestVersion: latestTag,
@@ -91,9 +100,11 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
           downloadUrl: downloadUrl,
         );
       } else {
+        print('UpdateService: App is up toDate');
         state = state.copyWith(status: UpdateStatus.upToDate, currentVersion: currentVersion);
       }
     } catch (e) {
+      print('UpdateService: Error checking for updates: $e');
       state = state.copyWith(status: UpdateStatus.error, error: e.toString());
     }
   }
@@ -210,6 +221,13 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
 
       // 1. Extract the ZIP to a temporary "update" folder
       final extractPath = p.join(tempDir.path, 'cinemuse_update');
+      
+      // Clean up any previous failed extraction
+      final dir = Directory(extractPath);
+      if (dir.existsSync()) {
+        dir.deleteSync(recursive: true);
+      }
+      
       final bytes = zipFile.readAsBytesSync();
       final archive = ZipDecoder().decodeBytes(bytes);
 
@@ -229,14 +247,47 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
       final currentAppDir = p.dirname(Platform.resolvedExecutable);
       final exeName = p.basename(Platform.resolvedExecutable);
       final scriptFile = File(p.join(tempDir.path, 'updater.bat'));
+      
+      // Ensure we use backslashes for Windows BAT script
+      final winExtractPath = extractPath.replaceAll('/', '\\');
+      final winAppDir = currentAppDir.replaceAll('/', '\\');
+      final winExePath = p.join(winAppDir, exeName).replaceAll('/', '\\');
 
       final scriptContent = '''
 @echo off
-timeout /t 3 /nobreak > nul
-xcopy /s /e /y /i "$extractPath\\*" "$currentAppDir"
-start "" "$currentAppDir\\$exeName"
-cd /d %temp%
-rd /s /q "$extractPath"
+setlocal
+:: 1. Self-Elevation Logic
+>nul 2>&1 "%SYSTEMROOT%\\system32\\cacls.exe" "%SYSTEMROOT%\\system32\\config\\system"
+if '%errorlevel%' NEQ '0' (
+    echo Requesting Administrator privileges...
+    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\\getadmin.vbs"
+    echo UAC.ShellExecute "%~s0", "", "", "runas", 1 >> "%temp%\\getadmin.vbs"
+    "%temp%\\getadmin.vbs"
+    exit /B
+)
+if exist "%temp%\\getadmin.vbs" ( del "%temp%\\getadmin.vbs" )
+
+echo Waiting for app to close...
+:wait_loop
+tasklist /fi "ImageName eq $exeName" | find /i "$exeName" > nul
+if %errorlevel% == 0 (
+    timeout /t 1 /nobreak > nul
+    goto wait_loop
+)
+
+echo Swapping files...
+xcopy /s /e /y /i "$winExtractPath\\*" "$winAppDir" > "%temp%\\cinemuse_update_log.txt" 2>&1
+if %errorlevel% neq 0 (
+    echo Error during file swap. Check %temp%\\cinemuse_update_log.txt
+    pause
+    exit /B
+)
+
+echo Restarting app...
+start "" "$winExePath"
+
+echo Cleaning up...
+rd /s /q "$winExtractPath"
 del "%~f0"
 ''';
 

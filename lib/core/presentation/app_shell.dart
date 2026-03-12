@@ -166,10 +166,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               ),
 
             // Update Notification Overlay
-            const Positioned(
-              top: 80, // Just below the top navbar
-              left: 0,
-              right: 0,
+            const Positioned.fill(
               child: UpdateOverlay(),
             ),
           ],
