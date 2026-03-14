@@ -58,6 +58,10 @@ class StremioSource implements BaseSource {
           final infoHash = s['infoHash'] ?? "";
           final streamUrl = s['url'];
           final metadata = StreamParser.parse(title);
+          
+          final Map<String, String>? headers = (s['behaviorHints']?['headers'] as Map?)?.map(
+            (k, v) => MapEntry(k.toString(), v.toString())
+          );
 
           return StreamCandidate(
             title: context.mapping != null ? " (Kitsu) $title" : title,
@@ -71,6 +75,7 @@ class StremioSource implements BaseSource {
             metadata: metadata,
             resolution: metadata.video.resolution.label,
             url: streamUrl,
+            headers: headers,
           );
         }).toList();
       } else {

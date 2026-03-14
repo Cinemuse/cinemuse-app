@@ -251,6 +251,7 @@ class UnifiedStreamResolver {
         url: candidate.url!,
         provider: candidate.provider,
         candidate: candidate,
+        headers: candidate.headers,
       );
     }
     

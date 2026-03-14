@@ -400,7 +400,10 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
               await _player!.setAudioTrack(AudioTrack.uri(localAudioPath));
             }
           } else {
-            await _player!.open(Media(resolvedStream.url), play: false);
+            await _player!.open(
+              Media(resolvedStream.url, httpHeaders: resolvedStream.headers),
+              play: false,
+            );
             unawaited(_trackManager?.ensurePreferredTrack(isAnime: state.valueOrNull?.isAnime ?? false) ?? Future.value());
           }
 

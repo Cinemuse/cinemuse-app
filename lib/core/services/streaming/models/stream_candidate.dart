@@ -44,6 +44,9 @@ class StreamCandidate {
   /// Explicit resolution string (e.g., '4K', '1080p') for direct access in UI.
   final String? resolution;
 
+  /// Custom HTTP headers required for playback (e.g. Referer, User-Agent).
+  final Map<String, String>? headers;
+
   StreamCandidate({
     required this.title,
     required this.infoHash,
@@ -57,6 +60,7 @@ class StreamCandidate {
     this.url,
     this.sizeInBytes,
     this.resolution,
+    this.headers,
   });
 
   /// True if the stream is cached on at least one Debrid provider.
@@ -90,6 +94,7 @@ class StreamCandidate {
       url: url,
       sizeInBytes: sizeInBytes,
       resolution: resolution,
+      headers: headers,
     );
   }
 }

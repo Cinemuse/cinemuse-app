@@ -8,6 +8,7 @@ class ResolvedStream {
   final int? activeFileId;
   final String provider; // The name of the service that resolved this stream
   final StreamCandidate candidate; // The original candidate this came from
+  final Map<String, String>? headers;
 
   ResolvedStream({
     required this.url,
@@ -17,6 +18,7 @@ class ResolvedStream {
     this.activeFileId,
     required this.provider,
     required this.candidate,
+    this.headers,
   });
 
   // Legacy map support removed to favor typed models
