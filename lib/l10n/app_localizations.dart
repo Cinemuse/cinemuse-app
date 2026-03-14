@@ -1211,8 +1211,44 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAudioLanguageDesc.
   ///
   /// In en, this message translates to:
-  /// **'Preferred audio language for playback.'**
+  /// **'Preferred audio language for movies and series.'**
   String get settingsAudioLanguageDesc;
+
+  /// No description provided for @settingsSubtitleLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitle Language'**
+  String get settingsSubtitleLanguage;
+
+  /// No description provided for @settingsSubtitleLanguageDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred subtitle language for movies and series.'**
+  String get settingsSubtitleLanguageDesc;
+
+  /// No description provided for @settingsShowSubtitles.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Subtitles'**
+  String get settingsShowSubtitles;
+
+  /// No description provided for @settingsJapanese.
+  ///
+  /// In en, this message translates to:
+  /// **'Japanese'**
+  String get settingsJapanese;
+
+  /// No description provided for @settingsOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get settingsOriginal;
+
+  /// No description provided for @settingsPlayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Media Preferences'**
+  String get settingsPlayer;
 
   /// No description provided for @settingsEnglish.
   ///
@@ -1226,11 +1262,53 @@ abstract class AppLocalizations {
   /// **'Italian'**
   String get settingsItalian;
 
-  /// No description provided for @settingsPlayer.
+  /// No description provided for @settingsSplitAnimePreferences.
   ///
   /// In en, this message translates to:
-  /// **'Player'**
-  String get settingsPlayer;
+  /// **'Split Anime Preferences'**
+  String get settingsSplitAnimePreferences;
+
+  /// No description provided for @settingsSplitAnimePreferencesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use different audio and subtitle settings for anime.'**
+  String get settingsSplitAnimePreferencesDesc;
+
+  /// No description provided for @settingsAnimeAudioLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Anime Audio Language'**
+  String get settingsAnimeAudioLanguage;
+
+  /// No description provided for @settingsAnimeAudioLanguageDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred audio language for anime.'**
+  String get settingsAnimeAudioLanguageDesc;
+
+  /// No description provided for @settingsAnimeShowSubtitles.
+  ///
+  /// In en, this message translates to:
+  /// **'Anime Show Subtitles'**
+  String get settingsAnimeShowSubtitles;
+
+  /// No description provided for @settingsAnimeShowSubtitlesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable or disable subtitles by default for anime.'**
+  String get settingsAnimeShowSubtitlesDesc;
+
+  /// No description provided for @settingsAnimeSubtitleLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Anime Subtitle Language'**
+  String get settingsAnimeSubtitleLanguage;
+
+  /// No description provided for @settingsAnimeSubtitleLanguageDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred subtitle language for anime.'**
+  String get settingsAnimeSubtitleLanguageDesc;
 
   /// No description provided for @settingsPrimaryColor.
   ///

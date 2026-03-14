@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cast/cast.dart';
 import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
@@ -52,6 +53,9 @@ class CinemaPlayerState {
   final bool remotePlaying;
   final List<ProviderSearchStatus> providerStatuses;
   final String? detectedMimeType;
+  final bool isAnime;
+  final AudioTrack? activeAudioTrack;
+  final SubtitleTrack? activeSubtitleTrack;
 
   CinemaPlayerState({
     required this.controller,
@@ -68,6 +72,9 @@ class CinemaPlayerState {
     this.remotePlaying = false,
     this.providerStatuses = const [],
     this.detectedMimeType,
+    this.isAnime = false,
+    this.activeAudioTrack,
+    this.activeSubtitleTrack,
   });
 
   CinemaPlayerState copyWith({
@@ -85,6 +92,9 @@ class CinemaPlayerState {
     bool? remotePlaying,
     List<ProviderSearchStatus>? providerStatuses,
     Object? detectedMimeType = _sentinel,
+    bool? isAnime,
+    Object? activeAudioTrack = _sentinel,
+    Object? activeSubtitleTrack = _sentinel,
   }) {
     return CinemaPlayerState(
       controller: controller ?? this.controller,
@@ -101,6 +111,9 @@ class CinemaPlayerState {
       remotePlaying: remotePlaying ?? this.remotePlaying,
       providerStatuses: providerStatuses ?? this.providerStatuses,
       detectedMimeType: detectedMimeType == _sentinel ? this.detectedMimeType : (detectedMimeType as String?),
+      isAnime: isAnime ?? this.isAnime,
+      activeAudioTrack: activeAudioTrack == _sentinel ? this.activeAudioTrack : (activeAudioTrack as AudioTrack?),
+      activeSubtitleTrack: activeSubtitleTrack == _sentinel ? this.activeSubtitleTrack : (activeSubtitleTrack as SubtitleTrack?),
     );
   }
 }

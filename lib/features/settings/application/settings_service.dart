@@ -15,7 +15,13 @@ class UserSettings {
   final bool enableRealDebrid;
   final String realDebridKey;
   final String appLanguage;
-  final String playerLanguage;
+  final String playerLanguage; // General Audio Language
+  final bool showSubtitles;
+  final String subtitleLanguage;
+  final bool splitAnimePreferences;
+  final String animeAudioLanguage;
+  final bool animeShowSubtitles;
+  final String animeSubtitleLanguage;
   final String playerPrimaryColor;
   final String playerSecondaryColor;
   final bool showDebugPanel;
@@ -30,6 +36,12 @@ class UserSettings {
     this.realDebridKey = '',
     this.appLanguage = 'en',
     this.playerLanguage = 'en',
+    this.showSubtitles = true,
+    this.subtitleLanguage = 'en',
+    this.splitAnimePreferences = false,
+    this.animeAudioLanguage = 'en',
+    this.animeShowSubtitles = true,
+    this.animeSubtitleLanguage = 'en',
     this.playerPrimaryColor = '',
     this.playerSecondaryColor = '',
     this.showDebugPanel = false,
@@ -51,6 +63,12 @@ class UserSettings {
       realDebridKey: prefs['realDebridKey'] ?? '',
       appLanguage: prefs['appLanguage'] ?? 'en',
       playerLanguage: prefs['playerLanguage'] ?? 'en',
+      showSubtitles: prefs['showSubtitles'] ?? true,
+      subtitleLanguage: prefs['subtitleLanguage'] ?? 'en',
+      splitAnimePreferences: prefs['splitAnimePreferences'] ?? false,
+      animeAudioLanguage: prefs['animeAudioLanguage'] ?? 'en',
+      animeShowSubtitles: prefs['animeShowSubtitles'] ?? true,
+      animeSubtitleLanguage: prefs['animeSubtitleLanguage'] ?? 'en',
       playerPrimaryColor: prefs['playerPrimaryColor'] ?? '',
       playerSecondaryColor: prefs['playerSecondaryColor'] ?? '',
       showDebugPanel: prefs['showDebugPanel'] ?? false,
@@ -72,6 +90,12 @@ class UserSettings {
     String? realDebridKey,
     String? appLanguage,
     String? playerLanguage,
+    bool? showSubtitles,
+    String? subtitleLanguage,
+    bool? splitAnimePreferences,
+    String? animeAudioLanguage,
+    bool? animeShowSubtitles,
+    String? animeSubtitleLanguage,
     String? playerPrimaryColor,
     String? playerSecondaryColor,
     bool? showDebugPanel,
@@ -86,6 +110,12 @@ class UserSettings {
       realDebridKey: realDebridKey ?? this.realDebridKey,
       appLanguage: appLanguage ?? this.appLanguage,
       playerLanguage: playerLanguage ?? this.playerLanguage,
+      showSubtitles: showSubtitles ?? this.showSubtitles,
+      subtitleLanguage: subtitleLanguage ?? this.subtitleLanguage,
+      splitAnimePreferences: splitAnimePreferences ?? this.splitAnimePreferences,
+      animeAudioLanguage: animeAudioLanguage ?? this.animeAudioLanguage,
+      animeShowSubtitles: animeShowSubtitles ?? this.animeShowSubtitles,
+      animeSubtitleLanguage: animeSubtitleLanguage ?? this.animeSubtitleLanguage,
       playerPrimaryColor: playerPrimaryColor ?? this.playerPrimaryColor,
       playerSecondaryColor: playerSecondaryColor ?? this.playerSecondaryColor,
       showDebugPanel: showDebugPanel ?? this.showDebugPanel,
@@ -102,6 +132,12 @@ class UserSettings {
       'realDebridKey': realDebridKey,
       'appLanguage': appLanguage,
       'playerLanguage': playerLanguage,
+      'showSubtitles': showSubtitles,
+      'subtitleLanguage': subtitleLanguage,
+      'splitAnimePreferences': splitAnimePreferences,
+      'animeAudioLanguage': animeAudioLanguage,
+      'animeShowSubtitles': animeShowSubtitles,
+      'animeSubtitleLanguage': animeSubtitleLanguage,
       'playerPrimaryColor': playerPrimaryColor,
       'playerSecondaryColor': playerSecondaryColor,
       'showDebugPanel': showDebugPanel,
@@ -143,15 +179,21 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       displayName: updates['displayName'],
       enableRealDebrid: updates['enableRealDebrid'],
       realDebridKey: updates['realDebridKey'],
-      appLanguage: updates['appLanguage'],
-      playerLanguage: updates['playerLanguage'],
-      playerPrimaryColor: updates['playerPrimaryColor'],
-      playerSecondaryColor: updates['playerSecondaryColor'],
-      showDebugPanel: updates['showDebugPanel'],
-      smartSearchFilter: updates['smartSearchFilter'],
-      liveTvRegion: updates['liveTvRegion'],
-      mediafusionUrl: updates['mediafusionUrl'],
-      streamingProviders: updates['streamingProviders'],
+      appLanguage: updates['appLanguage'] ?? state.appLanguage,
+      playerLanguage: updates['playerLanguage'] ?? state.playerLanguage,
+      showSubtitles: updates['showSubtitles'] ?? state.showSubtitles,
+      subtitleLanguage: updates['subtitleLanguage'] ?? state.subtitleLanguage,
+      splitAnimePreferences: updates['splitAnimePreferences'] ?? state.splitAnimePreferences,
+      animeAudioLanguage: updates['animeAudioLanguage'] ?? state.animeAudioLanguage,
+      animeShowSubtitles: updates['animeShowSubtitles'] ?? state.animeShowSubtitles,
+      animeSubtitleLanguage: updates['animeSubtitleLanguage'] ?? state.animeSubtitleLanguage,
+      playerPrimaryColor: updates['playerPrimaryColor'] ?? state.playerPrimaryColor,
+      playerSecondaryColor: updates['playerSecondaryColor'] ?? state.playerSecondaryColor,
+      showDebugPanel: updates['showDebugPanel'] ?? state.showDebugPanel,
+      smartSearchFilter: updates['smartSearchFilter'] ?? state.smartSearchFilter,
+      liveTvRegion: updates['liveTvRegion'] ?? state.liveTvRegion,
+      mediafusionUrl: updates['mediafusionUrl'] ?? state.mediafusionUrl,
+      streamingProviders: updates['streamingProviders'] ?? state.streamingProviders,
     );
 
     // Sync app language to localeProvider if updated

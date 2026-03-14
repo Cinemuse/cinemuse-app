@@ -614,7 +614,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAudioLanguageDesc =>
-      'Preferred audio language for playback.';
+      'Preferred audio language for movies and series.';
+
+  @override
+  String get settingsSubtitleLanguage => 'Subtitle Language';
+
+  @override
+  String get settingsSubtitleLanguageDesc =>
+      'Preferred subtitle language for movies and series.';
+
+  @override
+  String get settingsShowSubtitles => 'Show Subtitles';
+
+  @override
+  String get settingsJapanese => 'Japanese';
+
+  @override
+  String get settingsOriginal => 'Original';
+
+  @override
+  String get settingsPlayer => 'Media Preferences';
 
   @override
   String get settingsEnglish => 'English';
@@ -623,7 +642,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsItalian => 'Italian';
 
   @override
-  String get settingsPlayer => 'Player';
+  String get settingsSplitAnimePreferences => 'Split Anime Preferences';
+
+  @override
+  String get settingsSplitAnimePreferencesDesc =>
+      'Use different audio and subtitle settings for anime.';
+
+  @override
+  String get settingsAnimeAudioLanguage => 'Anime Audio Language';
+
+  @override
+  String get settingsAnimeAudioLanguageDesc =>
+      'Preferred audio language for anime.';
+
+  @override
+  String get settingsAnimeShowSubtitles => 'Anime Show Subtitles';
+
+  @override
+  String get settingsAnimeShowSubtitlesDesc =>
+      'Enable or disable subtitles by default for anime.';
+
+  @override
+  String get settingsAnimeSubtitleLanguage => 'Anime Subtitle Language';
+
+  @override
+  String get settingsAnimeSubtitleLanguageDesc =>
+      'Preferred subtitle language for anime.';
 
   @override
   String get settingsPrimaryColor => 'Primary Color';

@@ -8,40 +8,64 @@ class TrackManager extends BaseManager {
   TrackManager({required super.ref, required super.player});
 
   /// Toggle this for debugging track selection issues
-  static const bool showLogs = false;
+  static const bool showLogs = true;
 
   /// Sets the engine properties for instant matching (based on codes).
-  void applyEnginePreferences() {
-    final lang = ref.read(settingsProvider).playerLanguage.toLowerCase();
-    if (lang.isEmpty) return;
+  void applyEnginePreferences({bool isAnime = false}) {
+    final settings = ref.read(settingsProvider);
+    final audioLang = (settings.splitAnimePreferences && isAnime) 
+        ? settings.animeAudioLanguage.toLowerCase() 
+        : settings.playerLanguage.toLowerCase();
+        
+    final subLang = (settings.splitAnimePreferences && isAnime)
+        ? settings.animeSubtitleLanguage.toLowerCase()
+        : settings.subtitleLanguage.toLowerCase();
 
-    final langCodes = LanguageMapper.getCodes(lang);
+    if (audioLang.isEmpty) return;
+
+    final langCodes = LanguageMapper.getCodes(audioLang);
     final codesJoined = langCodes.join(',');
+
+    final subCodes = LanguageMapper.getCodes(subLang);
+    final subCodesJoined = subCodes.join(',');
 
     try {
       (player.platform as dynamic).setProperty('alang', codesJoined);
-      (player.platform as dynamic).setProperty('slang', codesJoined);
+      (player.platform as dynamic).setProperty('slang', subCodesJoined);
     } catch (e) {
       // silent engine preference set fail
     }
   }
 
   /// Ensures preferred tracks are selected, with a robust wait-and-verify mechanism.
-  Future<void> ensurePreferredTrack() async {
-    final lang = ref.read(settingsProvider).playerLanguage.toLowerCase();
-    if (lang.isEmpty) return;
+  Future<void> ensurePreferredTrack({bool isAnime = false}) async {
+    final settings = ref.read(settingsProvider);
+    
+    final audioLang = (settings.splitAnimePreferences && isAnime) 
+        ? settings.animeAudioLanguage.toLowerCase() 
+        : settings.playerLanguage.toLowerCase();
+        
+    final subLang = (settings.splitAnimePreferences && isAnime)
+        ? settings.animeSubtitleLanguage.toLowerCase()
+        : settings.subtitleLanguage.toLowerCase();
+        
+    final showSubs = (settings.splitAnimePreferences && isAnime)
+        ? settings.animeShowSubtitles
+        : settings.showSubtitles;
+
+    if (audioLang.isEmpty) return;
 
     try {
       // 1. Wait for tracks to be available (up to 5 seconds)
       await _waitForTracks();
 
       // 2. Initial selection logic
-      await _performSelection(lang);
+      await _performSelection(audioLang, subLang, showSubs);
 
       // 3. Reliability Check: Secondary verify after a short delay
       // Sometimes player overrides selection during early buffering
       await Future.delayed(const Duration(milliseconds: 800));
-      await _performSelection(lang, isVerify: true);
+      await _performSelection(audioLang, subLang, showSubs, isVerify: true);
 
     } catch (e) {
       // ignore
@@ -75,14 +99,14 @@ class TrackManager extends BaseManager {
     debugPrint('-----------------------');
   }
 
-  Future<void> _performSelection(String lang, {bool isVerify = false}) async {
+  Future<void> _performSelection(String audioLang, String subLang, bool showSubs, {bool isVerify = false}) async {
     final tracks = player.state.tracks;
     
     // 1. Audio Selection
     bool audioMatched = false;
     for (var track in tracks.audio) {
       if (track.id == 'auto' || track.id == 'no') continue;
-      if (LanguageMapper.isMatch(track, lang)) {
+      if (LanguageMapper.isMatch(track, audioLang)) {
         if (!isVerify || player.state.track.audio.id != track.id) {
           if (showLogs) debugPrint('  -> Selecting Audio: ${track.title} (${track.language}) ${isVerify ? "[Verify]" : ""}');
           await player.setAudioTrack(track);
@@ -94,6 +118,7 @@ class TrackManager extends BaseManager {
 
     // Fallback for audio if stuck on 'auto'
     if (!audioMatched && player.state.track.audio.id == 'auto') {
+      if (showLogs) debugPrint('  -> Audio Fallback: ${player.state.track.audio.title}');
       final firstReal = tracks.audio.firstWhere(
         (t) => t.id != 'auto' && t.id != 'no', 
         orElse: () => player.state.track.audio
@@ -105,10 +130,22 @@ class TrackManager extends BaseManager {
     }
 
     // 2. Subtitle Selection
+    if (!showSubs) {
+      if (!isVerify || player.state.track.subtitle.id != 'no') {
+        if (showLogs) debugPrint('  -> Disabling Subtitles ${isVerify ? "[Verify]" : ""}');
+        final noTrack = tracks.subtitle.firstWhere(
+          (t) => t.id == 'no',
+          orElse: () => player.state.track.subtitle,
+        );
+        await player.setSubtitleTrack(noTrack);
+      }
+      return;
+    }
+
     bool subtitleMatched = false;
     for (var track in tracks.subtitle) {
       if (track.id == 'auto' || track.id == 'no') continue;
-      if (LanguageMapper.isMatch(track, lang)) {
+      if (LanguageMapper.isMatch(track, subLang)) {
         if (!isVerify || player.state.track.subtitle.id != track.id) {
           if (showLogs) debugPrint('  -> Selecting Subtitle: ${track.title} (${track.language}) ${isVerify ? "[Verify]" : ""}');
           await player.setSubtitleTrack(track);

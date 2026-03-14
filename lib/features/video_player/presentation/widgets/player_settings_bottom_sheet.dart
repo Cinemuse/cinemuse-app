@@ -82,17 +82,17 @@ class PlayerSettingsBottomSheet extends ConsumerWidget {
               _SettingsTile(
                 icon: Icons.audiotrack_rounded,
                 title: l10n.playerAudio,
-                subtitle: _TrackSubtitle(player: currentState.controller.player, isSubtitle: false),
+                subtitle: _TrackSubtitle(state: currentState, isSubtitle: false),
                 onTap: () {
-                  _TrackSelector.show(context, currentState.controller.player, isSubtitle: false);
+                  _TrackSelector.show(context, currentState, params, isSubtitle: false);
                 },
               ),
               _SettingsTile(
                 icon: Icons.subtitles_rounded,
                 title: l10n.playerSubtitles,
-                subtitle: _TrackSubtitle(player: currentState.controller.player, isSubtitle: true),
+                subtitle: _TrackSubtitle(state: currentState, isSubtitle: true),
                 onTap: () {
-                  _TrackSelector.show(context, currentState.controller.player, isSubtitle: true);
+                  _TrackSelector.show(context, currentState, params, isSubtitle: true);
                 },
               ),
             ],
@@ -160,22 +160,29 @@ class _QualitySubtitle extends StatelessWidget {
 }
 
 class _TrackSubtitle extends ConsumerWidget {
-  final Player player;
+  final CinemaPlayerState state;
   final bool isSubtitle;
-  const _TrackSubtitle({required this.player, required this.isSubtitle});
+  const _TrackSubtitle({required this.state, required this.isSubtitle});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final player = state.controller.player;
+    final pref = ref.watch(settingsProvider);
+    
     if (isSubtitle) {
-      final track = player.state.track.subtitle;
-      final pref = ref.watch(settingsProvider).playerLanguage.toLowerCase();
+      final track = state.activeSubtitleTrack ?? player.state.track.subtitle;
+      final prefLang = (state.isAnime && pref.splitAnimePreferences)
+          ? pref.animeSubtitleLanguage.toLowerCase()
+          : pref.subtitleLanguage.toLowerCase();
       
       if (track.id == 'no' || track.id == 'auto') {
         if (track.id == 'no') return const Text('Off/None', style: TextStyle(color: AppTheme.textMuted));
         
-        // If Auto, find matching sub or default to first
         final subs = player.state.tracks.subtitle;
-        final matched = subs.firstWhere((t) => t.id != 'auto' && t.id != 'no' && LanguageMapper.isMatch(t, pref), orElse: () => subs.firstOrNull ?? track);
+        final matched = subs.firstWhere(
+          (t) => t.id != 'auto' && t.id != 'no' && LanguageMapper.isMatch(t, prefLang), 
+          orElse: () => subs.firstOrNull ?? track
+        );
         
         final name = LanguageMapper.getDisplayLanguage(matched.title ?? matched.language ?? matched.id);
         return Text(name, style: const TextStyle(color: AppTheme.textMuted));
@@ -184,15 +191,19 @@ class _TrackSubtitle extends ConsumerWidget {
       final name = LanguageMapper.getDisplayLanguage(track.title ?? track.language ?? track.id);
       return Text(name, style: const TextStyle(color: AppTheme.textMuted), maxLines: 1, overflow: TextOverflow.ellipsis);
     } else {
-      final track = player.state.track.audio;
-      final pref = ref.watch(settingsProvider).playerLanguage.toLowerCase();
+      final track = state.activeAudioTrack ?? player.state.track.audio;
+      final prefLang = (state.isAnime && pref.splitAnimePreferences)
+          ? pref.animeAudioLanguage.toLowerCase()
+          : pref.playerLanguage.toLowerCase();
       
       if (track.id == 'no' || track.id == 'auto') {
         if (track.id == 'no') return const Text('Off/None', style: TextStyle(color: AppTheme.textMuted));
         
-        // If Auto, find matching audio or default to first
         final audio = player.state.tracks.audio;
-        final matched = audio.firstWhere((t) => t.id != 'auto' && t.id != 'no' && LanguageMapper.isMatch(t, pref), orElse: () => audio.firstOrNull ?? track);
+        final matched = audio.firstWhere(
+          (t) => t.id != 'auto' && t.id != 'no' && LanguageMapper.isMatch(t, prefLang), 
+          orElse: () => audio.firstOrNull ?? track
+        );
         
         final name = LanguageMapper.getDisplayLanguage(matched.title ?? matched.language ?? matched.id);
         return Text(name, style: const TextStyle(color: AppTheme.textMuted));
@@ -555,26 +566,37 @@ class _QualitySelectorState extends ConsumerState<_QualitySelector> {
 }
 
 class _TrackSelector extends ConsumerWidget {
-  final Player player;
+  final CinemaPlayerState state;
+  final PlayerParams params;
   final bool isSubtitle;
 
-  const _TrackSelector({required this.player, required this.isSubtitle});
+  const _TrackSelector({required this.state, required this.params, required this.isSubtitle});
 
-  static void show(BuildContext context, Player player, {required bool isSubtitle}) {
+  static void show(BuildContext context, CinemaPlayerState state, PlayerParams params, {required bool isSubtitle}) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => _TrackSelector(player: player, isSubtitle: isSubtitle),
+      builder: (ctx) => _TrackSelector(state: state, params: params, isSubtitle: isSubtitle),
     );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch state to rebuild if tracks change
+    final currentState = ref.watch(playerControllerProvider(params)).value ?? state;
+    final player = currentState.controller.player;
+    
     final tracks = isSubtitle ? player.state.tracks.subtitle : player.state.tracks.audio;
-    final selectedTrack = isSubtitle ? player.state.track.subtitle : player.state.track.audio;
-    final pref = ref.watch(settingsProvider).playerLanguage.toLowerCase();
+    final selectedTrack = isSubtitle 
+        ? (currentState.activeSubtitleTrack ?? player.state.track.subtitle) 
+        : (currentState.activeAudioTrack ?? player.state.track.audio);
+        
+    final pref = ref.watch(settingsProvider);
+    final prefLang = (currentState.isAnime && pref.splitAnimePreferences)
+        ? (isSubtitle ? pref.animeSubtitleLanguage : pref.animeAudioLanguage).toLowerCase()
+        : (isSubtitle ? pref.subtitleLanguage : pref.playerLanguage).toLowerCase();
     
     final regularTracks = tracks.where((t) => t.id != 'no' && t.id != 'auto').toList();
     final noTrack = tracks.where((t) => t.id == 'no').firstOrNull ?? (isSubtitle ? SubtitleTrack.no() : AudioTrack.no());
@@ -647,7 +669,7 @@ class _TrackSelector extends ConsumerWidget {
                         ...regularTracks.map((track) {
                           // Logic for highlighting when still in 'auto' mode
                           final isSelected = selectedTrack.id == track.id || 
-                                           (selectedTrack.id == 'auto' && LanguageMapper.isMatch(track, pref));
+                                           (selectedTrack.id == 'auto' && LanguageMapper.isMatch(track, prefLang));
                           
                           return _TrackTile(
                             player: player,

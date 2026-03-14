@@ -50,118 +50,131 @@ class CustomizationSettings extends ConsumerWidget {
       title: l10n.settingsCustomization,
       description: l10n.settingsCustomizationDesc,
       children: [
-        // Language Section
+        // Interface Language
         SettingsCard(
           children: [
-            Text(
-              l10n.settingsLanguage.toUpperCase(),
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              l10n.settingsAppLanguage,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              l10n.settingsAppLanguageDesc,
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                SettingsLanguageButton(
-                  label: l10n.settingsEnglish,
-                  isSelected: userSettings.appLanguage == 'en',
-                  onTap: () => settingsNotifier.updateSettings({'appLanguage': 'en'}),
-                ),
-                const SizedBox(width: 8),
-                SettingsLanguageButton(
-                  label: l10n.settingsItalian,
-                  isSelected: userSettings.appLanguage == 'it',
-                  onTap: () => settingsNotifier.updateSettings({'appLanguage': 'it'}),
-                ),
+            SettingsDropdown<String>(
+              label: l10n.settingsAppLanguage,
+              value: userSettings.appLanguage,
+              items: [
+                DropdownMenuItem(value: 'en', child: Text(l10n.settingsEnglish)),
+                DropdownMenuItem(value: 'it', child: Text(l10n.settingsItalian)),
               ],
-            ),
-            const SizedBox(height: 24),
-            const Divider(color: Colors.white10),
-            const SizedBox(height: 24),
-            Text(
-              l10n.settingsAudioLanguage,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              l10n.settingsAudioLanguageDesc,
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                SettingsLanguageButton(
-                  label: l10n.settingsEnglish,
-                  isSelected: userSettings.playerLanguage == 'en',
-                  onTap: () => settingsNotifier.updateSettings({'playerLanguage': 'en'}),
-                ),
-                const SizedBox(width: 8),
-                SettingsLanguageButton(
-                  label: l10n.settingsItalian,
-                  isSelected: userSettings.playerLanguage == 'it',
-                  onTap: () => settingsNotifier.updateSettings({'playerLanguage': 'it'}),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            const Divider(color: Colors.white10),
-            const SizedBox(height: 24),
-            Text(
-              l10n.settingsLiveTvRegion.toUpperCase(),
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              l10n.settingsLiveTvRegionDesc,
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
-            ),
-            const SizedBox(height: 16),
-            SettingsRegionSelector(
-              selectedRegion: userSettings.liveTvRegion,
-              onChanged: (region) => settingsNotifier.updateSettings({'liveTvRegion': region}),
+              onChanged: (lang) => settingsNotifier.updateSettings({'appLanguage': lang}),
             ),
           ],
         ),
 
-        // Other Section
+        // Media Preferences
         SettingsCard(
           children: [
-            Text(
-              l10n.settingsOther.toUpperCase(),
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
+            _buildSectionHeader(l10n.settingsPlayer),
             const SizedBox(height: 16),
+            
+            // General Audio
+            SettingsDropdown<String>(
+              label: l10n.settingsAudioLanguage,
+              value: userSettings.playerLanguage,
+              items: [
+                DropdownMenuItem(value: 'en', child: Text(l10n.settingsEnglish)),
+                DropdownMenuItem(value: 'it', child: Text(l10n.settingsItalian)),
+              ],
+              onChanged: (lang) => settingsNotifier.updateSettings({'playerLanguage': lang}),
+            ),
+            
+            const SizedBox(height: 16),
+            const Divider(color: Colors.white10),
+            const SizedBox(height: 16),
+
+            // General Subtitles
+            SettingToggle(
+              label: l10n.settingsShowSubtitles,
+              value: userSettings.showSubtitles,
+              onChanged: (val) => settingsNotifier.updateSettings({'showSubtitles': val}),
+            ),
+            if (userSettings.showSubtitles) ...[
+              const SizedBox(height: 8),
+              SettingsDropdown<String>(
+                label: l10n.settingsSubtitleLanguage,
+                value: userSettings.subtitleLanguage,
+                items: [
+                  DropdownMenuItem(value: 'en', child: Text(l10n.settingsEnglish)),
+                  DropdownMenuItem(value: 'it', child: Text(l10n.settingsItalian)),
+                ],
+                onChanged: (lang) => settingsNotifier.updateSettings({'subtitleLanguage': lang}),
+              ),
+            ],
+
+            const SizedBox(height: 16),
+            const Divider(color: Colors.white10),
+            const SizedBox(height: 16),
+
+            // Split Toggle
+            SettingToggle(
+              label: l10n.settingsSplitAnimePreferences,
+              value: userSettings.splitAnimePreferences,
+              onChanged: (val) => settingsNotifier.updateSettings({'splitAnimePreferences': val}),
+            ),
+
+            if (userSettings.splitAnimePreferences) ...[
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white10, thickness: 2),
+              const SizedBox(height: 16),
+              _buildSectionHeader("ANIME"),
+              const SizedBox(height: 16),
+              
+              // Anime Audio
+              SettingsDropdown<String>(
+                label: l10n.settingsAnimeAudioLanguage,
+                value: userSettings.animeAudioLanguage,
+                items: [
+                  DropdownMenuItem(value: 'ja', child: Text(l10n.settingsOriginal)),
+                  DropdownMenuItem(value: 'en', child: Text(l10n.settingsEnglish)),
+                  DropdownMenuItem(value: 'it', child: Text(l10n.settingsItalian)),
+                ],
+                onChanged: (lang) => settingsNotifier.updateSettings({'animeAudioLanguage': lang}),
+              ),
+              
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white10),
+              const SizedBox(height: 16),
+
+              // Anime Subtitles
+              SettingToggle(
+                label: l10n.settingsAnimeShowSubtitles,
+                value: userSettings.animeShowSubtitles,
+                onChanged: (val) => settingsNotifier.updateSettings({'animeShowSubtitles': val}),
+              ),
+              if (userSettings.animeShowSubtitles) ...[
+                const SizedBox(height: 8),
+                SettingsDropdown<String>(
+                  label: l10n.settingsAnimeSubtitleLanguage,
+                  value: userSettings.animeSubtitleLanguage,
+                  items: [
+                    DropdownMenuItem(value: 'en', child: Text(l10n.settingsEnglish)),
+                    DropdownMenuItem(value: 'it', child: Text(l10n.settingsItalian)),
+                  ],
+                  onChanged: (lang) => settingsNotifier.updateSettings({'animeSubtitleLanguage': lang}),
+                ),
+              ],
+            ],
+          ],
+        ),
+
+        // Live TV / Other
+        SettingsCard(
+          children: [
+            _buildSectionHeader(l10n.settingsLiveTvRegion),
+            const SizedBox(height: 12),
+            SettingsRegionSelector(
+              selectedRegion: userSettings.liveTvRegion,
+              onChanged: (region) => settingsNotifier.updateSettings({'liveTvRegion': region}),
+            ),
+            const SizedBox(height: 24),
+            const Divider(color: Colors.white10),
+            const SizedBox(height: 24),
             SettingToggle(
               label: l10n.settingsSmartSearch,
-              description: l10n.settingsSmartSearchDesc,
               value: userSettings.smartSearchFilter,
               onChanged: (val) => settingsNotifier.updateSettings({'smartSearchFilter': val}),
             ),
@@ -170,6 +183,19 @@ class CustomizationSettings extends ConsumerWidget {
       ],
     );
   }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title.toUpperCase(),
+      style: const TextStyle(
+        color: AppTheme.textMuted,
+        fontWeight: FontWeight.bold,
+        fontSize: 12,
+      ),
+    );
+  }
+
+  // Removed _buildMediaGroup as it's replaced by SettingsDropdown
 }
 
 class IntegrationsSettings extends ConsumerWidget {

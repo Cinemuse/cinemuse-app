@@ -171,6 +171,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         currentStream: null,
         title: params.episodeTitle ?? params.queryId,
         isResolving: true,
+        activeAudioTrack: _player!.state.track.audio,
+        activeSubtitleTrack: _player!.state.track.subtitle,
       ));
     }
   }
@@ -183,6 +185,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         availableStreams: result.candidates,
         currentStream: result.resolvedStream,
         title: result.title,
+        activeAudioTrack: _player!.state.track.audio,
+        activeSubtitleTrack: _player!.state.track.subtitle,
       ));
     }
   }
@@ -270,7 +274,6 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
   Future<void> _performPostInitialization(VodInitializationResult vodResult) async {
     await _ensureMediaCached();
-    unawaited(_trackManager?.ensurePreferredTrack() ?? Future.value());
     await _handleInitialSeek();
     final nextEpisode = await _calculateNextEpisode();
 
@@ -282,8 +285,15 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? ref.read(localizationsProvider).commonUnknown,
         nextEpisode: nextEpisode,
         providerStatuses: state.valueOrNull?.providerStatuses ?? const [],
+        isAnime: vodResult.isAnime,
+        activeAudioTrack: _player!.state.track.audio,
+        activeSubtitleTrack: _player!.state.track.subtitle,
       ));
     }
+    
+    // Apply track preferences after state is updated with isAnime
+    _applyTrackPreferences();
+    unawaited(_trackManager?.ensurePreferredTrack(isAnime: vodResult.isAnime) ?? Future.value());
   }
 
   Future<void> _ensureMediaCached() async {
@@ -391,7 +401,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
             }
           } else {
             await _player!.open(Media(resolvedStream.url), play: false);
-            unawaited(_trackManager?.ensurePreferredTrack() ?? Future.value());
+            unawaited(_trackManager?.ensurePreferredTrack(isAnime: state.valueOrNull?.isAnime ?? false) ?? Future.value());
           }
 
           final newDuration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
@@ -472,7 +482,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       
       if (resolvedStream != null) {
         await _player!.open(Media(resolvedStream.url), play: true);
-        unawaited(_trackManager?.ensurePreferredTrack() ?? Future.value());
+        unawaited(_trackManager?.ensurePreferredTrack(isAnime: state.valueOrNull?.isAnime ?? false) ?? Future.value());
         
         state = AsyncValue.data(state.value!.copyWith(
           currentStream: resolvedStream,
@@ -540,13 +550,15 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
   void _triggerStateUpdate() {
     if (mounted && state.hasValue) {
-      // Logic to trigger a rebuild of the StateNotifier
-      state = AsyncValue.data(state.value!);
+      state = AsyncValue.data(state.value!.copyWith(
+        activeAudioTrack: _player?.state.track.audio,
+        activeSubtitleTrack: _player?.state.track.subtitle,
+      ));
     }
   }
 
   void _applyTrackPreferences() {
-    _trackManager?.applyEnginePreferences();
+    _trackManager?.applyEnginePreferences(isAnime: state.valueOrNull?.isAnime ?? false);
   }
 
   void _handleFormatDetected(String? format) {

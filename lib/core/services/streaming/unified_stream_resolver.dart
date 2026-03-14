@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:meta/meta.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
@@ -63,6 +64,7 @@ final unifiedStreamResolverProvider = Provider((ref) {
     debridServices: debridServices,
     tmdbService: ref.read(tmdbServiceProvider),
     kitsuMappingService: ref.read(kitsuMappingServiceProvider),
+    settings: settings,
   );
 });
 
@@ -71,6 +73,7 @@ class UnifiedStreamResolver {
   final List<BaseDebridService> _debridServices;
   final TmdbService _tmdbService;
   final KitsuMappingService _kitsuMappingService;
+  final UserSettings _settings;
 
   @visibleForTesting
   List<BaseSource> get sources => _sources;
@@ -80,10 +83,12 @@ class UnifiedStreamResolver {
     required List<BaseDebridService> debridServices,
     required TmdbService tmdbService,
     required KitsuMappingService kitsuMappingService,
+    required UserSettings settings,
   })  : _sources = sources,
         _debridServices = debridServices,
         _tmdbService = tmdbService,
-        _kitsuMappingService = kitsuMappingService;
+        _kitsuMappingService = kitsuMappingService,
+        _settings = settings;
 
   Future<List<StreamCandidate>> searchStreams(
     String queryId, // Can be TMDB ID (digits) or IMDB ID (tt...)
@@ -239,13 +244,29 @@ class UnifiedStreamResolver {
       }
 
       // 7. Rank and Sort
-      return StreamRanker.rank(candidates);
+      final preferredLanguage = (_settings.splitAnimePreferences && context.isAnime) 
+          ? _settings.animeAudioLanguage 
+          : _settings.playerLanguage;
+          
+      return StreamRanker.rank(candidates, preferredLanguage: preferredLanguage);
     } catch (e) {
       statusTimer?.cancel();
       print('UnifiedStreamResolver: Search failed: $e');
       if (e is StreamingException) rethrow;
       throw StreamResolutionFailedException(e.toString());
     }
+  }
+
+  Future<bool> checkIsAnime(Map<String, dynamic> details, String type) async {
+    final tmdbId = int.tryParse(details['id'].toString());
+    if (tmdbId == null) return false;
+
+    final kitsuMapping = await _kitsuMappingService.getMapping(
+      tmdbId: tmdbId,
+      type: type,
+    );
+
+    return kitsuMapping != null;
   }
 
   Future<ResolvedStream?> resolveStream(

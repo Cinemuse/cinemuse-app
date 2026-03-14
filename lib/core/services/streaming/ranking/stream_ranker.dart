@@ -10,9 +10,9 @@ class StreamRanker {
   /// Sorts a list of candidates based on cache status and calculated score.
   ///
   /// Streams cached on debrid services are prioritized first, followed by descending scores.
-  static List<StreamCandidate> rank(List<StreamCandidate> candidates) {
+  static List<StreamCandidate> rank(List<StreamCandidate> candidates, {String preferredLanguage = 'en'}) {
     return candidates.map((c) {
-      final s = score(c);
+      final s = score(c, preferredLanguage: preferredLanguage);
       return c.copyWith(
         score: s,
       );
@@ -30,11 +30,11 @@ class StreamRanker {
   /// Calculates a numerical score for a [StreamCandidate] based on its metadata.
   ///
   /// The final score is the sum of domain-specific scoring functions.
-  static int score(StreamCandidate candidate) {
+  static int score(StreamCandidate candidate, {String preferredLanguage = 'en'}) {
     final metadata = candidate.metadata ?? StreamParser.parse(candidate.title);
     
     int s = 0;
-    s += _scoreLanguage(metadata, candidate.title);
+    s += _scoreLanguage(metadata, candidate.title, preferredLanguage: preferredLanguage);
     s += _scoreVideo(metadata.video, candidate.title);
     s += _scoreQuality(metadata.quality);
     s += _scoreReleaseFlags(metadata.flags);
@@ -43,14 +43,39 @@ class StreamRanker {
     return s;
   }
 
-  static int _scoreLanguage(StreamMetadata metadata, String title) {
+  static int _scoreLanguage(StreamMetadata metadata, String title, {String preferredLanguage = 'en'}) {
     int s = 0;
     final isItalian = metadata.languages.contains('ITA');
     final isEnglish = metadata.languages.contains('ENG');
     final isMulti = title.toLowerCase().contains('multi') || (isItalian && isEnglish);
 
-    if (isItalian) s += 100;
-    if (isEnglish) s += 20;
+    // Direct match for preferred language
+    final isOriginalJa = preferredLanguage == 'ja';
+    
+    if (metadata.languages.contains(preferredLanguage.toUpperCase()) || 
+        (isOriginalJa && (metadata.languages.contains('JAP') || metadata.languages.contains('JAPANESE') || metadata.languages.contains('JP')))) {
+      return 1000;
+    }
+
+    // MULTI often contains many languages including the preferred one
+    if (metadata.languages.contains('MULTI')) {
+      // For anime original, MULTI is very likely to have JA
+      return isOriginalJa ? 900 : 800;
+    }
+
+    // Boost based on preferred language
+    final pref = preferredLanguage.toLowerCase();
+    if (pref == 'it' || pref == 'ita') {
+      if (isItalian) s += 100;
+      if (isEnglish) s += 20;
+    } else if (pref == 'en' || pref == 'eng') {
+      if (isEnglish) s += 100;
+      if (isItalian) s += 20;
+    } else {
+      // Fallback/Other languages
+      if (isEnglish) s += 50;
+    }
+
     if (isMulti) s += 150;
 
     final t = title.toLowerCase();

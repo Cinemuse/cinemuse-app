@@ -13,11 +13,13 @@ class VodInitializationResult {
   final List<StreamCandidate> candidates;
   final ResolvedStream resolvedStream;
   final Map<String, dynamic>? mediaDetails;
+  final bool isAnime;
 
   VodInitializationResult({
     required this.candidates,
     required this.resolvedStream,
     this.mediaDetails,
+    this.isAnime = false,
   });
 }
 
@@ -35,6 +37,11 @@ class VodSourceHandler {
     required Function(Map<String, dynamic>?) onMediaDetailsFetched,
   }) async {
     final mediaDetails = await _fetchMediaDetails(params, onMediaDetailsFetched);
+    
+    // 1. Resolve Anime Mapping to determine if it's anime
+    // This repeats some logic from resolver, but needed here for the result
+    final isAnime = await _checkIfAnime(params);
+
     final candidates = await _searchAvailableStreams(params, onStatusUpdate);
     final resolution = await _resolveBestStream(params, candidates);
     
@@ -44,7 +51,14 @@ class VodSourceHandler {
       candidates: candidates,
       resolvedStream: resolution.stream,
       mediaDetails: mediaDetails,
+      isAnime: isAnime,
     );
+  }
+
+  Future<bool> _checkIfAnime(PlayerParams params) async {
+    final details = await _tmdbService.getMediaDetails(params.queryId, params.type);
+    if (details == null) return false;
+    return await _resolver.checkIsAnime(details, params.type);
   }
 
   Future<Map<String, dynamic>?> _fetchMediaDetails(

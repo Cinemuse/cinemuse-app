@@ -33,8 +33,11 @@ class EventManager extends BaseManager {
        onStateChanged();
     }));
     
-    // Listen for track changes as a hint to probe format (Probing done)
-    _subscriptions.add(player.stream.track.listen((_) => _probeFormat()));
+    // Listen for track changes to trigger UI updates and probe format
+    _subscriptions.add(player.stream.track.listen((_) {
+      _probeFormat();
+      onStateChanged();
+    }));
     // We deliberately omit `player.stream.position` here.
     // MediaKit fires position updates dozens of times per second. Triggering
     // a Riverpod state update (and thus a full UI rebuild) on every tick ruins
