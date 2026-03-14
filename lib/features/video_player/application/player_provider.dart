@@ -30,6 +30,7 @@ import 'package:cinemuse_app/core/application/l10n_provider.dart';
 import 'package:cinemuse_app/features/video_player/application/helpers/player_history_manager.dart';
 import 'package:cinemuse_app/features/video_player/application/helpers/player_progress_tracker.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
+import 'package:cinemuse_app/core/utils/mime_resolver.dart';
 
 // Convert back to StateNotifierProvider for compatibility/simplicity
 final playerControllerProvider = StateNotifierProvider.family.autoDispose<PlayerController, AsyncValue<CinemaPlayerState>, PlayerParams>(
@@ -136,6 +137,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       onStateChanged: () => _triggerStateUpdate(),
       onError: (err) => _handlePlayerError(err),
       onCompleted: () => _handlePlaybackCompleted(),
+      onFormatDetected: (format) => _handleFormatDetected(format),
     );
     _eventManager!.initialize();
 
@@ -446,6 +448,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         season: params.season,
         episode: params.episode,
         absoluteEpisode: state.value!.currentStream?.candidate.absoluteEpisode,
+        detectedMimeType: state.value!.detectedMimeType,
       );
 
       _player?.pause();
@@ -544,5 +547,19 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
   void _applyTrackPreferences() {
     _trackManager?.applyEnginePreferences();
+  }
+
+  void _handleFormatDetected(String? format) {
+    if (format == null) return;
+    
+    final mimeType = MimeResolver.fromEngineFormat(format);
+    if (mimeType != null && mimeType != state.valueOrNull?.detectedMimeType) {
+      debugPrint('PlayerController: Engine detected format: $format -> $mimeType');
+      if (mounted) {
+        state = AsyncValue.data(state.value!.copyWith(
+          detectedMimeType: mimeType,
+        ));
+      }
+    }
   }
 }

@@ -10,6 +10,7 @@ class EventManager extends BaseManager {
   final VoidCallback onStateChanged;
   final Function(String) onError;
   final VoidCallback onCompleted;
+  final Function(String?) onFormatDetected;
 
   EventManager({
     required super.ref,
@@ -17,6 +18,7 @@ class EventManager extends BaseManager {
     required this.onStateChanged,
     required this.onError,
     required this.onCompleted,
+    required this.onFormatDetected,
   });
 
   void initialize() {
@@ -24,7 +26,15 @@ class EventManager extends BaseManager {
 
     _subscriptions.add(player.stream.playing.listen((_) => onStateChanged()));
     _subscriptions.add(player.stream.buffering.listen((_) => onStateChanged()));
-    _subscriptions.add(player.stream.duration.listen((_) => onStateChanged()));
+    _subscriptions.add(player.stream.duration.listen((d) {
+       if (d.inSeconds > 0) {
+         _probeFormat();
+       }
+       onStateChanged();
+    }));
+    
+    // Listen for track changes as a hint to probe format (Probing done)
+    _subscriptions.add(player.stream.track.listen((_) => _probeFormat()));
     // We deliberately omit `player.stream.position` here.
     // MediaKit fires position updates dozens of times per second. Triggering
     // a Riverpod state update (and thus a full UI rebuild) on every tick ruins
@@ -48,6 +58,18 @@ class EventManager extends BaseManager {
       sub.cancel();
     }
     _subscriptions.clear();
+  }
+
+  void _probeFormat() {
+    try {
+      // Accessing mpv property directly via Platform Player (native)
+      final format = (player.platform as dynamic).getProperty('file-format');
+      if (format is String) {
+        onFormatDetected(format);
+      }
+    } catch (_) {
+      // Property might not be available on all platforms/states
+    }
   }
 
   @override

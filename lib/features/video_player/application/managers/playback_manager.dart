@@ -54,6 +54,7 @@ class PlaybackManager extends BaseManager {
     int? season,
     int? episode,
     int? absoluteEpisode,
+    String? detectedMimeType,
   }) async {
     await castHandler.startCasting(
       device, 
@@ -64,6 +65,7 @@ class PlaybackManager extends BaseManager {
       season: season,
       episode: episode,
       absoluteEpisode: absoluteEpisode,
+      detectedMimeType: detectedMimeType,
     );
   }
 }

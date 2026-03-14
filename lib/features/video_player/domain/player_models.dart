@@ -51,6 +51,7 @@ class CinemaPlayerState {
   final Duration remoteDuration;
   final bool remotePlaying;
   final List<ProviderSearchStatus> providerStatuses;
+  final String? detectedMimeType;
 
   CinemaPlayerState({
     required this.controller,
@@ -66,6 +67,7 @@ class CinemaPlayerState {
     this.remoteDuration = Duration.zero,
     this.remotePlaying = false,
     this.providerStatuses = const [],
+    this.detectedMimeType,
   });
 
   CinemaPlayerState copyWith({
@@ -82,6 +84,7 @@ class CinemaPlayerState {
     Duration? remoteDuration,
     bool? remotePlaying,
     List<ProviderSearchStatus>? providerStatuses,
+    Object? detectedMimeType = _sentinel,
   }) {
     return CinemaPlayerState(
       controller: controller ?? this.controller,
@@ -97,6 +100,7 @@ class CinemaPlayerState {
       remoteDuration: remoteDuration ?? this.remoteDuration,
       remotePlaying: remotePlaying ?? this.remotePlaying,
       providerStatuses: providerStatuses ?? this.providerStatuses,
+      detectedMimeType: detectedMimeType == _sentinel ? this.detectedMimeType : (detectedMimeType as String?),
     );
   }
 }
