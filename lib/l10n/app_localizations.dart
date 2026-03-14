@@ -524,6 +524,12 @@ abstract class AppLocalizations {
   /// **'Enter your credentials to access your account'**
   String get authEnterCredentials;
 
+  /// No description provided for @authWelcomeBackDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to access your library and settings'**
+  String get authWelcomeBackDesc;
+
   /// No description provided for @authCreateAccount.
   ///
   /// In en, this message translates to:
@@ -917,7 +923,7 @@ abstract class AppLocalizations {
   /// No description provided for @playerResolving.
   ///
   /// In en, this message translates to:
-  /// **'Resolving stream with Real-Debrid...'**
+  /// **'Resolving stream...'**
   String get playerResolving;
 
   /// No description provided for @playerResolvingYoutube.
@@ -947,26 +953,20 @@ abstract class AppLocalizations {
   /// No description provided for @streamingErrorNoProviders.
   ///
   /// In en, this message translates to:
-  /// **'No streaming providers are enabled. Please check your settings.'**
+  /// **'No streaming addons are enabled. Please check your settings.'**
   String get streamingErrorNoProviders;
 
   /// No description provided for @streamingErrorCapabilityMissing.
   ///
   /// In en, this message translates to:
-  /// **'No enabled provider supports {category}. Please check your settings.'**
+  /// **'No enabled addon supports {category}. Please check your settings.'**
   String streamingErrorCapabilityMissing(Object category);
 
   /// No description provided for @streamingErrorNoResults.
   ///
   /// In en, this message translates to:
-  /// **'No results found across providers.'**
+  /// **'No results found across addons.'**
   String get streamingErrorNoResults;
-
-  /// No description provided for @streamingErrorDebridKey.
-  ///
-  /// In en, this message translates to:
-  /// **'{debridName} API Key is missing. Please check your settings.'**
-  String streamingErrorDebridKey(Object debridName);
 
   /// No description provided for @streamingErrorResolutionFailed.
   ///
@@ -989,7 +989,7 @@ abstract class AppLocalizations {
   /// No description provided for @streamingErrorProviderSearchFailed.
   ///
   /// In en, this message translates to:
-  /// **'Search failed for provider: {providerName}.'**
+  /// **'Search failed for addon: {providerName}.'**
   String streamingErrorProviderSearchFailed(Object providerName);
 
   /// No description provided for @playerFiles.
@@ -1061,13 +1061,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsIntegrations.
   ///
   /// In en, this message translates to:
-  /// **'Integrations'**
+  /// **'Addons & Extensions'**
   String get settingsIntegrations;
 
   /// No description provided for @settingsIntegrationsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Connect third-party services to enhance your experience.'**
+  /// **'Manage Stremio addons and native streaming integrations.'**
   String get settingsIntegrationsDesc;
 
   /// No description provided for @settingsData.
@@ -1097,20 +1097,92 @@ abstract class AppLocalizations {
   /// No description provided for @settingsProvidersTitle.
   ///
   /// In en, this message translates to:
-  /// **'Streaming Providers'**
+  /// **'Streaming Addons'**
   String get settingsProvidersTitle;
 
   /// No description provided for @settingsProvidersDesc.
   ///
   /// In en, this message translates to:
-  /// **'Manage your content sources.'**
+  /// **'Manage your Stremio-compatible addons.'**
   String get settingsProvidersDesc;
 
-  /// No description provided for @settingsProvidersReorder.
+  /// No description provided for @settingsAddNewAddon.
   ///
   /// In en, this message translates to:
-  /// **'Hold and drag to reorder providers.'**
-  String get settingsProvidersReorder;
+  /// **'ADD NEW ADDON'**
+  String get settingsAddNewAddon;
+
+  /// No description provided for @settingsInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Install'**
+  String get settingsInstall;
+
+  /// No description provided for @settingsAddonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste any Stremio manifest URL to add new content sources.'**
+  String get settingsAddonHint;
+
+  /// No description provided for @settingsInstalledAddons.
+  ///
+  /// In en, this message translates to:
+  /// **'INSTALLED ADDONS'**
+  String get settingsInstalledAddons;
+
+  /// No description provided for @settingsNoAddons.
+  ///
+  /// In en, this message translates to:
+  /// **'No addons installed yet'**
+  String get settingsNoAddons;
+
+  /// No description provided for @settingsAddonSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Addon installed successfully'**
+  String get settingsAddonSuccess;
+
+  /// No description provided for @settingsNativeIntegrations.
+  ///
+  /// In en, this message translates to:
+  /// **'Native Providers'**
+  String get settingsNativeIntegrations;
+
+  /// No description provided for @settingsEnableAnimeTosho.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable AnimeTosho'**
+  String get settingsEnableAnimeTosho;
+
+  /// No description provided for @settingsEnableAnimeToshoWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Requires active Real-Debrid integration'**
+  String get settingsEnableAnimeToshoWarning;
+
+  /// No description provided for @settingsDebridServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Debrid Services'**
+  String get settingsDebridServices;
+
+  /// No description provided for @settingsRealDebridTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-Debrid (Native)'**
+  String get settingsRealDebridTitle;
+
+  /// No description provided for @settingsRealDebridKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-Debrid API Key'**
+  String get settingsRealDebridKey;
+
+  /// No description provided for @settingsRealDebridKeyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Used for native sources like AnimeTosho.'**
+  String get settingsRealDebridKeyDesc;
 
   /// No description provided for @settingsDisplayName.
   ///
@@ -1129,60 +1201,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter your name'**
   String get settingsEnterName;
-
-  /// No description provided for @settingsEnableRealDebrid.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable Real-Debrid'**
-  String get settingsEnableRealDebrid;
-
-  /// No description provided for @settingsEnableRealDebridDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable high-speed streaming via Real-Debrid.'**
-  String get settingsEnableRealDebridDesc;
-
-  /// No description provided for @settingsRealDebridKey.
-  ///
-  /// In en, this message translates to:
-  /// **'Real-Debrid API Key'**
-  String get settingsRealDebridKey;
-
-  /// No description provided for @settingsMediafusionUrl.
-  ///
-  /// In en, this message translates to:
-  /// **'Mediafusion URL'**
-  String get settingsMediafusionUrl;
-
-  /// No description provided for @settingsMediafusionUrlDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'URL for Mediafusion provider (found in manifest configuration).'**
-  String get settingsMediafusionUrlDesc;
-
-  /// No description provided for @settingsMediafusionHint.
-  ///
-  /// In en, this message translates to:
-  /// **'https://.../manifest.json'**
-  String get settingsMediafusionHint;
-
-  /// No description provided for @settingsMediafusionInvalidFormat.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid URL format. Must start with http:// or https://'**
-  String get settingsMediafusionInvalidFormat;
-
-  /// No description provided for @settingsMediafusionUnreachable.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not reach the Mediafusion server. Check your internet connection or the URL.'**
-  String get settingsMediafusionUnreachable;
-
-  /// No description provided for @settingsMediafusionInvalidManifest.
-  ///
-  /// In en, this message translates to:
-  /// **'The URL does not point to a valid Stremio manifest.'**
-  String get settingsMediafusionInvalidManifest;
 
   /// No description provided for @settingsLanguage.
   ///

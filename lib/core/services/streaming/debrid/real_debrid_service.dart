@@ -2,6 +2,7 @@ import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
 import 'package:cinemuse_app/core/utils/media_parser.dart';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 
 class RealDebridService implements BaseDebridService {
@@ -42,7 +43,7 @@ class RealDebridService implements BaseDebridService {
       });
       return result;
     } catch (e) {
-      print('RealDebridService: Availability check failed: $e');
+      debugPrint('RealDebridService: Availability check failed: $e');
       return {};
     }
   }
@@ -72,7 +73,7 @@ class RealDebridService implements BaseDebridService {
       }
 
       final torrentId = addRes.data['id'];
-      print('RealDebridService: Added magnet, torrentId: $torrentId');
+      debugPrint('RealDebridService: Added magnet, torrentId: $torrentId');
 
       // 2. Get Info
       final infoRes = await _dio.get(
@@ -100,12 +101,12 @@ class RealDebridService implements BaseDebridService {
             'bytes': f['bytes'] as int? ?? 0,
             'selected': f['selected'] == 1,
           }).toList();
-      print('RealDebridService: Found ${allVideoFiles.length} video files');
+      debugPrint('RealDebridService: Found ${allVideoFiles.length} video files');
 
       int? selectedId = fileId;
       if (selectedId == null && season != null && episode != null) {
         selectedId = _findBestFileMatch(allVideoFiles, season, episode, absoluteEpisode);
-        print('RealDebridService: _findBestFileMatch result: $selectedId');
+        debugPrint('RealDebridService: _findBestFileMatch result: $selectedId');
       }
 
       // Default to largest if still null
@@ -145,7 +146,7 @@ class RealDebridService implements BaseDebridService {
           break; 
         }
         
-        print('RealDebridService: No links found yet for $torrentId, retrying (${retryCount + 1}/5)...');
+        debugPrint('RealDebridService: No links found yet for $torrentId, retrying (${retryCount + 1}/5)...');
         await Future.delayed(const Duration(milliseconds: 1000));
         
         final retryRes = await _dio.get(
@@ -157,7 +158,7 @@ class RealDebridService implements BaseDebridService {
       }
 
       if (info['status'] != 'downloaded') {
-        print('RealDebridService: Stream is not instantly available (Status: ${info['status']})');
+        debugPrint('RealDebridService: Stream is not instantly available (Status: ${info['status']})');
         return null;
       }
 
@@ -187,9 +188,9 @@ class RealDebridService implements BaseDebridService {
           candidate: candidate,
         );
       }
-      print('RealDebridService: Final check: No links found for torrentId: $torrentId (Status: ${info['status']})');
+      debugPrint('RealDebridService: Final check: No links found for torrentId: $torrentId (Status: ${info['status']})');
     } catch (e) {
-      print('RealDebridService: Resolve failed: $e');
+      debugPrint('RealDebridService: Resolve failed: $e');
     }
     return null;
   }

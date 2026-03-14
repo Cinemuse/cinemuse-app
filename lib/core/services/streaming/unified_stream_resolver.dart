@@ -3,6 +3,7 @@ import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:meta/meta.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
@@ -11,84 +12,76 @@ import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stremio_addon.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/stremio_source.dart';
-import 'package:cinemuse_app/core/services/streaming/sources/animetosho_source.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/dummy_source.dart';
-import 'package:cinemuse_app/core/services/streaming/debrid/real_debrid_service.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
+import 'package:cinemuse_app/core/services/streaming/sources/animetosho_source.dart';
+import 'package:cinemuse_app/core/services/streaming/debrid/real_debrid_service.dart';
 
 final unifiedStreamResolverProvider = Provider((ref) {
   final settings = ref.watch(settingsProvider);
   final dio = ref.read(dioProvider);
 
-  final configs = [...settings.streamingProviders]..sort((a, b) => a.priority.compareTo(b.priority));
-  
   final sources = <BaseSource>[];
-  for (final config in configs) {
-    if (!config.enabled) continue;
-    
-    switch (config.id) {
-      case 'torrentio':
-        sources.add(StremioSource(
-          dio, 
-          "https://torrentio.strem.fun", 
-          name: 'Torrentio',
-          supportedCategories: config.supportedCategories ?? {'movie', 'tv', 'anime'},
-        ));
-        break;
-      case 'animetosho':
-        sources.add(AnimeToshoSource(dio));
-        break;
-      case 'mediafusion':
-        if (settings.mediafusionUrl.isNotEmpty) {
-          sources.add(StremioSource(
-            dio, 
-            settings.mediafusionUrl, 
-            name: 'Mediafusion',
-            supportedCategories: config.supportedCategories ?? {'movie', 'tv'},
-          ));
-        }
-        break;
+  
+  // Dynamic Stremio Addons
+  for (final addon in settings.installedAddons) {
+    if (!addon.enabled || !addon.isStreamingAddon) {
+      debugPrint('UnifiedStreamResolver: Skipping addon ${addon.name} (enabled: ${addon.enabled}, streaming: ${addon.isStreamingAddon})');
+      continue;
     }
+    
+    debugPrint('UnifiedStreamResolver: Adding source ${addon.name} (BaseUrl: ${addon.baseUrl})');
+    sources.add(StremioSource(
+      dio, 
+      addon.baseUrl,
+      name: addon.name,
+      supportedCategories: addon.types.toSet(),
+      queryParams: addon.queryParams,
+    ));
   }
-
-  final debridServices = <BaseDebridService>[];
-  if (settings.enableRealDebrid && settings.realDebridKey.isNotEmpty) {
-    debridServices.add(RealDebridService(dio, settings.realDebridKey));
+  
+  // Native Build-in Sources
+  if (settings.enableAnimeTosho) {
+    debugPrint('UnifiedStreamResolver: Adding native source AnimeTosho');
+    sources.add(AnimeToshoSource(dio));
   }
 
   return UnifiedStreamResolver(
     sources: sources,
-    debridServices: debridServices,
     tmdbService: ref.read(tmdbServiceProvider),
     kitsuMappingService: ref.read(kitsuMappingServiceProvider),
     settings: settings,
+    debridService: settings.enableRealDebrid 
+        ? RealDebridService(dio, settings.realDebridKey) 
+        : null,
   );
 });
 
 class UnifiedStreamResolver {
   final List<BaseSource> _sources;
-  final List<BaseDebridService> _debridServices;
   final TmdbService _tmdbService;
   final KitsuMappingService _kitsuMappingService;
   final UserSettings _settings;
+  final BaseDebridService? _debridService;
 
   @visibleForTesting
   List<BaseSource> get sources => _sources;
 
   UnifiedStreamResolver({
     required List<BaseSource> sources,
-    required List<BaseDebridService> debridServices,
     required TmdbService tmdbService,
     required KitsuMappingService kitsuMappingService,
     required UserSettings settings,
+    BaseDebridService? debridService,
   })  : _sources = sources,
-        _debridServices = debridServices,
         _tmdbService = tmdbService,
         _kitsuMappingService = kitsuMappingService,
-        _settings = settings;
+        _settings = settings,
+        _debridService = debridService;
 
   Future<List<StreamCandidate>> searchStreams(
     String queryId, // Can be TMDB ID (digits) or IMDB ID (tt...)
@@ -116,7 +109,6 @@ class UnifiedStreamResolver {
       if (imdbId == null) throw ImdbIdResolutionException();
 
       // 2. Resolve Anime Mapping
-      // If a mapping exists, it's an anime. No more heuristics.
       final kitsuMapping = tmdbId != null 
           ? await _kitsuMappingService.getMapping(
               tmdbId: tmdbId,
@@ -133,7 +125,7 @@ class UnifiedStreamResolver {
         imdbId: imdbId,
         season: season,
         episode: episode,
-        episodeName: details['episode_name'], // Note: details might need checking if it has these
+        episodeName: details['episode_name'],
         seasonName: details['season_name'],
         mapping: kitsuMapping,
         isAnime: kitsuMapping != null,
@@ -143,6 +135,10 @@ class UnifiedStreamResolver {
       final targetCategory = context.isAnime ? 'anime' : (context.type == 'tv' ? 'tv' : 'movie');
       final capableSources = _sources.where((s) => s.supportedCategories.contains(targetCategory)).toList();
       
+      debugPrint('UnifiedStreamResolver: Target Category: $targetCategory');
+      debugPrint('UnifiedStreamResolver: Total Sources: ${_sources.length}');
+      debugPrint('UnifiedStreamResolver: Capable Sources: ${capableSources.map((s) => s.name).toList()}');
+
       if (capableSources.isEmpty) {
         throw CapabilityMissingException(targetCategory);
       }
@@ -182,7 +178,7 @@ class UnifiedStreamResolver {
           emitStatuses();
           return results;
         }).catchError((e) {
-          print('UnifiedStreamResolver: Source ${source.name} failed: $e');
+          // TODO: Use a proper logger
           statuses[source.name] = statuses[source.name]!.copyWith(
             status: ProviderStatus.failed,
             errorMessage: e.toString(),
@@ -211,47 +207,21 @@ class UnifiedStreamResolver {
       }
       var candidates = uniqueMap.values.toList();
 
-      // 5. Filter out junk (CAM, 3D, Screener)
+      // 5. Filter out junk
       candidates = candidates.where((c) {
         final t = c.title.toLowerCase();
         return !(t.contains('cam') || t.contains(' ts ') || t.contains('hdcam') || 
                  t.contains('screener') || t.contains(' scr ') || t.contains(' 3d ') || t.contains('sbs'));
       }).toList();
 
-      // 6. Check Instant Availability across all Providers
-      if (_debridServices.isNotEmpty) {
-        // Limit check to top candidates for performance (legacy used top 15)
-        final topHashes = candidates.take(20).map((c) => c.infoHash).toList();
-        
-        final availabilityFutures = _debridServices.map((d) => d.checkAvailability(topHashes));
-        final availabilityResults = await Future.wait(availabilityFutures);
-
-        final mergedAvailability = <String, Map<String, bool>>{}; // Hash -> {ProviderName: IsAvailable}
-        for (int i = 0; i < _debridServices.length; i++) {
-          final providerName = _debridServices[i].name;
-          final providerResults = availabilityResults[i];
-          providerResults.forEach((hash, isAvailable) {
-            mergedAvailability.putIfAbsent(hash, () => {})[providerName] = isAvailable;
-          });
-        }
-
-        // Apply availability to candidates
-        candidates = candidates.map((c) {
-          final hash = c.infoHash.toLowerCase();
-          final cachedOn = mergedAvailability[hash] ?? {};
-          return c.copyWith(cachedOn: cachedOn);
-        }).toList();
-      }
-
-      // 7. Rank and Sort
-      final preferredLanguage = (_settings.splitAnimePreferences && context.isAnime) 
+      // 6. Rank and Sort
+      final preferredLanguage = (context.isAnime && _settings.splitAnimePreferences) 
           ? _settings.animeAudioLanguage 
           : _settings.playerLanguage;
           
       return StreamRanker.rank(candidates, preferredLanguage: preferredLanguage);
     } catch (e) {
       statusTimer?.cancel();
-      print('UnifiedStreamResolver: Search failed: $e');
       if (e is StreamingException) rethrow;
       throw StreamResolutionFailedException(e.toString());
     }
@@ -275,7 +245,7 @@ class UnifiedStreamResolver {
     int? episode,
     int? fileId,
   }) async {
-    // 0. If candidate already has a direct URL (like Mediafusion), return it immediately
+    // Stremio addons usually return direct URLs
     if (candidate.url != null && candidate.url!.isNotEmpty) {
       return ResolvedStream(
         url: candidate.url!,
@@ -283,34 +253,16 @@ class UnifiedStreamResolver {
         candidate: candidate,
       );
     }
-
-    // 1. Prioritize providers where it's already cached
-    final cachedProviders = candidate.cachedOn.entries
-        .where((e) => e.value)
-        .map((e) => e.key)
-        .toList();
-
-    // Reorder debrid services to put cached ones first
-    final sortedDebrid = [..._debridServices]..sort((a, b) {
-      final aCached = cachedProviders.contains(a.name) ? 1 : 0;
-      final bCached = cachedProviders.contains(b.name) ? 1 : 0;
-      return bCached.compareTo(aCached);
-    });
-
-    for (final service in sortedDebrid) {
-      try {
-        final result = await service.resolve(
-          candidate,
-          season: season,
-          episode: episode,
-          fileId: fileId,
-        );
-        if (result != null) return result;
-      } catch (e) {
-        print('UnifiedStreamResolver: Resolve failed for ${service.name}: $e');
-      }
+    
+    // Fallback to Debrid for magnets (native sources like AnimeTosho)
+    if (candidate.magnet.isNotEmpty && _debridService != null && _debridService!.isEnabled) {
+      return _debridService!.resolve(
+        candidate,
+        season: season,
+        episode: episode,
+      );
     }
-
+    
     return null;
   }
 }

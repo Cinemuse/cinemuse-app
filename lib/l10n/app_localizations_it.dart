@@ -45,10 +45,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get commonDelete => 'Elimina';
 
   @override
-  String get commonFeatured => 'IN PRIMO PIANO';
+  String get commonFeatured => 'IN PRIMA PIANO';
 
   @override
-  String get commonUnexpectedError => 'Si è verificato un errore imprevisto';
+  String get commonUnexpectedError => 'Si è verificato un errore inaspettato';
 
   @override
   String get commonOk => 'OK';
@@ -60,7 +60,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get filterMax => 'Max';
 
   @override
-  String get searchPlaceholder => 'Cerca film, serie...';
+  String get searchPlaceholder => 'Cerca film, serie, persone...';
 
   @override
   String searchNoResults(Object query) {
@@ -79,7 +79,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get searchMovies => 'Film';
 
   @override
-  String get searchSeries => 'Serie';
+  String get searchSeries => 'Serie TV';
 
   @override
   String get searchPersons => 'Persone';
@@ -94,13 +94,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get searchFilteredResults => 'Risultati';
 
   @override
-  String get searchSortBy => 'Ordina Per';
+  String get searchSortBy => 'Ordina per';
 
   @override
   String get searchMostPopular => 'Più Popolari';
 
   @override
-  String get searchHighestRated => 'Voto Più Alto';
+  String get searchHighestRated => 'Più Votati';
 
   @override
   String get searchNewestReleases => 'Ultime Uscite';
@@ -112,19 +112,19 @@ class AppLocalizationsIt extends AppLocalizations {
   String get searchGenres => 'Generi';
 
   @override
-  String get searchRating => 'Voto';
+  String get searchRating => 'Valutazione';
 
   @override
   String get searchYearRange => 'Intervallo Anni';
 
   @override
-  String get searchVoteCount => 'Numero Voti';
+  String get searchVoteCount => 'Conteggio Voti';
 
   @override
   String get searchRuntime => 'Durata';
 
   @override
-  String get searchWatchProviders => 'Provider Streaming';
+  String get searchWatchProviders => 'Piattaforme';
 
   @override
   String get searchClearAll => 'Cancella Tutto';
@@ -133,13 +133,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get searchNoResultsTitle => 'Nessun risultato trovato';
 
   @override
-  String get searchTryAdjusting => 'Prova a regolare i filtri';
+  String get searchTryAdjusting => 'Prova a modificare i filtri';
 
   @override
-  String get searchMatchAny => 'Corrisponde a qualsiasi';
+  String get searchMatchAny => 'Corrispondenza Qualsiasi';
 
   @override
-  String get searchMatchAll => 'Corrisponde a tutti';
+  String get searchMatchAll => 'Corrispondenza Tutte';
 
   @override
   String get searchLanguagePlaceholder => 'Aggiungi una lingua...';
@@ -155,14 +155,14 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String detailsErrorLoadingSeason(Object error) {
-    return 'Errore nel caricamento della stagione: $error';
+    return 'Errore caricamento stagione: $error';
   }
 
   @override
   String get detailsSeasonNotFound => 'Dettagli stagione non trovati';
 
   @override
-  String get detailsDeleteListTitle => 'Eliminare la lista?';
+  String get detailsDeleteListTitle => 'Elimina Lista?';
 
   @override
   String detailsDeleteListConfirm(Object name) {
@@ -173,20 +173,20 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsCollectionsTitle => 'Collezioni';
 
   @override
-  String get detailsCollectionsDesc => 'Le tue liste personalizzate.';
+  String get detailsCollectionsDesc => 'Le tue liste personalizzate a tema.';
 
   @override
   String get detailsNewCollection => 'Nuova Collezione';
 
   @override
   String get detailsNoCollections =>
-      'Nessuna Collezione ancora. Creane una per iniziare a organizzare!';
+      'Nessuna Collezione presente. Creane una per iniziare a organizzare!';
 
   @override
-  String get detailsAddToList => 'Aggiungi alla lista';
+  String get detailsAddToList => 'Aggiungi alla Lista';
 
   @override
-  String get detailsNoCustomLists => 'Nessuna lista personalizzata ancora';
+  String get detailsNoCustomLists => 'Nessuna lista personalizzata';
 
   @override
   String get detailsCreateNewList => 'Crea Nuova Lista';
@@ -207,13 +207,13 @@ class AppLocalizationsIt extends AppLocalizations {
       'Nome Collezione (es., \'Gemme Sci-Fi\')';
 
   @override
-  String get homeErrorLoadingFeatures => 'Errore nel caricamento dei contenuti';
+  String get homeErrorLoadingFeatures => 'Errore caricamento contenuti';
 
   @override
   String get homeMoreInfo => 'Più Info';
 
   @override
-  String get homeTrendingNow => 'Di Tendenza';
+  String get homeTrendingNow => 'Tendenze';
 
   @override
   String get homePopularMovies => 'Film Popolari';
@@ -233,6 +233,10 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get authEnterCredentials =>
       'Inserisci le tue credenziali per accedere';
+
+  @override
+  String get authWelcomeBackDesc =>
+      'Sign in to access your library and settings';
 
   @override
   String get authCreateAccount => 'Crea un account per iniziare a guardare';
@@ -263,28 +267,28 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String settingsErrorSaving(Object error) {
-    return 'Errore nel salvataggio: $error';
+    return 'Errore salvataggio: $error';
   }
 
   @override
-  String get detailsEpisodes => 'EPISODI';
+  String get detailsEpisodes => 'Episodi';
 
   @override
-  String get detailsCast => 'CAST';
+  String get detailsCast => 'Cast';
 
   @override
   String get detailsPlay => 'Riproduci';
 
   @override
-  String get detailsMyList => 'La mia lista';
+  String get detailsMyList => 'La Mia Lista';
 
   @override
   String detailsErrorLoading(Object error) {
-    return 'Errore nel caricamento dei dettagli: $error';
+    return 'Errore caricamento dettagli: $error';
   }
 
   @override
-  String get detailsDecryptingMetadata => 'Decriptazione metadati...';
+  String get detailsDecryptingMetadata => 'Decrittazione metadati...';
 
   @override
   String get detailsEpisodesRegistry => 'Registro Episodi';
@@ -312,7 +316,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsResume => 'Riprendi';
 
   @override
-  String get detailsPlayNow => 'Riproduci ora';
+  String get detailsPlayNow => 'Riproduci Ora';
 
   @override
   String get detailsSeriesProgress => 'Progresso Serie';
@@ -333,28 +337,28 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsFinances => 'Finanze';
 
   @override
-  String get detailsProductionDNA => 'DNA di Produzione';
+  String get detailsProductionDNA => 'DNA Produzione';
 
   @override
-  String get detailsRate => 'VALUTA';
+  String get detailsRate => 'VOTA';
 
   @override
   String get detailsMarkRemaining => 'Segna Rimanenti';
 
   @override
-  String get detailsMarkAll => 'Segna Tutti';
+  String get detailsMarkAll => 'Segna Tutto';
 
   @override
   String get detailsRewatchSeries => 'Riguarda Serie';
 
   @override
-  String get detailsRemoveAll => 'Rimuovi Tutti';
+  String get detailsRemoveAll => 'Rimuovi Tutto';
 
   @override
   String get detailsBudget => 'Budget';
 
   @override
-  String get detailsRevenue => 'Incasso';
+  String get detailsRevenue => 'Incassi';
 
   @override
   String get detailsExternalLinks => 'Link Esterni';
@@ -386,7 +390,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get detailsTooltipMarkWatched =>
-      'Segna come visto (Tieni premuto per la data)';
+      'Segna come Visto (Pressione prolungata per la data)';
 
   @override
   String get personBiography => 'Biografia';
@@ -407,13 +411,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get personNoImage => 'Nessuna immagine disponibile';
 
   @override
-  String get personShowMore => 'Mostra altro';
+  String get personShowMore => 'Mostra Altro';
 
   @override
-  String get personShowLess => 'Mostra meno';
+  String get personShowLess => 'Mostra Meno';
 
   @override
-  String get personShowHidden => 'Mostra nascosti';
+  String get personShowHidden => 'Mostra Nascosti';
 
   @override
   String personShowingCredits(Object total, Object visible) {
@@ -421,7 +425,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get personNoImg => 'Nessuna immagine';
+  String get personNoImg => 'Nessuna img';
 
   @override
   String get personSeries => 'Serie';
@@ -445,19 +449,19 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playerSelectAudio => 'Seleziona Traccia Audio';
 
   @override
-  String get playerResolving => 'Risoluzione stream con Real-Debrid...';
+  String get playerResolving => 'Risoluzione stream...';
 
   @override
   String get playerResolvingYoutube => 'Caricamento video YouTube...';
 
   @override
   String playerErrorResolving(Object error) {
-    return 'Errore nella risoluzione dello stream:\n$error';
+    return 'Errore risoluzione stream:\n$error';
   }
 
   @override
   String playerErrorResolvingYoutube(Object error) {
-    return 'Errore nel caricamento del video YouTube:\n$error';
+    return 'Errore caricamento video YouTube:\n$error';
   }
 
   @override
@@ -465,36 +469,31 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get streamingErrorNoProviders =>
-      'Nessun provider di streaming abilitato. Controlla le tue impostazioni.';
+      'Nessun addon di streaming abilitato. Controlla le impostazioni.';
 
   @override
   String streamingErrorCapabilityMissing(Object category) {
-    return 'Nessun provider abilitato supporta $category. Controlla le tue impostazioni.';
+    return 'Nessun addon abilitato supporta $category. Controlla le impostazioni.';
   }
 
   @override
   String get streamingErrorNoResults =>
-      'Nessun risultato trovato tra i provider.';
-
-  @override
-  String streamingErrorDebridKey(Object debridName) {
-    return 'Chiave API $debridName mancante. Controlla le tue impostazioni.';
-  }
+      'Nessun risultato trovato tra gli addon.';
 
   @override
   String get streamingErrorResolutionFailed =>
-      'Impossibile risolvere lo streaming selezionato. Il link potrebbe non essere nella cache.';
+      'Impossibile risolvere lo stream selezionato. Il link potrebbe non essere disponibile in cache.';
 
   @override
   String get streamingErrorMediaDetails =>
-      'Impossibile recuperare i dettagli del contenuto.';
+      'Impossibile recuperare i dettagli multimediali.';
 
   @override
   String get streamingErrorImdbId => 'Impossibile risolvere l\'ID IMDB.';
 
   @override
   String streamingErrorProviderSearchFailed(Object providerName) {
-    return 'Ricerca fallita per il provider: $providerName.';
+    return 'Ricerca fallita per l\'addon: $providerName.';
   }
 
   @override
@@ -507,10 +506,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playerSubtitles => 'Sottotitoli';
 
   @override
-  String get playerSelectSubtitle => 'Seleziona Sottotitoli';
+  String get playerSelectSubtitle => 'Seleziona Sottotitolo';
 
   @override
-  String get commonGoBack => 'Indietro';
+  String get commonGoBack => 'Torna Indietro';
 
   @override
   String get playerNextEpisode => 'Prossimo Episodio';
@@ -523,7 +522,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get settingsIdentityDesc =>
-      'Gestisci i tuoi dati personali e le preferenze di accesso.';
+      'Gestisci i tuoi dettagli personali e le preferenze di accesso.';
 
   @override
   String get settingsCustomization => 'Personalizzazione App';
@@ -533,11 +532,11 @@ class AppLocalizationsIt extends AppLocalizations {
       'Personalizza la tua esperienza di visione e l\'aspetto dell\'app.';
 
   @override
-  String get settingsIntegrations => 'Integrazioni';
+  String get settingsIntegrations => 'Addon ed Estensioni';
 
   @override
   String get settingsIntegrationsDesc =>
-      'Collega servizi di terze parti per migliorare la tua esperienza.';
+      'Gestisci gli addon di Stremio e le integrazioni native.';
 
   @override
   String get settingsData => 'Dati e Archiviazione';
@@ -553,55 +552,62 @@ class AppLocalizationsIt extends AppLocalizations {
       'Trasferisci i tuoi dati da e verso altri servizi.';
 
   @override
-  String get settingsProvidersTitle => 'Provider Streaming';
+  String get settingsProvidersTitle => 'Addon di Streaming';
 
   @override
-  String get settingsProvidersDesc => 'Gestisci le tue sorgenti di contenuto.';
+  String get settingsProvidersDesc =>
+      'Gestisci i tuoi addon compatibili con Stremio.';
 
   @override
-  String get settingsProvidersReorder =>
-      'Tieni premuto e trascina per riordinare i provider.';
+  String get settingsAddNewAddon => 'AGGIUNGI NUOVO ADDON';
 
   @override
-  String get settingsDisplayName => 'Nome Visualizzato';
+  String get settingsInstall => 'Installa';
 
   @override
-  String get settingsDisplayNameDesc => 'Il tuo nome visualizzato pubblico.';
+  String get settingsAddonHint =>
+      'Incolla l\'URL del manifest di Stremio per aggiungere nuove sorgenti.';
 
   @override
-  String get settingsEnterName => 'Inserisci il tuo nome';
+  String get settingsInstalledAddons => 'ADDON INSTALLATI';
 
   @override
-  String get settingsEnableRealDebrid => 'Abilita Real-Debrid';
+  String get settingsNoAddons => 'Nessun addon installato';
 
   @override
-  String get settingsEnableRealDebridDesc =>
-      'Abilita lo streaming ad alta velocità tramite Real-Debrid.';
+  String get settingsAddonSuccess => 'Addon installato con successo';
+
+  @override
+  String get settingsNativeIntegrations => 'Provider Nativi';
+
+  @override
+  String get settingsEnableAnimeTosho => 'Abilita AnimeTosho';
+
+  @override
+  String get settingsEnableAnimeToshoWarning =>
+      'Richiede un\'integrazione Real-Debrid attiva';
+
+  @override
+  String get settingsDebridServices => 'Servizi Debrid';
+
+  @override
+  String get settingsRealDebridTitle => 'Real-Debrid (Nativo)';
 
   @override
   String get settingsRealDebridKey => 'Chiave API Real-Debrid';
 
   @override
-  String get settingsMediafusionUrl => 'URL Mediafusion';
+  String get settingsRealDebridKeyDesc =>
+      'Usato per sorgenti native come AnimeTosho.';
 
   @override
-  String get settingsMediafusionUrlDesc =>
-      'URL per il provider Mediafusion (si trova nella configurazione del manifest).';
+  String get settingsDisplayName => 'Nome Visualizzato';
 
   @override
-  String get settingsMediafusionHint => 'https://.../manifest.json';
+  String get settingsDisplayNameDesc => 'Il tuo nome pubblico.';
 
   @override
-  String get settingsMediafusionInvalidFormat =>
-      'Formato URL non valido. Deve iniziare con http:// o https://';
-
-  @override
-  String get settingsMediafusionUnreachable =>
-      'Impossibile raggiungere il server Mediafusion. Controlla la connessione o l\'URL.';
-
-  @override
-  String get settingsMediafusionInvalidManifest =>
-      'L\'URL non punta a un manifest Stremio valido.';
+  String get settingsEnterName => 'Inserisci il tuo nome';
 
   @override
   String get settingsLanguage => 'Lingua';
@@ -617,14 +623,14 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get settingsAudioLanguageDesc =>
-      'Lingua audio preferita per la riproduzione.';
+      'Lingua audio preferita per film e serie.';
 
   @override
   String get settingsSubtitleLanguage => 'Lingua Sottotitoli';
 
   @override
   String get settingsSubtitleLanguageDesc =>
-      'Lingua dei sottotitoli preferita per la riproduzione.';
+      'Lingua sottotitoli preferita per film e serie.';
 
   @override
   String get settingsShowSubtitles => 'Mostra Sottotitoli';
@@ -645,7 +651,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsItalian => 'Italiano';
 
   @override
-  String get settingsSplitAnimePreferences => 'Dividi Preferenze Anime';
+  String get settingsSplitAnimePreferences => 'Separa Preferenze Anime';
 
   @override
   String get settingsSplitAnimePreferencesDesc =>
@@ -663,26 +669,28 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get settingsAnimeShowSubtitlesDesc =>
-      'Abilita o disabilita i sottotitoli per impostazione predefinita per gli anime.';
+      'Abilita o disabilita i sottotitoli di default per gli anime.';
 
   @override
   String get settingsAnimeSubtitleLanguage => 'Lingua Sottotitoli Anime';
 
   @override
   String get settingsAnimeSubtitleLanguageDesc =>
-      'Lingua dei sottotitoli preferita per gli anime.';
+      'Lingua sottotitoli preferita per gli anime.';
 
   @override
   String get settingsPrimaryColor => 'Colore Primario';
 
   @override
-  String get settingsPrimaryColorDesc => 'Colore principale del player.';
+  String get settingsPrimaryColorDesc =>
+      'Colore accento principale per il player.';
 
   @override
   String get settingsSecondaryColor => 'Colore Secondario';
 
   @override
-  String get settingsSecondaryColorDesc => 'Colore secondario del player.';
+  String get settingsSecondaryColorDesc =>
+      'Colore accento secondario per il player.';
 
   @override
   String get settingsOther => 'Altro';
@@ -692,7 +700,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get settingsShowDebugPanelDesc =>
-      'Visualizza i dettagli tecnici in sovrimpressione.';
+      'Visualizza informazioni tecniche in sovrimpressione.';
 
   @override
   String get settingsSmartSearch => 'Filtro Ricerca Intelligente';
@@ -706,16 +714,16 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get settingsTotalDocSizeDesc =>
-      'Dimensione totale di tutti i dati memorizzati.';
+      'Dimensione totale di tutti i tuoi dati salvati.';
 
   @override
   String get settingsUserProfile => 'Libreria Utente';
 
   @override
-  String get settingsWatchedMovies => 'Film Guardati';
+  String get settingsWatchedMovies => 'Film Visti';
 
   @override
-  String get settingsWatchedSeries => 'Serie Guardate';
+  String get settingsWatchedSeries => 'Serie Viste';
 
   @override
   String get settingsLists => 'Liste';
@@ -733,7 +741,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsBack => 'Torna alle Impostazioni';
 
   @override
-  String get settingsLogout => 'Esci';
+  String get settingsLogout => 'Disconnetti';
 
   @override
   String get settingsProfile => 'Libreria';
@@ -748,13 +756,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get profileActivity => 'ATTIVITÀ';
 
   @override
-  String get profileActivityComingSoon => 'Attività in arrivo';
+  String get profileActivityComingSoon => 'Attività disponibile a breve';
 
   @override
   String get profileUserDashboard => 'Libreria Utente';
 
   @override
-  String get profileErrorLoading => 'Errore nel caricamento della libreria';
+  String get profileErrorLoading => 'Errore caricamento libreria';
 
   @override
   String profileMemberSince(Object year) {
@@ -762,10 +770,10 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get navLiveTV => 'TV in Diretta';
+  String get navLiveTV => 'Live TV';
 
   @override
-  String get liveTvTitle => 'TV in Diretta';
+  String get liveTvTitle => 'Live TV';
 
   @override
   String get liveTvSelectChannel =>
@@ -778,16 +786,16 @@ class AppLocalizationsIt extends AppLocalizations {
   String get liveTvNext => 'DOPO';
 
   @override
-  String get liveTvLive => 'IN DIRETTA';
+  String get liveTvLive => 'LIVE';
 
   @override
-  String get liveTvNoEpg => 'Nessun dato programma disponibile';
+  String get liveTvNoEpg => 'Nessuna informazione sul programma';
 
   @override
   String get liveTvLoading => 'Caricamento canali...';
 
   @override
-  String get liveTvError => 'Errore nel caricamento dei canali';
+  String get liveTvError => 'Errore caricamento canali';
 
   @override
   String get liveTvAllChannels => 'Tutti';
@@ -803,7 +811,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get settingsLiveTvRegionDesc =>
-      'Seleziona la tua regione per i canali locali.';
+      'Seleziona la tua regione per i canali regionali.';
 
   @override
   String get settingsNone => 'Nessuna';
@@ -827,31 +835,31 @@ class AppLocalizationsIt extends AppLocalizations {
   String get agendaTomorrow => 'Domani';
 
   @override
-  String get agendaThisWeek => 'Questa settimana';
+  String get agendaThisWeek => 'Questa Settimana';
 
   @override
-  String get agendaNextWeek => 'Settimana prossima';
+  String get agendaNextWeek => 'Prossima Settimana';
 
   @override
-  String get agendaLater => 'In seguito';
+  String get agendaLater => 'In Futuro';
 
   @override
   String get agendaMovie => 'Film';
 
   @override
-  String get agendaSeries => 'Serie';
+  String get agendaSeries => 'Serie TV';
 
   @override
-  String get agendaRecentlyReleased => 'Rilasciati di recente';
+  String get agendaRecentlyReleased => 'Usciti di Recente';
 
   @override
-  String get agendaTbd => 'TBD / Prossimamente';
+  String get agendaTbd => 'TBD / In Arrivo';
 
   @override
   String get agendaTbdLabel => 'TBD';
 
   @override
-  String get updateAvailable => 'Aggiornamento disponibile';
+  String get updateAvailable => 'Aggiornamento Disponibile';
 
   @override
   String get updateDialogTitle => 'Nuova versione disponibile';
@@ -861,14 +869,14 @@ class AppLocalizationsIt extends AppLocalizations {
       'Una nuova versione di Cinemuse è disponibile. Vuoi aggiornare ora?';
 
   @override
-  String get updateNow => 'Aggiorna ora';
+  String get updateNow => 'Aggiorna Ora';
 
   @override
-  String get later => 'Più tardi';
+  String get later => 'Dopo';
 
   @override
   String downloadingUpdate(Object progress) {
-    return 'Download aggiornamento $progress%';
+    return 'Scaricamento aggiornamento $progress%';
   }
 
   @override

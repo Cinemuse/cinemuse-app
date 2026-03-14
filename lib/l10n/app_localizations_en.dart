@@ -235,6 +235,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter your credentials to access your account';
 
   @override
+  String get authWelcomeBackDesc =>
+      'Sign in to access your library and settings';
+
+  @override
   String get authCreateAccount => 'Create an account to start watching';
 
   @override
@@ -445,7 +449,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playerSelectAudio => 'Select Audio Track';
 
   @override
-  String get playerResolving => 'Resolving stream with Real-Debrid...';
+  String get playerResolving => 'Resolving stream...';
 
   @override
   String get playerResolvingYoutube => 'Loading YouTube video...';
@@ -465,20 +469,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get streamingErrorNoProviders =>
-      'No streaming providers are enabled. Please check your settings.';
+      'No streaming addons are enabled. Please check your settings.';
 
   @override
   String streamingErrorCapabilityMissing(Object category) {
-    return 'No enabled provider supports $category. Please check your settings.';
+    return 'No enabled addon supports $category. Please check your settings.';
   }
 
   @override
-  String get streamingErrorNoResults => 'No results found across providers.';
-
-  @override
-  String streamingErrorDebridKey(Object debridName) {
-    return '$debridName API Key is missing. Please check your settings.';
-  }
+  String get streamingErrorNoResults => 'No results found across addons.';
 
   @override
   String get streamingErrorResolutionFailed =>
@@ -492,7 +491,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String streamingErrorProviderSearchFailed(Object providerName) {
-    return 'Search failed for provider: $providerName.';
+    return 'Search failed for addon: $providerName.';
   }
 
   @override
@@ -531,11 +530,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Customize your viewing experience and app appearance.';
 
   @override
-  String get settingsIntegrations => 'Integrations';
+  String get settingsIntegrations => 'Addons & Extensions';
 
   @override
   String get settingsIntegrationsDesc =>
-      'Connect third-party services to enhance your experience.';
+      'Manage Stremio addons and native streaming integrations.';
 
   @override
   String get settingsData => 'Data & Storage';
@@ -551,13 +550,52 @@ class AppLocalizationsEn extends AppLocalizations {
       'Transfer your data to and from other services.';
 
   @override
-  String get settingsProvidersTitle => 'Streaming Providers';
+  String get settingsProvidersTitle => 'Streaming Addons';
 
   @override
-  String get settingsProvidersDesc => 'Manage your content sources.';
+  String get settingsProvidersDesc => 'Manage your Stremio-compatible addons.';
 
   @override
-  String get settingsProvidersReorder => 'Hold and drag to reorder providers.';
+  String get settingsAddNewAddon => 'ADD NEW ADDON';
+
+  @override
+  String get settingsInstall => 'Install';
+
+  @override
+  String get settingsAddonHint =>
+      'Paste any Stremio manifest URL to add new content sources.';
+
+  @override
+  String get settingsInstalledAddons => 'INSTALLED ADDONS';
+
+  @override
+  String get settingsNoAddons => 'No addons installed yet';
+
+  @override
+  String get settingsAddonSuccess => 'Addon installed successfully';
+
+  @override
+  String get settingsNativeIntegrations => 'Native Providers';
+
+  @override
+  String get settingsEnableAnimeTosho => 'Enable AnimeTosho';
+
+  @override
+  String get settingsEnableAnimeToshoWarning =>
+      'Requires active Real-Debrid integration';
+
+  @override
+  String get settingsDebridServices => 'Debrid Services';
+
+  @override
+  String get settingsRealDebridTitle => 'Real-Debrid (Native)';
+
+  @override
+  String get settingsRealDebridKey => 'Real-Debrid API Key';
+
+  @override
+  String get settingsRealDebridKeyDesc =>
+      'Used for native sources like AnimeTosho.';
 
   @override
   String get settingsDisplayName => 'Display Name';
@@ -567,38 +605,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsEnterName => 'Enter your name';
-
-  @override
-  String get settingsEnableRealDebrid => 'Enable Real-Debrid';
-
-  @override
-  String get settingsEnableRealDebridDesc =>
-      'Enable high-speed streaming via Real-Debrid.';
-
-  @override
-  String get settingsRealDebridKey => 'Real-Debrid API Key';
-
-  @override
-  String get settingsMediafusionUrl => 'Mediafusion URL';
-
-  @override
-  String get settingsMediafusionUrlDesc =>
-      'URL for Mediafusion provider (found in manifest configuration).';
-
-  @override
-  String get settingsMediafusionHint => 'https://.../manifest.json';
-
-  @override
-  String get settingsMediafusionInvalidFormat =>
-      'Invalid URL format. Must start with http:// or https://';
-
-  @override
-  String get settingsMediafusionUnreachable =>
-      'Could not reach the Mediafusion server. Check your internet connection or the URL.';
-
-  @override
-  String get settingsMediafusionInvalidManifest =>
-      'The URL does not point to a valid Stremio manifest.';
 
   @override
   String get settingsLanguage => 'Language';

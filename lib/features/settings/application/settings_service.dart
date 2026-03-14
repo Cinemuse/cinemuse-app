@@ -1,9 +1,11 @@
+import 'dart:convert';
+import 'package:cinemuse_app/core/services/streaming/stremio_addon_service.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stremio_addon.dart';
 import 'package:cinemuse_app/core/utils/url_utils.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meta/meta.dart';
-import 'package:cinemuse_app/core/services/streaming/models/streaming_provider_config.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/profile/data/profile_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/profile.dart';
@@ -12,8 +14,6 @@ import 'package:cinemuse_app/core/application/locale_service.dart';
 // Simple state class for settings
 class UserSettings {
   final String displayName;
-  final bool enableRealDebrid;
-  final String realDebridKey;
   final String appLanguage;
   final String playerLanguage; // General Audio Language
   final bool showSubtitles;
@@ -27,13 +27,13 @@ class UserSettings {
   final bool showDebugPanel;
   final bool smartSearchFilter;
   final String? liveTvRegion;
-  final String mediafusionUrl;
-  final List<StreamingProviderConfig> streamingProviders;
+  final bool enableAnimeTosho;
+  final bool enableRealDebrid;
+  final String realDebridKey;
+  final List<StremioAddon> installedAddons;
 
   const UserSettings({
     this.displayName = '',
-    this.enableRealDebrid = false,
-    this.realDebridKey = '',
     this.appLanguage = 'en',
     this.playerLanguage = 'en',
     this.showSubtitles = true,
@@ -47,20 +47,16 @@ class UserSettings {
     this.showDebugPanel = false,
     this.smartSearchFilter = true,
     this.liveTvRegion,
-    this.mediafusionUrl = '',
-    this.streamingProviders = const [
-      StreamingProviderConfig(id: 'torrentio', name: 'Torrentio', priority: 0, supportedCategories: {'movie', 'tv', 'anime'}),
-      StreamingProviderConfig(id: 'animetosho', name: 'AnimeTosho', priority: 1, supportedCategories: {'anime'}),
-      StreamingProviderConfig(id: 'mediafusion', name: 'Mediafusion', priority: 2, supportedCategories: {'movie', 'tv'}),
-    ],
+    this.enableAnimeTosho = true,
+    this.enableRealDebrid = false,
+    this.realDebridKey = '',
+    this.installedAddons = const [],
   });
 
   factory UserSettings.fromProfile(Profile profile) {
     final prefs = profile.preferences;
     return UserSettings(
       displayName: profile.username ?? '',
-      enableRealDebrid: prefs['enableRealDebrid'] ?? false,
-      realDebridKey: prefs['realDebridKey'] ?? '',
       appLanguage: prefs['appLanguage'] ?? 'en',
       playerLanguage: prefs['playerLanguage'] ?? 'en',
       showSubtitles: prefs['showSubtitles'] ?? true,
@@ -74,20 +70,20 @@ class UserSettings {
       showDebugPanel: prefs['showDebugPanel'] ?? false,
       smartSearchFilter: prefs['smartSearchFilter'] ?? true,
       liveTvRegion: prefs['liveTvRegion'],
-      mediafusionUrl: prefs['mediafusionUrl'] ?? '',
-      streamingProviders: (prefs['streamingProviders'] as List?)?.map((e) => StreamingProviderConfig.fromJson(e as Map<String, dynamic>)).toList() ?? 
-        const [
-          StreamingProviderConfig(id: 'torrentio', name: 'Torrentio', priority: 0, supportedCategories: {'movie', 'tv', 'anime'}),
-          StreamingProviderConfig(id: 'animetosho', name: 'AnimeTosho', priority: 1, supportedCategories: {'anime'}),
-          StreamingProviderConfig(id: 'mediafusion', name: 'Mediafusion', priority: 2, supportedCategories: {'movie', 'tv'}),
-        ],
+      enableAnimeTosho: prefs['enableAnimeTosho'] ?? true,
+      enableRealDebrid: prefs['enableRealDebrid'] ?? false,
+      realDebridKey: prefs['realDebridKey'] ?? '',
+      installedAddons: (prefs['installedAddons'] as Iterable?)?.map((e) {
+        if (e is String) {
+          return StremioAddon.fromJson(jsonDecode(e) as Map<String, dynamic>);
+        }
+        return StremioAddon.fromJson(e as Map<String, dynamic>);
+      }).toList() ?? const [],
     );
   }
 
   UserSettings copyWith({
     String? displayName,
-    bool? enableRealDebrid,
-    String? realDebridKey,
     String? appLanguage,
     String? playerLanguage,
     bool? showSubtitles,
@@ -101,13 +97,13 @@ class UserSettings {
     bool? showDebugPanel,
     bool? smartSearchFilter,
     String? liveTvRegion,
-    String? mediafusionUrl,
-    List<StreamingProviderConfig>? streamingProviders,
+    bool? enableAnimeTosho,
+    bool? enableRealDebrid,
+    String? realDebridKey,
+    List<StremioAddon>? installedAddons,
   }) {
     return UserSettings(
       displayName: displayName ?? this.displayName,
-      enableRealDebrid: enableRealDebrid ?? this.enableRealDebrid,
-      realDebridKey: realDebridKey ?? this.realDebridKey,
       appLanguage: appLanguage ?? this.appLanguage,
       playerLanguage: playerLanguage ?? this.playerLanguage,
       showSubtitles: showSubtitles ?? this.showSubtitles,
@@ -121,15 +117,15 @@ class UserSettings {
       showDebugPanel: showDebugPanel ?? this.showDebugPanel,
       smartSearchFilter: smartSearchFilter ?? this.smartSearchFilter,
       liveTvRegion: liveTvRegion ?? this.liveTvRegion,
-      mediafusionUrl: mediafusionUrl ?? this.mediafusionUrl,
-      streamingProviders: streamingProviders ?? this.streamingProviders,
+      enableAnimeTosho: enableAnimeTosho ?? this.enableAnimeTosho,
+      enableRealDebrid: enableRealDebrid ?? this.enableRealDebrid,
+      realDebridKey: realDebridKey ?? this.realDebridKey,
+      installedAddons: installedAddons ?? this.installedAddons,
     );
   }
 
   Map<String, dynamic> toPreferencesJson() {
     return {
-      'enableRealDebrid': enableRealDebrid,
-      'realDebridKey': realDebridKey,
       'appLanguage': appLanguage,
       'playerLanguage': playerLanguage,
       'showSubtitles': showSubtitles,
@@ -143,8 +139,10 @@ class UserSettings {
       'showDebugPanel': showDebugPanel,
       'smartSearchFilter': smartSearchFilter,
       'liveTvRegion': liveTvRegion,
-      'mediafusionUrl': mediafusionUrl,
-      'streamingProviders': streamingProviders.map((e) => e.toJson()).toList(),
+      'enableAnimeTosho': enableAnimeTosho,
+      'enableRealDebrid': enableRealDebrid,
+      'realDebridKey': realDebridKey,
+      'installedAddons': installedAddons.map((e) => e.toJson()).toList(),
     };
   }
 }
@@ -177,8 +175,6 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
     // Update local state first for responsiveness
     state = state.copyWith(
       displayName: updates['displayName'],
-      enableRealDebrid: updates['enableRealDebrid'],
-      realDebridKey: updates['realDebridKey'],
       appLanguage: updates['appLanguage'] ?? state.appLanguage,
       playerLanguage: updates['playerLanguage'] ?? state.playerLanguage,
       showSubtitles: updates['showSubtitles'] ?? state.showSubtitles,
@@ -192,8 +188,10 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       showDebugPanel: updates['showDebugPanel'] ?? state.showDebugPanel,
       smartSearchFilter: updates['smartSearchFilter'] ?? state.smartSearchFilter,
       liveTvRegion: updates['liveTvRegion'] ?? state.liveTvRegion,
-      mediafusionUrl: updates['mediafusionUrl'] ?? state.mediafusionUrl,
-      streamingProviders: updates['streamingProviders'] ?? state.streamingProviders,
+      enableAnimeTosho: updates['enableAnimeTosho'] ?? state.enableAnimeTosho,
+      enableRealDebrid: updates['enableRealDebrid'] ?? state.enableRealDebrid,
+      realDebridKey: updates['realDebridKey'] ?? state.realDebridKey,
+      installedAddons: updates['installedAddons'] ?? state.installedAddons,
     );
 
     // Sync app language to localeProvider if updated
@@ -213,45 +211,32 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
     await _profileRepository.updateProfile(user.id, dbUpdates);
   }
 
-  Future<void> validateAndSaveMediafusionUrl(String url) async {
-    final cleaned = UrlUtils.cleanStremioBaseUrl(url);
+  Future<void> installAddon(String url) async {
+    final addonService = _ref.read(stremioAddonServiceProvider);
+    final addon = await addonService.fetchManifest(url);
+    
+    // Check if already installed
+    final currentAddons = [...state.installedAddons];
+    currentAddons.removeWhere((a) => a.id == addon.id);
+    currentAddons.add(addon);
+    
+    await updateSettings({'installedAddons': currentAddons});
+  }
 
-    if (cleaned.isEmpty) {
-      await updateSettings({'mediafusionUrl': ''});
-      return;
-    }
+  Future<void> removeAddon(String id) async {
+    final currentAddons = [...state.installedAddons];
+    currentAddons.removeWhere((a) => a.id == id);
+    
+    await updateSettings({'installedAddons': currentAddons});
+  }
 
-    if (!UrlUtils.isSecureUrl(cleaned)) {
-      throw 'invalid_format';
-    }
-
-    final dio = Dio();
-    try {
-      final manifestUrl = "$cleaned/manifest.json";
-      final response = await dio.get(
-        manifestUrl, 
-        options: Options(
-          receiveTimeout: const Duration(seconds: 10),
-          sendTimeout: const Duration(seconds: 10),
-        ),
-      );
-      
-      if (response.statusCode != 200) {
-        throw 'unreachable';
-      }
-
-      final data = response.data;
-      if (data is! Map || data['id'] == null || data['resources'] == null) {
-        throw 'invalid_manifest';
-      }
-
-      await updateSettings({'mediafusionUrl': cleaned});
-    } on DioException {
-      throw 'unreachable';
-    } catch (e) {
-      if (e is String) rethrow;
-      throw 'unexpected';
-    }
+  Future<void> toggleAddon(String id, bool enabled) async {
+    final currentAddons = state.installedAddons.map((a) {
+      if (a.id == id) return a.copyWith(enabled: enabled);
+      return a;
+    }).toList();
+    
+    await updateSettings({'installedAddons': currentAddons});
   }
 }
 
@@ -259,4 +244,3 @@ final settingsProvider = StateNotifierProvider<SettingsNotifier, UserSettings>((
   final profileRepo = ref.watch(profileRepositoryProvider);
   return SettingsNotifier(profileRepo, ref);
 });
-

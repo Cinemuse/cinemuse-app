@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/core/utils/url_utils.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
@@ -9,6 +10,7 @@ import 'package:dio/dio.dart';
 class StremioSource implements BaseSource {
   final Dio _dio;
   final String _baseUrl;
+  final String? _queryParams;
   
   @override
   final String name;
@@ -21,31 +23,40 @@ class StremioSource implements BaseSource {
     String baseUrl, 
     {
       this.name = 'Torrentio', 
-      this.supportedCategories = const {'movie', 'tv', 'anime'}
+      this.supportedCategories = const {'movie', 'tv', 'anime'},
+      String? queryParams,
     }
-  ) : _dio = dio, _baseUrl = UrlUtils.cleanStremioBaseUrl(baseUrl);
+  ) : _dio = dio, 
+      _baseUrl = baseUrl,
+      _queryParams = queryParams;
 
   @override
   Future<List<StreamCandidate>> search(StreamSearchContext context) async {
-    try {
-      final params = _resolveRequestParams(context);
-      final type = params.type;
-      final queryId = params.queryId;
+    final params = _resolveRequestParams(context);
+    final type = params.type;
+    final queryId = params.queryId;
+    
+    final resourcePath = "/stream/$type/$queryId.json";
+    final url = UrlUtils.unencodeStremioUrl(
+      _queryParams != null ? "$_baseUrl$resourcePath?$_queryParams" : "$_baseUrl$resourcePath"
+    );
 
-      final url = "$_baseUrl/stream/$type/$queryId.json";
-      print('StremioSource ($name): Fetching: $url');
+    try {
+      debugPrint('StremioSource ($name): Fetching: $url');
       
       final res = await _dio.get(url, options: Options(receiveTimeout: const Duration(seconds: 25)));
       
       if (res.statusCode == 200 && res.data['streams'] != null) {
         final streamsData = res.data['streams'] as List;
+        debugPrint('StremioSource ($name): Found ${streamsData.length} raw streams');
+        
         return streamsData.map((s) {
           final rawTitle = (s['title'] ?? s['description'] ?? "").replaceAll('\n', " ");
-          final name = s['name'] != null ? "[${s['name']}] " : "";
-          final title = "$name$rawTitle";
+          final nameStr = s['name'] != null ? "[${s['name']}] " : "";
+          final title = "$nameStr$rawTitle";
           
           final infoHash = s['infoHash'] ?? "";
-          final url = s['url'];
+          final streamUrl = s['url'];
           final metadata = StreamParser.parse(title);
 
           return StreamCandidate(
@@ -59,12 +70,16 @@ class StremioSource implements BaseSource {
             absoluteEpisode: context.mapping?.absoluteEpisode,
             metadata: metadata,
             resolution: metadata.video.resolution.label,
-            url: url,
+            url: streamUrl,
           );
         }).toList();
+      } else {
+        debugPrint('StremioSource ($name): Unexpected response: ${res.statusCode}');
       }
+    } on DioException catch (e) {
+      debugPrint('StremioSource ($name) fetch failed: ${e.message} (URL: $url)');
     } catch (e) {
-      print('StremioSource ($name) fetch failed: $e');
+      debugPrint('StremioSource ($name) unexpected error: $e');
     }
     return [];
   }

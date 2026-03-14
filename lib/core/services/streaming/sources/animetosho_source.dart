@@ -4,6 +4,7 @@ import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
 import 'package:cinemuse_app/core/services/streaming/ranking/stream_ranker.dart';
 import 'package:cinemuse_app/core/services/streaming/ranking/stream_parser.dart';
 import 'package:cinemuse_app/core/utils/media_parser.dart';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 
 class AnimeToshoSource extends BaseSource {
@@ -22,7 +23,7 @@ class AnimeToshoSource extends BaseSource {
   Future<List<StreamCandidate>> search(StreamSearchContext context) async {
     // Only search AnimeTosho if it's actually an anime and we have an AniDB ID
     if (!context.isAnime || context.mapping?.anidbId == null) {
-      print('AnimeToshoSource: Skipping search. isAnime: ${context.isAnime}, anidbId: ${context.mapping?.anidbId}');
+      debugPrint('AnimeToshoSource: Skipping search. isAnime: ${context.isAnime}, anidbId: ${context.mapping?.anidbId}');
       return [];
     }
 
@@ -45,7 +46,7 @@ class AnimeToshoSource extends BaseSource {
     try {
       final logParams = params.map((key, value) => MapEntry(key, value.toString()));
       final url = "$_baseUrl?${Uri(queryParameters: logParams).query}";
-      print('AnimeToshoSource: Fetching: $url');
+      debugPrint('AnimeToshoSource: Fetching: $url');
       final response = await _dio.get(_baseUrl, queryParameters: params);
       
       if (response.statusCode != 200 || response.data == null) {
@@ -91,7 +92,7 @@ class AnimeToshoSource extends BaseSource {
 
       return candidates;
     } catch (e) {
-      print('AnimeToshoSource: Search failed: $e');
+      debugPrint('AnimeToshoSource: Search failed: $e');
       return [];
     }
   }

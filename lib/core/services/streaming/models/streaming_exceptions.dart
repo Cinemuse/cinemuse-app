@@ -33,14 +33,6 @@ class NoResultsFoundException extends StreamingException {
   NoResultsFoundException() : super(message: "No results found across providers");
 }
 
-class DebridKeyNotSpecifiedException extends StreamingException {
-  final String debridName;
-  DebridKeyNotSpecifiedException(this.debridName) 
-    : super(
-        message: "$debridName key is not specified in settings",
-        metadata: {'debrid': debridName},
-      );
-}
 
 class StreamResolutionFailedException extends StreamingException {
   StreamResolutionFailedException(String details) 

@@ -6,7 +6,7 @@ import 'package:cinemuse_app/features/settings/presentation/widgets/setting_togg
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_input.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/settings_widgets.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
-import 'package:cinemuse_app/features/settings/presentation/widgets/provider_management_settings.dart';
+import 'package:cinemuse_app/features/settings/presentation/widgets/stremio_addon_settings.dart';
 
 class IdentitySettings extends ConsumerWidget {
   const IdentitySettings({super.key});
@@ -204,85 +204,11 @@ class IntegrationsSettings extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final userSettings = ref.watch(settingsProvider);
-    final settingsNotifier = ref.read(settingsProvider.notifier);
-
     return SettingsSection(
       title: l10n.settingsIntegrations,
       description: l10n.settingsIntegrationsDesc,
-      children: [
-        SettingsCard(
-          children: [
-            const Text(
-              "REAL-DEBRID",
-              style: TextStyle(
-                color: AppTheme.textMuted,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-            const SizedBox(height: 16),
-            SettingToggle(
-              label: l10n.settingsEnableRealDebrid,
-              description: l10n.settingsEnableRealDebridDesc,
-              value: userSettings.enableRealDebrid,
-              onChanged: (val) => settingsNotifier.updateSettings({'enableRealDebrid': val}),
-            ),
-            SettingInput(
-              label: l10n.settingsRealDebridKey,
-              value: userSettings.realDebridKey,
-              isPassword: true,
-              onSave: (val) => settingsNotifier.updateSettings({'realDebridKey': val}),
-            ),
-            const SizedBox(height: 16),
-            const Divider(color: Colors.white10),
-            const SizedBox(height: 16),
-            const Text(
-              "MEDIAFUSION",
-              style: TextStyle(
-                color: AppTheme.textMuted,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-            const SizedBox(height: 16),
-            SettingInput(
-              label: l10n.settingsMediafusionUrl,
-              description: l10n.settingsMediafusionUrlDesc,
-              value: userSettings.mediafusionUrl,
-              placeholder: l10n.settingsMediafusionHint,
-              isPassword: true,
-              onSave: (val) async {
-                try {
-                  await settingsNotifier.validateAndSaveMediafusionUrl(val);
-                } catch (e) {
-                  if (e == 'invalid_format') {
-                    throw l10n.settingsMediafusionInvalidFormat;
-                  } else if (e == 'unreachable') {
-                    throw l10n.settingsMediafusionUnreachable;
-                  } else if (e == 'invalid_manifest') {
-                    throw l10n.settingsMediafusionInvalidManifest;
-                  }
-                  rethrow;
-                }
-              },
-            ),
-          ],
-        ),
-        SettingsCard(
-          children: [
-            Text(
-              l10n.settingsProvidersTitle.toUpperCase(),
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-            const SizedBox(height: 24),
-            const ProviderManagementSettings(),
-          ],
-        ),
+      children: const [
+        StremioAddonSettings(),
       ],
     );
   }

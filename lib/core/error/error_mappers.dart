@@ -68,12 +68,6 @@ class StreamingErrorMapper implements BaseErrorMapper {
       if (error is NoResultsFoundException) {
         return UserFriendlyError(message: l10n.streamingErrorNoResults, type: AppExceptionType.streaming);
       }
-      if (error is DebridKeyNotSpecifiedException) {
-        return UserFriendlyError(
-          message: l10n.streamingErrorDebridKey(error.debridName),
-          type: AppExceptionType.streaming,
-        );
-      }
       if (error is MediaDetailsResolutionException) {
         return UserFriendlyError(message: l10n.streamingErrorMediaDetails, type: AppExceptionType.streaming);
       }
