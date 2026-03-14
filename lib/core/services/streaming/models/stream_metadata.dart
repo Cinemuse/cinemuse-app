@@ -48,6 +48,8 @@ enum ReleaseFlag {
   proper('PROPER'),
   repack('REPACK'),
   extended('EXTENDED'),
+  multi('MULTI'),
+  dual('DUAL'),
   none('None');
 
   final String label;

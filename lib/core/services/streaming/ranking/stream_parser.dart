@@ -33,6 +33,8 @@ class StreamParser {
     ReleaseFlag.proper: RegExp(r'\bproper\b', caseSensitive: false),
     ReleaseFlag.repack: RegExp(r'\brepack\b', caseSensitive: false),
     ReleaseFlag.extended: RegExp(r"extended(\.cut)?|director's\.cut", caseSensitive: false),
+    ReleaseFlag.multi: RegExp(r'multi', caseSensitive: false),
+    ReleaseFlag.dual: RegExp(r'dual', caseSensitive: false),
   };
 
   // --- Audio Patterns ---
@@ -91,16 +93,13 @@ class StreamParser {
   }
 
   static List<String> _parseLanguages(String title) {
-    final t = title.toLowerCase();
     final List<String> langs = [];
     
-    // Scene-style multi detection
-    if (t.contains('ita.eng') || t.contains('multi')) {
-      return ['ITA', 'ENG'];
-    }
+    final itaMatch = RegExp(r'\b(ita|italian)\b|🇮🇹', caseSensitive: false).hasMatch(title);
+    final engMatch = RegExp(r'\b(eng|english)\b|🇬🇧', caseSensitive: false).hasMatch(title);
 
-    if (t.contains('ita') || t.contains('italian') || t.contains('🇮🇹')) langs.add('ITA');
-    if (t.contains('eng') || t.contains('english') || t.contains('🇬🇧')) langs.add('ENG');
+    if (itaMatch) langs.add('ITA');
+    if (engMatch) langs.add('ENG');
     
     return langs;
   }

@@ -9,6 +9,7 @@ import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 
 class PlayerSettingsBottomSheet extends ConsumerWidget {
   final CinemaPlayerState state;
@@ -151,33 +152,9 @@ class _QualitySubtitle extends StatelessWidget {
     final currentStream = state.currentStream;
     if (currentStream == null) return const SizedBox.shrink();
     
-    final meta = currentStream.candidate.metadata;
-    
-    if (meta == null) {
-      return Text(
-        currentStream.candidate.title, 
-        style: const TextStyle(color: AppTheme.textMuted),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      );
-    }
-    
     return Padding(
-      padding: const EdgeInsets.only(top: 4.0),
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 4,
-        children: [
-          if (meta.video.resolution != VideoResolution.unknown) _Badge(text: meta.video.resolution.label, color: AppTheme.accent),
-          if (meta.size != null) _Badge(text: meta.size!, color: Colors.cyanAccent),
-          if (meta.video.is10Bit) _Badge(text: '10bit', color: Colors.blueGrey),
-          if (meta.video.isHDR) _Badge(text: 'HDR', color: Colors.blueGrey),
-          if (meta.video.isDV) _Badge(text: 'DV', color: Colors.blueGrey),
-          if (meta.video.codec != VideoCodec.unknown) _Badge(text: meta.video.codec.label, color: Colors.teal),
-          for (var a in meta.audio.formats) _Badge(text: a.label, color: Colors.deepPurpleAccent),
-          for (var l in meta.languages) _Badge(text: l, color: Colors.orange),
-        ],
-      ),
+      padding: const EdgeInsets.only(top: 8.0),
+      child: _StreamMetadataOverview(stream: currentStream.candidate),
     );
   }
 }
@@ -460,47 +437,23 @@ class _QualitySelectorState extends ConsumerState<_QualitySelector> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: Wrap(
-                                                spacing: 8,
-                                                runSpacing: 4,
-                                                crossAxisAlignment: WrapCrossAlignment.center,
-                                                children: [
-                                                  if (stream.isCached) _Badge(text: 'CACHED', color: Colors.greenAccent),
-                                                  if (meta is StreamMetadata) ...[
-                                                    if (meta.video.resolution != VideoResolution.unknown) 
-                                                      _Badge(text: meta.video.resolution.label, color: Colors.blueAccent),
-                                                    if (meta.size != null) 
-                                                      _Badge(text: meta.size!, color: Colors.cyanAccent),
-                                                    if (meta.video.isHDR) _Badge(text: 'HDR', color: Colors.orangeAccent),
-                                                    if (meta.video.isDV) _Badge(text: 'DV', color: Colors.orangeAccent),
-                                                    if (meta.video.is10Bit) _Badge(text: '10bit', color: Colors.orangeAccent),
-                                                    for (var l in meta.languages) _Badge(text: l, color: Colors.white70),
-                                                  ],
-                                                ],
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: _StreamMetadataOverview(stream: stream),
                                               ),
-                                            ),
-                                            if (isSelected) const Icon(Icons.check_circle_rounded, color: AppTheme.accent, size: 20),
-                                          ],
-                                        ),
+                                              if (isSelected) const Icon(Icons.check_circle_rounded, color: AppTheme.accent, size: 20),
+                                            ],
+                                          ),
                                         const SizedBox(height: 10),
                                         Text(
                                           stream.title,
                                           style: TextStyle(
-                                            color: isSelected ? Colors.white : AppTheme.textMuted, 
-                                            fontSize: 13, 
-                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                            color: isSelected ? Colors.white.withOpacity(0.9) : AppTheme.textMuted.withOpacity(0.6), 
+                                            fontSize: 11, 
+                                            fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
                                             height: 1.4,
                                           ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          stream.provider, 
-                                          style: TextStyle(color: AppTheme.textMuted.withAlpha(128), fontSize: 11, fontWeight: FontWeight.w500),
                                         ),
                                       ],
                                     ),
@@ -801,10 +754,80 @@ class _Badge extends StatelessWidget {
         style: TextStyle(
           color: color, 
           fontSize: 10, 
-          fontWeight: FontWeight.w800, 
+          fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
         ),
       ),
+    );
+  }
+}
+
+class _Label extends StatelessWidget {
+  final String text;
+  final Color? color;
+  const _Label({required this.text, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        color: color ?? AppTheme.textMuted.withOpacity(0.8),
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+}
+
+class _StreamMetadataOverview extends StatelessWidget {
+  final StreamCandidate stream;
+
+  const _StreamMetadataOverview({required this.stream});
+
+  @override
+  Widget build(BuildContext context) {
+    final meta = stream.metadata;
+    if (meta == null) {
+       return Text(
+        stream.title, 
+        style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            if (stream.isCached) const _Badge(text: 'CACHED', color: Colors.greenAccent),
+            if (meta.video.resolution != VideoResolution.unknown)
+              _Badge(text: meta.video.resolution.label, color: Colors.blueAccent),
+            if (meta.video.isHDR) const _Badge(text: 'HDR', color: Colors.orangeAccent),
+            if (meta.video.isDV) const _Badge(text: 'DV', color: Colors.orangeAccent),
+            if (meta.video.is10Bit) const _Badge(text: '10BIT', color: Colors.orangeAccent),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _Label(text: stream.provider, color: AppTheme.accent.withOpacity(0.9)),
+            if (meta.size != null) _Label(text: meta.size!, color: Colors.cyanAccent.withOpacity(0.8)),
+            ...meta.flags.where((f) => f != ReleaseFlag.none).map((f) => _Label(text: f.label, color: Colors.amberAccent.withOpacity(0.8))),
+            ...meta.audio.formats.map((a) => _Label(text: a.label, color: Colors.deepPurpleAccent.withOpacity(0.8))),
+            if (meta.languages.isNotEmpty) _Label(text: meta.languages.join(' • '), color: Colors.white70),
+          ],
+        ),
+      ],
     );
   }
 }
