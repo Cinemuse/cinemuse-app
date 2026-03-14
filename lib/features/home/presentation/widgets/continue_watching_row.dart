@@ -96,93 +96,190 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
   Widget build(BuildContext context) {
     final historyAsync = ref.watch(continueWatchingProvider);
 
-    return historyAsync.when(
-      data: (items) {
-        // Filter out locally pending removal
-        final effectiveItems = items.where((i) => i.tmdbId != _pendingRemoval?.tmdbId).toList();
-        
-        if (effectiveItems.isEmpty) return const SizedBox.shrink();
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 600),
+      switchInCurve: Curves.easeIn,
+      switchOutCurve: Curves.easeOut,
+      child: historyAsync.when(
+        data: (items) {
+          // Filter out locally pending removal
+          final effectiveItems = items.where((i) => i.tmdbId != _pendingRemoval?.tmdbId).toList();
+          
+          if (effectiveItems.isEmpty) return const SizedBox.shrink();
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                AppTheme.getResponsiveHorizontalPadding(context), 
-                24, 
-                AppTheme.getResponsiveHorizontalPadding(context), 
-                16
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    "Continue Watching",
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.chevron_right, color: AppTheme.textMuted),
-                ],
-              ),
-            ),
-            
-            SizedBox(
-              height: 200, // Height for card + text
-              child: ListView.separated(
-                clipBehavior: Clip.none,
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppTheme.getResponsiveHorizontalPadding(context)
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppTheme.getResponsiveHorizontalPadding(context), 
+                  24, 
+                  AppTheme.getResponsiveHorizontalPadding(context), 
+                  16
                 ),
-                scrollDirection: Axis.horizontal,
-                itemCount: effectiveItems.length,
-                separatorBuilder: (c, i) => const SizedBox(width: 16),
-                itemBuilder: (context, index) {
-                  final historyItem = effectiveItems[index];
-                  final media = historyItem.media;
-                  final title = media?.title ?? 'Unknown';
-                  final percentage = (historyItem.totalDuration != null && historyItem.totalDuration! > 0)
-                      ? (historyItem.progressSeconds / historyItem.totalDuration!)
-                      : 0.0;
-                  
-                  final backdrop = media?.backdropPath;
-                  
-                  return BackdropCard(
-                    title: title,
-                    backdropPath: backdrop,
-                    progress: percentage,
-                    infoText: historyItem.mediaType == MediaKind.tv 
-                              ? "S${historyItem.season} E${historyItem.episode}" 
-                              : "Movie",
-                    onTap: () {
-                       Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => MediaDetailsScreen(
-                          mediaId: historyItem.tmdbId.toString(), 
-                          mediaType: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
-                        ),
-                      ));
-                    },
-                    onRemove: () => _onRemove(historyItem),
-                  );
-                },
+                child: Row(
+                  children: [
+                    Text(
+                      "Continue Watching",
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.chevron_right, color: AppTheme.textMuted),
+                  ],
+                ),
               ),
+              
+              SizedBox(
+                height: 200, // Height for card + text
+                child: ListView.separated(
+                  clipBehavior: Clip.none,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppTheme.getResponsiveHorizontalPadding(context)
+                  ),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: effectiveItems.length,
+                  separatorBuilder: (c, i) => const SizedBox(width: 16),
+                  itemBuilder: (context, index) {
+                    final historyItem = effectiveItems[index];
+                    final media = historyItem.media;
+                    final title = media?.title ?? 'Unknown';
+                    final percentage = (historyItem.totalDuration != null && historyItem.totalDuration! > 0)
+                        ? (historyItem.progressSeconds / historyItem.totalDuration!)
+                        : 0.0;
+                    
+                    final backdrop = media?.backdropPath;
+                    
+                    return BackdropCard(
+                      title: title,
+                      backdropPath: backdrop,
+                      progress: percentage,
+                      infoText: historyItem.mediaType == MediaKind.tv 
+                                ? "S${historyItem.season} E${historyItem.episode}" 
+                                : "Movie",
+                      onTap: () {
+                         Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => MediaDetailsScreen(
+                            mediaId: historyItem.tmdbId.toString(), 
+                            mediaType: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+                          ),
+                        ));
+                      },
+                      onRemove: () => _onRemove(historyItem),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+        loading: () => const ContinueWatchingSkeleton(),
+        error: (e, s) {
+          final mapped = ref.read(errorMapperProvider).map(e);
+          return Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppTheme.getResponsiveHorizontalPadding(context),
+              vertical: 16,
             ),
-          ],
-        );
-      },
-      loading: () => const SizedBox.shrink(),
-      error: (e, s) {
-        final mapped = ref.read(errorMapperProvider).map(e);
-        return Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppTheme.getResponsiveHorizontalPadding(context),
-            vertical: 16,
+            child: ErrorCard(
+              message: mapped.message,
+              type: mapped.type,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class ContinueWatchingSkeleton extends StatelessWidget {
+  const ContinueWatchingSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final horizontalPadding = AppTheme.getResponsiveHorizontalPadding(context);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(horizontalPadding, 24, horizontalPadding, 16),
+          child: const _SkeletonBox(width: 180, height: 25),
+        ),
+        SizedBox(
+          height: 200,
+          child: ListView.separated(
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+            scrollDirection: Axis.horizontal,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 4,
+            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            itemBuilder: (_, __) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SkeletonBox(width: 280, height: 280 * (9/16)),
+                const SizedBox(height: 10),
+                const _SkeletonBox(width: 150, height: 16),
+              ],
+            ),
           ),
-          child: ErrorCard(
-            message: mapped.message,
-            type: mapped.type,
+        ),
+      ],
+    );
+  }
+}
+
+class _SkeletonBox extends StatefulWidget {
+  final double width;
+  final double height;
+  final double borderRadius;
+
+  const _SkeletonBox({
+    required this.width,
+    required this.height,
+    this.borderRadius = 8,
+  });
+
+  @override
+  State<_SkeletonBox> createState() => _SkeletonBoxState();
+}
+
+class _SkeletonBoxState extends State<_SkeletonBox> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _opacityAnimation = Tween<double>(begin: 0.05, end: 0.12).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _opacityAnimation,
+      builder: (context, child) {
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(_opacityAnimation.value),
+            borderRadius: BorderRadius.circular(widget.borderRadius),
           ),
         );
       },
