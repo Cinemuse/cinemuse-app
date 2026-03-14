@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cast/cast.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
@@ -39,12 +40,11 @@ class CastHandler {
       _castSession = await CastSessionManager().startSession(device);
       _mediaSessionId = null; // Reset for new session
       
-      // Listen for messages for debugging and session tracking
       _castSession!.messageStream.listen((message) {
-        if (message is! Map) return;
+        // Unnecessary type check removed (message is always Map)
         
         if (message['type'] == 'MEDIA_STATUS') {
-          print('CastHandler: Received MEDIA_STATUS: $message');
+          debugPrint('CastHandler: Received MEDIA_STATUS: $message');
           final statusList = message['status'] as List?;
           if (statusList != null && statusList.isNotEmpty) {
             final Map<String, dynamic> status = statusList[0];
@@ -53,7 +53,7 @@ class CastHandler {
             final mediaSessionId = status['mediaSessionId'];
             if (mediaSessionId != null && _mediaSessionId != mediaSessionId) {
               _mediaSessionId = mediaSessionId;
-              print('CastHandler: Media Session ID established/updated: $_mediaSessionId');
+              debugPrint('CastHandler: Media Session ID established/updated: $_mediaSessionId');
             }
 
             // 2. Update Playback State
@@ -78,14 +78,14 @@ class CastHandler {
             onStatusSync?.call(_isPlaying, _currentPosition, _duration);
           }
         } else if (message['type'] == 'RECEIVER_STATUS') {
-          print('CastHandler: Received RECEIVER_STATUS: $message');
+          debugPrint('CastHandler: Received RECEIVER_STATUS: $message');
           final status = message['status'];
           if (status != null && status['applications'] != null) {
             final apps = status['applications'] as List;
             for (final app in apps) {
               if (app['appId'] == _appId) {
                 _appSessionId = app['sessionId'];
-                print('CastHandler: Captured Application Session ID: $_appSessionId');
+                debugPrint('CastHandler: Captured Application Session ID: $_appSessionId');
               }
             }
           }
@@ -93,7 +93,7 @@ class CastHandler {
       });
 
       // 1. Launch the default media receiver
-      print('CastHandler: Launching Default Media Receiver (CC1AD845)');
+      debugPrint('CastHandler: Launching Default Media Receiver (CC1AD845)');
       _castSession!.sendMessage('urn:x-cast:com.google.cast.receiver', {
         'type': 'LAUNCH',
         'appId': _appId,
@@ -118,7 +118,7 @@ class CastHandler {
       onStreamResolved(resolvedStream);
 
       // Determine contentType with Sniffing
-      print('CastHandler: Sniffing MIME type for $urlToCasting');
+      debugPrint('CastHandler: Sniffing MIME type for $urlToCasting');
       String? sniffedType = await _sniffMimeType(urlToCasting);
       final contentType = _guessMimeType(urlToCasting, sniffedType ?? resolvedStream.mimeType);
 
@@ -140,7 +140,7 @@ class CastHandler {
         if (episode != null) mediaMetadata['episode'] = episode;
       }
 
-      print('CastHandler: Sending LOAD command for $urlToCasting ($contentType)');
+      debugPrint('CastHandler: Sending LOAD command for $urlToCasting ($contentType)');
 
       _castSession!.sendMessage('urn:x-cast:com.google.cast.media', {
         'type': 'LOAD',
@@ -155,7 +155,7 @@ class CastHandler {
         },
       });
 
-      print('CastHandler: Casting started to ${device.name}');
+      debugPrint('CastHandler: Casting started to ${device.name}');
 
       // 4. Proactively request status to confirm session ID if not received yet
       _requestStatus();
@@ -164,7 +164,7 @@ class CastHandler {
       _statusTimer?.cancel();
       _statusTimer = Timer.periodic(const Duration(seconds: 5), (_) => _requestStatus());
     } catch (e) {
-      print('CastHandler: Error starting cast: $e');
+      debugPrint('CastHandler: Error starting cast: $e');
       stopCasting();
       rethrow;
     }
@@ -172,7 +172,7 @@ class CastHandler {
 
   void pause() {
     if (_castSession == null || _mediaSessionId == null) return;
-    print('CastHandler: Pausing playback');
+    debugPrint('CastHandler: Pausing playback');
     _castSession!.sendMessage('urn:x-cast:com.google.cast.media', {
       'type': 'PAUSE',
       'mediaSessionId': _mediaSessionId,
@@ -182,7 +182,7 @@ class CastHandler {
 
   void play() {
     if (_castSession == null || _mediaSessionId == null) return;
-    print('CastHandler: Resuming playback');
+    debugPrint('CastHandler: Resuming playback');
     _castSession!.sendMessage('urn:x-cast:com.google.cast.media', {
       'type': 'PLAY',
       'mediaSessionId': _mediaSessionId,
@@ -192,7 +192,7 @@ class CastHandler {
 
   void seek(Duration position) {
     if (_castSession == null || _mediaSessionId == null) return;
-    print('CastHandler: Seeking to ${position.inSeconds}s');
+    debugPrint('CastHandler: Seeking to ${position.inSeconds}s');
     _castSession!.sendMessage('urn:x-cast:com.google.cast.media', {
       'type': 'SEEK',
       'mediaSessionId': _mediaSessionId,
@@ -206,7 +206,7 @@ class CastHandler {
     _statusTimer = null;
 
     if (_castSession != null) {
-      print('CastHandler: Stopping media and application session');
+      debugPrint('CastHandler: Stopping media and application session');
       try {
         // 1. Try to stop media playback context
         if (_mediaSessionId != null) {
@@ -229,11 +229,11 @@ class CastHandler {
         // Short delay to let messages flush before nulling the session
         await Future.delayed(const Duration(milliseconds: 1000));
       } catch (e) {
-        print('CastHandler: Error sending stop commands: $e');
+        debugPrint('CastHandler: Error sending stop commands: $e');
       }
     }
     
-    print('CastHandler: Disconnecting session and notifying exit');
+    debugPrint('CastHandler: Disconnecting session and notifying exit');
     _castSession = null;
     _mediaSessionId = null;
     _appSessionId = null;
@@ -314,13 +314,19 @@ class CastHandler {
       
       final contentType = response.headers.value('content-type');
       if (contentType != null) {
-        print('CastHandler: Sniffed Content-Type: $contentType');
+        debugPrint('CastHandler: Sniffed Content-Type: $contentType');
         // Clean up charset etc (video/mp4; charset=UTF-8 -> video/mp4)
         return contentType.split(';').first.trim();
       }
     } catch (e) {
-      print('CastHandler: Warning: MIME sniffing failed: $e');
+      debugPrint('CastHandler: Warning: MIME sniffing failed: $e');
     }
     return null;
   }
+  void dispose() {
+    _statusTimer?.cancel();
+    _statusTimer = null;
+    _castSession = null;
+  }
 }
+

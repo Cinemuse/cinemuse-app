@@ -79,7 +79,7 @@ class StremioSource implements BaseSource {
     }
 
     final type = context.type == 'tv' ? 'series' : context.type;
-    final baseId = context.strmiomdbId ?? context.imdbId ?? context.tmdbId;
+    final baseId = context.imdbId ?? context.tmdbId;
     final isEpisodeQuery = type == 'series' && context.season != null && context.episode != null;
     
     return (

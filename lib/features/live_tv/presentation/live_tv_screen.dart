@@ -1,18 +1,15 @@
 import 'dart:async';
-import 'dart:io' as io;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart' as mkv;
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_panel.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/live_player_section.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/epg_info_card.dart';
-import 'package:cinemuse_app/features/live_tv/presentation/widgets/number_input_osd.dart';
+import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
+import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 
 /// Main Live TV screen with side-list + player layout.
@@ -24,20 +21,12 @@ class LiveTvScreen extends ConsumerStatefulWidget {
 }
 
 class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
-  Player? _player;
-  mkv.VideoController? _videoController;
   Timer? _numberInputTimer;
-
-  String? _streamError;
-  bool _playerInitialized = false;
-
-  // Track subscriptions so they can be cancelled on dispose
-  final List<StreamSubscription> _subscriptions = [];
-
-  // Debounce rapid channel clicks — only the last one within 300ms fires
   Timer? _channelSwitchTimer;
-  // Generation counter to cancel stale async operations
-  int _playGeneration = 0;
+
+  // We use a constant PlayerParams for Live TV to keep the provider alive.
+  // The actual channel is swapped via `changeChannel`.
+  static const _liveTvParams = PlayerParams('livetv_session', 'livetv');
 
   @override
   void initState() {
@@ -45,45 +34,11 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     HardwareKeyboard.instance.addHandler(_handleKeyEvent);
   }
 
-  /// Initialize the player on demand (first visit to the tab).
-  void _initPlayer() {
-    if (_playerInitialized) return;
-    _playerInitialized = true;
-
-    _player = Player();
-    (_player!.platform as dynamic).setProperty('demuxer-max-bytes', '2M');
-    (_player!.platform as dynamic).setProperty('demuxer-readahead-secs', '3');
-    (_player!.platform as dynamic).setProperty('cache', 'yes');
-    (_player!.platform as dynamic).setProperty('cache-secs', '3');
-    _videoController = mkv.VideoController(
-      _player!,
-      configuration: mkv.VideoControllerConfiguration(
-        hwdec: io.Platform.isAndroid ? 'mediacodec' : 'auto',
-        vo: io.Platform.isAndroid ? 'gpu' : null,
-      ),
-    );
-
-    _subscriptions.add(_player!.stream.playing.listen((playing) {
-    }));
-    _subscriptions.add(_player!.stream.error.listen((error) {
-      if (mounted && error.contains('Failed to open')) {
-        setState(() => _streamError = error);
-      }
-    }));
-    _subscriptions.add(_player!.stream.buffering.listen((buffering) {
-    }));
-  }
-
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     _numberInputTimer?.cancel();
     _channelSwitchTimer?.cancel();
-    for (final sub in _subscriptions) {
-      sub.cancel();
-    }
-    _subscriptions.clear();
-    _player?.dispose();
     super.dispose();
   }
 
@@ -95,24 +50,11 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     });
   }
 
-  /// Channel switch with generation guard.
-  ///
-  /// Skips stop() — open() replaces the current media atomically inside mpv.
-  /// DASH streams are filtered out on Windows (see Channel.isPlayable) to
-  /// avoid a libmpv crash (github.com/media-kit/media-kit/issues/973).
   Future<void> _doPlayChannel(Channel channel) async {
-    if (!mounted || !_playerInitialized || _player == null) return;
-
-    final gen = ++_playGeneration;
-
-    setState(() => _streamError = null);
-
-    try {
-      await _player!.open(Media(channel.url));
-    } catch (e) {
-      // Silently handle open errors — the error stream listener
-      // will set _streamError for 'Failed to open' cases.
-    }
+    if (!mounted) return;
+    
+    // Delegate to the unified PlayerController
+    ref.read(playerControllerProvider(_liveTvParams).notifier).changeChannel(channel);
   }
 
   // -----------------------------------------------------------------------
@@ -226,14 +168,21 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     final numberBuffer = ref.watch(numberInputBufferProvider);
     final isMobile = MediaQuery.of(context).size.width < 600;
 
-    // React to channel selection changes
+    // Resolve the nav index FIRST so the listeners below can guard themselves.
+    final navIndex = ref.watch(navIndexProvider);
+    final isLiveTvTab = navIndex == 2;
+
+    // React to channel selection changes — only when the Live TV tab is active
+    // so we don't create the Player on other pages.
     ref.listen(selectedChannelProvider, (prev, next) {
-      if (next != null && next.lcn != prev?.lcn) {
+      if (isLiveTvTab && next != null && next.lcn != prev?.lcn) {
         _playChannel(next);
       }
     });
 
-    // Auto-select first channel when data loads
+    // Auto-select first channel when data loads.
+    // Intentionally does NOT call _playChannel here; the player isn't
+    // initialised yet. The build-time trigger below handles first-play.
     ref.listen(channelsProvider, (prev, next) {
       next.whenData((channels) {
         if (channels.isNotEmpty && ref.read(selectedChannelProvider) == null) {
@@ -242,33 +191,34 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
       });
     });
 
-    // Lazy init: create player only when Live TV tab is active
-    final navIndex = ref.watch(navIndexProvider);
-    if (navIndex == 2) {
-      final wasJustCreated = !_playerInitialized;
-      _initPlayer();
-      // If player was just created and a channel is already selected, open it
-      if (wasJustCreated && selectedChannel != null) {
-        _playChannel(selectedChannel);
-      } else if (!wasJustCreated && selectedChannel != null && _player?.state.playing == false) {
-        _player?.play();
+    AsyncValue<CinemaPlayerState>? playerState;
+    if (isLiveTvTab) {
+      final ps = ref.watch(playerControllerProvider(_liveTvParams));
+      playerState = ps;
+
+      // When the provider first becomes ready (no stream yet) and a channel is
+      // already selected, kick off playback in a post-frame callback so we
+      // don't call setState during build.
+      final stateValue = ps.valueOrNull;
+      if (selectedChannel != null && stateValue != null && stateValue.currentStream == null && !stateValue.isResolving) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _playChannel(selectedChannel);
+        });
       }
-    } else {
-      _player?.pause();
     }
 
     return Scaffold(
       backgroundColor: AppTheme.primary,
       body: isMobile
-          ? _buildMobileLayout(selectedChannel, numberBuffer)
-          : _buildDesktopLayout(selectedChannel, numberBuffer),
+          ? _buildMobileLayout(selectedChannel, numberBuffer, playerState)
+          : _buildDesktopLayout(selectedChannel, numberBuffer, playerState),
     );
   }
 
   // -----------------------------------------------------------------------
   // Desktop Layout
   // -----------------------------------------------------------------------
-  Widget _buildDesktopLayout(Channel? selectedChannel, String numberBuffer) {
+  Widget _buildDesktopLayout(Channel? selectedChannel, String numberBuffer, AsyncValue<CinemaPlayerState>? playerState) {
     const double padding = 20;
     const double epgHeight = 200;
     const double gap = 16;
@@ -297,10 +247,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
                         aspectRatio: 16 / 9,
                         child: LivePlayerSection(
                           channel: selectedChannel,
-                          player: selectedChannel != null ? _player : null,
-                          videoController:
-                              selectedChannel != null ? _videoController : null,
-                          streamError: _streamError,
+                          playerState: playerState,
                           onNumberInput: _handleNumberInput,
                           onConfirmNumber: _confirmNumberInput,
                           numberBuffer: numberBuffer,
@@ -325,7 +272,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
   // -----------------------------------------------------------------------
   // Mobile Layout
   // -----------------------------------------------------------------------
-  Widget _buildMobileLayout(Channel? selectedChannel, String numberBuffer) {
+  Widget _buildMobileLayout(Channel? selectedChannel, String numberBuffer, AsyncValue<CinemaPlayerState>? playerState) {
     return Column(
       children: [
         Padding(
@@ -334,10 +281,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
             aspectRatio: 16 / 9,
             child: LivePlayerSection(
               channel: selectedChannel,
-              player: selectedChannel != null ? _player : null,
-              videoController:
-                  selectedChannel != null ? _videoController : null,
-              streamError: _streamError,
+              playerState: playerState,
               onNumberInput: _handleNumberInput,
               onConfirmNumber: _confirmNumberInput,
               numberBuffer: numberBuffer,

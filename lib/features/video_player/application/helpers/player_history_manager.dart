@@ -5,6 +5,7 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class PlayerHistoryManager {
@@ -67,7 +68,7 @@ class PlayerHistoryManager {
         }
       }
     } catch (e) {
-      print("PlayerHistoryManager: Error saving progress: $e");
+      debugPrint('PlayerHistoryManager: Error saving progress: $e');
     }
   }
 }

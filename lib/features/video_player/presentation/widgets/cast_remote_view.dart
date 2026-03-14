@@ -1,4 +1,4 @@
-import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:flutter/material.dart';

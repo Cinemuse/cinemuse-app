@@ -9,13 +9,14 @@ import 'package:cinemuse_app/core/presentation/widgets/buffering_indicator.dart'
 import 'package:cinemuse_app/core/presentation/widgets/play_pause_overlay.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/number_input_osd.dart';
+import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 
 /// Full-featured controls overlay for the Live TV player.
 ///
-/// Matches the visual style of [CustomVideoControls] but operates directly
-/// on a media_kit [Player] instance without depending on VOD types.
+/// Matches the visual style of [CustomVideoControls] but operates on the
+/// unified [CinemaPlayerState].
 class LiveVideoControls extends StatefulWidget {
-  final Player player;
+  final CinemaPlayerState playerState;
   final Channel? channel;
   final mkv.VideoState videoState;
 
@@ -30,7 +31,7 @@ class LiveVideoControls extends StatefulWidget {
 
   const LiveVideoControls({
     super.key,
-    required this.player,
+    required this.playerState,
     required this.channel,
     required this.videoState,
     this.onNumberInput,
@@ -66,7 +67,7 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
   void _startHideTimer() {
     _hideTimer?.cancel();
     _hideTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted && widget.player.state.playing) {
+      if (mounted && widget.playerState.controller.player.state.playing) {
         setState(() => _visible = false);
       }
     });
@@ -82,7 +83,7 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
   // ---------------------------------------------------------------------------
 
   void _togglePlayPause() {
-    widget.player.playOrPause();
+    widget.playerState.controller.player.playOrPause();
     _onHover();
   }
 
@@ -104,9 +105,9 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
   }
 
   void _seekToLive() {
-    final duration = widget.player.state.duration;
+    final duration = widget.playerState.controller.player.state.duration;
     if (duration > Duration.zero) {
-      widget.player.seek(duration);
+      widget.playerState.controller.player.seek(duration);
     }
     _onHover();
   }
@@ -127,23 +128,23 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
       _volumeKey.currentState?.toggleMute();
       _onHover();
     } else if (key == LogicalKeyboardKey.arrowUp) {
-      final vol = widget.player.state.volume;
-      widget.player.setVolume((vol + 10).clamp(0, 100));
+      final vol = widget.playerState.controller.player.state.volume;
+      widget.playerState.controller.player.setVolume((vol + 10).clamp(0, 100));
       _onHover();
     } else if (key == LogicalKeyboardKey.arrowDown) {
-      final vol = widget.player.state.volume;
-      widget.player.setVolume((vol - 10).clamp(0, 100));
+      final vol = widget.playerState.controller.player.state.volume;
+      widget.playerState.controller.player.setVolume((vol - 10).clamp(0, 100));
       _onHover();
     } else if (key == LogicalKeyboardKey.arrowRight) {
-      final pos = widget.player.state.position;
-      final dur = widget.player.state.duration;
+      final pos = widget.playerState.controller.player.state.position;
+      final dur = widget.playerState.controller.player.state.duration;
       if (dur > Duration.zero) {
-        widget.player.seek(Duration(seconds: (pos.inSeconds + 10).clamp(0, dur.inSeconds)));
+        widget.playerState.controller.player.seek(Duration(seconds: (pos.inSeconds + 10).clamp(0, dur.inSeconds)));
       }
       _onHover();
     } else if (key == LogicalKeyboardKey.arrowLeft) {
-      final pos = widget.player.state.position;
-      widget.player.seek(Duration(seconds: (pos.inSeconds - 10).clamp(0, pos.inSeconds)));
+      final pos = widget.playerState.controller.player.state.position;
+      widget.playerState.controller.player.seek(Duration(seconds: (pos.inSeconds - 10).clamp(0, pos.inSeconds)));
       _onHover();
     } else if (key == LogicalKeyboardKey.escape) {
       if (_isFullscreen()) {
@@ -193,7 +194,7 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
           child: Stack(
             children: [
               // Buffering indicator (always visible)
-              BufferingIndicator(player: widget.player),
+              BufferingIndicator(player: widget.playerState.controller.player),
 
               // Controls layer
               AnimatedOpacity(
@@ -212,7 +213,7 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
                       ),
 
                       // Play/Pause center overlay
-                      PlayPauseOverlay(player: widget.player, visible: _visible),
+                      PlayPauseOverlay(player: widget.playerState.controller.player, visible: _visible),
 
                       // Bottom bar
                       Positioned(
@@ -318,10 +319,10 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
   /// jittering as duration grows every second.
   Widget _buildSeekBar() {
     return StreamBuilder<Duration>(
-      stream: widget.player.stream.position,
+      stream: widget.playerState.controller.player.stream.position,
       builder: (context, snapshot) {
         final position = snapshot.data ?? Duration.zero;
-        final duration = widget.player.state.duration;
+        final duration = widget.playerState.controller.player.state.duration;
         final maxSecs = duration.inSeconds.toDouble();
 
         if (maxSecs <= 0) return const SizedBox.shrink();
@@ -347,7 +348,7 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
                   value: effectivePos,
                   min: 0,
                   max: maxSecs,
-                  onChanged: (v) => widget.player.seek(Duration(seconds: v.toInt())),
+                  onChanged: (v) => widget.playerState.controller.player.seek(Duration(seconds: v.toInt())),
                 ),
               ),
             ),
@@ -373,8 +374,8 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
       children: [
         // Play/Pause
         StreamBuilder<bool>(
-          stream: widget.player.stream.playing,
-          initialData: widget.player.state.playing,
+          stream: widget.playerState.controller.player.stream.playing,
+          initialData: widget.playerState.controller.player.state.playing,
           builder: (context, snapshot) {
             final isPlaying = snapshot.data ?? false;
             return IconButton(
@@ -388,10 +389,10 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
           },
         ),
         // Volume
-        VolumeControl(key: _volumeKey, player: widget.player),
+        VolumeControl(key: _volumeKey, player: widget.playerState.controller.player),
         const SizedBox(width: 8),
         // LIVE pill
-        _LivePill(player: widget.player, onTap: _seekToLive),
+        _LivePill(player: widget.playerState.controller.player, onTap: _seekToLive),
         const Spacer(),
         // Fullscreen
         FullscreenButton(

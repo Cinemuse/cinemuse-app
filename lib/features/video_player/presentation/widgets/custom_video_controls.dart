@@ -5,7 +5,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 
 import 'dart:async';
 import 'dart:ui';
-import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/video_top_bar.dart';

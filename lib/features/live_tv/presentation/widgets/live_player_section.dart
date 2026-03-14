@@ -1,18 +1,19 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:media_kit/media_kit.dart';
+
 import 'package:media_kit_video/media_kit_video.dart' as mkv;
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/live_video_controls.dart';
 
+import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 /// The live video player section with custom controls overlay.
 class LivePlayerSection extends StatelessWidget {
   final Channel? channel;
-  final Player? player;
-  final mkv.VideoController? videoController;
-  final String? streamError;
+  final AsyncValue<CinemaPlayerState>? playerState;
   final ValueChanged<String>? onNumberInput;
   final VoidCallback? onConfirmNumber;
   final String numberBuffer;
@@ -20,9 +21,7 @@ class LivePlayerSection extends StatelessWidget {
   const LivePlayerSection({
     super.key,
     this.channel,
-    this.player,
-    this.videoController,
-    this.streamError,
+    this.playerState,
     this.onNumberInput,
     this.onConfirmNumber,
     this.numberBuffer = '',
@@ -42,22 +41,34 @@ class LivePlayerSection extends StatelessWidget {
             color: Colors.white.withOpacity(0.08),
           ),
         ),
-        child: streamError != null
-            ? _buildErrorState(l10n)
-            : videoController != null && player != null
-                ? mkv.Video(
-                    controller: videoController!,
+        child: playerState == null
+            ? _buildPlaceholder(l10n)
+            : playerState!.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, st) => _buildErrorState(l10n, e.toString()),
+                data: (state) {
+                  if (state.isResolving || state.currentStream == null) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (state.error != null) {
+                     return _buildErrorState(l10n, state.error!);
+                  }
+
+                  return mkv.Video(
+                    controller: state.controller,
                     filterQuality: FilterQuality.none,
                     controls: (videoState) => LiveVideoControls(
-                      player: player!,
+                      playerState: state,
                       channel: channel,
                       videoState: videoState,
                       onNumberInput: onNumberInput,
                       onConfirmNumber: onConfirmNumber,
                       numberBuffer: numberBuffer,
                     ),
-                  )
-                : _buildPlaceholder(l10n),
+                  );
+                },
+              ),
       ),
     );
   }
@@ -92,7 +103,7 @@ class LivePlayerSection extends StatelessWidget {
     );
   }
 
-  Widget _buildErrorState(AppLocalizations l10n) {
+  Widget _buildErrorState(AppLocalizations l10n, String error) {
     return Container(
       color: AppTheme.surface.withOpacity(0.8),
       child: Center(
@@ -117,7 +128,9 @@ class LivePlayerSection extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Text(
-                'This channel may be geo-restricted or temporarily offline.',
+                error.contains('Failed to open') 
+                  ? 'This channel may be geo-restricted or temporarily offline.'
+                  : error,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppTheme.textMuted,

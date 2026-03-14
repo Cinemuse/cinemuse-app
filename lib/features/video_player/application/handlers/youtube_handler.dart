@@ -1,13 +1,16 @@
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:media_kit/media_kit.dart';
 import 'package:cinemuse_app/core/services/video/youtube_service.dart';
+import 'package:flutter/foundation.dart';
 
 class YoutubeHandler {
   final YoutubeService _ytService;
   String? _localAudioPath;
 
   YoutubeHandler(this._ytService);
+
+  YoutubeService get service => _ytService;
+
 
   void cleanup() {
     if (_localAudioPath != null) {
@@ -31,7 +34,7 @@ class YoutubeHandler {
       _localAudioPath = resultPath;
       return resultPath;
     } catch (e) {
-      print('YoutubeHandler: Error downloading audio: $e');
+      debugPrint('YoutubeHandler: Error downloading audio: $e');
       return null;
     }
   }

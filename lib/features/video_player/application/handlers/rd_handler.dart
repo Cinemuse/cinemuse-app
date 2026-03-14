@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
+import 'package:flutter/foundation.dart';
 
 class RdHandler {
   final UnifiedStreamResolver _resolver;
@@ -26,9 +27,11 @@ class RdHandler {
         return streamData;
       }
     } catch (e) {
-      print('RdHandler: Resolve failed: $e');
+      debugPrint('RdHandler: Resolve failed: $e');
     }
 
     return null;
   }
+
+  void dispose() {}
 }

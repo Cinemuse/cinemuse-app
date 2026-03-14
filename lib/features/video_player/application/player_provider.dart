@@ -4,31 +4,32 @@ import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/core/services/video/youtube_service.dart';
-import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
-import 'package:cinemuse_app/core/constants/playback_constants.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
-import 'package:cinemuse_app/features/media/application/details_provider.dart';
-import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
+import 'package:cinemuse_app/features/video_player/application/handlers/vod_source_handler.dart';
+import 'package:flutter/foundation.dart';
 
 
 import 'package:cast/cast.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:cinemuse_app/features/video_player/application/managers/playback_manager.dart';
+import 'package:cinemuse_app/features/video_player/application/managers/event_manager.dart';
+import 'package:cinemuse_app/features/video_player/application/managers/track_manager.dart';
+import 'package:cinemuse_app/features/video_player/application/managers/initialization_manager.dart';
 import 'package:cinemuse_app/features/video_player/application/handlers/youtube_handler.dart';
 import 'package:cinemuse_app/features/video_player/application/handlers/rd_handler.dart';
 import 'package:cinemuse_app/features/video_player/application/handlers/cast_handler.dart';
-import 'package:cinemuse_app/features/video_player/application/language_mapper.dart';
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
 import 'package:cinemuse_app/features/video_player/application/helpers/player_history_manager.dart';
 import 'package:cinemuse_app/features/video_player/application/helpers/player_progress_tracker.dart';
-import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 
 // Convert back to StateNotifierProvider for compatibility/simplicity
 final playerControllerProvider = StateNotifierProvider.family.autoDispose<PlayerController, AsyncValue<CinemaPlayerState>, PlayerParams>(
@@ -46,13 +47,15 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   late final CastHandler _castHandler;
   
   Map<String, dynamic>? _mediaDetails;
-  late int _initialPosition;
   bool _isCompletionLogged = false;
   PlayerHistoryManager? _historyManager;
   PlayerProgressTracker? _progressTracker;
+  TrackManager? _trackManager;
+  EventManager? _eventManager;
+  PlaybackManager? _playbackManager;
+  InitializationManager? _initializationManager;
 
   PlayerController(this.ref, this.params) : super(const AsyncValue.loading()) {
-    _initialPosition = params.startPosition;
     
     // Initialize Handlers
     _youtubeHandler = YoutubeHandler(ref.read(youtubeServiceProvider));
@@ -76,306 +79,268 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   @override
   void dispose() {
     _saveProgress(force: true);
+    _eventManager?.dispose();
     _progressTracker?.dispose();
+    _trackManager?.dispose();
     _player?.dispose();
     _youtubeHandler.dispose();
+    _rdHandler.dispose();
+    _castHandler.dispose();
     super.dispose();
   }
 
   Future<void> _initialize() async {
     try {
+      _setupMediaEngine();
+      _initializeManagers();
+      _setupProgressTracking();
+
       if (params.type == 'youtube') {
-        final ytService = ref.read(youtubeServiceProvider);
-        final streams = await ytService.getStreamQualities(params.queryId);
-        
-        if (streams.isEmpty) {
-          throw Exception("Could not resolve YouTube streams");
-        }
-
-        // Sort by quality (highest first)
-        // YouTube labels like 1080p, 720p, 480p, 360p
-        // Sort by resolution (highest first)
-        // Sort order to prioritize stability:
-        // 1. HLS (Adaptive, Single Source) - Best
-        // 2. Muxed (Single Source) - Reliable Fallback
-        // 3. Separate A/V (High Res) - Manual Selection Only (can be unstable)
-        streams.sort((a, b) {
-           if (a['isHls'] == true) return -1;
-           if (b['isHls'] == true) return 1;
-           
-           // If neither is HLS, prefer Muxed over Separate
-           // We identify separate streams by checking if they have an 'audioUrl' key
-           // Muxed streams do NOT have 'audioUrl' in our current logic (or we can add a flag)
-           // Actually, let's use the fact that video-only streams have 'audioUrl'
-           final aIsSeparate = a.containsKey('audioUrl');
-           final bIsSeparate = b.containsKey('audioUrl');
-           
-           if (!aIsSeparate && bIsSeparate) return -1; // a is Muxed (better default)
-           if (aIsSeparate && !bIsSeparate) return 1;  // b is Muxed (better default)
-
-           return (b['res'] as int) - (a['res'] as int);
-        });
-
-        print('YT-DEBUG: Sorted qualities for playback: ${streams.map((s) => s['title']).toList()}');
-
-        // Initial selection: Highest available but preferably not higher than 1080p for stability
-        // HLS (1080p) or 1080p MP4 is preferred. 4K is allowed if manually selected later.
-        final initialStream = streams.firstWhere(
-          (s) => (s['res'] as int) <= 1080, 
-          orElse: () => streams.first
-        );
-        
-        print('YT-DEBUG: Initial Stream Selected: ${initialStream['title']} URL: ${initialStream['url']}');
-
-        if (_player == null) {
-          _player = Player();
-          _controller = VideoController(
-            _player!,
-            configuration: VideoControllerConfiguration(
-              vo: io.Platform.isAndroid ? 'gpu' : null,
-            ),
-          );
-          
-          _applyEnginePreferences();
-          
-          // Add debug listeners
-          _player!.stream.error.listen((event) { 
-            print('YT-DEBUG: Player Error: $event'); 
-          });
-          _player!.stream.log.listen((event) {
-             if (event.level == 'error' || event.level == 'warn') {
-               print('YT-DEBUG: Player Log: ${event.prefix} ${event.level} ${event.text}');
-             }
-          });
-        }
-
-        String? localAudioPath;
-        if (initialStream['needsAudio'] == true) {
-          localAudioPath = await _youtubeHandler.downloadAudioToTempFile();
-        }
-
-        await _player!.open(
-          Media(initialStream['url'], httpHeaders: _youtubeHandler.youtubeHeaders),
-          play: false,
-        );
-        
-        if (localAudioPath != null) {
-          print('YT-DEBUG: Setting Audio Track from local file: $localAudioPath');
-          await _player!.setAudioTrack(AudioTrack.uri(localAudioPath));
-        }
-
-        await _player!.play();
-        
-        final youtubeCandidates = streams.map((s) => StreamCandidate(
-          title: s['title'] ?? 'YouTube Stream',
-          infoHash: s['url'], // Use URL as hash for uniqueness
-          magnet: s['url'],
-          provider: 'YouTube',
-          metadata: StreamMetadata.empty().copyWithCustom(s),
-        )).toList();
-
-        final initialCandidate = youtubeCandidates.firstWhere(
-          (c) => c.infoHash == initialStream['url'],
-          orElse: () => youtubeCandidates.first,
-        );
-
-        final resolvedInitial = ResolvedStream(
-          url: initialStream['url'],
-          provider: 'YouTube',
-          candidate: initialCandidate,
-        );
-
-        if (mounted) {
-          state = AsyncValue.data(CinemaPlayerState(
-            controller: _controller!,
-            availableStreams: youtubeCandidates,
-            currentStream: resolvedInitial,
-            title: initialStream['title'] ?? 'YouTube Video',
-          ));
-        }
+        await _handleYouTubeInitialization();
+        return;
+      } else if (params.type == 'livetv') {
+        await _handleLiveTvInitialization();
         return;
       }
 
-      // Rest of the existing RD logic...
-      // 0. Get Settings
-      // 0. Get Settings (Wait for init)
-      var settings = ref.read(settingsProvider);
-      int settingsAttempts = 0;
-      
-      // Poll for valid settings if RD is disabled (handling async init of SettingsNotifier)
-      while (!settings.enableRealDebrid && settingsAttempts < 10) {
-        await Future.delayed(const Duration(milliseconds: 200));
-        settings = ref.read(settingsProvider);
-        settingsAttempts++;
-      }
-      
-      if (!settings.enableRealDebrid) {
-        throw Exception("Real-Debrid is disabled in settings (or failed to load)");
-      }
-      
-      final rdKey = settings.realDebridKey;
-      if (rdKey.isEmpty) {
-        throw Exception("Real-Debrid API Key is missing. Please check your settings.");
-      }
+      await _handleVodInitialization();
+    } catch (e, st) {
+      _handleInitializationError(e, st);
+    }
+  }
 
-      final resolver = ref.read(unifiedStreamResolverProvider);
-      final tmdbService = ref.read(tmdbServiceProvider);
-      
-      // 1. Fetch Media Details (for history)
-      _mediaDetails = await tmdbService.getMediaDetails(params.queryId, params.type);
-      _historyManager = PlayerHistoryManager(ref, params, _mediaDetails);
-      
-      if (_player == null) {
-        _player = Player();
-        _controller = VideoController(
-          _player!,
-          configuration: VideoControllerConfiguration(
-            hwdec: io.Platform.isAndroid ? 'mediacodec' : 'auto',
-            vo: io.Platform.isAndroid ? 'gpu' : null,
-          ),
-        );
-        _applyEnginePreferences();
-        
-        _progressTracker = PlayerProgressTracker(
-          player: _player!,
-          onProgress: (pos, dur) => _saveProgress(),
-        )..start();
-      }
+  void _setupMediaEngine() {
+    if (_player != null) return;
+    
+    _player = Player();
+    _controller = VideoController(
+      _player!,
+      configuration: VideoControllerConfiguration(
+        hwdec: io.Platform.isAndroid ? 'mediacodec' : 'auto',
+        vo: io.Platform.isAndroid ? 'gpu' : null,
+      ),
+    );
 
+    try {
+      (_player!.platform as dynamic).setProperty('log-level', 'no');
+    } catch (_) {}
+  }
+
+  void _initializeManagers() {
+    _trackManager = TrackManager(ref: ref, player: _player!);
+    _applyTrackPreferences();
+
+    _eventManager = EventManager(
+      ref: ref,
+      player: _player!,
+      onStateChanged: () => _triggerStateUpdate(),
+      onError: (err) => _handlePlayerError(err),
+      onCompleted: () => _handlePlaybackCompleted(),
+    );
+    _eventManager!.initialize();
+
+    _playbackManager = PlaybackManager(
+      ref: ref, 
+      player: _player!,
+      castHandler: _castHandler,
+      isCasting: () => state.value?.isCasting ?? false,
+    );
+
+    _initializationManager = InitializationManager(
+      ref: ref,
+      player: _player!,
+      youtubeHandler: _youtubeHandler,
+      rdHandler: _rdHandler,
+      resolver: ref.read(unifiedStreamResolverProvider),
+      tmdbService: ref.read(tmdbServiceProvider),
+    );
+  }
+
+  void _setupProgressTracking() {
+    _progressTracker = PlayerProgressTracker(
+      player: _player!,
+      onProgress: (pos, dur) => _saveProgress(),
+    )..start();
+
+    if (mounted) {
+      state = AsyncValue.data(CinemaPlayerState(
+        controller: _controller!,
+        availableStreams: const [],
+        currentStream: null,
+        title: params.episodeTitle ?? params.queryId,
+        isResolving: true,
+      ));
+    }
+  }
+
+  Future<void> _handleYouTubeInitialization() async {
+    final result = await _initializationManager!.initializeYouTube(params);
+    if (mounted) {
+      state = AsyncValue.data(CinemaPlayerState(
+        controller: _controller!,
+        availableStreams: result.candidates,
+        currentStream: result.resolvedStream,
+        title: result.title,
+      ));
+    }
+  }
+
+  Future<void> _handleVodInitialization() async {
+    final vodResult = await _initializationManager!.initializeVod(
+      params, 
+      onStatusUpdate: _onProviderStatusUpdate,
+      onMediaDetailsFetched: _onMediaDetailsFetched,
+    );
+
+    await _performPostInitialization(vodResult);
+  }
+
+  Future<void> _handleLiveTvInitialization() async {
+    // Set up a bare "ready-but-idle" initial state.
+    // LiveTvScreen's build method detects `currentStream == null && !isResolving`
+    // and immediately calls `changeChannel` for the currently selected channel.
+    if (mounted) {
+      state = AsyncValue.data(CinemaPlayerState(
+        controller: _controller!,
+        availableStreams: const [],
+        currentStream: null,
+        title: params.episodeTitle ?? 'Live TV',
+        isResolving: false,
+      ));
+    }
+  }
+
+  Future<void> changeChannel(Channel channel) async {
+    if (_player == null || _initializationManager == null) return;
+    
+    // Set resolving state to show loading spinner
+    if (mounted) {
+      state = AsyncValue.data(state.valueOrNull?.copyWith(
+        title: channel.name,
+        isResolving: true,
+        currentStream: null,
+        error: null,
+      ) ?? CinemaPlayerState(
+        controller: _controller!,
+        availableStreams: const [],
+        currentStream: null,
+        title: channel.name,
+        isResolving: true,
+      ));
+    }
+
+    try {
+      final result = await _initializationManager!.initializeLiveTv(channel);
+      
       if (mounted) {
-        state = AsyncValue.data(CinemaPlayerState(
-          controller: _controller!,
-          availableStreams: const [],
-          currentStream: null,
-          title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? 'Unknown',
-          isResolving: true,
-          providerStatuses: const [],
-        ));
-      }
-      
-      // 2. Search streams
-      final candidates = await resolver.searchStreams(
-        params.queryId, 
-        params.type, 
-        season: params.season, 
-        episode: params.episode,
-        onStatusUpdate: (statuses) {
-          if (mounted) {
-            final currentState = state.valueOrNull;
-            if (currentState != null) {
-              state = AsyncValue.data(currentState.copyWith(providerStatuses: statuses));
-            }
-          }
-        }
-      );
-
-      if (candidates.isEmpty) {
-        throw Exception("No streams found");
-      }
-
-      // 3 & 4. Iterate over candidates and resolve the first working stream
-      ResolvedStream? resolvedStream;
-      StreamCandidate? initialCandidate;
-
-      for (var candidate in candidates) {
-        try {
-          resolvedStream = await resolver.resolveStream(
-            candidate,
-            season: params.season,
-            episode: params.episode,
-          );
-
-          if (resolvedStream != null) {
-            initialCandidate = candidate;
-            break; // Successfully resolved!
-          }
-        } catch (e) {
-          print('PlayerController: Failed to resolve candidate ${candidate.title} (Provider: ${candidate.provider}): $e');
-          // Continue to the next candidate
-        }
-      }
-
-      if (resolvedStream == null || initialCandidate == null) {
-        throw Exception("All streams failed to resolve. Please try a different provider or quality.");
-      }
-
-      // 4.5 Ensure media is cached (Natural retrieval point)
-      final repo = ref.read(watchHistoryRepositoryProvider);
-      
-      // Cache the main media (Movie or TV show)
-      final mainMediaItem = MediaItem(
-        tmdbId: int.parse(params.queryId),
-        mediaType: params.type == 'movie' ? MediaKind.movie : MediaKind.tv,
-        title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? ref.read(localizationsProvider).commonUnknown,
-        posterPath: _mediaDetails?['poster_path'],
-        backdropPath: _mediaDetails?['backdrop_path'],
-        releaseDate: DateTime.tryParse(_mediaDetails?['release_date'] ?? _mediaDetails?['first_air_date'] ?? ''),
-        updatedAt: DateTime.now(),
-      );
-
-      print('Opening media: ${resolvedStream.url}');
-      await _player!.open(Media(resolvedStream.url), play: true);
-      
-      // Reactive preference check (backup for custom names)
-      unawaited(_ensurePreferredTrack());
-      
-      if (params.startPosition > 0) {
-        // Wait for usage duration to be available
-        await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
-        await _player!.seek(Duration(seconds: params.startPosition));
-      }
-
-      // 6. Calculate Next Episode using Domain Service
-      NextEpisodeInfo? nextEpisode;
-      if (params.type == 'tv' && params.season != null && params.episode != null && _mediaDetails != null) {
-        final result = ref.read(seriesDomainServiceProvider).getNextEpisode(
-          _mediaDetails!, 
-          params.season!, 
-          params.episode!,
-        );
-        
-        if (result.isAired) {
-          nextEpisode = result.next;
-          
-          // If we have a next episode, we still might want to fetch its title
-          // though the service doesn't fetch it to keep it synchronous and pure.
-          // We can enrich it here if needed, but for the button visibility, this is enough.
-          if (nextEpisode != null) {
-            final nextSeason = nextEpisode.season;
-            final nextEpNum = nextEpisode.episode;
-            
-            final seasonDetails = await tmdbService.getSeasonDetails(int.parse(params.queryId), nextSeason);
-            final episodes = seasonDetails?['episodes'] as List? ?? [];
-            final nextEpData = episodes.firstWhere(
-              (e) => e['episode_number'] == nextEpNum,
-              orElse: () => null,
-            );
-            
-            if (nextEpData != null) {
-              nextEpisode = NextEpisodeInfo(
-                season: nextSeason, 
-                episode: nextEpNum,
-                title: nextEpData['name'],
-              );
-            }
-          }
-        }
-      }
-
-      if (mounted) {
-        state = AsyncValue.data(CinemaPlayerState(
-          controller: _controller!,
-          availableStreams: candidates,
-          currentStream: resolvedStream,
-          title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? ref.read(localizationsProvider).commonUnknown,
-          nextEpisode: nextEpisode,
+        state = AsyncValue.data(state.value!.copyWith(
+          currentStream: result.resolvedStream,
+          isResolving: false,
+          error: null,
         ));
       }
     } catch (e, st) {
-      if (mounted) {
-        final mapped = ref.read(errorMapperProvider).map(e);
-        state = AsyncValue.error(mapped.message, st);
+      _handleInitializationError(e, st);
+    }
+  }
+
+  void _onProviderStatusUpdate(List<ProviderSearchStatus> statuses) {
+    if (!mounted) return;
+    final currentState = state.valueOrNull;
+    if (currentState != null) {
+      state = AsyncValue.data(currentState.copyWith(providerStatuses: statuses));
+    }
+  }
+
+  void _onMediaDetailsFetched(Map<String, dynamic>? details) {
+    _mediaDetails = details;
+    _historyManager = PlayerHistoryManager(ref, params, details);
+    
+    if (mounted) {
+      final currentState = state.valueOrNull;
+      if (currentState != null) {
+        state = AsyncValue.data(currentState.copyWith(
+          title: details?['title'] ?? details?['name'] ?? currentState.title,
+        ));
       }
+    }
+  }
+
+  Future<void> _performPostInitialization(VodInitializationResult vodResult) async {
+    await _ensureMediaCached();
+    unawaited(_trackManager?.ensurePreferredTrack() ?? Future.value());
+    await _handleInitialSeek();
+    final nextEpisode = await _calculateNextEpisode();
+
+    if (mounted) {
+      state = AsyncValue.data(CinemaPlayerState(
+        controller: _controller!,
+        availableStreams: vodResult.candidates,
+        currentStream: vodResult.resolvedStream,
+        title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? ref.read(localizationsProvider).commonUnknown,
+        nextEpisode: nextEpisode,
+        providerStatuses: state.valueOrNull?.providerStatuses ?? const [],
+      ));
+    }
+  }
+
+  Future<void> _ensureMediaCached() async {
+    final repo = ref.read(watchHistoryRepositoryProvider);
+    final mainMediaItem = MediaItem(
+      tmdbId: int.parse(params.queryId),
+      mediaType: params.type == 'movie' ? MediaKind.movie : MediaKind.tv,
+      title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? ref.read(localizationsProvider).commonUnknown,
+      posterPath: _mediaDetails?['poster_path'],
+      backdropPath: _mediaDetails?['backdrop_path'],
+      releaseDate: DateTime.tryParse(_mediaDetails?['release_date'] ?? _mediaDetails?['first_air_date'] ?? ''),
+      updatedAt: DateTime.now(),
+    );
+    await repo.ensureMediaCached(mainMediaItem);
+  }
+
+  Future<void> _handleInitialSeek() async {
+    if (params.startPosition > 0) {
+      await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
+      await _player!.seek(Duration(seconds: params.startPosition));
+    }
+  }
+
+  Future<NextEpisodeInfo?> _calculateNextEpisode() async {
+    if (params.type != 'tv' || params.season == null || params.episode == null || _mediaDetails == null) {
+      return null;
+    }
+
+    final nextEpResult = ref.read(seriesDomainServiceProvider).getNextEpisode(
+      _mediaDetails!, 
+      params.season!, 
+      params.episode!,
+    );
+    
+    if (!nextEpResult.isAired) return null;
+
+    NextEpisodeInfo? next = nextEpResult.next;
+    if (next != null) {
+      final seasonDetails = await ref.read(tmdbServiceProvider).getSeasonDetails(int.parse(params.queryId), next.season);
+      final episodes = seasonDetails?['episodes'] as List? ?? [];
+      final nextEpData = episodes.firstWhere(
+        (e) => e['episode_number'] == next?.episode,
+        orElse: () => null,
+      );
+      if (nextEpData != null) {
+        next = NextEpisodeInfo(
+          season: next.season, 
+          episode: next.episode,
+          title: nextEpData['name'],
+        );
+      }
+    }
+    return next;
+  }
+
+  void _handleInitializationError(dynamic e, StackTrace st) {
+    if (mounted) {
+      final mapped = ref.read(errorMapperProvider).map(e);
+      state = AsyncValue.error(mapped.message, st);
     }
   }
 
@@ -398,71 +363,54 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
     state = AsyncValue.data(state.value!.copyWith(isResolving: true, error: null));
     
-    print('PlayerController: changeSource requested for ${candidate.title} (Provider: ${candidate.provider})');
-
     try {
-       final resolvedStream = await _rdHandler.resolveAndMerge(
-         candidate,
-         season: params.season,
-         episode: params.episode,
-         absoluteEpisode: candidate.absoluteEpisode,
-       );
+        final position = _player!.state.position;
+        final resolvedStream = await _rdHandler.resolveAndMerge(
+          candidate,
+          season: params.season,
+          episode: params.episode,
+          absoluteEpisode: candidate.absoluteEpisode,
+        );
 
-       final latestState = state.value;
-       if (latestState == null) return;
-
-       if (resolvedStream != null) {
-          final position = _player!.state.position;
-          
+        if (resolvedStream != null) {
           if (candidate.provider == 'YouTube') {
             final meta = candidate.metadata;
-             String? localAudioPath;
-             if (meta?.custom?['needsAudio'] == true) {
-               localAudioPath = await _youtubeHandler.downloadAudioToTempFile();
-             } else {
-               _youtubeHandler.cleanup();
-             }
+            String? localAudioPath;
+            if (meta?.custom?['needsAudio'] == true) {
+              localAudioPath = await _youtubeHandler.downloadAudioToTempFile();
+            }
 
-             await _player!.open(
-               Media(resolvedStream.url, httpHeaders: _youtubeHandler.youtubeHeaders),
-               play: false,
-             );
-             
-             if (localAudioPath != null) {
-               await _player!.setAudioTrack(AudioTrack.uri(localAudioPath));
-             }
-             
-             final newDuration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
-             final seekTo = position.inSeconds < newDuration.inSeconds ? position : Duration(seconds: newDuration.inSeconds - 2);
-             
-             await _player!.seek(seekTo.isNegative ? Duration.zero : seekTo);
-             await _player!.play();
+            await _player!.open(
+              Media(resolvedStream.url, httpHeaders: _youtubeHandler.youtubeHeaders),
+              play: false,
+            );
+            if (localAudioPath != null) {
+              await _player!.setAudioTrack(AudioTrack.uri(localAudioPath));
+            }
           } else {
-            print('PlayerController: Opening new resolved URL: ${resolvedStream.url}');
-            await _player!.open(Media(resolvedStream.url), play: true);
-            unawaited(_ensurePreferredTrack());
-            
-            final newDuration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
-            final seekTo = position.inSeconds < newDuration.inSeconds ? position : Duration(seconds: newDuration.inSeconds - 2);
-            
-            await _player!.seek(seekTo.isNegative ? Duration.zero : seekTo);
+            await _player!.open(Media(resolvedStream.url), play: false);
+            unawaited(_trackManager?.ensurePreferredTrack() ?? Future.value());
           }
 
-          state = AsyncValue.data(state.value!.copyWith(
-            currentStream: resolvedStream,
-            isResolving: false,
-            error: null,
-          ));
-       } else {
-         print('PlayerController: Resolution failed (returned null)');
-         state = AsyncValue.data(state.value!.copyWith(
-           isResolving: false,
-           error: ref.read(localizationsProvider).streamingErrorResolutionFailed,
-         ));
-       }
+          final newDuration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
+          final seekTo = position.inSeconds < newDuration.inSeconds ? position : Duration(seconds: newDuration.inSeconds - 2);
+          
+          await _player!.seek(seekTo.isNegative ? Duration.zero : seekTo);
+          await _player!.play();
+
+          if (mounted) {
+            state = AsyncValue.data(state.value!.copyWith(
+              currentStream: resolvedStream,
+              isResolving: false,
+              error: null,
+            ));
+          }
+        } else {
+          throw Exception(ref.read(localizationsProvider).streamingErrorResolutionFailed);
+        }
     } catch (e) {
-      print("Error changing source: $e");
-      if (state.value != null) {
+      debugPrint("PlayerController: Error changing source: $e");
+      if (mounted && state.value != null) {
         state = AsyncValue.data(state.value!.copyWith(
           isResolving: false,
           error: ref.read(errorMapperProvider).map(e).message,
@@ -486,14 +434,14 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         selectedCastDevice: device,
       ));
 
-      await _castHandler.startCasting(
+      await _playbackManager?.startCasting(
         device, 
         state.value!.currentStream!.candidate, 
         state.value!.title, 
         _player?.state.position ?? Duration.zero,
         (ResolvedStream resolvedStream) {
-           // We can update state here if needed, but startCasting already sets isCasting: true
-           print('PlayerController: Cast stream resolved: ${resolvedStream.url}');
+           // We can update state here if needed
+           debugPrint('PlayerController: Cast stream resolved: ${resolvedStream.url}');
         },
         season: params.season,
         episode: params.episode,
@@ -502,7 +450,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
       _player?.pause();
     } catch (e) {
-      print('PlayerController: Error starting cast: $e');
+      debugPrint('PlayerController: Error starting cast: $e');
       stopCasting();
     }
   }
@@ -513,18 +461,15 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     state = AsyncValue.data(state.value!.copyWith(isResolving: true, error: null));
 
     try {
-      print('PlayerController: Changing file to $fileId');
       final resolvedStream = await _rdHandler.resolveAndMerge(
         state.value!.currentStream!.candidate,
         absoluteEpisode: state.value!.currentStream!.candidate.absoluteEpisode,
         fileId: fileId,
       );
       
-      print('PlayerController: Resolved stream for file change: ${resolvedStream != null}');
-
       if (resolvedStream != null) {
         await _player!.open(Media(resolvedStream.url), play: true);
-        unawaited(_ensurePreferredTrack());
+        unawaited(_trackManager?.ensurePreferredTrack() ?? Future.value());
         
         state = AsyncValue.data(state.value!.copyWith(
           currentStream: resolvedStream,
@@ -538,7 +483,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         ));
       }
     } catch (e) {
-      print("Error changing file: $e");
+      debugPrint("Error changing file: $e");
       if (state.value != null) {
         state = AsyncValue.data(state.value!.copyWith(
           isResolving: false,
@@ -548,28 +493,17 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     }
   }
 
+
   Future<void> pause() async {
-    if (state.value?.isCasting == true) {
-      _castHandler.pause();
-    } else {
-      _player?.pause();
-    }
+    await _playbackManager?.pause();
   }
 
   Future<void> play() async {
-    if (state.value?.isCasting == true) {
-      _castHandler.play();
-    } else {
-      _player?.play();
-    }
+    await _playbackManager?.play();
   }
 
   Future<void> seek(Duration position) async {
-    if (state.value?.isCasting == true) {
-      _castHandler.seek(position);
-    } else {
-      await _player?.seek(position);
-    }
+    await _playbackManager?.seek(position);
   }
 
   Future<void> stopCasting() async {
@@ -587,94 +521,28 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     _player?.play();
   }
 
-  void _applyEnginePreferences() {
-    if (_player == null) return;
-    final lang = ref.read(settingsProvider).playerLanguage.toLowerCase();
-    if (lang.isEmpty) return;
+  Future<void> _handlePlaybackCompleted() async {
+    // 1. Initial log
+    await _saveProgress(force: true);
+    
+    // 2. Logic for next episode or auto-play can go here
+    debugPrint('PlayerController: Playback finished. Ready for next actions.');
+  }
 
-    final langCodes = LanguageMapper.getCodes(lang);
-    final codesJoined = langCodes.join(',');
-
-    try {
-      // Set engine properties for instant matching (if codes are in metadata)
-      (_player!.platform as dynamic).setProperty('alang', codesJoined);
-      (_player!.platform as dynamic).setProperty('slang', codesJoined);
-      print('PlayerController: Set engine preferences: $codesJoined');
-    } catch (e) {
-      print('PlayerController: Error setting engine props: $e');
+  void _handlePlayerError(String error) {
+    if (mounted) {
+      state = AsyncValue.error(error, StackTrace.current);
     }
   }
 
-  /// Backup logic for custom names (e.g. "English [Crunchyroll]")
-  Future<void> _ensurePreferredTrack() async {
-    if (_player == null) return;
-    final lang = ref.read(settingsProvider).playerLanguage.toLowerCase();
-    if (lang.isEmpty) return;
-
-    try {
-       // Wait short time for tracks to appear stabilizer
-       await Future.delayed(const Duration(milliseconds: 500));
-       await _player!.stream.tracks.firstWhere((t) => t.audio.isNotEmpty)
-           .timeout(const Duration(seconds: 3));
-           
-       // Second small delay to ensure metadata (titles/langs) are parsed
-       await Future.delayed(const Duration(milliseconds: 200));
-           
-       final tracks = _player!.state.tracks;
-       
-       // 1. Audio Check
-       bool audioMatched = false;
-       for (var track in tracks.audio) {
-         if (track.id == 'auto' || track.id == 'no') continue;
-         if (LanguageMapper.isMatch(track, lang)) {
-           print('PlayerController: Explicitly Selecting Audio Match: ${track.title} [${track.id}]');
-           await _player!.setAudioTrack(track);
-           audioMatched = true;
-           break;
-         }
-       }
-
-       // If no match found and we are on 'auto', force the first real track for determinism
-       if (!audioMatched && _player!.state.track.audio.id == 'auto') {
-         final firstReal = tracks.audio.firstWhere((t) => t.id != 'auto' && t.id != 'no', orElse: () => _player!.state.track.audio);
-         if (firstReal.id != 'auto') {
-           print('PlayerController: No match, falling back to first audio track: ${firstReal.title}');
-           await _player!.setAudioTrack(firstReal);
-         }
-       }
-
-       // 2. Subtitle Check
-       bool subtitleMatched = false;
-       for (var track in tracks.subtitle) {
-         if (track.id == 'auto' || track.id == 'no') continue;
-         if (LanguageMapper.isMatch(track, lang)) {
-           print('PlayerController: Direct Match Subtitle: ${track.title}');
-           await _player!.setSubtitleTrack(track);
-           subtitleMatched = true;
-           break;
-         }
-       }
-       
-       // Fallback for subtitles if on 'auto' but no match
-       if (!subtitleMatched && _player!.state.track.subtitle.id == 'auto') {
-         // Subtitles usually default to 'no' if no match, which is fine
-         // But let's be explicit if it's stuck on 'auto'
-          final firstReal = tracks.subtitle.firstWhere((t) => t.id != 'auto' && t.id != 'no', orElse: () => _player!.state.track.subtitle);
-          if (firstReal.id != 'auto') {
-             print('PlayerController: No match, falling back to first subtitle: ${firstReal.title}');
-             await _player!.setSubtitleTrack(firstReal);
-          }
-       }
-    } catch (_) {
-      // Timeout or no tracks, ignore
+  void _triggerStateUpdate() {
+    if (mounted && state.hasValue) {
+      // Logic to trigger a rebuild of the StateNotifier
+      state = AsyncValue.data(state.value!);
     }
   }
 
-  bool _isLangMatch(dynamic track, String lang) {
-    return LanguageMapper.isMatch(track, lang);
-  }
-
-  List<String> _getLanguageCodes(String lang) {
-    return LanguageMapper.getCodes(lang);
+  void _applyTrackPreferences() {
+    _trackManager?.applyEnginePreferences();
   }
 }
