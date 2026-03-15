@@ -23,6 +23,8 @@ import 'package:cinemuse_app/core/presentation/intents.dart';
 import 'package:cinemuse_app/core/presentation/widgets/offline_error_screen.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:window_manager/window_manager.dart';
+import 'dart:io';
 
 void main() {
   Chain.capture(() async {
@@ -46,6 +48,25 @@ void main() {
       url: SupabaseConfig.url,
       anonKey: SupabaseConfig.anonKey,
     );
+
+    if (Platform.isWindows) {
+      await windowManager.ensureInitialized();
+      
+      const windowOptions = WindowOptions(
+        size: Size(1280, 720),
+        minimumSize: Size(800, 600),
+        center: true,
+        backgroundColor: Colors.transparent,
+        skipTaskbar: false,
+        titleBarStyle: TitleBarStyle.hidden,
+        title: 'Cinemuse',
+      );
+
+      await windowManager.waitUntilReadyToShow(windowOptions, () async {
+        await windowManager.show();
+        await windowManager.focus();
+      });
+    }
     
     // Custom error handling for Flutter errors to use terse stack traces
     FlutterError.onError = (details) {

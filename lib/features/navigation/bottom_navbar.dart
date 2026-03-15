@@ -92,13 +92,14 @@ class _BottomNavItem extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+              Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: isSelected ? AppTheme.accent.withOpacity(0.1) : Colors.transparent,

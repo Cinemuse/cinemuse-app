@@ -155,12 +155,13 @@ class VideoPlayerScreen extends ConsumerWidget {
           return Center(
             child: Video(
               controller: state.controller,
-              filterQuality: FilterQuality.none,
+              filterQuality: FilterQuality.low,
               controls: (videoState) => CustomVideoControls(
                 videoState: videoState,
                 playerState: state,
                 params: params,
                 onSettingsPressed: () => PlayerSettingsBottomSheet.show(context, state, params),
+                onBackPressed: () => Navigator.of(context).pop(),
                 onNextEpisode: state.nextEpisode != null ? () {
                   final next = state.nextEpisode!;
                   Navigator.of(context).pushReplacement(

@@ -5,6 +5,8 @@ import 'package:media_kit_video/media_kit_video.dart';
 
 import 'dart:async';
 import 'dart:ui';
+import 'dart:io';
+import 'package:window_manager/window_manager.dart';
 
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
@@ -21,6 +23,7 @@ class CustomVideoControls extends ConsumerStatefulWidget {
   final CinemaPlayerState playerState;
   final PlayerParams params;
   final VoidCallback onSettingsPressed;
+  final VoidCallback onBackPressed;
   final VoidCallback? onNextEpisode;
 
   const CustomVideoControls({
@@ -29,6 +32,7 @@ class CustomVideoControls extends ConsumerStatefulWidget {
     required this.playerState,
     required this.params,
     required this.onSettingsPressed,
+    required this.onBackPressed,
     this.onNextEpisode,
   });
 
@@ -115,13 +119,35 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     }
   }
 
-  void _toggleFullscreen() {
-    if (_isFullscreenSafe()) {
-      widget.videoState.exitFullscreen();
+  Future<void> _toggleFullscreen() async {
+    if (Platform.isWindows) {
+      final isFull = await windowManager.isFullScreen();
+      await windowManager.setFullScreen(!isFull);
+      // Stabilization delay to prevent video freeze on Windows
+      await Future.delayed(const Duration(milliseconds: 150));
     } else {
-      widget.videoState.enterFullscreen();
+      if (_isFullscreenSafe()) {
+        widget.videoState.exitFullscreen();
+      } else {
+        widget.videoState.enterFullscreen();
+      }
     }
-    setState(() {});
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _handleBack() async {
+    if (Platform.isWindows) {
+      if (await windowManager.isFullScreen()) {
+        // Trigger exit fullscreen and navigation simultaneously for snappier feel
+        windowManager.setFullScreen(false);
+      }
+    } else if (_isFullscreenSafe()) {
+      widget.videoState.exitFullscreen();
+    }
+    
+    if (mounted) {
+      widget.onBackPressed();
+    }
   }
 
   void _handleKeyEvent(KeyEvent event) {
@@ -160,10 +186,10 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
         _onHover();
       } else if (key == LogicalKeyboardKey.keyM) {
         _toggleMute();
-      } else if (key == LogicalKeyboardKey.keyF) {
+      } else if (key == LogicalKeyboardKey.keyF || key == LogicalKeyboardKey.f11) {
         _toggleFullscreen();
       } else if (key == LogicalKeyboardKey.escape) {
-        Navigator.of(context).pop();
+        _handleBack();
       } else if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.numpadEnter) {
         final pos = player.state.position.inSeconds;
         final dur = player.state.duration.inSeconds;
@@ -280,7 +306,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                         params: widget.params,
                         onSettingsPressed: widget.onSettingsPressed,
                         onCastPressed: () => _handleCastPressed(context),
-                        onBackPressed: () => Navigator.of(context).pop(),
+                        onBackPressed: _handleBack,
                       ),
                     ),
 
