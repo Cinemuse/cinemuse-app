@@ -1,3 +1,4 @@
+import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,13 +31,15 @@ void main() {
   Chain.capture(() async {
     setupSqlite();
     WidgetsFlutterBinding.ensureInitialized();
-    await initializeDateFormatting();
-    MediaKit.ensureInitialized();
-    
-    await dotenv.load(fileName: ".env");
+    // Parallelize independent initializations
+    await Future.wait([
+      initializeDateFormatting(),
+      dotenv.load(fileName: ".env"),
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+      if (io.Platform.isWindows) windowManager.ensureInitialized(),
+    ]);
 
-    // Hide status bar and system navigation for immersive experience
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    // System configurations
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       systemNavigationBarColor: Colors.transparent,
@@ -44,14 +47,13 @@ void main() {
       systemNavigationBarIconBrightness: Brightness.light,
     ));
 
+    // Depends on dotenv being loaded
     await Supabase.initialize(
       url: SupabaseConfig.url,
       anonKey: SupabaseConfig.anonKey,
     );
 
-    if (Platform.isWindows) {
-      await windowManager.ensureInitialized();
-      
+    if (io.Platform.isWindows) {
       const windowOptions = WindowOptions(
         size: Size(1280, 720),
         minimumSize: Size(800, 600),
