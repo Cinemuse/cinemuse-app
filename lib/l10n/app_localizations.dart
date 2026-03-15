@@ -1142,6 +1142,24 @@ abstract class AppLocalizations {
   /// **'Addon installed successfully'**
   String get settingsAddonSuccess;
 
+  /// No description provided for @settingsCopiedToClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'URL copied to clipboard'**
+  String get settingsCopiedToClipboard;
+
+  /// No description provided for @settingsCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy URL'**
+  String get settingsCopy;
+
+  /// No description provided for @settingsRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get settingsRemove;
+
   /// No description provided for @settingsNativeIntegrations.
   ///
   /// In en, this message translates to:
@@ -1379,13 +1397,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsSmartSearch.
   ///
   /// In en, this message translates to:
-  /// **'Smart Search Filter'**
+  /// **'Clean Stream Results'**
   String get settingsSmartSearch;
 
   /// No description provided for @settingsSmartSearchDesc.
   ///
   /// In en, this message translates to:
-  /// **'Intelligently filter search results.'**
+  /// **'Automatically hide items like CAM, Screener, 3D, or junk from addon results.'**
   String get settingsSmartSearchDesc;
 
   /// No description provided for @settingsTotalDocSize.

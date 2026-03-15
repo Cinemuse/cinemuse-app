@@ -19,23 +19,36 @@ class SettingsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                  color: AppTheme.accent,
+                ),
+              ),
+              if (description != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  description!,
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
-        if (description != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            description!,
-            style: const TextStyle(color: AppTheme.textMuted),
-          ),
-        ],
-        const SizedBox(height: 32),
+        const SizedBox(height: 16),
         ...children,
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -61,14 +74,116 @@ class SettingsCard extends StatelessWidget {
       padding: padding,
       margin: margin,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white10),
+        color: AppTheme.surface.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16), // Increased from 12 for a smoother look
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
         crossAxisAlignment: crossAxisAlignment,
         children: children,
       ),
+    );
+  }
+}
+
+class SettingsTile extends StatelessWidget {
+  final String label;
+  final String? description;
+  final IconData? icon;
+  final Widget? leading;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final bool showDivider;
+
+  const SettingsTile({
+    super.key,
+    required this.label,
+    this.description,
+    this.icon,
+    this.leading,
+    this.trailing,
+    this.onTap,
+    this.showDivider = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      child: Row(
+        children: [
+          if (leading != null || icon != null) ...[
+            Container(
+              width: 40,
+              height: 40,
+              padding: leading != null ? EdgeInsets.zero : const EdgeInsets.all(8),
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: leading ?? (icon != null ? Icon(icon, size: 20, color: Colors.white70) : null),
+            ),
+            const SizedBox(width: 16),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                  ),
+                ),
+                if (description != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    description!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (trailing != null) ...[
+            const SizedBox(width: 16),
+            trailing!,
+          ],
+          if (onTap != null && trailing == null) ...[
+            const SizedBox(width: 16),
+            const Icon(Icons.chevron_right, color: AppTheme.textMuted, size: 20),
+          ],
+        ],
+      ),
+    );
+
+    return Column(
+      children: [
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16), // Increased from 8 to match card
+            child: content,
+          ),
+        ),
+        if (showDivider)
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: Colors.white.withOpacity(0.05),
+            indent: icon != null ? 52 : 0,
+          ),
+      ],
     );
   }
 }
@@ -94,7 +209,7 @@ class SettingsLanguageButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? AppTheme.accent : Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(16), // Standardized to 16
         ),
         child: Text(
           label,
@@ -191,10 +306,11 @@ class SettingsDropdown<T> extends StatelessWidget {
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
+          height: 40,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white10),
+            color: Colors.white.withOpacity(0.07),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<T>(
@@ -202,8 +318,11 @@ class SettingsDropdown<T> extends StatelessWidget {
               items: items,
               onChanged: onChanged,
               dropdownColor: AppTheme.secondary,
+              borderRadius: BorderRadius.circular(16),
+              isDense: true,
+              alignment: Alignment.center,
               icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textMuted),
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
             ),
           ),
         ),

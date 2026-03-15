@@ -578,6 +578,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsAddonSuccess => 'Addon installato con successo';
 
   @override
+  String get settingsCopiedToClipboard => 'URL copiato negli appunti';
+
+  @override
+  String get settingsCopy => 'Copia URL';
+
+  @override
+  String get settingsRemove => 'Rimuovi';
+
+  @override
   String get settingsNativeIntegrations => 'Provider Nativi';
 
   @override
@@ -706,11 +715,11 @@ class AppLocalizationsIt extends AppLocalizations {
       'Visualizza informazioni tecniche in sovrimpressione.';
 
   @override
-  String get settingsSmartSearch => 'Filtro Ricerca Intelligente';
+  String get settingsSmartSearch => 'Pulizia Risultati Streaming';
 
   @override
   String get settingsSmartSearchDesc =>
-      'Filtra i risultati di ricerca in modo intelligente.';
+      'Nasconde automaticamente CAM, Screener, versioni 3D o link spazzatura dai risultati degli addon.';
 
   @override
   String get settingsTotalDocSize => 'Dimensione Totale Documenti';

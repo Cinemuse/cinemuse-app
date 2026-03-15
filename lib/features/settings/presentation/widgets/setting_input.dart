@@ -3,7 +3,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class SettingInput extends StatefulWidget {
-  final String label;
+  final String? label;
   final String? description;
   final String value;
   final String placeholder;
@@ -12,7 +12,7 @@ class SettingInput extends StatefulWidget {
 
   const SettingInput({
     super.key,
-    required this.label,
+    this.label,
     this.description,
     required this.value,
     this.placeholder = '',
@@ -104,18 +104,89 @@ class _SettingInputState extends State<SettingInput> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.white10),
+    final input = Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _controller,
+            obscureText: _isObscured,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: widget.placeholder,
+              filled: true,
+              fillColor: Colors.black.withOpacity(0.3),
+              suffixIcon: widget.isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        _isObscured ? Icons.visibility_off : Icons.visibility,
+                        color: AppTheme.textMuted,
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isObscured = !_isObscured;
+                        });
+                      },
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppTheme.accent),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
         ),
-      ),
+        const SizedBox(width: 12),
+        SizedBox(
+          height: 48,
+          child: ElevatedButton.icon(
+            onPressed: (_isDirty && !_isSaving) ? _handleSave : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _isDirty && !_isSaving ? Colors.white : Colors.white.withOpacity(0.05),
+              foregroundColor: _isDirty && !_isSaving ? Colors.black : Colors.grey,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 0,
+            ),
+            icon: _isSaving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                  )
+                : _showSuccess
+                    ? const Icon(Icons.check, size: 18, color: Colors.green)
+                    : const Icon(Icons.save, size: 18),
+            label: Text(
+              _isSaving
+                  ? ''
+                  : _showSuccess
+                      ? l10n.settingsSaved
+                      : l10n.settingsSave,
+            ),
+          ),
+        ),
+      ],
+    );
+
+    if (widget.label == null) return input;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.label,
+            widget.label!,
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w500,
@@ -133,75 +204,7 @@ class _SettingInputState extends State<SettingInput> {
             ),
           ],
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  obscureText: _isObscured,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: widget.placeholder,
-                    filled: true,
-                    fillColor: Colors.black.withOpacity(0.3),
-                    suffixIcon: widget.isPassword
-                        ? IconButton(
-                            icon: Icon(
-                              _isObscured ? Icons.visibility_off : Icons.visibility,
-                              color: AppTheme.textMuted,
-                              size: 20,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isObscured = !_isObscured;
-                              });
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppTheme.accent),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: (_isDirty && !_isSaving) ? _handleSave : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _isDirty && !_isSaving ? Colors.white : Colors.white.withOpacity(0.05),
-                  foregroundColor: _isDirty && !_isSaving ? Colors.black : Colors.grey,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20), // Match height roughly
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : _showSuccess
-                        ? const Icon(Icons.check, size: 18, color: Colors.green)
-                        : const Icon(Icons.save, size: 18),
-                label: Text(
-                  _isSaving
-                      ? ''
-                      : _showSuccess
-                          ? l10n.settingsSaved
-                          : l10n.settingsSave,
-                ),
-              ),
-            ],
-          ),
+          input,
         ],
       ),
     );

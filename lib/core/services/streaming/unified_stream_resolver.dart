@@ -213,12 +213,14 @@ class UnifiedStreamResolver {
       }
       var candidates = uniqueMap.values.toList();
 
-      // 5. Filter out junk
-      candidates = candidates.where((c) {
-        final t = c.title.toLowerCase();
-        return !(t.contains('cam') || t.contains(' ts ') || t.contains('hdcam') || 
-                 t.contains('screener') || t.contains(' scr ') || t.contains(' 3d ') || t.contains('sbs'));
-      }).toList();
+      // 5. Filter out junk if smart search is enabled
+      if (_settings.smartSearchFilter) {
+        candidates = candidates.where((c) {
+          final t = c.title.toLowerCase();
+          return !(t.contains('cam') || t.contains(' ts ') || t.contains('hdcam') || 
+                   t.contains('screener') || t.contains(' scr ') || t.contains(' 3d ') || t.contains('sbs'));
+        }).toList();
+      }
 
       // 6. Rank and Sort
       final preferredLanguage = (context.isAnime && _settings.splitAnimePreferences) 

@@ -575,6 +575,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAddonSuccess => 'Addon installed successfully';
 
   @override
+  String get settingsCopiedToClipboard => 'URL copied to clipboard';
+
+  @override
+  String get settingsCopy => 'Copy URL';
+
+  @override
+  String get settingsRemove => 'Remove';
+
+  @override
   String get settingsNativeIntegrations => 'Native Providers';
 
   @override
@@ -701,10 +710,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsShowDebugPanelDesc => 'Display technical details overlay.';
 
   @override
-  String get settingsSmartSearch => 'Smart Search Filter';
+  String get settingsSmartSearch => 'Clean Stream Results';
 
   @override
-  String get settingsSmartSearchDesc => 'Intelligently filter search results.';
+  String get settingsSmartSearchDesc =>
+      'Automatically hide items like CAM, Screener, 3D, or junk from addon results.';
 
   @override
   String get settingsTotalDocSize => 'Total Document Size';

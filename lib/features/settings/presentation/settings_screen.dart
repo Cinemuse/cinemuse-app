@@ -30,9 +30,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     Widget buildSidebar() {
       return Container(
         width: isMobile ? double.infinity : 320,
-        decoration: const BoxDecoration(
-          color: AppTheme.surface,
-          border: Border(right: BorderSide(color: Colors.white10)),
+        decoration: BoxDecoration(
+          color: AppTheme.surface.withOpacity(0.8),
+          border: const Border(right: BorderSide(color: Colors.white10)),
         ),
         child: Column(
           children: [
@@ -155,9 +155,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               : Container(
                   margin: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: AppTheme.surface.withOpacity(0.5),
+                    color: Colors.white.withOpacity(0.01),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white10),
+                    border: Border.all(color: Colors.white.withOpacity(0.05)),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Row(

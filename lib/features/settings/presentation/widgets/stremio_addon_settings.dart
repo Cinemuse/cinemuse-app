@@ -1,9 +1,11 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/settings_widgets.dart';
+import 'package:cinemuse_app/features/settings/presentation/widgets/setting_toggle.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class StremioAddonSettings extends ConsumerStatefulWidget {
@@ -16,6 +18,7 @@ class StremioAddonSettings extends ConsumerStatefulWidget {
 class _StremioAddonSettingsState extends ConsumerState<StremioAddonSettings> {
   final _urlController = TextEditingController();
   bool _isLoading = false;
+  bool _showApiKey = false;
   String? _error;
 
   @override
@@ -60,318 +63,309 @@ class _StremioAddonSettingsState extends ConsumerState<StremioAddonSettings> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Debrid Services
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 12),
-          child: Text(
-            l10n.settingsDebridServices.toUpperCase(),
-            style: const TextStyle(
-              color: AppTheme.textMuted,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        SettingsCard(
-          margin: const EdgeInsets.only(bottom: 24),
+        SettingsSection(
+          title: l10n.settingsDebridServices,
           children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.blueAccent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(LucideIcons.hardDrive, color: Colors.blueAccent, size: 20),
-              ),
-              title: Text(
-                l10n.settingsRealDebridTitle,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                l10n.settingsRealDebridKeyDesc,
-                style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
-              ),
-              trailing: Switch(
-                value: settings.enableRealDebrid,
-                onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
-                  'enableRealDebrid': val,
-                }),
-                activeColor: AppTheme.accent,
-              ),
-            ),
-            if (settings.enableRealDebrid) ...[
-              const SizedBox(height: 16),
-              TextField(
-                controller: TextEditingController(text: settings.realDebridKey),
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: l10n.settingsRealDebridKey,
-                  labelStyle: const TextStyle(color: AppTheme.textMuted),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.05),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+            SettingsCard(
+              children: [
+                SettingsTile(
+                  label: l10n.settingsRealDebridTitle,
+                  description: l10n.settingsRealDebridKeyDesc,
+                  icon: LucideIcons.hardDrive,
+                  trailing: SettingToggle(
+                    value: settings.enableRealDebrid,
+                    onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
+                      'enableRealDebrid': val,
+                    }),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
-                onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
-                  'realDebridKey': val,
-                }),
-              ),
-            ],
+                if (settings.enableRealDebrid)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: TextField(
+                      controller: TextEditingController(text: settings.realDebridKey),
+                      style: const TextStyle(color: Colors.white),
+                      obscureText: !_showApiKey,
+                      decoration: InputDecoration(
+                        labelText: l10n.settingsRealDebridKey,
+                        labelStyle: const TextStyle(color: AppTheme.textMuted),
+                        filled: true,
+                        fillColor: Colors.black.withOpacity(0.3),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppTheme.accent),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _showApiKey ? LucideIcons.eye : LucideIcons.eyeOff,
+                            color: AppTheme.textMuted,
+                            size: 20,
+                          ),
+                          onPressed: () => setState(() => _showApiKey = !_showApiKey),
+                        ),
+                      ),
+                      onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
+                        'realDebridKey': val,
+                      }),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
 
         // Native Providers
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 12),
-          child: Text(
-            l10n.settingsNativeIntegrations.toUpperCase(),
-            style: const TextStyle(
-              color: AppTheme.textMuted,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        SettingsCard(
-          margin: const EdgeInsets.only(bottom: 24),
+        SettingsSection(
+          title: l10n.settingsNativeIntegrations,
           children: [
-            Builder(
-              builder: (context) {
-                final isDebridActive = settings.enableRealDebrid && settings.realDebridKey.trim().isNotEmpty;
-                
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppTheme.accent.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
+            SettingsCard(
+              children: [
+                Builder(
+                  builder: (context) {
+                    final isDebridActive = settings.enableRealDebrid && settings.realDebridKey.trim().isNotEmpty;
+                    
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SettingsTile(
+                          label: l10n.settingsEnableAnimeTosho,
+                          description: "Native high-quality anime source (Torrent)",
+                          icon: LucideIcons.zap,
+                          trailing: SettingToggle(
+                            value: settings.enableAnimeTosho && isDebridActive,
+                            onChanged: isDebridActive 
+                              ? (val) => ref.read(settingsProvider.notifier).updateSettings({
+                                  'enableAnimeTosho': val,
+                                })
+                              : (val) {}, // No-op if disabled
+                          ),
                         ),
-                        child: const Icon(LucideIcons.zap, color: AppTheme.accent, size: 20),
-                      ),
-                      title: Text(
-                        l10n.settingsEnableAnimeTosho,
-                        style: TextStyle(
-                          color: isDebridActive ? Colors.white : Colors.white.withOpacity(0.3),
-                          fontWeight: FontWeight.bold,
+                        SettingsTile(
+                          label: l10n.settingsEnableVixSrc,
+                          description: "Native direct streaming source (No Debrid required)",
+                          icon: LucideIcons.playCircle,
+                          showDivider: !isDebridActive,
+                          trailing: SettingToggle(
+                            value: settings.enableVixSrc,
+                            onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
+                              'enableVixSrc': val,
+                            }),
+                          ),
                         ),
-                      ),
-                      subtitle: const Text(
-                        "Native high-quality anime source (Torrent)",
-                        style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                      ),
-                      trailing: Switch(
-                        value: settings.enableAnimeTosho && isDebridActive,
-                        onChanged: isDebridActive 
-                          ? (val) => ref.read(settingsProvider.notifier).updateSettings({
-                              'enableAnimeTosho': val,
-                            })
-                          : null,
-                        activeColor: AppTheme.accent,
-                      ),
-                    ),
-                    const Divider(color: Colors.white10),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.purpleAccent.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(LucideIcons.playCircle, color: Colors.purpleAccent, size: 20),
-                      ),
-                      title: Text(
-                        l10n.settingsEnableVixSrc,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        "Native direct streaming source (No Debrid required)",
-                        style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                      ),
-                      trailing: Switch(
-                        value: settings.enableVixSrc,
-                        onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
-                          'enableVixSrc': val,
-                        }),
-                        activeColor: AppTheme.accent,
-                      ),
-                    ),
-                    if (!isDebridActive)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8, left: 52),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.warning_amber_rounded, size: 14, color: Colors.orangeAccent),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                l10n.settingsEnableAnimeToshoWarning,
-                                style: const TextStyle(
-                                  color: Colors.orangeAccent,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
+                        if (!isDebridActive)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.warning_amber_rounded, size: 16, color: Colors.orangeAccent),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    l10n.settingsEnableAnimeToshoWarning,
+                                    style: const TextStyle(
+                                      color: Colors.orangeAccent,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                  ],
-                );
-              },
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        // Global Search Settings
+        SettingsSection(
+          title: "Search Preferences",
+          children: [
+            SettingsCard(
+              children: [
+                SettingsTile(
+                  label: l10n.settingsSmartSearch,
+                  description: l10n.settingsSmartSearchDesc,
+                  icon: LucideIcons.filter,
+                  showDivider: false,
+                  trailing: SettingToggle(
+                    value: settings.smartSearchFilter,
+                    onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
+                      'smartSearchFilter': val,
+                    }),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
 
         // Install New Addon
-        SettingsCard(
+        SettingsSection(
+          title: l10n.settingsAddNewAddon,
           children: [
-            Text(
-              l10n.settingsAddNewAddon,
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            SettingsCard(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _urlController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: "https://.../manifest.json",
-                      hintStyle: const TextStyle(color: Colors.white24),
-                      errorText: _error,
-                      filled: true,
-                      fillColor: Colors.white.withOpacity(0.05),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _urlController,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                hintText: "https://.../manifest.json",
+                                hintStyle: const TextStyle(color: Colors.white24),
+                                errorText: _error,
+                                filled: true,
+                                fillColor: Colors.black.withOpacity(0.3),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: AppTheme.accent),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              ),
+                              onSubmitted: (_) => _installAddon(),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            height: 48,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _installAddon,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.accent,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 24),
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    )
+                                  : Text(l10n.settingsInstall),
+                            ),
+                          ),
+                        ],
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    ),
-                    onSubmitted: (_) => _installAddon(),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _installAddon,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accent,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(Icons.info_outline, size: 14, color: AppTheme.textMuted),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.settingsAddonHint,
+                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                            ),
+                          ),
+                        ],
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : Text(l10n.settingsInstall),
+                    ],
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.settingsAddonHint,
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
             ),
           ],
         ),
 
         // Installed Addons List
-        if (addons.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 12),
-            child: Text(
-              l10n.settingsInstalledAddons,
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          ...addons.map((addon) => SettingsCard(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        if (addons.isNotEmpty)
+          SettingsSection(
+            title: l10n.settingsInstalledAddons,
             children: [
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: addon.icon != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(addon.icon!, width: 40, height: 40, fit: BoxFit.cover),
-                      )
-                    : Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white10,
-                          borderRadius: BorderRadius.circular(8),
+              SettingsCard(
+                padding: EdgeInsets.zero,
+                children: addons.map((addon) {
+                  final isLast = addon == addons.last;
+                  return SettingsTile(
+                    label: addon.name,
+                    description: addon.baseUrl,
+                    leading: addon.logo != null && addon.logo!.isNotEmpty
+                        ? Image.network(
+                            addon.logo!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.box, size: 20, color: Colors.white70),
+                          )
+                        : const Icon(LucideIcons.box, size: 20, color: Colors.white70),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SettingToggle(
+                          value: addon.enabled,
+                          onChanged: (val) => ref.read(settingsProvider.notifier).toggleAddon(addon.id, val),
                         ),
-                        child: const Icon(LucideIcons.package, color: AppTheme.textMuted, size: 20),
-                      ),
-                title: Text(
-                  addon.name,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  addon.baseUrl,
-                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Switch(
-                      value: addon.enabled,
-                      onChanged: (val) => ref.read(settingsProvider.notifier).toggleAddon(addon.id, val),
-                      activeColor: AppTheme.accent,
+                        const SizedBox(width: 4),
+                        IconButton(
+                          icon: const Icon(LucideIcons.copy, color: AppTheme.textMuted, size: 18),
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: addon.baseUrl));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l10n.settingsCopiedToClipboard),
+                                duration: const Duration(seconds: 1),
+                                behavior: SnackBarBehavior.floating,
+                                width: 200,
+                              ),
+                            );
+                          },
+                          tooltip: l10n.settingsCopy,
+                        ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          icon: const Icon(LucideIcons.trash2, color: Colors.redAccent, size: 18),
+                          onPressed: () => ref.read(settingsProvider.notifier).removeAddon(addon.id),
+                          tooltip: l10n.settingsRemove,
+                        ),
+                        const SizedBox(width: 4),
+                      ],
                     ),
-                    IconButton(
-                      icon: const Icon(LucideIcons.trash2, color: Colors.redAccent, size: 20),
-                      onPressed: () => ref.read(settingsProvider.notifier).removeAddon(addon.id),
-                    ),
-                  ],
-                ),
+                    showDivider: !isLast,
+                  );
+                }).toList(),
               ),
             ],
-          )),
-        ] else
+          )
+        else
           SettingsCard(
             children: [
               Center(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  padding: const EdgeInsets.symmetric(vertical: 48),
                   child: Column(
                     children: [
-                      const Icon(LucideIcons.box, size: 48, color: Colors.white10),
+                      Icon(LucideIcons.box, size: 64, color: Colors.white.withOpacity(0.05)),
                       const SizedBox(height: 16),
                       Text(
                         l10n.settingsNoAddons,
