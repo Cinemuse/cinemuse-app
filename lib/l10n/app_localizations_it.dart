@@ -584,6 +584,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsEnableAnimeTosho => 'Abilita AnimeTosho';
 
   @override
+  String get settingsEnableVixSrc => 'Abilita VixSrc';
+
+  @override
   String get settingsEnableAnimeToshoWarning =>
       'Richiede un\'integrazione Real-Debrid attiva';
 

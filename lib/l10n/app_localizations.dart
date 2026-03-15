@@ -1154,6 +1154,12 @@ abstract class AppLocalizations {
   /// **'Enable AnimeTosho'**
   String get settingsEnableAnimeTosho;
 
+  /// No description provided for @settingsEnableVixSrc.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable VixSrc'**
+  String get settingsEnableVixSrc;
+
   /// No description provided for @settingsEnableAnimeToshoWarning.
   ///
   /// In en, this message translates to:

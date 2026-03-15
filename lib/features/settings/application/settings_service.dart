@@ -28,6 +28,7 @@ class UserSettings {
   final bool smartSearchFilter;
   final String? liveTvRegion;
   final bool enableAnimeTosho;
+  final bool enableVixSrc;
   final bool enableRealDebrid;
   final String realDebridKey;
   final List<StremioAddon> installedAddons;
@@ -48,6 +49,7 @@ class UserSettings {
     this.smartSearchFilter = true,
     this.liveTvRegion,
     this.enableAnimeTosho = true,
+    this.enableVixSrc = true,
     this.enableRealDebrid = false,
     this.realDebridKey = '',
     this.installedAddons = const [],
@@ -71,6 +73,7 @@ class UserSettings {
       smartSearchFilter: prefs['smartSearchFilter'] ?? true,
       liveTvRegion: prefs['liveTvRegion'],
       enableAnimeTosho: prefs['enableAnimeTosho'] ?? true,
+      enableVixSrc: prefs['enableVixSrc'] ?? true,
       enableRealDebrid: prefs['enableRealDebrid'] ?? false,
       realDebridKey: prefs['realDebridKey'] ?? '',
       installedAddons: (prefs['installedAddons'] as Iterable?)?.map((e) {
@@ -98,6 +101,7 @@ class UserSettings {
     bool? smartSearchFilter,
     String? liveTvRegion,
     bool? enableAnimeTosho,
+    bool? enableVixSrc,
     bool? enableRealDebrid,
     String? realDebridKey,
     List<StremioAddon>? installedAddons,
@@ -118,6 +122,7 @@ class UserSettings {
       smartSearchFilter: smartSearchFilter ?? this.smartSearchFilter,
       liveTvRegion: liveTvRegion ?? this.liveTvRegion,
       enableAnimeTosho: enableAnimeTosho ?? this.enableAnimeTosho,
+      enableVixSrc: enableVixSrc ?? this.enableVixSrc,
       enableRealDebrid: enableRealDebrid ?? this.enableRealDebrid,
       realDebridKey: realDebridKey ?? this.realDebridKey,
       installedAddons: installedAddons ?? this.installedAddons,
@@ -140,6 +145,7 @@ class UserSettings {
       'smartSearchFilter': smartSearchFilter,
       'liveTvRegion': liveTvRegion,
       'enableAnimeTosho': enableAnimeTosho,
+      'enableVixSrc': enableVixSrc,
       'enableRealDebrid': enableRealDebrid,
       'realDebridKey': realDebridKey,
       'installedAddons': installedAddons.map((e) => e.toJson()).toList(),
@@ -189,6 +195,7 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       smartSearchFilter: updates['smartSearchFilter'] ?? state.smartSearchFilter,
       liveTvRegion: updates['liveTvRegion'] ?? state.liveTvRegion,
       enableAnimeTosho: updates['enableAnimeTosho'] ?? state.enableAnimeTosho,
+      enableVixSrc: updates['enableVixSrc'] ?? state.enableVixSrc,
       enableRealDebrid: updates['enableRealDebrid'] ?? state.enableRealDebrid,
       realDebridKey: updates['realDebridKey'] ?? state.realDebridKey,
       installedAddons: updates['installedAddons'] ?? state.installedAddons,

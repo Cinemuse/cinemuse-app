@@ -59,87 +59,6 @@ class _StremioAddonSettingsState extends ConsumerState<StremioAddonSettings> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Native Providers
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 12),
-          child: Text(
-            l10n.settingsNativeIntegrations.toUpperCase(),
-            style: const TextStyle(
-              color: AppTheme.textMuted,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        SettingsCard(
-          margin: const EdgeInsets.only(bottom: 24),
-          children: [
-            Builder(
-              builder: (context) {
-                final isDebridActive = settings.enableRealDebrid && settings.realDebridKey.trim().isNotEmpty;
-                
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppTheme.accent.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(LucideIcons.zap, color: AppTheme.accent, size: 20),
-                      ),
-                      title: Text(
-                        l10n.settingsEnableAnimeTosho,
-                        style: TextStyle(
-                          color: isDebridActive ? Colors.white : Colors.white.withOpacity(0.3),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        "Native high-quality anime source (Torrent)",
-                        style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                      ),
-                      trailing: Switch(
-                        value: settings.enableAnimeTosho && isDebridActive,
-                        onChanged: isDebridActive 
-                          ? (val) => ref.read(settingsProvider.notifier).updateSettings({
-                              'enableAnimeTosho': val,
-                            })
-                          : null,
-                        activeColor: AppTheme.accent,
-                      ),
-                    ),
-                    if (!isDebridActive)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8, left: 52),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.warning_amber_rounded, size: 14, color: Colors.orangeAccent),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                l10n.settingsEnableAnimeToshoWarning,
-                                style: const TextStyle(
-                                  color: Colors.orangeAccent,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-          ],
-        ),
-
         // Debrid Services
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 12),
@@ -203,6 +122,118 @@ class _StremioAddonSettingsState extends ConsumerState<StremioAddonSettings> {
                 }),
               ),
             ],
+          ],
+        ),
+
+        // Native Providers
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Text(
+            l10n.settingsNativeIntegrations.toUpperCase(),
+            style: const TextStyle(
+              color: AppTheme.textMuted,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ),
+        SettingsCard(
+          margin: const EdgeInsets.only(bottom: 24),
+          children: [
+            Builder(
+              builder: (context) {
+                final isDebridActive = settings.enableRealDebrid && settings.realDebridKey.trim().isNotEmpty;
+                
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppTheme.accent.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(LucideIcons.zap, color: AppTheme.accent, size: 20),
+                      ),
+                      title: Text(
+                        l10n.settingsEnableAnimeTosho,
+                        style: TextStyle(
+                          color: isDebridActive ? Colors.white : Colors.white.withOpacity(0.3),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        "Native high-quality anime source (Torrent)",
+                        style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                      ),
+                      trailing: Switch(
+                        value: settings.enableAnimeTosho && isDebridActive,
+                        onChanged: isDebridActive 
+                          ? (val) => ref.read(settingsProvider.notifier).updateSettings({
+                              'enableAnimeTosho': val,
+                            })
+                          : null,
+                        activeColor: AppTheme.accent,
+                      ),
+                    ),
+                    const Divider(color: Colors.white10),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.purpleAccent.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(LucideIcons.playCircle, color: Colors.purpleAccent, size: 20),
+                      ),
+                      title: Text(
+                        l10n.settingsEnableVixSrc,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        "Native direct streaming source (No Debrid required)",
+                        style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                      ),
+                      trailing: Switch(
+                        value: settings.enableVixSrc,
+                        onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
+                          'enableVixSrc': val,
+                        }),
+                        activeColor: AppTheme.accent,
+                      ),
+                    ),
+                    if (!isDebridActive)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8, left: 52),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, size: 14, color: Colors.orangeAccent),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                l10n.settingsEnableAnimeToshoWarning,
+                                style: const TextStyle(
+                                  color: Colors.orangeAccent,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
           ],
         ),
 

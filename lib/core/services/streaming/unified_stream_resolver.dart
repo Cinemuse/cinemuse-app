@@ -20,6 +20,7 @@ import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/animetosho_source.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/real_debrid_service.dart';
+import 'package:cinemuse_app/core/services/streaming/sources/vixsrc_source.dart';
 
 final unifiedStreamResolverProvider = Provider((ref) {
   final settings = ref.watch(settingsProvider);
@@ -48,6 +49,11 @@ final unifiedStreamResolverProvider = Provider((ref) {
   if (settings.enableAnimeTosho) {
     debugPrint('UnifiedStreamResolver: Adding native source AnimeTosho');
     sources.add(AnimeToshoSource(dio));
+  }
+
+  if (settings.enableVixSrc) {
+    debugPrint('UnifiedStreamResolver: Adding native source VixSrc');
+    sources.add(VixSrcSource(dio));
   }
 
   return UnifiedStreamResolver(

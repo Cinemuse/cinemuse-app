@@ -182,6 +182,7 @@
   "settingsAddonSuccess": "Addon installed successfully",
   "settingsNativeIntegrations": "Native Providers",
   "settingsEnableAnimeTosho": "Enable AnimeTosho",
+  "settingsEnableVixSrc": "Enable VixSrc",
   "settingsEnableAnimeToshoWarning": "Requires active Real-Debrid integration",
   "settingsDebridServices": "Debrid Services",
   "settingsRealDebridTitle": "Real-Debrid (Native)",
