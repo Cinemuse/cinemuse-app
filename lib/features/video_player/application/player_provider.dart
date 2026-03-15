@@ -113,18 +113,57 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   void _setupMediaEngine() {
     if (_player != null) return;
     
-    _player = Player();
+    _player = Player(
+      configuration: const PlayerConfiguration(
+        logLevel: MPVLogLevel.warn,
+      ),
+    );
+
     _controller = VideoController(
       _player!,
       configuration: VideoControllerConfiguration(
-        hwdec: io.Platform.isAndroid ? 'mediacodec' : 'auto',
+        hwdec: io.Platform.isAndroid ? 'mediacodec' : 'auto-safe',
         vo: io.Platform.isAndroid ? 'gpu' : null,
+        enableHardwareAcceleration: true,
       ),
     );
 
     try {
-      (_player!.platform as dynamic).setProperty('log-level', 'no');
-    } catch (_) {}
+      final mpv = _player!.platform as dynamic;
+      // ── Hardware Decoding & Rendering ─────────────────────────────────────
+      // vd-lavc-dr: Zero-copy direct rendering from decoder to GPU texture.
+      // Reduces RAM usage and improves throughput, especially on 4K/HEVC.
+      mpv.setProperty('vd-lavc-dr', 'yes');
+      mpv.setProperty('vd-lavc-threads', '0'); // Auto-pick optimal thread count
+
+      // ── Video Sync & Smoothness ───────────────────────────────────────────
+      // display-resample: syncs to the monitor's refresh rate, eliminates judder.
+      mpv.setProperty('video-sync', 'display-resample');
+      
+      // Interpolation to smooth out frame pacing (reduces judder on 24fps content).
+      mpv.setProperty('interpolation', 'yes');
+      mpv.setProperty('tscale', 'oversample'); 
+
+      // ── Network & Caching ─────────────────────────────────────────────────
+      // Aggressive cache settings for reliable streaming on variable bitrates.
+      mpv.setProperty('cache', 'yes');
+      mpv.setProperty('cache-secs', '120');
+      mpv.setProperty('demuxer-max-bytes', '300MiB');
+      mpv.setProperty('demuxer-readahead-secs', '120');
+      mpv.setProperty('demuxer-max-back-bytes', '50MiB');
+
+      // ── Audio & Volume ────────────────────────────────────────────────────
+      // Allow boosting volume up to 150% for quiet sources.
+      mpv.setProperty('volume-max', '150');
+      
+      // Fallback strategies for unsupported audio codecs.
+      mpv.setProperty('audio-fallback-to-null', 'yes');
+
+      // MPV Internal logging off
+      mpv.setProperty('log-level', 'no');
+    } catch (e) {
+      debugPrint('PlayerController: Failed to set MPV properties: $e');
+    }
   }
 
   void _initializeManagers() {
