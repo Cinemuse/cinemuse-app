@@ -68,6 +68,8 @@
   "homeTrendingNow": "Tendenze",
   "homePopularMovies": "Film Popolari",
   "homePopularSeries": "Serie Popolari",
+  "homeContinueWatching": "Continua a guardare",
+  "homeRemovedFromContinueWatching": "{title} rimosso",
   "authContinueGuest": "Continua come Ospite",
   "authWelcomeBack": "Bentornato",
   "authJoinCineMuse": "Unisciti a CineMuse",

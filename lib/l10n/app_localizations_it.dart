@@ -222,6 +222,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String get homePopularSeries => 'Serie Popolari';
 
   @override
+  String get homeContinueWatching => 'Continua a guardare';
+
+  @override
+  String homeRemovedFromContinueWatching(Object title) {
+    return '$title rimosso';
+  }
+
+  @override
   String get authContinueGuest => 'Continua come Ospite';
 
   @override

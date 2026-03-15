@@ -102,16 +102,22 @@ class AgendaRepository {
     final events = <AgendaEvent>[];
 
     // Get current watch history for all followed series to check for "caught up" status
+    // We order by last_watched_at descending to ensure we get the latest entries first
     final historyRes = await _supabase
         .from('watch_history')
         .select('tmdb_id, season, episode, status')
         .eq('user_id', userId)
         .eq('media_type', 'tv')
+        .order('last_watched_at', ascending: false)
         .withErrorHandling();
     
     final historyMap = <int, Map<String, dynamic>>{};
     for (final row in (historyRes as List)) {
-      historyMap[row['tmdb_id'] as int] = row;
+      final id = row['tmdb_id'] as int;
+      // Because we ordered by last_watched_at DESC, the first entry we encounter for an ID is the latest one
+      if (!historyMap.containsKey(id)) {
+        historyMap[id] = row;
+      }
     }
 
     // To respect rate limits, we'll fetch details for each series sequentially with a small delay
@@ -133,86 +139,139 @@ class AgendaRepository {
       final status = (details['status'] as String?)?.toLowerCase();
       if (status == 'ended' || status == 'canceled') continue;
 
+      final historyItem = historyMap[seriesId];
       final nextEp = details['next_episode_to_air'];
       
       // SYNC LOGIC: Check if this series should be added back to "watching"
-      final historyItem = historyMap[seriesId];
-      final lastAired = details['last_episode_to_air'];
+      // We check for new episodes by looking at the actual episode list for the relevant season.
+      if (historyItem != null) {
+        final sHistory = historyItem['season'] as int? ?? 0;
+        final eHistory = historyItem['episode'] as int? ?? 0;
+        final status = historyItem['status'] as String? ?? '';
 
-      if (lastAired != null) {
-        final lastS = lastAired['season_number'] as int? ?? 0;
-        final lastE = lastAired['episode_number'] as int? ?? 0;
+        // If caught up or watching an older episode, check if there's anything newer aired
+        // We look at the season from next_episode_to_air OR our history
+        final seasonNumToCheck = nextEp != null 
+            ? nextEp['season_number'] as int 
+            : sHistory;
 
-        if (historyItem == null) {
-          // Show is followed but no history? Maybe it's in watchlist.
-          // In web we don't automatically add, but here we could.
-          // Let's stick to "if they have history" to be safe.
-        } else {
-          final sHistory = historyItem['season'] as int? ?? 0;
-          final eHistory = historyItem['episode'] as int? ?? 0;
-          final status = historyItem['status'] as String? ?? '';
-
-          // Only sync if the series is marked as 'completed' (meaning they were caught up)
-          // or if they are in 'watching' but we've detected newer episodes than their current record.
-          // Actually, if they are 'watching' S01E05, we don't want to jump them.
-          // So let's stick to status == 'completed'.
+        // Fetch season details (we need this anyway for the Agenda events)
+        final seasonDetails = await _tmdb.getSeasonDetails(seriesId, seasonNumToCheck);
+        if (seasonDetails != null) {
+          final episodes = seasonDetails['episodes'] as List? ?? [];
           
-          if (status == 'completed' && (lastS > sHistory || (lastS == sHistory && lastE > eHistory))) {
-             // There is a newer aired episode than what's in history!
-             // Add it back to Continue Watching row.
-             await _watchHistoryRepo.upsertNextEpisode(
-               userId: userId, 
-               tmdbId: seriesId, 
-               currentSeason: sHistory, 
-               currentEpisode: eHistory, 
-               seriesDetails: details,
-             );
+          // Find the latest episode that has actually aired as of TODAY
+          final now = DateTime.now();
+          final todayStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+          
+          Map<String, dynamic>? verifiedLastAired;
+          for (final ep in episodes) {
+            final airDateStr = ep['air_date'] as String?;
+            if (airDateStr != null && airDateStr.isNotEmpty && airDateStr.compareTo(todayStr) <= 0) {
+              verifiedLastAired = ep;
+            }
           }
-        }
-      }
 
-      if (nextEp == null) continue;
+          if (verifiedLastAired != null) {
+            final lastS = verifiedLastAired['season_number'] as int;
+            final lastE = verifiedLastAired['episode_number'] as int;
 
-      // Small delay for rate limiting
-      await Future.delayed(const Duration(milliseconds: 50));
+            // Trigger sync if:
+            // 1. User was caught up AND a newer episode is out
+            // 2. OR User is watching, but there's a record mismatch (rare, but good for self-healing)
+            // We focus on status == 'completed' as per the user's report
+            if (status == 'completed' && (lastS > sHistory || (lastS == sHistory && lastE > eHistory))) {
+               await _watchHistoryRepo.upsertNextEpisode(
+                 userId: userId, 
+                 tmdbId: seriesId, 
+                 currentSeason: sHistory, 
+                 currentEpisode: eHistory, 
+                 seriesDetails: {
+                   ...details,
+                   'last_episode_to_air': verifiedLastAired, // Override with verified data
+                 },
+               );
+            }
+          }
 
-      final seasonNum = nextEp['season_number'] as int;
-      final seasonDetails = await _tmdb.getSeasonDetails(seriesId, seasonNum);
-      if (seasonDetails == null) continue;
-
-      final episodes = seasonDetails['episodes'] as List? ?? [];
-      for (final ep in episodes) {
-        final airDateStr = ep['air_date'] as String?;
-        if (airDateStr == null || airDateStr.isEmpty) {
-          events.add(AgendaEvent.fromEpisode(
-            seriesId: seriesId,
-            seriesName: details['name'] ?? '',
-            seriesPosterPath: details['poster_path'],
-            epJson: ep,
-          ));
-        } else {
-          try {
-            final airDate = DateTime.parse(airDateStr);
-            if (airDate.isAfter(startDate.subtract(const Duration(seconds: 1)))) {
+          // Generate Agenda Events from this season's episodes
+          final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 30));
+          for (final ep in episodes) {
+            final airDateStr = ep['air_date'] as String?;
+            if (airDateStr == null || airDateStr.isEmpty) {
               events.add(AgendaEvent.fromEpisode(
                 seriesId: seriesId,
                 seriesName: details['name'] ?? '',
                 seriesPosterPath: details['poster_path'],
                 epJson: ep,
               ));
+            } else {
+              try {
+                final airDate = DateTime.parse(airDateStr);
+                if (airDate.isAfter(startDate.subtract(const Duration(seconds: 1)))) {
+                  events.add(AgendaEvent.fromEpisode(
+                    seriesId: seriesId,
+                    seriesName: details['name'] ?? '',
+                    seriesPosterPath: details['poster_path'],
+                    epJson: ep,
+                  ));
+                }
+              } catch (_) {
+                events.add(AgendaEvent.fromEpisode(
+                  seriesId: seriesId,
+                  seriesName: details['name'] ?? '',
+                  seriesPosterPath: details['poster_path'],
+                  epJson: ep,
+                ));
+              }
             }
-          } catch (_) {
-            events.add(AgendaEvent.fromEpisode(
-              seriesId: seriesId,
-              seriesName: details['name'] ?? '',
-              seriesPosterPath: details['poster_path'],
-              epJson: ep,
-            ));
+          }
+        }
+      } else {
+        // No history, but check if there's a next episode to air for the agenda
+        if (nextEp != null) {
+          final seasonNum = nextEp['season_number'] as int;
+          final seasonDetails = await _tmdb.getSeasonDetails(seriesId, seasonNum);
+          if (seasonDetails != null) {
+            final episodes = seasonDetails['episodes'] as List? ?? [];
+            final now = DateTime.now();
+            final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 30));
+            
+            for (final ep in episodes) {
+              final airDateStr = ep['air_date'] as String?;
+              if (airDateStr == null || airDateStr.isEmpty) {
+                events.add(AgendaEvent.fromEpisode(
+                  seriesId: seriesId,
+                  seriesName: details['name'] ?? '',
+                  seriesPosterPath: details['poster_path'],
+                  epJson: ep,
+                ));
+              } else {
+                try {
+                  final airDate = DateTime.parse(airDateStr);
+                  if (airDate.isAfter(startDate.subtract(const Duration(seconds: 1)))) {
+                    events.add(AgendaEvent.fromEpisode(
+                      seriesId: seriesId,
+                      seriesName: details['name'] ?? '',
+                      seriesPosterPath: details['poster_path'],
+                      epJson: ep,
+                    ));
+                  }
+                } catch (_) {
+                  events.add(AgendaEvent.fromEpisode(
+                    seriesId: seriesId,
+                    seriesName: details['name'] ?? '',
+                    seriesPosterPath: details['poster_path'],
+                    epJson: ep,
+                  ));
+                }
+              }
+            }
           }
         }
       }
       
-      // More delay between series
+      // Small delay between series for rate limiting
       await Future.delayed(const Duration(milliseconds: 50));
     }
 

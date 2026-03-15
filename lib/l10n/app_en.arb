@@ -68,6 +68,8 @@
   "homeTrendingNow": "Trending Now",
   "homePopularMovies": "Popular Movies",
   "homePopularSeries": "Popular Series",
+  "homeContinueWatching": "Continue Watching",
+  "homeRemovedFromContinueWatching": "Removed {title}",
   "authContinueGuest": "Continue as Guest",
   "authWelcomeBack": "Welcome Back",
   "authJoinCineMuse": "Join CineMuse",

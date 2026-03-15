@@ -500,6 +500,18 @@ abstract class AppLocalizations {
   /// **'Popular Series'**
   String get homePopularSeries;
 
+  /// No description provided for @homeContinueWatching.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Watching'**
+  String get homeContinueWatching;
+
+  /// No description provided for @homeRemovedFromContinueWatching.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed {title}'**
+  String homeRemovedFromContinueWatching(Object title);
+
   /// No description provided for @authContinueGuest.
   ///
   /// In en, this message translates to:

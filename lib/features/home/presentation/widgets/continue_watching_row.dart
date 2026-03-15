@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
@@ -12,6 +13,7 @@ import 'package:cinemuse_app/features/media/presentation/media_details_screen.da
 import 'package:cinemuse_app/shared/widgets/backdrop_card.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class ContinueWatchingRow extends ConsumerStatefulWidget {
   const ContinueWatchingRow({super.key});
@@ -21,176 +23,227 @@ class ContinueWatchingRow extends ConsumerStatefulWidget {
 }
 
 class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
-  WatchHistory? _pendingRemoval;
-  Timer? _undoTimer;
+  // Map of tmdbId -> {item, timer} to support multiple simultaneous removals
+  final Map<int, ({WatchHistory item, Timer timer})> _pendingRemovals = {};
+  
+  // Set of tmdbId that have been finalized but not yet reflected in the provider's data.
+  // This prevents the "reappearing" bug when the undo timer elapses.
+  final Set<int> _flushingRemovals = {};
+  
+  // List of tmdbId in order of removal to manage the stack UI
+  final List<int> _activeToastIds = [];
+
   OverlayEntry? _undoOverlay;
 
   void _onRemove(WatchHistory item) {
-    _clearUndo();
-
     setState(() {
-      _pendingRemoval = item;
-    });
+      // If there's already a timer for this item, cancel it before replacing
+      _pendingRemovals[item.tmdbId]?.timer.cancel();
 
-    _showUndoOverlay(item);
+      final timer = Timer(const Duration(seconds: 5), () {
+        _finalizeRemoval(item.tmdbId);
+      });
 
-    _undoTimer = Timer(const Duration(seconds: 5), () {
-      if (mounted && _pendingRemoval?.tmdbId == item.tmdbId) {
-        _finalizeRemoval();
+      _pendingRemovals[item.tmdbId] = (item: item, timer: timer);
+      
+      // Add to toast list if not already there
+      if (!_activeToastIds.contains(item.tmdbId)) {
+        _activeToastIds.add(item.tmdbId);
       }
     });
+
+    _updateUndoOverlay();
   }
 
-  void _showUndoOverlay(WatchHistory item) {
-    _undoOverlay?.remove();
-    _undoOverlay = OverlayEntry(
-      builder: (context) => _UndoToast(
-        title: item.media?.title ?? 'Item',
-        onUndo: () {
-          _onUndo();
-        },
-      ),
-    );
-    Overlay.of(context).insert(_undoOverlay!);
+  void _updateUndoOverlay() {
+    if (_activeToastIds.isEmpty) {
+      _hideOverlay();
+      return;
+    }
+
+    if (_undoOverlay == null) {
+      _undoOverlay = OverlayEntry(
+        builder: (context) => _UndoStack(
+          ids: _activeToastIds,
+          pendingRemovals: _pendingRemovals,
+          onUndo: _onUndo,
+        ),
+      );
+      Overlay.of(context).insert(_undoOverlay!);
+    } else {
+      _undoOverlay?.markNeedsBuild();
+    }
   }
 
-  void _clearUndo() {
-    _undoTimer?.cancel();
-    _undoTimer = null;
+  void _hideOverlay() {
     _undoOverlay?.remove();
     _undoOverlay = null;
   }
 
-  Future<void> _finalizeRemoval() async {
-    final item = _pendingRemoval;
-    _clearUndo();
-    
-    if (mounted) {
-      setState(() {
-        _pendingRemoval = null;
-      });
-    }
+  Future<void> _finalizeRemoval(int tmdbId) async {
+    final pending = _pendingRemovals[tmdbId];
+    if (pending == null) return;
 
-    if (item != null) {
-      final user = ref.read(authProvider).value;
-      if (user != null) {
-        await ref.read(watchHistoryRepositoryProvider).removeFromContinueWatching(user.id, item.tmdbId);
+    setState(() {
+      _pendingRemovals.remove(tmdbId);
+      _flushingRemovals.add(tmdbId);
+      _activeToastIds.remove(tmdbId);
+    });
+
+    // Refresh overlay to reflect removed toast
+    _updateUndoOverlay();
+
+    final user = ref.read(authProvider).value;
+    if (user != null) {
+      try {
+        await ref.read(watchHistoryRepositoryProvider).removeFromContinueWatching(user.id, tmdbId);
+        
+        // Wait a bit for the provider to update before clearing the flushing state
+        // This ensures the item doesn't "reappear" if the database update is slightly delayed
+        await Future.delayed(const Duration(milliseconds: 500));
+      } finally {
+        if (mounted) {
+          setState(() {
+            _flushingRemovals.remove(tmdbId);
+          });
+        }
       }
+    } else {
+       if (mounted) {
+          setState(() {
+            _flushingRemovals.remove(tmdbId);
+          });
+       }
     }
   }
 
-  void _onUndo() {
-    _clearUndo();
-    setState(() {
-      _pendingRemoval = null;
-    });
+  void _onUndo(int tmdbId) {
+    final pending = _pendingRemovals[tmdbId];
+    if (pending != null) {
+      pending.timer.cancel();
+      setState(() {
+        _pendingRemovals.remove(tmdbId);
+        _activeToastIds.remove(tmdbId);
+      });
+      _updateUndoOverlay();
+    }
   }
 
   @override
   void dispose() {
-    _clearUndo();
+    for (final pending in _pendingRemovals.values) {
+      pending.timer.cancel();
+    }
+    _hideOverlay();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final historyAsync = ref.watch(continueWatchingProvider);
+    final l10n = AppLocalizations.of(context)!;
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 600),
-      switchInCurve: Curves.easeIn,
-      switchOutCurve: Curves.easeOut,
-      child: historyAsync.when(
-        data: (items) {
-          // Filter out locally pending removal
-          final effectiveItems = items.where((i) => i.tmdbId != _pendingRemoval?.tmdbId).toList();
-          
-          if (effectiveItems.isEmpty) return const SizedBox.shrink();
+    // If we have some data, but everything is currently being "flushed" or "pended",
+    // we want to maintain the column structure but potentially return SizedBox.shrink() 
+    // if the list becomes empty.
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    // We want to avoid the "blink" when the provider refreshes.
+    // We use .when only for initial load/error if no data is present.
+    if (historyAsync.hasError && !historyAsync.hasValue) {
+       final mapped = ref.read(errorMapperProvider).map(historyAsync.error!);
+       return Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppTheme.getResponsiveHorizontalPadding(context),
+            vertical: 16,
+          ),
+          child: ErrorCard(
+            message: mapped.message,
+            type: mapped.type,
+          ),
+        );
+    }
+
+    if (historyAsync.isLoading && !historyAsync.hasValue) {
+      return const ContinueWatchingSkeleton();
+    }
+
+    final items = historyAsync.value ?? [];
+    
+    // Filter out locally pending or flushing removals
+    final effectiveItems = items.where((i) {
+      return !_pendingRemovals.containsKey(i.tmdbId) && !_flushingRemovals.contains(i.tmdbId);
+    }).toList();
+    
+    if (effectiveItems.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppTheme.getResponsiveHorizontalPadding(context), 
+            24, 
+            AppTheme.getResponsiveHorizontalPadding(context), 
+            16
+          ),
+          child: Row(
             children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  AppTheme.getResponsiveHorizontalPadding(context), 
-                  24, 
-                  AppTheme.getResponsiveHorizontalPadding(context), 
-                  16
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      "Continue Watching",
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.chevron_right, color: AppTheme.textMuted),
-                  ],
+              Text(
+                l10n.homeContinueWatching,
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              
-              SizedBox(
-                height: 200, // Height for card + text
-                child: ListView.separated(
-                  clipBehavior: Clip.none,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppTheme.getResponsiveHorizontalPadding(context)
-                  ),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: effectiveItems.length,
-                  separatorBuilder: (c, i) => const SizedBox(width: 16),
-                  itemBuilder: (context, index) {
-                    final historyItem = effectiveItems[index];
-                    final media = historyItem.media;
-                    final title = media?.title ?? 'Unknown';
-                    final percentage = (historyItem.totalDuration != null && historyItem.totalDuration! > 0)
-                        ? (historyItem.progressSeconds / historyItem.totalDuration!)
-                        : 0.0;
-                    
-                    final backdrop = media?.backdropPath;
-                    
-                    return BackdropCard(
-                      title: title,
-                      backdropPath: backdrop,
-                      progress: percentage,
-                      infoText: historyItem.mediaType == MediaKind.tv 
-                                ? "S${historyItem.season} E${historyItem.episode}" 
-                                : "Movie",
-                      onTap: () {
-                         Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => MediaDetailsScreen(
-                            mediaId: historyItem.tmdbId.toString(), 
-                            mediaType: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
-                          ),
-                        ));
-                      },
-                      onRemove: () => _onRemove(historyItem),
-                    );
-                  },
-                ),
-              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right, color: AppTheme.textMuted),
             ],
-          );
-        },
-        loading: () => const ContinueWatchingSkeleton(),
-        error: (e, s) {
-          final mapped = ref.read(errorMapperProvider).map(e);
-          return Padding(
+          ),
+        ),
+        
+        SizedBox(
+          height: 200,
+          child: ListView.separated(
+            clipBehavior: Clip.none,
             padding: EdgeInsets.symmetric(
-              horizontal: AppTheme.getResponsiveHorizontalPadding(context),
-              vertical: 16,
+              horizontal: AppTheme.getResponsiveHorizontalPadding(context)
             ),
-            child: ErrorCard(
-              message: mapped.message,
-              type: mapped.type,
-            ),
-          );
-        },
-      ),
+            scrollDirection: Axis.horizontal,
+            itemCount: effectiveItems.length,
+            separatorBuilder: (c, i) => const SizedBox(width: 16),
+            itemBuilder: (context, index) {
+              final historyItem = effectiveItems[index];
+              final media = historyItem.media;
+              final title = media?.title ?? 'Unknown';
+              final percentage = (historyItem.totalDuration != null && historyItem.totalDuration! > 0)
+                  ? (historyItem.progressSeconds / historyItem.totalDuration!)
+                  : 0.0;
+              
+              final backdrop = media?.backdropPath;
+              
+              return BackdropCard(
+                key: ValueKey(historyItem.tmdbId),
+                title: title,
+                backdropPath: backdrop,
+                progress: percentage,
+                infoText: historyItem.mediaType == MediaKind.tv 
+                          ? "S${historyItem.season} E${historyItem.episode}" 
+                          : "Movie",
+                onTap: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => MediaDetailsScreen(
+                      mediaId: historyItem.tmdbId.toString(), 
+                      mediaType: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+                    ),
+                  ));
+                },
+                onRemove: () => _onRemove(historyItem),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -235,12 +288,10 @@ class ContinueWatchingSkeleton extends StatelessWidget {
 class _SkeletonBox extends StatefulWidget {
   final double width;
   final double height;
-  final double borderRadius;
 
   const _SkeletonBox({
     required this.width,
     required this.height,
-    this.borderRadius = 8,
   });
 
   @override
@@ -278,8 +329,8 @@ class _SkeletonBoxState extends State<_SkeletonBox> with SingleTickerProviderSta
           width: widget.width,
           height: widget.height,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(_opacityAnimation.value),
-            borderRadius: BorderRadius.circular(widget.borderRadius),
+            color: Colors.white.withValues(alpha: _opacityAnimation.value),
+            borderRadius: BorderRadius.circular(8),
           ),
         );
       },
@@ -287,83 +338,170 @@ class _SkeletonBoxState extends State<_SkeletonBox> with SingleTickerProviderSta
   }
 }
 
-class _UndoToast extends StatelessWidget {
-  final String title;
-  final VoidCallback onUndo;
+class _UndoStack extends StatelessWidget {
+  final List<int> ids;
+  final Map<int, ({WatchHistory item, Timer timer})> pendingRemovals;
+  final Function(int) onUndo;
 
-  const _UndoToast({
-    required this.title,
+  const _UndoStack({
+    required this.ids,
+    required this.pendingRemovals,
     required this.onUndo,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      bottom: 32,
-      right: 32,
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0.0, end: 1.0),
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeOutBack,
-        builder: (context, value, child) {
-          return Transform.translate(
-            offset: Offset(0, 40 * (1 - value)),
-            child: Opacity(
-              opacity: value.clamp(0.0, 1.0),
-              child: child,
-            ),
-          );
-        },
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.accent.withOpacity(0.5)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.6),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.delete_sweep, color: AppTheme.accent, size: 20),
-                const SizedBox(width: 12),
-                Text(
-                  "Removed $title",
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+    return Stack(
+      children: ids.map((id) {
+        final index = ids.indexOf(id);
+        final pending = pendingRemovals[id];
+        if (pending == null) return const SizedBox.shrink();
+        
+        // Calculate bottom position based on index in list.
+        // Newest is at the end of the list, should be at bottom (32).
+        // Reduced gap for a tighter feel (offset 64).
+        final bottomOffset = 32.0 + (ids.length - 1 - index) * 64.0;
+
+        return AnimatedPositioned(
+          key: ValueKey('undo_pos_$id'),
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOutCubic,
+          bottom: bottomOffset,
+          right: 32,
+          child: _UndoToast(
+            key: ValueKey('undo_item_$id'),
+            title: pending.item.media?.title ?? 'Item',
+            onUndo: () => onUndo(id),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _UndoToast extends StatefulWidget {
+  final String title;
+  final VoidCallback onUndo;
+
+  const _UndoToast({
+    super.key,
+    required this.title,
+    required this.onUndo,
+  });
+
+  @override
+  State<_UndoToast> createState() => _UndoToastState();
+}
+
+class _UndoToastState extends State<_UndoToast> with SingleTickerProviderStateMixin {
+  late AnimationController _countdownController;
+
+  @override
+  void initState() {
+    super.initState();
+    _countdownController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..forward();
+  }
+
+  @override
+  void dispose() {
+    _countdownController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(40 * (1 - value), 0),
+            child: child,
+          ),
+        );
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E).withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.accent.withValues(alpha: 0.1),
+                    blurRadius: 15,
+                    spreadRadius: -5,
                   ),
-                ),
-                const SizedBox(width: 20),
-                TextButton(
-                  onPressed: onUndo,
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: AppTheme.accent,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: Text(
-                    "UNDO",
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.delete_sweep_rounded, color: AppTheme.accent, size: 20),
+                  const SizedBox(width: 12),
+                  Text(
+                    l10n.homeRemovedFromContinueWatching(widget.title),
                     style: GoogleFonts.outfit(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 24),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: AnimatedBuilder(
+                          animation: _countdownController,
+                          builder: (context, child) {
+                            return CircularProgressIndicator(
+                              value: 1.0 - _countdownController.value,
+                              strokeWidth: 2,
+                              backgroundColor: Colors.white.withValues(alpha: 0.1),
+                              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accent),
+                            );
+                          },
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: widget.onUndo,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(40, 40),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: const CircleBorder(),
+                        ),
+                        child: Text(
+                          "UNDO",
+                          style: GoogleFonts.outfit(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -371,3 +509,4 @@ class _UndoToast extends StatelessWidget {
     );
   }
 }
+
