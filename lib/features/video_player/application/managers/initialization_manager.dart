@@ -10,6 +10,7 @@ import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/video_player/application/managers/base_manager.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 
 /// Centralized manager for orchestrating player initialization logic.
 class InitializationManager extends BaseManager {
@@ -46,7 +47,8 @@ class InitializationManager extends BaseManager {
   }
 
   Future<LiveTvInitializationResult> initializeLiveTv(Channel channel) async {
+    final settings = ref.read(settingsProvider);
     final handler = LiveTvSourceHandler(player);
-    return await handler.initialize(channel);
+    return await handler.initialize(channel, settings);
   }
 }

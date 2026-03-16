@@ -23,6 +23,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final categories = [
       {'id': 'identity', 'label': l10n.settingsIdentity, 'icon': Icons.security},
       {'id': 'customization', 'label': l10n.settingsCustomization, 'icon': Icons.smartphone},
+      {'id': 'livetv', 'label': l10n.settingsLiveTv, 'icon': Icons.live_tv},
       {'id': 'integrations', 'label': l10n.settingsIntegrations, 'icon': Icons.link},
       {'id': 'import', 'label': l10n.settingsImport, 'icon': Icons.download},
     ];
@@ -110,6 +111,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           return const IdentitySettings();
         case 'customization':
           return const CustomizationSettings();
+        case 'livetv':
+          return const LiveTvSettings();
         case 'integrations':
           return const IntegrationsSettings();
         case 'import':

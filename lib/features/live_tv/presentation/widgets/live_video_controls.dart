@@ -10,6 +10,7 @@ import 'package:cinemuse_app/core/presentation/widgets/play_pause_overlay.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/number_input_osd.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 
 /// Full-featured controls overlay for the Live TV player.
 ///
@@ -46,6 +47,12 @@ class LiveVideoControls extends StatefulWidget {
 class _LiveVideoControlsState extends State<LiveVideoControls> {
   bool _visible = true;
   Timer? _hideTimer;
+  bool _dragging = false;
+  Duration? _virtualPosition;
+  Timer? _clearVirtualPositionTimer;
+  double? _hoverX;
+  Duration? _hoverDuration;
+  bool _isHoveringSeekbar = false;
   final GlobalKey<VolumeControlState> _volumeKey = GlobalKey();
 
   @override
@@ -57,6 +64,7 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
   @override
   void dispose() {
     _hideTimer?.cancel();
+    _clearVirtualPositionTimer?.cancel();
     super.dispose();
   }
 
@@ -67,7 +75,7 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
   void _startHideTimer() {
     _hideTimer?.cancel();
     _hideTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted && widget.playerState.controller.player.state.playing) {
+      if (mounted && !_dragging && widget.playerState.controller.player.state.playing) {
         setState(() => _visible = false);
       }
     });
@@ -104,11 +112,20 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
     setState(() {});
   }
 
-  void _seekToLive() {
+  void _seekToLive() async {
     final duration = widget.playerState.controller.player.state.duration;
     if (duration > Duration.zero) {
-      widget.playerState.controller.player.seek(duration);
+      try {
+        // Seek to 5s before the edge to provide a safety buffer and prevent lag
+        final target = duration - const Duration(seconds: 5);
+        await widget.playerState.controller.player.seek(target > Duration.zero ? target : Duration.zero);
+      } catch (_) {
+        // Fallback or ignore
+      }
     }
+    setState(() {
+      _virtualPosition = null;
+    });
     _onHover();
   }
 
@@ -321,46 +338,148 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
     return StreamBuilder<Duration>(
       stream: widget.playerState.controller.player.stream.position,
       builder: (context, snapshot) {
-        final position = snapshot.data ?? Duration.zero;
-        final duration = widget.playerState.controller.player.state.duration;
-        final maxSecs = duration.inSeconds.toDouble();
+        final rawDuration = widget.playerState.controller.player.state.duration;
+        final rawPosition = _virtualPosition ?? snapshot.data ?? Duration.zero;
 
-        if (maxSecs <= 0) return const SizedBox.shrink();
+        if (rawDuration <= Duration.zero) return const SizedBox.shrink();
 
-        // Snap to live edge when within 5 seconds to prevent jitter
-        final behindLive = duration - position;
-        final isAtLive = behindLive.inSeconds.abs() < 5;
-        final effectivePos = isAtLive ? maxSecs : position.inSeconds.toDouble().clamp(0.0, maxSecs);
+        // 1. Calculate relative offset from live (0 is Live)
+        // Values will be negative, e.g., -120 means 2 minutes behind live.
+        final secondsBehindLive = -(rawDuration.inSeconds - rawPosition.inSeconds).toDouble();
+
+        // 2. Stabilize the seekbar window (the "min" value)
+        // We use the actual available duration but round up ONLY the UI scale
+        // to the next 60-second increment to prevent jitter every second.
+        // We clamp the actual seek within rawDuration in onChange.
+        final uiTotalSeconds = ((rawDuration.inSeconds / 60).ceil() * 60).toDouble().clamp(60.0, 7200.0);
+        
+        // Final sanity check for slider limits: the slider range [-uiTotalSeconds, 0]
+        // must always contain the current position.
+        final safeMin = -uiTotalSeconds;
+
+        // 3. Determine if we are "At Live"
+        // Most streams have a safety buffer of 1-3 segments (~18s).
+        // We treat anything within 30s of the edge as "LIVE" for UI stability.
+        final isAtLive = !_dragging && secondsBehindLive >= -30;
 
         return Row(
           children: [
             Expanded(
-              child: SliderTheme(
-                data: SliderThemeData(
-                  trackHeight: 2,
-                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-                  activeTrackColor: Colors.white,
-                  inactiveTrackColor: Colors.white24,
-                  thumbColor: Colors.white,
-                ),
-                child: Slider(
-                  value: effectivePos,
-                  min: 0,
-                  max: maxSecs,
-                  onChanged: (v) => widget.playerState.controller.player.seek(Duration(seconds: v.toInt())),
-                ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return MouseRegion(
+                    onHover: (event) {
+                      setState(() {
+                        _hoverX = event.localPosition.dx;
+                        _isHoveringSeekbar = true;
+                        final percent = (_hoverX! / constraints.maxWidth).clamp(0.0, 1.0);
+                        // Convert percent to seconds behind live relative to UI scale
+                        final hoverSeconds = -((1.0 - percent) * uiTotalSeconds);
+                        _hoverDuration = Duration(seconds: hoverSeconds.toInt().abs());
+                      });
+                    },
+                    onExit: (_) {
+                      setState(() {
+                        _isHoveringSeekbar = false;
+                        _hoverX = null;
+                        _hoverDuration = null;
+                      });
+                    },
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        SliderTheme(
+                          data: SliderThemeData(
+                            trackHeight: 3,
+                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+                            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                            activeTrackColor: AppTheme.accent,
+                            inactiveTrackColor: AppTheme.textWhite.withOpacity(0.24),
+                            thumbColor: AppTheme.textWhite,
+                            activeTickMarkColor: Colors.transparent,
+                            inactiveTickMarkColor: Colors.transparent,
+                          ),
+                          child: Slider(
+                            // We slider from safeMin (past) to 0 (Live)
+                            value: isAtLive ? 0 : secondsBehindLive.clamp(safeMin, 0),
+                            min: safeMin,
+                            max: 0,
+                            onChangeStart: (v) {
+                              setState(() {
+                                _dragging = true;
+                                // Clamp virtual position within rawDuration to avoid "jump back"
+                                final clampedOffset = v.clamp(-rawDuration.inSeconds.toDouble(), 0.0);
+                                _virtualPosition = rawDuration + Duration(seconds: clampedOffset.toInt());
+                              });
+                              _hideTimer?.cancel();
+                              _clearVirtualPositionTimer?.cancel();
+                            },
+                            onChanged: (v) {
+                              setState(() {
+                                final clampedOffset = v.clamp(-rawDuration.inSeconds.toDouble(), 0.0);
+                                _virtualPosition = rawDuration + Duration(seconds: clampedOffset.toInt());
+                              });
+                            },
+                            onChangeEnd: (v) async {
+                              final clampedOffset = v.clamp(-rawDuration.inSeconds.toDouble(), 0.0);
+                              final target = rawDuration + Duration(seconds: clampedOffset.toInt());
+                              try {
+                                await widget.playerState.controller.player.seek(target);
+                              } catch (_) {
+                                // Ignore seek errors on some problematic live streams or if force-seekable fails
+                              }
+                              setState(() {
+                                _dragging = false;
+                                _virtualPosition = target;
+                              });
+                              _startHideTimer();
+                              _clearVirtualPositionTimer?.cancel();
+                              _clearVirtualPositionTimer = Timer(const Duration(milliseconds: 1000), () {
+                                if (mounted) setState(() => _virtualPosition = null);
+                              });
+                            },
+                          ),
+                        ),
+                        if (_isHoveringSeekbar && _hoverX != null && _hoverDuration != null)
+                          Positioned(
+                            left: (_hoverX! - 35).clamp(0, constraints.maxWidth - 70),
+                            top: -35,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary.withOpacity(0.8),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: AppTheme.textWhite.withOpacity(0.24), width: 0.5),
+                              ),
+                              child: Text(
+                                '-${_formatDuration(_hoverDuration!)}',
+                                style: const TextStyle(
+                                  color: AppTheme.textWhite,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'monospace',
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              isAtLive
-                  ? 'LIVE'
-                  : '-${_formatDuration(behindLive)}',
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-                fontFamily: 'monospace',
+            Container(
+              width: 70,
+              alignment: Alignment.centerRight,
+              child: Text(
+                isAtLive ? 'LIVE' : '-${_formatDuration(Duration(seconds: secondsBehindLive.toInt().abs()))}',
+                style: TextStyle(
+                  color: isAtLive ? AppTheme.favorites : AppTheme.textWhite,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'monospace',
+                ),
               ),
             ),
           ],
@@ -421,36 +540,47 @@ class _LivePill extends StatelessWidget {
       builder: (context, posSnap) {
         final position = posSnap.data ?? Duration.zero;
         final duration = player.state.duration;
-        // Consider "at live" if within 5 seconds of the end
-        final isAtLive = duration <= Duration.zero || (duration - position).inSeconds.abs() < 5;
+        // Consider "at live" if within 30 seconds of the end for stability
+        final isAtLive = duration <= Duration.zero || (duration - position).inSeconds.abs() < 30;
 
         return GestureDetector(
           onTap: isAtLive ? null : onTap,
-          child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: isAtLive ? Colors.red : Colors.white24,
-              borderRadius: BorderRadius.circular(4),
+              color: isAtLive ? AppTheme.favorites : Colors.white10,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: isAtLive ? [
+                BoxShadow(
+                  color: AppTheme.favorites.withOpacity(0.4),
+                  blurRadius: 8,
+                  spreadRadius: 0,
+                )
+              ] : null,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: isAtLive ? Colors.white : Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                ),
+                if (isAtLive)
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  )
+                else
+                  const Icon(Icons.arrow_forward, size: 12, color: AppTheme.favorites),
                 const SizedBox(width: 6),
                 Text(
-                  'LIVE',
+                  isAtLive ? 'LIVE' : 'JUMP TO LIVE',
                   style: TextStyle(
-                    color: isAtLive ? Colors.white : Colors.red,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
+                    color: isAtLive ? Colors.white : AppTheme.favorites,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
                   ),
                 ),
               ],

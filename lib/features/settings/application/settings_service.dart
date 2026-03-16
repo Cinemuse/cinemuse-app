@@ -32,6 +32,8 @@ class UserSettings {
   final bool enableRealDebrid;
   final String realDebridKey;
   final List<StremioAddon> installedAddons;
+  final int liveTvBufferSize; // in MB
+  final bool enableLiveTvDiskCache;
 
   const UserSettings({
     this.displayName = '',
@@ -53,6 +55,8 @@ class UserSettings {
     this.enableRealDebrid = false,
     this.realDebridKey = '',
     this.installedAddons = const [],
+    this.liveTvBufferSize = 512,
+    this.enableLiveTvDiskCache = false,
   });
 
   factory UserSettings.fromProfile(Profile profile) {
@@ -82,6 +86,8 @@ class UserSettings {
         }
         return StremioAddon.fromJson(e as Map<String, dynamic>);
       }).toList() ?? const [],
+      liveTvBufferSize: prefs['liveTvBufferSize'] ?? 512,
+      enableLiveTvDiskCache: prefs['enableLiveTvDiskCache'] ?? false,
     );
   }
 
@@ -105,6 +111,8 @@ class UserSettings {
     bool? enableRealDebrid,
     String? realDebridKey,
     List<StremioAddon>? installedAddons,
+    int? liveTvBufferSize,
+    bool? enableLiveTvDiskCache,
   }) {
     return UserSettings(
       displayName: displayName ?? this.displayName,
@@ -126,6 +134,8 @@ class UserSettings {
       enableRealDebrid: enableRealDebrid ?? this.enableRealDebrid,
       realDebridKey: realDebridKey ?? this.realDebridKey,
       installedAddons: installedAddons ?? this.installedAddons,
+      liveTvBufferSize: liveTvBufferSize ?? this.liveTvBufferSize,
+      enableLiveTvDiskCache: enableLiveTvDiskCache ?? this.enableLiveTvDiskCache,
     );
   }
 
@@ -149,6 +159,8 @@ class UserSettings {
       'enableRealDebrid': enableRealDebrid,
       'realDebridKey': realDebridKey,
       'installedAddons': installedAddons.map((e) => e.toJson()).toList(),
+      'liveTvBufferSize': liveTvBufferSize,
+      'enableLiveTvDiskCache': enableLiveTvDiskCache,
     };
   }
 }
@@ -199,6 +211,8 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       enableRealDebrid: updates['enableRealDebrid'] ?? state.enableRealDebrid,
       realDebridKey: updates['realDebridKey'] ?? state.realDebridKey,
       installedAddons: updates['installedAddons'] ?? state.installedAddons,
+      liveTvBufferSize: updates['liveTvBufferSize'] ?? state.liveTvBufferSize,
+      enableLiveTvDiskCache: updates['enableLiveTvDiskCache'] ?? state.enableLiveTvDiskCache,
     );
 
     // Sync app language to localeProvider if updated

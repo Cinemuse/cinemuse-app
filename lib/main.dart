@@ -25,12 +25,12 @@ import 'package:cinemuse_app/core/presentation/widgets/offline_error_screen.dart
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:window_manager/window_manager.dart';
-import 'dart:io';
 
 void main() {
   Chain.capture(() async {
     setupSqlite();
     WidgetsFlutterBinding.ensureInitialized();
+    MediaKit.ensureInitialized();
     // Parallelize independent initializations
     await Future.wait([
       initializeDateFormatting(),

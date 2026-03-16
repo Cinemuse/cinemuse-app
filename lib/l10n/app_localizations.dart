@@ -1616,6 +1616,36 @@ abstract class AppLocalizations {
   /// **'Select your local region for regional channels.'**
   String get settingsLiveTvRegionDesc;
 
+  /// No description provided for @settingsLiveTv.
+  ///
+  /// In en, this message translates to:
+  /// **'Live TV'**
+  String get settingsLiveTv;
+
+  /// No description provided for @settingsLiveTvBufferSize.
+  ///
+  /// In en, this message translates to:
+  /// **'DVR Buffer Size'**
+  String get settingsLiveTvBufferSize;
+
+  /// No description provided for @settingsLiveTvBufferSizeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum amount of history (in MB) to keep in memory/disk for the current channel.'**
+  String get settingsLiveTvBufferSizeDesc;
+
+  /// No description provided for @settingsLiveTvDiskCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Disk Caching'**
+  String get settingsLiveTvDiskCache;
+
+  /// No description provided for @settingsLiveTvDiskCacheDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use local storage instead of RAM for the DVR buffer. Recommended for large buffers.'**
+  String get settingsLiveTvDiskCacheDesc;
+
   /// No description provided for @settingsNone.
   ///
   /// In en, this message translates to:

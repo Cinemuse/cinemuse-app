@@ -59,7 +59,7 @@ class CustomizationSettings extends ConsumerWidget {
                   label: l10n.settingsAppLanguage,
                   description: l10n.settingsAppLanguageDesc,
                   icon: Icons.language,
-                  trailing: _buildSmallDropdown<String>(
+                   trailing: buildSmallDropdown<String>(
                     value: userSettings.appLanguage,
                     items: [
                       DropdownMenuItem(value: 'en', child: Text(l10n.settingsEnglish)),
@@ -78,7 +78,7 @@ class CustomizationSettings extends ConsumerWidget {
                   label: l10n.settingsAudioLanguage,
                   description: l10n.settingsAudioLanguageDesc,
                   icon: Icons.audiotrack,
-                  trailing: _buildSmallDropdown<String>(
+                  trailing: buildSmallDropdown<String>(
                     value: userSettings.playerLanguage,
                     items: [
                       DropdownMenuItem(value: 'en', child: Text(l10n.settingsEnglish)),
@@ -101,7 +101,7 @@ class CustomizationSettings extends ConsumerWidget {
                     label: l10n.settingsSubtitleLanguage,
                     description: l10n.settingsSubtitleLanguageDesc,
                     icon: Icons.translate,
-                    trailing: _buildSmallDropdown<String>(
+                    trailing: buildSmallDropdown<String>(
                       value: userSettings.subtitleLanguage,
                       items: [
                         DropdownMenuItem(value: 'en', child: Text(l10n.settingsEnglish)),
@@ -133,7 +133,7 @@ class CustomizationSettings extends ConsumerWidget {
                         label: l10n.settingsAnimeAudioLanguage,
                         description: l10n.settingsAnimeAudioLanguageDesc,
                         icon: Icons.audiotrack,
-                        trailing: _buildSmallDropdown<String>(
+                        trailing: buildSmallDropdown<String>(
                           value: userSettings.animeAudioLanguage,
                           items: [
                             DropdownMenuItem(value: 'ja', child: Text(l10n.settingsOriginal)),
@@ -158,7 +158,7 @@ class CustomizationSettings extends ConsumerWidget {
                           description: l10n.settingsAnimeSubtitleLanguageDesc,
                           icon: Icons.translate,
                           showDivider: false,
-                          trailing: _buildSmallDropdown<String>(
+                          trailing: buildSmallDropdown<String>(
                             value: userSettings.animeSubtitleLanguage,
                             items: [
                               DropdownMenuItem(value: 'en', child: Text(l10n.settingsEnglish)),
@@ -205,41 +205,87 @@ class CustomizationSettings extends ConsumerWidget {
     );
   }
 
-  Widget _buildSmallDropdown<T>({
-    required T value,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      height: 38, // Slightly more height for better text centering
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.07), // Slightly more visible
+  // Removed _buildMediaGroup as it's replaced by SettingsDropdown
+}
+
+Widget buildSmallDropdown<T>({
+  required T value,
+  required List<DropdownMenuItem<T>> items,
+  required ValueChanged<T?> onChanged,
+}) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    height: 38, // Slightly more height for better text centering
+    decoration: BoxDecoration(
+      color: Colors.white.withOpacity(0.07), // Slightly more visible
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.white.withOpacity(0.1)),
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<T>(
+        value: value,
+        items: items,
+        onChanged: onChanged,
+        dropdownColor: AppTheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          items: items,
-          onChanged: onChanged,
-          dropdownColor: AppTheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          isDense: true, // Crucial to remove internal padding
-          alignment: Alignment.center,
-          underline: const SizedBox.shrink(),
-          icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textMuted, size: 18),
-          style: const TextStyle(
-            color: Colors.white, 
-            fontSize: 14, 
-            fontWeight: FontWeight.w600, // Make text a bit bolder
-          ),
+        isDense: true, // Crucial to remove internal padding
+        alignment: Alignment.center,
+        underline: const SizedBox.shrink(),
+        icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textMuted, size: 18),
+        style: const TextStyle(
+          color: Colors.white, 
+          fontSize: 14, 
+          fontWeight: FontWeight.w600, // Make text a bit bolder
         ),
       ),
+    ),
+  );
+}
+
+class LiveTvSettings extends ConsumerWidget {
+  const LiveTvSettings({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final userSettings = ref.watch(settingsProvider);
+    final settingsNotifier = ref.read(settingsProvider.notifier);
+
+    return SettingsSection(
+      title: l10n.settingsLiveTv,
+      children: [
+        SettingsCard(
+          children: [
+            SettingsTile(
+              label: l10n.settingsLiveTvBufferSize,
+              description: l10n.settingsLiveTvBufferSizeDesc,
+              icon: Icons.history,
+              trailing: buildSmallDropdown<int>(
+                value: userSettings.liveTvBufferSize,
+                items: const [
+                  DropdownMenuItem(value: 256, child: Text('256 MB')),
+                  DropdownMenuItem(value: 512, child: Text('512 MB')),
+                  DropdownMenuItem(value: 1024, child: Text('1 GB')),
+                  DropdownMenuItem(value: 2048, child: Text('2 GB')),
+                ],
+                onChanged: (val) => settingsNotifier.updateSettings({'liveTvBufferSize': val}),
+              ),
+            ),
+            SettingsTile(
+              label: l10n.settingsLiveTvDiskCache,
+              description: l10n.settingsLiveTvDiskCacheDesc,
+              icon: Icons.save,
+              showDivider: false,
+              trailing: SettingToggle(
+                value: userSettings.enableLiveTvDiskCache,
+                onChanged: (val) => settingsNotifier.updateSettings({'enableLiveTvDiskCache': val}),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
-
-  // Removed _buildMediaGroup as it's replaced by SettingsDropdown
 }
 
 class IntegrationsSettings extends ConsumerWidget {

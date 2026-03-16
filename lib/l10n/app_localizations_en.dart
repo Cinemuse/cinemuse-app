@@ -827,6 +827,23 @@ class AppLocalizationsEn extends AppLocalizations {
       'Select your local region for regional channels.';
 
   @override
+  String get settingsLiveTv => 'Live TV';
+
+  @override
+  String get settingsLiveTvBufferSize => 'DVR Buffer Size';
+
+  @override
+  String get settingsLiveTvBufferSizeDesc =>
+      'Maximum amount of history (in MB) to keep in memory/disk for the current channel.';
+
+  @override
+  String get settingsLiveTvDiskCache => 'Enable Disk Caching';
+
+  @override
+  String get settingsLiveTvDiskCacheDesc =>
+      'Use local storage instead of RAM for the DVR buffer. Recommended for large buffers.';
+
+  @override
   String get settingsNone => 'None';
 
   @override
