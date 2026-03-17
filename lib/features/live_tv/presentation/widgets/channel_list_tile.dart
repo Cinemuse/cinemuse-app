@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
+import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 
 /// A single channel row in the channel list panel.
@@ -46,7 +47,9 @@ class ChannelListTile extends StatelessWidget {
               SizedBox(
                 width: 32,
                 child: Text(
-                  channel.lcn.toString(),
+                  channel.lcn != null && channel.lcn! < 1000 
+                      ? channel.lcn.toString() 
+                      : '-',
                   style: TextStyle(
                     color: isSelected ? AppTheme.accent : AppTheme.textMuted,
                     fontWeight: FontWeight.w700,
@@ -104,19 +107,19 @@ class ChannelListTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (channel.hd) ...[
+                        if (channel.quality != StreamQuality.sd) ...[
                           const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 4, vertical: 1),
                             decoration: BoxDecoration(
-                              color: AppTheme.accent.withOpacity(0.15),
+                              color: (channel.quality == StreamQuality.uhd ? Colors.amber : AppTheme.accent).withOpacity(0.15),
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Text(
-                              'HD',
+                            child: Text(
+                              channel.quality.label,
                               style: TextStyle(
-                                color: AppTheme.accent,
+                                color: (channel.quality == StreamQuality.uhd ? Colors.amber : AppTheme.accent),
                                 fontSize: 9,
                                 fontWeight: FontWeight.w700,
                               ),

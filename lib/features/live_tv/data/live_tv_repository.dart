@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
+import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 
 class LiveTvRepository {
   final Dio _dio;
@@ -10,6 +11,9 @@ class LiveTvRepository {
       'https://raw.githubusercontent.com/ZapprTV/channels/refs/heads/main/it/dtt/national.json';
   static const _epgUrl =
       'https://epg.zappr.stream/it/dtt/national.json';
+
+  // Premium scraped list from user's Gist
+  static const _premiumChannelsUrl = 'https://gist.githubusercontent.com/quelmitch/ab33cc9daf45b96fe226ae57d86db98d/raw/channels.json';
 
   LiveTvRepository(this._dio);
 
@@ -32,7 +36,6 @@ class LiveTvRepository {
       final nationalData = _parseResponse(nationalResponse.data) as Map<String, dynamic>;
       allChannelsJson.addAll(nationalData['channels'] as List<dynamic>);
 
-      // 2. Fetch Regional Channels if selected
       if (region != null && region.isNotEmpty) {
         final regionalUrl = 'https://raw.githubusercontent.com/ZapprTV/channels/refs/heads/main/it/dtt/regional/$region.json';
         try {
@@ -40,26 +43,60 @@ class LiveTvRepository {
           final regionalData = _parseResponse(regionalResponse.data) as Map<String, dynamic>;
           allChannelsJson.addAll(regionalData['channels'] as List<dynamic>);
         } catch (_) {
+          // Regional fail is non-critical
         }
       }
 
-
       // ── Build channel map ──
-      // First pass: add all playable channels to the map.
-      // Regional channels (appended after national) override at the same LCN,
-      // but only if they have a compatible URL.
+      // Keys are LCNs. Stable DTT channels get priority seat on the LCN bus.
       final Map<int, Channel> channelMap = {};
+      final Map<String, Channel> nameLookup = {}; // For merging scraped links later
+
       for (final json in allChannelsJson) {
         try {
           final channel = Channel.fromJson(json as Map<String, dynamic>);
           if (channel.isPlayable) {
             final existing = channelMap[channel.lcn];
             if (existing == null || !_isMpvIncompatible(channel.url)) {
-              channelMap[channel.lcn] = channel;
+              // Assign "Generale" as default category for national channels
+              final withGroup = Channel(
+                lcn: channel.lcn,
+                name: channel.name,
+                logo: channel.logo,
+                hd: channel.hd,
+                uhd: channel.uhd,
+                type: channel.type,
+                urlOverride: channel.urlOverride,
+                links: channel.links,
+                group: 'Generale',
+                subtitle: channel.subtitle,
+                epgSource: channel.epgSource,
+                epgId: channel.epgId,
+                isGeoblocked: channel.isGeoblocked,
+                isDisabled: channel.isDisabled,
+                isFeed: channel.isFeed,
+                isRadio: channel.isRadio,
+                isAdult: channel.isAdult,
+              );
+              channelMap[channel.lcn] = withGroup;
+              nameLookup[_normalize(channel.name)] = withGroup;
             }
           }
-        } catch (_) {
+        } catch (_) {}
+      }
+
+      // ── Load & Merge Premium Scraped Channels ──
+      try {
+        // For development, we might load from local file system or a provided URL
+        // In this specific task, we'll try to reach the local artifact we just generated
+        // Note: In real production, this would be a URL.
+        final premiumJson = await _loadPremiumData();
+        if (premiumJson != null) {
+          _mergePremiumChannels(channelMap, nameLookup, premiumJson);
         }
+      } catch (e) {
+        // Log but don't crash, we still have the stable DTT links
+        print('Error merging premium channels: $e');
       }
 
       // Second pass: fix channels stuck with incompatible URLs.
@@ -84,7 +121,7 @@ class LiveTvRepository {
             hd: ch.hd,
             uhd: ch.uhd,
             type: ch.type,
-            url: donor.url,  // borrow the working URL
+            urlOverride: donor.url,  // borrow the working URL
             subtitle: ch.subtitle,
             epgSource: ch.epgSource,
             epgId: ch.epgId,
@@ -100,8 +137,13 @@ class LiveTvRepository {
 
       final channels = channelMap.values.toList();
       
-      // Sort by LCN for natural channel ordering
-      channels.sort((a, b) => a.lcn.compareTo(b.lcn));
+      // Sort: LCN 1-999 first, then alphabetically for channels without LCN
+      channels.sort((a, b) {
+        if (a.lcn > 0 && b.lcn > 0) return a.lcn.compareTo(b.lcn);
+        if (a.lcn > 0) return -1;
+        if (b.lcn > 0) return 1;
+        return a.name.compareTo(b.name);
+      });
 
       return channels;
     } catch (e) {
@@ -109,9 +151,79 @@ class LiveTvRepository {
     }
   }
 
-  /// CDN hosts that require HTTP headers mpv/media_kit cannot inject.
-  static bool _isMpvIncompatible(String url) =>
-      url.contains('akamaized.net');
+  /// Helper to normalize names for matching
+  static String _normalize(String name) {
+    return name.toUpperCase()
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .replaceAll(' +', '+')
+        .trim();
+  }
+
+  /// Loads premium data from the Gist URL
+  Future<Map<String, dynamic>?> _loadPremiumData() async {
+    try {
+      final response = await _dio.get(_premiumChannelsUrl);
+      return _parseResponse(response.data) as Map<String, dynamic>;
+    } catch (e) {
+      print('LiveTvRepository: Failed to load premium data: $e');
+      return null;
+    }
+  }
+
+  /// Merges scraped premium channels into the existing DTT map
+  void _mergePremiumChannels(
+    Map<int, Channel> channelMap, 
+    Map<String, Channel> nameLookup,
+    Map<String, dynamic> premiumJson,
+  ) {
+    int syntheticLcn = 1000; // Start high for channels without LCN
+    print('LiveTvRepository: Merging premium data into ${channelMap.length} existing channels...');
+    
+    premiumJson.forEach((groupName, channelsMap) {
+      if (channelsMap is! Map<String, dynamic>) {
+        print('LiveTvRepository: Invalid group data for $groupName: ${channelsMap.runtimeType}');
+        return;
+      }
+      
+      final titleCaseGroup = groupName[0].toUpperCase() + groupName.substring(1).toLowerCase();
+      print('LiveTvRepository: Processing group $groupName ($titleCaseGroup) with ${channelsMap.length} channels');
+      
+      channelsMap.forEach((channelName, linksDataList) {
+        if (linksDataList is! List) return;
+        
+        // final normalizedName = _normalize(channelName); // No longer needed
+        // final existing = nameLookup[normalizedName]; // No longer needed
+
+        final List<StreamLink> newLinks = linksDataList
+            .map((l) => StreamLink.fromJson(l as Map<String, dynamic>))
+            .toList();
+
+        // Always add as a new channel to keep DTT and Premium separate as requested
+        final channel = Channel(
+          lcn: 0, 
+          name: channelName,
+          logo: (linksDataList.first as Map<String, dynamic>)['logo'] as String? ?? '',
+          links: newLinks,
+          group: titleCaseGroup,
+        );
+        
+        channelMap[syntheticLcn++] = channel;
+      });
+    });
+    
+    print('LiveTvRepository: Merge complete. Total channels: ${channelMap.length}');
+  }
+
+  List<StreamLink> _mergeLinks(List<StreamLink> existing, List<StreamLink> newcomers) {
+    return [
+      ...existing,
+      ...newcomers,
+    ];
+  }
+
+  /// CDN hosts that require specific HTTP headers. 
+  /// Previously we blocked these, but now we handle them in LiveTvSourceHandler.
+  static bool _isMpvIncompatible(String url) => false;
 
   /// Checks if two channel names share a common base.
   /// e.g. "Rai 3 TGR Piemonte" and "Rai 3" → the longer starts with the shorter.

@@ -44,7 +44,9 @@ class _ChannelListPanelState extends ConsumerState<ChannelListPanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final channelsAsync = ref.watch(channelsProvider);
+    final channelsAsync = ref.watch(filteredChannelsProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final selectedCategory = ref.watch(liveTvCategoryProvider);
     final selectedChannel = ref.watch(selectedChannelProvider);
 
     // Auto-scroll when selected channel changes
@@ -73,8 +75,51 @@ class _ChannelListPanelState extends ConsumerState<ChannelListPanel> {
             ),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Category Switcher
+              categoriesAsync.when(
+                data: (categories) => Container(
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: categories.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final cat = categories[index];
+                      final isSelected = cat == selectedCategory;
+                      return ChoiceChip(
+                        label: Text(cat),
+                        selected: isSelected,
+                        onSelected: (val) {
+                          if (val) {
+                            ref.read(liveTvCategoryProvider.notifier).state = cat;
+                          }
+                        },
+                        selectedColor: AppTheme.accent.withOpacity(0.2),
+                        backgroundColor: Colors.white.withOpacity(0.05),
+                        labelStyle: TextStyle(
+                          color: isSelected ? AppTheme.accent : Colors.white70,
+                          fontSize: 13,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                            color: isSelected ? AppTheme.accent : Colors.transparent,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                loading: () => const SizedBox(height: 48),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
+
+              const Divider(height: 1, color: Colors.white10),
 
               // Channel list
               Expanded(
@@ -103,7 +148,7 @@ class _ChannelListPanelState extends ConsumerState<ChannelListPanel> {
                         return ChannelListTile(
                           channel: channel,
                           isSelected:
-                              selectedChannel?.lcn == channel.lcn,
+                              selectedChannel?.uniqueId == channel.uniqueId,
                           currentProgram: currentProgram,
                           onTap: () {
                             ref

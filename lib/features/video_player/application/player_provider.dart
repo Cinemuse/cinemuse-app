@@ -14,6 +14,8 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
 import 'package:cinemuse_app/features/video_player/application/handlers/vod_source_handler.dart';
+import 'package:cinemuse_app/features/video_player/application/handlers/livetv_source_handler.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:flutter/foundation.dart';
 
 
@@ -30,6 +32,7 @@ import 'package:cinemuse_app/core/application/l10n_provider.dart';
 import 'package:cinemuse_app/features/video_player/application/helpers/player_history_manager.dart';
 import 'package:cinemuse_app/features/video_player/application/helpers/player_progress_tracker.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
+import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:cinemuse_app/core/utils/mime_resolver.dart';
 
 // Convert back to StateNotifierProvider for compatibility/simplicity
@@ -55,6 +58,11 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   EventManager? _eventManager;
   PlaybackManager? _playbackManager;
   InitializationManager? _initializationManager;
+  LiveTvSourceHandler? _liveTvHandler;
+  
+  // --- Live TV Failover State ---
+  Channel? _currentChannel;
+  StreamLink? _currentLink;
 
   PlayerController(this.ref, this.params) : super(const AsyncValue.loading()) {
     
@@ -87,6 +95,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     _youtubeHandler.dispose();
     _rdHandler.dispose();
     _castHandler.dispose();
+    _liveTvHandler?.dispose();
     super.dispose();
   }
 
@@ -159,6 +168,11 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       // Fallback strategies for unsupported audio codecs.
       mpv.setProperty('audio-fallback-to-null', 'yes');
 
+      // --- Networking & Compatibility ---
+      // Fixes "Refusing to load potentially unsafe URL" error
+      mpv.setProperty('load-unsafe-playlists', 'yes');
+      mpv.setProperty('user-agent', 'VLC/3.0.18 LibVLC/3.0.18');
+      
       // MPV Internal logging off
       mpv.setProperty('log-level', 'no');
     } catch (e) {
@@ -195,6 +209,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       resolver: ref.read(unifiedStreamResolverProvider),
       tmdbService: ref.read(tmdbServiceProvider),
     );
+
+    _liveTvHandler = LiveTvSourceHandler(_player!);
   }
 
   void _setupProgressTracking() {
@@ -255,9 +271,23 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     }
   }
 
-  Future<void> changeChannel(Channel channel) async {
+  Future<void> changeChannel(Channel channel, {bool isFailover = false}) async {
     if (_player == null || _initializationManager == null) return;
     
+    if (!isFailover) {
+      // Reset failed markers and soft-retry markers on manual selection to allow fresh attempts
+      for (final link in channel.links) {
+        link.isFailed = false;
+        link.softRetryDone = false;
+      }
+    }
+
+    // Identify which link we are trying to open
+    _currentLink = null;
+    if (channel.links.isNotEmpty) {
+      _currentLink = channel.links.firstWhere((l) => !l.isFailed, orElse: () => channel.links.first);
+    }
+
     // Set resolving state to show loading spinner
     if (mounted) {
       state = AsyncValue.data(state.valueOrNull?.copyWith(
@@ -275,7 +305,18 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     }
 
     try {
-      final result = await _initializationManager!.initializeLiveTv(channel);
+      _currentChannel = channel;
+      final settings = ref.read(settingsProvider);
+      
+      // Ensure previous stall watchdogs are stopped
+      _liveTvHandler?.dispose();
+      _liveTvHandler = LiveTvSourceHandler(_player!);
+      
+      final result = await _liveTvHandler!.initialize(
+        channel, 
+        settings,
+        onStall: () => _handleLiveTvFailover('Stream stalled'),
+      );
       
       if (mounted) {
         state = AsyncValue.data(state.value!.copyWith(
@@ -286,6 +327,50 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       }
     } catch (e, st) {
       _handleInitializationError(e, st);
+    }
+  }
+
+  Future<void> _handleLiveTvFailover(String error, {bool isSoftRetry = false}) async {
+    if (_currentChannel == null) return;
+    
+    // 1. Handle link marking
+    if (_currentLink != null) {
+      if (isSoftRetry && !_currentLink!.softRetryDone) {
+        debugPrint('PlayerController: Soft-retry triggered for ${_currentLink!.url}');
+        _currentLink!.softRetryDone = true;
+        // We don't mark as failed yet, just try again
+      } else {
+        debugPrint('PlayerController: Marking link as failed: ${_currentLink!.url}');
+        _currentLink!.isFailed = true;
+        _currentLink!.softRetryDone = false; // Reset for next loop pass
+      }
+    }
+
+    // 2. Determine if we should loop or continue
+    bool hasWorkingLinks = _currentChannel!.links.any((l) => !l.isFailed);
+
+    if (!hasWorkingLinks) {
+       debugPrint('PlayerController: All links tried for ${_currentChannel!.name}. Restarting loop...');
+       // Reset failed status for all links to allow another pass
+       for (final link in _currentChannel!.links) {
+         link.isFailed = false;
+         link.softRetryDone = false;
+       }
+       hasWorkingLinks = true;
+    }
+    
+    // 3. For Live TV, we attempt infinitely. 
+    // 500ms delay for next link, 0ms for immediate soft-retry to minimize gap.
+    final retryDelay = isSoftRetry ? Duration.zero : const Duration(milliseconds: 500);
+    if (retryDelay > Duration.zero) {
+      await Future.delayed(retryDelay);
+    }
+
+    debugPrint('PlayerController: Live TV Failover triggered. Trying ${isSoftRetry ? 'SAME' : 'NEXT'} link...');
+    
+    // Re-trigger the same channel switch as a failover
+    if (mounted) {
+      await changeChannel(_currentChannel!, isFailover: true);
     }
   }
 
@@ -577,6 +662,12 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   }
 
   Future<void> _handlePlaybackCompleted() async {
+    if (params.type == 'livetv') {
+      debugPrint('PlayerController: Live TV Playback Completed (EOS). Triggering soft-retry.');
+      _handleLiveTvFailover('Stream ended unexpectedly (EOS)', isSoftRetry: true);
+      return;
+    }
+
     // 1. Initial log
     await _saveProgress(force: true);
     
@@ -585,6 +676,11 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   }
 
   void _handlePlayerError(String error) {
+    if (params.type == 'livetv') {
+      _handleLiveTvFailover(error);
+      return;
+    }
+    
     if (mounted) {
       state = AsyncValue.error(error, StackTrace.current);
     }
