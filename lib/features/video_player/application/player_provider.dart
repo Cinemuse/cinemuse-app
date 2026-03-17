@@ -61,6 +61,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   LiveTvSourceHandler? _liveTvHandler;
   
   // --- Live TV Failover State ---
+  bool _isChangingChannel = false;
+  int _activeRequestId = 0;
   Channel? _currentChannel;
   StreamLink? _currentLink;
 
@@ -274,38 +276,50 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   Future<void> changeChannel(Channel channel, {bool isFailover = false}) async {
     if (_player == null || _initializationManager == null) return;
     
-    if (!isFailover) {
-      // Reset failed markers and soft-retry markers on manual selection to allow fresh attempts
-      for (final link in channel.links) {
-        link.isFailed = false;
-        link.softRetryDone = false;
-      }
+    // Guard against multiple simultaneous failover attempts for the same issue.
+    // However, ALWAYS allow manual changes (!isFailover) to proceed and override.
+    if (isFailover && _isChangingChannel) {
+      debugPrint('PlayerController: Skipping failover request; change already in progress.');
+      return;
     }
 
-    // Identify which link we are trying to open
-    _currentLink = null;
-    if (channel.links.isNotEmpty) {
-      _currentLink = channel.links.firstWhere((l) => !l.isFailed, orElse: () => channel.links.first);
-    }
-
-    // Set resolving state to show loading spinner
-    if (mounted) {
-      state = AsyncValue.data(state.valueOrNull?.copyWith(
-        title: channel.name,
-        isResolving: true,
-        currentStream: null,
-        error: null,
-      ) ?? CinemaPlayerState(
-        controller: _controller!,
-        availableStreams: const [],
-        currentStream: null,
-        title: channel.name,
-        isResolving: true,
-      ));
-    }
+    final requestId = ++_activeRequestId;
+    _isChangingChannel = true;
+    _currentChannel = channel;
 
     try {
-      _currentChannel = channel;
+      if (!isFailover) {
+        // Reset failed markers and retry counters on manual selection
+        for (final link in channel.links) {
+          link.isFailed = false;
+          link.softRetryCount = 0;
+        }
+      }
+
+      // Identify which link we are trying to open
+      _currentLink = null;
+      if (channel.links.isNotEmpty) {
+        _currentLink = channel.links.firstWhere((l) => !l.isFailed, orElse: () => channel.links.first);
+      }
+
+      // During failover, keep the last video frame visible ("freeze frame")
+      // instead of showing the resolving spinner (black screen).
+      if (mounted && requestId == _activeRequestId) {
+        state = AsyncValue.data(state.valueOrNull?.copyWith(
+          title: channel.name,
+          isResolving: !isFailover,
+          currentStream: isFailover ? state.valueOrNull?.currentStream : null,
+          error: null,
+        ) ?? CinemaPlayerState(
+          controller: _controller!,
+          availableStreams: const [],
+          currentStream: null,
+          title: channel.name,
+          isResolving: true,
+        ));
+      }
+
+      // 4. Initialize stream
       final settings = ref.read(settingsProvider);
       
       // Ensure previous stall watchdogs are stopped
@@ -318,7 +332,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         onStall: () => _handleLiveTvFailover('Stream stalled'),
       );
       
-      if (mounted) {
+      // Only update state if this is still the most recent request
+      if (mounted && requestId == _activeRequestId) {
         state = AsyncValue.data(state.value!.copyWith(
           currentStream: result.resolvedStream,
           isResolving: false,
@@ -326,49 +341,54 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         ));
       }
     } catch (e, st) {
-      _handleInitializationError(e, st);
+      if (requestId == _activeRequestId) {
+        _handleInitializationError(e, st);
+      }
+    } finally {
+      // Only clear the guard if no newer request has started
+      if (requestId == _activeRequestId) {
+        _isChangingChannel = false;
+      }
     }
   }
 
-  Future<void> _handleLiveTvFailover(String error, {bool isSoftRetry = false}) async {
+  /// Max retries on a connection error before rotating to the next link.
+  /// EOS (stream ended) retries the same link infinitely since the server was working.
+  static const int _maxErrorRetries = 1;
+
+  Future<void> _handleLiveTvFailover(String error, {bool isConnectionError = false}) async {
     if (_currentChannel == null) return;
     
-    // 1. Handle link marking
+    // 1. Decide: persist on same link or rotate?
     if (_currentLink != null) {
-      if (isSoftRetry && !_currentLink!.softRetryDone) {
-        debugPrint('PlayerController: Soft-retry triggered for ${_currentLink!.url}');
-        _currentLink!.softRetryDone = true;
-        // We don't mark as failed yet, just try again
+      if (isConnectionError) {
+        // Connection errors (timeout, refused, HTTP error): rotate after a few tries
+        _currentLink!.softRetryCount++;
+        if (_currentLink!.softRetryCount >= _maxErrorRetries) {
+          debugPrint('PlayerController: Link unreachable after ${_currentLink!.softRetryCount} errors. Rotating.');
+          _currentLink!.isFailed = true;
+          _currentLink!.softRetryCount = 0;
+        } else {
+          debugPrint('PlayerController: Connection error (${_currentLink!.softRetryCount}/$_maxErrorRetries). Retrying SAME link.');
+        }
       } else {
-        debugPrint('PlayerController: Marking link as failed: ${_currentLink!.url}');
-        _currentLink!.isFailed = true;
-        _currentLink!.softRetryDone = false; // Reset for next loop pass
+        // EOS (stream ended): the server WAS streaming. Retry same link forever.
+        debugPrint('PlayerController: EOS on link. Retrying SAME link (server was active).');
+        // Don't increment counter, don't mark as failed. Just retry.
       }
     }
 
-    // 2. Determine if we should loop or continue
+    // 2. If all links are failed, reset and start over
     bool hasWorkingLinks = _currentChannel!.links.any((l) => !l.isFailed);
-
     if (!hasWorkingLinks) {
-       debugPrint('PlayerController: All links tried for ${_currentChannel!.name}. Restarting loop...');
-       // Reset failed status for all links to allow another pass
+       debugPrint('PlayerController: All links exhausted. Restarting loop...');
        for (final link in _currentChannel!.links) {
          link.isFailed = false;
-         link.softRetryDone = false;
+         link.softRetryCount = 0;
        }
-       hasWorkingLinks = true;
     }
     
-    // 3. For Live TV, we attempt infinitely. 
-    // 500ms delay for next link, 0ms for immediate soft-retry to minimize gap.
-    final retryDelay = isSoftRetry ? Duration.zero : const Duration(milliseconds: 500);
-    if (retryDelay > Duration.zero) {
-      await Future.delayed(retryDelay);
-    }
-
-    debugPrint('PlayerController: Live TV Failover triggered. Trying ${isSoftRetry ? 'SAME' : 'NEXT'} link...');
-    
-    // Re-trigger the same channel switch as a failover
+    // 3. Trigger the reconnection with no artificial delay.
     if (mounted) {
       await changeChannel(_currentChannel!, isFailover: true);
     }
@@ -663,8 +683,12 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
   Future<void> _handlePlaybackCompleted() async {
     if (params.type == 'livetv') {
-      debugPrint('PlayerController: Live TV Playback Completed (EOS). Triggering soft-retry.');
-      _handleLiveTvFailover('Stream ended unexpectedly (EOS)', isSoftRetry: true);
+      if (_isChangingChannel) {
+        debugPrint('PlayerController: Ignoring EOS during channel change.');
+        return;
+      }
+      debugPrint('PlayerController: Live TV EOS. Retrying same link...');
+      _handleLiveTvFailover('Stream ended (EOS)', isConnectionError: false);
       return;
     }
 
@@ -677,7 +701,12 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
   void _handlePlayerError(String error) {
     if (params.type == 'livetv') {
-      _handleLiveTvFailover(error);
+      if (_isChangingChannel) {
+        debugPrint('PlayerController: Ignoring Error during channel change: $error');
+        return;
+      }
+      // Connection error: retry same link a few times, then rotate.
+      _handleLiveTvFailover(error, isConnectionError: true);
       return;
     }
     

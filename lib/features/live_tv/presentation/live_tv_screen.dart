@@ -175,7 +175,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     // React to channel selection changes — only when the Live TV tab is active
     // so we don't create the Player on other pages.
     ref.listen(selectedChannelProvider, (prev, next) {
-      if (isLiveTvTab && next != null && next.lcn != prev?.lcn) {
+      if (isLiveTvTab && next != null && next.uniqueId != prev?.uniqueId) {
         _playChannel(next);
       }
     });

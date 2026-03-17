@@ -200,7 +200,7 @@ class LiveTvRepository {
 
         // Always add as a new channel to keep DTT and Premium separate as requested
         final channel = Channel(
-          lcn: 0, 
+          lcn: syntheticLcn, 
           name: channelName,
           logo: (linksDataList.first as Map<String, dynamic>)['logo'] as String? ?? '',
           links: newLinks,

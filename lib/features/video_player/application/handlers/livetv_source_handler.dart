@@ -136,7 +136,7 @@ class LiveTvSourceHandler {
       if (isPremium) {
         // MPEG-TS specific optimizations
         platform.setProperty('ffmpeg-format', 'mpegts');
-        platform.setProperty('demuxer-lavf-o', 'analyze_max_duration=1000000,probesize=1000000,live_start_index=-3,reconnect_streamed=1,reconnect_delay_max=2');
+        platform.setProperty('demuxer-lavf-o', 'analyze_max_duration=500000,probesize=500000,live_start_index=-3,reconnect_streamed=1,reconnect_delay_max=1');
         platform.setProperty('force-seekable', 'no'); // Prevents stalls on raw TS
       } else {
         platform.setProperty('demuxer-lavf-o', 'live_start_index=-3');

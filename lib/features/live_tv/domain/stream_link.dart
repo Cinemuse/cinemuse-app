@@ -34,15 +34,15 @@ class StreamLink {
   /// Marked true if the link failed during the current session.
   bool isFailed;
 
-  /// Marked true if we already attempted a soft-retry for this link in its current pass.
-  bool softRetryDone;
+  /// How many times we've retried this link in its current pass without success.
+  int softRetryCount;
 
   StreamLink({
     required this.url,
     this.quality = StreamQuality.sd,
     this.codec,
     this.isFailed = false,
-    this.softRetryDone = false,
+    this.softRetryCount = 0,
   });
 
   factory StreamLink.fromJson(Map<String, dynamic> json) {
