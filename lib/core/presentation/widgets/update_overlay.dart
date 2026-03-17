@@ -91,13 +91,13 @@ class UpdateOverlay extends ConsumerWidget {
             top: 80,
             left: 0,
             right: 0,
-            child: _buildErrorBanner(context, updateState.error ?? 'Unknown error'),
+            child: _buildErrorBanner(context, ref, updateState.error ?? 'Unknown error'),
           ),
       ],
     );
   }
 
-  Widget _buildErrorBanner(BuildContext context, String error) {
+  Widget _buildErrorBanner(BuildContext context, WidgetRef ref, String error) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -113,6 +113,13 @@ class UpdateOverlay extends ConsumerWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white, size: 18),
+            onPressed: () => ref.read(updateProvider.notifier).dismissUpdate(),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            visualDensity: VisualDensity.compact,
           ),
         ],
       ),
@@ -140,6 +147,13 @@ class UpdateOverlay extends ConsumerWidget {
               l10n.updateNow,
               style: const TextStyle(color: Colors.white, decoration: TextDecoration.underline),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white, size: 20),
+            onPressed: () => ref.read(updateProvider.notifier).dismissUpdate(),
+            padding: const EdgeInsets.only(left: 8),
+            constraints: const BoxConstraints(),
+            visualDensity: VisualDensity.compact,
           ),
         ],
       ),

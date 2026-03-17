@@ -104,9 +104,12 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
         state = state.copyWith(status: UpdateStatus.upToDate, currentVersion: currentVersion);
       }
     } catch (e) {
-      print('UpdateService: Error checking for updates: $e');
       state = state.copyWith(status: UpdateStatus.error, error: e.toString());
     }
+  }
+
+  void dismissUpdate() {
+    state = state.copyWith(status: UpdateStatus.upToDate);
   }
 
   String? _getDownloadUrl(Map<String, dynamic> releaseData) {
