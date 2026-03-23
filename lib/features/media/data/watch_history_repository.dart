@@ -77,15 +77,26 @@ class WatchHistoryRepository {
       // Only proceed if we actually deleted something (prevents double logs)
       // or if we are marking a new completion without an existing history entry
       if ((deleted as List).isNotEmpty) {
-        // Mark as Completed in logs (synonymous with checkmark in Cinemuse)
-        await logEpisodeWatch(
+        // [MODIFIED] Only log if not already watched
+        final alreadyWatched = await isMediaAlreadyWatched(
           userId: userId,
           tmdbId: media.tmdbId,
           mediaType: media.mediaType.name,
           season: season ?? 0,
           episode: episode ?? 0,
-          durationWatched: progressSeconds,
         );
+
+        if (!alreadyWatched) {
+          // Mark as Completed in logs (synonymous with checkmark in Cinemuse)
+          await logEpisodeWatch(
+            userId: userId,
+            tmdbId: media.tmdbId,
+            mediaType: media.mediaType.name,
+            season: season ?? 0,
+            episode: episode ?? 0,
+            durationWatched: progressSeconds,
+          );
+        }
 
         // Auto-advance to next episode
         if (media.mediaType == MediaKind.tv && season != null && episode != null && seriesDetails != null) {
@@ -136,6 +147,27 @@ class WatchHistoryRepository {
 
     // Update Remote
     await _client.from('watch_history').upsert(entry).withErrorHandling();
+  }
+
+  Future<bool> isMediaAlreadyWatched({
+    required String userId,
+    required int tmdbId,
+    required String mediaType,
+    required int season,
+    required int episode,
+  }) async {
+    final response = await _client
+        .from('watch_logs')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId)
+        .eq('media_type', mediaType)
+        .eq('season', season)
+        .eq('episode', episode)
+        .limit(1)
+        .maybeSingle();
+    
+    return response != null;
   }
 
   Future<void> logEpisodeWatch({
