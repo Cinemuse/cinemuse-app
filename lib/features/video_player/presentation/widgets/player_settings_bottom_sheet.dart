@@ -1,17 +1,19 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
-import 'package:cinemuse_app/features/video_player/application/language_mapper.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
-import 'package:cinemuse_app/features/settings/application/settings_service.dart';
-import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 
-class PlayerSettingsBottomSheet extends ConsumerWidget {
+import 'settings/main_settings_view.dart';
+import 'settings/quality_settings_view.dart';
+import 'settings/track_settings_view.dart';
+import 'settings/subtitle_appearance_view.dart';
+
+/// The views available inside the settings sheet.
+enum _SettingsView { main, quality, audio, subtitles, appearance }
+
+class PlayerSettingsBottomSheet extends ConsumerStatefulWidget {
   final CinemaPlayerState state;
   final PlayerParams params;
 
@@ -21,8 +23,8 @@ class PlayerSettingsBottomSheet extends ConsumerWidget {
     required this.params,
   });
 
-  static void show(BuildContext context, CinemaPlayerState state, PlayerParams params) {
-    showModalBottomSheet(
+  static Future<void> show(BuildContext context, CinemaPlayerState state, PlayerParams params) {
+    return showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black54,
@@ -32,824 +34,131 @@ class PlayerSettingsBottomSheet extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Watch state dynamically to reflect changes (though this main sheet is mostly static)
-    final currentState = ref.watch(playerControllerProvider(params)).value ?? state;
-    final l10n = AppLocalizations.of(context)!;
-    
+  ConsumerState<PlayerSettingsBottomSheet> createState() => _PlayerSettingsBottomSheetState();
+}
+
+class _PlayerSettingsBottomSheetState extends ConsumerState<PlayerSettingsBottomSheet> {
+  _SettingsView _currentView = _SettingsView.main;
+
+  void _navigateTo(_SettingsView view) {
+    setState(() => _currentView = view);
+  }
+
+  void _navigateBack() {
+    setState(() => _currentView = _SettingsView.main);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentState = ref.watch(playerControllerProvider(widget.params)).value ?? widget.state;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final maxSheetHeight = screenHeight * (isLandscape ? 0.9 : 0.6);
+    final minSheetHeight = screenHeight * 0.15;
+
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
       child: Container(
+        constraints: BoxConstraints(
+          minHeight: minSheetHeight,
+          maxHeight: maxSheetHeight,
+        ),
         decoration: BoxDecoration(
           color: AppTheme.glass.withOpacity(0.8),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           border: Border.all(color: AppTheme.border.withOpacity(0.1), width: 1.5),
         ),
-        padding: const EdgeInsets.only(bottom: 24),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Text(
-                  l10n.playerSettings.toUpperCase(), 
-                  style: TextStyle(
-                    color: AppTheme.textWhite.withOpacity(0.9), 
-                    fontSize: 14, 
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ),
-              _SettingsTile(
-                icon: Icons.high_quality_rounded,
-                title: l10n.playerQuality,
-                subtitle: _QualitySubtitle(state: currentState),
-                onTap: () {
-                  _QualitySelector.show(context, currentState, params);
-                },
-              ),
-              _SettingsTile(
-                icon: Icons.audiotrack_rounded,
-                title: l10n.playerAudio,
-                subtitle: _TrackSubtitle(state: currentState, isSubtitle: false),
-                onTap: () {
-                  _TrackSelector.show(context, currentState, params, isSubtitle: false);
-                },
-              ),
-              _SettingsTile(
-                icon: Icons.subtitles_rounded,
-                title: l10n.playerSubtitles,
-                subtitle: _TrackSubtitle(state: currentState, isSubtitle: true),
-                onTap: () {
-                  _TrackSelector.show(context, currentState, params, isSubtitle: true);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final Widget subtitle;
-  final VoidCallback onTap;
-
-  const _SettingsTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      leading: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppTheme.accent.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, color: AppTheme.accent, size: 24),
-      ),
-      title: Text(
-        title, 
-        style: const TextStyle(
-          color: AppTheme.textWhite, 
-          fontSize: 16, 
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      subtitle: subtitle,
-      trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24),
-      onTap: onTap,
-    );
-  }
-}
-
-class _QualitySubtitle extends StatelessWidget {
-  final CinemaPlayerState state;
-  const _QualitySubtitle({required this.state});
-
-  @override
-  Widget build(BuildContext context) {
-    final currentStream = state.currentStream;
-    if (currentStream == null) return const SizedBox.shrink();
-    
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
-      child: _StreamMetadataOverview(stream: currentStream.candidate),
-    );
-  }
-}
-
-class _TrackSubtitle extends ConsumerWidget {
-  final CinemaPlayerState state;
-  final bool isSubtitle;
-  const _TrackSubtitle({required this.state, required this.isSubtitle});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final player = state.controller.player;
-    final pref = ref.watch(settingsProvider);
-    
-    if (isSubtitle) {
-      final track = state.activeSubtitleTrack ?? player.state.track.subtitle;
-      final prefLang = (state.isAnime && pref.splitAnimePreferences)
-          ? pref.animeSubtitleLanguage.toLowerCase()
-          : pref.subtitleLanguage.toLowerCase();
-      
-      if (track.id == 'no' || track.id == 'auto') {
-        if (track.id == 'no') return const Text('Off/None', style: TextStyle(color: AppTheme.textMuted));
-        
-        final subs = player.state.tracks.subtitle;
-        final matched = subs.firstWhere(
-          (t) => t.id != 'auto' && t.id != 'no' && LanguageMapper.isMatch(t, prefLang), 
-          orElse: () => subs.firstOrNull ?? track
-        );
-        
-        final name = LanguageMapper.getDisplayLanguage(matched.title ?? matched.language ?? matched.id);
-        return Text(name, style: const TextStyle(color: AppTheme.textMuted));
-      }
-      
-      final name = LanguageMapper.getDisplayLanguage(track.title ?? track.language ?? track.id);
-      return Text(name, style: const TextStyle(color: AppTheme.textMuted), maxLines: 1, overflow: TextOverflow.ellipsis);
-    } else {
-      final track = state.activeAudioTrack ?? player.state.track.audio;
-      final prefLang = (state.isAnime && pref.splitAnimePreferences)
-          ? pref.animeAudioLanguage.toLowerCase()
-          : pref.playerLanguage.toLowerCase();
-      
-      if (track.id == 'no' || track.id == 'auto') {
-        if (track.id == 'no') return const Text('Off/None', style: TextStyle(color: AppTheme.textMuted));
-        
-        final audio = player.state.tracks.audio;
-        final matched = audio.firstWhere(
-          (t) => t.id != 'auto' && t.id != 'no' && LanguageMapper.isMatch(t, prefLang), 
-          orElse: () => audio.firstOrNull ?? track
-        );
-        
-        final name = LanguageMapper.getDisplayLanguage(matched.title ?? matched.language ?? matched.id);
-        return Text(name, style: const TextStyle(color: AppTheme.textMuted));
-      }
-      
-      final name = LanguageMapper.getDisplayLanguage(track.title ?? track.language ?? track.id);
-      return Text(name, style: const TextStyle(color: AppTheme.textMuted), maxLines: 1, overflow: TextOverflow.ellipsis);
-    }
-  }
-}
-
-class _QualitySelector extends ConsumerStatefulWidget {
-  final CinemaPlayerState state;
-  final PlayerParams params;
-
-  const _QualitySelector({required this.state, required this.params});
-
-  static void show(BuildContext context, CinemaPlayerState state, PlayerParams params) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => _QualitySelector(state: state, params: params),
-    );
-  }
-
-  @override
-  ConsumerState<_QualitySelector> createState() => _QualitySelectorState();
-}
-
-class _QualitySelectorState extends ConsumerState<_QualitySelector> {
-  bool _filesExpanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    // Watch state dynamically to reflect resolving/error changes
-    final params = widget.params;
-    final currentState = ref.watch(playerControllerProvider(params)).value ?? widget.state;
-
-    // Sort files alphabetically by filename
-    final sortedFiles = List<Map<String, dynamic>>.from(currentState.currentStream?.files ?? []);
-    sortedFiles.sort((a, b) {
-      final nameA = (a['path'] as String? ?? '').split('/').last.toLowerCase();
-      final nameB = (b['path'] as String? ?? '').split('/').last.toLowerCase();
-      return nameA.compareTo(nameB);
-    });
-
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) {
-          final l10n = AppLocalizations.of(context)!;
-          return Container(
-            decoration: BoxDecoration(
-              color: AppTheme.glass.withOpacity(0.8),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              border: Border.all(color: AppTheme.border.withOpacity(0.1), width: 1.5),
-            ),
-            child: Stack(
-              children: [
-                Column(
-                  children: [
-                    const SizedBox(height: 12),
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.white24,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 12, top: 12, right: 24, bottom: 12),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
-                            onPressed: () => Navigator.pop(context),
-                            splashRadius: 24,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            l10n.playerSelectQuality.toUpperCase(), 
-                            style: TextStyle(
-                              color: AppTheme.textWhite.withOpacity(0.9), 
-                              fontSize: 14, 
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: ListView(
-                        controller: scrollController,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        children: [
-                          // Files Section (Accordion)
-                          if (currentState.currentStream?.files.isNotEmpty ?? false) ...[
-                            Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () => setState(() => _filesExpanded = !_filesExpanded),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.folder_open_rounded, color: AppTheme.accent, size: 20),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              l10n.playerFiles.toUpperCase(),
-                                              style: const TextStyle(
-                                                color: AppTheme.textWhite, 
-                                                fontSize: 13, 
-                                                fontWeight: FontWeight.bold, 
-                                                letterSpacing: 1.2,
-                                              ),
-                                            ),
-                                            Text(
-                                              "${currentState.currentStream?.files.length} files available",
-                                              style: TextStyle(color: AppTheme.textMuted.withAlpha(128), fontSize: 11),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Icon(
-                                        _filesExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                                        color: AppTheme.textMuted,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            
-                            if (_filesExpanded) ...[
-                              const SizedBox(height: 8),
-                              ...sortedFiles.map((file) {
-                                final isSelected = file['id'] == currentState.currentStream?.activeFileId;
-                                final fileName = (file['path'] as String).split('/').last;
-                                final size = (file['bytes'] as int? ?? 0) / (1024 * 1024 * 1024); // GB
-                                
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(12),
-                                      onTap: () {
-                                        ref.read(playerControllerProvider(params).notifier).changeFile(file['id']);
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                        decoration: BoxDecoration(
-                                          color: isSelected ? AppTheme.accent.withOpacity(0.12) : Colors.white.withOpacity(0.04),
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: isSelected ? AppTheme.accent.withOpacity(0.6) : Colors.white.withOpacity(0.08),
-                                            width: 1,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    fileName,
-                                                    style: TextStyle(
-                                                      color: isSelected ? Colors.white : AppTheme.textWhite.withOpacity(0.7),
-                                                      fontSize: 13,
-                                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                                    ),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    "${size.toStringAsFixed(2)} GB",
-                                                    style: TextStyle(color: AppTheme.textMuted.withOpacity(0.5), fontSize: 10),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            if (isSelected) const Icon(Icons.check_circle_rounded, color: AppTheme.accent, size: 18),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }),
-                            ],
-                            const Divider(color: Colors.white10, height: 32),
-                          ],
-
-                          // Sources Section
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8, bottom: 8, top: 12),
-                            child: Text(
-                              l10n.playerQuality.toUpperCase(),
-                              style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
-                            ),
-                          ),
-                          ...List.generate(currentState.availableStreams.length, (index) {
-                            final stream = currentState.availableStreams[index];
-                            final meta = stream.metadata;
-                            
-                            final isSelected = currentState.currentStream?.candidate.uniqueId == stream.uniqueId;
-                            
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(16),
-                                  onTap: () {
-                                    ref.read(playerControllerProvider(params).notifier).changeSource(stream);
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: isSelected ? AppTheme.accent.withOpacity(0.1) : Colors.white.withOpacity(0.03),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: isSelected ? AppTheme.accent.withOpacity(0.5) : Colors.white.withOpacity(0.05),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: _StreamMetadataOverview(stream: stream),
-                                              ),
-                                              if (isSelected) const Icon(Icons.check_circle_rounded, color: AppTheme.accent, size: 20),
-                                            ],
-                                          ),
-                                        const SizedBox(height: 10),
-                                        Text(
-                                          stream.title,
-                                          style: TextStyle(
-                                            color: isSelected ? Colors.white.withOpacity(0.9) : AppTheme.textMuted.withOpacity(0.6), 
-                                            fontSize: 11, 
-                                            fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-                                            height: 1.4,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
-                          const SizedBox(height: 40),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                
-                // Loading Overlay
-                if (currentState.isResolving)
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const CircularProgressIndicator(color: AppTheme.accent),
-                            const SizedBox(height: 20),
-                            Text(
-                              "Resolving Stream...",
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "Checking debrid cache",
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.5),
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                // Error Banner
-                if (currentState.error != null)
-                  Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: 24,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.redAccent.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              currentState.error!,
-                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 18),
-                            onPressed: () => ref.read(playerControllerProvider(params).notifier).clearError(),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            splashRadius: 18,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _TrackSelector extends ConsumerWidget {
-  final CinemaPlayerState state;
-  final PlayerParams params;
-  final bool isSubtitle;
-
-  const _TrackSelector({required this.state, required this.params, required this.isSubtitle});
-
-  static void show(BuildContext context, CinemaPlayerState state, PlayerParams params, {required bool isSubtitle}) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => _TrackSelector(state: state, params: params, isSubtitle: isSubtitle),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Watch state to rebuild if tracks change
-    final currentState = ref.watch(playerControllerProvider(params)).value ?? state;
-    final player = currentState.controller.player;
-    
-    final tracks = isSubtitle ? player.state.tracks.subtitle : player.state.tracks.audio;
-    final selectedTrack = isSubtitle 
-        ? (currentState.activeSubtitleTrack ?? player.state.track.subtitle) 
-        : (currentState.activeAudioTrack ?? player.state.track.audio);
-        
-    final pref = ref.watch(settingsProvider);
-    final prefLang = (currentState.isAnime && pref.splitAnimePreferences)
-        ? (isSubtitle ? pref.animeSubtitleLanguage : pref.animeAudioLanguage).toLowerCase()
-        : (isSubtitle ? pref.subtitleLanguage : pref.playerLanguage).toLowerCase();
-    
-    final regularTracks = tracks.where((t) => t.id != 'no' && t.id != 'auto').toList();
-    final noTrack = tracks.where((t) => t.id == 'no').firstOrNull ?? (isSubtitle ? SubtitleTrack.no() : AudioTrack.no());
-
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.5,
-        minChildSize: 0.3,
-        maxChildSize: 0.8,
-        expand: false,
-        builder: (context, scrollController) {
-          final l10n = AppLocalizations.of(context)!;
-          return Container(
-            decoration: BoxDecoration(
-              color: AppTheme.glass.withOpacity(0.8),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              border: Border.all(color: AppTheme.border.withOpacity(0.1), width: 1.5),
-            ),
-            child: Column(
-              children: [
-                const SizedBox(height: 12),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 12, top: 12, right: 24, bottom: 12),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
-                        onPressed: () => Navigator.pop(context),
-                        splashRadius: 24,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        (isSubtitle ? l10n.playerSelectSubtitle : l10n.playerSelectAudio).toUpperCase(),
-                        style: TextStyle(
-                          color: AppTheme.textWhite.withOpacity(0.9), 
-                          fontSize: 14, 
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: ListView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      const SizedBox(height: 12),
-                      if (regularTracks.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Center(
-                            child: Text(
-                              isSubtitle ? "No internal subtitles found" : "No audio tracks found", 
-                              style: const TextStyle(color: AppTheme.textMuted),
-                            ),
-                          ),
-                        )
-                      else
-                        ...regularTracks.map((track) {
-                          // Logic for highlighting when still in 'auto' mode
-                          final isSelected = selectedTrack.id == track.id || 
-                                           (selectedTrack.id == 'auto' && LanguageMapper.isMatch(track, prefLang));
-                          
-                          return _TrackTile(
-                            player: player,
-                            track: track,
-                            isSelected: isSelected,
-                            isSubtitle: isSubtitle,
-                          );
-                        }),
-                      const Divider(color: Colors.white10, height: 32, indent: 16, endIndent: 16),
-                      _TrackTile(
-                        player: player,
-                        track: noTrack,
-                        isSelected: selectedTrack.id == 'no',
-                        isSubtitle: isSubtitle,
-                        customTitle: isSubtitle ? "Off / Disable" : "No Audio / Mute",
-                        color: AppTheme.textMuted,
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _TrackTile extends StatelessWidget {
-  final Player player;
-  final dynamic track;
-  final bool isSelected;
-  final bool isSubtitle;
-  final String? customTitle;
-  final Color? color;
-
-  const _TrackTile({
-    required this.player,
-    required this.track,
-    required this.isSelected,
-    required this.isSubtitle,
-    this.customTitle,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final title = customTitle ?? LanguageMapper.getDisplayLanguage(track.title ?? track.language ?? track.id);
-    
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: isSelected ? AppTheme.accent.withOpacity(0.1) : Colors.white.withOpacity(0.02),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSelected ? AppTheme.accent.withOpacity(0.5) : Colors.white.withOpacity(0.05),
-          width: 1,
-        ),
-      ),
-      child: ListTile(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: isSelected ? (color ?? AppTheme.textWhite) : AppTheme.textWhite.withOpacity(0.7),
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 15,
-          ),
-        ),
-        trailing: isSelected 
-            ? Icon(Icons.check_circle_rounded, color: color ?? AppTheme.accent, size: 20) 
-            : null,
-        onTap: () {
-          if (isSubtitle) {
-            player.setSubtitleTrack(track);
-          } else {
-            player.setAudioTrack(track);
-          }
-          Navigator.pop(context);
-        },
-      ),
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  final String text;
-  final Color color;
-  const _Badge({required this.text, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
-      ),
-      child: Text(
-        text.toUpperCase(),
-        style: TextStyle(
-          color: color, 
-          fontSize: 10, 
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
-}
-
-class _Label extends StatelessWidget {
-  final String text;
-  final Color? color;
-  const _Label({required this.text, this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text.toUpperCase(),
-      style: TextStyle(
-        color: color ?? AppTheme.textMuted.withOpacity(0.8),
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.5,
-      ),
-    );
-  }
-}
-
-class _StreamMetadataOverview extends StatelessWidget {
-  final StreamCandidate stream;
-
-  const _StreamMetadataOverview({required this.stream});
-
-  @override
-  Widget build(BuildContext context) {
-    final meta = stream.metadata;
-    if (meta == null) {
-       return Text(
-        stream.title, 
-        style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          spacing: 6,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            if (stream.isCached) const _Badge(text: 'CACHED', color: Colors.greenAccent),
-            if (meta.video.resolution != VideoResolution.unknown)
-              _Badge(text: meta.video.resolution.label, color: Colors.blueAccent),
-            if (meta.video.isHDR) const _Badge(text: 'HDR', color: Colors.orangeAccent),
-            if (meta.video.isDV) const _Badge(text: 'DV', color: Colors.orangeAccent),
-            if (meta.video.is10Bit) const _Badge(text: '10BIT', color: Colors.orangeAccent),
+            const SizedBox(height: 12),
+            // Drag handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Content area
+            Flexible(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOutCubic,
+                alignment: Alignment.topCenter,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                    return Stack(
+                      alignment: Alignment.topCenter,
+                      children: <Widget>[
+                        ...previousChildren,
+                        if (currentChild != null) currentChild,
+                      ],
+                    );
+                  },
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    );
+                  },
+                  child: KeyedSubtree(
+                    key: ValueKey(_currentView),
+                    child: _buildView(_currentView, currentState),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            _Label(text: stream.provider, color: AppTheme.accent.withOpacity(0.9)),
-            if (meta.size != null) _Label(text: meta.size!, color: Colors.cyanAccent.withOpacity(0.8)),
-            ...meta.flags.where((f) => f != ReleaseFlag.none).map((f) => _Label(text: f.label, color: Colors.amberAccent.withOpacity(0.8))),
-            ...meta.audio.formats.map((a) => _Label(text: a.label, color: Colors.deepPurpleAccent.withOpacity(0.8))),
-            if (meta.languages.isNotEmpty) _Label(text: meta.languages.join(' • '), color: Colors.white70),
-          ],
-        ),
-      ],
+      ),
     );
+  }
+
+  Widget _buildView(_SettingsView view, CinemaPlayerState currentState) {
+    switch (view) {
+      case _SettingsView.main:
+        return MainSettingsView(
+          state: currentState,
+          onNavigate: (viewStr) {
+            switch (viewStr) {
+              case 'quality': _navigateTo(_SettingsView.quality); break;
+              case 'audio': _navigateTo(_SettingsView.audio); break;
+              case 'subtitles': _navigateTo(_SettingsView.subtitles); break;
+              case 'appearance': _navigateTo(_SettingsView.appearance); break;
+            }
+          },
+        );
+      case _SettingsView.quality:
+        return QualitySettingsView(
+          state: currentState,
+          params: widget.params,
+          onBack: _navigateBack,
+        );
+      case _SettingsView.audio:
+        return TrackSettingsView(
+          state: currentState,
+          params: widget.params,
+          isSubtitle: false,
+          onBack: _navigateBack,
+        );
+      case _SettingsView.subtitles:
+        return TrackSettingsView(
+          state: currentState,
+          params: widget.params,
+          isSubtitle: true,
+          onBack: _navigateBack,
+        );
+      case _SettingsView.appearance:
+        return SubtitleAppearanceView(
+          state: currentState,
+          params: widget.params,
+          onBack: _navigateBack,
+        );
+    }
   }
 }

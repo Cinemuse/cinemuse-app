@@ -16,6 +16,7 @@ import 'package:cinemuse_app/core/services/streaming/models/provider_search_stat
 import 'package:cinemuse_app/features/video_player/application/handlers/vod_source_handler.dart';
 import 'package:cinemuse_app/features/video_player/application/handlers/livetv_source_handler.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
 import 'package:flutter/foundation.dart';
 
 
@@ -722,6 +723,23 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         activeSubtitleTrack: _player?.state.track.subtitle,
       ));
     }
+  }
+
+  void updateSubtitleStyle(SubtitleStyle style) {
+    if (mounted && state.hasValue) {
+      state = AsyncValue.data(state.value!.copyWith(
+        customSubtitleStyle: style,
+      ));
+    }
+  }
+
+  void playNextEpisode() {
+    final next = state.valueOrNull?.nextEpisode;
+    if (next == null || !mounted) return;
+
+    // Use pushReplacement or similar via Navigator if possible, 
+    // but better to let the UI handle navigation.
+    // For now, keeping it here since UI calls it.
   }
 
   void _applyTrackPreferences() {

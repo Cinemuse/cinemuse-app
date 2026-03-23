@@ -9,8 +9,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 
-class VideoPlayerScreen extends ConsumerWidget {
+class VideoPlayerScreen extends ConsumerStatefulWidget {
   final String queryId;
   final String type;
   final int? season;
@@ -33,17 +35,38 @@ class VideoPlayerScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Construct params
+  ConsumerState<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
+}
+
+class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
+  bool _settingsOpen = false;
+
+  void _openSettings(CinemaPlayerState state, PlayerParams params) {
+    final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+
+    if (isPortrait) {
+      setState(() => _settingsOpen = true);
+    }
+
+    PlayerSettingsBottomSheet.show(context, state, params).whenComplete(() {
+      if (mounted) {
+        setState(() => _settingsOpen = false);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final params = PlayerParams(
-      queryId, 
-      type, 
-      season: season, 
-      episode: episode, 
-      episodeTitle: episodeTitle,
-      startPosition: startPosition,
+      widget.queryId,
+      widget.type,
+      season: widget.season,
+      episode: widget.episode,
+      episodeTitle: widget.episodeTitle,
+      startPosition: widget.startPosition,
     );
     final playerState = ref.watch(playerControllerProvider(params));
+    final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
 
     ref.listen<AsyncValue<CinemaPlayerState>>(
       playerControllerProvider(params),
@@ -77,7 +100,7 @@ class VideoPlayerScreen extends ConsumerWidget {
                   const CircularProgressIndicator(),
                   const SizedBox(height: 24),
                   Text(
-                    loadingMessage ?? AppLocalizations.of(context)!.playerResolving,
+                    widget.loadingMessage ?? AppLocalizations.of(context)!.playerResolving,
                     style: const TextStyle(color: AppTheme.textMuted, fontSize: 16),
                   ),
                   if (state.providerStatuses.isNotEmpty) ...[
@@ -152,30 +175,79 @@ class VideoPlayerScreen extends ConsumerWidget {
             );
           }
           
-          return Center(
-            child: Video(
-              controller: state.controller,
-              filterQuality: FilterQuality.low,
-              controls: (videoState) => CustomVideoControls(
-                videoState: videoState,
-                playerState: state,
-                params: params,
-                onSettingsPressed: () => PlayerSettingsBottomSheet.show(context, state, params),
-                onBackPressed: () => Navigator.of(context).pop(),
-                onNextEpisode: state.nextEpisode != null ? () {
-                  final next = state.nextEpisode!;
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (_) => VideoPlayerScreen(
-                        queryId: queryId,
-                        type: type,
-                        season: next.season,
-                        episode: next.episode,
-                        episodeTitle: next.title,
-                      ),
+          final settings = ref.watch(settingsProvider);
+          final subtitleStyle = state.customSubtitleStyle ??
+              SubtitleStyle(
+                fontSize: settings.subtitleFontSize,
+                color: SubtitleStyle.hexToColor(settings.subtitleColor),
+                backgroundColor: SubtitleStyle.hexToColor(settings.subtitleBackgroundColor),
+                verticalPosition: settings.subtitleVerticalPosition,
+              );
+
+          return AnimatedAlign(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            alignment: (_settingsOpen && isPortrait) ? Alignment.topCenter : Alignment.center,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              height: (_settingsOpen && isPortrait)
+                  ? MediaQuery.of(context).size.height * 0.4
+                  : MediaQuery.of(context).size.height,
+              child: Builder(
+                builder: (context) {
+                  final videoHeight = (_settingsOpen && isPortrait)
+                      ? MediaQuery.of(context).size.height * 0.4
+                      : MediaQuery.of(context).size.height;
+
+                  // Base padding of 24, plus scaled height minus offset
+                  final calculatedPadding = 24.0 + (videoHeight - 80.0) * subtitleStyle.verticalPosition;
+                  
+                  final subtitleConfig = SubtitleViewConfiguration(
+                    style: TextStyle(
+                      fontSize: subtitleStyle.fontSize,
+                      color: subtitleStyle.color,
+                      backgroundColor: subtitleStyle.backgroundColor,
+                      shadows: [
+                        if (subtitleStyle.backgroundColor == Colors.transparent)
+                          const Shadow(blurRadius: 2.0, color: Colors.black, offset: Offset(0, 2)),
+                      ],
                     ),
-                   );
-                } : null,
+                    padding: EdgeInsets.fromLTRB(24, 24, 24, calculatedPadding),
+                  );
+
+                  return Video(
+                    // Removed ValueKey to prevent player state from resetting!
+                    controller: state.controller,
+                    filterQuality: FilterQuality.low,
+                    subtitleViewConfiguration: const SubtitleViewConfiguration(
+                      visible: false, // Turn off internal subtitles
+                    ),
+                    controls: (videoState) => Stack(
+                      children: [
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: SubtitleView(
+                              key: ValueKey('${subtitleStyle.verticalPosition}_${subtitleStyle.fontSize}_${subtitleStyle.color}'),
+                              controller: state.controller,
+                              configuration: subtitleConfig,
+                            ),
+                          ),
+                        ),
+                        CustomVideoControls(
+                          videoState: videoState,
+                          playerState: state,
+                          params: params,
+                          onSettingsPressed: () => _openSettings(state, params),
+                          onBackPressed: () => Navigator.of(context).pop(),
+                          onNextEpisode: state.nextEpisode != null ? () {
+                            ref.read(playerControllerProvider(params).notifier).playNextEpisode();
+                          } : null,
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           );
@@ -187,7 +259,7 @@ class VideoPlayerScreen extends ConsumerWidget {
               Icon(Icons.error, color: Theme.of(context).colorScheme.error, size: 48),
               const SizedBox(height: 16),
               Text(
-                errorMessage ?? AppLocalizations.of(context)!.playerErrorResolving(err.toString()),
+                widget.errorMessage ?? AppLocalizations.of(context)!.playerErrorResolving(err.toString()),
                 style: const TextStyle(color: AppTheme.textWhite),
                 textAlign: TextAlign.center,
               ),
@@ -216,15 +288,15 @@ class VideoPlayerScreen extends ConsumerWidget {
           ),
         ),
         loading: () => Center(
-           child: Column(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const CircularProgressIndicator(),
               const SizedBox(height: 16),
               Text(
-                loadingMessage ?? AppLocalizations.of(context)!.playerResolving,
+                widget.loadingMessage ?? AppLocalizations.of(context)!.playerResolving,
                 style: const TextStyle(color: AppTheme.textMuted),
-              )
+              ),
             ],
           ),
         ),

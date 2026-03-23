@@ -5,6 +5,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cast/cast.dart';
 import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
+import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
 
 // Simple data class for params
 class PlayerParams {
@@ -56,6 +57,7 @@ class CinemaPlayerState {
   final bool isAnime;
   final AudioTrack? activeAudioTrack;
   final SubtitleTrack? activeSubtitleTrack;
+  final SubtitleStyle? customSubtitleStyle;
 
   CinemaPlayerState({
     required this.controller,
@@ -75,6 +77,7 @@ class CinemaPlayerState {
     this.isAnime = false,
     this.activeAudioTrack,
     this.activeSubtitleTrack,
+    this.customSubtitleStyle,
   });
 
   CinemaPlayerState copyWith({
@@ -95,6 +98,7 @@ class CinemaPlayerState {
     bool? isAnime,
     Object? activeAudioTrack = _sentinel,
     Object? activeSubtitleTrack = _sentinel,
+    Object? customSubtitleStyle = _sentinel,
   }) {
     return CinemaPlayerState(
       controller: controller ?? this.controller,
@@ -114,6 +118,7 @@ class CinemaPlayerState {
       isAnime: isAnime ?? this.isAnime,
       activeAudioTrack: activeAudioTrack == _sentinel ? this.activeAudioTrack : (activeAudioTrack as AudioTrack?),
       activeSubtitleTrack: activeSubtitleTrack == _sentinel ? this.activeSubtitleTrack : (activeSubtitleTrack as SubtitleTrack?),
+      customSubtitleStyle: customSubtitleStyle == _sentinel ? this.customSubtitleStyle : (customSubtitleStyle as SubtitleStyle?),
     );
   }
 }

@@ -7,6 +7,8 @@ import 'package:cinemuse_app/features/settings/presentation/widgets/setting_inpu
 import 'package:cinemuse_app/features/settings/presentation/widgets/settings_widgets.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/stremio_addon_settings.dart';
+import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
+import 'package:cinemuse_app/features/settings/presentation/widgets/subtitle_appearance_form.dart';
 
 class IdentitySettings extends ConsumerWidget {
   const IdentitySettings({super.key});
@@ -199,12 +201,13 @@ class CustomizationSettings extends ConsumerWidget {
                 ),
               ],
             ),
+
+            const SubtitleAppearanceSettings(),
           ],
         ),
       ],
     );
   }
-
   // Removed _buildMediaGroup as it's replaced by SettingsDropdown
 }
 
@@ -217,9 +220,9 @@ Widget buildSmallDropdown<T>({
     padding: const EdgeInsets.symmetric(horizontal: 12),
     height: 38, // Slightly more height for better text centering
     decoration: BoxDecoration(
-      color: Colors.white.withOpacity(0.07), // Slightly more visible
+      color: Colors.white.withAlpha(18), // 0.07 * 255
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.white.withOpacity(0.1)),
+      border: Border.all(color: Colors.white.withAlpha(25)), // 0.1 * 255
     ),
     child: DropdownButtonHideUnderline(
       child: DropdownButton<T>(
@@ -325,6 +328,43 @@ class ImportSettings extends StatelessWidget {
             Text(
               "No services available for import",
               style: TextStyle(color: AppTheme.textMuted),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class SubtitleAppearanceSettings extends ConsumerWidget {
+  const SubtitleAppearanceSettings({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final userSettings = ref.watch(settingsProvider);
+    final settingsNotifier = ref.read(settingsProvider.notifier);
+
+    return SettingsSection(
+      title: l10n.playerSubtitleAppearance,
+      children: [
+        SettingsCard(
+          children: [
+            SubtitleAppearanceForm(
+              style: SubtitleStyle(
+                fontSize: userSettings.subtitleFontSize,
+                color: SubtitleStyle.hexToColor(userSettings.subtitleColor),
+                backgroundColor: SubtitleStyle.hexToColor(userSettings.subtitleBackgroundColor),
+                verticalPosition: userSettings.subtitleVerticalPosition,
+              ),
+              onChanged: (newStyle) {
+                settingsNotifier.updateSettings({
+                  'subtitleFontSize': newStyle.fontSize,
+                  'subtitleColor': SubtitleStyle.colorToHex(newStyle.color),
+                  'subtitleBackgroundColor': SubtitleStyle.colorToHex(newStyle.backgroundColor),
+                  'subtitleVerticalPosition': newStyle.verticalPosition,
+                });
+              },
             ),
           ],
         ),

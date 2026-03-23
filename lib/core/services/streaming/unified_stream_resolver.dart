@@ -23,19 +23,41 @@ import 'package:cinemuse_app/core/services/streaming/debrid/real_debrid_service.
 import 'package:cinemuse_app/core/services/streaming/sources/vixsrc_source.dart';
 
 final unifiedStreamResolverProvider = Provider((ref) {
-  final settings = ref.watch(settingsProvider);
-  final dio = ref.read(dioProvider);
+  // Only watch settings that affect streaming sources and ranking
+  final settings = ref.watch(settingsProvider.select((s) => (
+    s.installedAddons,
+    s.enableAnimeTosho,
+    s.enableVixSrc,
+    s.enableRealDebrid,
+    s.realDebridKey,
+    s.smartSearchFilter,
+    s.playerLanguage,
+    s.splitAnimePreferences,
+    s.animeAudioLanguage,
+  )));
+  
+  // Create a minimal UserSettings object for the constructor to avoid watching the whole thing
+  final userSettings = UserSettings(
+    installedAddons: settings.$1,
+    enableAnimeTosho: settings.$2,
+    enableVixSrc: settings.$3,
+    enableRealDebrid: settings.$4,
+    realDebridKey: settings.$5,
+    smartSearchFilter: settings.$6,
+    playerLanguage: settings.$7,
+    splitAnimePreferences: settings.$8,
+    animeAudioLanguage: settings.$9,
+  );
 
+  final dio = ref.read(dioProvider);
   final sources = <BaseSource>[];
   
   // Dynamic Stremio Addons
-  for (final addon in settings.installedAddons) {
+  for (final addon in userSettings.installedAddons) {
     if (!addon.enabled || !addon.isStreamingAddon) {
-      debugPrint('UnifiedStreamResolver: Skipping addon ${addon.name} (enabled: ${addon.enabled}, streaming: ${addon.isStreamingAddon})');
       continue;
     }
     
-    debugPrint('UnifiedStreamResolver: Adding source ${addon.name} (BaseUrl: ${addon.baseUrl})');
     sources.add(StremioSource(
       dio, 
       addon.baseUrl,
@@ -46,13 +68,11 @@ final unifiedStreamResolverProvider = Provider((ref) {
   }
   
   // Native Build-in Sources
-  if (settings.enableAnimeTosho) {
-    debugPrint('UnifiedStreamResolver: Adding native source AnimeTosho');
+  if (userSettings.enableAnimeTosho) {
     sources.add(AnimeToshoSource(dio));
   }
 
-  if (settings.enableVixSrc) {
-    debugPrint('UnifiedStreamResolver: Adding native source VixSrc');
+  if (userSettings.enableVixSrc) {
     sources.add(VixSrcSource(dio));
   }
 
@@ -60,9 +80,9 @@ final unifiedStreamResolverProvider = Provider((ref) {
     sources: sources,
     tmdbService: ref.read(tmdbServiceProvider),
     kitsuMappingService: ref.read(kitsuMappingServiceProvider),
-    settings: settings,
-    debridService: settings.enableRealDebrid 
-        ? RealDebridService(dio, settings.realDebridKey) 
+    settings: userSettings,
+    debridService: userSettings.enableRealDebrid 
+        ? RealDebridService(dio, userSettings.realDebridKey) 
         : null,
   );
 });

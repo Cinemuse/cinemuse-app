@@ -1040,6 +1040,54 @@ abstract class AppLocalizations {
   /// **'Next Episode'**
   String get playerNextEpisode;
 
+  /// No description provided for @playerSubtitleAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitle Appearance'**
+  String get playerSubtitleAppearance;
+
+  /// No description provided for @playerAppearanceFontSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Font Size'**
+  String get playerAppearanceFontSize;
+
+  /// No description provided for @playerAppearanceTextColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Text Color'**
+  String get playerAppearanceTextColor;
+
+  /// No description provided for @playerAppearanceBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Background Opacity'**
+  String get playerAppearanceBackground;
+
+  /// No description provided for @playerAppearanceBottomPadding.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom Padding'**
+  String get playerAppearanceBottomPadding;
+
+  /// No description provided for @playerAppearanceSaveDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as Default'**
+  String get playerAppearanceSaveDefault;
+
+  /// No description provided for @playerAppearanceReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to Default'**
+  String get playerAppearanceReset;
+
+  /// No description provided for @playerAppearanceSampleText.
+  ///
+  /// In en, this message translates to:
+  /// **'Sample Subtitle Text'**
+  String get playerAppearanceSampleText;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

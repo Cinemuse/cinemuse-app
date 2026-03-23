@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:cinemuse_app/core/services/streaming/stremio_addon_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stremio_addon.dart';
-import 'package:cinemuse_app/core/utils/url_utils.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meta/meta.dart';
@@ -35,6 +33,11 @@ class UserSettings {
   final int liveTvBufferSize; // in MB
   final bool enableLiveTvDiskCache;
 
+  final double subtitleFontSize;
+  final String subtitleColor;
+  final String subtitleBackgroundColor;
+  final double subtitleVerticalPosition;
+
   const UserSettings({
     this.displayName = '',
     this.appLanguage = 'en',
@@ -57,6 +60,10 @@ class UserSettings {
     this.installedAddons = const [],
     this.liveTvBufferSize = 512,
     this.enableLiveTvDiskCache = false,
+    this.subtitleFontSize = 24.0,
+    this.subtitleColor = '#FFFFFFFF',
+    this.subtitleBackgroundColor = '#00000000',
+    this.subtitleVerticalPosition = 0.05,
   });
 
   factory UserSettings.fromProfile(Profile profile) {
@@ -88,6 +95,10 @@ class UserSettings {
       }).toList() ?? const [],
       liveTvBufferSize: prefs['liveTvBufferSize'] ?? 512,
       enableLiveTvDiskCache: prefs['enableLiveTvDiskCache'] ?? false,
+      subtitleFontSize: (prefs['subtitleFontSize'] as num?)?.toDouble() ?? 24.0,
+      subtitleColor: prefs['subtitleColor'] ?? '#FFFFFFFF',
+      subtitleBackgroundColor: prefs['subtitleBackgroundColor'] ?? '#00000000',
+      subtitleVerticalPosition: (prefs['subtitleVerticalPosition'] as num?)?.toDouble() ?? 0.05,
     );
   }
 
@@ -113,6 +124,10 @@ class UserSettings {
     List<StremioAddon>? installedAddons,
     int? liveTvBufferSize,
     bool? enableLiveTvDiskCache,
+    double? subtitleFontSize,
+    String? subtitleColor,
+    String? subtitleBackgroundColor,
+    double? subtitleVerticalPosition,
   }) {
     return UserSettings(
       displayName: displayName ?? this.displayName,
@@ -136,6 +151,10 @@ class UserSettings {
       installedAddons: installedAddons ?? this.installedAddons,
       liveTvBufferSize: liveTvBufferSize ?? this.liveTvBufferSize,
       enableLiveTvDiskCache: enableLiveTvDiskCache ?? this.enableLiveTvDiskCache,
+      subtitleFontSize: subtitleFontSize ?? this.subtitleFontSize,
+      subtitleColor: subtitleColor ?? this.subtitleColor,
+      subtitleBackgroundColor: subtitleBackgroundColor ?? this.subtitleBackgroundColor,
+      subtitleVerticalPosition: subtitleVerticalPosition ?? this.subtitleVerticalPosition,
     );
   }
 
@@ -161,6 +180,10 @@ class UserSettings {
       'installedAddons': installedAddons.map((e) => e.toJson()).toList(),
       'liveTvBufferSize': liveTvBufferSize,
       'enableLiveTvDiskCache': enableLiveTvDiskCache,
+      'subtitleFontSize': subtitleFontSize,
+      'subtitleColor': subtitleColor,
+      'subtitleBackgroundColor': subtitleBackgroundColor,
+      'subtitleVerticalPosition': subtitleVerticalPosition,
     };
   }
 }
@@ -213,6 +236,10 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       installedAddons: updates['installedAddons'] ?? state.installedAddons,
       liveTvBufferSize: updates['liveTvBufferSize'] ?? state.liveTvBufferSize,
       enableLiveTvDiskCache: updates['enableLiveTvDiskCache'] ?? state.enableLiveTvDiskCache,
+      subtitleFontSize: updates['subtitleFontSize'] ?? state.subtitleFontSize,
+      subtitleColor: updates['subtitleColor'] ?? state.subtitleColor,
+      subtitleBackgroundColor: updates['subtitleBackgroundColor'] ?? state.subtitleBackgroundColor,
+      subtitleVerticalPosition: updates['subtitleVerticalPosition'] ?? state.subtitleVerticalPosition,
     );
 
     // Sync app language to localeProvider if updated

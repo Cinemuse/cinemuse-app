@@ -523,6 +523,30 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playerNextEpisode => 'Prossimo Episodio';
 
   @override
+  String get playerSubtitleAppearance => 'Aspetto Sottotitoli';
+
+  @override
+  String get playerAppearanceFontSize => 'Dimensione Carattere';
+
+  @override
+  String get playerAppearanceTextColor => 'Colore Testo';
+
+  @override
+  String get playerAppearanceBackground => 'Opacità Sfondo';
+
+  @override
+  String get playerAppearanceBottomPadding => 'Margine Inferiore';
+
+  @override
+  String get playerAppearanceSaveDefault => 'Salva come Predefinito';
+
+  @override
+  String get playerAppearanceReset => 'Ripristina Predefiniti';
+
+  @override
+  String get playerAppearanceSampleText => 'Esempio Testo Sottotitoli';
+
+  @override
   String get settingsTitle => 'Impostazioni';
 
   @override

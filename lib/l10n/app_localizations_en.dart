@@ -521,6 +521,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playerNextEpisode => 'Next Episode';
 
   @override
+  String get playerSubtitleAppearance => 'Subtitle Appearance';
+
+  @override
+  String get playerAppearanceFontSize => 'Font Size';
+
+  @override
+  String get playerAppearanceTextColor => 'Text Color';
+
+  @override
+  String get playerAppearanceBackground => 'Background Opacity';
+
+  @override
+  String get playerAppearanceBottomPadding => 'Bottom Padding';
+
+  @override
+  String get playerAppearanceSaveDefault => 'Save as Default';
+
+  @override
+  String get playerAppearanceReset => 'Reset to Default';
+
+  @override
+  String get playerAppearanceSampleText => 'Sample Subtitle Text';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

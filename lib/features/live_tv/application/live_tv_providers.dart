@@ -20,8 +20,8 @@ final liveTvRepositoryProvider = Provider<LiveTvRepository>((ref) {
 /// All playable channels, sorted by LCN.
 final channelsProvider = FutureProvider<List<Channel>>((ref) async {
   final repo = ref.watch(liveTvRepositoryProvider);
-  final settings = ref.watch(settingsProvider);
-  return repo.fetchChannels(region: settings.liveTvRegion);
+  final region = ref.watch(settingsProvider.select((s) => s.liveTvRegion));
+  return repo.fetchChannels(region: region);
 });
 
 /// Full EPG data keyed by source → channel id → programs.
