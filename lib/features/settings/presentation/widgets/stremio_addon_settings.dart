@@ -123,6 +123,72 @@ class _StremioAddonSettingsState extends ConsumerState<StremioAddonSettings> {
           ],
         ),
 
+        // External Subtitle Services
+        SettingsSection(
+          title: l10n.settingsOpenSubtitlesTitle,
+          children: [
+            SettingsCard(
+              children: [
+                SettingsTile(
+                  label: l10n.settingsOpenSubtitlesTitle,
+                  description: l10n.settingsOpenSubtitlesKeyDesc,
+                  icon: LucideIcons.subtitles,
+                  showDivider: false,
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: TextField(
+                    controller: TextEditingController(text: settings.openSubtitlesKey),
+                    style: const TextStyle(color: Colors.white),
+                    obscureText: !_showApiKey,
+                    decoration: InputDecoration(
+                      labelText: l10n.settingsOpenSubtitlesKey,
+                      labelStyle: const TextStyle(color: AppTheme.textMuted),
+                      filled: true,
+                      fillColor: Colors.black.withOpacity(0.3),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppTheme.accent),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _showApiKey ? LucideIcons.eye : LucideIcons.eyeOff,
+                          color: AppTheme.textMuted,
+                          size: 20,
+                        ),
+                        onPressed: () => setState(() => _showApiKey = !_showApiKey),
+                      ),
+                    ),
+                    onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
+                      'openSubtitlesKey': val,
+                    }),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: SettingToggle(
+                    label: l10n.settingsOpenSubtitlesAutoDownloadTitle,
+                    description: l10n.settingsOpenSubtitlesAutoDownloadDesc,
+                    value: settings.autoDownloadMissingSubtitles,
+                    onChanged: (val) {
+                      ref.read(settingsProvider.notifier).updateSettings({'autoDownloadMissingSubtitles': val});
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+
         // Native Providers
         SettingsSection(
           title: l10n.settingsNativeIntegrations,

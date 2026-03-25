@@ -58,6 +58,7 @@ class CinemaPlayerState {
   final AudioTrack? activeAudioTrack;
   final SubtitleTrack? activeSubtitleTrack;
   final SubtitleStyle? customSubtitleStyle;
+  final double subtitleDelay;
 
   CinemaPlayerState({
     required this.controller,
@@ -78,6 +79,7 @@ class CinemaPlayerState {
     this.activeAudioTrack,
     this.activeSubtitleTrack,
     this.customSubtitleStyle,
+    this.subtitleDelay = 0.0,
   });
 
   CinemaPlayerState copyWith({
@@ -99,6 +101,7 @@ class CinemaPlayerState {
     Object? activeAudioTrack = _sentinel,
     Object? activeSubtitleTrack = _sentinel,
     Object? customSubtitleStyle = _sentinel,
+    double? subtitleDelay,
   }) {
     return CinemaPlayerState(
       controller: controller ?? this.controller,
@@ -119,6 +122,7 @@ class CinemaPlayerState {
       activeAudioTrack: activeAudioTrack == _sentinel ? this.activeAudioTrack : (activeAudioTrack as AudioTrack?),
       activeSubtitleTrack: activeSubtitleTrack == _sentinel ? this.activeSubtitleTrack : (activeSubtitleTrack as SubtitleTrack?),
       customSubtitleStyle: customSubtitleStyle == _sentinel ? this.customSubtitleStyle : (customSubtitleStyle as SubtitleStyle?),
+      subtitleDelay: subtitleDelay ?? this.subtitleDelay,
     );
   }
 }

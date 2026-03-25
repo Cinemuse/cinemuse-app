@@ -29,6 +29,8 @@ class UserSettings {
   final bool enableVixSrc;
   final bool enableRealDebrid;
   final String realDebridKey;
+  final String openSubtitlesKey;
+  final bool autoDownloadMissingSubtitles;
   final List<StremioAddon> installedAddons;
   final int liveTvBufferSize; // in MB
   final bool enableLiveTvDiskCache;
@@ -57,6 +59,8 @@ class UserSettings {
     this.enableVixSrc = true,
     this.enableRealDebrid = false,
     this.realDebridKey = '',
+    this.openSubtitlesKey = '',
+    this.autoDownloadMissingSubtitles = false,
     this.installedAddons = const [],
     this.liveTvBufferSize = 512,
     this.enableLiveTvDiskCache = false,
@@ -87,6 +91,8 @@ class UserSettings {
       enableVixSrc: prefs['enableVixSrc'] ?? true,
       enableRealDebrid: prefs['enableRealDebrid'] ?? false,
       realDebridKey: prefs['realDebridKey'] ?? '',
+      openSubtitlesKey: prefs['openSubtitlesKey'] ?? '',
+      autoDownloadMissingSubtitles: prefs['autoDownloadMissingSubtitles'] ?? false,
       installedAddons: (prefs['installedAddons'] as Iterable?)?.map((e) {
         if (e is String) {
           return StremioAddon.fromJson(jsonDecode(e) as Map<String, dynamic>);
@@ -121,6 +127,8 @@ class UserSettings {
     bool? enableVixSrc,
     bool? enableRealDebrid,
     String? realDebridKey,
+    String? openSubtitlesKey,
+    bool? autoDownloadMissingSubtitles,
     List<StremioAddon>? installedAddons,
     int? liveTvBufferSize,
     bool? enableLiveTvDiskCache,
@@ -148,6 +156,8 @@ class UserSettings {
       enableVixSrc: enableVixSrc ?? this.enableVixSrc,
       enableRealDebrid: enableRealDebrid ?? this.enableRealDebrid,
       realDebridKey: realDebridKey ?? this.realDebridKey,
+      openSubtitlesKey: openSubtitlesKey ?? this.openSubtitlesKey,
+      autoDownloadMissingSubtitles: autoDownloadMissingSubtitles ?? this.autoDownloadMissingSubtitles,
       installedAddons: installedAddons ?? this.installedAddons,
       liveTvBufferSize: liveTvBufferSize ?? this.liveTvBufferSize,
       enableLiveTvDiskCache: enableLiveTvDiskCache ?? this.enableLiveTvDiskCache,
@@ -177,6 +187,8 @@ class UserSettings {
       'enableVixSrc': enableVixSrc,
       'enableRealDebrid': enableRealDebrid,
       'realDebridKey': realDebridKey,
+      'openSubtitlesKey': openSubtitlesKey,
+      'autoDownloadMissingSubtitles': autoDownloadMissingSubtitles,
       'installedAddons': installedAddons.map((e) => e.toJson()).toList(),
       'liveTvBufferSize': liveTvBufferSize,
       'enableLiveTvDiskCache': enableLiveTvDiskCache,
@@ -233,6 +245,8 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       enableVixSrc: updates['enableVixSrc'] ?? state.enableVixSrc,
       enableRealDebrid: updates['enableRealDebrid'] ?? state.enableRealDebrid,
       realDebridKey: updates['realDebridKey'] ?? state.realDebridKey,
+      openSubtitlesKey: updates['openSubtitlesKey'] ?? state.openSubtitlesKey,
+      autoDownloadMissingSubtitles: updates['autoDownloadMissingSubtitles'] ?? state.autoDownloadMissingSubtitles,
       installedAddons: updates['installedAddons'] ?? state.installedAddons,
       liveTvBufferSize: updates['liveTvBufferSize'] ?? state.liveTvBufferSize,
       enableLiveTvDiskCache: updates['enableLiveTvDiskCache'] ?? state.enableLiveTvDiskCache,

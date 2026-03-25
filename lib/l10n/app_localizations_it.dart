@@ -445,19 +445,28 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playerSettings => 'Impostazioni';
 
   @override
-  String get playerQuality => 'Sorgente';
+  String get playerQuality => 'Qualità';
 
   @override
   String get playerAudio => 'Audio';
 
   @override
-  String get playerSelectQuality => 'Seleziona Sorgente';
+  String get playerSelectQuality => 'Seleziona Qualità';
+
+  @override
+  String get playerSubtitleSize => 'Dimensione Sottotitoli';
+
+  @override
+  String get playerSubtitleDelay => 'Sincronizzazione';
+
+  @override
+  String get playerSubtitleDelayReset => 'Ripristina';
 
   @override
   String get playerSelectAudio => 'Seleziona Traccia Audio';
 
   @override
-  String get playerResolving => 'Risoluzione stream...';
+  String get playerResolving => 'Risoluzione stream in corso...';
 
   @override
   String get playerResolvingYoutube => 'Caricamento video YouTube...';
@@ -643,6 +652,24 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get settingsRealDebridKeyDesc =>
       'Usato per sorgenti native come AnimeTosho.';
+
+  @override
+  String get settingsOpenSubtitlesTitle => 'OpenSubtitles.com';
+
+  @override
+  String get settingsOpenSubtitlesKey => 'Chiave API OpenSubtitles';
+
+  @override
+  String get settingsOpenSubtitlesKeyDesc =>
+      'Usato per la ricerca di sottotitoli esterni. Richiede una chiave API gratuita.';
+
+  @override
+  String get settingsOpenSubtitlesAutoDownloadTitle =>
+      'Download automatico sottotitoli';
+
+  @override
+  String get settingsOpenSubtitlesAutoDownloadDesc =>
+      'Scarica automaticamente i sottotitoli se la tua lingua preferita è assente. Consuma la quota API giornaliera.';
 
   @override
   String get settingsDisplayName => 'Nome Visualizzato';

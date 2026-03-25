@@ -184,7 +184,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   }
 
   void _initializeManagers() {
-    _trackManager = TrackManager(ref: ref, player: _player!);
+    _trackManager = TrackManager(ref: ref, player: _player!, params: params);
     _applyTrackPreferences();
 
     _eventManager = EventManager(
@@ -733,6 +733,19 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     }
   }
 
+  void updateSubtitleDelay(double delaySeconds) {
+    if (_player == null || !mounted) return;
+    try {
+      final mpv = _player!.platform as dynamic;
+      mpv.setProperty('sub-delay', delaySeconds.toString());
+      if (state.hasValue) {
+        state = AsyncValue.data(state.value!.copyWith(subtitleDelay: delaySeconds));
+      }
+    } catch (e) {
+      debugPrint('PlayerController: Failed to set sub-delay: \$e');
+    }
+  }
+
   void playNextEpisode() {
     final next = state.valueOrNull?.nextEpisode;
     if (next == null || !mounted) return;
@@ -758,5 +771,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         ));
       }
     }
+  }
+
+  void setManualTrackSelection() {
+    _trackManager?.setManualSelection();
   }
 }

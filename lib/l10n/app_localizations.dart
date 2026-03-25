@@ -926,10 +926,28 @@ abstract class AppLocalizations {
   /// **'Select Source'**
   String get playerSelectQuality;
 
+  /// No description provided for @playerSubtitleSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitle Size'**
+  String get playerSubtitleSize;
+
+  /// No description provided for @playerSubtitleDelay.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitle Delay'**
+  String get playerSubtitleDelay;
+
+  /// No description provided for @playerSubtitleDelayReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get playerSubtitleDelayReset;
+
   /// No description provided for @playerSelectAudio.
   ///
   /// In en, this message translates to:
-  /// **'Select Audio Track'**
+  /// **'Audio Tracks'**
   String get playerSelectAudio;
 
   /// No description provided for @playerResolving.
@@ -1267,6 +1285,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Used for native sources like AnimeTosho.'**
   String get settingsRealDebridKeyDesc;
+
+  /// No description provided for @settingsOpenSubtitlesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'OpenSubtitles.com'**
+  String get settingsOpenSubtitlesTitle;
+
+  /// No description provided for @settingsOpenSubtitlesKey.
+  ///
+  /// In en, this message translates to:
+  /// **'OpenSubtitles API Key'**
+  String get settingsOpenSubtitlesKey;
+
+  /// No description provided for @settingsOpenSubtitlesKeyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Used for external subtitle lookup. Requires a free API key.'**
+  String get settingsOpenSubtitlesKeyDesc;
+
+  /// No description provided for @settingsOpenSubtitlesAutoDownloadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-download missing subtitles'**
+  String get settingsOpenSubtitlesAutoDownloadTitle;
+
+  /// No description provided for @settingsOpenSubtitlesAutoDownloadDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically fetch subtitles when your preferred language is missing from the stream. Consumes daily API quota.'**
+  String get settingsOpenSubtitlesAutoDownloadDesc;
 
   /// No description provided for @settingsDisplayName.
   ///

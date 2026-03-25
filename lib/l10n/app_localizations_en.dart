@@ -454,7 +454,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playerSelectQuality => 'Select Source';
 
   @override
-  String get playerSelectAudio => 'Select Audio Track';
+  String get playerSubtitleSize => 'Subtitle Size';
+
+  @override
+  String get playerSubtitleDelay => 'Subtitle Delay';
+
+  @override
+  String get playerSubtitleDelayReset => 'Reset';
+
+  @override
+  String get playerSelectAudio => 'Audio Tracks';
 
   @override
   String get playerResolving => 'Resolving stream...';
@@ -640,6 +649,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsRealDebridKeyDesc =>
       'Used for native sources like AnimeTosho.';
+
+  @override
+  String get settingsOpenSubtitlesTitle => 'OpenSubtitles.com';
+
+  @override
+  String get settingsOpenSubtitlesKey => 'OpenSubtitles API Key';
+
+  @override
+  String get settingsOpenSubtitlesKeyDesc =>
+      'Used for external subtitle lookup. Requires a free API key.';
+
+  @override
+  String get settingsOpenSubtitlesAutoDownloadTitle =>
+      'Auto-download missing subtitles';
+
+  @override
+  String get settingsOpenSubtitlesAutoDownloadDesc =>
+      'Automatically fetch subtitles when your preferred language is missing from the stream. Consumes daily API quota.';
 
   @override
   String get settingsDisplayName => 'Display Name';

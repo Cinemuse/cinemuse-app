@@ -170,7 +170,7 @@ class TrackSubtitle extends ConsumerWidget {
   }
 }
 
-class TrackTile extends StatelessWidget {
+class TrackTile extends ConsumerWidget {
   final Player player;
   final dynamic track;
   final bool isSelected;
@@ -178,6 +178,7 @@ class TrackTile extends StatelessWidget {
   final String? customTitle;
   final Color? color;
   final VoidCallback onBack;
+  final VoidCallback? onSelected;
 
   const TrackTile({
     super.key,
@@ -188,10 +189,11 @@ class TrackTile extends StatelessWidget {
     this.customTitle,
     this.color,
     required this.onBack,
+    this.onSelected,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final title = customTitle ?? LanguageMapper.getDisplayLanguage(track.title ?? track.language ?? track.id);
 
     return Container(
@@ -223,6 +225,11 @@ class TrackTile extends StatelessWidget {
           } else {
             player.setAudioTrack(track);
           }
+          
+          if (onSelected != null) {
+            onSelected!();
+          }
+          
           onBack();
         },
       ),
