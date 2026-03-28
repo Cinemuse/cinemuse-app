@@ -12,6 +12,8 @@ class Channel {
   final String? urlOverride; // Keep for static/stable URLs
   final List<StreamLink> links;
   final String? group;
+  final String? provider;
+  final String? subProvider;
   final String? subtitle;
   final String? epgSource;
   final String? epgId;
@@ -31,6 +33,8 @@ class Channel {
     this.urlOverride,
     this.links = const [],
     this.group,
+    this.provider,
+    this.subProvider,
     this.subtitle,
     this.epgSource,
     this.epgId,
@@ -78,6 +82,19 @@ class Channel {
     // Pick the highest quality among links
     return links.map((l) => l.quality).reduce((a, b) => a.index > b.index ? a : b);
   }
+
+  /// Links grouped by quality tier.
+  Map<StreamQuality, List<StreamLink>> get linksByQuality {
+    final map = <StreamQuality, List<StreamLink>>{};
+    for (final link in links) {
+      (map[link.quality] ??= []).add(link);
+    }
+    return map;
+  }
+
+  /// Available quality tiers, sorted highest-first.
+  List<StreamQuality> get availableQualities =>
+      linksByQuality.keys.toList()..sort((a, b) => b.index.compareTo(a.index));
 
   /// Full URL to the channel's logo on Supabase Storage.
   // We force .png extension here because we've uploaded PNGs to fix the black SVG issue.
@@ -145,6 +162,8 @@ class Channel {
       urlOverride: resolvedUrl.isNotEmpty ? resolvedUrl : null,
       links: streamLinks,
       group: json['group'] as String?,
+      provider: json['provider'] as String?,
+      subProvider: json['sub_provider'] as String?,
       subtitle: json['subtitle'] as String?,
       epgSource: epg?['source'] as String?,
       epgId: epg?['id']?.toString(),

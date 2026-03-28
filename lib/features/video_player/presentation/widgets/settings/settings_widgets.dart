@@ -98,12 +98,20 @@ class SettingsTile extends StatelessWidget {
   }
 }
 
-class QualitySubtitle extends StatelessWidget {
+class QualitySubtitle extends ConsumerWidget {
   final CinemaPlayerState state;
   const QualitySubtitle({super.key, required this.state});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (state.isLive) {
+      final quality = ref.watch(settingsProvider.select((s) => s.liveTvQuality));
+      return Text(
+        'Preferred: ${quality.label}',
+        style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+      );
+    }
+
     final currentStream = state.currentStream;
     if (currentStream == null) return const SizedBox.shrink();
 

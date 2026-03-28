@@ -35,58 +35,82 @@ final epgDataProvider =
 // UI State
 // ---------------------------------------------------------------------------
 
+enum LiveTvGroupMode { category, provider }
+enum LiveTvPanelFocus { groups, channels }
+
 /// The currently selected / playing channel.
 final selectedChannelProvider = StateProvider<Channel?>((ref) => null);
 
 /// The active search query for filtering channels.
 final channelSearchQueryProvider = StateProvider<String>((ref) => '');
 
-/// The currently selected category.
-final liveTvCategoryProvider = StateProvider<String>((ref) => 'Generale');
+/// Current group mode (Category vs Provider)
+final liveTvGroupModeProvider = StateProvider<LiveTvGroupMode>((ref) => LiveTvGroupMode.category);
 
-/// All available categories extracted from the current channel list.
-final categoriesProvider = Provider<AsyncValue<List<String>>>((ref) {
+/// Which part of the panel is currently focused/expanded
+final liveTvPanelFocusProvider = StateProvider<LiveTvPanelFocus>((ref) => LiveTvPanelFocus.groups);
+
+/// Tracks which sub-providers are expanded in the channel list (accordion state)
+/// Key: Provider/Category name, Value: Set of expanded sub-provider names.
+final expandedSubProvidersProvider = StateProvider<Map<String, Set<String>>>((ref) => {});
+
+/// The currently selected group name (Category or Provider).
+final liveTvSelectedGroupProvider = StateProvider<String>((ref) {
+  final mode = ref.watch(liveTvGroupModeProvider);
+  return mode == LiveTvGroupMode.category ? 'DTT' : '';
+});
+
+// Legacy support for category chip UI if still used elsewhere
+final liveTvCategoryProvider = Provider<String>((ref) => ref.watch(liveTvSelectedGroupProvider));
+
+/// All available groups (Categories or Providers) extracted from the current channel list.
+final groupsProvider = Provider<AsyncValue<List<String>>>((ref) {
   final channelsAsync = ref.watch(channelsProvider);
+  final mode = ref.watch(liveTvGroupModeProvider);
+  
   return channelsAsync.whenData((channels) {
     final groups = channels
-        .map((ch) => ch.group)
-        .where((g) => g != null)
+        .map((ch) => mode == LiveTvGroupMode.category ? ch.group : ch.provider)
+        .where((g) => g != null && g.isNotEmpty)
         .cast<String>()
         .toSet()
         .toList();
     groups.sort();
     
-    // Always put 'Generale' or 'All' first if exists, otherwise keep sorted
-    if (groups.contains('Generale')) {
-      groups.remove('Generale');
-      groups.insert(0, 'Generale');
+    if (mode == LiveTvGroupMode.category && groups.contains('DTT')) {
+      groups.remove('DTT');
+      groups.insert(0, 'DTT');
     }
     return groups;
   });
 });
 
-/// Channels filtered by the active search query (name or LCN) AND category.
+/// Channels filtered by the active search query AND selected group (category or provider).
 final filteredChannelsProvider = Provider<AsyncValue<List<Channel>>>((ref) {
   final channelsAsync = ref.watch(channelsProvider);
   final query = ref.watch(channelSearchQueryProvider).trim().toLowerCase();
-  final category = ref.watch(liveTvCategoryProvider);
+  final selectedGroup = ref.watch(liveTvSelectedGroupProvider);
+  final mode = ref.watch(liveTvGroupModeProvider);
 
   return channelsAsync.whenData((channels) {
-    var filtered = channels;
-    
-    // 1. Filter by category
-    if (category.isNotEmpty) {
-      filtered = filtered.where((ch) => ch.group == category).toList();
+    if (query.isNotEmpty) {
+      // Global search across all categories/providers
+      final asNumber = int.tryParse(query);
+      return channels.where((ch) {
+        if (asNumber != null && ch.lcn.toString().startsWith(query)) return true;
+        return ch.name.toLowerCase().contains(query);
+      }).toList();
     }
     
-    // 2. Filter by search query
-    if (query.isEmpty) return filtered;
+    // Filter by group (Category or Provider) only if NOT searching
+    if (selectedGroup.isNotEmpty) {
+      return channels.where((ch) {
+        final chGroup = mode == LiveTvGroupMode.category ? ch.group : ch.provider;
+        return chGroup == selectedGroup;
+      }).toList();
+    }
     
-    final asNumber = int.tryParse(query);
-    return filtered.where((ch) {
-      if (asNumber != null && ch.lcn.toString().startsWith(query)) return true;
-      return ch.name.toLowerCase().contains(query);
-    }).toList();
+    return channels;
   });
 });
 

@@ -485,6 +485,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playerNoAudioFound => 'Nessuna traccia audio trovata';
 
   @override
+  String get playerNoQualityOptions =>
+      'Nessuna opzione di qualità disponibile per questo stream.';
+
+  @override
   String get streamingErrorNoProviders =>
       'Nessun addon di streaming abilitato. Controlla le impostazioni.';
 
@@ -878,6 +882,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get liveTvNoChannels => 'Nessun canale trovato';
 
   @override
+  String get liveTvSearchPlaceholder => 'Cerca canali...';
+
+  @override
   String get settingsLiveTvRegion => 'Regione Live TV';
 
   @override
@@ -903,6 +910,18 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get settingsNone => 'Nessuna';
+
+  @override
+  String get liveTvCategories => 'Categorie';
+
+  @override
+  String get liveTvProviders => 'Provider';
+
+  @override
+  String get liveTvBrowse => 'Sfoglia';
+
+  @override
+  String get liveTvGroupMode => 'Raggruppamento';
 
   @override
   String get agendaTitle => 'Agenda';

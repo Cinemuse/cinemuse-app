@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cast/cast.dart';
@@ -59,6 +60,8 @@ class CinemaPlayerState {
   final SubtitleTrack? activeSubtitleTrack;
   final SubtitleStyle? customSubtitleStyle;
   final double subtitleDelay;
+  final bool isLive;
+  final Channel? currentChannel;
 
   CinemaPlayerState({
     required this.controller,
@@ -80,6 +83,8 @@ class CinemaPlayerState {
     this.activeSubtitleTrack,
     this.customSubtitleStyle,
     this.subtitleDelay = 0.0,
+    this.isLive = false,
+    this.currentChannel,
   });
 
   CinemaPlayerState copyWith({
@@ -102,6 +107,8 @@ class CinemaPlayerState {
     Object? activeSubtitleTrack = _sentinel,
     Object? customSubtitleStyle = _sentinel,
     double? subtitleDelay,
+    bool? isLive,
+    Object? currentChannel = _sentinel,
   }) {
     return CinemaPlayerState(
       controller: controller ?? this.controller,
@@ -123,6 +130,8 @@ class CinemaPlayerState {
       activeSubtitleTrack: activeSubtitleTrack == _sentinel ? this.activeSubtitleTrack : (activeSubtitleTrack as SubtitleTrack?),
       customSubtitleStyle: customSubtitleStyle == _sentinel ? this.customSubtitleStyle : (customSubtitleStyle as SubtitleStyle?),
       subtitleDelay: subtitleDelay ?? this.subtitleDelay,
+      isLive: isLive ?? this.isLive,
+      currentChannel: currentChannel == _sentinel ? this.currentChannel : (currentChannel as Channel?),
     );
   }
 }

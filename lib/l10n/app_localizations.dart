@@ -980,6 +980,12 @@ abstract class AppLocalizations {
   /// **'No audio tracks found'**
   String get playerNoAudioFound;
 
+  /// No description provided for @playerNoQualityOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'No quality options available for this stream.'**
+  String get playerNoQualityOptions;
+
   /// No description provided for @streamingErrorNoProviders.
   ///
   /// In en, this message translates to:
@@ -1700,6 +1706,12 @@ abstract class AppLocalizations {
   /// **'No channels found'**
   String get liveTvNoChannels;
 
+  /// No description provided for @liveTvSearchPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search channels...'**
+  String get liveTvSearchPlaceholder;
+
   /// No description provided for @settingsLiveTvRegion.
   ///
   /// In en, this message translates to:
@@ -1747,6 +1759,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'None'**
   String get settingsNone;
+
+  /// No description provided for @liveTvCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get liveTvCategories;
+
+  /// No description provided for @liveTvProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'Providers'**
+  String get liveTvProviders;
+
+  /// No description provided for @liveTvBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse'**
+  String get liveTvBrowse;
+
+  /// No description provided for @liveTvGroupMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Grouping'**
+  String get liveTvGroupMode;
 
   /// No description provided for @agendaTitle.
   ///

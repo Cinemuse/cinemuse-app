@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cinemuse_app/core/services/streaming/stremio_addon_service.dart';
+import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stremio_addon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,6 +35,7 @@ class UserSettings {
   final List<StremioAddon> installedAddons;
   final int liveTvBufferSize; // in MB
   final bool enableLiveTvDiskCache;
+  final StreamQuality liveTvQuality;
 
   final double subtitleFontSize;
   final String subtitleColor;
@@ -64,6 +66,7 @@ class UserSettings {
     this.installedAddons = const [],
     this.liveTvBufferSize = 512,
     this.enableLiveTvDiskCache = false,
+    this.liveTvQuality = StreamQuality.hd,
     this.subtitleFontSize = 24.0,
     this.subtitleColor = '#FFFFFFFF',
     this.subtitleBackgroundColor = '#00000000',
@@ -101,6 +104,10 @@ class UserSettings {
       }).toList() ?? const [],
       liveTvBufferSize: prefs['liveTvBufferSize'] ?? 512,
       enableLiveTvDiskCache: prefs['enableLiveTvDiskCache'] ?? false,
+      liveTvQuality: StreamQuality.values.firstWhere(
+        (e) => e.name == (prefs['liveTvQuality'] as String?),
+        orElse: () => StreamQuality.hd,
+      ),
       subtitleFontSize: (prefs['subtitleFontSize'] as num?)?.toDouble() ?? 24.0,
       subtitleColor: prefs['subtitleColor'] ?? '#FFFFFFFF',
       subtitleBackgroundColor: prefs['subtitleBackgroundColor'] ?? '#00000000',
@@ -132,6 +139,7 @@ class UserSettings {
     List<StremioAddon>? installedAddons,
     int? liveTvBufferSize,
     bool? enableLiveTvDiskCache,
+    StreamQuality? liveTvQuality,
     double? subtitleFontSize,
     String? subtitleColor,
     String? subtitleBackgroundColor,
@@ -161,6 +169,7 @@ class UserSettings {
       installedAddons: installedAddons ?? this.installedAddons,
       liveTvBufferSize: liveTvBufferSize ?? this.liveTvBufferSize,
       enableLiveTvDiskCache: enableLiveTvDiskCache ?? this.enableLiveTvDiskCache,
+      liveTvQuality: liveTvQuality ?? this.liveTvQuality,
       subtitleFontSize: subtitleFontSize ?? this.subtitleFontSize,
       subtitleColor: subtitleColor ?? this.subtitleColor,
       subtitleBackgroundColor: subtitleBackgroundColor ?? this.subtitleBackgroundColor,
@@ -192,6 +201,7 @@ class UserSettings {
       'installedAddons': installedAddons.map((e) => e.toJson()).toList(),
       'liveTvBufferSize': liveTvBufferSize,
       'enableLiveTvDiskCache': enableLiveTvDiskCache,
+      'liveTvQuality': liveTvQuality.name,
       'subtitleFontSize': subtitleFontSize,
       'subtitleColor': subtitleColor,
       'subtitleBackgroundColor': subtitleBackgroundColor,
@@ -250,6 +260,7 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       installedAddons: updates['installedAddons'] ?? state.installedAddons,
       liveTvBufferSize: updates['liveTvBufferSize'] ?? state.liveTvBufferSize,
       enableLiveTvDiskCache: updates['enableLiveTvDiskCache'] ?? state.enableLiveTvDiskCache,
+      liveTvQuality: updates['liveTvQuality'] ?? state.liveTvQuality,
       subtitleFontSize: updates['subtitleFontSize'] ?? state.subtitleFontSize,
       subtitleColor: updates['subtitleColor'] ?? state.subtitleColor,
       subtitleBackgroundColor: updates['subtitleBackgroundColor'] ?? state.subtitleBackgroundColor,

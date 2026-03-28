@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
+import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -30,6 +31,23 @@ void main() {
       expect(channel.subtitle, 'General TV');
       expect(channel.isRadio, false);
       expect(channel.isAdult, false);
+    });
+
+    test('extracts provider and subProvider from json', () {
+      final json = {
+        'lcn': 10,
+        'name': 'Sky Sport 1',
+        'logo': 'sky_sport_1.png',
+        'type': 'hls',
+        'url': 'http://example.com/stream.m3u8',
+        'provider': 'Sky',
+        'sub_provider': 'Sky Sport',
+      };
+
+      final channel = Channel.fromJson(json);
+
+      expect(channel.provider, 'Sky');
+      expect(channel.subProvider, 'Sky Sport');
     });
 
     test('prioritizes geoblock.url over main url if available', () {
@@ -100,7 +118,7 @@ void main() {
         name: 'Test',
         logo: 'logo',
         type: 'hls',
-        url: 'http://test',
+        urlOverride: 'http://test',
         isDisabled: true,
       );
 
@@ -113,7 +131,7 @@ void main() {
         name: 'Radio',
         logo: 'logo',
         type: 'hls',
-        url: 'http://test',
+        urlOverride: 'http://test',
         isRadio: true,
       );
 
@@ -122,7 +140,7 @@ void main() {
         name: 'Adult',
         logo: 'logo',
         type: 'hls',
-        url: 'http://test',
+        urlOverride: 'http://test',
         isAdult: true,
       );
 
@@ -136,7 +154,7 @@ void main() {
         name: 'Test',
         logo: 'logo',
         type: 'hls',
-        url: 'zappr://fake-stream',
+        urlOverride: 'zappr://fake-stream',
       );
 
       expect(channel.isPlayable, false);
@@ -148,7 +166,7 @@ void main() {
         name: 'HLS Stream',
         logo: 'logo',
         type: 'hls',
-        url: 'http://test.m3u8',
+        urlOverride: 'http://test.m3u8',
       );
 
       expect(channel.isPlayable, true);
@@ -160,7 +178,7 @@ void main() {
         name: 'DASH Stream',
         logo: 'logo',
         type: 'dash',
-        url: 'http://test.mpd',
+        urlOverride: 'http://test.mpd',
       );
 
       if (Platform.isWindows) {
@@ -179,7 +197,7 @@ void main() {
         name: 'Test',
         logo: 'Caffè_e_TV_Papà.svg',
         type: 'hls',
-        url: 'http://test',
+        urlOverride: 'http://test',
       );
 
       final url = channel.logoUrl;
@@ -189,6 +207,123 @@ void main() {
       expect(url, isNot(contains('è')));
       expect(url, isNot(contains('à')));
       expect(url, contains('caffe_e_tv_papa.png'));
+    });
+  });
+
+  group('Channel quality helpers', () {
+    test('linksByQuality groups links correctly', () {
+      final channel = Channel(
+        lcn: 1,
+        name: 'Test',
+        logo: 'logo',
+        links: [
+          StreamLink(url: 'http://a', quality: StreamQuality.fhd),
+          StreamLink(url: 'http://b', quality: StreamQuality.hd),
+          StreamLink(url: 'http://c', quality: StreamQuality.fhd),
+          StreamLink(url: 'http://d', quality: StreamQuality.sd),
+        ],
+      );
+
+      final byQuality = channel.linksByQuality;
+
+      expect(byQuality[StreamQuality.fhd]!.length, 2);
+      expect(byQuality[StreamQuality.hd]!.length, 1);
+      expect(byQuality[StreamQuality.sd]!.length, 1);
+      expect(byQuality[StreamQuality.uhd], isNull);
+    });
+
+    test('availableQualities returns sorted highest-first', () {
+      final channel = Channel(
+        lcn: 1,
+        name: 'Test',
+        logo: 'logo',
+        links: [
+          StreamLink(url: 'http://a', quality: StreamQuality.sd),
+          StreamLink(url: 'http://b', quality: StreamQuality.fhd),
+          StreamLink(url: 'http://c', quality: StreamQuality.hd),
+        ],
+      );
+
+      expect(channel.availableQualities, [
+        StreamQuality.fhd,
+        StreamQuality.hd,
+        StreamQuality.sd,
+      ]);
+    });
+
+    test('quality returns highest from links', () {
+      final channel = Channel(
+        lcn: 1,
+        name: 'Test',
+        logo: 'logo',
+        links: [
+          StreamLink(url: 'http://a', quality: StreamQuality.sd),
+          StreamLink(url: 'http://b', quality: StreamQuality.fhd),
+        ],
+      );
+
+      expect(channel.quality, StreamQuality.fhd);
+    });
+  });
+
+  group('StreamLink.fromJson', () {
+    test('parses flat format (quality/codec at root)', () {
+      final json = {
+        'url': 'http://stream.com/live.ts',
+        'quality': 'FHD',
+        'codec': 'H.265',
+      };
+
+      final link = StreamLink.fromJson(json);
+
+      expect(link.url, 'http://stream.com/live.ts');
+      expect(link.quality, StreamQuality.fhd);
+      expect(link.codec, 'H.265');
+    });
+
+    test('parses nested format (quality inside metadata)', () {
+      final json = {
+        'url': 'http://stream.com/live.ts',
+        'metadata': {
+          'quality': 'HD',
+          'codec': 'H.264',
+        },
+      };
+
+      final link = StreamLink.fromJson(json);
+
+      expect(link.url, 'http://stream.com/live.ts');
+      expect(link.quality, StreamQuality.hd);
+      expect(link.codec, 'H.264');
+    });
+
+    test('flat format takes priority over nested when both present', () {
+      final json = {
+        'url': 'http://stream.com/live.ts',
+        'quality': '4K',
+        'codec': '',
+        'metadata': {
+          'quality': 'SD',
+          'codec': 'H.264',
+        },
+      };
+
+      final link = StreamLink.fromJson(json);
+
+      expect(link.quality, StreamQuality.uhd);
+      // Empty codec at root means null
+      expect(link.codec, isNull);
+    });
+
+    test('defaults to SD when no quality provided', () {
+      final json = {
+        'url': 'http://stream.com/live.ts',
+      };
+
+      final link = StreamLink.fromJson(json);
+
+      expect(link.quality, StreamQuality.sd);
+      expect(link.codec, isNull);
     });
   });
 }

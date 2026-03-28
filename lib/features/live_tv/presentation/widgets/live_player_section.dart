@@ -17,6 +17,7 @@ class LivePlayerSection extends StatelessWidget {
   final ValueChanged<String>? onNumberInput;
   final VoidCallback? onConfirmNumber;
   final String numberBuffer;
+  final VoidCallback? onSettingsPressed;
 
   const LivePlayerSection({
     super.key,
@@ -25,6 +26,7 @@ class LivePlayerSection extends StatelessWidget {
     this.onNumberInput,
     this.onConfirmNumber,
     this.numberBuffer = '',
+    this.onSettingsPressed,
   });
 
   @override
@@ -65,6 +67,7 @@ class LivePlayerSection extends StatelessWidget {
                       onNumberInput: onNumberInput,
                       onConfirmNumber: onConfirmNumber,
                       numberBuffer: numberBuffer,
+                      onSettingsPressed: onSettingsPressed,
                     ),
                   );
                 },

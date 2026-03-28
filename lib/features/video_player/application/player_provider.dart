@@ -60,6 +60,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   PlaybackManager? _playbackManager;
   InitializationManager? _initializationManager;
   LiveTvSourceHandler? _liveTvHandler;
+  ProviderSubscription? _qualitySubscription;
   
   // --- Live TV Failover State ---
   bool _isChangingChannel = false;
@@ -97,6 +98,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     _player?.dispose();
     _youtubeHandler.dispose();
     _rdHandler.dispose();
+    _qualitySubscription?.close();
     _castHandler.dispose();
     _liveTvHandler?.dispose();
     super.dispose();
@@ -214,6 +216,18 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     );
 
     _liveTvHandler = LiveTvSourceHandler(_player!);
+
+    if (params.type == 'livetv') {
+      _qualitySubscription = ref.listen(
+        settingsProvider.select((s) => s.liveTvQuality),
+        (prev, next) {
+          if (prev != null && prev != next && _currentChannel != null) {
+            debugPrint('PlayerController: Quality preference changed to $next. Re-resolving channel...');
+            changeChannel(_currentChannel!);
+          }
+        },
+      );
+    }
   }
 
   void _setupProgressTracking() {
@@ -231,6 +245,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         isResolving: true,
         activeAudioTrack: _player!.state.track.audio,
         activeSubtitleTrack: _player!.state.track.subtitle,
+        isLive: params.type == 'livetv',
       ));
     }
   }
@@ -245,6 +260,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         title: result.title,
         activeAudioTrack: _player!.state.track.audio,
         activeSubtitleTrack: _player!.state.track.subtitle,
+        isLive: params.type == 'livetv',
       ));
     }
   }
@@ -270,6 +286,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         currentStream: null,
         title: params.episodeTitle ?? 'Live TV',
         isResolving: false,
+        isLive: true,
       ));
     }
   }
@@ -297,10 +314,22 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         }
       }
 
-      // Identify which link we are trying to open
+      // Identify which link we are trying to open, respecting preferred quality.
       _currentLink = null;
       if (channel.links.isNotEmpty) {
-        _currentLink = channel.links.firstWhere((l) => !l.isFailed, orElse: () => channel.links.first);
+        final settings = ref.read(settingsProvider);
+        final preferredQuality = settings.liveTvQuality;
+        
+        // Try to filter links by preferred quality
+        final qualityLinks = channel.links.where((l) => l.quality == preferredQuality && !l.isFailed).toList();
+        
+        if (qualityLinks.isNotEmpty) {
+          _currentLink = qualityLinks.first;
+        } else {
+          // If no links match preferred quality (or all of them failed), 
+          // allow any non-failed link as fallback to avoid black screen.
+          _currentLink = channel.links.firstWhere((l) => !l.isFailed, orElse: () => channel.links.first);
+        }
       }
 
       // During failover, keep the last video frame visible ("freeze frame")
@@ -311,12 +340,15 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           isResolving: !isFailover,
           currentStream: isFailover ? state.valueOrNull?.currentStream : null,
           error: null,
+          currentChannel: channel,
         ) ?? CinemaPlayerState(
           controller: _controller!,
           availableStreams: const [],
           currentStream: null,
           title: channel.name,
           isResolving: true,
+          isLive: true,
+          currentChannel: channel,
         ));
       }
 
@@ -433,6 +465,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         isAnime: vodResult.isAnime,
         activeAudioTrack: _player!.state.track.audio,
         activeSubtitleTrack: _player!.state.track.subtitle,
+        isLive: params.type == 'livetv',
       ));
     }
     

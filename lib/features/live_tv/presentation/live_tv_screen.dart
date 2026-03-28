@@ -11,6 +11,7 @@ import 'package:cinemuse_app/features/live_tv/presentation/widgets/epg_info_card
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/player_settings_bottom_sheet.dart';
 
 /// Main Live TV screen with side-list + player layout.
 class LiveTvScreen extends ConsumerStatefulWidget {
@@ -57,6 +58,10 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     ref.read(playerControllerProvider(_liveTvParams).notifier).changeChannel(channel);
   }
 
+  void _openSettings(CinemaPlayerState state) {
+    PlayerSettingsBottomSheet.show(context, state, _liveTvParams);
+  }
+
   // -----------------------------------------------------------------------
   // Number Input (Remote-style navigation)
   // -----------------------------------------------------------------------
@@ -64,8 +69,8 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     final buffer = ref.read(numberInputBufferProvider);
     final newBuffer = buffer + digit;
 
-    // Max 3 digits (LCN up to 999)
-    if (newBuffer.length > 3) return;
+    // Max 4 digits (LCN up to 9999)
+    if (newBuffer.length > 4) return;
 
     ref.read(numberInputBufferProvider.notifier).state = newBuffer;
 
@@ -251,6 +256,9 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
                           onNumberInput: _handleNumberInput,
                           onConfirmNumber: _confirmNumberInput,
                           numberBuffer: numberBuffer,
+                          onSettingsPressed: playerState?.valueOrNull != null 
+                            ? () => _openSettings(playerState!.valueOrNull!)
+                            : null,
                         ),
                       ),
                     ),
@@ -285,6 +293,9 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
               onNumberInput: _handleNumberInput,
               onConfirmNumber: _confirmNumberInput,
               numberBuffer: numberBuffer,
+              onSettingsPressed: playerState?.valueOrNull != null 
+                ? () => _openSettings(playerState!.valueOrNull!)
+                : null,
             ),
           ),
         ),

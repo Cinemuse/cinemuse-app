@@ -9,6 +9,7 @@ import 'settings/main_settings_view.dart';
 import 'settings/quality_settings_view.dart';
 import 'settings/track_settings_view.dart';
 import 'settings/subtitle_appearance_view.dart';
+import 'settings/live_tv_quality_view.dart';
 
 /// The views available inside the settings sheet.
 enum _SettingsView { main, quality, audio, subtitles, appearance }
@@ -134,6 +135,9 @@ class _PlayerSettingsBottomSheetState extends ConsumerState<PlayerSettingsBottom
           },
         );
       case _SettingsView.quality:
+        if (currentState.isLive) {
+          return LiveTvQualityView(onBack: _navigateBack, state: currentState);
+        }
         return QualitySettingsView(
           state: currentState,
           params: widget.params,

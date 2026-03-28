@@ -50,7 +50,6 @@ class LiveTvRepository {
       // ── Build channel map ──
       // Keys are LCNs. Stable DTT channels get priority seat on the LCN bus.
       final Map<int, Channel> channelMap = {};
-      final Map<String, Channel> nameLookup = {}; // For merging scraped links later
 
       for (final json in allChannelsJson) {
         try {
@@ -58,7 +57,7 @@ class LiveTvRepository {
           if (channel.isPlayable) {
             final existing = channelMap[channel.lcn];
             if (existing == null || !_isMpvIncompatible(channel.url)) {
-              // Assign "Generale" as default category for national channels
+              // Assign "DTT" as default category for national channels
               final withGroup = Channel(
                 lcn: channel.lcn,
                 name: channel.name,
@@ -68,7 +67,7 @@ class LiveTvRepository {
                 type: channel.type,
                 urlOverride: channel.urlOverride,
                 links: channel.links,
-                group: 'Generale',
+                group: 'DTT',
                 subtitle: channel.subtitle,
                 epgSource: channel.epgSource,
                 epgId: channel.epgId,
@@ -79,7 +78,6 @@ class LiveTvRepository {
                 isAdult: channel.isAdult,
               );
               channelMap[channel.lcn] = withGroup;
-              nameLookup[_normalize(channel.name)] = withGroup;
             }
           }
         } catch (_) {}
@@ -87,16 +85,13 @@ class LiveTvRepository {
 
       // ── Load & Merge Premium Scraped Channels ──
       try {
-        // For development, we might load from local file system or a provided URL
-        // In this specific task, we'll try to reach the local artifact we just generated
-        // Note: In real production, this would be a URL.
-        final premiumJson = await _loadPremiumData();
-        if (premiumJson != null) {
-          _mergePremiumChannels(channelMap, nameLookup, premiumJson);
+        final premiumList = await _loadPremiumData();
+        if (premiumList != null) {
+          _mergePremiumChannels(channelMap, premiumList);
         }
       } catch (e) {
         // Log but don't crash, we still have the stable DTT links
-        print('Error merging premium channels: $e');
+        // Log or handle error — for now we skip stable DTT links
       }
 
       // Second pass: fix channels stuck with incompatible URLs.
@@ -151,74 +146,56 @@ class LiveTvRepository {
     }
   }
 
-  /// Helper to normalize names for matching
-  static String _normalize(String name) {
-    return name.toUpperCase()
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .replaceAll(' +', '+')
-        .trim();
-  }
-
-  /// Loads premium data from the Gist URL
-  Future<Map<String, dynamic>?> _loadPremiumData() async {
+  /// Loads premium data from the Gist URL (flat list format)
+  Future<List<dynamic>?> _loadPremiumData() async {
     try {
       final response = await _dio.get(_premiumChannelsUrl);
-      return _parseResponse(response.data) as Map<String, dynamic>;
+      return _parseResponse(response.data) as List<dynamic>;
     } catch (e) {
-      print('LiveTvRepository: Failed to load premium data: $e');
       return null;
     }
   }
 
-  /// Merges scraped premium channels into the existing DTT map
+  /// Merges scraped premium channels (flat list) into the existing DTT map
   void _mergePremiumChannels(
     Map<int, Channel> channelMap, 
-    Map<String, Channel> nameLookup,
-    Map<String, dynamic> premiumJson,
+    List<dynamic> premiumList,
   ) {
     int syntheticLcn = 1000; // Start high for channels without LCN
-    print('LiveTvRepository: Merging premium data into ${channelMap.length} existing channels...');
+    // Skip LCNs already taken by DTT channels
+    while (channelMap.containsKey(syntheticLcn)) {
+      syntheticLcn++;
+    }
+
     
-    premiumJson.forEach((groupName, channelsMap) {
-      if (channelsMap is! Map<String, dynamic>) {
-        print('LiveTvRepository: Invalid group data for $groupName: ${channelsMap.runtimeType}');
-        return;
+    for (final entry in premiumList) {
+      if (entry is! Map<String, dynamic>) continue;
+
+      final links = entry['links'] as List<dynamic>?;
+      if (links == null || links.isEmpty) continue;
+
+      final streamLinks = links
+          .map((l) => StreamLink.fromJson(l as Map<String, dynamic>))
+          .toList();
+
+      final channel = Channel(
+        lcn: syntheticLcn,
+        name: (entry['name'] as String?) ?? '',
+        logo: (entry['logo'] as String?) ?? '',
+        links: streamLinks,
+        group: entry['category'] as String?,
+        provider: entry['provider'] as String?,
+        subProvider: entry['sub_provider'] as String?,
+      );
+
+      channelMap[syntheticLcn] = channel;
+      syntheticLcn++;
+      // Skip occupied LCNs
+      while (channelMap.containsKey(syntheticLcn)) {
+        syntheticLcn++;
       }
-      
-      final titleCaseGroup = groupName[0].toUpperCase() + groupName.substring(1).toLowerCase();
-      print('LiveTvRepository: Processing group $groupName ($titleCaseGroup) with ${channelsMap.length} channels');
-      
-      channelsMap.forEach((channelName, linksDataList) {
-        if (linksDataList is! List) return;
-        
-        // final normalizedName = _normalize(channelName); // No longer needed
-        // final existing = nameLookup[normalizedName]; // No longer needed
-
-        final List<StreamLink> newLinks = linksDataList
-            .map((l) => StreamLink.fromJson(l as Map<String, dynamic>))
-            .toList();
-
-        // Always add as a new channel to keep DTT and Premium separate as requested
-        final channel = Channel(
-          lcn: syntheticLcn, 
-          name: channelName,
-          logo: (linksDataList.first as Map<String, dynamic>)['logo'] as String? ?? '',
-          links: newLinks,
-          group: titleCaseGroup,
-        );
-        
-        channelMap[syntheticLcn++] = channel;
-      });
-    });
+    }
     
-    print('LiveTvRepository: Merge complete. Total channels: ${channelMap.length}');
-  }
-
-  List<StreamLink> _mergeLinks(List<StreamLink> existing, List<StreamLink> newcomers) {
-    return [
-      ...existing,
-      ...newcomers,
-    ];
   }
 
   /// CDN hosts that require specific HTTP headers. 

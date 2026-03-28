@@ -29,6 +29,7 @@ class LiveVideoControls extends StatefulWidget {
 
   /// Current number input buffer to display in the OSD overlay.
   final String numberBuffer;
+  final VoidCallback? onSettingsPressed;
 
   const LiveVideoControls({
     super.key,
@@ -38,6 +39,7 @@ class LiveVideoControls extends StatefulWidget {
     this.onNumberInput,
     this.onConfirmNumber,
     this.numberBuffer = '',
+    this.onSettingsPressed,
   });
 
   @override
@@ -255,7 +257,7 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
   }
 
   // ---------------------------------------------------------------------------
-  // Top bar — channel name + logo, no settings cog
+  // Top bar — channel name, logo, and settings cog
   // ---------------------------------------------------------------------------
 
   Widget _buildTopBar() {
@@ -300,6 +302,15 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
               ),
             ),
           ],
+          const Spacer(),
+          if (widget.onSettingsPressed != null)
+            IconButton(
+              icon: const Icon(Icons.settings, color: Colors.white),
+              onPressed: () {
+                _onHover(); // Keep controls visible while settings open
+                widget.onSettingsPressed!();
+              },
+            ),
         ],
       ),
     );

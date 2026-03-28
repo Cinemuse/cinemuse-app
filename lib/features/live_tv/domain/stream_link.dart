@@ -46,10 +46,15 @@ class StreamLink {
   });
 
   factory StreamLink.fromJson(Map<String, dynamic> json) {
+    // Support both flat format (quality/codec at root) and nested (metadata.quality)
+    final metadata = json['metadata'] as Map<String, dynamic>?;
+    final qualityStr = json['quality'] as String? ?? metadata?['quality'] as String?;
+    final codecStr = json['codec'] as String? ?? metadata?['codec'] as String?;
+
     return StreamLink(
       url: json['url'] as String,
-      quality: StreamQuality.fromString(json['metadata']?['quality'] as String?),
-      codec: json['metadata']?['codec'] as String?,
+      quality: StreamQuality.fromString(qualityStr),
+      codec: (codecStr?.isNotEmpty ?? false) ? codecStr : null,
     );
   }
 

@@ -45,13 +45,13 @@ class ChannelListTile extends StatelessWidget {
             children: [
               // LCN number
               SizedBox(
-                width: 40,
+                width: 32,
                 child: Text(
                   channel.lcn.toString(),
                   style: TextStyle(
                     color: isSelected ? AppTheme.accent : AppTheme.textMuted,
                     fontWeight: FontWeight.w700,
-                    fontSize: 13,
+                    fontSize: 12,
                   ),
                 ),
               ),
@@ -68,7 +68,7 @@ class ChannelListTile extends StatelessWidget {
                     fit: BoxFit.contain,
                     errorBuilder: (_, __, ___) => Center(
                       child: Text(
-                        channel.name.substring(0, 1),
+                        channel.name.isNotEmpty ? channel.name.substring(0, 1) : '?',
                         style: const TextStyle(
                           color: AppTheme.textMuted,
                           fontWeight: FontWeight.bold,
