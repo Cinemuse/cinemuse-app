@@ -42,58 +42,67 @@ class SubtitleAppearanceView extends ConsumerWidget {
           onBack: onBack,
         ),
         
-        // Shared Form for content (includes preview now)
-        SubtitleAppearanceForm(
-          style: currentStyle,
-          onChanged: (newStyle) {
-            ref.read(playerControllerProvider(params).notifier)
-               .updateSubtitleStyle(newStyle);
-          },
-        ),
-
-        const SizedBox(height: 24),
-        
-        // Actions
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: _ActionButton(
-                  label: l10n.playerAppearanceReset,
-                  isSecondary: true,
-                   onPressed: () {
-                     ref.read(playerControllerProvider(params).notifier)
-                        .updateSubtitleStyle(SubtitleStyle(
-                          fontSize: settings.subtitleFontSize,
-                          color: SubtitleStyle.hexToColor(settings.subtitleColor),
-                          backgroundColor: SubtitleStyle.hexToColor(settings.subtitleBackgroundColor),
-                          verticalPosition: settings.subtitleVerticalPosition,
-                        ));
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ActionButton(
-                  label: l10n.playerAppearanceSaveDefault,
-                  onPressed: () {
-                    ref.read(settingsProvider.notifier).updateSettings({
-                      'subtitleFontSize': currentStyle.fontSize,
-                      'subtitleColor': SubtitleStyle.colorToHex(currentStyle.color),
-                      'subtitleBackgroundColor': SubtitleStyle.colorToHex(currentStyle.backgroundColor),
-                      'subtitleVerticalPosition': currentStyle.verticalPosition,
-                    });
-                    // Refresh local override since it's now global
+        Flexible(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Shared Form for content (includes preview now)
+                SubtitleAppearanceForm(
+                  style: currentStyle,
+                  onChanged: (newStyle) {
                     ref.read(playerControllerProvider(params).notifier)
-                       .updateSubtitleStyle(currentStyle);
+                       .updateSubtitleStyle(newStyle);
                   },
                 ),
-              ),
-            ],
+        
+                const SizedBox(height: 24),
+                
+                // Actions
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _ActionButton(
+                          label: l10n.playerAppearanceReset,
+                          isSecondary: true,
+                           onPressed: () {
+                             ref.read(playerControllerProvider(params).notifier)
+                                .updateSubtitleStyle(SubtitleStyle(
+                                  fontSize: settings.subtitleFontSize,
+                                  color: SubtitleStyle.hexToColor(settings.subtitleColor),
+                                  backgroundColor: SubtitleStyle.hexToColor(settings.subtitleBackgroundColor),
+                                  verticalPosition: settings.subtitleVerticalPosition,
+                                ));
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _ActionButton(
+                          label: l10n.playerAppearanceSaveDefault,
+                          onPressed: () {
+                            ref.read(settingsProvider.notifier).updateSettings({
+                              'subtitleFontSize': currentStyle.fontSize,
+                              'subtitleColor': SubtitleStyle.colorToHex(currentStyle.color),
+                              'subtitleBackgroundColor': SubtitleStyle.colorToHex(currentStyle.backgroundColor),
+                              'subtitleVerticalPosition': currentStyle.verticalPosition,
+                            });
+                            // Refresh local override since it's now global
+                            ref.read(playerControllerProvider(params).notifier)
+                               .updateSubtitleStyle(currentStyle);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 16),
       ],
     );
   }
