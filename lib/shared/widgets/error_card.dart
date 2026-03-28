@@ -5,12 +5,14 @@ import 'package:google_fonts/google_fonts.dart';
 
 class ErrorCard extends StatelessWidget {
   final String message;
+  final String? hint;
   final AppExceptionType type;
   final VoidCallback? onRetry;
 
   const ErrorCard({
     super.key,
     required this.message,
+    this.hint,
     this.type = AppExceptionType.unknown,
     this.onRetry,
   });
@@ -44,12 +46,29 @@ class ErrorCard extends StatelessWidget {
           Icon(Icons.error_outline_rounded, color: color, size: 24),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              message,
-              style: GoogleFonts.outfit(
-                color: Colors.white70,
-                fontSize: 14,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  message,
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (hint != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    hint!,
+                    style: GoogleFonts.outfit(
+                      color: Colors.white60,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           if (onRetry != null)

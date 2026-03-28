@@ -183,6 +183,19 @@ class AppDatabase extends _$AppDatabase {
         .getSingleOrNull();
   }
 
+  // Get multiple media items in bulk for optimization
+  Future<List<CachedMediaItem>> getMediaItems(List<({int id, String type})> filters) {
+    if (filters.isEmpty) return Future.value([]);
+    
+    return (select(cachedMediaItems)..where((t) {
+      Expression<bool> predicate = const Constant(false);
+      for (final filter in filters) {
+        predicate = predicate | (t.tmdbId.equals(filter.id) & t.mediaType.equals(filter.type));
+      }
+      return predicate;
+    })).get();
+  }
+
   // Get all watch history for a user
   Future<List<LocalWatchHistory>> getWatchHistory(String userId) {
     return (select(localWatchHistories)

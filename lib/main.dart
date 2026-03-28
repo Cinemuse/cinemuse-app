@@ -11,6 +11,7 @@ import 'package:cinemuse_app/features/auth/presentation/auth_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
+import 'package:cinemuse_app/core/network/http_overrides.dart';
 
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:cinemuse_app/core/data/sqlite_workaround.dart';
@@ -27,6 +28,9 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() {
+  io.HttpOverrides.global = AppHttpOverrides();
+  debugPrint('Networking: Global HttpOverrides registered for SSL/TLS bypass coverage.');
+  
   Chain.capture(() async {
     setupSqlite();
     WidgetsFlutterBinding.ensureInitialized();

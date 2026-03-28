@@ -223,16 +223,31 @@ class WatchHistoryRepository {
   /// Watch watch history locally (Drift)
   Stream<List<WatchHistory>> watchHistory(String userId) {
     return _db.watchWatchHistory(userId).asyncMap((localItems) async {
-      final watchHistoryList = <WatchHistory>[];
+      if (localItems.isEmpty) return [];
+
+      // 1. Prepare bulk request for media items
+      final mediaRequests = localItems.map((l) => (
+        id: l.tmdbId, 
+        type: MediaItem.fromString(l.mediaType)
+      )).toList();
+
+      // 2. Fetch all cached media in one go
+      final cachedMediaList = await _mediaRepo.getMediaItems(mediaRequests);
       
-      for (final local in localItems) {
-        // Fetch media item for each history entry (from local cache if possible)
-        final media = await _mediaRepo.getMediaItem(local.tmdbId, MediaItem.fromString(local.mediaType));
+      // 3. Create a lookup map for fast association
+      final mediaMap = {
+        for (final m in cachedMediaList) '${m.tmdbId}-${m.mediaType.name}': m
+      };
+
+      // 4. Map everything together
+      return localItems.map((local) {
+        final mediaType = MediaItem.fromString(local.mediaType);
+        final media = mediaMap['${local.tmdbId}-${mediaType.name}'];
         
-        watchHistoryList.add(WatchHistory(
+        return WatchHistory(
           userId: local.userId,
           tmdbId: local.tmdbId,
-          mediaType: MediaItem.fromString(local.mediaType),
+          mediaType: mediaType,
           status: WatchStatus.fromJson(local.status),
           progressSeconds: local.progressSeconds,
           totalDuration: local.totalDuration,
@@ -240,9 +255,8 @@ class WatchHistoryRepository {
           episode: local.episode,
           lastWatchedAt: local.lastWatchedAt,
           media: media,
-        ));
-      }
-      return watchHistoryList;
+        );
+      }).toList();
     });
   }
 

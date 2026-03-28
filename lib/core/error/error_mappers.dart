@@ -42,8 +42,17 @@ class NetworkErrorMapper implements BaseErrorMapper {
             type: AppExceptionType.network,
           );
         default:
+          final underlying = error.error?.toString() ?? '';
+          final detail = error.message != null ? ': ${error.message}' : '';
+          
+          String? hint;
+          if (underlying.contains('HandshakeException') || underlying.contains('CertificateException') || underlying.contains('TlsException')) {
+             hint = "Your system might be missing some root certificates. Try updating Windows or check your firewall/DNS.";
+          }
+
           return UserFriendlyError(
-            message: "Network error occurred",
+            message: "Network error occurred$detail",
+            hint: hint,
             type: AppExceptionType.network,
           );
       }

@@ -8,6 +8,9 @@ final dioProvider = Provider<Dio>((ref) {
       connectTimeout: const Duration(seconds: 30),
       sendTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
+      headers: {
+        'User-Agent': 'Cinemuse/1.0.0 (Windows 10; Desktop) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
     ),
   );
 

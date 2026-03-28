@@ -81,41 +81,29 @@ class TmdbService {
   
   // Trending & Popular
   Future<List<Map<String, dynamic>>> getTrending() async {
-     try {
-      final res = await _dio.get(
-        '$_baseUrl/trending/all/week',
-        queryParameters: {'api_key': _apiKey, 'language': 'en-US'},
-      );
-      return List<Map<String, dynamic>>.from(res.data['results']);
-    } catch (e) {
-      return [];
-    }
+    final res = await _dio.get(
+      '$_baseUrl/trending/all/week',
+      queryParameters: {'api_key': _apiKey, 'language': 'en-US'},
+    );
+    return List<Map<String, dynamic>>.from(res.data['results']);
   }
 
   Future<List<Map<String, dynamic>>> getPopularMovies() async {
-    try {
-      final res = await _dio.get(
-        '$_baseUrl/movie/popular',
-        queryParameters: {'api_key': _apiKey, 'language': 'en-US'},
-      );
-      final results = List<Map<String, dynamic>>.from(res.data['results']);
-      return results.map((item) => {...item, 'media_type': 'movie'}).toList();
-    } catch (e) {
-      return [];
-    }
+    final res = await _dio.get(
+      '$_baseUrl/movie/popular',
+      queryParameters: {'api_key': _apiKey, 'language': 'en-US'},
+    );
+    final results = List<Map<String, dynamic>>.from(res.data['results']);
+    return results.map((item) => {...item, 'media_type': 'movie'}).toList();
   }
 
   Future<List<Map<String, dynamic>>> getPopularSeries() async {
-    try {
-      final res = await _dio.get(
-        '$_baseUrl/tv/popular',
-        queryParameters: {'api_key': _apiKey, 'language': 'en-US'},
-      );
-      final results = List<Map<String, dynamic>>.from(res.data['results']);
-      return results.map((item) => {...item, 'media_type': 'tv'}).toList();
-    } catch (e) {
-      return [];
-    }
+    final res = await _dio.get(
+      '$_baseUrl/tv/popular',
+      queryParameters: {'api_key': _apiKey, 'language': 'en-US'},
+    );
+    final results = List<Map<String, dynamic>>.from(res.data['results']);
+    return results.map((item) => {...item, 'media_type': 'tv'}).toList();
   }
 
   Future<List<Map<String, dynamic>>> searchMulti(String query, {int page = 1}) async {

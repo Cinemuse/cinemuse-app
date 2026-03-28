@@ -55,6 +55,23 @@ class MediaRepository {
     return null;
   }
 
+  Future<List<MediaItem>> getMediaItems(List<({int id, MediaKind type})> requests) async {
+    if (requests.isEmpty) return [];
+
+    try {
+      final filters = requests.map((r) => (id: r.id, type: r.type.name)).toList();
+      final localResults = await _db.getMediaItems(filters);
+      
+      return localResults
+          .where((data) => data.expiryDate.isAfter(DateTime.now()))
+          .map((data) => _mapToMediaItem(data))
+          .toList();
+    } catch (e) {
+      print('MediaRepository: Bulk local cache fetch failed: $e');
+      return [];
+    }
+  }
+
   /// Ensures a media item exists in both local and remote cache.
   Future<void> ensureMediaCached(MediaItem item, {Duration? ttl}) async {
     final expiry = DateTime.now().add(ttl ?? defaultTTL);

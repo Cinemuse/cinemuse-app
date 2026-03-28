@@ -66,7 +66,7 @@ class MediaRow extends ConsumerWidget {
                   backdropPath: item['backdrop_path'],
                   releaseDate: DateTime.tryParse(item['release_date'] ?? item['first_air_date'] ?? ''),
                   voteAverage: (item['vote_average'] as num?)?.toDouble(),
-                  updatedAt: DateTime.now(), // Dummy for display
+                  updatedAt: item['updated_at'] != null ? DateTime.parse(item['updated_at']) : DateTime(2000), // Stable dummy
                 );
               }).toList();
 
@@ -85,6 +85,7 @@ class MediaRow extends ConsumerWidget {
                final mapped = ref.read(errorMapperProvider).map(e);
                return ErrorCard(
                  message: mapped.message,
+                 hint: mapped.hint,
                  type: mapped.type,
                );
              },

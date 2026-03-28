@@ -9,6 +9,8 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cinemuse_app/shared/widgets/error_card.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -33,15 +35,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Column(
           children: [
             // 1. Hero Section (Trending #1)
-            trendingAsync.when(
-              data: (data) => HeroSection(media: data.isNotEmpty ? data[0] : null),
-              loading: () => SizedBox(
-                height: MediaQuery.of(context).size.height * 0.75, 
-                child: const Center(child: CircularProgressIndicator())
-              ),
-              error: (err, stack) => SizedBox(
-                height: MediaQuery.of(context).size.height * 0.6, 
-                child: Center(child: Text('${l10n.homeErrorLoadingFeatures}: $err')),
+            RepaintBoundary(
+              child: trendingAsync.when(
+                data: (data) => HeroSection(media: data.isNotEmpty ? data[0] : null),
+                loading: () => SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.75, 
+                  child: const Center(child: CircularProgressIndicator())
+                ),
+                error: (err, stack) {
+                  final mapped = ref.read(errorMapperProvider).map(err);
+                  return SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6, 
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: ErrorCard(
+                          message: mapped.message,
+                          hint: mapped.hint,
+                          type: mapped.type,
+                          onRetry: () => ref.refresh(trendingProvider),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
             
@@ -52,30 +69,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Continue Watching
-                  FocusTraversalGroup(
-                    policy: OrderedTraversalPolicy(),
-                    child: const ContinueWatchingRow(),
+                  RepaintBoundary(
+                    child: FocusTraversalGroup(
+                      policy: OrderedTraversalPolicy(),
+                      child: const ContinueWatchingRow(),
+                    ),
                   ),
                   const SizedBox(height: 20),
 
                   // Trending List
-                  FocusTraversalGroup(
-                    policy: OrderedTraversalPolicy(),
-                    child: MediaRow(title: l10n.homeTrendingNow, asyncData: trendingAsync, skipFirst: true),
+                  RepaintBoundary(
+                    child: FocusTraversalGroup(
+                      policy: OrderedTraversalPolicy(),
+                      child: MediaRow(title: l10n.homeTrendingNow, asyncData: trendingAsync, skipFirst: true),
+                    ),
                   ),
                   const SizedBox(height: 30),
 
                   // Popular Movies
-                  FocusTraversalGroup(
-                    policy: OrderedTraversalPolicy(),
-                    child: MediaRow(title: l10n.homePopularMovies, asyncData: popularMoviesAsync),
+                  RepaintBoundary(
+                    child: FocusTraversalGroup(
+                      policy: OrderedTraversalPolicy(),
+                      child: MediaRow(title: l10n.homePopularMovies, asyncData: popularMoviesAsync),
+                    ),
                   ),
                   const SizedBox(height: 30),
 
                   // Popular Series
-                  FocusTraversalGroup(
-                    policy: OrderedTraversalPolicy(),
-                    child: MediaRow(title: l10n.homePopularSeries, asyncData: popularSeriesAsync),
+                  RepaintBoundary(
+                    child: FocusTraversalGroup(
+                      policy: OrderedTraversalPolicy(),
+                      child: MediaRow(title: l10n.homePopularSeries, asyncData: popularSeriesAsync),
+                    ),
                   ),
                   const SizedBox(height: 50),
                    
