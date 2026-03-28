@@ -237,7 +237,11 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
 
         return Row(
           children: [
-            Expanded(child: const ChannelListPanel()),
+            const Expanded(
+              child: RepaintBoundary(
+                child: ChannelListPanel(),
+              ),
+            ),
 
             SizedBox(
               width: rightPanelWidth.clamp(400, constraints.maxWidth * 0.7),
@@ -250,15 +254,17 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
                     Flexible(
                       child: AspectRatio(
                         aspectRatio: 16 / 9,
-                        child: LivePlayerSection(
-                          channel: selectedChannel,
-                          playerState: playerState,
-                          onNumberInput: _handleNumberInput,
-                          onConfirmNumber: _confirmNumberInput,
-                          numberBuffer: numberBuffer,
-                          onSettingsPressed: playerState?.valueOrNull != null 
-                            ? () => _openSettings(playerState!.valueOrNull!)
-                            : null,
+                        child: RepaintBoundary(
+                          child: LivePlayerSection(
+                            channel: selectedChannel,
+                            playerState: playerState,
+                            onNumberInput: _handleNumberInput,
+                            onConfirmNumber: _confirmNumberInput,
+                            numberBuffer: numberBuffer,
+                            onSettingsPressed: playerState?.valueOrNull != null 
+                              ? () => _openSettings(playerState!.valueOrNull!)
+                              : null,
+                          ),
                         ),
                       ),
                     ),
@@ -287,20 +293,26 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           child: AspectRatio(
             aspectRatio: 16 / 9,
-            child: LivePlayerSection(
-              channel: selectedChannel,
-              playerState: playerState,
-              onNumberInput: _handleNumberInput,
-              onConfirmNumber: _confirmNumberInput,
-              numberBuffer: numberBuffer,
-              onSettingsPressed: playerState?.valueOrNull != null 
-                ? () => _openSettings(playerState!.valueOrNull!)
-                : null,
+            child: RepaintBoundary(
+              child: LivePlayerSection(
+                channel: selectedChannel,
+                playerState: playerState,
+                onNumberInput: _handleNumberInput,
+                onConfirmNumber: _confirmNumberInput,
+                numberBuffer: numberBuffer,
+                onSettingsPressed: playerState?.valueOrNull != null 
+                  ? () => _openSettings(playerState!.valueOrNull!)
+                  : null,
+              ),
             ),
           ),
         ),
         // EPG card removed for mobile to maximize space
-        const Expanded(child: ChannelListPanel()),
+        const Expanded(
+          child: RepaintBoundary(
+            child: ChannelListPanel(),
+          ),
+        ),
       ],
     );
   }

@@ -121,21 +121,45 @@ final filteredChannelsProvider = Provider<AsyncValue<List<Channel>>>((ref) {
 /// Current program for a given channel.
 final currentProgramProvider =
     Provider.family<EpgProgram?, Channel>((ref, channel) {
-  final epgAsync = ref.watch(epgDataProvider);
-  return epgAsync.whenOrNull(data: (epgData) {
-    final repo = ref.read(liveTvRepositoryProvider);
-    return repo.getProgramsForChannel(channel, epgData).current;
-  });
+  final programs = ref.watch(epgDataProvider.select((asyncEpg) {
+    return asyncEpg.whenOrNull(data: (epgData) {
+      if (channel.epgSource == null || channel.epgId == null) return <EpgProgram>[];
+      return epgData[channel.epgSource]?[channel.epgId] ?? <EpgProgram>[];
+    }) ?? <EpgProgram>[];
+  }));
+
+  if (programs.isEmpty) return null;
+  final now = DateTime.now();
+  
+  for (int i = 0; i < programs.length; i++) {
+    final p = programs[i];
+    if (now.isAfter(p.startTime) && now.isBefore(p.endTime)) {
+      return p;
+    }
+  }
+  return null;
 });
 
 /// Next program for a given channel.
 final nextProgramProvider =
     Provider.family<EpgProgram?, Channel>((ref, channel) {
-  final epgAsync = ref.watch(epgDataProvider);
-  return epgAsync.whenOrNull(data: (epgData) {
-    final repo = ref.read(liveTvRepositoryProvider);
-    return repo.getProgramsForChannel(channel, epgData).next;
-  });
+  final programs = ref.watch(epgDataProvider.select((asyncEpg) {
+    return asyncEpg.whenOrNull(data: (epgData) {
+      if (channel.epgSource == null || channel.epgId == null) return <EpgProgram>[];
+      return epgData[channel.epgSource]?[channel.epgId] ?? <EpgProgram>[];
+    }) ?? <EpgProgram>[];
+  }));
+
+  if (programs.isEmpty) return null;
+  final now = DateTime.now();
+  
+  for (int i = 0; i < programs.length; i++) {
+    final p = programs[i];
+    if (now.isAfter(p.startTime) && now.isBefore(p.endTime)) {
+      if (i + 1 < programs.length) return programs[i + 1];
+    }
+  }
+  return null;
 });
 
 // ---------------------------------------------------------------------------
