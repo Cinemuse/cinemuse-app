@@ -155,16 +155,28 @@ class _AppNavbarState extends State<AppNavbar> {
                                   PopupMenuItem(
                                     value: -1,
                                     height: 40,
-                                    child: Center(child: Text(l10n.settingsTitle)),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.settings_outlined, size: 18, color: Colors.white70),
+                                        const SizedBox(width: 8),
+                                        Text(l10n.settingsTitle),
+                                      ],
+                                    ),
                                   ),
                                   PopupMenuItem(
                                     value: -2,
                                     height: 40,
-                                    child: Center(
-                                      child: Text(
-                                        l10n.settingsLogout,
-                                        style: const TextStyle(color: Colors.redAccent),
-                                      ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.logout_rounded, size: 18, color: Colors.redAccent),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          l10n.settingsLogout,
+                                          style: const TextStyle(color: Colors.redAccent),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -228,7 +240,76 @@ class _AppNavbarState extends State<AppNavbar> {
                     ),
                   ),
 
-                  // Mobile/Tablet Nav items could go here if needed, but AppShell handles index
+                  // Mobile Actions (Right)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _IconAction(
+                        icon: Icons.search,
+                        onTap: () => widget.onSearchTap?.call(),
+                        size: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          popupMenuTheme: PopupMenuThemeData(
+                            color: AppTheme.surface,
+                            textStyle: const TextStyle(color: Colors.white),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+                            ),
+                          ),
+                        ),
+                        child: PopupMenuButton<int>(
+                          icon: const Icon(
+                            Icons.person_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                          tooltip: l10n.settingsTitle,
+                          offset: const Offset(0, 48),
+                          constraints: const BoxConstraints(minWidth: 160),
+                          onSelected: (value) {
+                            if (value == -1) {
+                              widget.onSettingsTap?.call();
+                            } else if (value == -2) {
+                              widget.onLogoutTap?.call();
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              value: -1,
+                              height: 48, // Slightly larger for touch
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.settings_outlined, size: 20, color: Colors.white70),
+                                  const SizedBox(width: 12),
+                                  Text(l10n.settingsTitle),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: -2,
+                              height: 48,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.logout_rounded, size: 20, color: Colors.redAccent),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    l10n.settingsLogout,
+                                    style: const TextStyle(color: Colors.redAccent),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -398,8 +479,13 @@ class _NavItem extends StatelessWidget {
 class _IconAction extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
+  final double size;
 
-  const _IconAction({required this.icon, required this.onTap});
+  const _IconAction({
+    required this.icon, 
+    required this.onTap,
+    this.size = 20,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -412,7 +498,7 @@ class _IconAction extends StatelessWidget {
         hoverColor: Colors.white.withOpacity(0.1),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Icon(icon, color: Colors.white, size: 20),
+          child: Icon(icon, color: Colors.white, size: size),
         ),
       ),
     );
