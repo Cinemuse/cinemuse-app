@@ -40,7 +40,7 @@ void main() {
       initializeDateFormatting(),
       dotenv.load(fileName: ".env"),
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
-      if (io.Platform.isWindows) windowManager.ensureInitialized(),
+      if (io.Platform.isWindows || io.Platform.isLinux) windowManager.ensureInitialized(),
     ]);
 
     // System configurations
@@ -57,7 +57,7 @@ void main() {
       anonKey: SupabaseConfig.anonKey,
     );
 
-    if (io.Platform.isWindows) {
+    if (io.Platform.isWindows || io.Platform.isLinux) {
       const windowOptions = WindowOptions(
         size: Size(1280, 720),
         minimumSize: Size(800, 600),

@@ -3,9 +3,16 @@ import 'package:flutter/foundation.dart'; // For defaultTargetPlatform
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final connectivityProvider = StreamProvider<ConnectivityResult>((ref) async* {
+  // 1. WSL/Linux Workaround: connectivity_plus on Linux depends on NetworkManager via DBus.
+  // Many minimal Linux environments (like WSL) don't run NetworkManager, causing a crash.
+  if (defaultTargetPlatform == TargetPlatform.linux || defaultTargetPlatform == TargetPlatform.macOS) {
+    yield ConnectivityResult.wifi;
+    return;
+  }
+
   final connectivity = Connectivity();
   
-  // 1. Initial Assumption: Assume connected (wifi) to avoid an immediate "Offline Screen" flicker.
+  // 2. Initial Assumption: Assume connected (wifi) to avoid an immediate "Offline Screen" flicker.
   // This follows the "Fail-Open" UX principle: assume it works until proven otherwise.
   ConnectivityResult lastResult = ConnectivityResult.wifi; 
 

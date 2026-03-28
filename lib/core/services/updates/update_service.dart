@@ -127,6 +127,16 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
         orElse: () => null,
       );
       return zip?['browser_download_url'];
+    } else if (Platform.isLinux) {
+      // Look for AppImage, deb, or tar.gz
+      final linuxAsset = assets.firstWhere(
+        (a) => (a['name'] as String).toLowerCase().contains('linux') || 
+               (a['name'] as String).endsWith('.appimage') ||
+               (a['name'] as String).endsWith('.deb') ||
+               (a['name'] as String).endsWith('.tar.gz'),
+        orElse: () => null,
+      );
+      return linuxAsset?['browser_download_url'];
     }
     return null;
   }

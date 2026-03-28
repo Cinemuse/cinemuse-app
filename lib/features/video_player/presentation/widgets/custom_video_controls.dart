@@ -120,7 +120,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   }
 
   Future<void> _toggleFullscreen() async {
-    if (Platform.isWindows) {
+    if (Platform.isWindows || Platform.isLinux) {
       final isFull = await windowManager.isFullScreen();
       await windowManager.setFullScreen(!isFull);
       // Stabilization delay to prevent video freeze on Windows
@@ -136,7 +136,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   }
 
   Future<void> _handleBack() async {
-    if (Platform.isWindows) {
+    if (Platform.isWindows || Platform.isLinux) {
       if (await windowManager.isFullScreen()) {
         // Trigger exit fullscreen and navigation simultaneously for snappier feel
         windowManager.setFullScreen(false);

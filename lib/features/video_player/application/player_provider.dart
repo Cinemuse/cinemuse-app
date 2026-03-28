@@ -152,11 +152,14 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
       // ── Video Sync & Smoothness ───────────────────────────────────────────
       // display-resample: syncs to the monitor's refresh rate, eliminates judder.
-      mpv.setProperty('video-sync', 'display-resample');
-      
-      // Interpolation to smooth out frame pacing (reduces judder on 24fps content).
-      mpv.setProperty('interpolation', 'yes');
-      mpv.setProperty('tscale', 'oversample'); 
+      // We disable this on Linux/WSL as it can cause crashes with virtualised GPU drivers.
+      if (!io.Platform.isLinux) {
+        mpv.setProperty('video-sync', 'display-resample');
+        
+        // Interpolation to smooth out frame pacing (reduces judder on 24fps content).
+        mpv.setProperty('interpolation', 'yes');
+        mpv.setProperty('tscale', 'oversample'); 
+      }
 
       // ── Network & Caching ─────────────────────────────────────────────────
       // Aggressive cache settings for reliable streaming on variable bitrates.
@@ -172,6 +175,11 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       
       // Fallback strategies for unsupported audio codecs.
       mpv.setProperty('audio-fallback-to-null', 'yes');
+      
+      // Force PulseAudio on Linux to avoid PipeWire issues in WSL
+      if (io.Platform.isLinux) {
+        mpv.setProperty('ao', 'pulse');
+      }
 
       // --- Networking & Compatibility ---
       // Fixes "Refusing to load potentially unsafe URL" error
