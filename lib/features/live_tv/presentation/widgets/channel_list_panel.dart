@@ -82,250 +82,372 @@ class _ChannelListPanelState extends ConsumerState<ChannelListPanel> {
       }
     });
 
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return ClipRRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           decoration: BoxDecoration(
             color: AppTheme.surface.withOpacity(0.6),
-            border: Border(
-              right: BorderSide(
-                color: Colors.white.withOpacity(0.08),
-              ),
-            ),
+            border: isMobile 
+              ? null
+              : Border(right: BorderSide(color: Colors.white.withOpacity(0.08))),
           ),
-          child: Row(
-            children: [
-              // 1. Group Rail (Categories / Providers)
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  if (!isGroupsFocused) {
-                    ref.read(liveTvPanelFocusProvider.notifier).state = LiveTvPanelFocus.groups;
-                  }
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 350),
-                  curve: Curves.fastOutSlowIn,
-                  clipBehavior: Clip.antiAlias,
-                  width: isGroupsFocused ? 200 : 70, // Slightly wider for safer layout when collapsed
-                  decoration: BoxDecoration(
-                    color: AppTheme.surface.withOpacity(0.4),
-                    border: Border(
-                      right: BorderSide(
-                        color: Colors.white.withOpacity(0.05),
+          child: isMobile
+            ? _buildMobileLayout(context, channelsAsync, groupsAsync, selectedGroup, selectedChannel, groupMode)
+            : Row(
+                children: [
+                  // 1. Group Rail (Categories / Providers)
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      if (!isGroupsFocused) {
+                        ref.read(liveTvPanelFocusProvider.notifier).state = LiveTvPanelFocus.groups;
+                      }
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.fastOutSlowIn,
+                      clipBehavior: Clip.antiAlias,
+                      width: isGroupsFocused ? 200 : 70, // Slightly wider for safer layout when collapsed
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface.withOpacity(0.4),
+                        border: Border(
+                          right: BorderSide(
+                            color: Colors.white.withOpacity(0.05),
+                          ),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          // 1. Static Header with Hamburger Icon
+                          Container(
+                            height: 60,
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Row(
+                              mainAxisAlignment: isGroupsFocused ? MainAxisAlignment.start : MainAxisAlignment.center,
+                              children: [
+                                if (isGroupsFocused) const SizedBox(width: 8), 
+                                Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(20),
+                                    onTap: () {
+                                      ref.read(liveTvPanelFocusProvider.notifier).state = 
+                                        isGroupsFocused ? LiveTvPanelFocus.channels : LiveTvPanelFocus.groups;
+                                    },
+                                    child: const Padding(
+                                      padding: EdgeInsets.all(12.0),
+                                      child: Icon(
+                                        Icons.menu,
+                                        size: 22,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                if (isGroupsFocused) ...[
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: AnimatedOpacity(
+                                      duration: const Duration(milliseconds: 200),
+                                      opacity: isGroupsFocused ? 1.0 : 0.0,
+                                      curve: Curves.easeIn,
+                                      child: Text(
+                                        l10n.liveTvBrowse,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.clip,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          
+                          const Divider(height: 1, color: Colors.white10),
+
+                          // 2. Mode Toggle (Repositioned below header)
+                          // Fixed height to prevent vertical shifting of the list below during animation
+                          SizedBox(
+                            height: 52,
+                            child: isGroupsFocused
+                              ? Padding(
+                                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                                  child: _buildGroupingToggle(context, groupMode),
+                                )
+                              : Center(
+                                  child: _buildCompactGroupingToggle(context, groupMode),
+                                ),
+                          ),
+                          
+                          const SizedBox(height: 8),
+
+                          // Groups List
+                          Expanded(
+                            child: groupsAsync.when(
+                              data: (groups) => ListView.builder(
+                                controller: _groupScrollController,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                itemCount: groups.length,
+                                itemBuilder: (context, index) {
+                                  final group = groups[index];
+                                  final isSelected = group == selectedGroup;
+                                  return _buildGroupTile(group, isSelected, isGroupsFocused, groupMode);
+                                },
+                              ),
+                              loading: () => const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                              error: (_, __) => const SizedBox.shrink(),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  child: Column(
-                    children: [
-                      // 1. Static Header with Hamburger Icon
-                      Container(
-                        height: 60,
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Row(
-                          mainAxisAlignment: isGroupsFocused ? MainAxisAlignment.start : MainAxisAlignment.center,
-                          children: [
-                            if (isGroupsFocused) const SizedBox(width: 8), 
-                            Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(20),
-                                onTap: () {
-                                  ref.read(liveTvPanelFocusProvider.notifier).state = 
-                                    isGroupsFocused ? LiveTvPanelFocus.channels : LiveTvPanelFocus.groups;
-                                },
-                                child: const Padding(
-                                  padding: EdgeInsets.all(12.0),
-                                  child: Icon(
-                                    Icons.menu,
-                                    size: 22,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            if (isGroupsFocused) ...[
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: AnimatedOpacity(
-                                  duration: const Duration(milliseconds: 200),
-                                  opacity: isGroupsFocused ? 1.0 : 0.0,
-                                  curve: Curves.easeIn,
-                                  child: Text(
-                                    l10n.liveTvBrowse,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.clip,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      
-                      const Divider(height: 1, color: Colors.white10),
 
-                      // 2. Mode Toggle (Repositioned below header)
-                      // Fixed height to prevent vertical shifting of the list below during animation
-                      SizedBox(
-                        height: 52,
-                        child: isGroupsFocused
-                          ? Padding(
-                              padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-                              child: _buildGroupingToggle(context, groupMode),
-                            )
-                          : Center(
-                              child: _buildCompactGroupingToggle(context, groupMode),
-                            ),
-                      ),
-                      
-                      const SizedBox(height: 8),
-
-                      // Groups List
-                      Expanded(
-                        child: groupsAsync.when(
-                          data: (groups) => ListView.builder(
-                            controller: _groupScrollController,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            itemCount: groups.length,
-                            itemBuilder: (context, index) {
-                              final group = groups[index];
-                              final isSelected = group == selectedGroup;
-                              return _buildGroupTile(group, isSelected, isGroupsFocused, groupMode);
-                            },
+                  // 2. Channel List Rail
+                  Expanded(
+                    child: GestureDetector(
+                      onTapDown: (_) => ref.read(liveTvPanelFocusProvider.notifier).state = LiveTvPanelFocus.channels,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Search area
+                          // Search Field
+                          Container(
+                            height: 60, // Matches group rail header height
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            alignment: Alignment.center,
+                            child: _buildSearchField(context),
                           ),
-                          loading: () => const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-                          error: (_, __) => const SizedBox.shrink(),
-                        ),
+
+                          const Divider(height: 1, color: Colors.white10),
+
+                          // Channel list
+                          Expanded(
+                            child: _buildChannelList(channelsAsync, selectedChannel, selectedGroup),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                  ),
+                ],
+              ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChannelList(AsyncValue<List<Channel>> channelsAsync, Channel? selectedChannel, String? selectedGroup) {
+    return channelsAsync.when(
+      data: (channels) {
+        // 1. Group channels by sub-provider
+        final hasSubProviders = channels.any((ch) => ch.subProvider?.isNotEmpty == true);
+        
+        if (!hasSubProviders) {
+          return ListView.builder(
+            controller: _channelScrollController,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            itemCount: channels.length,
+            itemExtent: 60,
+            itemBuilder: (context, index) {
+              final channel = channels[index];
+              final currentProgram = ref.watch(currentProgramProvider(channel));
+
+              return ChannelListTile(
+                channel: channel,
+                isSelected: selectedChannel?.uniqueId == channel.uniqueId,
+                currentProgram: currentProgram,
+                onTap: () {
+                  ref.read(selectedChannelProvider.notifier).state = channel;
+                  ref.read(liveTvPanelFocusProvider.notifier).state = LiveTvPanelFocus.channels;
+                },
+              );
+            },
+          );
+        }
+
+        // 2. Prepare grouped list items
+        final grouped = <String, List<Channel>>{};
+        for (final ch in channels) {
+          final key = ch.subProvider?.isNotEmpty == true ? ch.subProvider! : 'General';
+          (grouped[key] ??= []).add(ch);
+        }
+
+        final allExpandedMap = ref.watch(expandedSubProvidersProvider);
+        
+        // Initialize this group's expanded state if it's the first visit
+        Set<String> expandedSet;
+        if (allExpandedMap.containsKey(selectedGroup)) {
+          expandedSet = allExpandedMap[selectedGroup]!;
+        } else {
+          // First visit logic
+          final targetSub = selectedChannel?.subProvider?.isNotEmpty == true 
+              ? selectedChannel!.subProvider! 
+              : (grouped.keys.isNotEmpty ? grouped.keys.first : 'General');
+          expandedSet = { targetSub };
+        }
+
+        final listItems = <dynamic>[];
+        for (final entry in grouped.entries) {
+          listItems.add(entry.key); // Header (String)
+          final isExpanded = expandedSet.contains(entry.key);
+          if (isExpanded) {
+            listItems.addAll(entry.value); // Channels
+          }
+        }
+
+        return ListView.builder(
+          controller: _channelScrollController,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          itemCount: listItems.length,
+          itemBuilder: (context, index) {
+            final item = listItems[index];
+
+            if (item is String) {
+              final isExpanded = expandedSet.contains(item);
+              return _buildSubProviderHeader(context, item, isExpanded, expandedSet, selectedGroup ?? '');
+            }
+
+            final channel = item as Channel;
+            final currentProgram = ref.watch(currentProgramProvider(channel));
+
+            return ChannelListTile(
+              channel: channel,
+              isSelected: selectedChannel?.uniqueId == channel.uniqueId,
+              currentProgram: currentProgram,
+              onTap: () {
+                ref.read(selectedChannelProvider.notifier).state = channel;
+                ref.read(liveTvPanelFocusProvider.notifier).state = LiveTvPanelFocus.channels;
+              },
+            );
+          },
+        );
+      },
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: AppTheme.accent),
+      ),
+      error: (error, _) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildMobileLayout(
+    BuildContext context, 
+    AsyncValue<List<Channel>> channelsAsync,
+    AsyncValue<List<String>> groupsAsync,
+    String? selectedGroup,
+    Channel? selectedChannel,
+    LiveTvGroupMode groupMode,
+  ) {
+    return Column(
+      children: [
+        // 1. Horizontal Group Bar
+        _buildMobileGroupBar(context, groupsAsync, selectedGroup, groupMode),
+
+        // 2. Search Field (Full width - expanded to match channel list)
+        Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          alignment: Alignment.center,
+          child: _buildSearchField(context),
+        ),
+
+        // 3. Channel List
+        Expanded(
+          child: _buildChannelList(channelsAsync, selectedChannel, selectedGroup),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileGroupBar(
+    BuildContext context, 
+    AsyncValue<List<String>> groupsAsync,
+    String? selectedGroup,
+    LiveTvGroupMode groupMode,
+  ) {
+    return Container(
+      height: 56,
+      child: Row(
+        children: [
+          // Anchored Toggle (Now on the left)
+          Container(
+            padding: const EdgeInsets.only(left: 12, right: 8),
+            decoration: BoxDecoration(
+              border: Border(right: BorderSide(color: Colors.white.withOpacity(0.05))),
+            ),
+            child: _buildCompactGroupingToggle(context, groupMode),
+          ),
+
+          // Scrollable Groups
+          Expanded(
+            child: groupsAsync.when(
+              data: (groups) => ListView.builder(
+                controller: _groupScrollController,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                itemCount: groups.length,
+                itemBuilder: (context, index) {
+                  final group = groups[index];
+                  final isSelected = group == selectedGroup;
+                  return _buildMobileGroupPill(group, isSelected, groupMode);
+                },
+              ),
+              loading: () => const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileGroupPill(String name, bool isSelected, LiveTvGroupMode mode) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            ref.read(liveTvSelectedGroupProvider.notifier).state = name;
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: isSelected ? AppTheme.accent.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isSelected ? AppTheme.accent.withOpacity(0.4) : Colors.transparent,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _getGroupIcon(name, mode),
+                  size: 16,
+                  color: isSelected ? AppTheme.accent : Colors.white60,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  name,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.white70,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 12,
                   ),
                 ),
-              ),
-
-              // 2. Channel List Rail
-              Expanded(
-                child: GestureDetector(
-                  onTapDown: (_) => ref.read(liveTvPanelFocusProvider.notifier).state = LiveTvPanelFocus.channels,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Search area
-                      // Search Field
-                      Container(
-                        height: 60, // Matches group rail header height
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        alignment: Alignment.center,
-                        child: _buildSearchField(context),
-                      ),
-
-                      const Divider(height: 1, color: Colors.white10),
-
-                      // Channel list
-                      Expanded(
-                        child: channelsAsync.when(
-                          data: (channels) {
-                            // 1. Group channels by sub-provider
-                            final hasSubProviders = channels.any((ch) => ch.subProvider?.isNotEmpty == true);
-                            
-                            if (!hasSubProviders) {
-                              return ListView.builder(
-                                controller: _channelScrollController,
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                itemCount: channels.length,
-                                itemExtent: 60,
-                                itemBuilder: (context, index) {
-                                  final channel = channels[index];
-                                  final currentProgram = ref.watch(currentProgramProvider(channel));
-
-                                  return ChannelListTile(
-                                    channel: channel,
-                                    isSelected: selectedChannel?.uniqueId == channel.uniqueId,
-                                    currentProgram: currentProgram,
-                                    onTap: () {
-                                      ref.read(selectedChannelProvider.notifier).state = channel;
-                                      ref.read(liveTvPanelFocusProvider.notifier).state = LiveTvPanelFocus.channels;
-                                    },
-                                  );
-                                },
-                              );
-                            }
-
-                            // 2. Prepare grouped list items
-                            final grouped = <String, List<Channel>>{};
-                            for (final ch in channels) {
-                              final key = ch.subProvider?.isNotEmpty == true ? ch.subProvider! : 'General';
-                              (grouped[key] ??= []).add(ch);
-                            }
-
-                            final allExpandedMap = ref.watch(expandedSubProvidersProvider);
-                            final selectedGroup = ref.watch(liveTvSelectedGroupProvider);
-                            
-                            // Initialize this group's expanded state if it's the first visit
-                            Set<String> expandedSet;
-                            if (allExpandedMap.containsKey(selectedGroup)) {
-                              expandedSet = allExpandedMap[selectedGroup]!;
-                            } else {
-                              // First visit logic
-                              final targetSub = selectedChannel?.subProvider?.isNotEmpty == true 
-                                  ? selectedChannel!.subProvider! 
-                                  : (grouped.keys.isNotEmpty ? grouped.keys.first : 'General');
-                              expandedSet = { targetSub };
-                            }
-
-                            final listItems = <dynamic>[];
-                            for (final entry in grouped.entries) {
-                              listItems.add(entry.key); // Header (String)
-                              final isExpanded = expandedSet.contains(entry.key);
-                              if (isExpanded) {
-                                listItems.addAll(entry.value); // Channels
-                              }
-                            }
-
-                            return ListView.builder(
-                              controller: _channelScrollController,
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              itemCount: listItems.length,
-                              itemBuilder: (context, index) {
-                                final item = listItems[index];
-
-                                if (item is String) {
-                                  final isExpanded = expandedSet.contains(item);
-                                  return _buildSubProviderHeader(context, item, isExpanded, expandedSet, selectedGroup);
-                                }
-
-                                final channel = item as Channel;
-                                final currentProgram = ref.watch(currentProgramProvider(channel));
-
-                                return ChannelListTile(
-                                  channel: channel,
-                                  isSelected: selectedChannel?.uniqueId == channel.uniqueId,
-                                  currentProgram: currentProgram,
-                                  onTap: () {
-                                    ref.read(selectedChannelProvider.notifier).state = channel;
-                                    ref.read(liveTvPanelFocusProvider.notifier).state = LiveTvPanelFocus.channels;
-                                  },
-                                );
-                              },
-                            );
-                          },
-                          loading: () => const Center(
-                            child: CircularProgressIndicator(color: AppTheme.accent),
-                          ),
-                          error: (error, _) => const SizedBox.shrink(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -333,39 +455,49 @@ class _ChannelListPanelState extends ConsumerState<ChannelListPanel> {
   }
 
   Widget _buildCompactGroupingToggle(BuildContext context, LiveTvGroupMode current) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildCompactToggleButton(Icons.folder_outlined, LiveTvGroupMode.category, current),
-        const SizedBox(width: 4),
-        _buildCompactToggleButton(Icons.sensors_outlined, LiveTvGroupMode.provider, current),
-      ],
+    final nextMode = current == LiveTvGroupMode.category ? LiveTvGroupMode.provider : LiveTvGroupMode.category;
+    
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: () => ref.read(liveTvGroupModeProvider.notifier).state = nextMode,
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: AppTheme.surface.withAlpha(128), // Consistent with original pill style
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withAlpha(25)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildCompactToggleButton(Icons.folder_outlined, LiveTvGroupMode.category, current),
+              const SizedBox(width: 4),
+              _buildCompactToggleButton(Icons.sensors_outlined, LiveTvGroupMode.provider, current),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildCompactToggleButton(IconData icon, LiveTvGroupMode mode, LiveTvGroupMode current) {
     final isSelected = mode == current;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => ref.read(liveTvGroupModeProvider.notifier).state = mode,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(5),
-          decoration: BoxDecoration(
-            color: isSelected ? AppTheme.accent.withOpacity(0.15) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isSelected ? AppTheme.accent.withOpacity(0.3) : Colors.transparent,
-            ),
-          ),
-          child: Icon(
-            icon,
-            size: 16, // Slightly smaller for better fit
-            color: isSelected ? AppTheme.accent : Colors.white60,
-          ),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: isSelected ? AppTheme.accent.withAlpha(40) : Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSelected ? AppTheme.accent.withAlpha(80) : Colors.transparent,
         ),
+      ),
+      child: Icon(
+        icon,
+        size: 16,
+        color: isSelected ? AppTheme.accent : Colors.white60,
       ),
     );
   }

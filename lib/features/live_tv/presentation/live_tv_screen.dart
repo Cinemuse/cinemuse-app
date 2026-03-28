@@ -284,7 +284,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           child: AspectRatio(
             aspectRatio: 16 / 9,
             child: LivePlayerSection(
@@ -299,11 +299,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
             ),
           ),
         ),
-        if (selectedChannel != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-            child: _buildEpgCard(selectedChannel),
-          ),
+        // EPG card removed for mobile to maximize space
         const Expanded(child: ChannelListPanel()),
       ],
     );
