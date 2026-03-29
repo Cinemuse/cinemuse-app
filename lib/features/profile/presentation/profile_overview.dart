@@ -33,7 +33,8 @@ class ProfileOverview extends ConsumerWidget {
 
     final groupedMovies = groupHistory(history.where((h) => h.mediaType == MediaKind.movie).toList());
     final groupedSeries = groupHistory(history.where((h) => h.mediaType == MediaKind.tv).toList());
-    final stats = ref.watch(profileStatsProvider);
+    final statsAsync = ref.watch(profileStatsProvider);
+    final stats = statsAsync.valueOrNull ?? ProfileStats.empty();
 
     String formatDuration(int minutes) {
       final d = minutes ~/ 1440;

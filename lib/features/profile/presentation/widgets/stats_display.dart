@@ -11,7 +11,8 @@ class StatsDisplay extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final stats = ref.watch(profileStatsProvider);
+    final statsAsync = ref.watch(profileStatsProvider);
+    final stats = statsAsync.valueOrNull ?? ProfileStats.empty();
 
     // Helpers
     String formatDuration(int minutes) {
