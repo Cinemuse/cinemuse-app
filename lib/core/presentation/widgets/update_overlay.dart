@@ -76,19 +76,22 @@ class UpdateOverlay extends ConsumerWidget {
       );
     }
 
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    final double topOffset = isMobile ? (MediaQuery.of(context).padding.top + 60.0) : 80.0;
+
     // 3. Banner/Error Overlay (Non-blocking but on top)
     return Stack(
       children: [
         if (updateState.status == UpdateStatus.available)
           Positioned(
-            top: 80,
+            top: topOffset,
             left: 0,
             right: 0,
             child: _buildUpdateBanner(context, ref, l10n, updateState),
           ),
         if (updateState.status == UpdateStatus.error)
           Positioned(
-            top: 80,
+            top: topOffset,
             left: 0,
             right: 0,
             child: _buildErrorBanner(context, ref, updateState.error ?? 'Unknown error'),

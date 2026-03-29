@@ -39,7 +39,7 @@ void main() {
     await Future.wait([
       initializeDateFormatting(),
       dotenv.load(fileName: ".env"),
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values),
       if (io.Platform.isWindows || io.Platform.isLinux) windowManager.ensureInitialized(),
     ]);
 

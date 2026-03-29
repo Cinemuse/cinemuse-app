@@ -45,6 +45,10 @@ class _AppNavbarState extends State<AppNavbar> {
       vertical: 16
     );
 
+    // Dynamic top padding for mobile notches
+    final topPadding = isDesktop ? 16.0 : (MediaQuery.of(context).padding.top + 12.0);
+    final mobilePadding = padding.copyWith(top: topPadding);
+
     return ClipRRect(
       child: isDesktop 
         ? Stack(
@@ -60,8 +64,6 @@ class _AppNavbarState extends State<AppNavbar> {
               ),
               
               // 2. Interaction Layer (Logo, Pill, Buttons)
-              // We use a Container with transparent color to ensure it occupies the right size
-              // but doesn't block hits in empty spaces (since Row doesn't have a background).
               Container(
                 padding: padding,
                 child: Row(
@@ -80,6 +82,7 @@ class _AppNavbarState extends State<AppNavbar> {
                       ),
                     ),
 
+                    // ... (rest of desktop layout remains the same)
                     // Unified Central Pill
                     if (isDesktop && MediaQuery.of(context).size.width >= 600)
                       Container(
@@ -223,7 +226,7 @@ class _AppNavbarState extends State<AppNavbar> {
             filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
             child: Container(
               decoration: navbarDecoration,
-              padding: padding,
+              padding: mobilePadding,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

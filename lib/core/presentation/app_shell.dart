@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/home/presentation/home_screen.dart';
 import 'package:cinemuse_app/features/explore/presentation/pages/explore_screen.dart';
@@ -78,25 +79,32 @@ class _AppShellState extends ConsumerState<AppShell> {
       }
     });
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        final navigator = shellNavigatorKey.currentState;
-        if (navigator != null && navigator.canPop()) {
-          navigator.pop();
-        }
-      },
-      child: Scaffold(
-        backgroundColor: Colors.black, // Match "bg-primary"
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          final navigator = shellNavigatorKey.currentState;
+          if (navigator != null && navigator.canPop()) {
+            navigator.pop();
+          }
+        },
+        child: Scaffold(
+          backgroundColor: Colors.black, // Match "bg-primary"
         body: Stack(
           children: [
             // Main Content Area with Nested Navigator
             Positioned.fill(
               child: Padding(
                 padding: EdgeInsets.only(
-                  top: 80, // Space for top navbar
-                  bottom: isMobile ? 80 : 0, // Space for bottom navbar
+                  top: isMobile ? (MediaQuery.of(context).padding.top + 60) : 80,
+                  bottom: 0, // Content fills the screen behind bottom navbar
                 ),
                 child: Navigator(
                   key: shellNavigatorKey,
@@ -171,8 +179,8 @@ class _AppShellState extends ConsumerState<AppShell> {
             ),
           ],
         ),
-
       ),
-    );
-  }
+    ),
+  );
+}
 }
