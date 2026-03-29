@@ -78,6 +78,7 @@ class UserListItem {
   });
 
   factory UserListItem.fromJson(Map<String, dynamic> json) {
+    final mediaJson = json['media'] as Map<String, dynamic>?;
     return UserListItem(
       listId: json['list_id'] as String,
       mediaType: MediaItem.fromString(json['media_type'] as String? ?? 'movie'),
@@ -85,7 +86,7 @@ class UserListItem {
       sortOrder: json['sort_order'] as int? ?? 0,
       meta: json['meta'] as Map<String, dynamic>? ?? {},
       addedAt: DateTime.parse(json['added_at'] as String),
-      // We'll hydrate the 'media' property using the meta or a cache later
+      media: mediaJson != null ? MediaItem.fromJson(mediaJson) : null,
     );
   }
 }

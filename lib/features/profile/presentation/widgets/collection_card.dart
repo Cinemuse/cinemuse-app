@@ -98,8 +98,8 @@ class CollectionCard extends StatelessWidget {
                    if (list.items.isNotEmpty)
                     Row(
                       children: list.items.take(3).map((item) {
-                        // Use poster_path from meta if available
-                        final posterPath = item.meta['poster_path'] as String?;
+                        // Use poster_path from joined media or fallback to meta
+                        final posterPath = item.media?.posterPath ?? (item.meta['poster_path'] as String?);
                         return Expanded(
                           child: Container(
                             decoration: const BoxDecoration(

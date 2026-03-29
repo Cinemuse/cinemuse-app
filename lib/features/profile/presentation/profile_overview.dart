@@ -2,6 +2,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
+import 'package:cinemuse_app/features/profile/domain/profile_stats.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/stats_display.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/agenda_widget.dart';
 import 'package:cinemuse_app/shared/widgets/horizontal_media_list.dart';

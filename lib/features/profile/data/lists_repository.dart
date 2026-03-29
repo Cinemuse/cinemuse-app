@@ -22,7 +22,7 @@ class ListsRepository {
     
     final response = await _client
         .from('lists')
-        .select('*, list_items(*)')
+        .select('*, list_items(*, media:media_cache(*))')
         .eq('user_id', userId)
         .order('sort_order', ascending: true)
         .withErrorHandling();
@@ -84,7 +84,7 @@ class ListsRepository {
     try {
       final response = await _client
           .from('lists')
-          .select('*, list_items(*)')
+          .select('*, list_items(*, media:media_cache(*))')
           .eq('user_id', userId)
           .withErrorHandling();
 
@@ -103,11 +103,23 @@ class ListsRepository {
         final listId = listJson['id'] as String;
         final itemsJson = listJson['list_items'] as List? ?? [];
         for (final itemJson in itemsJson) {
+          Map<String, dynamic>? metaData;
+          if (itemJson['media'] != null) {
+            final media = itemJson['media'] as Map<String, dynamic>;
+            metaData = {
+              'title': media['title'],
+              'poster_path': media['poster_path'],
+              'backdrop_path': media['backdrop_path'],
+              'rating': media['vote_average'],
+              'year': media['release_date'] != null ? DateTime.tryParse(media['release_date'])?.year : null,
+            };
+          }
+
           items.add(CachedListItemsCompanion(
             listId: Value(listId),
             mediaTmdbId: Value(itemJson['media_tmdb_id'] as int),
             mediaType: Value(itemJson['media_type'] as String),
-            meta: Value(itemJson['meta'] != null ? jsonEncode(itemJson['meta']) : null),
+            meta: Value(metaData != null ? jsonEncode(metaData) : null),
             sortOrder: Value(itemJson['sort_order'] as int? ?? 0),
             addedAt: Value(DateTime.parse(itemJson['added_at'] as String? ?? DateTime.now().toIso8601String())),
           ));
@@ -182,7 +194,6 @@ class ListsRepository {
       'list_id': listId,
       'media_tmdb_id': tmdbId,
       'media_type': normalizedType,
-      'meta': meta,
       'sort_order': sortOrder ?? 0,
     }, onConflict: 'list_id,media_tmdb_id,media_type').withErrorHandling();
   }
