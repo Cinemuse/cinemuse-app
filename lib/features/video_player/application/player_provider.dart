@@ -787,15 +787,6 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     }
   }
 
-  void playNextEpisode() {
-    final next = state.valueOrNull?.nextEpisode;
-    if (next == null || !mounted) return;
-
-    // Use pushReplacement or similar via Navigator if possible, 
-    // but better to let the UI handle navigation.
-    // For now, keeping it here since UI calls it.
-  }
-
   void _applyTrackPreferences() {
     _trackManager?.applyEnginePreferences(isAnime: state.valueOrNull?.isAnime ?? false);
   }
