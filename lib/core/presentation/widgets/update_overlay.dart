@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/services/updates/update_service.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -14,7 +15,8 @@ class UpdateOverlay extends ConsumerWidget {
     if (l10n == null) return const SizedBox.shrink();
 
     // 1. If no update or checking, show nothing (ignore full-screen)
-    if (updateState.status == UpdateStatus.initial || 
+    if (kDebugMode || 
+        updateState.status == UpdateStatus.initial || 
         updateState.status == UpdateStatus.upToDate ||
         updateState.status == UpdateStatus.checking) {
       return const SizedBox.shrink();
