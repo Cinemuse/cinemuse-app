@@ -1904,11 +1904,29 @@ abstract class AppLocalizations {
   /// **'Downloading update {progress}%'**
   String downloadingUpdate(Object progress);
 
+  /// No description provided for @updateReadyToInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Update ready to install'**
+  String get updateReadyToInstall;
+
   /// No description provided for @updateFailed.
   ///
   /// In en, this message translates to:
   /// **'Update failed. Please try again later.'**
   String get updateFailed;
+
+  /// No description provided for @updateNoCompatibleApk.
+  ///
+  /// In en, this message translates to:
+  /// **'No compatible update found for your device architecture ({abi})'**
+  String updateNoCompatibleApk(Object abi);
+
+  /// No description provided for @updateUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'App is up to date'**
+  String get updateUpToDate;
 }
 
 class _AppLocalizationsDelegate

@@ -52,7 +52,20 @@ jobs:
           }
 
       - name: Build APK
-        run: flutter build apk --release --build-name="${{ steps.version.outputs.BUILD_NAME }}" --build-number="${{ steps.version.outputs.BUILD_NUMBER }}"
+        run: flutter build apk --release --split-per-abi --build-name="${{ steps.version.outputs.BUILD_NAME }}" --build-number="${{ steps.version.outputs.BUILD_NUMBER }}"
+
+      - name: Rename APKs
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          Get-ChildItem -Path build/app/outputs/flutter-apk/*.apk | ForEach-Object {
+            $oldName = $_.Name
+            $newName = $oldName.Replace("app-", "Cinemuse-$tag-")
+            if ($oldName -ne $newName) {
+              Write-Output "Renaming $oldName to $newName"
+              Rename-Item $_.FullName $newName
+            }
+          }
 
       - name: Build Windows ZIP
         run: |
@@ -63,7 +76,7 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/app/outputs/flutter-apk/app-release.apk,build/windows/x64/runner/Release/cinemuse-windows.zip"
+          artifacts: "build/app/outputs/flutter-apk/*.apk,build/windows/x64/runner/Release/cinemuse-windows.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
           generateReleaseNotes: true
           tag: ${{ github.ref_name }}

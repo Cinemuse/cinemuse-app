@@ -987,5 +987,17 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get updateReadyToInstall =>
+      'Aggiornamento pronto per l\'installazione';
+
+  @override
   String get updateFailed => 'Aggiornamento fallito. Riprova più tardi.';
+
+  @override
+  String updateNoCompatibleApk(Object abi) {
+    return 'Nessun aggiornamento compatibile trovato per l\'architettura del tuo dispositivo ($abi)';
+  }
+
+  @override
+  String get updateUpToDate => 'L\'app è aggiornata';
 }

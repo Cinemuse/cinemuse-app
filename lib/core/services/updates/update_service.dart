@@ -8,6 +8,8 @@ import 'package:ota_update/ota_update.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
+import 'dart:ffi';
+import 'package:flutter/foundation.dart';
 
 enum UpdateStatus {
   initial,
@@ -25,6 +27,8 @@ class UpdateState {
   final String? currentVersion;
   final double progress;
   final String? error;
+  final String? errorKey;
+  final Map<String, String>? errorArgs;
   final String? downloadUrl;
 
   UpdateState({
@@ -33,6 +37,8 @@ class UpdateState {
     this.currentVersion,
     this.progress = 0,
     this.error,
+    this.errorKey,
+    this.errorArgs,
     this.downloadUrl,
   });
 
@@ -42,6 +48,8 @@ class UpdateState {
     String? currentVersion,
     double? progress,
     String? error,
+    String? errorKey,
+    Map<String, String>? errorArgs,
     String? downloadUrl,
   }) {
     return UpdateState(
@@ -50,6 +58,8 @@ class UpdateState {
       currentVersion: currentVersion ?? this.currentVersion,
       progress: progress ?? this.progress,
       error: error ?? this.error,
+      errorKey: errorKey ?? this.errorKey,
+      errorArgs: errorArgs ?? this.errorArgs,
       downloadUrl: downloadUrl ?? this.downloadUrl,
     );
   }
@@ -61,7 +71,7 @@ final updateProvider = StateNotifierProvider<UpdateNotifier, UpdateState>((ref) 
 
 class UpdateNotifier extends StateNotifier<UpdateState> {
   UpdateNotifier() : super(UpdateState(status: UpdateStatus.initial));
-
+  
   final Dio _dio = Dio();
 
   String get _owner => dotenv.env['GITHUB_OWNER'] ?? '';
@@ -69,12 +79,12 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
 
   Future<void> checkForUpdates() async {
     if (_owner.isEmpty || _repo.isEmpty) {
-      print('UpdateService: GITHUB_OWNER or GITHUB_REPO is missing in .env');
+      debugPrint('UpdateService: GITHUB_OWNER or GITHUB_REPO is missing in .env');
       return;
     }
 
     state = state.copyWith(status: UpdateStatus.checking);
-    print('UpdateService: Checking for updates for $_owner/$_repo...');
+    debugPrint('UpdateService: Checking for updates for $_owner/$_repo...');
 
     try {
       final packageInfo = await PackageInfo.fromPlatform();
@@ -85,14 +95,14 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
       );
 
       final latestTag = response.data['tag_name'] as String;
-      print('UpdateService: Current version: $currentVersion+${packageInfo.buildNumber}');
-      print('UpdateService: Latest tag from GitHub: $latestTag');
+      debugPrint('UpdateService: Current version: $currentVersion+${packageInfo.buildNumber}');
+      debugPrint('UpdateService: Latest tag from GitHub: $latestTag');
       
-      final downloadUrl = _getDownloadUrl(response.data);
-      print('UpdateService: Download URL: $downloadUrl');
+      final downloadUrl = await _getDownloadUrl(response.data);
+      debugPrint('UpdateService: Download URL: $downloadUrl');
 
       if (_isNewer(latestTag, currentVersion, packageInfo.buildNumber)) {
-        print('UpdateService: New version available!');
+        debugPrint('UpdateService: New version available!');
         state = state.copyWith(
           status: UpdateStatus.available,
           latestVersion: latestTag,
@@ -100,11 +110,11 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
           downloadUrl: downloadUrl,
         );
       } else {
-        print('UpdateService: App is up toDate');
+        debugPrint('UpdateService: App is up toDate');
         state = state.copyWith(status: UpdateStatus.upToDate, currentVersion: currentVersion);
       }
     } catch (e) {
-      state = state.copyWith(status: UpdateStatus.error, error: e.toString());
+      state = state.copyWith(status: UpdateStatus.error, errorKey: 'updateFailed');
     }
   }
 
@@ -112,13 +122,48 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
     state = state.copyWith(status: UpdateStatus.upToDate);
   }
 
-  String? _getDownloadUrl(Map<String, dynamic> releaseData) {
+  Future<String?> _getDownloadUrl(Map<String, dynamic> releaseData) async {
     final assets = releaseData['assets'] as List;
     if (Platform.isAndroid) {
-      final apk = assets.firstWhere(
+      // Use Abi.current() from dart:ffi to detect the architecture
+      final currentAbi = Abi.current().toString();
+      
+      // Mapping of dart:ffi Abi to common GitHub asset naming patterns
+      String? abiPattern;
+      if (currentAbi.contains('arm64')) {
+        abiPattern = 'arm64-v8a';
+      } else if (currentAbi.contains('arm')) {
+        abiPattern = 'armeabi-v7a';
+      } else if (currentAbi.contains('x64')) {
+        abiPattern = 'x86_64';
+      }
+      
+      debugPrint('UpdateService: Detected ABI: $currentAbi -> Pattern: $abiPattern');
+
+      // 1. Try to find an APK that matches the ABI pattern
+      var apk = (abiPattern != null) ? assets.firstWhere(
+        (a) {
+          final name = (a['name'] as String).toLowerCase();
+          return name.endsWith('.apk') && name.contains(abiPattern!);
+        },
+        orElse: () => null,
+      ) : null;
+
+      // 2. Fallback to generic release APK if no ABI match found
+      apk ??= assets.firstWhere(
+        (a) {
+          final name = (a['name'] as String).toLowerCase();
+          return name.endsWith('.apk') && (name.contains('release') || name.contains('universal') || !name.contains('-'));
+        },
+        orElse: () => null,
+      );
+
+      // 3. Last resort: first APK found
+      apk ??= assets.firstWhere(
         (a) => (a['name'] as String).endsWith('.apk'),
         orElse: () => null,
       );
+
       return apk?['browser_download_url'];
     } else if (Platform.isWindows) {
       // Look for the ZIP bundle first
@@ -192,23 +237,34 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
               state = state.copyWith(progress: double.tryParse(event.value ?? '0') ?? 0);
               break;
             case OtaStatus.INSTALLING:
+            case OtaStatus.INSTALLATION_DONE:
               state = state.copyWith(status: UpdateStatus.readyToInstall);
               break;
             case OtaStatus.ALREADY_RUNNING_ERROR:
+              state = state.copyWith(status: UpdateStatus.error, error: 'An update is already in progress.');
+              break;
             case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
+              state = state.copyWith(status: UpdateStatus.error, error: 'Permission to install apps was denied.');
+              break;
             case OtaStatus.INTERNAL_ERROR:
+              state = state.copyWith(status: UpdateStatus.error, error: 'Internal update error. Please try again.');
+              break;
             case OtaStatus.DOWNLOAD_ERROR:
+              state = state.copyWith(status: UpdateStatus.error, error: 'Failed to download the update.');
+              break;
             case OtaStatus.CHECKSUM_ERROR:
-              state = state.copyWith(status: UpdateStatus.error, error: event.status.toString());
+              state = state.copyWith(status: UpdateStatus.error, error: 'Update file is corrupted.');
               break;
             default:
-              // Handle other statuses if necessary
               break;
           }
         },
+        onError: (e) {
+          state = state.copyWith(status: UpdateStatus.error, errorKey: 'updateFailed');
+        },
       );
     } catch (e) {
-      state = state.copyWith(status: UpdateStatus.error, error: e.toString());
+      state = state.copyWith(status: UpdateStatus.error, errorKey: 'updateFailed');
     }
   }
 
@@ -311,7 +367,7 @@ del "%~f0"
       exit(0);
       
     } catch (e) {
-      state = state.copyWith(status: UpdateStatus.error, error: e.toString());
+      state = state.copyWith(status: UpdateStatus.error, errorKey: 'updateFailed');
     }
   }
 }

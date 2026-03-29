@@ -24,7 +24,7 @@ class UpdateOverlay extends ConsumerWidget {
     if (updateState.status == UpdateStatus.downloading || 
         updateState.status == UpdateStatus.readyToInstall) {
       return Container(
-        color: Colors.black.withOpacity(0.85),
+        color: Colors.black.withAlpha((0.85 * 255).toInt()),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
@@ -40,8 +40,8 @@ class UpdateOverlay extends ConsumerWidget {
                     const SizedBox(height: 16),
                     Text(
                       updateState.status == UpdateStatus.readyToInstall 
-                        ? 'Update Ready' 
-                        : 'Updating Cinemuse...',
+                        ? l10n.updateReadyToInstall 
+                        : l10n.downloadingUpdate(updateState.progress.toStringAsFixed(0)),
                       style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                     const SizedBox(height: 8),
@@ -94,13 +94,24 @@ class UpdateOverlay extends ConsumerWidget {
             top: topOffset,
             left: 0,
             right: 0,
-            child: _buildErrorBanner(context, ref, updateState.error ?? 'Unknown error'),
+            child: _buildErrorBanner(context, ref, l10n, updateState),
           ),
       ],
     );
   }
 
-  Widget _buildErrorBanner(BuildContext context, WidgetRef ref, String error) {
+  Widget _buildErrorBanner(BuildContext context, WidgetRef ref, AppLocalizations l10n, UpdateState state) {
+    String errorMessage = state.error ?? l10n.updateFailed;
+    
+    // Attempt to localize if we have an errorKey
+    if (state.errorKey != null) {
+      if (state.errorKey == 'updateNoCompatibleApk') {
+        errorMessage = l10n.updateNoCompatibleApk(state.errorArgs?['abi'] ?? 'unknown');
+      } else if (state.errorKey == 'updateFailed') {
+        errorMessage = l10n.updateFailed;
+      }
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -111,7 +122,7 @@ class UpdateOverlay extends ConsumerWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Update check failed: $error',
+              errorMessage,
               style: const TextStyle(color: Colors.white, fontSize: 12),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

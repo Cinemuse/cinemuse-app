@@ -310,5 +310,8 @@
   "updateNow": "Aggiorna Ora",
   "later": "Dopo",
   "downloadingUpdate": "Scaricamento aggiornamento {progress}%",
-  "updateFailed": "Aggiornamento fallito. Riprova più tardi."
+  "updateReadyToInstall": "Aggiornamento pronto per l'installazione",
+  "updateFailed": "Aggiornamento fallito. Riprova più tardi.",
+  "updateNoCompatibleApk": "Nessun aggiornamento compatibile trovato per l'architettura del tuo dispositivo ({abi})",
+  "updateUpToDate": "L'app è aggiornata"
 }

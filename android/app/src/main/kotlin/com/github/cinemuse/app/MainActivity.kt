@@ -1,4 +1,4 @@
-package com.example.cinemuse_app
+package com.github.cinemuse.app
 
 import io.flutter.embedding.android.FlutterActivity
 

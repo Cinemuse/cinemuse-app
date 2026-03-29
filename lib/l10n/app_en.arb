@@ -311,5 +311,8 @@
   "updateNow": "Update Now",
   "later": "Later",
   "downloadingUpdate": "Downloading update {progress}%",
-  "updateFailed": "Update failed. Please try again later."
+  "updateReadyToInstall": "Update ready to install",
+  "updateFailed": "Update failed. Please try again later.",
+  "updateNoCompatibleApk": "No compatible update found for your device architecture ({abi})",
+  "updateUpToDate": "App is up to date"
 }
