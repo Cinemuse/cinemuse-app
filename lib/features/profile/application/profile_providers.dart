@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // 1. Current User ID Provider
 final userIdProvider = Provider<String?>((ref) {
-  final user = supabase.auth.currentUser;
+  final user = ref.watch(authProvider).valueOrNull;
   return user?.id;
 });
 

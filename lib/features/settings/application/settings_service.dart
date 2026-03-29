@@ -315,5 +315,14 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
 
 final settingsProvider = StateNotifierProvider<SettingsNotifier, UserSettings>((ref) {
   final profileRepo = ref.watch(profileRepositoryProvider);
-  return SettingsNotifier(profileRepo, ref);
+  final notifier = SettingsNotifier(profileRepo, ref);
+
+  // Listen to auth state changes to reload settings on account switch
+  ref.listen(authProvider, (previous, next) {
+    if (previous?.value?.id != next.value?.id) {
+      notifier.initSettings();
+    }
+  });
+
+  return notifier;
 });

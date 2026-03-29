@@ -7,6 +7,7 @@ import 'package:cinemuse_app/features/media/application/watch_history_store.dart
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
+import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -67,7 +68,7 @@ class OptimisticSeriesLogs extends FamilyStreamNotifier<List<Map<String, dynamic
 
   @override
   Stream<List<Map<String, dynamic>>> build(int arg) {
-    final userId = supabase.auth.currentUser?.id;
+    final userId = ref.watch(authProvider).asData?.value?.id;
     if (userId == null) return Stream.value([]);
     
     final repository = ref.watch(watchHistoryRepositoryProvider);
@@ -183,7 +184,7 @@ final seriesWatchStatusProvider = Provider.family<({bool isFullyWatched, bool is
 
 // Helper provider to get a map of "season-episode" -> WatchHistory (progress) for the series
 final episodeProgressMapProvider = StreamProvider.family<Map<String, WatchHistory>, int>((ref, tmdbId) {
-  final userId = supabase.auth.currentUser?.id;
+  final userId = ref.watch(authProvider).asData?.value?.id;
   if (userId == null) return Stream.value({});
 
   final repository = ref.watch(watchHistoryRepositoryProvider);

@@ -12,7 +12,7 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 // Listeners (UI) update instantly when the database changes.
 
 final watchHistoryStoreProvider = StreamProvider<Map<String, WatchHistory>>((ref) {
-  final user = ref.watch(authProvider).valueOrNull;
+  final user = ref.watch(authProvider).asData?.value;
   if (user == null) return Stream.value({});
 
   final repository = ref.watch(watchHistoryRepositoryProvider);

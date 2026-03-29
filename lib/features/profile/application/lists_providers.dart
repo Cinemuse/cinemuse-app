@@ -16,7 +16,7 @@ final listsRepositoryProvider = Provider<ListsRepository>((ref) {
 class UserListsNotifier extends StreamNotifier<List<UserList>> {
   @override
   Stream<List<UserList>> build() {
-    final user = ref.watch(authProvider).valueOrNull;
+    final user = ref.watch(authProvider).asData?.value;
     if (user == null) return Stream.value([]);
     
     final repo = ref.watch(listsRepositoryProvider);
