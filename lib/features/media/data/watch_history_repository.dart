@@ -46,6 +46,11 @@ class WatchHistoryRepository {
     await _mediaRepo.ensureMediaCached(media);
   }
 
+  /// Triggers a repair of media metadata if incomplete.
+  Future<void> repairMetadata(int tmdbId, MediaKind type) async {
+    await _mediaRepo.repairMetadata(tmdbId, type);
+  }
+
   Future<void> updateProgress({
     required String userId,
     required MediaItem media,
@@ -222,28 +227,27 @@ class WatchHistoryRepository {
 
   /// Watch watch history locally (Drift)
   Stream<List<WatchHistory>> watchHistory(String userId) {
-    return _db.watchWatchHistory(userId).asyncMap((localItems) async {
-      if (localItems.isEmpty) return [];
-
-      // 1. Prepare bulk request for media items
-      final mediaRequests = localItems.map((l) => (
-        id: l.tmdbId, 
-        type: MediaItem.fromString(l.mediaType)
-      )).toList();
-
-      // 2. Fetch all cached media in one go
-      final cachedMediaList = await _mediaRepo.getMediaItems(mediaRequests);
-      
-      // 3. Create a lookup map for fast association
-      final mediaMap = {
-        for (final m in cachedMediaList) '${m.tmdbId}-${m.mediaType.name}': m
-      };
-
-      // 4. Map everything together
-      return localItems.map((local) {
-        final mediaType = MediaItem.fromString(local.mediaType);
-        final media = mediaMap['${local.tmdbId}-${mediaType.name}'];
+    return _db.watchWatchHistoryWithMedia(userId).map((rows) {
+      return rows.map((row) {
+        final local = row.readTable(_db.localWatchHistories);
+        final cached = row.readTableOrNull(_db.cachedMediaItems);
         
+        final mediaType = MediaItem.fromString(local.mediaType);
+        
+        // Map cached media if exists
+        MediaItem? media;
+        if (cached != null) {
+          media = _mediaRepo.mapToMediaItem(cached);
+          
+          // If metadata needs repair (missing crucial info OR throttled retry), trigger background repair
+          if (media.needsMetadataRepair) {
+            _mediaRepo.repairMetadata(local.tmdbId, mediaType).catchError((e) => null);
+          }
+        } else {
+          // Not in cache at all, trigger background repair
+          _mediaRepo.repairMetadata(local.tmdbId, mediaType).catchError((e) => null);
+        }
+
         return WatchHistory(
           userId: local.userId,
           tmdbId: local.tmdbId,
@@ -251,9 +255,10 @@ class WatchHistoryRepository {
           status: WatchStatus.fromJson(local.status),
           progressSeconds: local.progressSeconds,
           totalDuration: local.totalDuration,
+          watchCount: 0, // Not available in local table yet
+          lastWatchedAt: local.lastWatchedAt,
           season: local.season,
           episode: local.episode,
-          lastWatchedAt: local.lastWatchedAt,
           media: media,
         );
       }).toList();

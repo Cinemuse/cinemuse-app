@@ -63,7 +63,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
         tmdbId: media.tmdbId,
         mediaType: media.mediaType.name,
         meta: {
-          'title': media.title,
+          'title': media.titleEn,
           'poster_path': media.posterPath,
           'backdrop_path': media.backdropPath,
           'rating': media.voteAverage,
@@ -117,7 +117,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
       tmdbId: media.tmdbId,
       mediaType: media.mediaType.name,
       meta: {
-        'title': media.title,
+        'title': media.titleEn,
         'poster_path': media.posterPath,
         'backdrop_path': media.backdropPath,
         'rating': media.voteAverage,

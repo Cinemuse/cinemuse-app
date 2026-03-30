@@ -154,7 +154,7 @@ class ListDetailsModal extends StatelessWidget {
                       itemBuilder: (context, index) {
                         final item = list.items[index];
                         final posterPath = item.media?.posterPath ?? (item.meta['poster_path'] as String?);
-                        final title = item.media?.title ?? (item.meta['title'] as String? ?? 'Unknown');
+                        final title = item.media?.getLocalizedTitle('en') ?? (item.meta['title'] as String? ?? 'Unknown');
                         final rating = item.media?.voteAverage ?? (item.meta['rating'] as num?)?.toDouble();
                         final year = item.media?.releaseDate?.year.toString() ?? item.meta['year']?.toString();
 

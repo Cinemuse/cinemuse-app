@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 
-class HorizontalMediaList extends StatelessWidget {
+class HorizontalMediaList extends ConsumerWidget {
   final List<MediaItem> items;
   final double height;
   final double itemWidth;
@@ -20,13 +22,15 @@ class HorizontalMediaList extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (items.isEmpty) {
       return const SizedBox(
         height: 100,
         child: Center(child: Text("No content available", style: TextStyle(color: Colors.white54))),
       );
     }
+
+    final appLanguage = ref.watch(settingsProvider).appLanguage;
 
     return SizedBox(
       height: height,
@@ -41,7 +45,7 @@ class HorizontalMediaList extends StatelessWidget {
           return SizedBox(
             width: itemWidth,
             child: MediaCard(
-              title: item.title,
+              title: item.getLocalizedTitle(appLanguage) ?? 'Unknown',
               posterPath: item.posterPath,
               releaseDate: item.releaseDate?.year.toString(),
               rating: item.voteAverage,

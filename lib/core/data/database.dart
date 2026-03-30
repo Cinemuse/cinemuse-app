@@ -10,11 +10,13 @@ part 'database.g.dart';
 class CachedMediaItems extends Table {
   IntColumn get tmdbId => integer()();
   TextColumn get mediaType => text()(); // 'movie' or 'tv'
-  TextColumn get title => text()();
+  TextColumn get titleIt => text().nullable()();
+  TextColumn get titleEn => text().nullable()();
   TextColumn get posterPath => text().nullable()();
   TextColumn get backdropPath => text().nullable()();
   IntColumn get runtimeMinutes => integer().nullable()();
   TextColumn get genres => text().nullable()(); // JSON string
+  TextColumn get castMembers => text().nullable()(); // JSON string
   DateTimeColumn get releaseDate => dateTime().nullable()();
   RealColumn get voteAverage => real().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
@@ -98,7 +100,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -120,6 +122,14 @@ class AppDatabase extends _$AppDatabase {
             try {
               await m.addColumn(animeExternalMappings, animeExternalMappings.anidbId);
             } catch (_) {}
+          }
+          if (from < 6) {
+            await m.addColumn(cachedMediaItems, cachedMediaItems.titleIt);
+            await m.addColumn(cachedMediaItems, cachedMediaItems.titleEn);
+            await m.addColumn(cachedMediaItems, cachedMediaItems.castMembers);
+          }
+          if (from < 7) {
+            await m.database.customStatement('ALTER TABLE cached_media_items DROP COLUMN title');
           }
         },
         beforeOpen: (details) async {
@@ -223,6 +233,21 @@ class AppDatabase extends _$AppDatabase {
           ..where((t) => t.userId.equals(userId))
           ..orderBy([(t) => OrderingTerm(expression: t.lastWatchedAt, mode: OrderingMode.desc)]))
         .watch();
+  }
+
+  /// Joint stream for watch history and media cache to ensure reactivity to both tables.
+  Stream<List<TypedResult>> watchWatchHistoryWithMedia(String userId) {
+    final query = select(localWatchHistories).join([
+      leftOuterJoin(
+        cachedMediaItems, 
+        cachedMediaItems.tmdbId.equalsExp(localWatchHistories.tmdbId) & 
+        cachedMediaItems.mediaType.equalsExp(localWatchHistories.mediaType)
+      ),
+    ])
+      ..where(localWatchHistories.userId.equals(userId))
+      ..orderBy([OrderingTerm(expression: localWatchHistories.lastWatchedAt, mode: OrderingMode.desc)]);
+      
+    return query.watch();
   }
 
   // --- User Lists ---

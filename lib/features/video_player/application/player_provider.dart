@@ -450,11 +450,18 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     if (mounted) {
       final currentState = state.valueOrNull;
       if (currentState != null) {
+        final appLanguage = ref.read(settingsProvider).appLanguage;
         state = AsyncValue.data(currentState.copyWith(
-          title: details?['title'] ?? details?['name'] ?? currentState.title,
+          title: _extractLocalizedTitle(details, appLanguage),
         ));
       }
     }
+  }
+
+  String _extractLocalizedTitle(Map<String, dynamic>? details, String languageCode) {
+    if (details == null) return params.episodeTitle ?? params.queryId;
+    return MediaItem.extractTitleFromTmdb(details, languageCode) ?? 
+           params.episodeTitle ?? params.queryId;
   }
 
   Future<void> _performPostInitialization(VodInitializationResult vodResult) async {
@@ -467,7 +474,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         controller: _controller!,
         availableStreams: vodResult.candidates,
         currentStream: vodResult.resolvedStream,
-        title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? ref.read(localizationsProvider).commonUnknown,
+        title: _extractLocalizedTitle(_mediaDetails, ref.read(settingsProvider).appLanguage),
         nextEpisode: nextEpisode,
         providerStatuses: state.valueOrNull?.providerStatuses ?? const [],
         isAnime: vodResult.isAnime,
@@ -487,7 +494,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     final mainMediaItem = MediaItem(
       tmdbId: int.parse(params.queryId),
       mediaType: params.type == 'movie' ? MediaKind.movie : MediaKind.tv,
-      title: _mediaDetails?['title'] ?? _mediaDetails?['name'] ?? ref.read(localizationsProvider).commonUnknown,
+      titleIt: _extractLocalizedTitle(_mediaDetails, 'it'),
+      titleEn: _extractLocalizedTitle(_mediaDetails, 'en'),
       posterPath: _mediaDetails?['poster_path'],
       backdropPath: _mediaDetails?['backdrop_path'],
       releaseDate: DateTime.tryParse(_mediaDetails?['release_date'] ?? _mediaDetails?['first_air_date'] ?? ''),

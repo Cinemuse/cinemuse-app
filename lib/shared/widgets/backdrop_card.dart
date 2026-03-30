@@ -7,6 +7,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 class BackdropCard extends StatefulWidget {
   final String title;
   final String? backdropPath;
+  final String? posterPath;
   final double? progress; // 0.0 to 1.0
   final String? infoText; // e.g. "S1 E5" or "1h 20m left"
   final VoidCallback? onTap;
@@ -16,6 +17,7 @@ class BackdropCard extends StatefulWidget {
     super.key,
     required this.title,
     this.backdropPath,
+    this.posterPath,
     this.progress,
     this.infoText,
     this.onTap,
@@ -32,8 +34,10 @@ class _BackdropCardState extends State<BackdropCard> {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = widget.backdropPath != null 
-        ? "https://image.tmdb.org/t/p/w500${widget.backdropPath}" 
+    final String? effectiveImagePath = widget.backdropPath ?? widget.posterPath;
+
+    final imageUrl = effectiveImagePath != null 
+        ? "https://image.tmdb.org/t/p/w500$effectiveImagePath" 
         : null;
 
     return Focus(
@@ -96,8 +100,9 @@ class _BackdropCardState extends State<BackdropCard> {
                                         fit: BoxFit.cover,
                                         color: Colors.black.withOpacity(0.2),
                                         colorBlendMode: BlendMode.darken,
+                                        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
                                       )
-                                    : const SizedBox.shrink(),
+                                    : _buildPlaceholder(),
                               ),
                               
                               // Play Icon
@@ -222,6 +227,34 @@ class _BackdropCardState extends State<BackdropCard> {
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      color: AppTheme.surface.withValues(alpha: 0.5),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.movie_outlined, color: Colors.white.withValues(alpha: 0.2), size: 40),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                widget.title,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.outfit(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

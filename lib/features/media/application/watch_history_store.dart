@@ -1,5 +1,3 @@
-import 'package:cinemuse_app/core/error/app_exception.dart';
-import 'package:cinemuse_app/core/error/supabase_error_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -39,6 +37,13 @@ final watchHistoryStoreProvider = StreamProvider<Map<String, WatchHistory>>((ref
       if (item.mediaType == MediaKind.tv && item.season != null && item.episode != null) {
         final epKey = '$baseKey-${item.season}-${item.episode}';
         map[epKey] = item;
+      }
+
+      // 3. Trigger background repair if metadata is incomplete
+      if (item.media != null && item.media!.isIncomplete) {
+        repository.repairMetadata(item.tmdbId, item.mediaType).catchError((e) {
+          print('WatchHistoryStore: Background repair failed for ${item.tmdbId}: $e');
+        });
       }
     }
     return map;

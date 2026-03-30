@@ -42,7 +42,7 @@ class TmdbService {
         queryParameters: {
           'api_key': _apiKey, 
           'language': 'en-US',
-          'append_to_response': 'credits,videos,similar,recommendations,external_ids'
+          'append_to_response': 'credits,videos,similar,recommendations,external_ids,translations'
         },
       );
       return res.data;

@@ -331,10 +331,23 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
   }
 
   void _showAddToList(BuildContext context, int tmdbId, String type, Map<String, dynamic> details) {
+    final translations = details['translations']?['translations'] as List?;
+    String? titleIt;
+    String? titleEn;
+    if (translations != null) {
+      for (final t in translations) {
+        final data = t['data'] as Map<String, dynamic>;
+        if (t['iso_3166_1'] == 'IT') titleIt = data['title'] ?? data['name'];
+        if (t['iso_3166_1'] == 'US') titleEn = data['title'] ?? data['name'];
+      }
+    }
+    titleEn ??= details['title'] ?? details['name'] ?? '';
+
     final mediaItem = MediaItem(
       tmdbId: tmdbId,
       mediaType: MediaItem.fromString(type),
-      title: details['title'] ?? details['name'] ?? '',
+      titleIt: titleIt,
+      titleEn: titleEn,
       posterPath: details['poster_path'],
       backdropPath: details['backdrop_path'],
       voteAverage: (details['vote_average'] as num?)?.toDouble(),

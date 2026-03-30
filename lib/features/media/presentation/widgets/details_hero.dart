@@ -43,7 +43,9 @@ class DetailsHero extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final type = media['type'] ?? (details['title'] != null ? 'movie' : 'series');
-    final title = details['title'] ?? details['name'] ?? media['title'] ?? '';
+    final titleIt = MediaItem.extractTitleFromTmdb(details, 'it');
+    final titleEn = MediaItem.extractTitleFromTmdb(details, 'en') ?? media['title'] ?? '';
+    final String title = titleEn;
     final tagline = details['tagline'];
     final backdropPath = details['backdrop_path'] ?? media['backdrop_path'];
     final voteAverage = details['vote_average'] as num?;
@@ -67,7 +69,8 @@ class DetailsHero extends ConsumerWidget {
     final mediaItem = MediaItem(
       tmdbId: int.parse(media['id'].toString()),
       mediaType: MediaItem.fromString(type),
-      title: title,
+      titleIt: titleIt,
+      titleEn: titleEn,
       posterPath: details['poster_path'],
       backdropPath: details['backdrop_path'],
       voteAverage: voteAverage?.toDouble(),
@@ -97,7 +100,7 @@ class DetailsHero extends ConsumerWidget {
                 colors: [
                   AppTheme.primary,
                   AppTheme.primary,
-                  AppTheme.primary.withOpacity(0.3),
+                  AppTheme.primary.withValues(alpha: 0.3),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.05, 0.4, 1.0],
@@ -120,8 +123,8 @@ class DetailsHero extends ConsumerWidget {
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
                 colors: [
-                  AppTheme.primary.withOpacity(0.9),
-                  AppTheme.primary.withOpacity(0.2),
+                  AppTheme.primary.withValues(alpha: 0.9),
+                  AppTheme.primary.withValues(alpha: 0.2),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.5, 1.0],

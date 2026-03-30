@@ -20,10 +20,15 @@ final mediaDetailsProvider = FutureProvider.family<Map<String, dynamic>?, ({Stri
   if (details != null) {
     // Naturally cache the item when we discover its details
     final repo = ref.read(watchHistoryRepositoryProvider);
+    final titleIt = MediaItem.extractTitleFromTmdb(details, 'it');
+    final titleEn = MediaItem.extractTitleFromTmdb(details, 'en') ?? 
+                     ref.read(localizationsProvider).commonUnknown;
+
     final mediaItem = MediaItem(
       tmdbId: int.parse(args.id),
       mediaType: MediaItem.fromString(args.type),
-      title: details['title'] ?? details['name'] ?? ref.read(localizationsProvider).commonUnknown,
+      titleIt: titleIt,
+      titleEn: titleEn,
       posterPath: details['poster_path'],
       backdropPath: details['backdrop_path'],
       releaseDate: DateTime.tryParse(details['release_date'] ?? details['first_air_date'] ?? ''),

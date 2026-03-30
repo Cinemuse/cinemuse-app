@@ -14,6 +14,7 @@ import 'package:cinemuse_app/shared/widgets/backdrop_card.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 
 class ContinueWatchingRow extends ConsumerStatefulWidget {
   const ContinueWatchingRow({super.key});
@@ -215,7 +216,8 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
             itemBuilder: (context, index) {
               final historyItem = effectiveItems[index];
               final media = historyItem.media;
-              final title = media?.title ?? 'Unknown';
+              final appLanguage = ref.watch(settingsProvider).appLanguage;
+              final title = media?.getLocalizedTitle(appLanguage) ?? 'Loading metadata...';
               final percentage = (historyItem.totalDuration != null && historyItem.totalDuration! > 0)
                   ? (historyItem.progressSeconds / historyItem.totalDuration!)
                   : 0.0;
@@ -226,6 +228,7 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
                 key: ValueKey(historyItem.tmdbId),
                 title: title,
                 backdropPath: backdrop,
+                posterPath: media?.posterPath,
                 progress: percentage,
                 infoText: historyItem.mediaType == MediaKind.tv 
                           ? "S${historyItem.season} E${historyItem.episode}" 
@@ -338,7 +341,7 @@ class _SkeletonBoxState extends State<_SkeletonBox> with SingleTickerProviderSta
   }
 }
 
-class _UndoStack extends StatelessWidget {
+class _UndoStack extends ConsumerWidget {
   final List<int> ids;
   final Map<int, ({WatchHistory item, Timer timer})> pendingRemovals;
   final Function(int) onUndo;
@@ -350,7 +353,8 @@ class _UndoStack extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLanguage = ref.watch(settingsProvider).appLanguage;
     return Stack(
       children: ids.map((id) {
         final index = ids.indexOf(id);
@@ -370,7 +374,7 @@ class _UndoStack extends StatelessWidget {
           right: 32,
           child: _UndoToast(
             key: ValueKey('undo_item_$id'),
-            title: pending.item.media?.title ?? 'Item',
+            title: pending.item.media?.getLocalizedTitle(appLanguage) ?? 'Item',
             onUndo: () => onUndo(id),
           ),
         );

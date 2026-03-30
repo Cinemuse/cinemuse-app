@@ -32,10 +32,16 @@ class PlayerHistoryManager {
       final repo = ref.read(watchHistoryRepositoryProvider);
       final mediaType = params.type == 'movie' ? MediaKind.movie : MediaKind.tv;
 
+      var titleIt = MediaItem.extractTitleFromTmdb(mediaDetails!, 'it');
+      final titleEn = MediaItem.extractTitleFromTmdb(mediaDetails!, 'en') ?? 
+                       ref.read(localizationsProvider).commonUnknown;
+      titleIt ??= titleEn;
+
       final mediaItem = MediaItem(
         tmdbId: int.parse(params.queryId),
         mediaType: mediaType,
-        title: mediaDetails!['title'] ?? mediaDetails!['name'] ?? ref.read(localizationsProvider).commonUnknown,
+        titleIt: titleIt,
+        titleEn: titleEn,
         posterPath: mediaDetails!['poster_path'],
         backdropPath: mediaDetails!['backdrop_path'],
         releaseDate: DateTime.tryParse(mediaDetails!['release_date'] ?? mediaDetails!['first_air_date'] ?? ''),

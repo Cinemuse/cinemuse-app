@@ -61,7 +61,7 @@ class MediaRow extends ConsumerWidget {
                   mediaType: (item['media_type'] == 'tv' || item['first_air_date'] != null || item['name'] != null) 
                       ? MediaKind.tv 
                       : MediaKind.movie,
-                  title: item['title'] ?? item['name'] ?? 'Unknown',
+                  titleEn: item['title'] ?? item['name'] ?? 'Unknown',
                   posterPath: item['poster_path'],
                   backdropPath: item['backdrop_path'],
                   releaseDate: DateTime.tryParse(item['release_date'] ?? item['first_air_date'] ?? ''),

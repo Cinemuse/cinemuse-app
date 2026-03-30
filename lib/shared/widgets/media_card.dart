@@ -183,7 +183,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                                               MediaItem(
                                                 tmdbId: widget.tmdbId!,
                                                 mediaType: widget.mediaType!,
-                                                title: widget.title,
+                                                titleEn: widget.title,
                                                 posterPath: widget.posterPath,
                                                 releaseDate: widget.releaseDate != null ? DateTime.tryParse(widget.releaseDate!) : null,
                                                 voteAverage: widget.rating,

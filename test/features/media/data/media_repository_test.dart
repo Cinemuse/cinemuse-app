@@ -7,7 +7,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
+
 class MockSupabaseClient extends Mock implements SupabaseClient {}
+class MockTmdbService extends Mock implements TmdbService {}
 
 class FakeTransformBuilder<T> extends Fake implements PostgrestTransformBuilder<T> {
   final T _value;
@@ -61,12 +64,14 @@ class FakeQueryBuilder extends Fake implements SupabaseQueryBuilder {
 void main() {
   late MediaRepository repository;
   late MockSupabaseClient mockSupabase;
+  late MockTmdbService mockTmdb;
   late AppDatabase database;
 
   setUp(() {
     mockSupabase = MockSupabaseClient();
+    mockTmdb = MockTmdbService();
     database = AppDatabase(NativeDatabase.memory());
-    repository = MediaRepository(mockSupabase, database);
+    repository = MediaRepository(mockSupabase, database, mockTmdb);
   });
 
   tearDown(() async {
@@ -82,14 +87,14 @@ void main() {
       await database.upsertMediaItem(CachedMediaItemsCompanion.insert(
         tmdbId: tmdbId,
         mediaType: 'movie',
-        title: 'Cached Movie',
+        titleEn: 'Cached Movie',
         updatedAt: now,
         expiryDate: now.add(const Duration(days: 1)),
       ));
 
       final result = await repository.getMediaItem(tmdbId, mediaType);
 
-      expect(result?.title, 'Cached Movie');
+      expect(result?.titleEn, 'Cached Movie');
       verifyNever(() => mockSupabase.from(any()));
     });
 
@@ -97,7 +102,8 @@ void main() {
       final remoteData = {
         'tmdb_id': tmdbId,
         'media_type': 'movie',
-        'title': 'Remote Movie',
+        'title_en': 'Remote Movie',
+        'title_it': 'Film Remoto',
         'updated_at': DateTime.now().toIso8601String(),
       };
       
@@ -105,10 +111,11 @@ void main() {
 
       final result = await repository.getMediaItem(tmdbId, mediaType);
 
-      expect(result?.title, 'Remote Movie');
+      expect(result?.titleEn, 'Remote Movie');
+      expect(result?.titleIt, 'Film Remoto');
       
       final local = await database.getMediaItem(tmdbId, 'movie');
-      expect(local?.title, 'Remote Movie');
+      expect(local?.titleEn, 'Remote Movie');
     });
   });
 }

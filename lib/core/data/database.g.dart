@@ -29,14 +29,27 @@ class $CachedMediaItemsTable extends CachedMediaItems
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  static const VerificationMeta _titleItMeta = const VerificationMeta(
+    'titleIt',
+  );
   @override
-  late final GeneratedColumn<String> title = GeneratedColumn<String>(
-    'title',
+  late final GeneratedColumn<String> titleIt = GeneratedColumn<String>(
+    'title_it',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _titleEnMeta = const VerificationMeta(
+    'titleEn',
+  );
+  @override
+  late final GeneratedColumn<String> titleEn = GeneratedColumn<String>(
+    'title_en',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _posterPathMeta = const VerificationMeta(
     'posterPath',
@@ -75,6 +88,17 @@ class $CachedMediaItemsTable extends CachedMediaItems
   @override
   late final GeneratedColumn<String> genres = GeneratedColumn<String>(
     'genres',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _castMembersMeta = const VerificationMeta(
+    'castMembers',
+  );
+  @override
+  late final GeneratedColumn<String> castMembers = GeneratedColumn<String>(
+    'cast_members',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -128,11 +152,13 @@ class $CachedMediaItemsTable extends CachedMediaItems
   List<GeneratedColumn> get $columns => [
     tmdbId,
     mediaType,
-    title,
+    titleIt,
+    titleEn,
     posterPath,
     backdropPath,
     runtimeMinutes,
     genres,
+    castMembers,
     releaseDate,
     voteAverage,
     updatedAt,
@@ -166,13 +192,17 @@ class $CachedMediaItemsTable extends CachedMediaItems
     } else if (isInserting) {
       context.missing(_mediaTypeMeta);
     }
-    if (data.containsKey('title')) {
+    if (data.containsKey('title_it')) {
       context.handle(
-        _titleMeta,
-        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+        _titleItMeta,
+        titleIt.isAcceptableOrUnknown(data['title_it']!, _titleItMeta),
       );
-    } else if (isInserting) {
-      context.missing(_titleMeta);
+    }
+    if (data.containsKey('title_en')) {
+      context.handle(
+        _titleEnMeta,
+        titleEn.isAcceptableOrUnknown(data['title_en']!, _titleEnMeta),
+      );
     }
     if (data.containsKey('poster_path')) {
       context.handle(
@@ -202,6 +232,15 @@ class $CachedMediaItemsTable extends CachedMediaItems
       context.handle(
         _genresMeta,
         genres.isAcceptableOrUnknown(data['genres']!, _genresMeta),
+      );
+    }
+    if (data.containsKey('cast_members')) {
+      context.handle(
+        _castMembersMeta,
+        castMembers.isAcceptableOrUnknown(
+          data['cast_members']!,
+          _castMembersMeta,
+        ),
       );
     }
     if (data.containsKey('release_date')) {
@@ -257,11 +296,14 @@ class $CachedMediaItemsTable extends CachedMediaItems
             DriftSqlType.string,
             data['${effectivePrefix}media_type'],
           )!,
-      title:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}title'],
-          )!,
+      titleIt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title_it'],
+      ),
+      titleEn: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title_en'],
+      ),
       posterPath: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}poster_path'],
@@ -277,6 +319,10 @@ class $CachedMediaItemsTable extends CachedMediaItems
       genres: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}genres'],
+      ),
+      castMembers: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cast_members'],
       ),
       releaseDate: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -308,11 +354,13 @@ class $CachedMediaItemsTable extends CachedMediaItems
 class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
   final int tmdbId;
   final String mediaType;
-  final String title;
+  final String? titleIt;
+  final String? titleEn;
   final String? posterPath;
   final String? backdropPath;
   final int? runtimeMinutes;
   final String? genres;
+  final String? castMembers;
   final DateTime? releaseDate;
   final double? voteAverage;
   final DateTime updatedAt;
@@ -320,11 +368,13 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
   const CachedMediaItem({
     required this.tmdbId,
     required this.mediaType,
-    required this.title,
+    this.titleIt,
+    this.titleEn,
     this.posterPath,
     this.backdropPath,
     this.runtimeMinutes,
     this.genres,
+    this.castMembers,
     this.releaseDate,
     this.voteAverage,
     required this.updatedAt,
@@ -335,7 +385,12 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
     final map = <String, Expression>{};
     map['tmdb_id'] = Variable<int>(tmdbId);
     map['media_type'] = Variable<String>(mediaType);
-    map['title'] = Variable<String>(title);
+    if (!nullToAbsent || titleIt != null) {
+      map['title_it'] = Variable<String>(titleIt);
+    }
+    if (!nullToAbsent || titleEn != null) {
+      map['title_en'] = Variable<String>(titleEn);
+    }
     if (!nullToAbsent || posterPath != null) {
       map['poster_path'] = Variable<String>(posterPath);
     }
@@ -347,6 +402,9 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
     }
     if (!nullToAbsent || genres != null) {
       map['genres'] = Variable<String>(genres);
+    }
+    if (!nullToAbsent || castMembers != null) {
+      map['cast_members'] = Variable<String>(castMembers);
     }
     if (!nullToAbsent || releaseDate != null) {
       map['release_date'] = Variable<DateTime>(releaseDate);
@@ -363,7 +421,14 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
     return CachedMediaItemsCompanion(
       tmdbId: Value(tmdbId),
       mediaType: Value(mediaType),
-      title: Value(title),
+      titleIt:
+          titleIt == null && nullToAbsent
+              ? const Value.absent()
+              : Value(titleIt),
+      titleEn:
+          titleEn == null && nullToAbsent
+              ? const Value.absent()
+              : Value(titleEn),
       posterPath:
           posterPath == null && nullToAbsent
               ? const Value.absent()
@@ -378,6 +443,10 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
               : Value(runtimeMinutes),
       genres:
           genres == null && nullToAbsent ? const Value.absent() : Value(genres),
+      castMembers:
+          castMembers == null && nullToAbsent
+              ? const Value.absent()
+              : Value(castMembers),
       releaseDate:
           releaseDate == null && nullToAbsent
               ? const Value.absent()
@@ -399,11 +468,13 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
     return CachedMediaItem(
       tmdbId: serializer.fromJson<int>(json['tmdbId']),
       mediaType: serializer.fromJson<String>(json['mediaType']),
-      title: serializer.fromJson<String>(json['title']),
+      titleIt: serializer.fromJson<String?>(json['titleIt']),
+      titleEn: serializer.fromJson<String?>(json['titleEn']),
       posterPath: serializer.fromJson<String?>(json['posterPath']),
       backdropPath: serializer.fromJson<String?>(json['backdropPath']),
       runtimeMinutes: serializer.fromJson<int?>(json['runtimeMinutes']),
       genres: serializer.fromJson<String?>(json['genres']),
+      castMembers: serializer.fromJson<String?>(json['castMembers']),
       releaseDate: serializer.fromJson<DateTime?>(json['releaseDate']),
       voteAverage: serializer.fromJson<double?>(json['voteAverage']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -416,11 +487,13 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
     return <String, dynamic>{
       'tmdbId': serializer.toJson<int>(tmdbId),
       'mediaType': serializer.toJson<String>(mediaType),
-      'title': serializer.toJson<String>(title),
+      'titleIt': serializer.toJson<String?>(titleIt),
+      'titleEn': serializer.toJson<String?>(titleEn),
       'posterPath': serializer.toJson<String?>(posterPath),
       'backdropPath': serializer.toJson<String?>(backdropPath),
       'runtimeMinutes': serializer.toJson<int?>(runtimeMinutes),
       'genres': serializer.toJson<String?>(genres),
+      'castMembers': serializer.toJson<String?>(castMembers),
       'releaseDate': serializer.toJson<DateTime?>(releaseDate),
       'voteAverage': serializer.toJson<double?>(voteAverage),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -431,11 +504,13 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
   CachedMediaItem copyWith({
     int? tmdbId,
     String? mediaType,
-    String? title,
+    Value<String?> titleIt = const Value.absent(),
+    Value<String?> titleEn = const Value.absent(),
     Value<String?> posterPath = const Value.absent(),
     Value<String?> backdropPath = const Value.absent(),
     Value<int?> runtimeMinutes = const Value.absent(),
     Value<String?> genres = const Value.absent(),
+    Value<String?> castMembers = const Value.absent(),
     Value<DateTime?> releaseDate = const Value.absent(),
     Value<double?> voteAverage = const Value.absent(),
     DateTime? updatedAt,
@@ -443,12 +518,14 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
   }) => CachedMediaItem(
     tmdbId: tmdbId ?? this.tmdbId,
     mediaType: mediaType ?? this.mediaType,
-    title: title ?? this.title,
+    titleIt: titleIt.present ? titleIt.value : this.titleIt,
+    titleEn: titleEn.present ? titleEn.value : this.titleEn,
     posterPath: posterPath.present ? posterPath.value : this.posterPath,
     backdropPath: backdropPath.present ? backdropPath.value : this.backdropPath,
     runtimeMinutes:
         runtimeMinutes.present ? runtimeMinutes.value : this.runtimeMinutes,
     genres: genres.present ? genres.value : this.genres,
+    castMembers: castMembers.present ? castMembers.value : this.castMembers,
     releaseDate: releaseDate.present ? releaseDate.value : this.releaseDate,
     voteAverage: voteAverage.present ? voteAverage.value : this.voteAverage,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -458,7 +535,8 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
     return CachedMediaItem(
       tmdbId: data.tmdbId.present ? data.tmdbId.value : this.tmdbId,
       mediaType: data.mediaType.present ? data.mediaType.value : this.mediaType,
-      title: data.title.present ? data.title.value : this.title,
+      titleIt: data.titleIt.present ? data.titleIt.value : this.titleIt,
+      titleEn: data.titleEn.present ? data.titleEn.value : this.titleEn,
       posterPath:
           data.posterPath.present ? data.posterPath.value : this.posterPath,
       backdropPath:
@@ -470,6 +548,8 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
               ? data.runtimeMinutes.value
               : this.runtimeMinutes,
       genres: data.genres.present ? data.genres.value : this.genres,
+      castMembers:
+          data.castMembers.present ? data.castMembers.value : this.castMembers,
       releaseDate:
           data.releaseDate.present ? data.releaseDate.value : this.releaseDate,
       voteAverage:
@@ -485,11 +565,13 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
     return (StringBuffer('CachedMediaItem(')
           ..write('tmdbId: $tmdbId, ')
           ..write('mediaType: $mediaType, ')
-          ..write('title: $title, ')
+          ..write('titleIt: $titleIt, ')
+          ..write('titleEn: $titleEn, ')
           ..write('posterPath: $posterPath, ')
           ..write('backdropPath: $backdropPath, ')
           ..write('runtimeMinutes: $runtimeMinutes, ')
           ..write('genres: $genres, ')
+          ..write('castMembers: $castMembers, ')
           ..write('releaseDate: $releaseDate, ')
           ..write('voteAverage: $voteAverage, ')
           ..write('updatedAt: $updatedAt, ')
@@ -502,11 +584,13 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
   int get hashCode => Object.hash(
     tmdbId,
     mediaType,
-    title,
+    titleIt,
+    titleEn,
     posterPath,
     backdropPath,
     runtimeMinutes,
     genres,
+    castMembers,
     releaseDate,
     voteAverage,
     updatedAt,
@@ -518,11 +602,13 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
       (other is CachedMediaItem &&
           other.tmdbId == this.tmdbId &&
           other.mediaType == this.mediaType &&
-          other.title == this.title &&
+          other.titleIt == this.titleIt &&
+          other.titleEn == this.titleEn &&
           other.posterPath == this.posterPath &&
           other.backdropPath == this.backdropPath &&
           other.runtimeMinutes == this.runtimeMinutes &&
           other.genres == this.genres &&
+          other.castMembers == this.castMembers &&
           other.releaseDate == this.releaseDate &&
           other.voteAverage == this.voteAverage &&
           other.updatedAt == this.updatedAt &&
@@ -532,11 +618,13 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
 class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
   final Value<int> tmdbId;
   final Value<String> mediaType;
-  final Value<String> title;
+  final Value<String?> titleIt;
+  final Value<String?> titleEn;
   final Value<String?> posterPath;
   final Value<String?> backdropPath;
   final Value<int?> runtimeMinutes;
   final Value<String?> genres;
+  final Value<String?> castMembers;
   final Value<DateTime?> releaseDate;
   final Value<double?> voteAverage;
   final Value<DateTime> updatedAt;
@@ -545,11 +633,13 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
   const CachedMediaItemsCompanion({
     this.tmdbId = const Value.absent(),
     this.mediaType = const Value.absent(),
-    this.title = const Value.absent(),
+    this.titleIt = const Value.absent(),
+    this.titleEn = const Value.absent(),
     this.posterPath = const Value.absent(),
     this.backdropPath = const Value.absent(),
     this.runtimeMinutes = const Value.absent(),
     this.genres = const Value.absent(),
+    this.castMembers = const Value.absent(),
     this.releaseDate = const Value.absent(),
     this.voteAverage = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -559,11 +649,13 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
   CachedMediaItemsCompanion.insert({
     required int tmdbId,
     required String mediaType,
-    required String title,
+    this.titleIt = const Value.absent(),
+    this.titleEn = const Value.absent(),
     this.posterPath = const Value.absent(),
     this.backdropPath = const Value.absent(),
     this.runtimeMinutes = const Value.absent(),
     this.genres = const Value.absent(),
+    this.castMembers = const Value.absent(),
     this.releaseDate = const Value.absent(),
     this.voteAverage = const Value.absent(),
     required DateTime updatedAt,
@@ -571,17 +663,18 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
     this.rowid = const Value.absent(),
   }) : tmdbId = Value(tmdbId),
        mediaType = Value(mediaType),
-       title = Value(title),
        updatedAt = Value(updatedAt),
        expiryDate = Value(expiryDate);
   static Insertable<CachedMediaItem> custom({
     Expression<int>? tmdbId,
     Expression<String>? mediaType,
-    Expression<String>? title,
+    Expression<String>? titleIt,
+    Expression<String>? titleEn,
     Expression<String>? posterPath,
     Expression<String>? backdropPath,
     Expression<int>? runtimeMinutes,
     Expression<String>? genres,
+    Expression<String>? castMembers,
     Expression<DateTime>? releaseDate,
     Expression<double>? voteAverage,
     Expression<DateTime>? updatedAt,
@@ -591,11 +684,13 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
     return RawValuesInsertable({
       if (tmdbId != null) 'tmdb_id': tmdbId,
       if (mediaType != null) 'media_type': mediaType,
-      if (title != null) 'title': title,
+      if (titleIt != null) 'title_it': titleIt,
+      if (titleEn != null) 'title_en': titleEn,
       if (posterPath != null) 'poster_path': posterPath,
       if (backdropPath != null) 'backdrop_path': backdropPath,
       if (runtimeMinutes != null) 'runtime_minutes': runtimeMinutes,
       if (genres != null) 'genres': genres,
+      if (castMembers != null) 'cast_members': castMembers,
       if (releaseDate != null) 'release_date': releaseDate,
       if (voteAverage != null) 'vote_average': voteAverage,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -607,11 +702,13 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
   CachedMediaItemsCompanion copyWith({
     Value<int>? tmdbId,
     Value<String>? mediaType,
-    Value<String>? title,
+    Value<String?>? titleIt,
+    Value<String?>? titleEn,
     Value<String?>? posterPath,
     Value<String?>? backdropPath,
     Value<int?>? runtimeMinutes,
     Value<String?>? genres,
+    Value<String?>? castMembers,
     Value<DateTime?>? releaseDate,
     Value<double?>? voteAverage,
     Value<DateTime>? updatedAt,
@@ -621,11 +718,13 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
     return CachedMediaItemsCompanion(
       tmdbId: tmdbId ?? this.tmdbId,
       mediaType: mediaType ?? this.mediaType,
-      title: title ?? this.title,
+      titleIt: titleIt ?? this.titleIt,
+      titleEn: titleEn ?? this.titleEn,
       posterPath: posterPath ?? this.posterPath,
       backdropPath: backdropPath ?? this.backdropPath,
       runtimeMinutes: runtimeMinutes ?? this.runtimeMinutes,
       genres: genres ?? this.genres,
+      castMembers: castMembers ?? this.castMembers,
       releaseDate: releaseDate ?? this.releaseDate,
       voteAverage: voteAverage ?? this.voteAverage,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -643,8 +742,11 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
     if (mediaType.present) {
       map['media_type'] = Variable<String>(mediaType.value);
     }
-    if (title.present) {
-      map['title'] = Variable<String>(title.value);
+    if (titleIt.present) {
+      map['title_it'] = Variable<String>(titleIt.value);
+    }
+    if (titleEn.present) {
+      map['title_en'] = Variable<String>(titleEn.value);
     }
     if (posterPath.present) {
       map['poster_path'] = Variable<String>(posterPath.value);
@@ -657,6 +759,9 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
     }
     if (genres.present) {
       map['genres'] = Variable<String>(genres.value);
+    }
+    if (castMembers.present) {
+      map['cast_members'] = Variable<String>(castMembers.value);
     }
     if (releaseDate.present) {
       map['release_date'] = Variable<DateTime>(releaseDate.value);
@@ -681,11 +786,13 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
     return (StringBuffer('CachedMediaItemsCompanion(')
           ..write('tmdbId: $tmdbId, ')
           ..write('mediaType: $mediaType, ')
-          ..write('title: $title, ')
+          ..write('titleIt: $titleIt, ')
+          ..write('titleEn: $titleEn, ')
           ..write('posterPath: $posterPath, ')
           ..write('backdropPath: $backdropPath, ')
           ..write('runtimeMinutes: $runtimeMinutes, ')
           ..write('genres: $genres, ')
+          ..write('castMembers: $castMembers, ')
           ..write('releaseDate: $releaseDate, ')
           ..write('voteAverage: $voteAverage, ')
           ..write('updatedAt: $updatedAt, ')
@@ -2937,11 +3044,13 @@ typedef $$CachedMediaItemsTableCreateCompanionBuilder =
     CachedMediaItemsCompanion Function({
       required int tmdbId,
       required String mediaType,
-      required String title,
+      Value<String?> titleIt,
+      Value<String?> titleEn,
       Value<String?> posterPath,
       Value<String?> backdropPath,
       Value<int?> runtimeMinutes,
       Value<String?> genres,
+      Value<String?> castMembers,
       Value<DateTime?> releaseDate,
       Value<double?> voteAverage,
       required DateTime updatedAt,
@@ -2952,11 +3061,13 @@ typedef $$CachedMediaItemsTableUpdateCompanionBuilder =
     CachedMediaItemsCompanion Function({
       Value<int> tmdbId,
       Value<String> mediaType,
-      Value<String> title,
+      Value<String?> titleIt,
+      Value<String?> titleEn,
       Value<String?> posterPath,
       Value<String?> backdropPath,
       Value<int?> runtimeMinutes,
       Value<String?> genres,
+      Value<String?> castMembers,
       Value<DateTime?> releaseDate,
       Value<double?> voteAverage,
       Value<DateTime> updatedAt,
@@ -2983,8 +3094,13 @@ class $$CachedMediaItemsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get title => $composableBuilder(
-    column: $table.title,
+  ColumnFilters<String> get titleIt => $composableBuilder(
+    column: $table.titleIt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get titleEn => $composableBuilder(
+    column: $table.titleEn,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3005,6 +3121,11 @@ class $$CachedMediaItemsTableFilterComposer
 
   ColumnFilters<String> get genres => $composableBuilder(
     column: $table.genres,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get castMembers => $composableBuilder(
+    column: $table.castMembers,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3048,8 +3169,13 @@ class $$CachedMediaItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get title => $composableBuilder(
-    column: $table.title,
+  ColumnOrderings<String> get titleIt => $composableBuilder(
+    column: $table.titleIt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get titleEn => $composableBuilder(
+    column: $table.titleEn,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3070,6 +3196,11 @@ class $$CachedMediaItemsTableOrderingComposer
 
   ColumnOrderings<String> get genres => $composableBuilder(
     column: $table.genres,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get castMembers => $composableBuilder(
+    column: $table.castMembers,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3109,8 +3240,11 @@ class $$CachedMediaItemsTableAnnotationComposer
   GeneratedColumn<String> get mediaType =>
       $composableBuilder(column: $table.mediaType, builder: (column) => column);
 
-  GeneratedColumn<String> get title =>
-      $composableBuilder(column: $table.title, builder: (column) => column);
+  GeneratedColumn<String> get titleIt =>
+      $composableBuilder(column: $table.titleIt, builder: (column) => column);
+
+  GeneratedColumn<String> get titleEn =>
+      $composableBuilder(column: $table.titleEn, builder: (column) => column);
 
   GeneratedColumn<String> get posterPath => $composableBuilder(
     column: $table.posterPath,
@@ -3129,6 +3263,11 @@ class $$CachedMediaItemsTableAnnotationComposer
 
   GeneratedColumn<String> get genres =>
       $composableBuilder(column: $table.genres, builder: (column) => column);
+
+  GeneratedColumn<String> get castMembers => $composableBuilder(
+    column: $table.castMembers,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get releaseDate => $composableBuilder(
     column: $table.releaseDate,
@@ -3195,11 +3334,13 @@ class $$CachedMediaItemsTableTableManager
               ({
                 Value<int> tmdbId = const Value.absent(),
                 Value<String> mediaType = const Value.absent(),
-                Value<String> title = const Value.absent(),
+                Value<String?> titleIt = const Value.absent(),
+                Value<String?> titleEn = const Value.absent(),
                 Value<String?> posterPath = const Value.absent(),
                 Value<String?> backdropPath = const Value.absent(),
                 Value<int?> runtimeMinutes = const Value.absent(),
                 Value<String?> genres = const Value.absent(),
+                Value<String?> castMembers = const Value.absent(),
                 Value<DateTime?> releaseDate = const Value.absent(),
                 Value<double?> voteAverage = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -3208,11 +3349,13 @@ class $$CachedMediaItemsTableTableManager
               }) => CachedMediaItemsCompanion(
                 tmdbId: tmdbId,
                 mediaType: mediaType,
-                title: title,
+                titleIt: titleIt,
+                titleEn: titleEn,
                 posterPath: posterPath,
                 backdropPath: backdropPath,
                 runtimeMinutes: runtimeMinutes,
                 genres: genres,
+                castMembers: castMembers,
                 releaseDate: releaseDate,
                 voteAverage: voteAverage,
                 updatedAt: updatedAt,
@@ -3223,11 +3366,13 @@ class $$CachedMediaItemsTableTableManager
               ({
                 required int tmdbId,
                 required String mediaType,
-                required String title,
+                Value<String?> titleIt = const Value.absent(),
+                Value<String?> titleEn = const Value.absent(),
                 Value<String?> posterPath = const Value.absent(),
                 Value<String?> backdropPath = const Value.absent(),
                 Value<int?> runtimeMinutes = const Value.absent(),
                 Value<String?> genres = const Value.absent(),
+                Value<String?> castMembers = const Value.absent(),
                 Value<DateTime?> releaseDate = const Value.absent(),
                 Value<double?> voteAverage = const Value.absent(),
                 required DateTime updatedAt,
@@ -3236,11 +3381,13 @@ class $$CachedMediaItemsTableTableManager
               }) => CachedMediaItemsCompanion.insert(
                 tmdbId: tmdbId,
                 mediaType: mediaType,
-                title: title,
+                titleIt: titleIt,
+                titleEn: titleEn,
                 posterPath: posterPath,
                 backdropPath: backdropPath,
                 runtimeMinutes: runtimeMinutes,
                 genres: genres,
+                castMembers: castMembers,
                 releaseDate: releaseDate,
                 voteAverage: voteAverage,
                 updatedAt: updatedAt,
