@@ -21,6 +21,8 @@ import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions
 import 'package:cinemuse_app/core/services/streaming/sources/animetosho_source.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/real_debrid_service.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/vixsrc_source.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/media/data/media_repository.dart';
 
 final unifiedStreamResolverProvider = Provider((ref) {
   // Only watch settings that affect streaming sources and ranking
@@ -80,6 +82,7 @@ final unifiedStreamResolverProvider = Provider((ref) {
     sources: sources,
     tmdbService: ref.read(tmdbServiceProvider),
     kitsuMappingService: ref.read(kitsuMappingServiceProvider),
+    mediaRepository: ref.read(mediaRepositoryProvider),
     settings: userSettings,
     debridService: userSettings.enableRealDebrid 
         ? RealDebridService(dio, userSettings.realDebridKey) 
@@ -91,6 +94,7 @@ class UnifiedStreamResolver {
   final List<BaseSource> _sources;
   final TmdbService _tmdbService;
   final KitsuMappingService _kitsuMappingService;
+  final MediaRepository _mediaRepository;
   final UserSettings _settings;
   final BaseDebridService? _debridService;
 
@@ -101,11 +105,13 @@ class UnifiedStreamResolver {
     required List<BaseSource> sources,
     required TmdbService tmdbService,
     required KitsuMappingService kitsuMappingService,
+    required MediaRepository mediaRepository,
     required UserSettings settings,
     BaseDebridService? debridService,
   })  : _sources = sources,
         _tmdbService = tmdbService,
         _kitsuMappingService = kitsuMappingService,
+        _mediaRepository = mediaRepository,
         _settings = settings,
         _debridService = debridService;
 
@@ -117,6 +123,13 @@ class UnifiedStreamResolver {
     void Function(List<ProviderSearchStatus>)? onStatusUpdate,
   }) async {
     Timer? statusTimer;
+    final kind = MediaItem.fromString(type);
+    final numericId = int.tryParse(queryId);
+    
+    if (numericId != null) {
+       _mediaRepository.markAsExternalFetch(numericId, kind, true);
+    }
+
     try {
       if (_sources.isEmpty) {
         throw NoProvidersEnabledException();
@@ -125,6 +138,9 @@ class UnifiedStreamResolver {
       // 1. Resolve Media Details and IDs
       final details = await _tmdbService.getMediaDetails(queryId, type);
       if (details == null) throw MediaDetailsResolutionException();
+
+      // Proactively ingest into cache since we have full details
+      _mediaRepository.ingestTmdbDetails(details, kind).catchError((_) {});
 
       final tmdbId = int.tryParse(queryId) ?? int.tryParse(details['id'].toString());
       String? imdbId = details['external_ids']?['imdb_id'] ?? details['imdb_id'];
@@ -141,85 +157,57 @@ class UnifiedStreamResolver {
               type: type,
               season: season,
               episode: episode,
-            )
+            ) 
           : null;
 
+      final isAnime = kitsuMapping != null;
       final context = StreamSearchContext(
-        tmdbId: tmdbId.toString(),
-        type: type,
-        title: details['title'] ?? details['name'] ?? 'Unknown',
+        tmdbId: (tmdbId ?? details['id']).toString(),
         imdbId: imdbId,
+        type: type,
         season: season,
         episode: episode,
-        episodeName: details['episode_name'],
-        seasonName: details['season_name'],
+        title: details['title'] ?? details['name'] ?? '',
         mapping: kitsuMapping,
-        isAnime: kitsuMapping != null,
+        isAnime: isAnime,
       );
 
       // 3. Search All Sources
-      final targetCategory = context.isAnime ? 'anime' : (context.type == 'tv' ? 'tv' : 'movie');
-      final capableSources = _sources.where((s) => s.supportedCategories.contains(targetCategory)).toList();
-      
-      debugPrint('UnifiedStreamResolver: Target Category: $targetCategory');
-      debugPrint('UnifiedStreamResolver: Total Sources: ${_sources.length}');
-      debugPrint('UnifiedStreamResolver: Capable Sources: ${capableSources.map((s) => s.name).toList()}');
+      final searchStatuses = _sources.map((s) => ProviderSearchStatus(providerName: s.name)).toList();
+      onStatusUpdate?.call(searchStatuses);
 
-      if (capableSources.isEmpty) {
-        throw CapabilityMissingException(targetCategory);
-      }
+      // Periodically update UI status
+      statusTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+        onStatusUpdate?.call(searchStatuses);
+      });
 
-      final statuses = <String, ProviderSearchStatus>{};
-      for (final s in capableSources) {
-        statuses[s.name] = ProviderSearchStatus(providerName: s.name);
-      }
-
-      void emitStatuses() {
-        if (onStatusUpdate != null) {
-          onStatusUpdate(statuses.values.toList());
-        }
-      }
-
-      emitStatuses();
-
-      var elapsedMilliseconds = 0;
-      statusTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-        elapsedMilliseconds += 100;
-        bool changed = false;
-        for (final k in statuses.keys) {
-          if (statuses[k]!.status == ProviderStatus.searching) {
-            statuses[k] = statuses[k]!.copyWith(timeElapsed: Duration(milliseconds: elapsedMilliseconds));
-            changed = true;
+      final results = await Future.wait(
+        _sources.asMap().entries.map((entry) async {
+          final index = entry.key;
+          final source = entry.value;
+          
+          try {
+            final candidates = await source.search(context);
+            searchStatuses[index] = searchStatuses[index].copyWith(
+              status: ProviderStatus.finished,
+              resultsCount: candidates.length,
+            );
+            return candidates;
+          } catch (e) {
+            searchStatuses[index] = searchStatuses[index].copyWith(
+              status: ProviderStatus.failed,
+              errorMessage: e.toString(),
+            );
+            return <StreamCandidate>[];
           }
-        }
-        if (changed) emitStatuses();
-      });
+        }),
+      );
 
-      final searchFutures = capableSources.map((source) {
-        return source.search(context).then((results) {
-          statuses[source.name] = statuses[source.name]!.copyWith(
-            status: ProviderStatus.finished,
-            resultsCount: results.length,
-          );
-          emitStatuses();
-          return results;
-        }).catchError((e) {
-          // TODO: Use a proper logger
-          statuses[source.name] = statuses[source.name]!.copyWith(
-            status: ProviderStatus.failed,
-            errorMessage: e.toString(),
-          );
-          emitStatuses();
-          return <StreamCandidate>[];
-        });
-      });
-      final rawResults = await Future.wait(searchFutures);
       statusTimer.cancel();
-      
-      final allCandidates = rawResults.expand((x) => x).toList();
+      final allCandidates = results.expand((x) => x).toList();
 
       if (allCandidates.isEmpty) {
-        throw NoResultsFoundException();
+        return [];
       }
 
       // 4. Deduplicate
@@ -249,9 +237,13 @@ class UnifiedStreamResolver {
           
       return StreamRanker.rank(candidates, preferredLanguage: preferredLanguage);
     } catch (e) {
-      statusTimer?.cancel();
       if (e is StreamingException) rethrow;
       throw StreamResolutionFailedException(e.toString());
+    } finally {
+      statusTimer?.cancel();
+      if (numericId != null) {
+        _mediaRepository.markAsExternalFetch(numericId, kind, false);
+      }
     }
   }
 

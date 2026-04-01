@@ -50,7 +50,6 @@ class MediaItem {
   bool get isIncomplete => 
       backdropPath == null || 
       posterPath == null || 
-      titleIt == null || 
       titleEn == null ||
       (castMembers == null || castMembers!.isEmpty);
 
@@ -102,6 +101,45 @@ class MediaItem {
 
     // Fallback to primary title/name if translation is missing or language matches English
     return _nullIfEmpty(data['title'] ?? data['name']);
+  }
+
+  /// Creates a MediaItem from full TMDB details (Map representation).
+  /// This centralizes extraction for all fields (titles, paths, genres, cast, etc.).
+  factory MediaItem.fromTmdbDetails(Map<String, dynamic> details, MediaKind type) {
+    final titleIt = extractTitleFromTmdb(details, 'it');
+    final titleEn = extractTitleFromTmdb(details, 'en');
+    
+    // Extract cast (top 10)
+    final cast = (details['credits']?['cast'] as List?)
+        ?.take(10)
+        .map((c) => c['id'] as int)
+        .toList();
+
+    // Extract genres
+    final genres = details['genres'] is List 
+        ? (details['genres'] as List).map((e) => e['id'] as int).toList()
+        : null;
+
+    // Resolve runtime (handle both formats)
+    final runtime = details['runtime'] ?? 
+        (details['episode_run_time'] is List && (details['episode_run_time'] as List).isNotEmpty 
+            ? details['episode_run_time'][0] 
+            : null);
+
+    return MediaItem(
+      tmdbId: int.parse(details['id'].toString()),
+      mediaType: type,
+      titleIt: titleIt,
+      titleEn: titleEn,
+      posterPath: details['poster_path'],
+      backdropPath: details['backdrop_path'],
+      runtimeMinutes: runtime,
+      genres: genres,
+      castMembers: cast,
+      releaseDate: DateTime.tryParse(details['release_date'] ?? details['first_air_date'] ?? ''),
+      voteAverage: (details['vote_average'] as num?)?.toDouble(),
+      updatedAt: DateTime.now(),
+    );
   }
 
   factory MediaItem.fromJson(Map<String, dynamic> json) {

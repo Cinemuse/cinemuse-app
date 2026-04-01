@@ -9,36 +9,30 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/core/services/system/supabase_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/media/data/media_repository.dart';
 
 // Family provider to fetch details for a specific media item
 final mediaDetailsProvider = FutureProvider.family<Map<String, dynamic>?, ({String id, String type})>((ref, args) async {
   final tmdbService = ref.read(tmdbServiceProvider);
-  final details = await tmdbService.getMediaDetails(args.id, args.type);
+  final repo = ref.read(mediaRepositoryProvider);
+  final type = MediaItem.fromString(args.type);
   
-  if (details != null) {
-    // Naturally cache the item when we discover its details
-    final repo = ref.read(watchHistoryRepositoryProvider);
-    final titleIt = MediaItem.extractTitleFromTmdb(details, 'it');
-    final titleEn = MediaItem.extractTitleFromTmdb(details, 'en') ?? 
-                     ref.read(localizationsProvider).commonUnknown;
-
-    final mediaItem = MediaItem(
-      tmdbId: int.parse(args.id),
-      mediaType: MediaItem.fromString(args.type),
-      titleIt: titleIt,
-      titleEn: titleEn,
-      posterPath: details['poster_path'],
-      backdropPath: details['backdrop_path'],
-      releaseDate: DateTime.tryParse(details['release_date'] ?? details['first_air_date'] ?? ''),
-      updatedAt: DateTime.now(),
-    );
-    // Use fire-and-forget for caching to not block UI
-    repo.ensureMediaCached(mediaItem).catchError((e) => print('Background caching failed: $e'));
+  // Mark as external fetch to prevent redundant repair trigger
+  repo.markAsExternalFetch(int.parse(args.id), type, true);
+  
+  try {
+    final details = await tmdbService.getMediaDetails(args.id, args.type);
+    
+    if (details != null) {
+      // Naturally cache the item when we discover its details fully
+      repo.ingestTmdbDetails(details, type).catchError((_) {});
+    }
+    
+    return details;
+  } finally {
+    repo.markAsExternalFetch(int.parse(args.id), type, false);
   }
-  
-  return details;
 });
 
 // Family provider to fetch season details

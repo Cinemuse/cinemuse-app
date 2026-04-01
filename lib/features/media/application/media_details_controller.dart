@@ -1,10 +1,12 @@
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/features/media/data/media_repository.dart';
 
 /// Controller for Media Details logic.
 /// Centralizes actions like tracking, list management, and state updates.
@@ -54,15 +56,25 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       // We can fetch it or pass it. Fetching is safer but adds a call.
       // Since this is a background action after UI update, fetching is fine.
       final tmdbService = ref.read(tmdbServiceProvider);
-      final details = await tmdbService.getMediaDetails(tmdbId.toString(), 'tv');
-      if (details != null) {
-        await _repository.upsertNextEpisode(
-          userId: userId,
-          tmdbId: tmdbId,
-          currentSeason: season,
-          currentEpisode: episode,
-          seriesDetails: details,
-        );
+      final mediaRepo = ref.read(mediaRepositoryProvider);
+      
+      mediaRepo.markAsExternalFetch(tmdbId, MediaKind.tv, true);
+      try {
+        final details = await tmdbService.getMediaDetails(tmdbId.toString(), 'tv');
+        if (details != null) {
+          // Sync cache since we have full details
+          await mediaRepo.ingestTmdbDetails(details, MediaKind.tv);
+          
+          await _repository.upsertNextEpisode(
+            userId: userId,
+            tmdbId: tmdbId,
+            currentSeason: season,
+            currentEpisode: episode,
+            seriesDetails: details,
+          );
+        }
+      } finally {
+        mediaRepo.markAsExternalFetch(tmdbId, MediaKind.tv, false);
       }
 
       // Success: Invalidate to fetch real data (optimistic state will be cleared naturally or manually)
@@ -162,15 +174,25 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
 
       // 2. Queue the next one
       final tmdbService = ref.read(tmdbServiceProvider);
-      final details = await tmdbService.getMediaDetails(tmdbId.toString(), 'tv');
-      if (details != null) {
-        await _repository.upsertNextEpisode(
-          userId: userId,
-          tmdbId: tmdbId,
-          currentSeason: latest.season,
-          currentEpisode: latest.episode,
-          seriesDetails: details,
-        );
+      final mediaRepo = ref.read(mediaRepositoryProvider);
+      
+      mediaRepo.markAsExternalFetch(tmdbId, MediaKind.tv, true);
+      try {
+        final details = await tmdbService.getMediaDetails(tmdbId.toString(), 'tv');
+        if (details != null) {
+          // Sync cache since we have full details
+          await mediaRepo.ingestTmdbDetails(details, MediaKind.tv);
+
+          await _repository.upsertNextEpisode(
+            userId: userId,
+            tmdbId: tmdbId,
+            currentSeason: latest.season,
+            currentEpisode: latest.episode,
+            seriesDetails: details,
+          );
+        }
+      } finally {
+        mediaRepo.markAsExternalFetch(tmdbId, MediaKind.tv, false);
       }
 
       _invalidateLogs(tmdbId);

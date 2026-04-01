@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:drift/drift.dart';
-import 'package:cinemuse_app/core/data/database.dart' hide MediaItem; 
+import 'package:cinemuse_app/core/data/database.dart'; 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
@@ -35,9 +35,7 @@ class MediaRepository {
       if (localData != null && localData.expiryDate.isAfter(DateTime.now())) {
         return mapToMediaItem(localData);
       }
-    } catch (e) {
-      print('MediaRepository: Local cache fetch failed: $e');
-    }
+    } catch (_) {}
 
     // 2. Try Supabase Cache
     try {
@@ -51,12 +49,10 @@ class MediaRepository {
       if (response != null) {
         final item = MediaItem.fromJson(response);
         // Sync to Local Cache asynchronously
-        ensureMediaCached(item).catchError((e) => print('Background sync to local failed: $e'));
+        ensureMediaCached(item).catchError((_) {});
         return item;
       }
-    } catch (e) {
-      print('MediaRepository: Supabase cache fetch failed: $e');
-    }
+    } catch (_) {}
 
     return null;
   }
@@ -72,8 +68,7 @@ class MediaRepository {
           .where((data) => data.expiryDate.isAfter(DateTime.now()))
           .map<MediaItem>((data) => mapToMediaItem(data))
           .toList();
-    } catch (e) {
-      print('MediaRepository: Bulk local cache fetch failed: $e');
+    } catch (_) {
       return [];
     }
   }
@@ -99,16 +94,12 @@ class MediaRepository {
         updatedAt: Value(item.updatedAt),
         expiryDate: Value(expiry),
       ));
-    } catch (e) {
-      print('MediaRepository: Failed to save to local cache: $e');
-    }
+    } catch (_) {}
 
     // Save to Remote Cache (Supabase)
     try {
       await _client.from('media_cache').upsert(item.toDbJson());
-    } catch (e) {
-      print('MediaRepository: Failed to sync to remote cache: $e');
-    }
+    } catch (_) {}
   }
 
   /// Map Drift data to Domain model
@@ -136,41 +127,45 @@ class MediaRepository {
   /// Internal set to track items currently being repaired to avoid redundant API calls.
   final Set<String> _repairQueue = {};
 
+  /// Internal set to track items currently being fetched from TMDB by ANY service
+  /// to avoid redundant parallel network calls.
+  final Set<String> _activeFetches = {};
+
+  /// Updates the metadata cache from raw TMDB details.
+  /// Call this whenever you fetch full details from TMDB to sync the cache
+  /// and potentially prevent background repairs.
+  Future<void> ingestTmdbDetails(Map<String, dynamic> details, MediaKind type) async {
+    final id = details['id']?.toString();
+    if (id == null) return;
+    
+    final tmdbId = int.parse(id);
+    final key = '${type.name}-$tmdbId';
+    
+    // If we are already repairing this item, we don't need to do anything here
+    // as ensureMediaCached will handle the upsert.
+    if (_repairQueue.contains(key)) return;
+
+    final item = MediaItem.fromTmdbDetails(details, type);
+    await ensureMediaCached(item);
+  }
+
   /// Fetches full metadata from TMDB and updates the cache.
   Future<void> repairMetadata(int tmdbId, MediaKind type) async {
     final key = '${type.name}-$tmdbId';
-    if (_repairQueue.contains(key)) return;
+    if (_repairQueue.contains(key) || _activeFetches.contains(key)) return;
     
-    print('DEBUG: 🔧 Starting metadata repair for $tmdbId ($type)');
+    // debugPrint('🔧 Starting metadata repair for $tmdbId ($type)');
     _repairQueue.add(key);
+    _activeFetches.add(key);
     try {
       final details = await _tmdbService.getMediaDetails(tmdbId.toString(), type.name);
       
       MediaItem item;
       if (details != null) {
-        final titleIt = MediaItem.extractTitleFromTmdb(details, 'it');
-        final titleEn = MediaItem.extractTitleFromTmdb(details, 'en');
-        final cast = (details['credits']?['cast'] as List?)?.take(10).map((c) => c['id'] as int).toList();
-
-        item = MediaItem(
-          tmdbId: tmdbId,
-          mediaType: type,
-          titleIt: titleIt,
-          titleEn: titleEn,
-          posterPath: details['poster_path'],
-          backdropPath: details['backdrop_path'],
-          runtimeMinutes: details['runtime'] ?? (details['episode_run_time'] is List && (details['episode_run_time'] as List).isNotEmpty ? details['episode_run_time'][0] : null),
-          genres: details['genres'] is List 
-              ? (details['genres'] as List).map((e) => e['id'] as int).toList()
-              : null,
-          castMembers: cast,
-          releaseDate: DateTime.tryParse(details['release_date'] ?? details['first_air_date'] ?? ''),
-          voteAverage: (details['vote_average'] as num?)?.toDouble(),
-          updatedAt: DateTime.now(),
-        );
+        item = MediaItem.fromTmdbDetails(details, type);
       } else {
         // Negative Caching: Save a stub record so we don't spam TMDB for 24h
-        print('DEBUG: ❌ TMDB 404/Null for $tmdbId. Caching negative result for 24h.');
+        // debugPrint('❌ TMDB 404/Null for $tmdbId. Caching negative result for 24h.');
         item = MediaItem(
           tmdbId: tmdbId,
           mediaType: type,
@@ -180,10 +175,22 @@ class MediaRepository {
 
       await ensureMediaCached(item);
     } catch (e) {
-      print('DEBUG: ⚠️ Repair error for $tmdbId: $e');
+      // debugPrint('⚠️ Repair error for $tmdbId: $e');
       // Even on error, we might want to cache a stub to prevent immediate retry
     } finally {
       _repairQueue.remove(key);
+      _activeFetches.remove(key);
+    }
+  }
+
+  /// Marks an item as being fetched externally (e.g. by a provider) 
+  /// so repairMetadata won't overlap.
+  void markAsExternalFetch(int tmdbId, MediaKind type, bool active) {
+    final key = '${type.name}-$tmdbId';
+    if (active) {
+      _activeFetches.add(key);
+    } else {
+      _activeFetches.remove(key);
     }
   }
 }

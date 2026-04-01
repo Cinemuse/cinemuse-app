@@ -6,7 +6,7 @@ import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:drift/drift.dart';
-import 'package:cinemuse_app/core/data/database.dart' hide MediaItem;
+import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/core/constants/playback_constants.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
@@ -239,12 +239,12 @@ class WatchHistoryRepository {
         if (cached != null) {
           media = _mediaRepo.mapToMediaItem(cached);
           
-          // If metadata needs repair (missing crucial info OR throttled retry), trigger background repair
+          // Unified Repair Logic: Only trigger if needsMetadataRepair returns true (includes 24h throttling)
           if (media.needsMetadataRepair) {
             _mediaRepo.repairMetadata(local.tmdbId, mediaType).catchError((e) => null);
           }
         } else {
-          // Not in cache at all, trigger background repair
+          // Not in cache at all: trigger immediate repair
           _mediaRepo.repairMetadata(local.tmdbId, mediaType).catchError((e) => null);
         }
 
@@ -302,9 +302,7 @@ class WatchHistoryRepository {
           _mediaRepo.ensureMediaCached(media).catchError((_) {});
         }
       }
-    } catch (e) {
-      print('WatchHistoryRepository: Sync failed: $e');
-    }
+    } catch (_) {}
   }
 
   Stream<List<WatchHistory>> watchAllHistory(String userId) {
@@ -634,7 +632,7 @@ class WatchHistoryRepository {
       final controller = StreamController<T>.broadcast();
       Timer? debounceTimer;
 
-      final subscription = stream.listen(
+      stream.listen(
         (data) {
           debounceTimer?.cancel();
           debounceTimer = Timer(duration, () {
