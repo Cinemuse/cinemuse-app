@@ -313,5 +313,13 @@
   "updateReadyToInstall": "Aggiornamento pronto per l'installazione",
   "updateFailed": "Aggiornamento fallito. Riprova più tardi.",
   "updateNoCompatibleApk": "Nessun aggiornamento compatibile trovato per l'architettura del tuo dispositivo ({abi})",
-  "updateUpToDate": "L'app è aggiornata"
+  "updateUpToDate": "L'app è aggiornata",
+  "menuMoreOptions": "Altre Opzioni",
+  "menuAddToWatchlist": "Aggiungi alla Watchlist",
+  "menuRemoveFromWatchlist": "Rimuovi dalla Watchlist",
+  "menuMarkAsWatched": "Segna come Visto",
+  "menuMarkAsUnwatched": "Segna come Non Visto",
+  "menuShare": "Condividi",
+  "menuRemoveFromWatchlist": "Rimuovi dalla Lista",
+  "menuRemoveFromContinueWatching": "Rimuovi da Continua a Guardare"
 }

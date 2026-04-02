@@ -7,12 +7,10 @@ import 'package:cinemuse_app/features/search/application/search_state.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/shared/widgets/error_view_state.dart';
-import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:cinemuse_app/core/error/app_exception.dart';
 
 class SearchOverlay extends ConsumerStatefulWidget {
   final NavigatorState? navigator;
@@ -149,9 +147,9 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay> with SingleTicker
                       decoration: BoxDecoration(
                         color: AppTheme.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, spreadRadius: 5),
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 20, spreadRadius: 5),
                         ],
                       ),
                       child: Column(
@@ -160,7 +158,7 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay> with SingleTicker
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                               border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
+                               border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
                             ),
                             child: Row(
                                children: [
@@ -179,7 +177,7 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay> with SingleTicker
                                       decoration: InputDecoration(
                                          hintText: l10n.searchPlaceholder,
                                          hintStyle: TextStyle(
-                                           color: AppTheme.textMuted.withOpacity(0.5),
+                                           color: AppTheme.textMuted.withValues(alpha: 0.5),
                                            fontSize: 20,
                                            fontWeight: FontWeight.w300,
                                          ),
@@ -202,7 +200,7 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay> with SingleTicker
                                      ),
                                   
                                   const SizedBox(width: 12),
-                                  Container(width: 1, height: 24, color: Colors.white.withOpacity(0.1)),
+                                  Container(width: 1, height: 24, color: Colors.white.withValues(alpha: 0.1)),
                                   const SizedBox(width: 12),
                                   
                                   IconButton(
@@ -216,7 +214,7 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay> with SingleTicker
                           
                           Flexible(
                             child: Container(
-                              color: Colors.black.withOpacity(0.2),
+                              color: Colors.black.withValues(alpha: 0.2),
                               constraints: BoxConstraints(
                                 maxHeight: MediaQuery.of(context).size.height * 0.7,
                                 minHeight: 200,
@@ -313,8 +311,7 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay> with SingleTicker
               releaseDate: releaseDate,
               rating: rating,
               tmdbId: tmdbId,
-              mediaType: mediaType,
-              showWatchlistButton: !isPerson,
+              mediaType: isPerson ? null : mediaType,
               onTap: () => _onMediaTap(item),
            );
         },

@@ -1,4 +1,6 @@
 
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,6 +14,9 @@ class BackdropCard extends StatefulWidget {
   final String? infoText; // e.g. "S1 E5" or "1h 20m left"
   final VoidCallback? onTap;
   final VoidCallback? onRemove;
+  final VoidCallback? onDetails;
+  final VoidCallback? onWatchlistToggle;
+  final bool isWatchlisted;
 
   const BackdropCard({
     super.key,
@@ -22,6 +27,9 @@ class BackdropCard extends StatefulWidget {
     this.infoText,
     this.onTap,
     this.onRemove,
+    this.onDetails,
+    this.onWatchlistToggle,
+    this.isWatchlisted = false,
   });
 
   @override
@@ -30,7 +38,52 @@ class BackdropCard extends StatefulWidget {
 
 class _BackdropCardState extends State<BackdropCard> {
   bool _isHovered = false;
-  bool _isCloseHovered = false;
+  final GlobalKey _menuKey = GlobalKey();
+
+  void _showContextActions(BuildContext context, {BuildContext? anchorContext}) {
+    final l10n = AppLocalizations.of(context)!;
+    
+    final options = [
+      AppMenuOption(
+        icon: Icons.play_arrow_outlined,
+        label: l10n.detailsPlay,
+        onTap: widget.onTap ?? () {},
+      ),
+      if (widget.onDetails != null)
+        AppMenuOption(
+          icon: Icons.info_outline,
+          label: l10n.homeMoreInfo,
+          onTap: widget.onDetails!,
+        ),
+      if (widget.onWatchlistToggle != null)
+        AppMenuOption(
+          icon: widget.isWatchlisted ? Icons.bookmark_remove : Icons.bookmark_add_outlined,
+          label: widget.isWatchlisted ? l10n.menuRemoveFromWatchlist : l10n.menuAddToWatchlist,
+          onTap: widget.onWatchlistToggle!,
+        ),
+      AppMenuOption(
+        icon: Icons.share_outlined,
+        label: l10n.menuShare,
+        onTap: () {
+          // Future: Implement share
+        },
+      ),
+      if (widget.onRemove != null)
+        AppMenuOption(
+          icon: Icons.delete_outline,
+          label: l10n.menuRemoveFromContinueWatching,
+          onTap: widget.onRemove!,
+          isDestructive: true,
+        ),
+    ];
+
+    AppMenu.show(
+      context: context,
+      options: options,
+      title: widget.title,
+      anchorContext: anchorContext ?? _menuKey.currentContext,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +121,8 @@ class _BackdropCardState extends State<BackdropCard> {
                 curve: Curves.easeOutCubic,
                 child: GestureDetector(
                   onTap: widget.onTap,
+                  onLongPress: () => _showContextActions(context),
+                  onSecondaryTapDown: (_) => _showContextActions(context),
                   behavior: HitTestBehavior.opaque,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,7 +137,7 @@ class _BackdropCardState extends State<BackdropCard> {
                             color: AppTheme.surface,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.5),
+                                color: Colors.black.withValues(alpha: 0.5),
                                 blurRadius: _isHovered ? 16 : 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -98,7 +153,7 @@ class _BackdropCardState extends State<BackdropCard> {
                                     ? Image.network(
                                         imageUrl,
                                         fit: BoxFit.cover,
-                                        color: Colors.black.withOpacity(0.2),
+                                        color: Colors.black.withValues(alpha: 0.2),
                                         colorBlendMode: BlendMode.darken,
                                         errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
                                       )
@@ -112,7 +167,7 @@ class _BackdropCardState extends State<BackdropCard> {
                                   duration: const Duration(milliseconds: 200),
                                   child: Icon(
                                     Icons.play_circle_outline, 
-                                    color: _isHovered ? AppTheme.accent : Colors.white.withOpacity(0.8), 
+                                    color: _isHovered ? AppTheme.accent : Colors.white.withValues(alpha: 0.8), 
                                     size: 48,
                                   ),
                                 ),
@@ -126,9 +181,9 @@ class _BackdropCardState extends State<BackdropCard> {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.6),
+                                      color: Colors.black.withValues(alpha: 0.6),
                                       borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                                     ),
                                     child: Text(
                                       widget.infoText!,
@@ -145,7 +200,7 @@ class _BackdropCardState extends State<BackdropCard> {
                                   right: 0,
                                   child: LinearProgressIndicator(
                                     value: widget.progress,
-                                    backgroundColor: Colors.white.withOpacity(0.2),
+                                    backgroundColor: Colors.white.withValues(alpha: 0.2),
                                     valueColor: const AlwaysStoppedAnimation<Color>(Colors.redAccent),
                                     minHeight: 4,
                                   ),
@@ -158,8 +213,8 @@ class _BackdropCardState extends State<BackdropCard> {
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
                                     color: _isHovered 
-                                        ? AppTheme.accent.withOpacity(0.5) 
-                                        : Colors.white.withOpacity(0.1),
+                                        ? AppTheme.accent.withValues(alpha: 0.5) 
+                                        : Colors.white.withValues(alpha: 0.1),
                                     width: _isHovered ? 2 : 1,
                                   ),
                                 ),
@@ -185,44 +240,38 @@ class _BackdropCardState extends State<BackdropCard> {
                 ),
               ),
 
-              // 2. Separate Close Button (Always positioned relative to 1.0 scale)
-              if (widget.onRemove != null && _isHovered)
+              // 2. Context Menu Button (More Options)
                 Positioned(
-                  top: 4,
-                  right: 4,
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    onEnter: (_) => setState(() => _isCloseHovered = true),
-                    onExit: (_) => setState(() => _isCloseHovered = false),
-                    child: GestureDetector(
-                      onTap: widget.onRemove,
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: _isCloseHovered 
-                              ? Colors.red 
-                              : Colors.black.withOpacity(0.7),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 4,
-                            ),
-                            if (_isCloseHovered)
-                              BoxShadow(
-                                color: Colors.red.withOpacity(0.5),
-                                blurRadius: 10,
+                  top: 8,
+                  right: 8,
+                  child: Builder(
+                    builder: (context) {
+                      final isMobile = MediaQuery.of(context).size.width < 600;
+                      return AnimatedOpacity(
+                        opacity: (_isHovered || isMobile) ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _showContextActions(context),
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              key: _menuKey,
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.7),
+                                shape: BoxShape.circle,
                               ),
-                          ],
+                              child: const Icon(
+                                Icons.more_vert,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ),
             ],

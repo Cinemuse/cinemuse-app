@@ -314,5 +314,12 @@
   "updateReadyToInstall": "Update ready to install",
   "updateFailed": "Update failed. Please try again later.",
   "updateNoCompatibleApk": "No compatible update found for your device architecture ({abi})",
-  "updateUpToDate": "App is up to date"
+  "updateUpToDate": "App is up to date",
+  "menuMoreOptions": "More Options",
+  "menuAddToWatchlist": "Add to Watchlist",
+  "menuRemoveFromWatchlist": "Remove from Watchlist",
+  "menuMarkAsWatched": "Mark as Watched",
+  "menuMarkAsUnwatched": "Mark as Unwatched",
+  "menuShare": "Share",
+  "menuRemoveFromContinueWatching": "Remove from Continue Watching"
 }

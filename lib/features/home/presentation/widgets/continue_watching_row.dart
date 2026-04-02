@@ -10,6 +10,8 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
+import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
+import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/shared/widgets/backdrop_card.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
@@ -169,6 +171,10 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
     }
 
     final items = historyAsync.value ?? [];
+    final watchlistItems = ref.watch(userListsProvider).valueOrNull
+        ?.where((l) => l.type == ListType.watchlist)
+        .firstOrNull
+        ?.items ?? [];
     
     // Filter out locally pending or flushing removals
     final effectiveItems = items.where((i) {
@@ -215,6 +221,7 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
             separatorBuilder: (c, i) => const SizedBox(width: 16),
             itemBuilder: (context, index) {
               final historyItem = effectiveItems[index];
+              final isWatchlisted = watchlistItems.any((i) => i.tmdbId == historyItem.tmdbId && i.mediaType == historyItem.mediaType);
               final media = historyItem.media;
               final appLanguage = ref.watch(settingsProvider).appLanguage;
               final title = media?.getLocalizedTitle(appLanguage) ?? 'Loading metadata...';
@@ -233,6 +240,7 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
                 infoText: historyItem.mediaType == MediaKind.tv 
                           ? "S${historyItem.season} E${historyItem.episode}" 
                           : "Movie",
+                isWatchlisted: isWatchlisted,
                 onTap: () {
                     Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => MediaDetailsScreen(
@@ -240,6 +248,19 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
                       mediaType: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
                     ),
                   ));
+                },
+                onDetails: () {
+                   Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => MediaDetailsScreen(
+                      mediaId: historyItem.tmdbId.toString(), 
+                      mediaType: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+                    ),
+                  ));
+                },
+                onWatchlistToggle: () {
+                  if (media != null) {
+                    ref.read(userListsProvider.notifier).toggleWatchlist(media);
+                  }
                 },
                 onRemove: () => _onRemove(historyItem),
               );

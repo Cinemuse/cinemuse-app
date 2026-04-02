@@ -1000,4 +1000,25 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get updateUpToDate => 'L\'app è aggiornata';
+
+  @override
+  String get menuMoreOptions => 'Altre Opzioni';
+
+  @override
+  String get menuAddToWatchlist => 'Aggiungi alla Watchlist';
+
+  @override
+  String get menuRemoveFromWatchlist => 'Rimuovi dalla Lista';
+
+  @override
+  String get menuMarkAsWatched => 'Segna come Visto';
+
+  @override
+  String get menuMarkAsUnwatched => 'Segna come Non Visto';
+
+  @override
+  String get menuShare => 'Condividi';
+
+  @override
+  String get menuRemoveFromContinueWatching => 'Rimuovi da Continua a Guardare';
 }

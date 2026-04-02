@@ -272,7 +272,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
       rating: rating,
       tmdbId: tmdbId,
       mediaType: kind,
-      showWatchlistButton: true,
       onTap: () {
         if (mediaTypeEnum != MediaType.person) {
           Navigator.of(context).push(MaterialPageRoute(
@@ -314,7 +313,7 @@ class _FilterToggleButton extends StatelessWidget {
           ),
           boxShadow: isOpen ? [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 10,
               offset: const Offset(0, 4),
             )

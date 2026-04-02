@@ -1,6 +1,5 @@
-import 'package:cinemuse_app/features/media/domain/media_item.dart';
-import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
-import 'package:cinemuse_app/features/profile/domain/user_list.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +7,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/premium_hover_text.dart';
-import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
+import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
+import 'package:cinemuse_app/features/profile/domain/user_list.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
 class MediaCard extends ConsumerStatefulWidget {
   final String title;
@@ -22,7 +23,6 @@ class MediaCard extends ConsumerStatefulWidget {
   // New props for centralized logic
   final int? tmdbId;
   final MediaKind? mediaType;
-  final bool showWatchlistButton;
 
   const MediaCard({
     super.key,
@@ -35,7 +35,6 @@ class MediaCard extends ConsumerStatefulWidget {
     this.onTap,
     this.tmdbId,
     this.mediaType,
-    this.showWatchlistButton = false,
   });
 
   @override
@@ -44,6 +43,67 @@ class MediaCard extends ConsumerStatefulWidget {
 
 class _MediaCardState extends ConsumerState<MediaCard> {
   bool _isHovered = false;
+  final GlobalKey _menuKey = GlobalKey();
+
+  void _showContextActions(BuildContext context, {BuildContext? anchorContext}) {
+    final l10n = AppLocalizations.of(context)!;
+    
+    // Determine if already watchlisted to show toggle correctly
+    bool isWatchlisted = false;
+    if (widget.tmdbId != null && widget.mediaType != null) {
+      isWatchlisted = ref.read(userListsProvider).valueOrNull
+          ?.where((l) => l.type == ListType.watchlist)
+          .firstOrNull
+          ?.items
+          .any((i) => i.tmdbId == widget.tmdbId && i.mediaType == widget.mediaType) ?? false;
+    } else if (widget.onWatchlistToggle != null) {
+      isWatchlisted = widget.isWatchlisted;
+    }
+
+    final options = [
+      AppMenuOption(
+        icon: Icons.info_outline,
+        label: l10n.homeMoreInfo,
+        onTap: widget.onTap ?? () {},
+      ),
+      if ((widget.tmdbId != null && widget.mediaType != null) || widget.onWatchlistToggle != null)
+        AppMenuOption(
+          icon: isWatchlisted ? Icons.bookmark_remove : Icons.bookmark_add_outlined,
+          label: isWatchlisted ? l10n.menuRemoveFromWatchlist : l10n.menuAddToWatchlist,
+          onTap: () {
+            if (widget.onWatchlistToggle != null) {
+              widget.onWatchlistToggle!.call();
+            } else {
+              ref.read(userListsProvider.notifier).toggleWatchlist(
+                MediaItem(
+                  tmdbId: widget.tmdbId!,
+                  mediaType: widget.mediaType!,
+                  titleEn: widget.title,
+                  posterPath: widget.posterPath,
+                  releaseDate: widget.releaseDate != null ? DateTime.tryParse(widget.releaseDate!) : null,
+                  voteAverage: widget.rating,
+                  updatedAt: DateTime.now(),
+                ),
+              );
+            }
+          },
+        ),
+      AppMenuOption(
+        icon: Icons.share_outlined,
+        label: l10n.menuShare,
+        onTap: () {
+          // Future: Implement share
+        },
+      ),
+    ];
+
+    AppMenu.show(
+      context: context,
+      options: options,
+      title: widget.title,
+      anchorContext: anchorContext ?? _menuKey.currentContext,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +131,8 @@ class _MediaCardState extends ConsumerState<MediaCard> {
         onExit: (_) => setState(() => _isHovered = false),
         child: GestureDetector(
           onTap: widget.onTap,
+          onLongPress: () => _showContextActions(context),
+          onSecondaryTapDown: (_) => _showContextActions(context),
           child: AnimatedScale(
               scale: _isHovered ? 1.05 : 1.0,
               duration: const Duration(milliseconds: 200),
@@ -89,7 +151,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                         color: AppTheme.surface,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.5),
+                            color: Colors.black.withValues(alpha: 0.5),
                             blurRadius: _isHovered ? 16 : 8,
                             offset: const Offset(0, 4),
                           ),
@@ -147,146 +209,52 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: _isHovered 
-                                    ? AppTheme.accent.withOpacity(0.5) 
-                                    : Colors.white.withOpacity(0.1),
+                                    ? AppTheme.accent.withValues(alpha: 0.5) 
+                                    : Colors.white.withValues(alpha: 0.1),
                                 width: _isHovered ? 2 : 1,
                               ),
                             ),
                           ),
-
-                          // Watchlist Toggle Button
-                          if (widget.showWatchlistButton && widget.tmdbId != null && widget.mediaType != null)
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: Consumer(
-                                builder: (context, ref, child) {
-                                  final isWatchlistedInternal = ref.watch(userListsProvider.select((lists) {
-                                    return lists.valueOrNull
-                                        ?.where((l) => l.type == ListType.watchlist)
-                                        .firstOrNull
-                                        ?.items
-                                        .any((i) => i.tmdbId == widget.tmdbId && i.mediaType == widget.mediaType) ?? false;
-                                  }));
-
-                                  return AnimatedOpacity(
-                                    opacity: (isWatchlistedInternal || _isHovered) ? 1.0 : 0.0,
-                                    duration: const Duration(milliseconds: 200),
-                                    child: IgnorePointer(
-                                      ignoring: !(isWatchlistedInternal || _isHovered),
-                                      child: HoverScale(
-                                        onTap: () {
-                                          if (widget.onWatchlistToggle != null) {
-                                            widget.onWatchlistToggle!.call();
-                                          } else {
-                                            ref.read(userListsProvider.notifier).toggleWatchlist(
-                                              MediaItem(
-                                                tmdbId: widget.tmdbId!,
-                                                mediaType: widget.mediaType!,
-                                                titleEn: widget.title,
-                                                posterPath: widget.posterPath,
-                                                releaseDate: widget.releaseDate != null ? DateTime.tryParse(widget.releaseDate!) : null,
-                                                voteAverage: widget.rating,
-                                                updatedAt: DateTime.now(),
-                                              ),
-                                            );
-                                          }
-                                        },
-                                        scale: 1.2,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(4),
-                                          decoration: BoxDecoration(
-                                            color: Colors.transparent,
-                                            shape: BoxShape.circle,
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withOpacity(0.4),
-                                                blurRadius: 10,
-                                                spreadRadius: 2,
-                                              ),
-                                            ],
-                                          ),
-                                          child: Icon(
-                                            isWatchlistedInternal ? Icons.bookmark : Icons.bookmark_add_outlined,
-                                            color: isWatchlistedInternal 
-                                                ? AppTheme.watchlist 
-                                                : Colors.white,
-                                            size: 24,
-                                            shadows: [
-                                              Shadow(
-                                                color: Colors.black.withOpacity(0.8),
-                                                blurRadius: 12,
-                                                offset: const Offset(0, 1),
-                                              ),
-                                              Shadow(
-                                                color: Colors.black.withOpacity(0.5),
-                                                blurRadius: 4,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            )
-                          else if (widget.onWatchlistToggle != null)
-                            // Backward compatibility for manual toggle if provided without ID/Type
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: AnimatedOpacity(
-                                opacity: (widget.isWatchlisted || _isHovered) ? 1.0 : 0.0,
+                        
+                        // Context Menu Button (More Options)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Consumer(
+                            builder: (context, ref, child) {
+                              final isMobile = MediaQuery.of(context).size.width < 600;
+                              return AnimatedOpacity(
+                                opacity: (_isHovered || isMobile) ? 1.0 : 0.0,
                                 duration: const Duration(milliseconds: 200),
-                                child: IgnorePointer(
-                                  ignoring: !(widget.isWatchlisted || _isHovered),
-                                  child: HoverScale(
-                                    onTap: widget.onWatchlistToggle,
-                                    scale: 1.2,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () => _showContextActions(context),
+                                    borderRadius: BorderRadius.circular(20),
                                     child: Container(
+                                      key: _menuKey,
                                       padding: const EdgeInsets.all(4),
                                       decoration: BoxDecoration(
-                                        color: Colors.transparent,
+                                        color: Colors.black.withValues(alpha: 0.4),
                                         shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(0.4),
-                                            blurRadius: 10,
-                                            spreadRadius: 2,
-                                          ),
-                                        ],
                                       ),
-                                      child: Icon(
-                                        widget.isWatchlisted ? Icons.bookmark : Icons.bookmark_add_outlined,
-                                        color: widget.isWatchlisted 
-                                            ? AppTheme.watchlist 
-                                            : Colors.white,
-                                        size: 24,
-                                        shadows: [
-                                          Shadow(
-                                            color: Colors.black.withOpacity(0.8),
-                                            blurRadius: 12,
-                                            offset: const Offset(0, 1),
-                                          ),
-                                          Shadow(
-                                            color: Colors.black.withOpacity(0.5),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
+                                      child: const Icon(
+                                        Icons.more_vert,
+                                        color: Colors.white,
+                                        size: 20,
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
-                        ],
-                      ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
+              ),
                 const SizedBox(height: 8),
                 // Title
                 PremiumHoverText(
@@ -304,6 +272,11 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                       const Icon(Icons.star, size: 12, color: AppTheme.star),
                     if (widget.rating != null && widget.rating! > 0)
                       const SizedBox(width: 4),
+                    if (widget.rating != null && widget.rating! > 0)
+                      const Text(
+                        "", // Placeholder logic if needed, otherwise removed rating display
+                        style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                      ),
                     if (widget.rating != null && widget.rating! > 0)
                       Text(
                         widget.rating!.toStringAsFixed(1),

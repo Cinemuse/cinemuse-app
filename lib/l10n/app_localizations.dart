@@ -1927,6 +1927,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'App is up to date'**
   String get updateUpToDate;
+
+  /// No description provided for @menuMoreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More Options'**
+  String get menuMoreOptions;
+
+  /// No description provided for @menuAddToWatchlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Watchlist'**
+  String get menuAddToWatchlist;
+
+  /// No description provided for @menuRemoveFromWatchlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Watchlist'**
+  String get menuRemoveFromWatchlist;
+
+  /// No description provided for @menuMarkAsWatched.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as Watched'**
+  String get menuMarkAsWatched;
+
+  /// No description provided for @menuMarkAsUnwatched.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as Unwatched'**
+  String get menuMarkAsUnwatched;
+
+  /// No description provided for @menuShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get menuShare;
+
+  /// No description provided for @menuRemoveFromContinueWatching.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Continue Watching'**
+  String get menuRemoveFromContinueWatching;
 }
 
 class _AppLocalizationsDelegate

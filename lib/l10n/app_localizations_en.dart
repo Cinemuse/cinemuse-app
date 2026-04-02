@@ -992,4 +992,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateUpToDate => 'App is up to date';
+
+  @override
+  String get menuMoreOptions => 'More Options';
+
+  @override
+  String get menuAddToWatchlist => 'Add to Watchlist';
+
+  @override
+  String get menuRemoveFromWatchlist => 'Remove from Watchlist';
+
+  @override
+  String get menuMarkAsWatched => 'Mark as Watched';
+
+  @override
+  String get menuMarkAsUnwatched => 'Mark as Unwatched';
+
+  @override
+  String get menuShare => 'Share';
+
+  @override
+  String get menuRemoveFromContinueWatching => 'Remove from Continue Watching';
 }
