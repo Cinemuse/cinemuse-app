@@ -15,6 +15,7 @@ class BackdropCard extends StatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback? onRemove;
   final VoidCallback? onDetails;
+  final VoidCallback? onRestart;
   final VoidCallback? onWatchlistToggle;
   final bool isWatchlisted;
 
@@ -28,6 +29,7 @@ class BackdropCard extends StatefulWidget {
     this.onTap,
     this.onRemove,
     this.onDetails,
+    this.onRestart,
     this.onWatchlistToggle,
     this.isWatchlisted = false,
   });
@@ -44,11 +46,18 @@ class _BackdropCardState extends State<BackdropCard> {
     final l10n = AppLocalizations.of(context)!;
     
     final options = [
-      AppMenuOption(
-        icon: Icons.play_arrow_outlined,
-        label: l10n.detailsPlay,
-        onTap: widget.onTap ?? () {},
-      ),
+      if (widget.onTap != null)
+        AppMenuOption(
+          icon: Icons.play_arrow_outlined,
+          label: l10n.menuResume,
+          onTap: widget.onTap!,
+        ),
+      if (widget.onRestart != null)
+        AppMenuOption(
+          icon: Icons.replay,
+          label: l10n.menuRestart,
+          onTap: widget.onRestart!,
+        ),
       if (widget.onDetails != null)
         AppMenuOption(
           icon: Icons.info_outline,
@@ -61,13 +70,6 @@ class _BackdropCardState extends State<BackdropCard> {
           label: widget.isWatchlisted ? l10n.menuRemoveFromWatchlist : l10n.menuAddToWatchlist,
           onTap: widget.onWatchlistToggle!,
         ),
-      AppMenuOption(
-        icon: Icons.share_outlined,
-        label: l10n.menuShare,
-        onTap: () {
-          // Future: Implement share
-        },
-      ),
       if (widget.onRemove != null)
         AppMenuOption(
           icon: Icons.delete_outline,

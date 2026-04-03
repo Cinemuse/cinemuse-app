@@ -33,9 +33,12 @@ class MediaCard extends ConsumerStatefulWidget {
     this.isWatchlisted = false,
     this.onWatchlistToggle,
     this.onTap,
+    this.onPlay,
     this.tmdbId,
     this.mediaType,
   });
+
+  final VoidCallback? onPlay;
 
   @override
   ConsumerState<MediaCard> createState() => _MediaCardState();
@@ -61,6 +64,12 @@ class _MediaCardState extends ConsumerState<MediaCard> {
     }
 
     final options = [
+      if (widget.onPlay != null)
+        AppMenuOption(
+          icon: Icons.play_arrow_outlined,
+          label: l10n.menuPlay,
+          onTap: widget.onPlay!,
+        ),
       AppMenuOption(
         icon: Icons.info_outline,
         label: l10n.homeMoreInfo,
@@ -88,13 +97,6 @@ class _MediaCardState extends ConsumerState<MediaCard> {
             }
           },
         ),
-      AppMenuOption(
-        icon: Icons.share_outlined,
-        label: l10n.menuShare,
-        onTap: () {
-          // Future: Implement share
-        },
-      ),
     ];
 
     AppMenu.show(

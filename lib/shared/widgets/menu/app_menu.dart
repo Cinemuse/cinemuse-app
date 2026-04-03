@@ -42,6 +42,7 @@ class AppMenu {
   ) {
     return showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black54,
       isScrollControlled: true,

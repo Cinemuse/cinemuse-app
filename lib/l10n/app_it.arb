@@ -320,6 +320,8 @@
   "menuMarkAsWatched": "Segna come Visto",
   "menuMarkAsUnwatched": "Segna come Non Visto",
   "menuShare": "Condividi",
-  "menuRemoveFromWatchlist": "Rimuovi dalla Lista",
+  "menuResume": "Riprendi",
+  "menuRestart": "Ricomincia",
+  "menuPlay": "Riproduci",
   "menuRemoveFromContinueWatching": "Rimuovi da Continua a Guardare"
 }

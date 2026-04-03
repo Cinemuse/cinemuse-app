@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
+import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 
 class HorizontalMediaList extends ConsumerWidget {
   final List<MediaItem> items;
@@ -54,6 +55,14 @@ class HorizontalMediaList extends ConsumerWidget {
                   builder: (_) => MediaDetailsScreen(
                     mediaId: item.tmdbId.toString(),
                     mediaType: item.mediaType.name,
+                  ),
+                ));
+              },
+              onPlay: () {
+                Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
+                  builder: (_) => VideoPlayerScreen(
+                    queryId: item.tmdbId.toString(),
+                    type: item.mediaType.name,
                   ),
                 ));
               },

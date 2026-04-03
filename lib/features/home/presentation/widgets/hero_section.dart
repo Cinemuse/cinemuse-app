@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
+import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class HeroSection extends StatelessWidget {
@@ -95,11 +96,11 @@ class HeroSection extends StatelessWidget {
                 // "FEATURED" Tag
                 Container(
                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                   decoration: BoxDecoration(
-                     color: AppTheme.accent.withOpacity(0.2),
-                     borderRadius: BorderRadius.circular(4),
-                     border: Border.all(color: AppTheme.accent.withOpacity(0.5)),
-                   ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accent.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppTheme.accent.withValues(alpha: 0.5)),
+                    ),
                    child: Text(
                     l10n.commonFeatured,
                     style: const TextStyle(
@@ -149,11 +150,11 @@ class HeroSection extends StatelessWidget {
                     children: [
                       ElevatedButton.icon(
                         onPressed: () {
-                           Navigator.of(context).push(
+                           Navigator.of(context, rootNavigator: true).push(
                               MaterialPageRoute(
-                                builder: (_) => MediaDetailsScreen(
-                                  mediaId: media!['id'].toString(), 
-                                  mediaType: media!['media_type'] ?? 'movie',
+                                builder: (_) => VideoPlayerScreen(
+                                  queryId: media!['id'].toString(), 
+                                  type: media!['media_type'] ?? 'movie',
                                 ),
                               ),
                             );
@@ -167,7 +168,7 @@ class HeroSection extends StatelessWidget {
                           textStyle: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           elevation: 10,
-                          shadowColor: AppTheme.accent.withOpacity(0.5),
+                          shadowColor: AppTheme.accent.withValues(alpha: 0.5),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -186,11 +187,11 @@ class HeroSection extends StatelessWidget {
                         label: Text(l10n.homeMoreInfo),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
-                          side: BorderSide(color: Colors.white.withOpacity(0.2), width: 2),
+                          side: BorderSide(color: Colors.white.withValues(alpha: 0.2), width: 2),
                           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
                           textStyle: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          backgroundColor: Colors.white.withOpacity(0.1),
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
                         ),
                       ),
                     ],

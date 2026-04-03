@@ -1012,5 +1012,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuShare => 'Share';
 
   @override
+  String get menuResume => 'Resume';
+
+  @override
+  String get menuRestart => 'Restart';
+
+  @override
+  String get menuPlay => 'Play';
+
+  @override
   String get menuRemoveFromContinueWatching => 'Remove from Continue Watching';
 }

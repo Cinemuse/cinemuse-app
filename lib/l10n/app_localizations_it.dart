@@ -1008,7 +1008,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get menuAddToWatchlist => 'Aggiungi alla Watchlist';
 
   @override
-  String get menuRemoveFromWatchlist => 'Rimuovi dalla Lista';
+  String get menuRemoveFromWatchlist => 'Rimuovi dalla Watchlist';
 
   @override
   String get menuMarkAsWatched => 'Segna come Visto';
@@ -1018,6 +1018,15 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get menuShare => 'Condividi';
+
+  @override
+  String get menuResume => 'Riprendi';
+
+  @override
+  String get menuRestart => 'Ricomincia';
+
+  @override
+  String get menuPlay => 'Riproduci';
 
   @override
   String get menuRemoveFromContinueWatching => 'Rimuovi da Continua a Guardare';

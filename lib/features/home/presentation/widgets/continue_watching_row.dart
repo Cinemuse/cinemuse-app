@@ -17,6 +17,7 @@ import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 
 class ContinueWatchingRow extends ConsumerStatefulWidget {
   const ContinueWatchingRow({super.key});
@@ -242,15 +243,31 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
                           : "Movie",
                 isWatchlisted: isWatchlisted,
                 onTap: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => MediaDetailsScreen(
-                      mediaId: historyItem.tmdbId.toString(), 
-                      mediaType: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+                    // Instant Resume
+                    Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
+                    builder: (_) => VideoPlayerScreen(
+                      queryId: historyItem.tmdbId.toString(),
+                      type: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+                      season: historyItem.season,
+                      episode: historyItem.episode,
+                      startPosition: historyItem.progressSeconds,
+                    ),
+                  ));
+                },
+                onRestart: () {
+                    // Restart from beginning
+                    Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
+                    builder: (_) => VideoPlayerScreen(
+                      queryId: historyItem.tmdbId.toString(),
+                      type: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+                      season: historyItem.season,
+                      episode: historyItem.episode,
+                      startPosition: 0,
                     ),
                   ));
                 },
                 onDetails: () {
-                   Navigator.of(context).push(MaterialPageRoute(
+                    Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => MediaDetailsScreen(
                       mediaId: historyItem.tmdbId.toString(), 
                       mediaType: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',

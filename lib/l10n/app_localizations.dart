@@ -1964,6 +1964,24 @@ abstract class AppLocalizations {
   /// **'Share'**
   String get menuShare;
 
+  /// No description provided for @menuResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get menuResume;
+
+  /// No description provided for @menuRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart'**
+  String get menuRestart;
+
+  /// No description provided for @menuPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get menuPlay;
+
   /// No description provided for @menuRemoveFromContinueWatching.
   ///
   /// In en, this message translates to:

@@ -113,7 +113,7 @@ class _AgendaWidgetState extends ConsumerState<AgendaWidget> {
                           children: [
                             _AgendaEventItem(event: event),
                             if (index < events.length - 1)
-                              Divider(height: 1, color: Colors.white.withOpacity(0.05)),
+                              Divider(height: 1, color: Colors.white.withValues(alpha: 0.05)),
                           ],
                         );
                       },
@@ -150,7 +150,7 @@ class _AgendaWidgetState extends ConsumerState<AgendaWidget> {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,7 +185,10 @@ class _AgendaWidgetState extends ConsumerState<AgendaWidget> {
           if (widget.isExpanded)
             Expanded(child: buildContent())
           else
-            buildContent(),
+            SizedBox(
+              height: 440, // Match typical card heights
+              child: buildContent(),
+            ),
           
           const SizedBox(height: 16),
         ],
@@ -229,7 +232,7 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(
@@ -259,7 +262,6 @@ class _AgendaEventItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final dateStr = DateFormat.MMMd().format(event.releaseDate);
 
     return InkWell(
       onTap: () {
@@ -327,8 +329,8 @@ class _AgendaEventItem extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
                             color: event.type == MediaKind.tv 
-                              ? Colors.blue.withOpacity(0.3) 
-                              : AppTheme.accent.withOpacity(0.3),
+                              ? Colors.blue.withValues(alpha: 0.3) 
+                              : AppTheme.accent.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Text(

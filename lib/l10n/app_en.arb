@@ -321,5 +321,8 @@
   "menuMarkAsWatched": "Mark as Watched",
   "menuMarkAsUnwatched": "Mark as Unwatched",
   "menuShare": "Share",
+  "menuResume": "Resume",
+  "menuRestart": "Restart",
+  "menuPlay": "Play",
   "menuRemoveFromContinueWatching": "Remove from Continue Watching"
 }
