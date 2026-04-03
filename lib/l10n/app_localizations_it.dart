@@ -45,6 +45,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get commonDelete => 'Elimina';
 
   @override
+  String get commonUndo => 'Annulla';
+
+  @override
   String get commonFeatured => 'IN PRIMA PIANO';
 
   @override

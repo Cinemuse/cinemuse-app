@@ -12,6 +12,7 @@
   "commonConfirm": "Confirm",
   "commonCreate": "Create",
   "commonDelete": "Delete",
+  "commonUndo": "Undo",
   "commonFeatured": "FEATURED",
   "commonUnexpectedError": "An unexpected error occurred",
   "commonOk": "OK",

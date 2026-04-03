@@ -45,6 +45,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonDelete => 'Delete';
 
   @override
+  String get commonUndo => 'Undo';
+
+  @override
   String get commonFeatured => 'FEATURED';
 
   @override

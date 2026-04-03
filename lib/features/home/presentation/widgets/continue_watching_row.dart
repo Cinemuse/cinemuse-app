@@ -393,6 +393,11 @@ class _UndoStack extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLanguage = ref.watch(settingsProvider).appLanguage;
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final baseOffset = isMobile ? ((bottomPadding > 0 ? bottomPadding : 12.0) + 96.0) : 32.0;
+    final rightOffset = isMobile ? 16.0 : 32.0;
+
     return Stack(
       children: ids.map((id) {
         final index = ids.indexOf(id);
@@ -400,16 +405,16 @@ class _UndoStack extends ConsumerWidget {
         if (pending == null) return const SizedBox.shrink();
         
         // Calculate bottom position based on index in list.
-        // Newest is at the end of the list, should be at bottom (32).
+        // Newest is at the end of the list, should be at bottom (baseOffset).
         // Reduced gap for a tighter feel (offset 64).
-        final bottomOffset = 32.0 + (ids.length - 1 - index) * 64.0;
+        final bottomOffset = baseOffset + (ids.length - 1 - index) * 64.0;
 
         return AnimatedPositioned(
           key: ValueKey('undo_pos_$id'),
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeOutCubic,
           bottom: bottomOffset,
-          right: 32,
+          right: rightOffset,
           child: _UndoToast(
             key: ValueKey('undo_item_$id'),
             title: pending.item.media?.getLocalizedTitle(appLanguage) ?? 'Item',
@@ -457,6 +462,9 @@ class _UndoToastState extends State<_UndoToast> with SingleTickerProviderStateMi
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 300),
@@ -478,29 +486,44 @@ class _UndoToastState extends State<_UndoToast> with SingleTickerProviderStateMi
             color: Colors.transparent,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              constraints: BoxConstraints(
+                maxWidth: isMobile ? (screenWidth - 32) : 500,
+              ),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E).withValues(alpha: 0.8),
+                color: AppTheme.surface.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.accent.withValues(alpha: 0.1),
+                    color: Colors.black.withValues(alpha: 0.3),
                     blurRadius: 15,
                     spreadRadius: -5,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.delete_sweep_rounded, color: AppTheme.accent, size: 20),
+                   Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accent.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.delete_sweep_rounded, color: AppTheme.accent, size: 20),
+                  ),
                   const SizedBox(width: 12),
-                  Text(
-                    l10n.homeRemovedFromContinueWatching(widget.title),
-                    style: GoogleFonts.outfit(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                  Flexible(
+                    child: Text(
+                      l10n.homeRemovedFromContinueWatching(widget.title),
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
                   const SizedBox(width: 24),
@@ -515,8 +538,8 @@ class _UndoToastState extends State<_UndoToast> with SingleTickerProviderStateMi
                           builder: (context, child) {
                             return CircularProgressIndicator(
                               value: 1.0 - _countdownController.value,
-                              strokeWidth: 2,
-                              backgroundColor: Colors.white.withValues(alpha: 0.1),
+                              strokeWidth: 2.5,
+                              backgroundColor: Colors.white.withValues(alpha: 0.05),
                               valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accent),
                             );
                           },
@@ -525,18 +548,18 @@ class _UndoToastState extends State<_UndoToast> with SingleTickerProviderStateMi
                       TextButton(
                         onPressed: widget.onUndo,
                         style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppTheme.accent,
                           padding: EdgeInsets.zero,
-                          minimumSize: const Size(40, 40),
+                          minimumSize: const Size(44, 44),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           shape: const CircleBorder(),
                         ),
                         child: Text(
-                          "UNDO",
+                          l10n.commonUndo.toUpperCase(),
                           style: GoogleFonts.outfit(
                             fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.8,
                           ),
                         ),
                       ),
