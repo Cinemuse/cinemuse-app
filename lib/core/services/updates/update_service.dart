@@ -30,6 +30,8 @@ class UpdateState {
   final String? errorKey;
   final Map<String, String>? errorArgs;
   final String? downloadUrl;
+  final String? releaseNotes;
+  final CancelToken? cancelToken;
 
   UpdateState({
     required this.status,
@@ -40,6 +42,8 @@ class UpdateState {
     this.errorKey,
     this.errorArgs,
     this.downloadUrl,
+    this.releaseNotes,
+    this.cancelToken,
   });
 
   UpdateState copyWith({
@@ -51,6 +55,9 @@ class UpdateState {
     String? errorKey,
     Map<String, String>? errorArgs,
     String? downloadUrl,
+    String? releaseNotes,
+    CancelToken? cancelToken,
+    bool clearCancelToken = false,
   }) {
     return UpdateState(
       status: status ?? this.status,
@@ -61,6 +68,8 @@ class UpdateState {
       errorKey: errorKey ?? this.errorKey,
       errorArgs: errorArgs ?? this.errorArgs,
       downloadUrl: downloadUrl ?? this.downloadUrl,
+      releaseNotes: releaseNotes ?? this.releaseNotes,
+      cancelToken: clearCancelToken ? null : (cancelToken ?? this.cancelToken),
     );
   }
 }
@@ -95,6 +104,7 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
       );
 
       final latestTag = response.data['tag_name'] as String;
+      final releaseNotes = response.data['body'] as String?;
       debugPrint('UpdateService: Current version: $currentVersion+${packageInfo.buildNumber}');
       debugPrint('UpdateService: Latest tag from GitHub: $latestTag');
       
@@ -108,14 +118,21 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
           latestVersion: latestTag,
           currentVersion: currentVersion,
           downloadUrl: downloadUrl,
+          releaseNotes: releaseNotes,
         );
       } else {
-        debugPrint('UpdateService: App is up toDate');
+        debugPrint('UpdateService: App is up to date');
         state = state.copyWith(status: UpdateStatus.upToDate, currentVersion: currentVersion);
-      }
+     }
     } catch (e) {
-      state = state.copyWith(status: UpdateStatus.error, errorKey: 'updateFailed');
+      debugPrint('UpdateService: Check for updates failed: $e');
+      state = state.copyWith(status: UpdateStatus.error, errorKey: 'updateSourceError');
     }
+  }
+
+  void cancelUpdate() {
+    state.cancelToken?.cancel('User cancelled');
+    state = state.copyWith(status: UpdateStatus.available, progress: 0, clearCancelToken: true);
   }
 
   void dismissUpdate() {
@@ -232,27 +249,34 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
     try {
       OtaUpdate().execute(state.downloadUrl!).listen(
         (OtaEvent event) {
+          debugPrint('UpdateService: OTA Event: ${event.status} - ${event.value}');
           switch (event.status) {
             case OtaStatus.DOWNLOADING:
               state = state.copyWith(progress: double.tryParse(event.value ?? '0') ?? 0);
               break;
             case OtaStatus.INSTALLING:
             case OtaStatus.INSTALLATION_DONE:
+              debugPrint('UpdateService: OTA Installation starting...');
               state = state.copyWith(status: UpdateStatus.readyToInstall);
               break;
             case OtaStatus.ALREADY_RUNNING_ERROR:
+              debugPrint('UpdateService: OTA Error: Already running');
               state = state.copyWith(status: UpdateStatus.error, error: 'An update is already in progress.');
               break;
             case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
+              debugPrint('UpdateService: OTA Error: Permission not granted');
               state = state.copyWith(status: UpdateStatus.error, error: 'Permission to install apps was denied.');
               break;
             case OtaStatus.INTERNAL_ERROR:
+              debugPrint('UpdateService: OTA Error: Internal error');
               state = state.copyWith(status: UpdateStatus.error, error: 'Internal update error. Please try again.');
               break;
             case OtaStatus.DOWNLOAD_ERROR:
+              debugPrint('UpdateService: OTA Error: Download error');
               state = state.copyWith(status: UpdateStatus.error, error: 'Failed to download the update.');
               break;
             case OtaStatus.CHECKSUM_ERROR:
+              debugPrint('UpdateService: OTA Error: Checksum error');
               state = state.copyWith(status: UpdateStatus.error, error: 'Update file is corrupted.');
               break;
             default:
@@ -260,6 +284,7 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
           }
         },
         onError: (e) {
+          debugPrint('UpdateService: OTA Stream Error: $e');
           state = state.copyWith(status: UpdateStatus.error, errorKey: 'updateFailed');
         },
       );
@@ -271,22 +296,47 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
   Future<void> _startWindowsUpdate() async {
     state = state.copyWith(status: UpdateStatus.downloading, progress: 0);
 
+    Directory? tempDir;
+    File? zipFile;
+
     try {
-      final tempDir = await getTemporaryDirectory();
+      tempDir = await getTemporaryDirectory();
       final fileName = state.downloadUrl!.split('/').last;
-      final zipFile = File(p.join(tempDir.path, fileName));
+      zipFile = File(p.join(tempDir.path, fileName));
+      final cancelToken = CancelToken();
+      
+      state = state.copyWith(cancelToken: cancelToken);
 
       await _dio.download(
         state.downloadUrl!,
         zipFile.path,
+        cancelToken: cancelToken,
         onReceiveProgress: (received, total) {
           if (total != -1) {
             state = state.copyWith(progress: (received / total) * 100);
           }
         },
       );
+    } on DioException catch (e) {
+      if (CancelToken.isCancel(e)) {
+        debugPrint('UpdateService: Windows download cancelled');
+        return;
+      }
+      debugPrint('UpdateService: Windows download failed: $e');
+      String errorKey = 'updateNetworkError';
+      if (e.type == DioExceptionType.badResponse && e.response?.statusCode == 404) {
+        errorKey = 'updateSourceError';
+      }
+      state = state.copyWith(status: UpdateStatus.error, errorKey: errorKey);
+      return;
+    } catch (e) {
+      debugPrint('UpdateService: Windows download unexpected error: $e');
+      state = state.copyWith(status: UpdateStatus.error, errorKey: 'updateFailed');
+      return;
+    }
 
-      state = state.copyWith(status: UpdateStatus.readyToInstall);
+    try {
+      state = state.copyWith(status: UpdateStatus.readyToInstall, clearCancelToken: true);
 
       // 1. Extract the ZIP to a temporary "update" folder
       final extractPath = p.join(tempDir.path, 'cinemuse_update');

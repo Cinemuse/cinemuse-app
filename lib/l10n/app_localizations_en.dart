@@ -339,6 +339,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailsVerdict => 'Verdict';
 
   @override
+  String get detailsVerdictExcellent => 'Sublime';
+
+  @override
+  String get detailsVerdictGood => 'Recommended';
+
+  @override
+  String get detailsVerdictAverage => 'Watchable';
+
+  @override
+  String get detailsVerdictPoor => 'Forgettable';
+
+  @override
   String get detailsReviews => 'Reviews';
 
   @override
@@ -822,7 +834,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileOverview => 'OVERVIEW';
 
   @override
-  String get profileCollections => 'COLLECTIONS';
+  String get profileCollections => 'COLLEZIONI';
 
   @override
   String get profileActivity => 'ACTIVITY';
@@ -995,6 +1007,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateUpToDate => 'App is up to date';
+
+  @override
+  String get updateChangelog => 'What\'s New';
+
+  @override
+  String get updateCancel => 'Cancel Update';
+
+  @override
+  String get updateNetworkError =>
+      'Network error during update. Please check your connection.';
+
+  @override
+  String get updateStorageError =>
+      'Not enough storage space to download the update.';
+
+  @override
+  String get updateSourceError => 'The update source is currently unavailable.';
 
   @override
   String get menuMoreOptions => 'More Options';

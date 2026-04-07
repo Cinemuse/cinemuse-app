@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/services/updates/update_service.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'dart:io';
+
 
 class UpdateOverlay extends ConsumerWidget {
   const UpdateOverlay({super.key});
@@ -38,7 +41,7 @@ class UpdateOverlay extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.system_update_alt, size: 48, color: AppTheme.secondary),
+                    const Icon(Icons.system_update_alt, size: 48, color: AppTheme.accent),
                     const SizedBox(height: 16),
                     Text(
                       updateState.status == UpdateStatus.readyToInstall 
@@ -49,7 +52,9 @@ class UpdateOverlay extends ConsumerWidget {
                     const SizedBox(height: 8),
                     Text(
                       updateState.status == UpdateStatus.readyToInstall
-                        ? 'Files swapped. Restarting in a moment...'
+                        ? (Platform.isAndroid 
+                            ? 'Preparing to launch the installer...' 
+                            : 'Files swapped. Restarting in a moment...')
                         : 'Please wait while we prepare the new version. Do not close the app.',
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.white70),
@@ -59,12 +64,18 @@ class UpdateOverlay extends ConsumerWidget {
                       LinearProgressIndicator(
                         value: updateState.progress / 100,
                         backgroundColor: Colors.white10,
-                        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.secondary),
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accent),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         '${updateState.progress.toStringAsFixed(0)}%',
-                        style: const TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+                      TextButton.icon(
+                        onPressed: () => ref.read(updateProvider.notifier).cancelUpdate(),
+                        icon: const Icon(Icons.cancel, color: Colors.white60, size: 18),
+                        label: Text(l10n.updateCancel, style: const TextStyle(color: Colors.white60)),
                       ),
                     ] else ...[
                       const CircularProgressIndicator(color: Colors.green),
@@ -107,10 +118,22 @@ class UpdateOverlay extends ConsumerWidget {
     
     // Attempt to localize if we have an errorKey
     if (state.errorKey != null) {
-      if (state.errorKey == 'updateNoCompatibleApk') {
-        errorMessage = l10n.updateNoCompatibleApk(state.errorArgs?['abi'] ?? 'unknown');
-      } else if (state.errorKey == 'updateFailed') {
-        errorMessage = l10n.updateFailed;
+      switch (state.errorKey) {
+        case 'updateNoCompatibleApk':
+          errorMessage = l10n.updateNoCompatibleApk(state.errorArgs?['abi'] ?? 'unknown');
+          break;
+        case 'updateNetworkError':
+          errorMessage = l10n.updateNetworkError;
+          break;
+        case 'updateStorageError':
+          errorMessage = l10n.updateStorageError;
+          break;
+        case 'updateSourceError':
+          errorMessage = l10n.updateSourceError;
+          break;
+        case 'updateFailed':
+          errorMessage = l10n.updateFailed;
+          break;
       }
     }
 
@@ -158,7 +181,7 @@ class UpdateOverlay extends ConsumerWidget {
             ),
           ),
           TextButton(
-            onPressed: () => _showUpdateDialog(context, ref, l10n),
+            onPressed: () => _showUpdateDialog(context, ref, l10n, state),
             child: Text(
               l10n.updateNow,
               style: const TextStyle(color: Colors.white, decoration: TextDecoration.underline),
@@ -176,20 +199,59 @@ class UpdateOverlay extends ConsumerWidget {
     );
   }
 
-  void _showUpdateDialog(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
+  void _showUpdateDialog(BuildContext context, WidgetRef ref, AppLocalizations l10n, UpdateState updateState) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.primary,
-        title: Text(l10n.updateDialogTitle),
-        content: Text(l10n.updateDialogMessage),
+        title: Row(
+          children: [
+            const Icon(Icons.system_update_alt, color: AppTheme.accent),
+            const SizedBox(width: 12),
+            Text(l10n.updateDialogTitle),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.updateDialogMessage),
+            if (updateState.releaseNotes != null && updateState.releaseNotes!.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white12),
+              const SizedBox(height: 8),
+              Text(
+                l10n.updateChangelog,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.accent),
+              ),
+              const SizedBox(height: 8),
+              Flexible(
+                child: Container(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: SingleChildScrollView(
+                    child: MarkdownBody(
+                      data: updateState.releaseNotes!,
+                      selectable: true,
+                      styleSheet: MarkdownStyleSheet(
+                        p: const TextStyle(fontSize: 12, color: Colors.white70),
+                        h1: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                        h2: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                        listBullet: const TextStyle(color: AppTheme.accent),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(l10n.later, style: const TextStyle(color: Colors.white38)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.secondary),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
             onPressed: () {
               ref.read(updateProvider.notifier).startUpdate();
               Navigator.pop(context);

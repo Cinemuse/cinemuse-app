@@ -247,7 +247,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get authWelcomeBackDesc =>
-      'Sign in to access your library and settings';
+      'Accedi per visualizzare la tua libreria e le impostazioni';
 
   @override
   String get authCreateAccount => 'Crea un account per iniziare a guardare';
@@ -337,6 +337,18 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get detailsVerdict => 'Verdetto';
+
+  @override
+  String get detailsVerdictExcellent => 'Sublime';
+
+  @override
+  String get detailsVerdictGood => 'Consigliato';
+
+  @override
+  String get detailsVerdictAverage => 'Guardabile';
+
+  @override
+  String get detailsVerdictPoor => 'Dimenticabile';
 
   @override
   String get detailsReviews => 'Recensioni';
@@ -1003,6 +1015,24 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get updateUpToDate => 'L\'app è aggiornata';
+
+  @override
+  String get updateChangelog => 'Novità';
+
+  @override
+  String get updateCancel => 'Annulla Aggiornamento';
+
+  @override
+  String get updateNetworkError =>
+      'Errore di rete durante l\'aggiornamento. Controlla la tua connessione.';
+
+  @override
+  String get updateStorageError =>
+      'Spazio di archiviazione insufficiente per scaricare l\'aggiornamento.';
+
+  @override
+  String get updateSourceError =>
+      'La sorgente dell\'aggiornamento non è al momento disponibile.';
 
   @override
   String get menuMoreOptions => 'Altre Opzioni';

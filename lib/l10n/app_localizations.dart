@@ -710,6 +710,30 @@ abstract class AppLocalizations {
   /// **'Verdict'**
   String get detailsVerdict;
 
+  /// No description provided for @detailsVerdictExcellent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sublime'**
+  String get detailsVerdictExcellent;
+
+  /// No description provided for @detailsVerdictGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get detailsVerdictGood;
+
+  /// No description provided for @detailsVerdictAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Watchable'**
+  String get detailsVerdictAverage;
+
+  /// No description provided for @detailsVerdictPoor.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgettable'**
+  String get detailsVerdictPoor;
+
   /// No description provided for @detailsReviews.
   ///
   /// In en, this message translates to:
@@ -1607,7 +1631,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileCollections.
   ///
   /// In en, this message translates to:
-  /// **'COLLECTIONS'**
+  /// **'COLLEZIONI'**
   String get profileCollections;
 
   /// No description provided for @profileActivity.
@@ -1933,6 +1957,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'App is up to date'**
   String get updateUpToDate;
+
+  /// No description provided for @updateChangelog.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s New'**
+  String get updateChangelog;
+
+  /// No description provided for @updateCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Update'**
+  String get updateCancel;
+
+  /// No description provided for @updateNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error during update. Please check your connection.'**
+  String get updateNetworkError;
+
+  /// No description provided for @updateStorageError.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough storage space to download the update.'**
+  String get updateStorageError;
+
+  /// No description provided for @updateSourceError.
+  ///
+  /// In en, this message translates to:
+  /// **'The update source is currently unavailable.'**
+  String get updateSourceError;
 
   /// No description provided for @menuMoreOptions.
   ///
