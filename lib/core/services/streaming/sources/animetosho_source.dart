@@ -30,23 +30,69 @@ class AnimeToshoSource extends BaseSource {
     final anidbId = context.mapping!.anidbId;
     final absoluteEpisode = context.mapping?.absoluteEpisode;
     
-    // Construct search query
-    // aids: filters by Series
-    // q: filters by episode (e.g., "05")
-    final Map<String, dynamic> params = {
+    // We perform two searches in parallel:
+    // 1. Specific absolute episode (e.g., "05")
+    // 2. Batches/Complete releases
+    final List<Future<List<StreamCandidate>>> searchTasks = [];
+
+    // Episode search
+    if (absoluteEpisode != null) {
+      final epParams = {
+        'qx': 1,
+        'only_tor': 1,
+        'aids': anidbId,
+        'q': absoluteEpisode.toString().padLeft(2, '0'),
+      };
+      searchTasks.add(_fetch(epParams, context, absoluteEpisode));
+    } else {
+      // General series search if no specific episode
+      final seriesParams = {
+        'qx': 1,
+        'only_tor': 1,
+        'aids': anidbId,
+      };
+      searchTasks.add(_fetch(seriesParams, context, null));
+    }
+
+    // Batch search
+    final batchParams = {
       'qx': 1,
       'only_tor': 1,
       'aids': anidbId,
+      'q': 'batch',
     };
+    searchTasks.add(_fetch(batchParams, context, absoluteEpisode));
 
-    if (absoluteEpisode != null) {
-      params['q'] = absoluteEpisode.toString().padLeft(2, '0');
-    }
+    // Complete series search (often distinct from "batch")
+    final completeParams = {
+      'qx': 1,
+      'only_tor': 1,
+      'aids': anidbId,
+      'q': 'complete',
+    };
+    searchTasks.add(_fetch(completeParams, context, absoluteEpisode));
 
     try {
-      final logParams = params.map((key, value) => MapEntry(key, value.toString()));
-      final url = "$_baseUrl?${Uri(queryParameters: logParams).query}";
-      debugPrint('AnimeToshoSource: Fetching: $url');
+      final results = await Future.wait(searchTasks);
+      final allCandidates = results.expand((x) => x).toList();
+      
+      // Deduplicate by infoHash
+      final uniqueMap = <String, StreamCandidate>{};
+      for (final c in allCandidates) {
+        if (!uniqueMap.containsKey(c.infoHash)) {
+          uniqueMap[c.infoHash] = c;
+        }
+      }
+      
+      return uniqueMap.values.toList();
+    } catch (e) {
+      debugPrint('AnimeToshoSource: Search failed: $e');
+      return [];
+    }
+  }
+
+  Future<List<StreamCandidate>> _fetch(Map<String, dynamic> params, StreamSearchContext context, int? absoluteEpisode) async {
+    try {
       final response = await _dio.get(_baseUrl, queryParameters: params);
       
       if (response.statusCode != 200 || response.data == null) {
@@ -64,6 +110,7 @@ class AnimeToshoSource extends BaseSource {
         final seeds = item['seeders'] as int? ?? 0;
 
         // Verify episode match using MediaParser
+        // This now supports batches via the updated MediaParser.matches
         if (absoluteEpisode != null) {
           if (!MediaParser.matches(
             title,
@@ -71,7 +118,7 @@ class AnimeToshoSource extends BaseSource {
             targetSeason: context.season,
             targetEpisode: context.episode,
           )) {
-            continue; // Skip if it doesn't match our target episode
+            continue; 
           }
         }
 
@@ -92,7 +139,7 @@ class AnimeToshoSource extends BaseSource {
 
       return candidates;
     } catch (e) {
-      debugPrint('AnimeToshoSource: Search failed: $e');
+      debugPrint('AnimeToshoSource fetch error: $e');
       return [];
     }
   }

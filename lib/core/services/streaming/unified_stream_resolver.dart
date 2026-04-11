@@ -98,6 +98,16 @@ class UnifiedStreamResolver {
   final UserSettings _settings;
   final BaseDebridService? _debridService;
 
+  // Simple in-memory cache for search results
+  static final Map<String, _CachedSearch> _searchCache = {};
+  static const Duration _cacheDuration = Duration(minutes: 30);
+
+  /// Clears the in-memory search cache.
+  @visibleForTesting
+  static void clearCache() {
+    _searchCache.clear();
+  }
+
   @visibleForTesting
   List<BaseSource> get sources => _sources;
 
@@ -122,10 +132,18 @@ class UnifiedStreamResolver {
     int? episode,
     void Function(List<ProviderSearchStatus>)? onStatusUpdate,
   }) async {
+    final cacheKey = "$type:$queryId:${season ?? 0}:${episode ?? 0}";
+    final cached = _searchCache[cacheKey];
+    
+    if (cached != null && DateTime.now().difference(cached.timestamp) < _cacheDuration) {
+      debugPrint('UnifiedStreamResolver: Returning cached results for $cacheKey');
+      // Proactively check availability again if needed, or return cached ones
+      // Since ranking depends on cache status, we might want to re-check if we have a debrid service
+      return _finalizeResults(cached.candidates, context: cached.context);
+    }
+
     Timer? statusTimer;
     final kind = MediaItem.fromString(type);
-    final numericId = int.tryParse(queryId);
-    
     
     try {
       if (_sources.isEmpty) {
@@ -205,7 +223,7 @@ class UnifiedStreamResolver {
       final allCandidates = results.expand((x) => x).toList();
 
       if (allCandidates.isEmpty) {
-        return [];
+        throw NoResultsFoundException();
       }
 
       // 4. Deduplicate
@@ -219,27 +237,75 @@ class UnifiedStreamResolver {
       }
       var candidates = uniqueMap.values.toList();
 
-      // 5. Filter out junk if smart search is enabled
-      if (_settings.smartSearchFilter) {
-        candidates = candidates.where((c) {
-          final t = c.title.toLowerCase();
-          return !(t.contains('cam') || t.contains(' ts ') || t.contains('hdcam') || 
-                   t.contains('screener') || t.contains(' scr ') || t.contains(' 3d ') || t.contains('sbs'));
-        }).toList();
-      }
+      // Save to cache before finalization (availability check and ranking)
+      _searchCache[cacheKey] = _CachedSearch(
+        candidates: List.from(candidates),
+        context: context,
+        timestamp: DateTime.now(),
+      );
 
-      // 6. Rank and Sort
-      final preferredLanguage = (context.isAnime && _settings.splitAnimePreferences) 
-          ? _settings.animeAudioLanguage 
-          : _settings.playerLanguage;
-          
-      return StreamRanker.rank(candidates, preferredLanguage: preferredLanguage);
+      return _finalizeResults(candidates, context: context);
     } catch (e) {
       if (e is StreamingException) rethrow;
       throw StreamResolutionFailedException(e.toString());
     } finally {
       statusTimer?.cancel();
     }
+  }
+
+  /// Performs availability checks, filtering, and ranking.
+  Future<List<StreamCandidate>> _finalizeResults(
+    List<StreamCandidate> candidates, {
+    required StreamSearchContext context,
+  }) async {
+    var results = List<StreamCandidate>.from(candidates);
+
+    // 1. Proactive Debrid Availability Check
+    if (_debridService != null && _debridService!.isEnabled) {
+      final hashes = results
+          .where((c) => c.infoHash.isNotEmpty)
+          .map((c) => c.infoHash)
+          .toSet()
+          .toList();
+
+      if (hashes.isNotEmpty) {
+        debugPrint('UnifiedStreamResolver: Checking availability for ${hashes.length} hashes on ${_debridService!.name}');
+        
+        // Split into chunks if there are many (RD has limits, though usually 100 is fine)
+        final Map<String, bool> availability = {};
+        for (var i = 0; i < hashes.length; i += 100) {
+          final chunk = hashes.sublist(i, i + 100 > hashes.length ? hashes.length : i + 100);
+          final chunkRes = await _debridService!.checkAvailability(chunk);
+          availability.addAll(chunkRes);
+        }
+
+        results = results.map((c) {
+          final isAvailable = availability[c.infoHash.toLowerCase()] ?? false;
+          if (isAvailable) {
+            final updatedCachedOn = Map<String, bool>.from(c.cachedOn);
+            updatedCachedOn[_debridService!.name] = true;
+            return c.copyWith(cachedOn: updatedCachedOn);
+          }
+          return c;
+        }).toList();
+      }
+    }
+
+    // 2. Filter out junk if smart search is enabled
+    if (_settings.smartSearchFilter) {
+      results = results.where((c) {
+        final t = c.title.toLowerCase();
+        return !(t.contains('cam') || t.contains(' ts ') || t.contains('hdcam') || 
+                 t.contains('screener') || t.contains(' scr ') || t.contains(' 3d ') || t.contains('sbs'));
+      }).toList();
+    }
+
+    // 3. Rank and Sort
+    final preferredLanguage = (context.isAnime && _settings.splitAnimePreferences) 
+        ? _settings.animeAudioLanguage 
+        : _settings.playerLanguage;
+        
+    return StreamRanker.rank(results, preferredLanguage: preferredLanguage);
   }
 
   Future<bool> checkIsAnime(Map<String, dynamic> details, String type) async {
@@ -281,4 +347,16 @@ class UnifiedStreamResolver {
     
     return null;
   }
+}
+
+class _CachedSearch {
+  final List<StreamCandidate> candidates;
+  final StreamSearchContext context;
+  final DateTime timestamp;
+
+  _CachedSearch({
+    required this.candidates,
+    required this.context,
+    required this.timestamp,
+  });
 }

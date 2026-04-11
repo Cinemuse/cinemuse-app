@@ -49,16 +49,52 @@ class MediaParser {
       episode = absoluteEpisode;
     }
 
+    // Check for Batch/Complete markers
+    final isBatch = t.contains('batch') || 
+                   t.contains('complete') || 
+                   t.contains('collection') ||
+                   t.contains('pack') ||
+                   RegExp(r's\d{1,2}\s?-\s?s\d{1,2}', caseSensitive: false).hasMatch(t) ||
+                   RegExp(r'\d{1,3}\s?-\s?\d{1,3}', caseSensitive: false).hasMatch(t);
+
     return MediaParseResult(
       season: season,
       episode: episode,
       absoluteEpisode: absoluteEpisode,
+      isBatch: isBatch,
     );
   }
 
   /// Checks if a filename matches a specific season and episode target.
   static bool matches(String filename, {int? targetSeason, int? targetEpisode, int? targetAbsoluteEpisode}) {
     final parsed = parse(filename);
+
+    // If it's a batch/complete, and we don't have a specific CONFLICTING episode,
+    // we assume it MIGHT contain the target.
+    if (parsed.isBatch) {
+      // If the batch title explicitly lists a different episode or range that excludes ours,
+      // we should theoretically return false, but usually batches contain everything.
+      // For now, if it's a batch and has no specific single episode that conflicts, it's a match.
+      if (parsed.episode == null && parsed.absoluteEpisode == null) return true;
+      if (targetEpisode != null && parsed.episode == targetEpisode) return true;
+      if (targetAbsoluteEpisode != null && parsed.absoluteEpisode == targetAbsoluteEpisode) return true;
+      
+      // If it has an episode but it's different, it might be the start of the batch (e.g. 01-26)
+      // Check for range patterns
+      final rangeMatch = RegExp(r'(\d{1,3})\s?-\s?(\d{1,3})').firstMatch(filename);
+      if (rangeMatch != null) {
+        final start = int.tryParse(rangeMatch.group(1)!);
+        final end = int.tryParse(rangeMatch.group(2)!);
+        if (start != null && end != null) {
+          if (targetAbsoluteEpisode != null && targetAbsoluteEpisode >= start && targetAbsoluteEpisode <= end) return true;
+          if (targetEpisode != null && targetEpisode >= start && targetEpisode <= end) return true;
+        }
+      }
+
+      // If it's a batch but didn't match the range/specific ep, we still allow it as a fallback
+      // if it contains "Complete" or "Batch" and NO other episode number is found.
+      if (parsed.episode == null) return true;
+    }
 
     // If we have a target absolute episode, it's the strongest signal for anime
     if (targetAbsoluteEpisode != null && parsed.absoluteEpisode != null) {
@@ -83,9 +119,10 @@ class MediaParseResult {
   final int? season;
   final int? episode;
   final int? absoluteEpisode;
+  final bool isBatch;
 
-  MediaParseResult({this.season, this.episode, this.absoluteEpisode});
+  MediaParseResult({this.season, this.episode, this.absoluteEpisode, this.isBatch = false});
 
   @override
-  String toString() => 'MediaParseResult(S: $season, E: $episode, Abs: $absoluteEpisode)';
+  String toString() => 'MediaParseResult(S: $season, E: $episode, Abs: $absoluteEpisode, Batch: $isBatch)';
 }

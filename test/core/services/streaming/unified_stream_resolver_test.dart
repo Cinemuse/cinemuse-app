@@ -8,9 +8,14 @@ import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dar
 import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 
+import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
+import 'package:cinemuse_app/features/media/data/media_repository.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+
 class MockSource extends Mock implements BaseSource {}
 class MockTmdbService extends Mock implements TmdbService {}
 class MockKitsuMappingService extends Mock implements KitsuMappingService {}
+class MockMediaRepository extends Mock implements MediaRepository {}
 
 // Register fallback for StreamSearchContext if needed (for any())
 class FakeStreamSearchContext extends Fake implements StreamSearchContext {}
@@ -20,19 +25,25 @@ void main() {
   late MockSource mockSource;
   late MockTmdbService mockTmdb;
   late MockKitsuMappingService mockKitsu;
+  late MockMediaRepository mockMedia;
 
   setUpAll(() {
     registerFallbackValue(FakeStreamSearchContext());
     registerFallbackValue(StreamCandidate(title: '', infoHash: '', magnet: '', provider: ''));
+    registerFallbackValue(MediaItem(tmdbId: 0, mediaType: MediaKind.movie, updatedAt: DateTime.now()));
   });
 
   setUp(() {
+    UnifiedStreamResolver.clearCache();
     mockSource = MockSource();
     mockTmdb = MockTmdbService();
     mockKitsu = MockKitsuMappingService();
+    mockMedia = MockMediaRepository();
 
     when(() => mockSource.name).thenReturn('MockSource');
     when(() => mockSource.supportedCategories).thenReturn({'movie', 'tv', 'anime'});
+
+    when(() => mockMedia.saveMediaItem(any())).thenAnswer((_) async => {});
 
     when(() => mockKitsu.getMapping(
       tmdbId: any(named: 'tmdbId'),
@@ -45,6 +56,7 @@ void main() {
       sources: [mockSource],
       tmdbService: mockTmdb,
       kitsuMappingService: mockKitsu,
+      mediaRepository: mockMedia,
       settings: const UserSettings(),
     );
   });
@@ -86,6 +98,7 @@ void main() {
         sources: [],
         tmdbService: mockTmdb,
         kitsuMappingService: mockKitsu,
+        mediaRepository: mockMedia,
         settings: const UserSettings(),
       );
 
