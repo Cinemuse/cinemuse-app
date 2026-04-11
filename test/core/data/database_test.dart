@@ -19,37 +19,22 @@ void main() {
       final item = CachedMediaItemsCompanion.insert(
         tmdbId: 1,
         mediaType: 'movie',
-        title: 'Inception',
+        titleEn: Value('Inception'),
         updatedAt: DateTime.now(),
-        expiryDate: DateTime.now().add(const Duration(days: 7)),
       );
 
       await database.upsertMediaItem(item);
 
       final retrieved = await database.getMediaItem(1, 'movie');
-      expect(retrieved?.title, 'Inception');
+      expect(retrieved?.titleEn, 'Inception');
     });
 
-    test('can delete expired items', () async {
-      final now = DateTime.now();
+    test('can retrieve total count', () async {
       await database.upsertMediaItem(CachedMediaItemsCompanion.insert(
         tmdbId: 1,
         mediaType: 'movie',
-        title: 'New Item',
-        updatedAt: now,
-        expiryDate: now.add(const Duration(days: 1)),
+        updatedAt: DateTime.now(),
       ));
-
-      await database.upsertMediaItem(CachedMediaItemsCompanion.insert(
-        tmdbId: 2,
-        mediaType: 'movie',
-        title: 'Expired Item',
-        updatedAt: now,
-        expiryDate: now.subtract(const Duration(days: 1)),
-      ));
-
-      final deletedCount = await database.deleteExpiredItems();
-      expect(deletedCount, 1);
 
       final items = await database.getTotalCount();
       expect(items, 1);

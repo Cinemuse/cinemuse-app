@@ -45,18 +45,20 @@ void main() {
   late WatchHistoryRepository repository;
   late MockSupabaseClient mockSupabase;
   late AppDatabase database;
-  late MockMediaRepository mockMediaRepo;
+  late MediaRepository mediaRepo;
   late MockSeriesDomainService mockSeriesService;
 
   setUp(() {
     mockSupabase = MockSupabaseClient();
     database = AppDatabase(NativeDatabase.memory());
-    mockMediaRepo = MockMediaRepository();
+    mockTmdb = MockTmdbService();
+    mediaRepo = MediaRepository(database, mockTmdb);
     mockSeriesService = MockSeriesDomainService();
-    repository = WatchHistoryRepository(mockSupabase, mockMediaRepo, database, mockSeriesService);
+    repository = WatchHistoryRepository(mockSupabase, mediaRepo, database, mockSeriesService);
     
     // Register Fallbacks
     registerFallbackValue(MediaKind.movie);
+    registerFallbackValue((id: 1, type: MediaKind.movie));
   });
 
   tearDown(() async {
@@ -96,10 +98,11 @@ void main() {
         lastWatchedAt: DateTime.now(),
       ));
 
-      when(() => mockMediaRepo.getMediaItem(1, any())).thenAnswer((_) async => MediaItem(
+      // Add metadata in database for the stream to find it
+      await database.upsertMediaItem(CachedMediaItemsCompanion.insert(
         tmdbId: 1,
-        title: 'Movie Title',
-        mediaType: MediaKind.movie,
+        mediaType: 'movie',
+        titleEn: Value('Movie Title'),
         updatedAt: DateTime.now(),
       ));
 
@@ -107,7 +110,7 @@ void main() {
       final result = await stream.first;
 
       expect(result.length, 1);
-      expect(result.first.media?.title, 'Movie Title');
+      expect(result.first.media?.titleEn, 'Movie Title');
     });
   });
 }

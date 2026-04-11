@@ -20,7 +20,6 @@ class CachedMediaItems extends Table {
   DateTimeColumn get releaseDate => dateTime().nullable()();
   RealColumn get voteAverage => real().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
-  DateTimeColumn get expiryDate => dateTime()();
 
   @override
   Set<Column> get primaryKey => {tmdbId, mediaType};
@@ -100,41 +99,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 1;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onUpgrade: (m, from, to) async {
-          if (from < 2) {
-            await m.createTable(cachedUserLists);
-            await m.createTable(cachedListItems);
-          }
-          if (from < 3) {
-            await m.createTable(animeExternalMappings);
-            await m.createTable(animeKitsuMappings);
-          }
-          if (from < 4) {
-             try {
-                await m.addColumn(animeKitsuMappings, animeKitsuMappings.episodeCount);
-             } catch (_) {}
-          }
-          if (from < 5) {
-            try {
-              await m.addColumn(animeExternalMappings, animeExternalMappings.anidbId);
-            } catch (_) {}
-          }
-          if (from < 6) {
-            await m.addColumn(cachedMediaItems, cachedMediaItems.titleIt);
-            await m.addColumn(cachedMediaItems, cachedMediaItems.titleEn);
-            await m.addColumn(cachedMediaItems, cachedMediaItems.castMembers);
-          }
-          if (from < 7) {
-            await m.database.customStatement('ALTER TABLE cached_media_items DROP COLUMN title');
-          }
+        onCreate: (m) async {
+          await m.createAll();
         },
         beforeOpen: (details) async {
-          // Optional: Enable foreign keys if needed
-          // await customStatement('PRAGMA foreign_keys = ON');
+          // Safety: If database exists and version is different, 
+          // we might want to wipe it during this dev reset phase.
+          // For now, we trust the user to clear app data if needed,
+          // but we can add a check here if requested.
         },
       );
 
@@ -311,11 +287,6 @@ class AppDatabase extends _$AppDatabase {
 
   // --- Cleanup ---
 
-  // Cleanup expired items
-  Future<int> deleteExpiredItems() {
-    return (delete(cachedMediaItems)..where((t) => t.expiryDate.isSmallerThanValue(DateTime.now()))).go();
-  }
-
   // Get total count of cached items
   Future<int> getTotalCount() async {
     final countExp = cachedMediaItems.tmdbId.count();
@@ -336,10 +307,6 @@ LazyDatabase _openConnection() {
 @Riverpod(keepAlive: true)
 AppDatabase appDatabase(AppDatabaseRef ref) {
   final db = AppDatabase();
-  // Trigger cleanup on initialization
-  db.deleteExpiredItems().then((count) {
-    if (count > 0) print('AppDatabase: Cleaned up $count expired items.');
-  });
   ref.onDispose(() => db.close());
   return db;
 }

@@ -55,7 +55,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
       );
     } else {
       // Naturally cache the item when it's being added to a system list
-      ref.read(watchHistoryRepositoryProvider).ensureMediaCached(media)
+      ref.read(watchHistoryRepositoryProvider).saveMediaItem(media)
           .catchError((e) => print('Background caching failed: $e'));
 
       await repo.addItemToList(
@@ -109,7 +109,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
     final repo = ref.read(listsRepositoryProvider);
 
     // Naturally cache the item when it's being added to a custom list
-    ref.read(watchHistoryRepositoryProvider).ensureMediaCached(media)
+    ref.read(watchHistoryRepositoryProvider).saveMediaItem(media)
         .catchError((e) => print('Background caching failed: $e'));
 
     await repo.addItemToList(

@@ -68,10 +68,9 @@ void main() {
   late AppDatabase database;
 
   setUp(() {
-    mockSupabase = MockSupabaseClient();
     mockTmdb = MockTmdbService();
     database = AppDatabase(NativeDatabase.memory());
-    repository = MediaRepository(mockSupabase, database, mockTmdb);
+    repository = MediaRepository(database, mockTmdb);
   });
 
   tearDown(() async {
@@ -82,40 +81,23 @@ void main() {
     const tmdbId = 123;
     const mediaType = MediaKind.movie;
 
-    test('getMediaItem returns item from local cache if valid', () async {
+    test('getMediaItem returns item from local cache if present', () async {
       final now = DateTime.now();
       await database.upsertMediaItem(CachedMediaItemsCompanion.insert(
         tmdbId: tmdbId,
         mediaType: 'movie',
-        titleEn: 'Cached Movie',
+        titleEn: Value('Cached Movie'),
         updatedAt: now,
-        expiryDate: now.add(const Duration(days: 1)),
       ));
 
       final result = await repository.getMediaItem(tmdbId, mediaType);
 
       expect(result?.titleEn, 'Cached Movie');
-      verifyNever(() => mockSupabase.from(any()));
     });
 
-    test('getMediaItem falls back to Supabase and caches locally if not in Drift', () async {
-      final remoteData = {
-        'tmdb_id': tmdbId,
-        'media_type': 'movie',
-        'title_en': 'Remote Movie',
-        'title_it': 'Film Remoto',
-        'updated_at': DateTime.now().toIso8601String(),
-      };
-      
-      when(() => mockSupabase.from('media_cache')).thenAnswer((_) => FakeQueryBuilder([remoteData]) as SupabaseQueryBuilder);
-
+    test('getMediaItem returns null if not in memory or Drift', () async {
       final result = await repository.getMediaItem(tmdbId, mediaType);
-
-      expect(result?.titleEn, 'Remote Movie');
-      expect(result?.titleIt, 'Film Remoto');
-      
-      final local = await database.getMediaItem(tmdbId, 'movie');
-      expect(local?.titleEn, 'Remote Movie');
+      expect(result, isNull);
     });
   });
 }

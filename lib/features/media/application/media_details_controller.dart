@@ -58,23 +58,19 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       final tmdbService = ref.read(tmdbServiceProvider);
       final mediaRepo = ref.read(mediaRepositoryProvider);
       
-      mediaRepo.markAsExternalFetch(tmdbId, MediaKind.tv, true);
-      try {
-        final details = await tmdbService.getMediaDetails(tmdbId.toString(), 'tv');
-        if (details != null) {
-          // Sync cache since we have full details
-          await mediaRepo.ingestTmdbDetails(details, MediaKind.tv);
-          
-          await _repository.upsertNextEpisode(
-            userId: userId,
-            tmdbId: tmdbId,
-            currentSeason: season,
-            currentEpisode: episode,
-            seriesDetails: details,
-          );
-        }
-      } finally {
-        mediaRepo.markAsExternalFetch(tmdbId, MediaKind.tv, false);
+      final details = await tmdbService.getMediaDetails(tmdbId.toString(), 'tv');
+      if (details != null) {
+        // Opportunistically update cache
+        final item = MediaItem.fromTmdbDetails(details, MediaKind.tv);
+        await mediaRepo.saveMediaItem(item);
+        
+        await _repository.upsertNextEpisode(
+          userId: userId,
+          tmdbId: tmdbId,
+          currentSeason: season,
+          currentEpisode: episode,
+          seriesDetails: details,
+        );
       }
 
       // Success: Invalidate to fetch real data (optimistic state will be cleared naturally or manually)
@@ -176,23 +172,19 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       final tmdbService = ref.read(tmdbServiceProvider);
       final mediaRepo = ref.read(mediaRepositoryProvider);
       
-      mediaRepo.markAsExternalFetch(tmdbId, MediaKind.tv, true);
-      try {
-        final details = await tmdbService.getMediaDetails(tmdbId.toString(), 'tv');
-        if (details != null) {
-          // Sync cache since we have full details
-          await mediaRepo.ingestTmdbDetails(details, MediaKind.tv);
+      final details = await tmdbService.getMediaDetails(tmdbId.toString(), 'tv');
+      if (details != null) {
+        // Opportunistically update cache
+        final item = MediaItem.fromTmdbDetails(details, MediaKind.tv);
+        await mediaRepo.saveMediaItem(item);
 
-          await _repository.upsertNextEpisode(
-            userId: userId,
-            tmdbId: tmdbId,
-            currentSeason: latest.season,
-            currentEpisode: latest.episode,
-            seriesDetails: details,
-          );
-        }
-      } finally {
-        mediaRepo.markAsExternalFetch(tmdbId, MediaKind.tv, false);
+        await _repository.upsertNextEpisode(
+          userId: userId,
+          tmdbId: tmdbId,
+          currentSeason: latest.season,
+          currentEpisode: latest.episode,
+          seriesDetails: details,
+        );
       }
 
       _invalidateLogs(tmdbId);

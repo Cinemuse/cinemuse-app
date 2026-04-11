@@ -501,7 +501,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       releaseDate: DateTime.tryParse(_mediaDetails?['release_date'] ?? _mediaDetails?['first_air_date'] ?? ''),
       updatedAt: DateTime.now(),
     );
-    await repo.ensureMediaCached(mainMediaItem);
+    await repo.saveMediaItem(mainMediaItem);
   }
 
   Future<void> _handleInitialSeek() async {

@@ -32,7 +32,7 @@ class WatchHistoryRepository {
   Future<List<WatchHistory>> getContinueWatching(String userId) async {
     final response = await _client
         .from('watch_history')
-        .select('*, media_cache(*)') // Join with media_cache
+        .select() // Join with media_cache removed
         .eq('user_id', userId)
         .eq('status', 'watching')
         .order('last_watched_at', ascending: false)
@@ -41,14 +41,9 @@ class WatchHistoryRepository {
     return (response as List).map((e) => WatchHistory.fromJson(e)).toList();
   }
 
-  /// Ensures a media item exists in the cache (Local & Remote).
-  Future<void> ensureMediaCached(MediaItem media) async {
-    await _mediaRepo.ensureMediaCached(media);
-  }
-
-  /// Triggers a repair of media metadata if incomplete.
-  Future<void> repairMetadata(int tmdbId, MediaKind type) async {
-    await _mediaRepo.repairMetadata(tmdbId, type);
+  /// Ensures a media item exists in the local cache.
+  Future<void> saveMediaItem(MediaItem media) async {
+    await _mediaRepo.saveMediaItem(media);
   }
 
   Future<void> updateProgress({
@@ -215,7 +210,7 @@ class WatchHistoryRepository {
   Future<WatchHistory?> getHistoryItem(String userId, String tmdbId) async {
     final response = await _client
         .from('watch_history')
-        .select('*, media_cache(*)')
+        .select()
         .eq('user_id', userId)
         .eq('tmdb_id', tmdbId)
         .maybeSingle()
@@ -225,28 +220,17 @@ class WatchHistoryRepository {
     return WatchHistory.fromJson(response);
   }
 
-  /// Watch watch history locally (Drift)
   Stream<List<WatchHistory>> watchHistory(String userId) {
-    return _db.watchWatchHistoryWithMedia(userId).map((rows) {
-      return rows.map((row) {
-        final local = row.readTable(_db.localWatchHistories);
-        final cached = row.readTableOrNull(_db.cachedMediaItems);
-        
+    return _db.watchWatchHistory(userId).asyncMap((list) async {
+      final futures = list.map((local) async {
         final mediaType = MediaItem.fromString(local.mediaType);
+        final mediaKind = MediaKind.values.firstWhere(
+          (e) => e.name == local.mediaType, 
+          orElse: () => MediaKind.movie
+        );
         
-        // Map cached media if exists
-        MediaItem? media;
-        if (cached != null) {
-          media = _mediaRepo.mapToMediaItem(cached);
-          
-          // Unified Repair Logic: Only trigger if needsMetadataRepair returns true (includes 24h throttling)
-          if (media.needsMetadataRepair) {
-            _mediaRepo.repairMetadata(local.tmdbId, mediaType).catchError((e) => null);
-          }
-        } else {
-          // Not in cache at all: trigger immediate repair
-          _mediaRepo.repairMetadata(local.tmdbId, mediaType).catchError((e) => null);
-        }
+        // Try to get media metadata (now handles TMDB fallback)
+        final media = await _mediaRepo.getMediaItem(local.tmdbId, mediaKind);
 
         return WatchHistory(
           userId: local.userId,
@@ -255,13 +239,15 @@ class WatchHistoryRepository {
           status: WatchStatus.fromJson(local.status),
           progressSeconds: local.progressSeconds,
           totalDuration: local.totalDuration,
-          watchCount: 0, // Not available in local table yet
+          watchCount: 0,
           lastWatchedAt: local.lastWatchedAt,
           season: local.season,
           episode: local.episode,
           media: media,
         );
-      }).toList();
+      });
+
+      return await Future.wait(futures);
     });
   }
 
@@ -271,7 +257,7 @@ class WatchHistoryRepository {
     try {
       final remoteData = await _client
           .from('watch_history')
-          .select('*, media_cache(*)')
+          .select()
           .eq('user_id', userId)
           .withErrorHandling();
 
@@ -294,14 +280,6 @@ class WatchHistoryRepository {
       }).toList();
 
       await _db.syncWatchHistory(userId, companions);
-      
-      // Also cache media items referenced in the history
-      for (final json in remoteData) {
-        if (json['media_cache'] != null) {
-          final media = MediaItem.fromJson(json['media_cache']);
-          _mediaRepo.ensureMediaCached(media).catchError((_) {});
-        }
-      }
     } catch (_) {}
   }
 

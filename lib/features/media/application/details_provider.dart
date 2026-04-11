@@ -12,26 +12,45 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 
-// Family provider to fetch details for a specific media item
+// Family provider to fetch basic details for a specific media item (with local caching)
+final mediaItemProvider = FutureProvider.family<MediaItem?, ({int id, MediaKind type})>((ref, args) async {
+  final repo = ref.read(mediaRepositoryProvider);
+  
+  // 1. Check local cache (Memory/Drift)
+  final cached = await repo.getMediaItem(args.id, args.type);
+  if (cached != null) return cached;
+
+  // 2. Fetch from TMDB
+  final tmdbService = ref.read(tmdbServiceProvider);
+  final details = await tmdbService.getMediaDetails(args.id.toString(), args.type.name);
+  
+  if (details != null) {
+     final item = MediaItem.fromTmdbDetails(details, args.type);
+     await repo.saveMediaItem(item);
+     return item;
+  }
+  
+  return null;
+});
+
+// Family provider to fetch full details for a specific media item (e.g. for details screen)
 final mediaDetailsProvider = FutureProvider.family<Map<String, dynamic>?, ({String id, String type})>((ref, args) async {
   final tmdbService = ref.read(tmdbServiceProvider);
   final repo = ref.read(mediaRepositoryProvider);
   final type = MediaItem.fromString(args.type);
   
-  // Mark as external fetch to prevent redundant repair trigger
-  repo.markAsExternalFetch(int.parse(args.id), type, true);
-  
   try {
     final details = await tmdbService.getMediaDetails(args.id, args.type);
     
     if (details != null) {
-      // Naturally cache the item when we discover its details fully
-      repo.ingestTmdbDetails(details, type).catchError((_) {});
+      // Opportunistically update cache with full details
+      final item = MediaItem.fromTmdbDetails(details, type);
+      repo.saveMediaItem(item).catchError((_) {});
     }
     
     return details;
-  } finally {
-    repo.markAsExternalFetch(int.parse(args.id), type, false);
+  } catch (_) {
+    return null;
   }
 });
 

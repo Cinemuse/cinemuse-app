@@ -126,10 +126,7 @@ class UnifiedStreamResolver {
     final kind = MediaItem.fromString(type);
     final numericId = int.tryParse(queryId);
     
-    if (numericId != null) {
-       _mediaRepository.markAsExternalFetch(numericId, kind, true);
-    }
-
+    
     try {
       if (_sources.isEmpty) {
         throw NoProvidersEnabledException();
@@ -140,7 +137,8 @@ class UnifiedStreamResolver {
       if (details == null) throw MediaDetailsResolutionException();
 
       // Proactively ingest into cache since we have full details
-      _mediaRepository.ingestTmdbDetails(details, kind).catchError((_) {});
+      final item = MediaItem.fromTmdbDetails(details, kind);
+      _mediaRepository.saveMediaItem(item).catchError((_) {});
 
       final tmdbId = int.tryParse(queryId) ?? int.tryParse(details['id'].toString());
       String? imdbId = details['external_ids']?['imdb_id'] ?? details['imdb_id'];
@@ -241,9 +239,6 @@ class UnifiedStreamResolver {
       throw StreamResolutionFailedException(e.toString());
     } finally {
       statusTimer?.cancel();
-      if (numericId != null) {
-        _mediaRepository.markAsExternalFetch(numericId, kind, false);
-      }
     }
   }
 

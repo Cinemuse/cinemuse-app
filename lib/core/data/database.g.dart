@@ -137,17 +137,6 @@ class $CachedMediaItemsTable extends CachedMediaItems
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _expiryDateMeta = const VerificationMeta(
-    'expiryDate',
-  );
-  @override
-  late final GeneratedColumn<DateTime> expiryDate = GeneratedColumn<DateTime>(
-    'expiry_date',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
   @override
   List<GeneratedColumn> get $columns => [
     tmdbId,
@@ -162,7 +151,6 @@ class $CachedMediaItemsTable extends CachedMediaItems
     releaseDate,
     voteAverage,
     updatedAt,
-    expiryDate,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -269,14 +257,6 @@ class $CachedMediaItemsTable extends CachedMediaItems
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
-    if (data.containsKey('expiry_date')) {
-      context.handle(
-        _expiryDateMeta,
-        expiryDate.isAcceptableOrUnknown(data['expiry_date']!, _expiryDateMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_expiryDateMeta);
-    }
     return context;
   }
 
@@ -337,11 +317,6 @@ class $CachedMediaItemsTable extends CachedMediaItems
             DriftSqlType.dateTime,
             data['${effectivePrefix}updated_at'],
           )!,
-      expiryDate:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.dateTime,
-            data['${effectivePrefix}expiry_date'],
-          )!,
     );
   }
 
@@ -364,7 +339,6 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
   final DateTime? releaseDate;
   final double? voteAverage;
   final DateTime updatedAt;
-  final DateTime expiryDate;
   const CachedMediaItem({
     required this.tmdbId,
     required this.mediaType,
@@ -378,7 +352,6 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
     this.releaseDate,
     this.voteAverage,
     required this.updatedAt,
-    required this.expiryDate,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -413,7 +386,6 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
       map['vote_average'] = Variable<double>(voteAverage);
     }
     map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['expiry_date'] = Variable<DateTime>(expiryDate);
     return map;
   }
 
@@ -456,7 +428,6 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
               ? const Value.absent()
               : Value(voteAverage),
       updatedAt: Value(updatedAt),
-      expiryDate: Value(expiryDate),
     );
   }
 
@@ -478,7 +449,6 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
       releaseDate: serializer.fromJson<DateTime?>(json['releaseDate']),
       voteAverage: serializer.fromJson<double?>(json['voteAverage']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      expiryDate: serializer.fromJson<DateTime>(json['expiryDate']),
     );
   }
   @override
@@ -497,7 +467,6 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
       'releaseDate': serializer.toJson<DateTime?>(releaseDate),
       'voteAverage': serializer.toJson<double?>(voteAverage),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'expiryDate': serializer.toJson<DateTime>(expiryDate),
     };
   }
 
@@ -514,7 +483,6 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
     Value<DateTime?> releaseDate = const Value.absent(),
     Value<double?> voteAverage = const Value.absent(),
     DateTime? updatedAt,
-    DateTime? expiryDate,
   }) => CachedMediaItem(
     tmdbId: tmdbId ?? this.tmdbId,
     mediaType: mediaType ?? this.mediaType,
@@ -529,7 +497,6 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
     releaseDate: releaseDate.present ? releaseDate.value : this.releaseDate,
     voteAverage: voteAverage.present ? voteAverage.value : this.voteAverage,
     updatedAt: updatedAt ?? this.updatedAt,
-    expiryDate: expiryDate ?? this.expiryDate,
   );
   CachedMediaItem copyWithCompanion(CachedMediaItemsCompanion data) {
     return CachedMediaItem(
@@ -555,8 +522,6 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
       voteAverage:
           data.voteAverage.present ? data.voteAverage.value : this.voteAverage,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      expiryDate:
-          data.expiryDate.present ? data.expiryDate.value : this.expiryDate,
     );
   }
 
@@ -574,8 +539,7 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
           ..write('castMembers: $castMembers, ')
           ..write('releaseDate: $releaseDate, ')
           ..write('voteAverage: $voteAverage, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('expiryDate: $expiryDate')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -594,7 +558,6 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
     releaseDate,
     voteAverage,
     updatedAt,
-    expiryDate,
   );
   @override
   bool operator ==(Object other) =>
@@ -611,8 +574,7 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
           other.castMembers == this.castMembers &&
           other.releaseDate == this.releaseDate &&
           other.voteAverage == this.voteAverage &&
-          other.updatedAt == this.updatedAt &&
-          other.expiryDate == this.expiryDate);
+          other.updatedAt == this.updatedAt);
 }
 
 class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
@@ -628,7 +590,6 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
   final Value<DateTime?> releaseDate;
   final Value<double?> voteAverage;
   final Value<DateTime> updatedAt;
-  final Value<DateTime> expiryDate;
   final Value<int> rowid;
   const CachedMediaItemsCompanion({
     this.tmdbId = const Value.absent(),
@@ -643,7 +604,6 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
     this.releaseDate = const Value.absent(),
     this.voteAverage = const Value.absent(),
     this.updatedAt = const Value.absent(),
-    this.expiryDate = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CachedMediaItemsCompanion.insert({
@@ -659,12 +619,10 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
     this.releaseDate = const Value.absent(),
     this.voteAverage = const Value.absent(),
     required DateTime updatedAt,
-    required DateTime expiryDate,
     this.rowid = const Value.absent(),
   }) : tmdbId = Value(tmdbId),
        mediaType = Value(mediaType),
-       updatedAt = Value(updatedAt),
-       expiryDate = Value(expiryDate);
+       updatedAt = Value(updatedAt);
   static Insertable<CachedMediaItem> custom({
     Expression<int>? tmdbId,
     Expression<String>? mediaType,
@@ -678,7 +636,6 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
     Expression<DateTime>? releaseDate,
     Expression<double>? voteAverage,
     Expression<DateTime>? updatedAt,
-    Expression<DateTime>? expiryDate,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -694,7 +651,6 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
       if (releaseDate != null) 'release_date': releaseDate,
       if (voteAverage != null) 'vote_average': voteAverage,
       if (updatedAt != null) 'updated_at': updatedAt,
-      if (expiryDate != null) 'expiry_date': expiryDate,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -712,7 +668,6 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
     Value<DateTime?>? releaseDate,
     Value<double?>? voteAverage,
     Value<DateTime>? updatedAt,
-    Value<DateTime>? expiryDate,
     Value<int>? rowid,
   }) {
     return CachedMediaItemsCompanion(
@@ -728,7 +683,6 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
       releaseDate: releaseDate ?? this.releaseDate,
       voteAverage: voteAverage ?? this.voteAverage,
       updatedAt: updatedAt ?? this.updatedAt,
-      expiryDate: expiryDate ?? this.expiryDate,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -772,9 +726,6 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (expiryDate.present) {
-      map['expiry_date'] = Variable<DateTime>(expiryDate.value);
-    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -796,7 +747,6 @@ class CachedMediaItemsCompanion extends UpdateCompanion<CachedMediaItem> {
           ..write('releaseDate: $releaseDate, ')
           ..write('voteAverage: $voteAverage, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('expiryDate: $expiryDate, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3054,7 +3004,6 @@ typedef $$CachedMediaItemsTableCreateCompanionBuilder =
       Value<DateTime?> releaseDate,
       Value<double?> voteAverage,
       required DateTime updatedAt,
-      required DateTime expiryDate,
       Value<int> rowid,
     });
 typedef $$CachedMediaItemsTableUpdateCompanionBuilder =
@@ -3071,7 +3020,6 @@ typedef $$CachedMediaItemsTableUpdateCompanionBuilder =
       Value<DateTime?> releaseDate,
       Value<double?> voteAverage,
       Value<DateTime> updatedAt,
-      Value<DateTime> expiryDate,
       Value<int> rowid,
     });
 
@@ -3141,11 +3089,6 @@ class $$CachedMediaItemsTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get expiryDate => $composableBuilder(
-    column: $table.expiryDate,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3218,11 +3161,6 @@ class $$CachedMediaItemsTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<DateTime> get expiryDate => $composableBuilder(
-    column: $table.expiryDate,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $$CachedMediaItemsTableAnnotationComposer
@@ -3281,11 +3219,6 @@ class $$CachedMediaItemsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get expiryDate => $composableBuilder(
-    column: $table.expiryDate,
-    builder: (column) => column,
-  );
 }
 
 class $$CachedMediaItemsTableTableManager
@@ -3344,7 +3277,6 @@ class $$CachedMediaItemsTableTableManager
                 Value<DateTime?> releaseDate = const Value.absent(),
                 Value<double?> voteAverage = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
-                Value<DateTime> expiryDate = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CachedMediaItemsCompanion(
                 tmdbId: tmdbId,
@@ -3359,7 +3291,6 @@ class $$CachedMediaItemsTableTableManager
                 releaseDate: releaseDate,
                 voteAverage: voteAverage,
                 updatedAt: updatedAt,
-                expiryDate: expiryDate,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3376,7 +3307,6 @@ class $$CachedMediaItemsTableTableManager
                 Value<DateTime?> releaseDate = const Value.absent(),
                 Value<double?> voteAverage = const Value.absent(),
                 required DateTime updatedAt,
-                required DateTime expiryDate,
                 Value<int> rowid = const Value.absent(),
               }) => CachedMediaItemsCompanion.insert(
                 tmdbId: tmdbId,
@@ -3391,7 +3321,6 @@ class $$CachedMediaItemsTableTableManager
                 releaseDate: releaseDate,
                 voteAverage: voteAverage,
                 updatedAt: updatedAt,
-                expiryDate: expiryDate,
                 rowid: rowid,
               ),
           withReferenceMapper:
@@ -4705,7 +4634,7 @@ class $AppDatabaseManager {
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appDatabaseHash() => r'd448e60c82cde399a217c3bc2afd816758a0815b';
+String _$appDatabaseHash() => r'105bd8a8ef41e172ff5db2d8e451479a0697fd42';
 
 /// See also [appDatabase].
 @ProviderFor(appDatabase)

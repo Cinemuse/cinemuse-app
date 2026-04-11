@@ -46,29 +46,6 @@ class MediaItem {
     return title;
   }
 
-  /// True if the item is missing crucial metadata for the UI (e.g. titles, backdrop).
-  bool get isIncomplete => 
-      backdropPath == null || 
-      posterPath == null || 
-      titleEn == null ||
-      (castMembers == null || castMembers!.isEmpty);
-
-  /// Decides if a background repair is actually necessary.
-  /// Throttles repairs for items that are 'incomplete' but were recently updated.
-  bool get needsMetadataRepair {
-    // 1. Critical: Missing English title is always a repair trigger.
-    if (titleEn == null) return true;
-
-    // 2. Secondary: If incomplete (missing secondary titles/images), 
-    // only repair if we haven't tried in the last 24 hours.
-    if (isIncomplete) {
-      final hoursSinceUpdate = DateTime.now().difference(updatedAt).inHours;
-      return hoursSinceUpdate >= 24;
-    }
-
-    return false;
-  }
-
   static MediaKind fromString(String type) {
     if (type == 'series' || type == 'tv') return MediaKind.tv;
     if (type == 'episode') return MediaKind.episode;
