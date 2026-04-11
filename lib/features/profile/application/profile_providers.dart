@@ -92,7 +92,21 @@ final watchHistoryStreamProvider = StreamProvider<List<WatchHistory>>((ref) {
   });
 });
 
-// 4. Computed Stats Provider (Fetching from Supabase View)
+// 4. Recently Watched Stream Provider (Log-based, permanent history)
+final recentlyWatchedStreamProvider = StreamProvider<List<WatchHistory>>((ref) {
+  final userId = ref.watch(userIdProvider);
+  if (userId == null) return Stream.value([]);
+  
+  return ref.watch(watchHistoryRepositoryProvider).watchRecentHistoryStream(userId)
+      .handleError((error, stackTrace) {
+    if (error is RealtimeSubscribeException) {
+      return <WatchHistory>[];
+    }
+    throw error;
+  });
+});
+
+// 5. Computed Stats Provider (Fetching from Supabase View)
 final profileStatsProvider = StreamProvider<ProfileStats>((ref) async* {
   final userId = ref.watch(userIdProvider);
   if (userId == null) {

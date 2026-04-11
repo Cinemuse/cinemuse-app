@@ -91,8 +91,7 @@ final mediaWatchHistoryProvider = Provider.family<AsyncValue<WatchHistory?>, Str
 
 // StateNotifier for managing series logs with optimistic updates
 class OptimisticSeriesLogs extends FamilyStreamNotifier<List<Map<String, dynamic>>, int> {
-  // Store local optimistic updates: 'season-episode' -> isWatched (true=add, false=remove)
-  // We use a map to handle multiple rapid updates
+  // Key: "season-episode" -> true (added), false (removed)
   final Map<String, bool> _optimisticUpdates = {};
 
   @override
@@ -102,57 +101,65 @@ class OptimisticSeriesLogs extends FamilyStreamNotifier<List<Map<String, dynamic
     
     final repository = ref.watch(watchHistoryRepositoryProvider);
     return repository.watchSeriesLogs(userId, arg).handleError((error) {
-      if (error is AppException && error.type == AppExceptionType.realtime) {
+       if (error is AppException && error.type == AppExceptionType.realtime) {
         return <Map<String, dynamic>>[];
       }
       throw error;
-    });
+    }).map((logs) => _applyOptimisticUpdates(logs));
   }
 
-  // Apply an optimistic update
   void addOptimisticUpdate(int season, int episode, bool isWatched) {
     final key = '$season-$episode';
     _optimisticUpdates[key] = isWatched;
-    
-    // Force a rebuild with current state + optimistic changes
-    state = state.whenData((logs) => _applyOptimisticUpdates(logs));
+    _forceRebuild();
   }
 
-  // Clear optimistic updates (usually after a successful server sync or error)
+  void _forceRebuild() {
+    state.whenData((logs) {
+      state = AsyncValue.data(_applyOptimisticUpdates(logs));
+    });
+  }
+
   void clearOptimisticUpdates() {
     _optimisticUpdates.clear();
-    // Revert to original stream state (or let stream update naturally)
     ref.invalidateSelf();
   }
 
   List<Map<String, dynamic>> _applyOptimisticUpdates(List<Map<String, dynamic>> currentLogs) {
-    // Create a mutable copy
-    final List<Map<String, dynamic>> updatedLogs = List.from(currentLogs);
-    final Set<String> currentKeys = currentLogs
+    // 0. Build current server state map
+    final Set<String> serverKeys = currentLogs
         .map((l) => '${l['season']}-${l['episode']}')
         .toSet();
 
+    // 1. Self-Cleaning: Prune confirmed changes from the local map
+    _optimisticUpdates.removeWhere((key, isWatched) {
+      final exists = serverKeys.contains(key);
+      return (isWatched && exists) || (!isWatched && !exists);
+    });
+
+    final List<Map<String, dynamic>> updatedLogs = List.from(currentLogs);
+    final Set<String> activeKeys = Set.from(serverKeys);
+
+    // 2. Apply remaining optimistic updates that aren't on the server yet
     _optimisticUpdates.forEach((key, isWatched) {
       final parts = key.split('-');
       final s = int.parse(parts[0]);
       final e = int.parse(parts[1]);
       
       if (isWatched) {
-        // optimistically add log if not present
-        if (!currentKeys.contains(key)) {
+        if (!activeKeys.contains(key)) {
           updatedLogs.add({
             'season': s,
             'episode': e,
             'media_type': 'tv',
-            'logged_at': DateTime.now().toIso8601String(), // Temporary timestamp
+            'logged_at': DateTime.now().toIso8601String(),
             'is_optimistic': true,
           });
-          currentKeys.add(key);
+          activeKeys.add(key);
         }
       } else {
-        // optimistically remove log
         updatedLogs.removeWhere((l) => l['season'] == s && l['episode'] == e);
-        currentKeys.remove(key);
+        activeKeys.remove(key);
       }
     });
 
@@ -235,9 +242,10 @@ final episodeProgressMapProvider = StreamProvider.family<Map<String, WatchHistor
 
 // StateNotifier for managing movie logs with optimistic updates
 class OptimisticMovieLogs extends FamilyStreamNotifier<List<Map<String, dynamic>>, int> {
-  // Key: logged_at ISO string -> isWatched (always true for additions here)
-  final Map<String, bool> _optimisticUpdates = {};
-  int _optimisticRemovals = 0;
+  // Sets of normalized "logged_at" strings to manage additions and removals
+  final Set<String> _optimisticAdditions = {};
+  final Set<String> _optimisticRemovals = {};
+  bool _clearAll = false;
 
   @override
   Stream<List<Map<String, dynamic>>> build(int arg) {
@@ -253,58 +261,92 @@ class OptimisticMovieLogs extends FamilyStreamNotifier<List<Map<String, dynamic>
     }).map((logs) => _applyOptimisticUpdates(logs));
   }
 
+  String _normalizeTimestamp(String ts) {
+    if (ts.isEmpty) return ts;
+    try {
+      final date = DateTime.parse(ts);
+      return DateTime(date.year, date.month, date.day, date.hour, date.minute, date.second).toIso8601String();
+    } catch (_) {
+      return ts;
+    }
+  }
+
   void addOptimisticLog(String loggedAt) {
-    _optimisticUpdates[loggedAt] = true;
+    final normalized = _normalizeTimestamp(loggedAt);
+    _optimisticRemovals.remove(normalized);
+    _optimisticAdditions.add(normalized);
+    _clearAll = false;
     _forceRebuild();
   }
 
   void removeOptimisticLog() {
-    _optimisticRemovals++;
-    _forceRebuild();
-  }
+    state.whenData((logs) {
+      if (logs.isEmpty) return;
+      
+      final sorted = List<Map<String, dynamic>>.from(logs)
+        ..sort((a, b) => (b['logged_at'] as String).compareTo(a['logged_at'] as String));
+      
+      final latest = sorted.first;
+      final normalized = _normalizeTimestamp(latest['logged_at'] as String);
 
-  void _forceRebuild() {
-    if (state.hasValue) {
-      state = AsyncValue.data(_applyOptimisticUpdates(state.value!));
-    }
+      if (latest['is_optimistic'] == true) {
+        _optimisticAdditions.remove(normalized);
+      } else {
+        _optimisticRemovals.add(normalized);
+      }
+      _forceRebuild();
+    });
   }
 
   void clearOptimisticOffset() {
-    _optimisticRemovals = 9999;
+    _optimisticAdditions.clear();
+    _optimisticRemovals.clear();
+    _clearAll = true;
     _forceRebuild();
   }
 
   void clearOptimisticUpdates() {
-    _optimisticUpdates.clear();
-    _optimisticRemovals = 0;
+    _optimisticAdditions.clear();
+    _optimisticRemovals.clear();
+    _clearAll = false;
     ref.invalidateSelf();
   }
 
+  void _forceRebuild() {
+    state.whenData((logs) {
+      state = AsyncValue.data(_applyOptimisticUpdates(logs));
+    });
+  }
+
   List<Map<String, dynamic>> _applyOptimisticUpdates(List<Map<String, dynamic>> currentLogs) {
-    final updatedLogs = List<Map<String, dynamic>>.from(currentLogs);
-    final Set<String> currentKeys = currentLogs
-        .map((l) => l['logged_at'] as String? ?? '')
+    if (_clearAll) return [];
+
+    final Set<String> serverKeys = currentLogs
+        .map((l) => _normalizeTimestamp(l['logged_at'] as String? ?? ''))
         .toSet();
 
-    // 1. Additions: Only add if not already in the stream with the same timestamp
-    _optimisticUpdates.forEach((loggedAt, _) {
-      if (!currentKeys.contains(loggedAt)) {
+    // 1. Self-Cleaning: Prune confirmed entries
+    _optimisticAdditions.removeWhere((key) => serverKeys.contains(key));
+    _optimisticRemovals.removeWhere((key) => !serverKeys.contains(key));
+
+    final updatedLogs = List<Map<String, dynamic>>.from(currentLogs);
+    
+    // 2. Hide removals still present in the stream
+    updatedLogs.removeWhere((l) => _optimisticRemovals.contains(_normalizeTimestamp(l['logged_at'] as String? ?? '')));
+
+    final Set<String> activeKeys = updatedLogs
+        .map((l) => _normalizeTimestamp(l['logged_at'] as String? ?? ''))
+        .toSet();
+
+    // 3. Add additions not yet present in the stream
+    for (final loggedAt in _optimisticAdditions) {
+      if (!activeKeys.contains(loggedAt)) {
         updatedLogs.add({
           'media_type': 'movie',
           'logged_at': loggedAt,
           'is_optimistic': true,
         });
-        currentKeys.add(loggedAt);
-      }
-    });
-
-    // 2. Removals: Hide the latest logs
-    if (_optimisticRemovals > 0) {
-      if (_optimisticRemovals >= 9999) return [];
-      
-      updatedLogs.sort((a, b) => (b['logged_at'] as String).compareTo(a['logged_at'] as String));
-      for (int i = 0; i < _optimisticRemovals && updatedLogs.isNotEmpty; i++) {
-        updatedLogs.removeAt(0);
+        activeKeys.add(loggedAt);
       }
     }
 

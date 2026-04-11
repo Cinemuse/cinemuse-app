@@ -15,25 +15,11 @@ class ProfileOverview extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final historyAsync = ref.watch(watchHistoryStreamProvider);
+    final historyAsync = ref.watch(recentlyWatchedStreamProvider);
     final history = historyAsync.valueOrNull ?? [];
     
-    // Group history items by tmdbId to show each title only once
-    List<WatchHistory> groupHistory(List<WatchHistory> items) {
-      final groups = <int, WatchHistory>{};
-      for (final item in items) {
-        if (!groups.containsKey(item.tmdbId)) {
-          groups[item.tmdbId] = item;
-        } else if (item.lastWatchedAt.isAfter(groups[item.tmdbId]!.lastWatchedAt)) {
-          groups[item.tmdbId] = item;
-        }
-      }
-      return groups.values.toList()
-        ..sort((a, b) => b.lastWatchedAt.compareTo(a.lastWatchedAt));
-    }
-
-    final groupedMovies = groupHistory(history.where((h) => h.mediaType == MediaKind.movie).toList());
-    final groupedSeries = groupHistory(history.where((h) => h.mediaType == MediaKind.tv).toList());
+    final groupedMovies = history.where((h) => h.mediaType == MediaKind.movie).toList();
+    final groupedSeries = history.where((h) => h.mediaType == MediaKind.tv).toList();
     final statsAsync = ref.watch(profileStatsProvider);
     final stats = statsAsync.valueOrNull ?? ProfileStats.empty();
 

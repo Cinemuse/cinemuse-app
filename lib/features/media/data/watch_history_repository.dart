@@ -254,6 +254,103 @@ class WatchHistoryRepository {
     });
   }
 
+  /// Streams the latest unique media items that have been watched (completed).
+  /// Derived from watch_logs to ensure persistence after clearing progress.
+  /// Combines remote logs with local Drift progress for instant UI updates.
+  Stream<List<WatchHistory>> watchRecentHistoryStream(String userId) {
+    final remoteLogsStream = _client
+        .from('watch_logs')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .order('logged_at', ascending: false)
+        .withErrorHandling();
+
+    final localHistoryStream = watchAllHistory(userId);
+
+    // We use a StreamController to merge and process these streams
+    final controller = StreamController<List<WatchHistory>>();
+    List<WatchHistory> latestRemote = [];
+    List<WatchHistory> latestLocal = [];
+
+    void emitMerged() {
+      // Group by unique media (tmdbId + mediaType)
+      final merged = <String, WatchHistory>{};
+
+      // 1. Process Remote Logs (Permanent history)
+      for (final log in latestRemote) {
+        final key = '${log.tmdbId}-${log.mediaType.name}';
+        if (!merged.containsKey(key)) merged[key] = log;
+      }
+
+      // 2. Process Local History (Instant progress-based tracking)
+      // Only include completed items or items with progress that we want to show as "recent"
+      for (final item in latestLocal) {
+        // Only include if it's completed (manually tracked)
+        if (item.status == WatchStatus.completed) {
+           final key = '${item.tmdbId}-${item.mediaType.name}';
+           final existing = merged[key];
+           if (existing == null || item.lastWatchedAt.isAfter(existing.lastWatchedAt)) {
+             merged[key] = item;
+           }
+        }
+      }
+
+      final results = merged.values.toList()
+        ..sort((a, b) => b.lastWatchedAt.compareTo(a.lastWatchedAt));
+      
+      if (!controller.isClosed) {
+        controller.add(results);
+      }
+    }
+
+    // Subscribe to remote logs
+    final remoteSub = remoteLogsStream.asyncMap((logs) async {
+      // Basic grouping for the remote part
+      final uniqueRemote = <String, Map<String, dynamic>>{};
+      for (final log in logs) {
+        final key = '${log['tmdb_id']}-${log['media_type']}';
+        if (!uniqueRemote.containsKey(key)) uniqueRemote[key] = log;
+      }
+
+      final futures = uniqueRemote.values.map((log) async {
+        final tmdbId = log['tmdb_id'] as int;
+        final type = (log['media_type'] as String) == 'tv' ? MediaKind.tv : MediaKind.movie;
+        final media = await _mediaRepo.getMediaItem(tmdbId, type);
+        
+        return WatchHistory(
+          userId: userId,
+          tmdbId: tmdbId,
+          mediaType: type,
+          status: WatchStatus.completed,
+          progressSeconds: 0,
+          totalDuration: 0,
+          watchCount: 0,
+          lastWatchedAt: DateTime.parse(log['logged_at'] as String),
+          season: log['season'] as int?,
+          episode: log['episode'] as int?,
+          media: media,
+        );
+      });
+      return await Future.wait(futures);
+    }).listen((data) {
+      latestRemote = data;
+      emitMerged();
+    }, onError: (e) => controller.addError(e));
+
+    // Subscribe to local history (instant)
+    final localSub = localHistoryStream.listen((data) {
+      latestLocal = data;
+      emitMerged();
+    }, onError: (e) => controller.addError(e));
+
+    controller.onCancel = () {
+      remoteSub.cancel();
+      localSub.cancel();
+    };
+
+    return controller.stream;
+  }
+
   /// Syncs watch history from Supabase to Drift.
   /// Should be called on app startup or periodically.
   Future<void> syncWatchHistory(String userId) async {
