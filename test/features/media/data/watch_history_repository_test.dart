@@ -4,7 +4,9 @@ import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:drift/native.dart';
+import 'package:drift/drift.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -12,6 +14,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class MockSupabaseClient extends Mock implements SupabaseClient {}
 class MockMediaRepository extends Mock implements MediaRepository {}
 class MockSeriesDomainService extends Mock implements SeriesDomainService {}
+class MockTmdbService extends Mock implements TmdbService {}
 
 class FakeFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
   final T _value;
@@ -47,6 +50,7 @@ void main() {
   late AppDatabase database;
   late MediaRepository mediaRepo;
   late MockSeriesDomainService mockSeriesService;
+  late MockTmdbService mockTmdb;
 
   setUp(() {
     mockSupabase = MockSupabaseClient();

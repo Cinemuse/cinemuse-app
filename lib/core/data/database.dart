@@ -208,6 +208,18 @@ class AppDatabase extends _$AppDatabase {
     return into(localWatchHistories).insertOnConflictUpdate(entry);
   }
 
+  // Delete a specific watch history entry (or all episodes for a tv show)
+  Future<void> deleteWatchHistoryItem(String userId, int tmdbId, String mediaType, {int? season, int? episode}) {
+    return (delete(localWatchHistories)
+          ..where((t) {
+            var predicate = t.userId.equals(userId) & t.tmdbId.equals(tmdbId) & t.mediaType.equals(mediaType);
+            if (season != null) predicate = predicate & t.season.equals(season);
+            if (episode != null) predicate = predicate & t.episode.equals(episode);
+            return predicate;
+          }))
+        .go();
+  }
+
   // Sync whole watch history
   Future<void> syncWatchHistory(String userId, List<LocalWatchHistoriesCompanion> entries) async {
     await batch((batch) {

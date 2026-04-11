@@ -232,3 +232,96 @@ final episodeProgressMapProvider = StreamProvider.family<Map<String, WatchHistor
     throw error;
   });
 });
+
+// StateNotifier for managing movie logs with optimistic updates
+class OptimisticMovieLogs extends FamilyStreamNotifier<List<Map<String, dynamic>>, int> {
+  // Key: logged_at ISO string -> isWatched (always true for additions here)
+  final Map<String, bool> _optimisticUpdates = {};
+  int _optimisticRemovals = 0;
+
+  @override
+  Stream<List<Map<String, dynamic>>> build(int arg) {
+    final userId = ref.watch(authProvider).asData?.value?.id;
+    if (userId == null) return Stream.value([]);
+    
+    final repository = ref.watch(watchHistoryRepositoryProvider);
+    return repository.watchMovieLogs(userId, arg).handleError((error) {
+      if (error is AppException && error.type == AppExceptionType.realtime) {
+        return <Map<String, dynamic>>[];
+      }
+      throw error;
+    }).map((logs) => _applyOptimisticUpdates(logs));
+  }
+
+  void addOptimisticLog(String loggedAt) {
+    _optimisticUpdates[loggedAt] = true;
+    _forceRebuild();
+  }
+
+  void removeOptimisticLog() {
+    _optimisticRemovals++;
+    _forceRebuild();
+  }
+
+  void _forceRebuild() {
+    if (state.hasValue) {
+      state = AsyncValue.data(_applyOptimisticUpdates(state.value!));
+    }
+  }
+
+  void clearOptimisticOffset() {
+    _optimisticRemovals = 9999;
+    _forceRebuild();
+  }
+
+  void clearOptimisticUpdates() {
+    _optimisticUpdates.clear();
+    _optimisticRemovals = 0;
+    ref.invalidateSelf();
+  }
+
+  List<Map<String, dynamic>> _applyOptimisticUpdates(List<Map<String, dynamic>> currentLogs) {
+    final updatedLogs = List<Map<String, dynamic>>.from(currentLogs);
+    final Set<String> currentKeys = currentLogs
+        .map((l) => l['logged_at'] as String? ?? '')
+        .toSet();
+
+    // 1. Additions: Only add if not already in the stream with the same timestamp
+    _optimisticUpdates.forEach((loggedAt, _) {
+      if (!currentKeys.contains(loggedAt)) {
+        updatedLogs.add({
+          'media_type': 'movie',
+          'logged_at': loggedAt,
+          'is_optimistic': true,
+        });
+        currentKeys.add(loggedAt);
+      }
+    });
+
+    // 2. Removals: Hide the latest logs
+    if (_optimisticRemovals > 0) {
+      if (_optimisticRemovals >= 9999) return [];
+      
+      updatedLogs.sort((a, b) => (b['logged_at'] as String).compareTo(a['logged_at'] as String));
+      for (int i = 0; i < _optimisticRemovals && updatedLogs.isNotEmpty; i++) {
+        updatedLogs.removeAt(0);
+      }
+    }
+
+    return updatedLogs;
+  }
+}
+
+// Provider for the optimistic movie logs
+final movieWatchLogsProvider = StreamNotifierProvider.family<OptimisticMovieLogs, List<Map<String, dynamic>>, int>(() {
+  return OptimisticMovieLogs();
+});
+
+// Helper provider to get global movie watch count
+final movieWatchCountProvider = Provider.family<int, int>((ref, tmdbId) {
+  final logsAsync = ref.watch(movieWatchLogsProvider(tmdbId));
+  return logsAsync.maybeWhen(
+    data: (logs) => logs.length,
+    orElse: () => 0,
+  );
+});

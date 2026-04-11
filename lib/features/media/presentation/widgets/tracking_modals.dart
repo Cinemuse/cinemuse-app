@@ -278,3 +278,99 @@ Future<DateTime?> _selectDate(BuildContext context) async {
     },
   );
 }
+
+/// Modal for managing a movie's tracking options.
+class MovieTrackModal extends StatefulWidget {
+  final String title;
+  final int watchCount;
+  final Function(DateTime? date) onRewatch;
+  final VoidCallback onRemoveOne;
+  final VoidCallback onRemoveAll;
+
+  const MovieTrackModal({
+    super.key,
+    required this.title,
+    required this.watchCount,
+    required this.onRewatch,
+    required this.onRemoveOne,
+    required this.onRemoveAll,
+  });
+
+  @override
+  State<MovieTrackModal> createState() => _MovieTrackModalState();
+}
+
+class _MovieTrackModalState extends State<MovieTrackModal> {
+  DateTime? _selectedDate;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppTheme.secondary,
+      surfaceTintColor: Colors.transparent,
+      contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Row(
+        children: [
+          const Icon(Icons.history, color: AppTheme.accent, size: 24),
+          const SizedBox(width: 12),
+          Expanded(child: Text(widget.title, style: const TextStyle(color: Colors.white, fontSize: 18), overflow: TextOverflow.ellipsis)),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Manage your history for this movie.',
+            style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+          ),
+          const SizedBox(height: 24),
+          
+          _ModalButton(
+            icon: Icons.replay,
+            label: widget.watchCount > 0 ? 'Mark a Rewatch' : 'Mark as Watched',
+            subtitle: _selectedDate == null ? 'Today' : 'Watched on ${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
+            color: AppTheme.accent,
+            onTap: () {
+              Navigator.pop(context);
+              widget.onRewatch(_selectedDate);
+            },
+            onSecondaryTap: () async {
+              final date = await _selectDate(context);
+              if (date != null) setState(() => _selectedDate = date);
+            },
+          ),
+          
+          if (widget.watchCount > 0) ...[
+            const SizedBox(height: 12),
+            
+            _ModalButton(
+              icon: Icons.remove_circle_outline,
+              label: 'Remove One Watch',
+              subtitle: 'Delete the latest entry',
+              color: Colors.orangeAccent,
+              onTap: () {
+                Navigator.pop(context);
+                widget.onRemoveOne();
+              },
+            ),
+            
+            const SizedBox(height: 12),
+            
+            _ModalButton(
+              icon: Icons.delete_outline,
+              label: 'Remove All History',
+              subtitle: 'Clear all logs for this movie',
+              color: Colors.redAccent,
+              onTap: () {
+                Navigator.pop(context);
+                widget.onRemoveAll();
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

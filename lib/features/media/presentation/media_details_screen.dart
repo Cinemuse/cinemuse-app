@@ -165,6 +165,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                   totalEpisodes: _calculateReleasedEpisodes(details),
                 )))
               : null;
+          final movieWatchCount = !isTV ? ref.watch(movieWatchCountProvider(tmdbId)) : 0;
           final hasFinances = (details['budget'] as int? ?? 0) > 0 || (details['revenue'] as int? ?? 0) > 0;
 
           // Set default tab if not set
@@ -198,7 +199,10 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                   onPlayClick: () => _handlePlay(context, watchHistory, typeForTmdb),
                   onDeepSearch: (params) => {},
                   onListTap: () => _showAddToList(context, tmdbId, typeForTmdb, details),
-                  onTrackTap: isTV ? () => _showSeriesTrackModal(context, controller, tmdbId, details, seriesWatchStatus) : null,
+                  onTrackTap: isTV 
+                      ? () => _showSeriesTrackModal(context, controller, tmdbId, details, seriesWatchStatus) 
+                      : () => _showMovieTrackModal(context, controller, tmdbId, details, movieWatchCount),
+                  movieWatchCount: movieWatchCount,
                   contentPadding: responsivePadding,
                 ),
               ),
@@ -405,6 +409,28 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         onMarkRemaining: (date) => _markAllEpisodes(controller, tmdbId, details, date, onlyRemaining: true),
         onMarkAll: (date) => _markAllEpisodes(controller, tmdbId, details, date, onlyRemaining: false),
         onRemoveAll: () => controller.deleteAllSeriesLogs(tmdbId: tmdbId),
+      ),
+    );
+  }
+
+  void _showMovieTrackModal(
+    BuildContext context, 
+    MediaDetailsController controller, 
+    int tmdbId, 
+    Map<String, dynamic> details,
+    int watchCount,
+  ) {
+    // Provide a fallback title just in case
+    final title = details['title'] ?? details['name'] ?? 'Movie';
+    
+    showDialog(
+      context: context,
+      builder: (context) => MovieTrackModal(
+        title: title,
+        watchCount: watchCount,
+        onRewatch: (date) => controller.logMovieWatch(tmdbId: tmdbId, loggedAt: date),
+        onRemoveOne: () => controller.deleteLatestMovieLog(tmdbId: tmdbId),
+        onRemoveAll: () => controller.deleteAllMovieLogs(tmdbId: tmdbId),
       ),
     );
   }

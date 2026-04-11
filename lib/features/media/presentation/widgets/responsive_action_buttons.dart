@@ -13,6 +13,7 @@ class ResponsiveActionButtons extends StatelessWidget {
   final VoidCallback onListTap;
   final VoidCallback? onTrackTap;
   final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})? seriesWatchStatus;
+  final int? movieWatchCount;
   final double mobileBreakpoint;
 
   const ResponsiveActionButtons({
@@ -25,6 +26,7 @@ class ResponsiveActionButtons extends StatelessWidget {
     required this.onListTap,
     this.onTrackTap,
     this.seriesWatchStatus,
+    this.movieWatchCount,
     this.mobileBreakpoint = 600.0,
   });
 
@@ -54,6 +56,7 @@ class ResponsiveActionButtons extends StatelessWidget {
                   child: _TrackButton(
                     onTrackTap: onTrackTap!,
                     seriesWatchStatus: seriesWatchStatus,
+                    movieWatchCount: movieWatchCount,
                   ),
                 ),
               ],
@@ -78,6 +81,7 @@ class ResponsiveActionButtons extends StatelessWidget {
           _TrackButton(
             onTrackTap: onTrackTap!,
             seriesWatchStatus: seriesWatchStatus,
+            movieWatchCount: movieWatchCount,
           ),
         ],
       ],
@@ -139,17 +143,20 @@ class _PlayButton extends StatelessWidget {
 class _TrackButton extends StatelessWidget {
   final VoidCallback onTrackTap;
   final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})? seriesWatchStatus;
+  final int? movieWatchCount;
 
   const _TrackButton({
     required this.onTrackTap,
     this.seriesWatchStatus,
+    this.movieWatchCount,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isFullyWatched = seriesWatchStatus?.isFullyWatched ?? false;
+    final isMovie = movieWatchCount != null;
+    final isFullyWatched = seriesWatchStatus?.isFullyWatched ?? (isMovie && movieWatchCount! > 0);
     final isPartiallyWatched = seriesWatchStatus?.isPartiallyWatched ?? false;
-    final minWatchCount = seriesWatchStatus?.minWatchCount ?? 0;
+    final minWatchCount = seriesWatchStatus?.minWatchCount ?? (movieWatchCount ?? 0);
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -187,7 +194,9 @@ class _TrackButton extends StatelessWidget {
                 Flexible(
                   child: Text(
                     isFullyWatched 
-                        ? (minWatchCount > 1 ? 'Up to date x$minWatchCount' : 'Up to date')
+                        ? (isMovie 
+                            ? (minWatchCount > 1 ? 'Watched x$minWatchCount' : 'Watched') 
+                            : (minWatchCount > 1 ? 'Up to date x$minWatchCount' : 'Up to date'))
                         : (isPartiallyWatched ? 'Finish Series' : 'Track'),
                     style: TextStyle(
                       color: isFullyWatched

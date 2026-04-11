@@ -23,6 +23,7 @@ class DetailsHero extends ConsumerWidget {
   final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})? seriesWatchStatus;
   final VoidCallback onListTap;
   final VoidCallback? onTrackTap;
+  final int? movieWatchCount;
 
   const DetailsHero({
     super.key,
@@ -37,6 +38,7 @@ class DetailsHero extends ConsumerWidget {
     this.seriesWatchStatus,
     required this.onListTap,
     this.onTrackTap,
+    this.movieWatchCount,
   });
 
   @override
@@ -286,6 +288,7 @@ class DetailsHero extends ConsumerWidget {
                   onListTap: onListTap,
                   onTrackTap: onTrackTap,
                   seriesWatchStatus: seriesWatchStatus,
+                  movieWatchCount: movieWatchCount,
                 ),
 
                 // Series Progress Bar (extracted)

@@ -255,6 +255,75 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     // Invalidate to refresh UI
     _invalidateLogs(tmdbId);
   }
+
+  Future<void> logMovieWatch({
+    required int tmdbId,
+    DateTime? loggedAt,
+  }) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final now = loggedAt ?? DateTime.now();
+    final loggedAtStr = now.toIso8601String();
+
+    ref.read(movieWatchLogsProvider(tmdbId).notifier).addOptimisticLog(loggedAtStr);
+
+    try {
+      await _repository.logMovieWatch(
+        userId: userId,
+        tmdbId: tmdbId,
+        loggedAt: now,
+      );
+      // No need to invalidate, the stream and optimistic logic handle it
+    } catch (e) {
+      ref.read(movieWatchLogsProvider(tmdbId).notifier).clearOptimisticUpdates();
+      rethrow;
+    }
+  }
+
+  Future<void> deleteLatestMovieLog({
+    required int tmdbId,
+  }) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    ref.read(movieWatchLogsProvider(tmdbId).notifier).removeOptimisticLog();
+
+    try {
+      await _repository.deleteLatestMovieLog(
+        userId: userId,
+        tmdbId: tmdbId,
+      );
+    } catch (e) {
+      ref.read(movieWatchLogsProvider(tmdbId).notifier).clearOptimisticUpdates();
+      rethrow;
+    }
+  }
+
+  Future<void> deleteAllMovieLogs({
+    required int tmdbId,
+  }) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    ref.read(movieWatchLogsProvider(tmdbId).notifier).clearOptimisticOffset();
+
+    try {
+      await _repository.deleteAllMovieLogs(
+        userId: userId,
+        tmdbId: tmdbId,
+      );
+      _invalidateMovieLogs(tmdbId);
+    } catch (e) {
+      ref.read(movieWatchLogsProvider(tmdbId).notifier).clearOptimisticUpdates();
+      rethrow;
+    }
+  }
+
+  void _invalidateMovieLogs(int tmdbId) {
+    ref.invalidate(movieWatchLogsProvider(tmdbId));
+    ref.invalidate(movieWatchCountProvider(tmdbId));
+  }
 }
 
 final mediaDetailsControllerProvider = AutoDisposeNotifierProvider<MediaDetailsController, void>(() {
