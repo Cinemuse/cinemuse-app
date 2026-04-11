@@ -21,10 +21,10 @@ class ChannelListPanel extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           decoration: BoxDecoration(
-            color: AppTheme.surface.withOpacity(0.6),
+            color: AppTheme.surface.withValues(alpha: 0.6),
             border: isMobile 
               ? null
-              : Border(right: BorderSide(color: Colors.white.withOpacity(0.08))),
+              : Border(right: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
           ),
           child: isMobile ? const _MobileLayout() : const _DesktopLayout(),
         ),
@@ -85,9 +85,9 @@ class _GroupSidebar extends ConsumerWidget {
         curve: Curves.fastOutSlowIn,
         width: isGroupsFocused ? 200 : 70,
         decoration: BoxDecoration(
-          color: AppTheme.surface.withOpacity(0.4),
+          color: AppTheme.surface.withValues(alpha: 0.4),
           border: Border(
-            right: BorderSide(color: Colors.white.withOpacity(0.05)),
+            right: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
           ),
         ),
         child: Column(
@@ -202,14 +202,14 @@ class _MobileGroupBar extends ConsumerWidget {
     final selectedGroup = ref.watch(liveTvSelectedGroupProvider);
     final groupMode = ref.watch(liveTvGroupModeProvider);
 
-    return Container(
+    return SizedBox(
       height: 56,
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.only(left: 12, right: 8),
             decoration: BoxDecoration(
-              border: Border(right: BorderSide(color: Colors.white.withOpacity(0.05))),
+              border: Border(right: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
             ),
             child: _CompactGroupingToggle(current: groupMode),
           ),
@@ -487,7 +487,7 @@ class _GroupTile extends ConsumerWidget {
           ref.read(liveTvSelectedGroupProvider.notifier).state = name;
           ref.read(liveTvPanelFocusProvider.notifier).state = LiveTvPanelFocus.channels;
         },
-        child: Container(
+        child: SizedBox(
           height: 44,
           child: Stack(
             children: [
@@ -558,9 +558,9 @@ class _MobileGroupPill extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.accent.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+              color: isSelected ? AppTheme.accent.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: isSelected ? AppTheme.accent.withOpacity(0.4) : Colors.transparent),
+              border: Border.all(color: isSelected ? AppTheme.accent.withValues(alpha: 0.4) : Colors.transparent),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -606,9 +606,19 @@ class _CompactGroupingToggle extends ConsumerWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _CompactToggleButton(icon: Icons.folder_outlined, isSelected: current == LiveTvGroupMode.category),
+              Flexible(
+                child: _CompactToggleButton(
+                  icon: Icons.folder_outlined, 
+                  isSelected: current == LiveTvGroupMode.category,
+                ),
+              ),
               const SizedBox(width: 4),
-              _CompactToggleButton(icon: Icons.sensors_outlined, isSelected: current == LiveTvGroupMode.provider),
+              Flexible(
+                child: _CompactToggleButton(
+                  icon: Icons.sensors_outlined, 
+                  isSelected: current == LiveTvGroupMode.provider,
+                ),
+              ),
             ],
           ),
         ),
@@ -648,9 +658,9 @@ class _GroupingToggle extends ConsumerWidget {
     return Container(
       height: 36,
       decoration: BoxDecoration(
-        color: AppTheme.surface.withOpacity(0.5),
+        color: AppTheme.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       padding: const EdgeInsets.all(3),
       child: Row(
@@ -679,9 +689,9 @@ class _ToggleButton extends ConsumerWidget {
         duration: const Duration(milliseconds: 200),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.accent.withOpacity(0.2) : Colors.transparent,
+          color: isSelected ? AppTheme.accent.withValues(alpha: 0.2) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? AppTheme.accent.withOpacity(0.5) : Colors.transparent),
+          border: Border.all(color: isSelected ? AppTheme.accent.withValues(alpha: 0.5) : Colors.transparent),
         ),
         child: Text(
           label,
@@ -716,7 +726,7 @@ class _SubProviderHeader extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 4),
       child: Material(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
