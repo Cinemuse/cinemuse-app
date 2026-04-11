@@ -11,6 +11,8 @@ import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
+import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 // Family provider to fetch basic details for a specific media item (with local caching)
 final mediaItemProvider = FutureProvider.family<MediaItem?, ({int id, MediaKind type})>((ref, args) async {
@@ -19,6 +21,9 @@ final mediaItemProvider = FutureProvider.family<MediaItem?, ({int id, MediaKind 
   // 1. Check local cache (Memory/Drift)
   final cached = await repo.getMediaItem(args.id, args.type);
   if (cached != null) return cached;
+
+  final connectivity = ref.watch(connectivityProvider).valueOrNull;
+  if (connectivity == ConnectivityResult.none) return null;
 
   // 2. Fetch from TMDB
   final tmdbService = ref.read(tmdbServiceProvider);
@@ -35,6 +40,9 @@ final mediaItemProvider = FutureProvider.family<MediaItem?, ({int id, MediaKind 
 
 // Family provider to fetch full details for a specific media item (e.g. for details screen)
 final mediaDetailsProvider = FutureProvider.family<Map<String, dynamic>?, ({String id, String type})>((ref, args) async {
+  final connectivity = ref.watch(connectivityProvider).valueOrNull;
+  if (connectivity == ConnectivityResult.none) return null;
+
   final tmdbService = ref.read(tmdbServiceProvider);
   final repo = ref.read(mediaRepositoryProvider);
   final type = MediaItem.fromString(args.type);
@@ -56,6 +64,9 @@ final mediaDetailsProvider = FutureProvider.family<Map<String, dynamic>?, ({Stri
 
 // Family provider to fetch season details
 final seasonDetailsProvider = FutureProvider.family<Map<String, dynamic>?, ({int tmdbId, int seasonNumber})>((ref, args) async {
+  final connectivity = ref.watch(connectivityProvider).valueOrNull;
+  if (connectivity == ConnectivityResult.none) return null;
+
   final tmdbService = ref.read(tmdbServiceProvider);
   return tmdbService.getSeasonDetails(args.tmdbId, args.seasonNumber);
 });

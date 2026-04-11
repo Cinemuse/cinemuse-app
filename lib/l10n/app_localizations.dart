@@ -206,6 +206,18 @@ abstract class AppLocalizations {
   /// **'Max'**
   String get filterMax;
 
+  /// No description provided for @offlineScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection Required'**
+  String get offlineScreenTitle;
+
+  /// No description provided for @offlineScreenMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature requires an internet connection to browse content and stream media.'**
+  String get offlineScreenMessage;
+
   /// No description provided for @searchPlaceholder.
   ///
   /// In en, this message translates to:

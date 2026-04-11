@@ -6,6 +6,7 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:drift/drift.dart';
 import 'package:cinemuse_app/core/data/database.dart' hide MediaItem;
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ListsRepository {
   final SupabaseClient _client;
@@ -19,6 +20,11 @@ class ListsRepository {
     await syncUserLists(userId);
     
     // Fallback fetch from remote if needed for direct await (rarely used now)
+    final connectivity = await Connectivity().checkConnectivity();
+    if (connectivity.isNotEmpty && connectivity.first == ConnectivityResult.none) {
+      // Return local immediately if offline
+      return watchUserLists(userId).first;
+    }
     
     final response = await _client
         .from('lists')
@@ -82,6 +88,11 @@ class ListsRepository {
   /// Synchronize lists and items with Supabase
   Future<void> syncUserLists(String userId) async {
     try {
+      final connectivity = await Connectivity().checkConnectivity();
+      if (connectivity.isNotEmpty && connectivity.first == ConnectivityResult.none) {
+        return; // Don't attempt to sync if offline
+      }
+
       final response = await _client
           .from('lists')
           .select('*, list_items(*, media:media_cache(*))')
@@ -128,7 +139,9 @@ class ListsRepository {
 
       await _db.syncUserLists(userId, lists, items);
     } catch (e) {
-      print('ListsRepository: Sync failed: $e');
+      if (!e.toString().contains('Failed host lookup') && !e.toString().contains('SocketException')) {
+        print('ListsRepository: Sync failed: $e');
+      }
     }
   }
 

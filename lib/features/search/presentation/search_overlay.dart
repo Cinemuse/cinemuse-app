@@ -12,6 +12,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 class SearchOverlay extends ConsumerStatefulWidget {
   final NavigatorState? navigator;
   const SearchOverlay({super.key, this.navigator});
@@ -120,6 +123,8 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay> with SingleTicker
   Widget build(BuildContext context) {
     final searchState = ref.watch(searchProvider);
     final l10n = AppLocalizations.of(context)!;
+    final connectivity = ref.watch(connectivityProvider);
+    final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
 
     return Stack(
       children: [
@@ -167,11 +172,12 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay> with SingleTicker
                                   Expanded(
                                     child: TextField(
                                       controller: _searchController,
+                                      enabled: !isOffline,
                                       focusNode: _focusNode,
                                       cursorColor: Colors.white,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 20, 
-                                        color: Colors.white, 
+                                        color: isOffline ? AppTheme.textMuted : Colors.white, 
                                         fontWeight: FontWeight.w300
                                       ),
                                       decoration: InputDecoration(
@@ -219,7 +225,7 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay> with SingleTicker
                                 maxHeight: MediaQuery.of(context).size.height * 0.7,
                                 minHeight: 200,
                               ),
-                              child: _buildBody(searchState, l10n),
+                              child: _buildBody(searchState, l10n, isOffline),
                             ),
                           ),
                         ],
@@ -235,7 +241,40 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay> with SingleTicker
     );
   }
 
-  Widget _buildBody(SearchState state, AppLocalizations l10n) {
+  Widget _buildBody(SearchState state, AppLocalizations l10n, bool isOffline) {
+     if (isOffline) {
+        return Center(
+           child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                 Icon(
+                    Icons.wifi_off_rounded,
+                    size: 48,
+                    color: AppTheme.textMuted.withValues(alpha: 0.5),
+                 ),
+                 const SizedBox(height: 16),
+                 Text(
+                    l10n.offlineScreenTitle,
+                    style: const TextStyle(
+                       color: AppTheme.textWhite,
+                       fontWeight: FontWeight.bold,
+                       fontSize: 16,
+                    ),
+                 ),
+                 const SizedBox(height: 8),
+                 Text(
+                    l10n.offlineScreenMessage,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                       color: AppTheme.textMuted,
+                       fontSize: 13,
+                    ),
+                 ),
+              ],
+           ),
+        );
+     }
+
      if (state.query.isEmpty) {
         return Center(
            child: Column(

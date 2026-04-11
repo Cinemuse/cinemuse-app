@@ -18,7 +18,8 @@
   "commonOk": "OK",
   "commonUnknown": "Sconosciuto",
   "filterMax": "Max",
-  
+  "offlineScreenTitle": "Connessione Richiesta",
+  "offlineScreenMessage": "Questa funzione richiede una connessione internet per sfogliare i contenuti e avviare lo streaming.",
   "searchPlaceholder": "Cerca film, serie, persone...",
   "searchNoResults": "Nessun risultato trovato per \"{query}\"",
   "searchEmptyStateTitle": "Trova la tua prossima storia preferita",

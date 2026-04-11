@@ -10,6 +10,7 @@ import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
 import 'dart:ffi';
 import 'package:flutter/foundation.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 enum UpdateStatus {
   initial,
@@ -92,12 +93,18 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
       return;
     }
 
-    state = state.copyWith(status: UpdateStatus.checking);
-    debugPrint('UpdateService: Checking for updates for $_owner/$_repo...');
-
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
+
+      final connectivity = await Connectivity().checkConnectivity();
+      if (connectivity.isNotEmpty && connectivity.first == ConnectivityResult.none) {
+        state = state.copyWith(status: UpdateStatus.upToDate, currentVersion: currentVersion);
+        return;
+      }
+
+      state = state.copyWith(status: UpdateStatus.checking);
+      debugPrint('UpdateService: Checking for updates for $_owner/$_repo...');
 
       final response = await _dio.get(
         'https://api.github.com/repos/$_owner/$_repo/releases/latest',
@@ -125,7 +132,9 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
         state = state.copyWith(status: UpdateStatus.upToDate, currentVersion: currentVersion);
      }
     } catch (e) {
-      debugPrint('UpdateService: Check for updates failed: $e');
+      if (!e.toString().contains('Failed host lookup') && !e.toString().contains('SocketException')) {
+        debugPrint('UpdateService: Check for updates failed: $e');
+      }
       state = state.copyWith(status: UpdateStatus.error, errorKey: 'updateSourceError');
     }
   }

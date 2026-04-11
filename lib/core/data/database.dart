@@ -87,6 +87,18 @@ class AnimeKitsuMappings extends Table {
   Set<Column> get primaryKey => {anilistId};
 }
 
+class CachedProfiles extends Table {
+  TextColumn get id => text()();
+  TextColumn get username => text().nullable()();
+  TextColumn get avatarUrl => text().nullable()();
+  TextColumn get preferences => text().nullable()(); // JSON string
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(tables: [
   CachedMediaItems,
   LocalWatchHistories,
@@ -94,6 +106,7 @@ class AnimeKitsuMappings extends Table {
   CachedListItems,
   AnimeExternalMappings,
   AnimeKitsuMappings,
+  CachedProfiles,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
@@ -283,6 +296,16 @@ class AppDatabase extends _$AppDatabase {
     await (delete(cachedListItems)
           ..where((t) => t.listId.equals(listId) & t.mediaTmdbId.equals(tmdbId) & t.mediaType.equals(mediaType)))
         .go();
+  }
+
+  // --- Profiles & Settings ---
+
+  Future<void> upsertProfile(CachedProfilesCompanion profile) {
+    return into(cachedProfiles).insertOnConflictUpdate(profile);
+  }
+
+  Future<CachedProfile?> getCachedProfile(String id) {
+    return (select(cachedProfiles)..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   // --- Cleanup ---

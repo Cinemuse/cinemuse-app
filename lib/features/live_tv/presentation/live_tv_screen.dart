@@ -12,6 +12,9 @@ import 'package:cinemuse_app/features/video_player/application/player_provider.d
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/player_settings_bottom_sheet.dart';
+import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
+import 'package:cinemuse_app/shared/widgets/offline_placeholder.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// Main Live TV screen with side-list + player layout.
 class LiveTvScreen extends ConsumerStatefulWidget {
@@ -169,6 +172,15 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final connectivity = ref.watch(connectivityProvider);
+    final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
+
+    if (isOffline) {
+      return OfflinePlaceholder(
+        onRetry: () => ref.invalidate(connectivityProvider),
+      );
+    }
+
     final selectedChannel = ref.watch(selectedChannelProvider);
     final numberBuffer = ref.watch(numberInputBufferProvider);
     final isMobile = MediaQuery.of(context).size.width < 600;

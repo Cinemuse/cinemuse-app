@@ -20,6 +20,10 @@ import 'package:cinemuse_app/shared/widgets/bento_box.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/details_tab_nav.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/responsive_details_layout.dart';
+import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
+import 'package:cinemuse_app/shared/widgets/offline_banner.dart';
+import 'package:cinemuse_app/shared/widgets/offline_placeholder.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class MediaDetailsScreen extends ConsumerStatefulWidget {
@@ -48,17 +52,31 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     final controller = ref.read(mediaDetailsControllerProvider.notifier);
     final responsivePadding = AppTheme.getResponsiveHorizontalPadding(context);
     final isMobile = MediaQuery.of(context).size.width < 600;
+    final connectivity = ref.watch(connectivityProvider);
+    final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
 
     return Scaffold(
       backgroundColor: AppTheme.primary,
       body: detailsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.accent)),
         error: (err, stack) {
+          if (isOffline) {
+            return OfflinePlaceholder(
+              onRetry: () => ref.invalidate(connectivityProvider),
+            );
+          }
           final message = err is AppException ? err.message : err.toString();
           return Center(child: Text('${l10n.commonError}: $message', style: const TextStyle(color: Colors.white)));
         },
         data: (details) {
-          if (details == null) return Center(child: Text(l10n.commonError, style: const TextStyle(color: Colors.white)));
+          if (details == null) {
+            if (isOffline) {
+              return OfflinePlaceholder(
+                onRetry: () => ref.invalidate(connectivityProvider),
+              );
+            }
+            return Center(child: Text(l10n.commonError, style: const TextStyle(color: Colors.white)));
+          }
 
           final tmdbId = int.parse(widget.mediaId);
           final isTV = typeForTmdb == 'tv';
@@ -154,6 +172,15 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
 
           return CustomScrollView(
             slivers: [
+              if (isOffline)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(responsivePadding, 48, responsivePadding, 0),
+                    child: OfflineBanner(
+                      onRetry: () => ref.invalidate(connectivityProvider),
+                    ),
+                  ),
+                ),
               SliverToBoxAdapter(
                 child: DetailsHero(
                   media: {'id': widget.mediaId, 'type': typeForTmdb},

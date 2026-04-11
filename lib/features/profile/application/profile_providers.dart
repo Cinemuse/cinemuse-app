@@ -1,13 +1,14 @@
+import 'dart:convert';
+import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
-import 'package:cinemuse_app/features/profile/data/profile_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/profile.dart';
 import 'package:cinemuse_app/features/profile/domain/profile_stats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart';
 
 // 1. Current User ID Provider
 final userIdProvider = Provider<String?>((ref) {
@@ -15,19 +16,64 @@ final userIdProvider = Provider<String?>((ref) {
   return user?.id;
 });
 
-// 2. Profile Stream Provider (Real-time updates from DB)
-final profileStreamProvider = StreamProvider<Profile?>((ref) {
+// 2. Profile Stream Provider (Resilient with Cache Fallback)
+final profileStreamProvider = StreamProvider<Profile?>((ref) async* {
   final userId = ref.watch(userIdProvider);
-  if (userId == null) return Stream.value(null);
+  if (userId == null) {
+    yield null;
+    return;
+  }
 
-  return supabase
-      .from('profiles')
-      .stream(primaryKey: ['id'])
-      .eq('id', userId)
-      .map((event) {
-        if (event.isEmpty) return null;
-        return Profile.fromJson(event.first);
-      });
+  final db = ref.watch(appDatabaseProvider);
+  
+  // 1. Instant Cache Fallback
+  try {
+    final cached = await db.getCachedProfile(userId);
+    if (cached != null) {
+      yield Profile(
+        id: cached.id,
+        username: cached.username,
+        avatarUrl: cached.avatarUrl,
+        preferences: cached.preferences != null 
+            ? jsonDecode(cached.preferences!) as Map<String, dynamic> 
+            : {},
+        createdAt: cached.createdAt,
+        updatedAt: cached.updatedAt,
+      );
+    }
+  } catch (e) {
+    // Ignore cache error, proceed to stream
+  }
+
+  // 2. Real-time background update
+  try {
+    final stream = supabase
+        .from('profiles')
+        .stream(primaryKey: ['id'])
+        .eq('id', userId)
+        .map((event) {
+          if (event.isEmpty) return null;
+          return Profile.fromJson(event.first);
+        });
+
+    await for (final profile in stream) {
+      // Sync remote update to local cache background
+      if (profile != null) {
+        db.upsertProfile(CachedProfilesCompanion(
+          id: Value(profile.id),
+          username: Value(profile.username),
+          avatarUrl: Value(profile.avatarUrl),
+          preferences: Value(jsonEncode(profile.preferences)),
+          createdAt: Value(profile.createdAt),
+          updatedAt: Value(profile.updatedAt),
+        )).catchError((_) {});
+      }
+      yield profile;
+    }
+  } catch (e) {
+    // Silently stop if stream fails (e.g. offline)
+    // We already yielded the cached version so UI is happy.
+  }
 });
 
 // 3. Watch History Stream Provider (All history for stats)

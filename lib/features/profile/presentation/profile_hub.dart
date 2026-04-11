@@ -5,6 +5,9 @@ import 'package:cinemuse_app/features/profile/presentation/widgets/profile_hero.
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
+import 'package:cinemuse_app/shared/widgets/offline_banner.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ProfileHub extends ConsumerStatefulWidget {
   const ProfileHub({super.key});
@@ -31,22 +34,33 @@ class _ProfileHubState extends ConsumerState<ProfileHub> with SingleTickerProvid
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final connectivity = ref.watch(connectivityProvider);
+    final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
+
     return Scaffold(
       backgroundColor: AppTheme.primary,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  top: 60, 
-                  left: AppTheme.getResponsiveHorizontalPadding(context), 
-                  right: AppTheme.getResponsiveHorizontalPadding(context), 
-                  bottom: 0
-                ),
-                child: Column(
-                  children: [
-                    const ProfileHero(),
+              child: Column(
+                children: [
+                  if (isOffline) ...[
+                    SizedBox(height: 40),
+                    OfflineBanner(
+                      onRetry: () => ref.invalidate(connectivityProvider),
+                    ),
+                    const SizedBox(height: 16),
+                  ] else ...[
+                    SizedBox(height: 60),
+                  ],
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppTheme.getResponsiveHorizontalPadding(context), 
+                    ),
+                    child: Column(
+                      children: [
+                        const ProfileHero(),
                     const SizedBox(height: 24),
                     // Navigation Tabs
                     TabBar(
@@ -67,8 +81,10 @@ class _ProfileHubState extends ConsumerState<ProfileHub> with SingleTickerProvid
                       ],
                     ),
                     const Divider(height: 1, color: Colors.white24),
-                  ],
-                ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ];

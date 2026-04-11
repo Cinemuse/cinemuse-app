@@ -18,7 +18,8 @@
   "commonOk": "OK",
   "commonUnknown": "Unknown",
   "filterMax": "Max",
-  
+  "offlineScreenTitle": "Connection Required",
+  "offlineScreenMessage": "This feature requires an internet connection to browse content and stream media.",
   "searchPlaceholder": "Search movies, series, people...",
   "searchNoResults": "No results found for \"{query}\"",
   "searchEmptyStateTitle": "Find your next favorite story",

@@ -220,14 +220,18 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
 
   @visibleForTesting
   Future<void> initSettings() async {
-    final user = _ref.read(authProvider).value;
-    if (user != null) {
-      final profile = await _profileRepository.getProfile(user.id);
-      if (profile != null) {
-        state = UserSettings.fromProfile(profile);
-        // Sync initial app language to localeProvider
-        _ref.read(localeProvider.notifier).setLocale(state.appLanguage);
+    try {
+      final user = _ref.read(authProvider).value;
+      if (user != null) {
+        final profile = await _profileRepository.getProfile(user.id);
+        if (profile != null) {
+          state = UserSettings.fromProfile(profile);
+          // Sync initial app language to localeProvider
+          _ref.read(localeProvider.notifier).setLocale(state.appLanguage);
+        }
       }
+    } catch (e) {
+      debugPrint('SettingsService: Failed to initialize settings (offline?). Using defaults.');
     }
   }
 

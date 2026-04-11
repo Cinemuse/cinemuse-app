@@ -63,6 +63,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get filterMax => 'Max';
 
   @override
+  String get offlineScreenTitle => 'Connessione Richiesta';
+
+  @override
+  String get offlineScreenMessage =>
+      'Questa funzione richiede una connessione internet per sfogliare i contenuti e avviare lo streaming.';
+
+  @override
   String get searchPlaceholder => 'Cerca film, serie, persone...';
 
   @override

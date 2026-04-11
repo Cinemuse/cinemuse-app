@@ -8,6 +8,9 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
+import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 class AgendaWidget extends ConsumerStatefulWidget {
   final bool isExpanded;
   const AgendaWidget({super.key, this.isExpanded = false});
@@ -67,8 +70,46 @@ class _AgendaWidgetState extends ConsumerState<AgendaWidget> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final agendaAsync = ref.watch(agendaProvider);
+    final connectivity = ref.watch(connectivityProvider);
+    final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
 
     Widget buildContent() {
+      if (isOffline) {
+        return Padding(
+          padding: const EdgeInsets.all(32),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.wifi_off_rounded,
+                  size: 48,
+                  color: AppTheme.textMuted.withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.offlineScreenTitle,
+                  style: const TextStyle(
+                    color: AppTheme.textWhite,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.offlineScreenMessage,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
       return agendaAsync.when(
         data: (groups) {
           if (groups.isEmpty) {

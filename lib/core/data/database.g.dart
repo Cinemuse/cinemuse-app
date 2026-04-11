@@ -2958,6 +2958,425 @@ class AnimeKitsuMappingsCompanion extends UpdateCompanion<AnimeKitsuMapping> {
   }
 }
 
+class $CachedProfilesTable extends CachedProfiles
+    with TableInfo<$CachedProfilesTable, CachedProfile> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedProfilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _usernameMeta = const VerificationMeta(
+    'username',
+  );
+  @override
+  late final GeneratedColumn<String> username = GeneratedColumn<String>(
+    'username',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _avatarUrlMeta = const VerificationMeta(
+    'avatarUrl',
+  );
+  @override
+  late final GeneratedColumn<String> avatarUrl = GeneratedColumn<String>(
+    'avatar_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _preferencesMeta = const VerificationMeta(
+    'preferences',
+  );
+  @override
+  late final GeneratedColumn<String> preferences = GeneratedColumn<String>(
+    'preferences',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    username,
+    avatarUrl,
+    preferences,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_profiles';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedProfile> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('username')) {
+      context.handle(
+        _usernameMeta,
+        username.isAcceptableOrUnknown(data['username']!, _usernameMeta),
+      );
+    }
+    if (data.containsKey('avatar_url')) {
+      context.handle(
+        _avatarUrlMeta,
+        avatarUrl.isAcceptableOrUnknown(data['avatar_url']!, _avatarUrlMeta),
+      );
+    }
+    if (data.containsKey('preferences')) {
+      context.handle(
+        _preferencesMeta,
+        preferences.isAcceptableOrUnknown(
+          data['preferences']!,
+          _preferencesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CachedProfile map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedProfile(
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}id'],
+          )!,
+      username: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}username'],
+      ),
+      avatarUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}avatar_url'],
+      ),
+      preferences: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}preferences'],
+      ),
+      createdAt:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}created_at'],
+          )!,
+      updatedAt:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}updated_at'],
+          )!,
+    );
+  }
+
+  @override
+  $CachedProfilesTable createAlias(String alias) {
+    return $CachedProfilesTable(attachedDatabase, alias);
+  }
+}
+
+class CachedProfile extends DataClass implements Insertable<CachedProfile> {
+  final String id;
+  final String? username;
+  final String? avatarUrl;
+  final String? preferences;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const CachedProfile({
+    required this.id,
+    this.username,
+    this.avatarUrl,
+    this.preferences,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    if (!nullToAbsent || username != null) {
+      map['username'] = Variable<String>(username);
+    }
+    if (!nullToAbsent || avatarUrl != null) {
+      map['avatar_url'] = Variable<String>(avatarUrl);
+    }
+    if (!nullToAbsent || preferences != null) {
+      map['preferences'] = Variable<String>(preferences);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  CachedProfilesCompanion toCompanion(bool nullToAbsent) {
+    return CachedProfilesCompanion(
+      id: Value(id),
+      username:
+          username == null && nullToAbsent
+              ? const Value.absent()
+              : Value(username),
+      avatarUrl:
+          avatarUrl == null && nullToAbsent
+              ? const Value.absent()
+              : Value(avatarUrl),
+      preferences:
+          preferences == null && nullToAbsent
+              ? const Value.absent()
+              : Value(preferences),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory CachedProfile.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedProfile(
+      id: serializer.fromJson<String>(json['id']),
+      username: serializer.fromJson<String?>(json['username']),
+      avatarUrl: serializer.fromJson<String?>(json['avatarUrl']),
+      preferences: serializer.fromJson<String?>(json['preferences']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'username': serializer.toJson<String?>(username),
+      'avatarUrl': serializer.toJson<String?>(avatarUrl),
+      'preferences': serializer.toJson<String?>(preferences),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  CachedProfile copyWith({
+    String? id,
+    Value<String?> username = const Value.absent(),
+    Value<String?> avatarUrl = const Value.absent(),
+    Value<String?> preferences = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => CachedProfile(
+    id: id ?? this.id,
+    username: username.present ? username.value : this.username,
+    avatarUrl: avatarUrl.present ? avatarUrl.value : this.avatarUrl,
+    preferences: preferences.present ? preferences.value : this.preferences,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  CachedProfile copyWithCompanion(CachedProfilesCompanion data) {
+    return CachedProfile(
+      id: data.id.present ? data.id.value : this.id,
+      username: data.username.present ? data.username.value : this.username,
+      avatarUrl: data.avatarUrl.present ? data.avatarUrl.value : this.avatarUrl,
+      preferences:
+          data.preferences.present ? data.preferences.value : this.preferences,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedProfile(')
+          ..write('id: $id, ')
+          ..write('username: $username, ')
+          ..write('avatarUrl: $avatarUrl, ')
+          ..write('preferences: $preferences, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, username, avatarUrl, preferences, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedProfile &&
+          other.id == this.id &&
+          other.username == this.username &&
+          other.avatarUrl == this.avatarUrl &&
+          other.preferences == this.preferences &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class CachedProfilesCompanion extends UpdateCompanion<CachedProfile> {
+  final Value<String> id;
+  final Value<String?> username;
+  final Value<String?> avatarUrl;
+  final Value<String?> preferences;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const CachedProfilesCompanion({
+    this.id = const Value.absent(),
+    this.username = const Value.absent(),
+    this.avatarUrl = const Value.absent(),
+    this.preferences = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedProfilesCompanion.insert({
+    required String id,
+    this.username = const Value.absent(),
+    this.avatarUrl = const Value.absent(),
+    this.preferences = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id);
+  static Insertable<CachedProfile> custom({
+    Expression<String>? id,
+    Expression<String>? username,
+    Expression<String>? avatarUrl,
+    Expression<String>? preferences,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (username != null) 'username': username,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
+      if (preferences != null) 'preferences': preferences,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedProfilesCompanion copyWith({
+    Value<String>? id,
+    Value<String?>? username,
+    Value<String?>? avatarUrl,
+    Value<String?>? preferences,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return CachedProfilesCompanion(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      preferences: preferences ?? this.preferences,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (username.present) {
+      map['username'] = Variable<String>(username.value);
+    }
+    if (avatarUrl.present) {
+      map['avatar_url'] = Variable<String>(avatarUrl.value);
+    }
+    if (preferences.present) {
+      map['preferences'] = Variable<String>(preferences.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedProfilesCompanion(')
+          ..write('id: $id, ')
+          ..write('username: $username, ')
+          ..write('avatarUrl: $avatarUrl, ')
+          ..write('preferences: $preferences, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2976,6 +3395,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $AnimeExternalMappingsTable(this);
   late final $AnimeKitsuMappingsTable animeKitsuMappings =
       $AnimeKitsuMappingsTable(this);
+  late final $CachedProfilesTable cachedProfiles = $CachedProfilesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2987,6 +3407,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     cachedListItems,
     animeExternalMappings,
     animeKitsuMappings,
+    cachedProfiles,
   ];
 }
 
@@ -4612,6 +5033,240 @@ typedef $$AnimeKitsuMappingsTableProcessedTableManager =
       AnimeKitsuMapping,
       PrefetchHooks Function()
     >;
+typedef $$CachedProfilesTableCreateCompanionBuilder =
+    CachedProfilesCompanion Function({
+      required String id,
+      Value<String?> username,
+      Value<String?> avatarUrl,
+      Value<String?> preferences,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+typedef $$CachedProfilesTableUpdateCompanionBuilder =
+    CachedProfilesCompanion Function({
+      Value<String> id,
+      Value<String?> username,
+      Value<String?> avatarUrl,
+      Value<String?> preferences,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$CachedProfilesTableFilterComposer
+    extends Composer<_$AppDatabase, $CachedProfilesTable> {
+  $$CachedProfilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get username => $composableBuilder(
+    column: $table.username,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get preferences => $composableBuilder(
+    column: $table.preferences,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CachedProfilesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CachedProfilesTable> {
+  $$CachedProfilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get username => $composableBuilder(
+    column: $table.username,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get preferences => $composableBuilder(
+    column: $table.preferences,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CachedProfilesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CachedProfilesTable> {
+  $$CachedProfilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get username =>
+      $composableBuilder(column: $table.username, builder: (column) => column);
+
+  GeneratedColumn<String> get avatarUrl =>
+      $composableBuilder(column: $table.avatarUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get preferences => $composableBuilder(
+    column: $table.preferences,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$CachedProfilesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CachedProfilesTable,
+          CachedProfile,
+          $$CachedProfilesTableFilterComposer,
+          $$CachedProfilesTableOrderingComposer,
+          $$CachedProfilesTableAnnotationComposer,
+          $$CachedProfilesTableCreateCompanionBuilder,
+          $$CachedProfilesTableUpdateCompanionBuilder,
+          (
+            CachedProfile,
+            BaseReferences<_$AppDatabase, $CachedProfilesTable, CachedProfile>,
+          ),
+          CachedProfile,
+          PrefetchHooks Function()
+        > {
+  $$CachedProfilesTableTableManager(
+    _$AppDatabase db,
+    $CachedProfilesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () => $$CachedProfilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () =>
+                  $$CachedProfilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () => $$CachedProfilesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String?> username = const Value.absent(),
+                Value<String?> avatarUrl = const Value.absent(),
+                Value<String?> preferences = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CachedProfilesCompanion(
+                id: id,
+                username: username,
+                avatarUrl: avatarUrl,
+                preferences: preferences,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                Value<String?> username = const Value.absent(),
+                Value<String?> avatarUrl = const Value.absent(),
+                Value<String?> preferences = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CachedProfilesCompanion.insert(
+                id: id,
+                username: username,
+                avatarUrl: avatarUrl,
+                preferences: preferences,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CachedProfilesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CachedProfilesTable,
+      CachedProfile,
+      $$CachedProfilesTableFilterComposer,
+      $$CachedProfilesTableOrderingComposer,
+      $$CachedProfilesTableAnnotationComposer,
+      $$CachedProfilesTableCreateCompanionBuilder,
+      $$CachedProfilesTableUpdateCompanionBuilder,
+      (
+        CachedProfile,
+        BaseReferences<_$AppDatabase, $CachedProfilesTable, CachedProfile>,
+      ),
+      CachedProfile,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4628,6 +5283,8 @@ class $AppDatabaseManager {
       $$AnimeExternalMappingsTableTableManager(_db, _db.animeExternalMappings);
   $$AnimeKitsuMappingsTableTableManager get animeKitsuMappings =>
       $$AnimeKitsuMappingsTableTableManager(_db, _db.animeKitsuMappings);
+  $$CachedProfilesTableTableManager get cachedProfiles =>
+      $$CachedProfilesTableTableManager(_db, _db.cachedProfiles);
 }
 
 // **************************************************************************

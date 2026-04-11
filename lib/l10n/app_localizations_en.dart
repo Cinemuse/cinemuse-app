@@ -63,6 +63,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterMax => 'Max';
 
   @override
+  String get offlineScreenTitle => 'Connection Required';
+
+  @override
+  String get offlineScreenMessage =>
+      'This feature requires an internet connection to browse content and stream media.';
+
+  @override
   String get searchPlaceholder => 'Search movies, series, people...';
 
   @override

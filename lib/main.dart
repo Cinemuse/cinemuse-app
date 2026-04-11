@@ -22,9 +22,7 @@ import 'package:cinemuse_app/core/application/locale_service.dart';
 import 'package:stack_trace/stack_trace.dart';
 import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
 import 'package:cinemuse_app/core/presentation/intents.dart';
-import 'package:cinemuse_app/core/presentation/widgets/offline_error_screen.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() {
@@ -145,9 +143,6 @@ class CinemuseApp extends ConsumerWidget {
             
             return connectivity.when(
               data: (result) {
-                if (result == ConnectivityResult.none) {
-                  return const OfflineErrorScreen();
-                }
                 return ExcludeSemantics(child: child ?? const SizedBox());
               },
               loading: () => ExcludeSemantics(child: child ?? const SizedBox()),

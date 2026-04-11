@@ -10,6 +10,9 @@ import 'package:cinemuse_app/features/media/presentation/media_details_screen.da
 import '../widgets/active_filters_list.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import '../../../../shared/widgets/hover_scale.dart';
+import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
+import 'package:cinemuse_app/shared/widgets/offline_placeholder.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
@@ -42,6 +45,15 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final connectivity = ref.watch(connectivityProvider);
+    final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
+
+    if (isOffline) {
+      return OfflinePlaceholder(
+        onRetry: () => ref.invalidate(connectivityProvider),
+      );
+    }
+
     final l10n = AppLocalizations.of(context)!;
     final mediaType = ref.watch(exploreMediaTypeProvider);
     final filters = ref.watch(exploreFiltersProvider);
