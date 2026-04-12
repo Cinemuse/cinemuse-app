@@ -59,7 +59,7 @@ class VideoTopBar extends ConsumerWidget {
                   Text(
                     '${l10n.detailsSeasonNumber(params.season!)}, ${l10n.detailsEpisodeNumber(params.episode!)}${params.episodeTitle != null ? ' - ${params.episodeTitle}' : ''}',
                     style: TextStyle(
-                      color: AppTheme.textWhite.withOpacity(0.7),
+                      color: AppTheme.textWhite.withValues(alpha: 0.7),
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),

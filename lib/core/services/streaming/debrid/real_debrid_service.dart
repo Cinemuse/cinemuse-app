@@ -43,7 +43,7 @@ class RealDebridService implements BaseDebridService {
       });
       return result;
     } catch (e) {
-      debugPrint('RealDebridService: Availability check failed: $e');
+      // Availability check failed silently
       return {};
     }
   }
@@ -73,7 +73,7 @@ class RealDebridService implements BaseDebridService {
       }
 
       final torrentId = addRes.data['id'];
-      debugPrint('RealDebridService: Added magnet, torrentId: $torrentId');
+
 
       // 2. Get Info
       final infoRes = await _dio.get(
@@ -101,12 +101,12 @@ class RealDebridService implements BaseDebridService {
             'bytes': f['bytes'] as int? ?? 0,
             'selected': f['selected'] == 1,
           }).toList();
-      debugPrint('RealDebridService: Found ${allVideoFiles.length} video files');
+
 
       int? selectedId = fileId;
       if (selectedId == null && season != null && episode != null) {
         selectedId = _findBestFileMatch(allVideoFiles, season, episode, absoluteEpisode);
-        debugPrint('RealDebridService: _findBestFileMatch result: $selectedId');
+
       }
 
       // Default to largest if still null
@@ -146,7 +146,7 @@ class RealDebridService implements BaseDebridService {
           break; 
         }
         
-        debugPrint('RealDebridService: No links found yet for $torrentId, retrying (${retryCount + 1}/5)...');
+
         await Future.delayed(const Duration(milliseconds: 1000));
         
         final retryRes = await _dio.get(
@@ -158,7 +158,7 @@ class RealDebridService implements BaseDebridService {
       }
 
       if (info['status'] != 'downloaded') {
-        debugPrint('RealDebridService: Stream is not instantly available (Status: ${info['status']})');
+
         return null;
       }
 
@@ -188,9 +188,9 @@ class RealDebridService implements BaseDebridService {
           candidate: candidate,
         );
       }
-      debugPrint('RealDebridService: Final check: No links found for torrentId: $torrentId (Status: ${info['status']})');
+
     } catch (e) {
-      debugPrint('RealDebridService: Resolve failed: $e');
+
     }
     return null;
   }

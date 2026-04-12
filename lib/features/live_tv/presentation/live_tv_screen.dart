@@ -62,7 +62,12 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
   }
 
   void _openSettings(CinemaPlayerState state) {
-    PlayerSettingsBottomSheet.show(context, state, _liveTvParams);
+    PlayerSettingsBottomSheet.show(
+      context, 
+      state, 
+      _liveTvParams,
+      (_) {}, // No-op overlay callback for Live TV for now
+    );
   }
 
   // -----------------------------------------------------------------------

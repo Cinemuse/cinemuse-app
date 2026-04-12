@@ -178,7 +178,9 @@
   "playerAppearanceBottomPadding": "Bottom Padding",
   "playerAppearanceSaveDefault": "Save as Default",
   "playerAppearanceReset": "Reset to Default",
+  "playerAppearanceSave": "Save",
   "playerAppearanceSampleText": "Sample Subtitle Text",
+  "playerSubtitleSync": "Subtitle Sync",
 
   "settingsTitle": "Settings",
   "settingsIdentity": "Identity & Access",

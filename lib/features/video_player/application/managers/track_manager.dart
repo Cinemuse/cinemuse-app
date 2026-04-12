@@ -60,8 +60,11 @@ class TrackManager extends BaseManager {
     try {
       final audioCodes = LanguageMapper.getCodes(audioLang).join(',');
       final subCodes = LanguageMapper.getCodes(subLang).join(',');
-      (player.platform as dynamic).setProperty('alang', audioCodes);
-      (player.platform as dynamic).setProperty('slang', subCodes);
+      final platform = player.platform as dynamic;
+      platform.setProperty('alang', audioCodes);
+      platform.setProperty('slang', subCodes);
+      // Disable auto-showing forced subtitles as an overlay
+      platform.setProperty('sub-forced-events-only', 'no');
     } catch (_) {}
   }
 

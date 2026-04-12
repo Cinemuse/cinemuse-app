@@ -12,25 +12,40 @@ import 'settings/subtitle_appearance_view.dart';
 import 'settings/live_tv_quality_view.dart';
 
 /// The views available inside the settings sheet.
-enum _SettingsView { main, quality, audio, subtitles, appearance }
+enum SettingsView { main, quality, audio, subtitles, appearance }
 
 class PlayerSettingsBottomSheet extends ConsumerStatefulWidget {
   final CinemaPlayerState state;
   final PlayerParams params;
+  final ValueChanged<SliderOverlayType> onOverlayRequested;
+  final SettingsView initialView;
 
   const PlayerSettingsBottomSheet({
     super.key,
     required this.state,
     required this.params,
+    required this.onOverlayRequested,
+    this.initialView = SettingsView.main,
   });
 
-  static Future<void> show(BuildContext context, CinemaPlayerState state, PlayerParams params) {
+  static Future<void> show(
+    BuildContext context, 
+    CinemaPlayerState state, 
+    PlayerParams params, 
+    ValueChanged<SliderOverlayType> onOverlayRequested, {
+    SettingsView initialView = SettingsView.main,
+  }) {
     return showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black54,
       isScrollControlled: true,
-      builder: (ctx) => PlayerSettingsBottomSheet(state: state, params: params),
+      builder: (ctx) => PlayerSettingsBottomSheet(
+        state: state, 
+        params: params, 
+        onOverlayRequested: onOverlayRequested,
+        initialView: initialView,
+      ),
     );
   }
 
@@ -39,14 +54,20 @@ class PlayerSettingsBottomSheet extends ConsumerStatefulWidget {
 }
 
 class _PlayerSettingsBottomSheetState extends ConsumerState<PlayerSettingsBottomSheet> {
-  _SettingsView _currentView = _SettingsView.main;
+  late SettingsView _currentView;
 
-  void _navigateTo(_SettingsView view) {
+  @override
+  void initState() {
+    super.initState();
+    _currentView = widget.initialView;
+  }
+
+  void _navigateTo(SettingsView view) {
     setState(() => _currentView = view);
   }
 
   void _navigateBack() {
-    setState(() => _currentView = _SettingsView.main);
+    setState(() => _currentView = SettingsView.main);
   }
 
   @override
@@ -65,9 +86,9 @@ class _PlayerSettingsBottomSheetState extends ConsumerState<PlayerSettingsBottom
           maxHeight: maxSheetHeight,
         ),
         decoration: BoxDecoration(
-          color: AppTheme.glass.withOpacity(0.8),
+          color: AppTheme.glass.withValues(alpha: 0.8),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border.all(color: AppTheme.border.withOpacity(0.1), width: 1.5),
+          border: Border.all(color: AppTheme.border.withValues(alpha: 0.1), width: 1.5),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -120,21 +141,21 @@ class _PlayerSettingsBottomSheetState extends ConsumerState<PlayerSettingsBottom
     );
   }
 
-  Widget _buildView(_SettingsView view, CinemaPlayerState currentState) {
+  Widget _buildView(SettingsView view, CinemaPlayerState currentState) {
     switch (view) {
-      case _SettingsView.main:
+      case SettingsView.main:
         return MainSettingsView(
           state: currentState,
           onNavigate: (viewStr) {
             switch (viewStr) {
-              case 'quality': _navigateTo(_SettingsView.quality); break;
-              case 'audio': _navigateTo(_SettingsView.audio); break;
-              case 'subtitles': _navigateTo(_SettingsView.subtitles); break;
-              case 'appearance': _navigateTo(_SettingsView.appearance); break;
+              case 'quality': _navigateTo(SettingsView.quality); break;
+              case 'audio': _navigateTo(SettingsView.audio); break;
+              case 'subtitles': _navigateTo(SettingsView.subtitles); break;
+              case 'appearance': _navigateTo(SettingsView.appearance); break;
             }
           },
         );
-      case _SettingsView.quality:
+      case SettingsView.quality:
         if (currentState.isLive) {
           return LiveTvQualityView(onBack: _navigateBack, state: currentState);
         }
@@ -143,25 +164,26 @@ class _PlayerSettingsBottomSheetState extends ConsumerState<PlayerSettingsBottom
           params: widget.params,
           onBack: _navigateBack,
         );
-      case _SettingsView.audio:
+      case SettingsView.audio:
         return TrackSettingsView(
           state: currentState,
           params: widget.params,
           isSubtitle: false,
           onBack: _navigateBack,
         );
-      case _SettingsView.subtitles:
+      case SettingsView.subtitles:
         return TrackSettingsView(
           state: currentState,
           params: widget.params,
           isSubtitle: true,
           onBack: _navigateBack,
         );
-      case _SettingsView.appearance:
+      case SettingsView.appearance:
         return SubtitleAppearanceView(
           state: currentState,
           params: widget.params,
           onBack: _navigateBack,
+          onOverlayRequested: widget.onOverlayRequested,
         );
     }
   }

@@ -579,7 +579,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playerAppearanceReset => 'Ripristina Predefiniti';
 
   @override
+  String get playerAppearanceSave => 'Salva';
+
+  @override
   String get playerAppearanceSampleText => 'Esempio Testo Sottotitoli';
+
+  @override
+  String get playerSubtitleSync => 'Sincronizzazione';
 
   @override
   String get settingsTitle => 'Impostazioni';

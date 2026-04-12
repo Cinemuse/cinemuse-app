@@ -178,7 +178,9 @@
   "playerAppearanceBottomPadding": "Margine Inferiore",
   "playerAppearanceSaveDefault": "Salva come Predefinito",
   "playerAppearanceReset": "Ripristina Predefiniti",
+  "playerAppearanceSave": "Salva",
   "playerAppearanceSampleText": "Esempio Testo Sottotitoli",
+  "playerSubtitleSync": "Sincronizzazione",
 
   "settingsTitle": "Impostazioni",
   "settingsIdentity": "Identità e Accesso",

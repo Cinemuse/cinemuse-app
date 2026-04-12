@@ -1148,11 +1148,23 @@ abstract class AppLocalizations {
   /// **'Reset to Default'**
   String get playerAppearanceReset;
 
+  /// No description provided for @playerAppearanceSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get playerAppearanceSave;
+
   /// No description provided for @playerAppearanceSampleText.
   ///
   /// In en, this message translates to:
   /// **'Sample Subtitle Text'**
   String get playerAppearanceSampleText;
+
+  /// No description provided for @playerSubtitleSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitle Sync'**
+  String get playerSubtitleSync;
 
   /// No description provided for @settingsTitle.
   ///

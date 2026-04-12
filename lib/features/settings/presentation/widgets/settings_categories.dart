@@ -6,8 +6,8 @@ import 'package:cinemuse_app/features/settings/presentation/widgets/setting_togg
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_input.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/settings_widgets.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/stremio_addon_settings.dart';
-import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/subtitle_appearance_form.dart';
 
 class IdentitySettings extends ConsumerWidget {
@@ -342,8 +342,8 @@ class SubtitleAppearanceSettings extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final userSettings = ref.watch(settingsProvider);
-    final settingsNotifier = ref.read(settingsProvider.notifier);
+    final localSettings = ref.watch(localSettingsProvider);
+    final localNotifier = ref.read(localSettingsProvider.notifier);
 
     return SettingsSection(
       title: l10n.playerSubtitleAppearance,
@@ -351,19 +351,9 @@ class SubtitleAppearanceSettings extends ConsumerWidget {
         SettingsCard(
           children: [
             SubtitleAppearanceForm(
-              style: SubtitleStyle(
-                fontSize: userSettings.subtitleFontSize,
-                color: SubtitleStyle.hexToColor(userSettings.subtitleColor),
-                backgroundColor: SubtitleStyle.hexToColor(userSettings.subtitleBackgroundColor),
-                verticalPosition: userSettings.subtitleVerticalPosition,
-              ),
+              style: localSettings.subtitleStyle,
               onChanged: (newStyle) {
-                settingsNotifier.updateSettings({
-                  'subtitleFontSize': newStyle.fontSize,
-                  'subtitleColor': SubtitleStyle.colorToHex(newStyle.color),
-                  'subtitleBackgroundColor': SubtitleStyle.colorToHex(newStyle.backgroundColor),
-                  'subtitleVerticalPosition': newStyle.verticalPosition,
-                });
+                localNotifier.updateSubtitleStyle(newStyle);
               },
             ),
           ],

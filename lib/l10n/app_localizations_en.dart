@@ -577,7 +577,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playerAppearanceReset => 'Reset to Default';
 
   @override
+  String get playerAppearanceSave => 'Save';
+
+  @override
   String get playerAppearanceSampleText => 'Sample Subtitle Text';
+
+  @override
+  String get playerSubtitleSync => 'Subtitle Sync';
 
   @override
   String get settingsTitle => 'Settings';

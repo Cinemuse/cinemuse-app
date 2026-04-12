@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import 'dart:async';
-import 'dart:ui';
 import 'dart:io';
 import 'package:window_manager/window_manager.dart';
 
@@ -24,6 +23,7 @@ class CustomVideoControls extends ConsumerStatefulWidget {
   final PlayerParams params;
   final VoidCallback onSettingsPressed;
   final VoidCallback onBackPressed;
+  final ValueChanged<SliderOverlayType> onOverlayRequested;
   final VoidCallback? onNextEpisode;
 
   const CustomVideoControls({
@@ -33,6 +33,7 @@ class CustomVideoControls extends ConsumerStatefulWidget {
     required this.params,
     required this.onSettingsPressed,
     required this.onBackPressed,
+    required this.onOverlayRequested,
     this.onNextEpisode,
   });
 

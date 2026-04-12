@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/core/services/streaming/subtitles/external_subtitle.dart';
 import 'package:cinemuse_app/core/services/streaming/subtitles/subtitle_provider.dart';
 import 'package:dio/dio.dart';
@@ -45,7 +46,10 @@ class OpenSubtitlesProvider implements SubtitleProvider {
     String? query,
     required String language,
   }) async {
-    if (!isReady) return [];
+    if (!isReady) {
+      debugPrint('[OpenSubtitles] Not ready (API key empty)');
+      return [];
+    }
 
     try {
       final queryParams = _buildSearchParams(
@@ -56,14 +60,26 @@ class OpenSubtitlesProvider implements SubtitleProvider {
         query: query,
         language: language,
       );
-      if (queryParams == null) return [];
+      if (queryParams == null) {
+        debugPrint('[OpenSubtitles] No valid search params (imdb=$imdbId, tmdb=$tmdbId, query=$query)');
+        return [];
+      }
 
+      debugPrint('[OpenSubtitles] Searching: $queryParams');
       final response = await _dio.get('/subtitles', queryParameters: queryParams);
+      debugPrint('[OpenSubtitles] Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        return _parseSearchResults(response.data, language);
+        final results = _parseSearchResults(response.data, language);
+        debugPrint('[OpenSubtitles] Found ${results.length} subtitles');
+        return results;
+      } else {
+        debugPrint('[OpenSubtitles] Error response: ${response.statusCode} — ${response.data}');
       }
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[OpenSubtitles] Exception during search: $e');
+      debugPrint('[OpenSubtitles] $st');
+    }
 
     return [];
   }
@@ -73,14 +89,20 @@ class OpenSubtitlesProvider implements SubtitleProvider {
     if (!isReady) return null;
 
     try {
+      debugPrint('[OpenSubtitles] Downloading file_id=${subtitle.id}');
       final response = await _dio.post('/download', data: {
         'file_id': int.tryParse(subtitle.id) ?? subtitle.id,
       });
 
       if (response.statusCode == 200) {
+        debugPrint('[OpenSubtitles] Download URL obtained');
         return response.data['link']?.toString();
+      } else {
+        debugPrint('[OpenSubtitles] Download failed: ${response.statusCode} — ${response.data}');
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[OpenSubtitles] Download exception: $e');
+    }
 
     return null;
   }
@@ -115,8 +137,8 @@ class OpenSubtitlesProvider implements SubtitleProvider {
       return null;
     }
 
-    if (season != null) params['season_number'] = season;
-    if (episode != null) params['episode_number'] = episode;
+    if (season != null && season > 0) params['season_number'] = season;
+    if (episode != null && episode > 0) params['episode_number'] = episode;
 
     return params;
   }
@@ -132,7 +154,7 @@ class OpenSubtitlesProvider implements SubtitleProvider {
     int? episode,
   }) {
     final parsedId = int.tryParse(tmdbId) ?? tmdbId;
-    final isSeries = season != null && episode != null;
+    final isSeries = (season != null && season > 0) && (episode != null && episode > 0);
 
     params['type'] = isSeries ? 'episode' : 'movie';
     params[isSeries ? 'parent_tmdb_id' : 'tmdb_id'] = parsedId;

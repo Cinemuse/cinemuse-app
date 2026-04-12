@@ -2,6 +2,7 @@ import 'package:cinemuse_app/features/video_player/application/player_provider.d
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_video_controls.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/subtitle_slider_overlay.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/player_settings_bottom_sheet.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/cast_remote_view.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
-import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 
 class VideoPlayerScreen extends ConsumerStatefulWidget {
@@ -40,19 +40,20 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
 }
 
 class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
+  SliderOverlayType _activeOverlay = SliderOverlayType.none;
   bool _settingsOpen = false;
 
-  void _openSettings(CinemaPlayerState state, PlayerParams params) {
-    final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
-
-    if (isPortrait) {
-      setState(() => _settingsOpen = true);
-    }
-
-    PlayerSettingsBottomSheet.show(context, state, params).whenComplete(() {
-      if (mounted) {
-        setState(() => _settingsOpen = false);
-      }
+  void _openSettings(CinemaPlayerState state, PlayerParams params, {SettingsView initialView = SettingsView.main}) {
+    if (_settingsOpen) return;
+    setState(() => _settingsOpen = true);
+    PlayerSettingsBottomSheet.show(
+      context, 
+      state, 
+      params,
+      (type) => setState(() => _activeOverlay = type),
+      initialView: initialView,
+    ).then((_) {
+      if (mounted) setState(() => _settingsOpen = false);
     });
   }
 
@@ -190,14 +191,8 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
             );
           }
           
-          final settings = ref.watch(settingsProvider);
-          final subtitleStyle = state.customSubtitleStyle ??
-              SubtitleStyle(
-                fontSize: settings.subtitleFontSize,
-                color: SubtitleStyle.hexToColor(settings.subtitleColor),
-                backgroundColor: SubtitleStyle.hexToColor(settings.subtitleBackgroundColor),
-                verticalPosition: settings.subtitleVerticalPosition,
-              );
+          final localSettings = ref.watch(localSettingsProvider);
+          final subtitleStyle = state.customSubtitleStyle ?? localSettings.subtitleStyle;
 
           return AnimatedAlign(
             duration: const Duration(milliseconds: 300),
@@ -255,10 +250,26 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                           params: params,
                           onSettingsPressed: () => _openSettings(state, params),
                           onBackPressed: () => Navigator.of(context).pop(),
+                          onOverlayRequested: (type) {
+                            setState(() => _activeOverlay = type);
+                          },
                           onNextEpisode: state.nextEpisode != null ? () {
                             _navigateToNextEpisode(state.nextEpisode!);
                           } : null,
                         ),
+                        if (_activeOverlay != SliderOverlayType.none)
+                          SubtitleSliderOverlay(
+                            type: _activeOverlay,
+                            params: params,
+                            state: state,
+                            onClose: (wasSaved) {
+                              setState(() => _activeOverlay = SliderOverlayType.none);
+                              if (wasSaved) {
+                                // Return to appearance settings menu
+                                _openSettings(state, params, initialView: SettingsView.appearance);
+                              }
+                            },
+                          ),
                       ],
                     ),
                   );

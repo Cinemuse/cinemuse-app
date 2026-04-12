@@ -2,6 +2,7 @@ import 'package:cinemuse_app/core/services/streaming/subtitles/external_subtitle
 import 'package:cinemuse_app/core/services/streaming/subtitles/opensubtitles_provider.dart';
 import 'package:cinemuse_app/core/services/streaming/subtitles/subtitle_provider.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SubtitleService {
@@ -34,7 +35,11 @@ class SubtitleService {
     required String language,
   }) async {
     final activeProviders = _providers.where((p) => p.isReady).toList();
-    if (activeProviders.isEmpty) return [];
+    debugPrint('[SubtitleService] search called — imdb=$imdbId, tmdb=$tmdbId, lang=$language, providers=${activeProviders.length}');
+    if (activeProviders.isEmpty) {
+      debugPrint('[SubtitleService] No active providers, returning empty');
+      return [];
+    }
 
     final List<ExternalSubtitle> allResults = [];
 
@@ -54,6 +59,7 @@ class SubtitleService {
       allResults.addAll(list);
     }
 
+    debugPrint('[SubtitleService] Total results: ${allResults.length}');
     return allResults;
   }
 

@@ -227,11 +227,16 @@ class TrackTile extends ConsumerWidget {
         trailing: isSelected
             ? Icon(Icons.check_circle_rounded, color: color ?? AppTheme.accent, size: 20)
             : null,
-        onTap: () {
-          if (isSubtitle) {
-            player.setSubtitleTrack(track);
-          } else {
-            player.setAudioTrack(track);
+        onTap: () async {
+          if (isSelected) return;
+          try {
+            if (isSubtitle) {
+              await player.setSubtitleTrack(track);
+            } else {
+              await player.setAudioTrack(track);
+            }
+          } catch (_) {
+            // Ignore "already selected" or stale track errors from MPV
           }
           
           if (onSelected != null) {

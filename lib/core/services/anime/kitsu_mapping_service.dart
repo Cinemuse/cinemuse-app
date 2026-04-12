@@ -5,6 +5,7 @@ import 'package:cinemuse_app/core/services/system/smart_cache.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class KitsuMapping {
@@ -35,7 +36,7 @@ class KitsuMappingService {
     int? season,
     int? episode,
   }) async {
-    print('KitsuMappingService: Resolving mapping for TMDB $tmdbId, $type, S$season E$episode');
+
     
     // 1. Get External Mapping Candidates from Local DB
     List<AnimeExternalMapping> candidates;
@@ -46,11 +47,11 @@ class KitsuMappingService {
     }
 
     if (candidates.isEmpty) {
-      print('KitsuMappingService: No external mappings found in local DB for TMDB $tmdbId');
+
       return null;
     }
 
-    print('KitsuMappingService: Found ${candidates.length} mapping candidates');
+
 
     // 2. Prioritize Specific Range Mappings
     if (type == 'tv' && season != null && episode != null) {
@@ -63,9 +64,11 @@ class KitsuMappingService {
           if (range.isNotEmpty) {
              final result = _tryMatchRange(range, episode);
              if (result != null) {
-               print('KitsuMappingService: Found specific range match: $range -> Episode $result for AniList ${mapping.anilistId}');
                final kitsuId = await _getKitsuId(mapping.anilistId);
-               if (kitsuId != null) return KitsuMapping(kitsuId: kitsuId, absoluteEpisode: result, anidbId: mapping.anidbId);
+               if (kitsuId != null) {
+                 debugPrint('[KitsuMapping] TMDB $tmdbId S$season E$episode -> Kitsu $kitsuId (absEp=$result)');
+                 return KitsuMapping(kitsuId: kitsuId, absoluteEpisode: result, anidbId: mapping.anidbId);
+               }
              }
           }
         }
@@ -78,7 +81,7 @@ class KitsuMappingService {
       candidates.sort((a, b) => _getSeasonIndex(a).compareTo(_getSeasonIndex(b)));
 
       int remainingEpisode = episode;
-      print('KitsuMappingService: Entering overflow logic for S$season E$episode');
+
 
       for (int i = 0; i < candidates.length; i++) {
         final mapping = candidates[i];
@@ -92,25 +95,24 @@ class KitsuMappingService {
           
           // If this candidate maps to a season < our target season, skip it (it's in the past)
           if (mappingSeasonNum < season) {
-            print('KitsuMappingService: Skipping AniList ${mapping.anilistId} (Season $mappingSeasonNum < $season)');
+
             continue;
           }
 
           // Resolve Kitsu metadata (ID and Episode Count)
           final kitsuData = await _getKitsuData(mapping.anilistId);
           if (kitsuData == null) {
-             print('KitsuMappingService: Failed to get Kitsu data for AniList ${mapping.anilistId}, skipping');
              continue;
           }
 
           final count = kitsuData.episodeCount ?? 999;
-          print('KitsuMappingService: Checking candidate AniList ${mapping.anilistId} (Kitsu ${kitsuData.kitsuId}): episodeCount=$count, remaining=$remainingEpisode');
+
 
           if (remainingEpisode <= count) {
-            print('KitsuMappingService: Successfully mapped to Kitsu ${kitsuData.kitsuId} Episode $remainingEpisode');
+            debugPrint('[KitsuMapping] TMDB $tmdbId S$season E$episode -> Kitsu ${kitsuData.kitsuId} (absEp=$remainingEpisode)');
             return KitsuMapping(kitsuId: kitsuData.kitsuId, absoluteEpisode: remainingEpisode, anidbId: mapping.anidbId);
           } else {
-            print('KitsuMappingService: Episode $remainingEpisode overflows Kitsu ${kitsuData.kitsuId} (max $count)');
+
             remainingEpisode -= count;
           }
         }
@@ -118,11 +120,13 @@ class KitsuMappingService {
     }
 
     // Fallback: Just return the first available mapping
-    print('KitsuMappingService: Overflow failed, falling back to first candidate');
+
     final targetAnilistId = candidates.first.anilistId;
     final kitsuId = await _getKitsuId(targetAnilistId);
     if (kitsuId != null) {
-      return KitsuMapping(kitsuId: kitsuId, absoluteEpisode: episode, anidbId: candidates.first.anidbId);
+      final validEpisode = (episode != null && episode > 0) ? episode : null;
+      debugPrint('[KitsuMapping] TMDB $tmdbId (fallback) -> Kitsu $kitsuId (absEp=$validEpisode)');
+      return KitsuMapping(kitsuId: kitsuId, absoluteEpisode: validEpisode, anidbId: candidates.first.anidbId);
     }
 
     return null;
@@ -198,7 +202,7 @@ class KitsuMappingService {
         }
       }
     } catch (e) {
-      print('KitsuMappingService: Failed to fetch Kitsu data for AniList $anilistId: $e');
+
     }
     return null;
   }

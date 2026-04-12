@@ -28,7 +28,10 @@ class AnimeToshoSource extends BaseSource {
     }
 
     final anidbId = context.mapping!.anidbId;
-    final absoluteEpisode = context.mapping?.absoluteEpisode;
+    // Treat 0 as invalid (movies get mapped with absEp=0 from fallback)
+    final absoluteEpisode = (context.mapping?.absoluteEpisode != null && context.mapping!.absoluteEpisode! > 0)
+        ? context.mapping!.absoluteEpisode
+        : null;
     
     // We perform two searches in parallel:
     // 1. Specific absolute episode (e.g., "05")

@@ -136,4 +136,6 @@ class CinemaPlayerState {
   }
 }
 
+enum SliderOverlayType { none, sync, fontSize, position, background, color }
+
 const Object _sentinel = Object();

@@ -759,6 +759,13 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       _handleLiveTvFailover(error, isConnectionError: true);
       return;
     }
+
+    // Filter out benign MPV errors that shouldn't crash the player state
+    final lowerError = error.toLowerCase();
+    if (lowerError.contains('already selected') || lowerError.contains('track')) {
+      debugPrint('PlayerController: Ignoring benign MPV error: $error');
+      return;
+    }
     
     if (mounted) {
       state = AsyncValue.error(error, StackTrace.current);

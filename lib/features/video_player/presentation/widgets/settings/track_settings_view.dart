@@ -84,13 +84,6 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
                   _buildExternalTracks(player, externalSubsAsync!, isLandscape),
                 ],
                 const SizedBox(height: 24),
-                if (widget.isSubtitle && selectedTrack.id != 'no')
-                   _SubtitleSyncAdjustment(
-                     delaySeconds: currentState.subtitleDelay,
-                     onChanged: (val) {
-                       ref.read(playerControllerProvider(widget.params).notifier).updateSubtitleDelay(val);
-                     },
-                   ),
               ],
             ),
           ),
@@ -376,91 +369,6 @@ class _ExternalSubtitleTileState extends ConsumerState<_ExternalSubtitleTile> {
     );
   }
 }
-
 // =============================================================================
-// Subtitle Sync Adjustment
+// Track Tile
 // =============================================================================
-
-class _SubtitleSyncAdjustment extends StatelessWidget {
-  final double delaySeconds;
-  final ValueChanged<double> onChanged;
-
-  const _SubtitleSyncAdjustment({
-    required this.delaySeconds,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    
-    return Container(
-      margin: const EdgeInsets.only(bottom: 24.0),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(l10n.playerSubtitleDelay, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-              Text(
-                '${delaySeconds > 0 ? '+' : ''}${delaySeconds.toStringAsFixed(1)} s',
-                style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(LucideIcons.minus, color: Colors.white70),
-                onPressed: () => onChanged(delaySeconds - 0.5),
-              ),
-              Expanded(
-                child: SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    trackHeight: 2,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
-                    activeTrackColor: AppTheme.accent,
-                    inactiveTrackColor: Colors.white24,
-                    thumbColor: AppTheme.accent,
-                  ),
-                  child: Slider(
-                    value: delaySeconds.clamp(-15.0, 15.0),
-                    min: -15.0,
-                    max: 15.0,
-                    divisions: 60,
-                    onChanged: onChanged,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(LucideIcons.plus, color: Colors.white70),
-                onPressed: () => onChanged(delaySeconds + 0.5),
-              ),
-            ],
-          ),
-          Center(
-            child: TextButton(
-              onPressed: delaySeconds == 0 ? null : () => onChanged(0.0),
-              style: TextButton.styleFrom(
-                foregroundColor: AppTheme.textMuted,
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(0, 0),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text(l10n.playerSubtitleDelayReset, style: const TextStyle(fontSize: 12)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

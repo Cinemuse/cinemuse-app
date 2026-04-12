@@ -37,28 +37,18 @@ class VodSourceHandler {
     required Function(Map<String, dynamic>?) onMediaDetailsFetched,
   }) async {
     final mediaDetails = await _fetchMediaDetails(params, onMediaDetailsFetched);
-    
-    // 1. Resolve Anime Mapping to determine if it's anime
-    // This repeats some logic from resolver, but needed here for the result
-    final isAnime = await _checkIfAnime(params);
 
-    final candidates = await _searchAvailableStreams(params, onStatusUpdate);
-    final resolution = await _resolveBestStream(params, candidates);
+    final searchResult = await _searchAvailableStreams(params, onStatusUpdate);
+    final resolution = await _resolveBestStream(params, searchResult.candidates);
     
     await _player.open(Media(resolution.stream.url), play: true);
 
     return VodInitializationResult(
-      candidates: candidates,
+      candidates: searchResult.candidates,
       resolvedStream: resolution.stream,
       mediaDetails: mediaDetails,
-      isAnime: isAnime,
+      isAnime: searchResult.isAnime,
     );
-  }
-
-  Future<bool> _checkIfAnime(PlayerParams params) async {
-    final details = await _tmdbService.getMediaDetails(params.queryId, params.type);
-    if (details == null) return false;
-    return await _resolver.checkIsAnime(details, params.type);
   }
 
   Future<Map<String, dynamic>?> _fetchMediaDetails(
@@ -70,11 +60,11 @@ class VodSourceHandler {
     return details;
   }
 
-  Future<List<StreamCandidate>> _searchAvailableStreams(
+  Future<StreamSearchResult> _searchAvailableStreams(
     PlayerParams params,
     Function(List<ProviderSearchStatus>) onStatusUpdate
   ) async {
-    final candidates = await _resolver.searchStreams(
+    final result = await _resolver.searchStreams(
       params.queryId, 
       params.type, 
       season: params.season, 
@@ -82,10 +72,10 @@ class VodSourceHandler {
       onStatusUpdate: onStatusUpdate,
     );
 
-    if (candidates.isEmpty) {
+    if (result.candidates.isEmpty) {
       throw Exception("No streams found for this content.");
     }
-    return candidates;
+    return result;
   }
 
   Future<({ResolvedStream stream, StreamCandidate candidate})> _resolveBestStream(
