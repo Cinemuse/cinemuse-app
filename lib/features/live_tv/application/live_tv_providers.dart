@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
@@ -32,11 +33,51 @@ final epgDataProvider =
 });
 
 // ---------------------------------------------------------------------------
-// UI State
+// UI State — Tabs & Filters
 // ---------------------------------------------------------------------------
 
+/// The three navigation tabs on the channel list panel.
+enum LiveTvTab { all, favorites, recents }
+
+/// Which tab is currently active.
+final liveTvTabProvider = StateProvider<LiveTvTab>((ref) => LiveTvTab.all);
+
+/// Grouping mode used inside the filter sheet.
 enum LiveTvGroupMode { category, provider }
-enum LiveTvPanelFocus { groups, channels }
+
+/// Filter state applied from the filter sheet.
+class ChannelFilter {
+  final LiveTvGroupMode groupMode;
+  final String? selectedGroup;
+  final String? selectedSubProvider;
+
+  const ChannelFilter({
+    this.groupMode = LiveTvGroupMode.category,
+    this.selectedGroup,
+    this.selectedSubProvider,
+  });
+
+  bool get isActive => selectedGroup != null;
+
+  ChannelFilter copyWith({
+    LiveTvGroupMode? groupMode,
+    String? Function()? selectedGroup,
+    String? Function()? selectedSubProvider,
+  }) {
+    return ChannelFilter(
+      groupMode: groupMode ?? this.groupMode,
+      selectedGroup:
+          selectedGroup != null ? selectedGroup() : this.selectedGroup,
+      selectedSubProvider: selectedSubProvider != null
+          ? selectedSubProvider()
+          : this.selectedSubProvider,
+    );
+  }
+}
+
+/// The current filter state (set via the filter sheet).
+final channelFilterProvider =
+    StateProvider<ChannelFilter>((ref) => const ChannelFilter());
 
 /// The currently selected / playing channel.
 final selectedChannelProvider = StateProvider<Channel?>((ref) => null);
@@ -44,39 +85,93 @@ final selectedChannelProvider = StateProvider<Channel?>((ref) => null);
 /// The active search query for filtering channels.
 final channelSearchQueryProvider = StateProvider<String>((ref) => '');
 
-/// Current group mode (Category vs Provider)
-final liveTvGroupModeProvider = StateProvider<LiveTvGroupMode>((ref) => LiveTvGroupMode.category);
+// ---------------------------------------------------------------------------
+// Favorites
+// ---------------------------------------------------------------------------
 
-/// Which part of the panel is currently focused/expanded
-final liveTvPanelFocusProvider = StateProvider<LiveTvPanelFocus>((ref) => LiveTvPanelFocus.groups);
+class FavoriteChannelsNotifier extends StateNotifier<Set<String>> {
+  FavoriteChannelsNotifier() : super({}) {
+    _load();
+  }
 
-/// Tracks which sub-providers are expanded in the channel list (accordion state)
-/// Key: Provider/Category name, Value: Set of expanded sub-provider names.
-final expandedSubProvidersProvider = StateProvider<Map<String, Set<String>>>((ref) => {});
+  static const _key = 'live_tv_favorites';
 
-/// The currently selected group name (Category or Provider).
-final liveTvSelectedGroupProvider = StateProvider<String>((ref) {
-  final mode = ref.watch(liveTvGroupModeProvider);
-  return mode == LiveTvGroupMode.category ? 'DTT' : '';
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ids = prefs.getStringList(_key) ?? [];
+    state = ids.toSet();
+  }
+
+  Future<void> toggle(String channelId) async {
+    final next = Set<String>.from(state);
+    if (next.contains(channelId)) {
+      next.remove(channelId);
+    } else {
+      next.add(channelId);
+    }
+    state = next;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_key, next.toList());
+  }
+
+  bool isFavorite(String channelId) => state.contains(channelId);
+}
+
+final favoriteChannelIdsProvider =
+    StateNotifierProvider<FavoriteChannelsNotifier, Set<String>>((ref) {
+  return FavoriteChannelsNotifier();
 });
 
-// Legacy support for category chip UI if still used elsewhere
-final liveTvCategoryProvider = Provider<String>((ref) => ref.watch(liveTvSelectedGroupProvider));
+// ---------------------------------------------------------------------------
+// Recently Watched
+// ---------------------------------------------------------------------------
 
-/// All available groups (Categories or Providers) extracted from the current channel list.
+class RecentChannelsNotifier extends StateNotifier<List<String>> {
+  RecentChannelsNotifier() : super([]) {
+    _load();
+  }
+
+  static const _key = 'live_tv_recents';
+  static const _maxRecents = 15;
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getStringList(_key) ?? [];
+  }
+
+  Future<void> push(String channelId) async {
+    final next = [channelId, ...state.where((id) => id != channelId)];
+    state = next.take(_maxRecents).toList();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_key, state);
+  }
+}
+
+final recentChannelIdsProvider =
+    StateNotifierProvider<RecentChannelsNotifier, List<String>>((ref) {
+  return RecentChannelsNotifier();
+});
+
+// ---------------------------------------------------------------------------
+// Derived: Groups & Sub-Providers (for filter sheet)
+// ---------------------------------------------------------------------------
+
+/// All available groups (Categories or Providers) for the filter sheet.
 final groupsProvider = Provider<AsyncValue<List<String>>>((ref) {
   final channelsAsync = ref.watch(channelsProvider);
-  final mode = ref.watch(liveTvGroupModeProvider);
-  
+  final mode =
+      ref.watch(channelFilterProvider.select((f) => f.groupMode));
+
   return channelsAsync.whenData((channels) {
     final groups = channels
-        .map((ch) => mode == LiveTvGroupMode.category ? ch.group : ch.provider)
+        .map((ch) =>
+            mode == LiveTvGroupMode.category ? ch.group : ch.provider)
         .where((g) => g != null && g.isNotEmpty)
         .cast<String>()
         .toSet()
         .toList();
     groups.sort();
-    
+
     if (mode == LiveTvGroupMode.category && groups.contains('DTT')) {
       groups.remove('DTT');
       groups.insert(0, 'DTT');
@@ -85,34 +180,156 @@ final groupsProvider = Provider<AsyncValue<List<String>>>((ref) {
   });
 });
 
-/// Channels filtered by the active search query AND selected group (category or provider).
-final filteredChannelsProvider = Provider<AsyncValue<List<Channel>>>((ref) {
+/// Sub-providers available for the currently selected group.
+final subProvidersForGroupProvider = Provider<List<String>>((ref) {
   final channelsAsync = ref.watch(channelsProvider);
-  final query = ref.watch(channelSearchQueryProvider).trim().toLowerCase();
-  final selectedGroup = ref.watch(liveTvSelectedGroupProvider);
-  final mode = ref.watch(liveTvGroupModeProvider);
+  final filter = ref.watch(channelFilterProvider);
 
-  return channelsAsync.whenData((channels) {
+  return channelsAsync.whenOrNull(data: (channels) {
+        if (filter.selectedGroup == null) return <String>[];
+
+        final inGroup = channels.where((ch) {
+          final chGroup = filter.groupMode == LiveTvGroupMode.category
+              ? ch.group
+              : ch.provider;
+          return chGroup == filter.selectedGroup;
+        });
+
+        final subs = inGroup
+            .map((ch) => ch.subProvider)
+            .where((s) => s != null && s.isNotEmpty)
+            .cast<String>()
+            .toSet()
+            .toList();
+        subs.sort();
+        return subs;
+      }) ??
+      [];
+});
+
+// ---------------------------------------------------------------------------
+// Derived: Sectioned channels for the main list
+// ---------------------------------------------------------------------------
+
+/// A section header + its channels, used for sticky headers in the flat list.
+class ChannelSection {
+  final String title;
+  final List<Channel> channels;
+  const ChannelSection({required this.title, required this.channels});
+}
+
+/// Channels grouped into sections for sticky-header display.
+/// When a filter is active, returns a single section (no headers needed).
+final sectionedChannelsProvider =
+    Provider<AsyncValue<List<ChannelSection>>>((ref) {
+  final tab = ref.watch(liveTvTabProvider);
+  final query = ref.watch(channelSearchQueryProvider).trim().toLowerCase();
+  final filter = ref.watch(channelFilterProvider);
+  final channelsAsync = ref.watch(channelsProvider);
+  final favoriteIds = ref.watch(favoriteChannelIdsProvider);
+  final recentIds = ref.watch(recentChannelIdsProvider);
+
+  return channelsAsync.whenData((allChannels) {
+    List<Channel> pool;
+
+    // Resolve by tab
+    switch (tab) {
+      case LiveTvTab.favorites:
+        pool = allChannels
+            .where((ch) => favoriteIds.contains(ch.uniqueId))
+            .toList();
+        break;
+      case LiveTvTab.recents:
+        pool = _resolveRecents(allChannels, recentIds);
+        break;
+      case LiveTvTab.all:
+        pool = _applyGroupFilter(allChannels, filter);
+        break;
+    }
+
+    // Apply search
     if (query.isNotEmpty) {
-      // Global search across all categories/providers
-      final asNumber = int.tryParse(query);
-      return channels.where((ch) {
-        if (asNumber != null && ch.lcn.toString().startsWith(query)) return true;
-        return ch.name.toLowerCase().contains(query);
-      }).toList();
+      pool = _applySearch(pool, query);
     }
-    
-    // Filter by group (Category or Provider) only if NOT searching
-    if (selectedGroup.isNotEmpty) {
-      return channels.where((ch) {
-        final chGroup = mode == LiveTvGroupMode.category ? ch.group : ch.provider;
-        return chGroup == selectedGroup;
-      }).toList();
+
+    // Build sections
+    if (tab != LiveTvTab.all || filter.isActive || query.isNotEmpty) {
+      // Single flat list — no section headers
+      return [ChannelSection(title: '', channels: pool)];
     }
-    
-    return channels;
+
+    // Group by category for "All" tab with no filter
+    return _buildSections(pool);
   });
 });
+
+/// Flat filtered channels (convenience for scroll-to-selected logic).
+final filteredChannelsProvider =
+    Provider<AsyncValue<List<Channel>>>((ref) {
+  final sectioned = ref.watch(sectionedChannelsProvider);
+  return sectioned.whenData((sections) {
+    return sections.expand((s) => s.channels).toList();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Section Building Helpers
+// ---------------------------------------------------------------------------
+
+List<Channel> _resolveRecents(
+    List<Channel> allChannels, List<String> recentIds) {
+  final channelMap = {for (final ch in allChannels) ch.uniqueId: ch};
+  return recentIds
+      .map((id) => channelMap[id])
+      .where((ch) => ch != null)
+      .cast<Channel>()
+      .toList();
+}
+
+List<Channel> _applyGroupFilter(
+    List<Channel> channels, ChannelFilter filter) {
+  if (!filter.isActive) return channels;
+
+  var result = channels.where((ch) {
+    final chGroup = filter.groupMode == LiveTvGroupMode.category
+        ? ch.group
+        : ch.provider;
+    return chGroup == filter.selectedGroup;
+  });
+
+  if (filter.selectedSubProvider != null) {
+    result = result.where((ch) => ch.subProvider == filter.selectedSubProvider);
+  }
+
+  return result.toList();
+}
+
+List<Channel> _applySearch(List<Channel> channels, String query) {
+  final asNumber = int.tryParse(query);
+  return channels.where((ch) {
+    if (asNumber != null && ch.lcn.toString().startsWith(query)) return true;
+    return ch.name.toLowerCase().contains(query);
+  }).toList();
+}
+
+List<ChannelSection> _buildSections(List<Channel> channels) {
+  final grouped = <String, List<Channel>>{};
+  for (final ch in channels) {
+    final key = ch.group?.isNotEmpty == true ? ch.group! : 'Other';
+    (grouped[key] ??= []).add(ch);
+  }
+
+  // Sort groups, but keep DTT first if present
+  final keys = grouped.keys.toList()..sort();
+  if (keys.contains('DTT')) {
+    keys.remove('DTT');
+    keys.insert(0, 'DTT');
+  }
+
+  return keys
+      .map((k) => ChannelSection(title: k, channels: grouped[k]!))
+      .toList();
+}
 
 // ---------------------------------------------------------------------------
 // EPG Helpers
@@ -168,4 +385,3 @@ final nextProgramProvider =
 
 /// Buffer for remote-style number input (e.g., "10" for LCN 10).
 final numberInputBufferProvider = StateProvider<String>((ref) => '');
-

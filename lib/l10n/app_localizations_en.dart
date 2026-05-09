@@ -1074,4 +1074,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get menuRemoveFromContinueWatching => 'Remove from Continue Watching';
+
+  @override
+  String get liveTvTabAll => 'All';
+
+  @override
+  String get liveTvTabFavorites => 'Favorites';
+
+  @override
+  String get liveTvTabRecents => 'Recents';
+
+  @override
+  String get liveTvFilterChannels => 'Filter Channels';
+
+  @override
+  String get liveTvGroupBy => 'Group by';
+
+  @override
+  String get liveTvSubProvider => 'Sub-provider';
+
+  @override
+  String get liveTvApplyFilters => 'Apply Filters';
+
+  @override
+  String get liveTvClearFilters => 'Clear Filters';
+
+  @override
+  String get liveTvAddedToFavorites => 'Added to favorites';
+
+  @override
+  String get liveTvRemovedFromFavorites => 'Removed from favorites';
+
+  @override
+  String get liveTvNoFavorites => 'No favorite channels yet';
+
+  @override
+  String get liveTvNoFavoritesHint =>
+      'Long-press a channel to add it to favorites';
+
+  @override
+  String get liveTvNoRecents => 'No recently watched channels';
 }

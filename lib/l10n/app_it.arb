@@ -339,5 +339,18 @@
   "menuResume": "Riprendi",
   "menuRestart": "Ricomincia",
   "menuPlay": "Riproduci",
-  "menuRemoveFromContinueWatching": "Rimuovi da Continua a Guardare"
+  "menuRemoveFromContinueWatching": "Rimuovi da Continua a Guardare",
+  "liveTvTabAll": "Tutti",
+  "liveTvTabFavorites": "Preferiti",
+  "liveTvTabRecents": "Recenti",
+  "liveTvFilterChannels": "Filtra Canali",
+  "liveTvGroupBy": "Raggruppa per",
+  "liveTvSubProvider": "Sub-provider",
+  "liveTvApplyFilters": "Applica Filtri",
+  "liveTvClearFilters": "Rimuovi Filtri",
+  "liveTvAddedToFavorites": "Aggiunto ai preferiti",
+  "liveTvRemovedFromFavorites": "Rimosso dai preferiti",
+  "liveTvNoFavorites": "Nessun canale preferito",
+  "liveTvNoFavoritesHint": "Tieni premuto su un canale per aggiungerlo ai preferiti",
+  "liveTvNoRecents": "Nessun canale guardato di recente"
 }

@@ -2083,6 +2083,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove from Continue Watching'**
   String get menuRemoveFromContinueWatching;
+
+  /// No description provided for @liveTvTabAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get liveTvTabAll;
+
+  /// No description provided for @liveTvTabFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get liveTvTabFavorites;
+
+  /// No description provided for @liveTvTabRecents.
+  ///
+  /// In en, this message translates to:
+  /// **'Recents'**
+  String get liveTvTabRecents;
+
+  /// No description provided for @liveTvFilterChannels.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter Channels'**
+  String get liveTvFilterChannels;
+
+  /// No description provided for @liveTvGroupBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Group by'**
+  String get liveTvGroupBy;
+
+  /// No description provided for @liveTvSubProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Sub-provider'**
+  String get liveTvSubProvider;
+
+  /// No description provided for @liveTvApplyFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply Filters'**
+  String get liveTvApplyFilters;
+
+  /// No description provided for @liveTvClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Filters'**
+  String get liveTvClearFilters;
+
+  /// No description provided for @liveTvAddedToFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to favorites'**
+  String get liveTvAddedToFavorites;
+
+  /// No description provided for @liveTvRemovedFromFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from favorites'**
+  String get liveTvRemovedFromFavorites;
+
+  /// No description provided for @liveTvNoFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorite channels yet'**
+  String get liveTvNoFavorites;
+
+  /// No description provided for @liveTvNoFavoritesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press a channel to add it to favorites'**
+  String get liveTvNoFavoritesHint;
+
+  /// No description provided for @liveTvNoRecents.
+  ///
+  /// In en, this message translates to:
+  /// **'No recently watched channels'**
+  String get liveTvNoRecents;
 }
 
 class _AppLocalizationsDelegate

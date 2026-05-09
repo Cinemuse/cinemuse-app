@@ -57,6 +57,9 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
   Future<void> _doPlayChannel(Channel channel) async {
     if (!mounted) return;
     
+    // Push to recents so the Recents tab stays populated
+    ref.read(recentChannelIdsProvider.notifier).push(channel.uniqueId);
+
     // Delegate to the unified PlayerController
     ref.read(playerControllerProvider(_liveTvParams).notifier).changeChannel(channel);
   }
