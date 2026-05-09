@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
+import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
+import 'package:cinemuse_app/features/live_tv/data/m3u_parser.dart';
 
 class LiveTvRepository {
   final Dio _dio;
@@ -11,9 +14,6 @@ class LiveTvRepository {
       'https://raw.githubusercontent.com/ZapprTV/channels/refs/heads/main/it/dtt/national.json';
   static const _epgUrl =
       'https://epg.zappr.stream/it/dtt/national.json';
-
-  // Premium scraped list from user's Gist
-  static const _premiumChannelsUrl = 'https://gist.githubusercontent.com/quelmitch/ab33cc9daf45b96fe226ae57d86db98d/raw/channels.json';
 
   LiveTvRepository(this._dio);
 
@@ -27,7 +27,7 @@ class LiveTvRepository {
 
   /// Fetches the channel list, filtering to only playable channels.
   /// If [region] is provided, it also fetches regional channels.
-  Future<List<Channel>> fetchChannels({String? region}) async {
+  Future<List<Channel>> fetchChannels({String? region, List<LiveTvPlaylist>? customPlaylists}) async {
     try {
       final List<dynamic> allChannelsJson = [];
 
@@ -83,15 +83,82 @@ class LiveTvRepository {
         } catch (_) {}
       }
 
-      // ── Load & Merge Premium Scraped Channels ──
+      // ── Load & Merge Custom Playlists ──
       try {
-        final premiumList = await _loadPremiumData();
-        if (premiumList != null) {
-          _mergePremiumChannels(channelMap, premiumList);
+        if (customPlaylists != null) {
+          int syntheticLcn = 2000;
+          for (final playlist in customPlaylists) {
+            String content = '';
+            try {
+              if (playlist.isLocal) {
+                content = await File(playlist.urlOrPath).readAsString();
+              } else {
+                final response = await _dio.get(playlist.urlOrPath);
+                content = response.data is String ? response.data as String : json.encode(response.data);
+              }
+              
+              if (playlist.type == PlaylistType.m3u) {
+                final m3uChannels = M3uParser.parse(content, startLcn: syntheticLcn);
+                for (final ch in m3uChannels) {
+                  // Ensure we don't overwrite existing LCNs
+                  while(channelMap.containsKey(syntheticLcn)) {
+                    syntheticLcn++;
+                  }
+                  channelMap[syntheticLcn] = Channel(
+                    lcn: syntheticLcn,
+                    name: ch.name,
+                    logo: ch.logo,
+                    group: ch.group ?? playlist.name,
+                    epgId: ch.epgId,
+                    links: ch.links,
+                  );
+                  syntheticLcn++;
+                }
+              } else if (playlist.type == PlaylistType.json) {
+                final dynamic jsonData = json.decode(content);
+                List<dynamic> channelsList = [];
+                
+                // Handle both array format and standard object format
+                if (jsonData is List) {
+                  channelsList = jsonData;
+                } else if (jsonData is Map && jsonData.containsKey('channels')) {
+                  channelsList = jsonData['channels'] as List<dynamic>;
+                }
+                
+                for (final entry in channelsList) {
+                  if (entry is! Map<String, dynamic>) continue;
+                  
+                  final links = entry['links'] as List<dynamic>?;
+                  if (links == null || links.isEmpty) continue;
+
+                  final streamLinks = links
+                      .map((l) => StreamLink.fromJson(l as Map<String, dynamic>))
+                      .toList();
+                      
+                  while(channelMap.containsKey(syntheticLcn)) {
+                    syntheticLcn++;
+                  }
+
+                  channelMap[syntheticLcn] = Channel(
+                    lcn: syntheticLcn,
+                    name: (entry['name'] as String?) ?? 'Unknown',
+                    logo: (entry['logo'] as String?) ?? '',
+                    links: streamLinks,
+                    group: (entry['group'] ?? entry['category']) as String? ?? playlist.name,
+                    provider: entry['provider'] as String?,
+                    subProvider: entry['sub_provider'] as String?,
+                    epgId: entry['epg_id'] as String?,
+                  );
+                  syntheticLcn++;
+                }
+              }
+            } catch (e) {
+               // Skip failed playlists
+            }
+          }
         }
       } catch (e) {
-        // Log but don't crash, we still have the stable DTT links
-        // Log or handle error — for now we skip stable DTT links
+        // Log but don't crash
       }
 
       // Second pass: fix channels stuck with incompatible URLs.
@@ -144,58 +211,6 @@ class LiveTvRepository {
     } catch (e) {
       rethrow;
     }
-  }
-
-  /// Loads premium data from the Gist URL (flat list format)
-  Future<List<dynamic>?> _loadPremiumData() async {
-    try {
-      final response = await _dio.get(_premiumChannelsUrl);
-      return _parseResponse(response.data) as List<dynamic>;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /// Merges scraped premium channels (flat list) into the existing DTT map
-  void _mergePremiumChannels(
-    Map<int, Channel> channelMap, 
-    List<dynamic> premiumList,
-  ) {
-    int syntheticLcn = 1000; // Start high for channels without LCN
-    // Skip LCNs already taken by DTT channels
-    while (channelMap.containsKey(syntheticLcn)) {
-      syntheticLcn++;
-    }
-
-    
-    for (final entry in premiumList) {
-      if (entry is! Map<String, dynamic>) continue;
-
-      final links = entry['links'] as List<dynamic>?;
-      if (links == null || links.isEmpty) continue;
-
-      final streamLinks = links
-          .map((l) => StreamLink.fromJson(l as Map<String, dynamic>))
-          .toList();
-
-      final channel = Channel(
-        lcn: syntheticLcn,
-        name: (entry['name'] as String?) ?? '',
-        logo: (entry['logo'] as String?) ?? '',
-        links: streamLinks,
-        group: entry['category'] as String?,
-        provider: entry['provider'] as String?,
-        subProvider: entry['sub_provider'] as String?,
-      );
-
-      channelMap[syntheticLcn] = channel;
-      syntheticLcn++;
-      // Skip occupied LCNs
-      while (channelMap.containsKey(syntheticLcn)) {
-        syntheticLcn++;
-      }
-    }
-    
   }
 
   /// CDN hosts that require specific HTTP headers. 

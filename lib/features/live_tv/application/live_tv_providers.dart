@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
+import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 
 // ---------------------------------------------------------------------------
@@ -15,6 +16,51 @@ final liveTvRepositoryProvider = Provider<LiveTvRepository>((ref) {
 });
 
 // ---------------------------------------------------------------------------
+// Custom Playlists
+// ---------------------------------------------------------------------------
+
+class CustomPlaylistsNotifier extends StateNotifier<List<LiveTvPlaylist>> {
+  CustomPlaylistsNotifier() : super([]) {
+    _load();
+  }
+
+  static const _key = 'live_tv_custom_playlists';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonList = prefs.getStringList(_key) ?? [];
+    try {
+      state = jsonList.map((str) => LiveTvPlaylist.decode(str)).toList();
+    } catch (_) {
+      state = [];
+    }
+  }
+
+  Future<void> addPlaylist(LiveTvPlaylist playlist) async {
+    final next = [...state, playlist];
+    state = next;
+    _save(next);
+  }
+
+  Future<void> removePlaylist(String id) async {
+    final next = state.where((p) => p.id != id).toList();
+    state = next;
+    _save(next);
+  }
+
+  Future<void> _save(List<LiveTvPlaylist> playlists) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonList = playlists.map((p) => p.encode()).toList();
+    await prefs.setStringList(_key, jsonList);
+  }
+}
+
+final customPlaylistsProvider =
+    StateNotifierProvider<CustomPlaylistsNotifier, List<LiveTvPlaylist>>((ref) {
+  return CustomPlaylistsNotifier();
+});
+
+// ---------------------------------------------------------------------------
 // Data Providers
 // ---------------------------------------------------------------------------
 
@@ -22,7 +68,8 @@ final liveTvRepositoryProvider = Provider<LiveTvRepository>((ref) {
 final channelsProvider = FutureProvider<List<Channel>>((ref) async {
   final repo = ref.watch(liveTvRepositoryProvider);
   final region = ref.watch(settingsProvider.select((s) => s.liveTvRegion));
-  return repo.fetchChannels(region: region);
+  final customPlaylists = ref.watch(customPlaylistsProvider);
+  return repo.fetchChannels(region: region, customPlaylists: customPlaylists);
 });
 
 /// Full EPG data keyed by source → channel id → programs.

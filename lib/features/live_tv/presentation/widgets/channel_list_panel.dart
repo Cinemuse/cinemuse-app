@@ -8,6 +8,7 @@ import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_tile.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_filter_sheet.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/playlist_management_sheet.dart';
 
 /// Minimalist Live TV channel list panel.
 ///
@@ -153,6 +154,23 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
                 color: currentTab == LiveTvTab.recents ? AppTheme.accent : Colors.white30,
               ),
               tooltip: l10n.liveTvTabRecents,
+            ),
+            // Playlist Management Icon
+            IconButton(
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  isScrollControlled: true,
+                  builder: (context) => const PlaylistManagementSheet(),
+                );
+              },
+              icon: const Icon(
+                Icons.playlist_play_rounded,
+                size: 22,
+                color: Colors.white30,
+              ),
+              tooltip: 'Manage Playlists',
             ),
             _FilterIconButton(isActive: filterIsActive),
           ],
