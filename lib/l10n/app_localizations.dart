@@ -1316,6 +1316,18 @@ abstract class AppLocalizations {
   /// **'Enable VixSrc'**
   String get settingsEnableVixSrc;
 
+  /// No description provided for @settingsEnableAnimeUnity.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable AnimeUnity'**
+  String get settingsEnableAnimeUnity;
+
+  /// No description provided for @settingsEnableAnimeUnityDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Native anime streaming source (No Debrid required)'**
+  String get settingsEnableAnimeUnityDesc;
+
   /// No description provided for @settingsEnableAnimeToshoWarning.
   ///
   /// In en, this message translates to:

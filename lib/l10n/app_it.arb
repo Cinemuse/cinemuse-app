@@ -208,6 +208,8 @@
   "settingsNativeIntegrations": "Provider Nativi",
   "settingsEnableAnimeTosho": "Abilita AnimeTosho",
   "settingsEnableVixSrc": "Abilita VixSrc",
+  "settingsEnableAnimeUnity": "Abilita AnimeUnity",
+  "settingsEnableAnimeUnityDesc": "Sorgente di streaming anime nativa (nessun Debrid necessario)",
   "settingsEnableAnimeToshoWarning": "Richiede un'integrazione Real-Debrid attiva",
   "settingsDebridServices": "Servizi Debrid",
   "settingsRealDebridTitle": "Real-Debrid (Nativo)",

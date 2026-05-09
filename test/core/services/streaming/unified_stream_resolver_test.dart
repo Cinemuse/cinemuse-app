@@ -80,8 +80,8 @@ void main() {
 
       final results = await resolver.searchStreams('123', 'movie');
 
-      expect(results.length, equals(2), reason: 'Should deduplicate by infoHash');
-      expect(results.any((c) => c.infoHash == 'abc'), isTrue);
+      expect(results.candidates.length, equals(2), reason: 'Should deduplicate by infoHash');
+      expect(results.candidates.any((c) => c.infoHash == 'abc'), isTrue);
     });
 
     test('Should handle source failures gracefully', () async {

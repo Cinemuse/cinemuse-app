@@ -28,6 +28,7 @@ class UserSettings {
   final String? liveTvRegion;
   final bool enableAnimeTosho;
   final bool enableVixSrc;
+  final bool enableAnimeUnity;
   final bool enableRealDebrid;
   final String realDebridKey;
   final String openSubtitlesKey;
@@ -36,11 +37,6 @@ class UserSettings {
   final int liveTvBufferSize; // in MB
   final bool enableLiveTvDiskCache;
   final StreamQuality liveTvQuality;
-
-  final double subtitleFontSize;
-  final String subtitleColor;
-  final String subtitleBackgroundColor;
-  final double subtitleVerticalPosition;
 
   const UserSettings({
     this.displayName = '',
@@ -59,6 +55,7 @@ class UserSettings {
     this.liveTvRegion,
     this.enableAnimeTosho = true,
     this.enableVixSrc = true,
+    this.enableAnimeUnity = true,
     this.enableRealDebrid = false,
     this.realDebridKey = '',
     this.openSubtitlesKey = '',
@@ -67,10 +64,6 @@ class UserSettings {
     this.liveTvBufferSize = 512,
     this.enableLiveTvDiskCache = false,
     this.liveTvQuality = StreamQuality.hd,
-    this.subtitleFontSize = 24.0,
-    this.subtitleColor = '#FFFFFFFF',
-    this.subtitleBackgroundColor = '#00000000',
-    this.subtitleVerticalPosition = 0.05,
   });
 
   factory UserSettings.fromProfile(Profile profile) {
@@ -92,6 +85,7 @@ class UserSettings {
       liveTvRegion: prefs['liveTvRegion'],
       enableAnimeTosho: prefs['enableAnimeTosho'] ?? true,
       enableVixSrc: prefs['enableVixSrc'] ?? true,
+      enableAnimeUnity: prefs['enableAnimeUnity'] ?? true,
       enableRealDebrid: prefs['enableRealDebrid'] ?? false,
       realDebridKey: prefs['realDebridKey'] ?? '',
       openSubtitlesKey: prefs['openSubtitlesKey'] ?? '',
@@ -108,10 +102,6 @@ class UserSettings {
         (e) => e.name == (prefs['liveTvQuality'] as String?),
         orElse: () => StreamQuality.hd,
       ),
-      subtitleFontSize: (prefs['subtitleFontSize'] as num?)?.toDouble() ?? 24.0,
-      subtitleColor: prefs['subtitleColor'] ?? '#FFFFFFFF',
-      subtitleBackgroundColor: prefs['subtitleBackgroundColor'] ?? '#00000000',
-      subtitleVerticalPosition: (prefs['subtitleVerticalPosition'] as num?)?.toDouble() ?? 0.05,
     );
   }
 
@@ -132,6 +122,7 @@ class UserSettings {
     String? liveTvRegion,
     bool? enableAnimeTosho,
     bool? enableVixSrc,
+    bool? enableAnimeUnity,
     bool? enableRealDebrid,
     String? realDebridKey,
     String? openSubtitlesKey,
@@ -140,10 +131,6 @@ class UserSettings {
     int? liveTvBufferSize,
     bool? enableLiveTvDiskCache,
     StreamQuality? liveTvQuality,
-    double? subtitleFontSize,
-    String? subtitleColor,
-    String? subtitleBackgroundColor,
-    double? subtitleVerticalPosition,
   }) {
     return UserSettings(
       displayName: displayName ?? this.displayName,
@@ -162,6 +149,7 @@ class UserSettings {
       liveTvRegion: liveTvRegion ?? this.liveTvRegion,
       enableAnimeTosho: enableAnimeTosho ?? this.enableAnimeTosho,
       enableVixSrc: enableVixSrc ?? this.enableVixSrc,
+      enableAnimeUnity: enableAnimeUnity ?? this.enableAnimeUnity,
       enableRealDebrid: enableRealDebrid ?? this.enableRealDebrid,
       realDebridKey: realDebridKey ?? this.realDebridKey,
       openSubtitlesKey: openSubtitlesKey ?? this.openSubtitlesKey,
@@ -170,10 +158,6 @@ class UserSettings {
       liveTvBufferSize: liveTvBufferSize ?? this.liveTvBufferSize,
       enableLiveTvDiskCache: enableLiveTvDiskCache ?? this.enableLiveTvDiskCache,
       liveTvQuality: liveTvQuality ?? this.liveTvQuality,
-      subtitleFontSize: subtitleFontSize ?? this.subtitleFontSize,
-      subtitleColor: subtitleColor ?? this.subtitleColor,
-      subtitleBackgroundColor: subtitleBackgroundColor ?? this.subtitleBackgroundColor,
-      subtitleVerticalPosition: subtitleVerticalPosition ?? this.subtitleVerticalPosition,
     );
   }
 
@@ -194,6 +178,7 @@ class UserSettings {
       'liveTvRegion': liveTvRegion,
       'enableAnimeTosho': enableAnimeTosho,
       'enableVixSrc': enableVixSrc,
+      'enableAnimeUnity': enableAnimeUnity,
       'enableRealDebrid': enableRealDebrid,
       'realDebridKey': realDebridKey,
       'openSubtitlesKey': openSubtitlesKey,
@@ -202,10 +187,6 @@ class UserSettings {
       'liveTvBufferSize': liveTvBufferSize,
       'enableLiveTvDiskCache': enableLiveTvDiskCache,
       'liveTvQuality': liveTvQuality.name,
-      'subtitleFontSize': subtitleFontSize,
-      'subtitleColor': subtitleColor,
-      'subtitleBackgroundColor': subtitleBackgroundColor,
-      'subtitleVerticalPosition': subtitleVerticalPosition,
     };
   }
 }
@@ -257,6 +238,7 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       liveTvRegion: updates['liveTvRegion'] ?? state.liveTvRegion,
       enableAnimeTosho: updates['enableAnimeTosho'] ?? state.enableAnimeTosho,
       enableVixSrc: updates['enableVixSrc'] ?? state.enableVixSrc,
+      enableAnimeUnity: updates['enableAnimeUnity'] ?? state.enableAnimeUnity,
       enableRealDebrid: updates['enableRealDebrid'] ?? state.enableRealDebrid,
       realDebridKey: updates['realDebridKey'] ?? state.realDebridKey,
       openSubtitlesKey: updates['openSubtitlesKey'] ?? state.openSubtitlesKey,
@@ -265,10 +247,6 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       liveTvBufferSize: updates['liveTvBufferSize'] ?? state.liveTvBufferSize,
       enableLiveTvDiskCache: updates['enableLiveTvDiskCache'] ?? state.enableLiveTvDiskCache,
       liveTvQuality: updates['liveTvQuality'] ?? state.liveTvQuality,
-      subtitleFontSize: updates['subtitleFontSize'] ?? state.subtitleFontSize,
-      subtitleColor: updates['subtitleColor'] ?? state.subtitleColor,
-      subtitleBackgroundColor: updates['subtitleBackgroundColor'] ?? state.subtitleBackgroundColor,
-      subtitleVerticalPosition: updates['subtitleVerticalPosition'] ?? state.subtitleVerticalPosition,
     );
 
     // Sync app language to localeProvider if updated

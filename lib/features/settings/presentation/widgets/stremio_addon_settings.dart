@@ -219,11 +219,22 @@ class _StremioAddonSettingsState extends ConsumerState<StremioAddonSettings> {
                           label: l10n.settingsEnableVixSrc,
                           description: "Native direct streaming source (No Debrid required)",
                           icon: LucideIcons.playCircle,
-                          showDivider: !isDebridActive,
                           trailing: SettingToggle(
                             value: settings.enableVixSrc,
                             onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
                               'enableVixSrc': val,
+                            }),
+                          ),
+                        ),
+                        SettingsTile(
+                          label: l10n.settingsEnableAnimeUnity,
+                          description: l10n.settingsEnableAnimeUnityDesc,
+                          icon: LucideIcons.playCircle,
+                          showDivider: !isDebridActive,
+                          trailing: SettingToggle(
+                            value: settings.enableAnimeUnity,
+                            onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
+                              'enableAnimeUnity': val,
                             }),
                           ),
                         ),

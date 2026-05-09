@@ -16,6 +16,17 @@ class KitsuMapping {
   KitsuMapping({required this.kitsuId, this.absoluteEpisode, this.anidbId});
 }
 
+/// Represents a resolved AnimeUnity entry parsed from the Stremio mapping API.
+class AnimeUnityEntry {
+  /// The numeric AnimeUnity anime ID (e.g. 12 from `/anime/12-one-piece`).
+  final int id;
+
+  /// The full path from the mapping (e.g. `/anime/12-one-piece`).
+  final String path;
+
+  AnimeUnityEntry({required this.id, required this.path});
+}
+
 final kitsuMappingServiceProvider = Provider((ref) {
   return KitsuMappingService(
     ref.read(dioProvider),
@@ -24,8 +35,11 @@ final kitsuMappingServiceProvider = Provider((ref) {
 });
 
 class KitsuMappingService {
+  static const _stremioMappingBaseUrl = 'https://animemapping.stremio.dpdns.org/kitsu';
+
   final Dio _dio;
   final AppDatabase _db;
+  final Map<String, List<AnimeUnityEntry>> _animeUnityCache = {};
 
   KitsuMappingService(this._dio, this._db);
 
@@ -205,5 +219,47 @@ class KitsuMappingService {
 
     }
     return null;
+  }
+
+  /// Resolves a Kitsu ID to a list of [AnimeUnityEntry] using the Stremio mapping API.
+  /// Returns an empty list if the mapping is unavailable or parsing fails.
+  Future<List<AnimeUnityEntry>> getAnimeUnityIds(String kitsuId) async {
+    final cached = _animeUnityCache[kitsuId];
+    if (cached != null) return cached;
+
+    try {
+      final res = await _dio.get('$_stremioMappingBaseUrl/$kitsuId');
+      if (res.statusCode != 200 || res.data == null) return [];
+
+      final entries = _parseAnimeUnityPaths(res.data);
+      _animeUnityCache[kitsuId] = entries;
+      debugPrint('[KitsuMapping] Kitsu $kitsuId -> ${entries.length} AnimeUnity entries');
+      return entries;
+    } catch (e) {
+      debugPrint('[KitsuMapping] AnimeUnity mapping failed for Kitsu $kitsuId: $e');
+      return [];
+    }
+  }
+
+  /// Parses AnimeUnity paths from the Stremio mapping API response.
+  /// Expected format: `mappings.animeunity = ["/anime/12-one-piece", ...]`
+  List<AnimeUnityEntry> _parseAnimeUnityPaths(Map<String, dynamic> data) {
+    final paths = data['mappings']?['animeunity'] as List?;
+    if (paths == null) return [];
+
+    final results = <AnimeUnityEntry>[];
+    final idPattern = RegExp(r'/anime/(\d+)');
+
+    for (final raw in paths) {
+      final path = raw.toString();
+      final match = idPattern.firstMatch(path);
+      if (match == null) continue;
+
+      final id = int.tryParse(match.group(1)!);
+      if (id != null) {
+        results.add(AnimeUnityEntry(id: id, path: path));
+      }
+    }
+    return results;
   }
 }

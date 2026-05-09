@@ -21,6 +21,7 @@ import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions
 import 'package:cinemuse_app/core/services/streaming/sources/animetosho_source.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/real_debrid_service.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/vixsrc_source.dart';
+import 'package:cinemuse_app/core/services/streaming/sources/animeunity_source.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 
@@ -30,6 +31,7 @@ final unifiedStreamResolverProvider = Provider((ref) {
     s.installedAddons,
     s.enableAnimeTosho,
     s.enableVixSrc,
+    s.enableAnimeUnity,
     s.enableRealDebrid,
     s.realDebridKey,
     s.smartSearchFilter,
@@ -43,12 +45,13 @@ final unifiedStreamResolverProvider = Provider((ref) {
     installedAddons: settings.$1,
     enableAnimeTosho: settings.$2,
     enableVixSrc: settings.$3,
-    enableRealDebrid: settings.$4,
-    realDebridKey: settings.$5,
-    smartSearchFilter: settings.$6,
-    playerLanguage: settings.$7,
-    splitAnimePreferences: settings.$8,
-    animeAudioLanguage: settings.$9,
+    enableAnimeUnity: settings.$4,
+    enableRealDebrid: settings.$5,
+    realDebridKey: settings.$6,
+    smartSearchFilter: settings.$7,
+    playerLanguage: settings.$8,
+    splitAnimePreferences: settings.$9,
+    animeAudioLanguage: settings.$10,
   );
 
   final dio = ref.read(dioProvider);
@@ -76,6 +79,10 @@ final unifiedStreamResolverProvider = Provider((ref) {
 
   if (userSettings.enableVixSrc) {
     sources.add(VixSrcSource(dio));
+  }
+
+  if (userSettings.enableAnimeUnity) {
+    sources.add(AnimeUnitySource(dio, ref.read(kitsuMappingServiceProvider)));
   }
 
   return UnifiedStreamResolver(
@@ -125,7 +132,7 @@ class UnifiedStreamResolver {
         _settings = settings,
         _debridService = debridService;
 
-  Future<List<StreamCandidate>> searchStreams(
+  Future<StreamSearchResult> searchStreams(
     String queryId, // Can be TMDB ID (digits) or IMDB ID (tt...)
     String type, {
     int? season,
@@ -139,7 +146,8 @@ class UnifiedStreamResolver {
       debugPrint('UnifiedStreamResolver: Returning cached results for $cacheKey');
       // Proactively check availability again if needed, or return cached ones
       // Since ranking depends on cache status, we might want to re-check if we have a debrid service
-      return _finalizeResults(cached.candidates, context: cached.context);
+      final rankedCandidates = await _finalizeResults(cached.candidates, context: cached.context);
+      return StreamSearchResult(candidates: rankedCandidates, isAnime: cached.context.isAnime);
     }
 
     Timer? statusTimer;
@@ -244,7 +252,10 @@ class UnifiedStreamResolver {
         timestamp: DateTime.now(),
       );
 
-      return _finalizeResults(candidates, context: context);
+      return StreamSearchResult(
+        candidates: await _finalizeResults(candidates, context: context),
+        isAnime: isAnime,
+      );
     } catch (e) {
       if (e is StreamingException) rethrow;
       throw StreamResolutionFailedException(e.toString());
@@ -347,6 +358,14 @@ class UnifiedStreamResolver {
     
     return null;
   }
+}
+
+/// Result of a stream search, containing the candidates and metadata.
+class StreamSearchResult {
+  final List<StreamCandidate> candidates;
+  final bool isAnime;
+
+  StreamSearchResult({required this.candidates, this.isAnime = false});
 }
 
 class _CachedSearch {

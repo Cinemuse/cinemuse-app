@@ -41,7 +41,7 @@ class VodSourceHandler {
     final searchResult = await _searchAvailableStreams(params, onStatusUpdate);
     final resolution = await _resolveBestStream(params, searchResult.candidates);
     
-    await _player.open(Media(resolution.stream.url), play: true);
+    await _player.open(Media(resolution.stream.url, httpHeaders: resolution.stream.headers), play: true);
 
     return VodInitializationResult(
       candidates: searchResult.candidates,

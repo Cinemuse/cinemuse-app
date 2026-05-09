@@ -666,6 +666,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsEnableVixSrc => 'Enable VixSrc';
 
   @override
+  String get settingsEnableAnimeUnity => 'Enable AnimeUnity';
+
+  @override
+  String get settingsEnableAnimeUnityDesc =>
+      'Native anime streaming source (No Debrid required)';
+
+  @override
   String get settingsEnableAnimeToshoWarning =>
       'Requires active Real-Debrid integration';
 
