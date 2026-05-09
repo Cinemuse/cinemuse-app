@@ -32,6 +32,21 @@ jobs:
       - name: Create .env from secret
         run: echo "${{ secrets.ENV_FILE }}" > .env
 
+      - name: Configure Keystore
+        shell: pwsh
+        run: |
+          $keystorePath = "android/app/cinemuse-release.jks"
+          $encodedKeystore = "${{ secrets.ANDROID_KEYSTORE_BASE64 }}"
+          [IO.File]::WriteAllBytes($keystorePath, [Convert]::FromBase64String($encodedKeystore))
+          
+          $propertiesPath = "android/key.properties"
+          $propertiesContent = @"
+          ${{ secrets.KEY_PROPERTIES }}
+          "@
+          # Ensure the storeFile path in properties is correct for the runner
+          $propertiesContent = $propertiesContent -replace "storeFile=.*", "storeFile=cinemuse-release.jks"
+          Set-Content -Path $propertiesPath -Value $propertiesContent
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -54,17 +69,15 @@ jobs:
       - name: Build APK
         run: flutter build apk --release --split-per-abi --build-name="${{ steps.version.outputs.BUILD_NAME }}" --build-number="${{ steps.version.outputs.BUILD_NUMBER }}"
 
-      - name: Rename APKs
+      - name: Prepare Artifacts
         shell: pwsh
         run: |
           $tag = "${{ github.ref_name }}"
+          # The Gradle script already renames the APKs, we just need to make sure they are in the right place
+          # or identified correctly if we want to change them further.
+          # We'll just ensure they are picked up by the release-action.
           Get-ChildItem -Path build/app/outputs/flutter-apk/*.apk | ForEach-Object {
-            $oldName = $_.Name
-            $newName = $oldName.Replace("app-", "Cinemuse-$tag-")
-            if ($oldName -ne $newName) {
-              Write-Output "Renaming $oldName to $newName"
-              Rename-Item $_.FullName $newName
-            }
+            Write-Output "Found APK: $($_.Name)"
           }
 
       - name: Build Windows ZIP
