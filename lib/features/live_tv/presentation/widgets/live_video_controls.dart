@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
@@ -56,11 +58,22 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
   Duration? _hoverDuration;
   bool _isHoveringSeekbar = false;
   final GlobalKey<VolumeControlState> _volumeKey = GlobalKey();
+  bool _isFullScreen = false;
 
   @override
   void initState() {
     super.initState();
     _startHideTimer();
+    _initFullscreenState();
+  }
+
+  Future<void> _initFullscreenState() async {
+    if (Platform.isWindows || Platform.isLinux) {
+      final isFull = await windowManager.isFullScreen();
+      if (mounted) setState(() => _isFullScreen = isFull);
+    } else {
+      if (mounted) setState(() => _isFullScreen = _isFullscreen());
+    }
   }
 
   @override
@@ -105,13 +118,23 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
     }
   }
 
-  void _toggleFullscreen() {
-    if (_isFullscreen()) {
-      widget.videoState.exitFullscreen();
+  Future<void> _toggleFullscreen() async {
+    if (Platform.isWindows || Platform.isLinux) {
+      final isFull = await windowManager.isFullScreen();
+      await windowManager.setFullScreen(!isFull);
+      _isFullScreen = !isFull;
+      // Stabilization delay to prevent video freeze on Windows
+      await Future.delayed(const Duration(milliseconds: 150));
     } else {
-      widget.videoState.enterFullscreen();
+      if (_isFullscreen()) {
+        widget.videoState.exitFullscreen();
+        _isFullScreen = false;
+      } else {
+        widget.videoState.enterFullscreen();
+        _isFullScreen = true;
+      }
     }
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   void _seekToLive() async {
@@ -166,7 +189,7 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
       widget.playerState.controller.player.seek(Duration(seconds: (pos.inSeconds - 10).clamp(0, pos.inSeconds)));
       _onHover();
     } else if (key == LogicalKeyboardKey.escape) {
-      if (_isFullscreen()) {
+      if (_isFullScreen) {
         _toggleFullscreen();
       }
     }
@@ -200,6 +223,9 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
       },
       child: MouseRegion(
         onHover: (_) => _onHover(),
+        cursor: (_visible || !_isFullScreen) 
+            ? SystemMouseCursors.basic 
+            : SystemMouseCursors.none,
         child: GestureDetector(
           onTap: () {
             if (_visible) {
@@ -272,12 +298,12 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          if (_isFullscreen())
+          if (_isFullScreen)
             IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: _toggleFullscreen,
             ),
-          if (_isFullscreen()) const SizedBox(width: 8),
+          if (_isFullScreen) const SizedBox(width: 8),
           // Channel logo
           if (widget.channel != null) ...[
             ClipRRect(
@@ -526,7 +552,7 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
         const Spacer(),
         // Fullscreen
         FullscreenButton(
-          isFullscreen: _isFullscreen(),
+          isFullscreen: _isFullScreen,
           onToggle: _toggleFullscreen,
         ),
       ],

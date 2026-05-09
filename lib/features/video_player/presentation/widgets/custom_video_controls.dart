@@ -51,11 +51,22 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   int _skipCount = 0;
   Duration? _virtualPosition;
   Timer? _clearVirtualPositionTimer;
+  bool _isFullScreen = false;
 
   @override
   void initState() {
     super.initState();
     _startHideTimer();
+    _initFullscreenState();
+  }
+
+  Future<void> _initFullscreenState() async {
+    if (Platform.isWindows || Platform.isLinux) {
+      final isFull = await windowManager.isFullScreen();
+      if (mounted) setState(() => _isFullScreen = isFull);
+    } else {
+      if (mounted) setState(() => _isFullScreen = _isFullscreenSafe());
+    }
   }
 
   @override
@@ -124,13 +135,16 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     if (Platform.isWindows || Platform.isLinux) {
       final isFull = await windowManager.isFullScreen();
       await windowManager.setFullScreen(!isFull);
+      _isFullScreen = !isFull;
       // Stabilization delay to prevent video freeze on Windows
       await Future.delayed(const Duration(milliseconds: 150));
     } else {
       if (_isFullscreenSafe()) {
         widget.videoState.exitFullscreen();
+        _isFullScreen = false;
       } else {
         widget.videoState.enterFullscreen();
+        _isFullScreen = true;
       }
     }
     if (mounted) setState(() {});
@@ -141,9 +155,11 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       if (await windowManager.isFullScreen()) {
         // Trigger exit fullscreen and navigation simultaneously for snappier feel
         windowManager.setFullScreen(false);
+        _isFullScreen = false;
       }
     } else if (_isFullscreenSafe()) {
       widget.videoState.exitFullscreen();
+      _isFullScreen = false;
     }
     
     if (mounted) {
@@ -281,6 +297,9 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       },
       child: MouseRegion(
         onHover: (_) => _onHover(),
+        cursor: (_visible || !_isFullScreen) 
+            ? SystemMouseCursors.basic 
+            : SystemMouseCursors.none,
         child: GestureDetector(
           onTap: () {
             if (_visible) {
@@ -348,7 +367,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                         onTogglePlayPause: _togglePlayPause,
                         onSkip: _performRealSkip,
                         onToggleMute: _toggleMute,
-                        isFullscreen: _isFullscreenSafe(),
+                        isFullscreen: _isFullScreen,
                         onToggleFullscreen: _toggleFullscreen,
                         onNextEpisode: widget.onNextEpisode,
                       ),
