@@ -69,6 +69,10 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   int _activeRequestId = 0;
   Channel? _currentChannel;
   StreamLink? _currentLink;
+  
+  // --- Auto-retry State ---
+  int _retryCount = 0;
+  static const int _maxRetries = 2;
 
   PlayerController(this.ref, this.params) : super(const AsyncValue.loading()) {
     
@@ -170,6 +174,12 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       mpv.setProperty('demuxer-max-bytes', '300MiB');
       mpv.setProperty('demuxer-readahead-secs', '120');
       mpv.setProperty('demuxer-max-back-bytes', '50MiB');
+
+      // ── Reconnection ──────────────────────────────────────────────────────
+      // Robust reconnection for handling timeouts after long pauses.
+      mpv.setProperty('http-reconnect', 'yes');
+      mpv.setProperty('reconnect-on-network-error', 'yes');
+      mpv.setProperty('reconnect-on-http-error', 'all');
 
       // ── Audio & Volume ────────────────────────────────────────────────────
       // Allow boosting volume up to 150% for quiet sources.
@@ -486,6 +496,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       ));
     }
     
+    // Reset retry count on successful initialization
+    _retryCount = 0;
+    
     // Apply track preferences after state is updated with isAnime
     _applyTrackPreferences();
     unawaited(_trackManager?.ensurePreferredTrack(isAnime: vodResult.isAnime) ?? Future.value());
@@ -610,6 +623,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           await _player!.play();
 
           if (mounted) {
+            _retryCount = 0; // Reset on manual source change
             state = AsyncValue.data(state.value!.copyWith(
               currentStream: resolvedStream,
               isResolving: false,
@@ -770,7 +784,74 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     }
     
     if (mounted) {
+      // Check if we should attempt a soft-retry for VOD content
+      final currentState = state.valueOrNull;
+      if (currentState != null && currentState.currentStream != null && _retryCount < _maxRetries) {
+        _retryCount++;
+        debugPrint('PlayerController: Auto-retrying playback (attempt $_retryCount/$_maxRetries) after error: $error');
+        _performSoftRetry();
+        return;
+      }
+
       state = AsyncValue.error(error, StackTrace.current);
+    }
+  }
+
+  Future<void> _performSoftRetry() async {
+    final currentState = state.valueOrNull;
+    if (currentState == null || currentState.currentStream == null || _player == null) return;
+
+    final lastPosition = _player!.state.position;
+    final candidate = currentState.currentStream!.candidate;
+
+    if (mounted) {
+      state = AsyncValue.data(currentState.copyWith(
+        isResolving: true,
+        providerStatuses: const [], // Clear statuses to show simple spinner
+        error: null,
+      ));
+    }
+
+    try {
+      final resolvedStream = await _rdHandler.resolveAndMerge(
+        candidate,
+        season: params.season,
+        episode: params.episode,
+        absoluteEpisode: candidate.absoluteEpisode,
+        fileId: currentState.currentStream?.activeFileId,
+      );
+
+      if (resolvedStream != null) {
+        await _player!.open(
+          Media(resolvedStream.url, httpHeaders: resolvedStream.headers),
+          play: false,
+        );
+        
+        // Wait for duration to be known before seeking
+        final duration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0)
+            .timeout(const Duration(seconds: 5), onTimeout: () => Duration.zero);
+            
+        if (duration > Duration.zero) {
+          final seekTo = lastPosition < duration ? lastPosition : Duration.zero;
+          await _player!.seek(seekTo);
+        }
+        
+        await _player!.play();
+
+        if (mounted) {
+          state = AsyncValue.data(state.value!.copyWith(
+            currentStream: resolvedStream,
+            isResolving: false,
+          ));
+        }
+      } else {
+        throw Exception('Failed to re-resolve stream during auto-retry');
+      }
+    } catch (e) {
+      debugPrint('PlayerController: Auto-retry failed: $e');
+      if (mounted) {
+        state = AsyncValue.error(e.toString(), StackTrace.current);
+      }
     }
   }
 
