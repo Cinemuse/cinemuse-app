@@ -46,6 +46,57 @@ class WatchHistoryRepository {
     await _mediaRepo.saveMediaItem(media);
   }
 
+  /// Explicitly marks an episode as completed, regardless of playback position.
+  /// Used when the user presses "Next Episode" and has watched enough (≥ skip threshold).
+  Future<void> completeEpisode({
+    required String userId,
+    required int tmdbId,
+    required int season,
+    required int episode,
+    int? durationWatched,
+    Map<String, dynamic>? seriesDetails,
+  }) async {
+    // 1. Remove any 'watching' entry for this specific episode
+    await _client.from('watch_history').delete().match({
+      'user_id': userId,
+      'tmdb_id': tmdbId,
+      'media_type': 'tv',
+      'season': season,
+      'episode': episode,
+    });
+    await _db.deleteWatchHistoryItem(userId, tmdbId, 'tv', season: season, episode: episode);
+
+    // 2. Log the episode as watched (if not already logged)
+    final alreadyWatched = await isMediaAlreadyWatched(
+      userId: userId,
+      tmdbId: tmdbId,
+      mediaType: 'tv',
+      season: season,
+      episode: episode,
+    );
+    if (!alreadyWatched) {
+      await logEpisodeWatch(
+        userId: userId,
+        tmdbId: tmdbId,
+        mediaType: 'tv',
+        season: season,
+        episode: episode,
+        durationWatched: durationWatched,
+      );
+    }
+
+    // 3. Auto-advance to next episode
+    if (seriesDetails != null) {
+      await upsertNextEpisode(
+        userId: userId,
+        tmdbId: tmdbId,
+        currentSeason: season,
+        currentEpisode: episode,
+        seriesDetails: seriesDetails,
+      );
+    }
+  }
+
   Future<void> updateProgress({
     required String userId,
     required MediaItem media,
@@ -123,6 +174,29 @@ class WatchHistoryRepository {
     }
 
     // 3. Watching State (Implicitly: Progress > 120s OR Progress > 10%)
+    
+    // [FIX] Clean up other 'watching' episodes for this show before saving new progress.
+    // To optimize performance, we only do this if the current episode is NOT already 
+    // the one marked as 'watching' in the local database.
+    if (media.mediaType == MediaKind.tv) {
+      final localCurrent = await (_db.select(_db.localWatchHistories)
+        ..where((t) => 
+          t.userId.equals(userId) & 
+          t.tmdbId.equals(media.tmdbId) & 
+          t.season.equals(season ?? 0) & 
+          t.episode.equals(episode ?? 0)
+        )).getSingleOrNull();
+      
+      if (localCurrent == null || localCurrent.status != 'watching') {
+        await _clearStaleWatchingEntries(
+          userId, 
+          media.tmdbId, 
+          excludeSeason: season, 
+          excludeEpisode: episode,
+        );
+      }
+    }
+
     final entry = {
       'user_id': userId,
       'tmdb_id': media.tmdbId, 
@@ -641,13 +715,16 @@ class WatchHistoryRepository {
 
     await _client.from('watch_logs').insert(logs);
 
-    // 3. Update history for all marked episodes to completed
+    // Clean stale 'watching' entries before upserting completed ones
+    await _clearStaleWatchingEntries(userId, tmdbId);
+
+    // Update history for all marked episodes to completed
     final historyUpdates = episodes.map((e) => {
       'user_id': userId,
       'tmdb_id': tmdbId,
       'media_type': 'tv',
       'status': 'completed',
-      'progress_seconds': 0, // We set to 0/0 or matching if 0 is treated as finished
+      'progress_seconds': 0,
       'total_duration': 0,
       'season': e.season,
       'episode': e.episode,
@@ -688,7 +765,10 @@ class WatchHistoryRepository {
     required int currentEpisode,
     required Map<String, dynamic> seriesDetails,
   }) async {
-    // 1. Calculate next episode using Domain Service
+    // 1. Clean all stale 'watching' entries for this series to prevent ghost items
+    await _clearStaleWatchingEntries(userId, tmdbId);
+
+    // 2. Calculate next episode using Domain Service
     final result = _seriesService.getNextEpisode(
       seriesDetails, 
       currentSeason, 
@@ -760,6 +840,42 @@ class WatchHistoryRepository {
       // Update Remote
       await _client.from('watch_history').upsert(entry);
     }
+  }
+
+  /// Removes all 'watching' entries for a given series from both local and remote.
+  /// Prevents stale Continue Watching items when advancing episodes.
+  /// If excludeSeason and excludeEpisode are provided, that specific entry is spared.
+  Future<void> _clearStaleWatchingEntries(
+    String userId, 
+    int tmdbId, {
+    int? excludeSeason, 
+    int? excludeEpisode,
+  }) async {
+    // Remote: delete all 'watching' rows for this series
+    var query = _client.from('watch_history').delete().match({
+      'user_id': userId,
+      'tmdb_id': tmdbId,
+      'media_type': 'tv',
+    }).eq('status', 'watching');
+
+    if (excludeSeason != null && excludeEpisode != null) {
+      query = query.neq('season', excludeSeason).neq('episode', excludeEpisode);
+    }
+    
+    await query;
+
+    // Local: delete all entries for this series that are 'watching'
+    await ((_db.delete(_db.localWatchHistories)
+      ..where((t) =>
+        t.userId.equals(userId) &
+        t.tmdbId.equals(tmdbId) &
+        t.mediaType.equals('tv') &
+        t.status.equals('watching') &
+        (excludeSeason != null && excludeEpisode != null
+            ? t.season.equals(excludeSeason).not() | t.episode.equals(excludeEpisode).not()
+            : const Constant(true))
+      ))
+    ).go();
   }
 
   /// Ensures an episode is marked as watching with 0 progress if not already tracked.

@@ -1123,19 +1123,4 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get liveTvNoRecents => 'Nessun canale guardato di recente';
-
-  @override
-  String get liveTvTvGuide => 'Guida TV';
-
-  @override
-  String get liveTvRefreshEpg => 'Aggiorna EPG';
-
-  @override
-  String get liveTvNoEpgData =>
-      'Dati EPG non disponibili. Aggiungi sorgenti nelle Impostazioni Playlist.';
-
-  @override
-  String liveTvSearchingFor(Object channel) {
-    return 'Nessuna corrispondenza ID. Ricerca di \"$channel\" in corso';
-  }
 }

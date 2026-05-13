@@ -62,6 +62,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   LiveTvSourceHandler? _liveTvHandler;
   ProviderSubscription? _qualitySubscription;
   
+  PlayerHistoryManager get historyManager => _historyManager!;
+  
   // --- Live TV Failover State ---
   bool _isChangingChannel = false;
   int _activeRequestId = 0;

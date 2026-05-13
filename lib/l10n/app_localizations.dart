@@ -2161,30 +2161,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No recently watched channels'**
   String get liveTvNoRecents;
-
-  /// No description provided for @liveTvTvGuide.
-  ///
-  /// In en, this message translates to:
-  /// **'TV Guide'**
-  String get liveTvTvGuide;
-
-  /// No description provided for @liveTvRefreshEpg.
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh EPG'**
-  String get liveTvRefreshEpg;
-
-  /// No description provided for @liveTvNoEpgData.
-  ///
-  /// In en, this message translates to:
-  /// **'No EPG data available. Add sources in Playlist Settings.'**
-  String get liveTvNoEpgData;
-
-  /// No description provided for @liveTvSearchingFor.
-  ///
-  /// In en, this message translates to:
-  /// **'No exact ID match. Searching for \"{channel}\"'**
-  String liveTvSearchingFor(Object channel);
 }
 
 class _AppLocalizationsDelegate

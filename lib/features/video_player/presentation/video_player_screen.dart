@@ -253,7 +253,16 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                           onOverlayRequested: (type) {
                             setState(() => _activeOverlay = type);
                           },
-                          onNextEpisode: state.nextEpisode != null ? () {
+                          onNextEpisode: state.nextEpisode != null ? () async {
+                            // Ensure the current episode is marked as completed if threshold is met
+                            // and cleanup any stale watching entries before navigating
+                            await ref.read(playerControllerProvider(params).notifier)
+                                .historyManager
+                                .markCurrentEpisodeCompleted(
+                                  position: state.controller.player.state.position.inSeconds,
+                                  duration: state.controller.player.state.duration.inSeconds,
+                                );
+                                
                             _navigateToNextEpisode(state.nextEpisode!);
                           } : null,
                         ),

@@ -10,4 +10,8 @@ class PlaybackThresholds {
 
   /// Percentage of duration to count as "Completed".
   static const double completionPercentage = 0.95;
+
+  /// Minimum percentage watched to auto-complete when user explicitly
+  /// skips to the next episode (e.g. pressing "Next Episode" button).
+  static const double skipCompletionPercentage = 0.50;
 }

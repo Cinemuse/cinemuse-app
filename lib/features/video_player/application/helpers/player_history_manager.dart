@@ -77,4 +77,46 @@ class PlayerHistoryManager {
       debugPrint('PlayerHistoryManager: Error saving progress: $e');
     }
   }
+
+  /// Explicitly marks the current episode as completed when the user
+  /// presses "Next Episode". Uses a more lenient threshold (50%) since
+  /// the user is explicitly signaling they are done with this episode.
+  Future<bool> markCurrentEpisodeCompleted({
+    required int position,
+    required int duration,
+  }) async {
+    if (mediaDetails == null || params.type != 'tv') return false;
+    if (params.season == null || params.episode == null) return false;
+    if (duration <= 0) return false;
+
+    final progressPercentage = position / duration;
+    if (progressPercentage < PlaybackThresholds.skipCompletionPercentage) {
+      return false;
+    }
+
+    final user = ref.read(authProvider).value;
+    if (user == null) return false;
+
+    try {
+      final repo = ref.read(watchHistoryRepositoryProvider);
+      await repo.completeEpisode(
+        userId: user.id,
+        tmdbId: int.parse(params.queryId),
+        season: params.season!,
+        episode: params.episode!,
+        durationWatched: position,
+        seriesDetails: mediaDetails,
+      );
+
+      // Invalidate providers so UI updates
+      final tmdbIdInt = int.parse(params.queryId);
+      ref.invalidate(seriesWatchLogsProvider(tmdbIdInt));
+      ref.invalidate(watchedEpisodesMapProvider(tmdbIdInt));
+
+      return true;
+    } catch (e) {
+      debugPrint('PlayerHistoryManager: Error marking episode completed: $e');
+      return false;
+    }
+  }
 }
