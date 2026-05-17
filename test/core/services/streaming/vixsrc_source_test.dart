@@ -29,12 +29,12 @@ void main() {
         <html>
           <body>
             <script>
-              var config = {
-                "token": "test-token",
-                "expires": "123456789"
-              };
-              var source = {
-                url: "https://vix-cdn.com/embed/123"
+              window.masterPlaylist = {
+                params: {
+                  'token': 'test-token',
+                  'expires': '123456789'
+                },
+                url: 'https://vixsrc.to/playlist/123?b=1'
               };
             </script>
           </body>
@@ -50,6 +50,10 @@ void main() {
 1080p.m3u8
       ''';
 
+      final mockApiResponse = MockResponse();
+      when(() => mockApiResponse.statusCode).thenReturn(200);
+      when(() => mockApiResponse.data).thenReturn({'src': '/embed/123'});
+
       final mockHtmlResponse = MockResponse();
       when(() => mockHtmlResponse.statusCode).thenReturn(200);
       when(() => mockHtmlResponse.data).thenReturn(html);
@@ -59,12 +63,17 @@ void main() {
       when(() => mockPlaylistResponse.data).thenReturn(playlistHeader);
 
       when(() => mockDio.get(
-        'https://vixsrc.to/movie/123',
+        'https://vixsrc.to/api/movie/123',
+        options: any(named: 'options'),
+      )).thenAnswer((_) async => mockApiResponse);
+
+      when(() => mockDio.get(
+        'https://vixsrc.to/embed/123',
         options: any(named: 'options'),
       )).thenAnswer((_) async => mockHtmlResponse);
 
       when(() => mockDio.get(
-        any(that: contains('vix-cdn.com')),
+        any(that: contains('vixsrc.to/playlist')),
         options: any(named: 'options'),
       )).thenAnswer((_) async => mockPlaylistResponse);
 
@@ -87,12 +96,23 @@ void main() {
         title: 'Test Movie',
       );
 
-      final mockResponse = MockResponse();
-      when(() => mockResponse.statusCode).thenReturn(200);
-      when(() => mockResponse.data).thenReturn('<html>No tokens here</html>');
+      final mockApiResponse = MockResponse();
+      when(() => mockApiResponse.statusCode).thenReturn(200);
+      when(() => mockApiResponse.data).thenReturn({'src': '/embed/123'});
 
-      when(() => mockDio.get(any(), options: any(named: 'options')))
-          .thenAnswer((_) async => mockResponse);
+      final mockHtmlResponse = MockResponse();
+      when(() => mockHtmlResponse.statusCode).thenReturn(200);
+      when(() => mockHtmlResponse.data).thenReturn('<html>No tokens here</html>');
+
+      when(() => mockDio.get(
+        'https://vixsrc.to/api/movie/123',
+        options: any(named: 'options'),
+      )).thenAnswer((_) async => mockApiResponse);
+
+      when(() => mockDio.get(
+        'https://vixsrc.to/embed/123',
+        options: any(named: 'options'),
+      )).thenAnswer((_) async => mockHtmlResponse);
 
       final results = await source.search(context);
       expect(results, isEmpty);

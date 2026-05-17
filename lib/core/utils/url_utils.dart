@@ -11,9 +11,9 @@ class UrlUtils {
     String path = qIdx >= 0 ? trimmed.substring(0, qIdx) : trimmed;
     final query = qIdx >= 0 ? trimmed.substring(qIdx + 1) : null;
     
-    // Clean trailing manifest.json and slashes
-    path = path.replaceAll(RegExp(r'/manifest\.json$', caseSensitive: false), '')
-               .replaceAll(RegExp(r'/$'), '');
+    // Clean trailing manifest.json and anything after it, then clean trailing slashes
+    path = path.replaceFirst(RegExp(r'/manifest\.json.*$', caseSensitive: false), '')
+               .replaceAll(RegExp(r'/+$'), '');
     
     if (!path.startsWith('http')) path = 'https://$path';
     

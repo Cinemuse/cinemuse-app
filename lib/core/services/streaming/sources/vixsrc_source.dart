@@ -31,18 +31,36 @@ class VixSrcSource extends BaseSource {
     final url = '$_baseUrl$path';
     
     try {
-      // 1. Fetch the HTML from the embed page
-      final response = await _dio.get(url, options: Options(headers: {'Referer': url}));
+      // 1. Fetch from the API first
+      final apiUrl = '$_baseUrl/api$path';
+      final apiResponse = await _dio.get(
+        apiUrl, 
+        options: Options(headers: {
+          'Referer': '$_baseUrl$path', 
+          'Accept': 'application/json'
+        })
+      );
+
+      if (apiResponse.statusCode != 200 || apiResponse.data == null) {
+        return [];
+      }
+
+      final src = apiResponse.data['src'];
+      if (src == null) return [];
+
+      // 2. Fetch the HTML from the embed page
+      final embedUrl = '$_baseUrl$src';
+      final response = await _dio.get(embedUrl, options: Options(headers: {'Referer': '$_baseUrl$path'}));
       if (response.statusCode != 200 || response.data == null) {
         return [];
       }
 
       final String html = response.data.toString();
 
-      // 2. Extract token, expires, and playlist URL base using Regex
-      final tokenMatch = RegExp(r'''['"]token['"]:\s?['"](.*?)['"]''').firstMatch(html);
-      final expiresMatch = RegExp(r'''['"]expires['"]:\s?['"](.*?)['"]''').firstMatch(html);
-      final urlMatch = RegExp(r'''url:\s?['"](.*?)['"]''').firstMatch(html);
+      // 3. Extract token, expires, and playlist URL base using Regex
+      final urlMatch = RegExp(r'''url:\s*['"]([^'"]+)['"]''').firstMatch(html);
+      final tokenMatch = RegExp(r'''['"]?token['"]?:\s*['"]([^'"]+)['"]''').firstMatch(html);
+      final expiresMatch = RegExp(r'''['"]?expires['"]?:\s*['"]([^'"]+)['"]''').firstMatch(html);
 
       if (tokenMatch == null || expiresMatch == null || urlMatch == null) {
         debugPrint('VixSrcSource: Failed to extract tokens from HTML');
@@ -53,12 +71,12 @@ class VixSrcSource extends BaseSource {
       final expires = expiresMatch.group(1)!;
       final baseUrlStr = urlMatch.group(1)!;
 
-      // 3. Construct the HLS Playlist URL
+      // 4. Construct the HLS Playlist URL
       final baseUrl = Uri.parse(baseUrlStr);
       final playlistUrl = Uri(
         scheme: baseUrl.scheme,
         host: baseUrl.host,
-        path: '${baseUrl.path}.m3u8',
+        path: baseUrl.path,
         queryParameters: {
           ...baseUrl.queryParameters,
           'token': token,
