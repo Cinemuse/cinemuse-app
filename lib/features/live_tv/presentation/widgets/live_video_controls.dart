@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart' as mkv;
+import 'package:window_manager/window_manager.dart';
 import 'package:cinemuse_app/core/presentation/widgets/volume_control.dart';
 import 'package:cinemuse_app/core/presentation/widgets/fullscreen_button.dart';
 import 'package:cinemuse_app/core/presentation/widgets/buffering_indicator.dart';
@@ -59,6 +59,9 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
   bool _isHoveringSeekbar = false;
   final GlobalKey<VolumeControlState> _volumeKey = GlobalKey();
   bool _isFullScreen = false;
+  /// Tracks whether the window was already maximized before we entered
+  /// fullscreen, so we can restore the original state on exit.
+  bool _wasMaximizedBeforeFullscreen = false;
 
   @override
   void initState() {
@@ -67,13 +70,8 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
     _initFullscreenState();
   }
 
-  Future<void> _initFullscreenState() async {
-    if (Platform.isWindows || Platform.isLinux) {
-      final isFull = await windowManager.isFullScreen();
-      if (mounted) setState(() => _isFullScreen = isFull);
-    } else {
-      if (mounted) setState(() => _isFullScreen = _isFullscreen());
-    }
+  void _initFullscreenState() {
+    if (mounted) setState(() => _isFullScreen = _isFullscreen());
   }
 
   @override
@@ -119,22 +117,22 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
   }
 
   Future<void> _toggleFullscreen() async {
-    if (Platform.isWindows || Platform.isLinux) {
-      final isFull = await windowManager.isFullScreen();
-      await windowManager.setFullScreen(!isFull);
-      _isFullScreen = !isFull;
-      // Stabilization delay to prevent video freeze on Windows
-      await Future.delayed(const Duration(milliseconds: 150));
-    } else {
-      if (_isFullscreen()) {
-        widget.videoState.exitFullscreen();
-        _isFullScreen = false;
-      } else {
-        widget.videoState.enterFullscreen();
-        _isFullScreen = true;
+    if (_isFullscreen()) {
+      await widget.videoState.exitFullscreen();
+      if ((Platform.isWindows || Platform.isLinux) && !_wasMaximizedBeforeFullscreen) {
+        await windowManager.unmaximize();
       }
+      if (mounted) setState(() => _isFullScreen = false);
+    } else {
+      if (Platform.isWindows || Platform.isLinux) {
+        _wasMaximizedBeforeFullscreen = await windowManager.isMaximized();
+        if (!_wasMaximizedBeforeFullscreen) {
+          await windowManager.maximize();
+        }
+      }
+      await widget.videoState.enterFullscreen();
+      if (mounted) setState(() => _isFullScreen = true);
     }
-    if (mounted) setState(() {});
   }
 
   void _seekToLive() async {
@@ -298,12 +296,6 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          if (_isFullScreen)
-            IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: _toggleFullscreen,
-            ),
-          if (_isFullScreen) const SizedBox(width: 8),
           // Channel logo
           if (widget.channel != null) ...[
             ClipRRect(

@@ -52,6 +52,9 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   Duration? _virtualPosition;
   Timer? _clearVirtualPositionTimer;
   bool _isFullScreen = false;
+  /// Tracks whether the window was already maximized before we entered
+  /// fullscreen, so we can restore the original state on exit.
+  bool _wasMaximizedBeforeFullscreen = false;
 
   @override
   void initState() {
@@ -60,13 +63,8 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     _initFullscreenState();
   }
 
-  Future<void> _initFullscreenState() async {
-    if (Platform.isWindows || Platform.isLinux) {
-      final isFull = await windowManager.isFullScreen();
-      if (mounted) setState(() => _isFullScreen = isFull);
-    } else {
-      if (mounted) setState(() => _isFullScreen = _isFullscreenSafe());
-    }
+  void _initFullscreenState() {
+    if (mounted) setState(() => _isFullScreen = _isFullscreenSafe());
   }
 
   @override
@@ -132,39 +130,33 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   }
 
   Future<void> _toggleFullscreen() async {
-    if (Platform.isWindows || Platform.isLinux) {
-      final isFull = await windowManager.isFullScreen();
-      await windowManager.setFullScreen(!isFull);
-      _isFullScreen = !isFull;
-      // Stabilization delay to prevent video freeze on Windows
-      await Future.delayed(const Duration(milliseconds: 150));
-    } else {
-      if (_isFullscreenSafe()) {
-        widget.videoState.exitFullscreen();
-        _isFullScreen = false;
-      } else {
-        widget.videoState.enterFullscreen();
-        _isFullScreen = true;
+    if (_isFullscreenSafe()) {
+      widget.videoState.exitFullscreen();
+      if ((Platform.isWindows || Platform.isLinux) && !_wasMaximizedBeforeFullscreen) {
+        await windowManager.unmaximize();
       }
+      if (mounted) setState(() => _isFullScreen = false);
+    } else {
+      if (Platform.isWindows || Platform.isLinux) {
+        _wasMaximizedBeforeFullscreen = await windowManager.isMaximized();
+        if (!_wasMaximizedBeforeFullscreen) {
+          await windowManager.maximize();
+        }
+      }
+      widget.videoState.enterFullscreen();
+      if (mounted) setState(() => _isFullScreen = true);
     }
-    if (mounted) setState(() {});
   }
 
   Future<void> _handleBack() async {
-    if (Platform.isWindows || Platform.isLinux) {
-      if (await windowManager.isFullScreen()) {
-        // Trigger exit fullscreen and navigation simultaneously for snappier feel
-        windowManager.setFullScreen(false);
-        _isFullScreen = false;
-      }
-    } else if (_isFullscreenSafe()) {
+    if (_isFullscreenSafe()) {
       widget.videoState.exitFullscreen();
+      if ((Platform.isWindows || Platform.isLinux) && !_wasMaximizedBeforeFullscreen) {
+        await windowManager.unmaximize();
+      }
       _isFullScreen = false;
     }
-    
-    if (mounted) {
-      widget.onBackPressed();
-    }
+    if (mounted) widget.onBackPressed();
   }
 
   void _handleKeyEvent(KeyEvent event) {
