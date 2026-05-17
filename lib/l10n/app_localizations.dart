@@ -524,6 +524,66 @@ abstract class AppLocalizations {
   /// **'Continue Watching'**
   String get homeContinueWatching;
 
+  /// No description provided for @homeSportSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Sport Schedule'**
+  String get homeSportSchedule;
+
+  /// No description provided for @sportFootball.
+  ///
+  /// In en, this message translates to:
+  /// **'Football'**
+  String get sportFootball;
+
+  /// No description provided for @sportBasketball.
+  ///
+  /// In en, this message translates to:
+  /// **'Basketball'**
+  String get sportBasketball;
+
+  /// No description provided for @sportMotorcycling.
+  ///
+  /// In en, this message translates to:
+  /// **'Motorcycling'**
+  String get sportMotorcycling;
+
+  /// No description provided for @sportVolleyball.
+  ///
+  /// In en, this message translates to:
+  /// **'Volleyball'**
+  String get sportVolleyball;
+
+  /// No description provided for @sportAthletics.
+  ///
+  /// In en, this message translates to:
+  /// **'Athletics'**
+  String get sportAthletics;
+
+  /// No description provided for @sportTennis.
+  ///
+  /// In en, this message translates to:
+  /// **'Tennis'**
+  String get sportTennis;
+
+  /// No description provided for @sportCycling.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycling'**
+  String get sportCycling;
+
+  /// No description provided for @sportRugby.
+  ///
+  /// In en, this message translates to:
+  /// **'Rugby'**
+  String get sportRugby;
+
+  /// No description provided for @sportGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Sport Event'**
+  String get sportGeneric;
+
   /// No description provided for @homeRemovedFromContinueWatching.
   ///
   /// In en, this message translates to:

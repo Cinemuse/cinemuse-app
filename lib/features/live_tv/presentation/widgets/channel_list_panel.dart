@@ -91,6 +91,28 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
     final filterIsActive = ref.watch(channelFilterProvider.select((f) => f.isActive));
     final isMobile = MediaQuery.of(context).size.width < 600;
 
+    // Sync controller when the provider is changed externally (e.g. from sport cards)
+    ref.listen<String>(channelSearchQueryProvider, (previous, next) {
+      if (_controller.text != next) {
+        _controller.text = next;
+        _controller.selection = TextSelection.collapsed(offset: next.length);
+      }
+
+      // Auto-select the first filtered channel whenever the query is set externally
+      // to a non-empty value (fires on every external navigation, not just first time).
+      if (next.isNotEmpty && next != previous) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final channels = ref.read(filteredChannelsProvider);
+          channels.whenData((list) {
+            if (list.isNotEmpty) {
+              ref.read(selectedChannelProvider.notifier).state = list.first;
+            }
+          });
+        });
+      }
+    });
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: SizedBox(

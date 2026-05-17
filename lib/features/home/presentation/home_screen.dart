@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/continue_watching_row.dart';
+import 'package:cinemuse_app/features/home/presentation/widgets/sport_schedule_row.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/hero_section.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/media_row.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -84,6 +85,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: FocusTraversalGroup(
                       policy: OrderedTraversalPolicy(),
                       child: const ContinueWatchingRow(),
+                    ),
+                  ),
+                  
+                  // Sports Schedule
+                  RepaintBoundary(
+                    child: FocusTraversalGroup(
+                      policy: OrderedTraversalPolicy(),
+                      child: const SportScheduleRow(),
                     ),
                   ),
                   

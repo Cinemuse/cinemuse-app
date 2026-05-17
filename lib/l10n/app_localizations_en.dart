@@ -235,6 +235,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeContinueWatching => 'Continue Watching';
 
   @override
+  String get homeSportSchedule => 'Sport Schedule';
+
+  @override
+  String get sportFootball => 'Football';
+
+  @override
+  String get sportBasketball => 'Basketball';
+
+  @override
+  String get sportMotorcycling => 'Motorcycling';
+
+  @override
+  String get sportVolleyball => 'Volleyball';
+
+  @override
+  String get sportAthletics => 'Athletics';
+
+  @override
+  String get sportTennis => 'Tennis';
+
+  @override
+  String get sportCycling => 'Cycling';
+
+  @override
+  String get sportRugby => 'Rugby';
+
+  @override
+  String get sportGeneric => 'Sport Event';
+
+  @override
   String homeRemovedFromContinueWatching(Object title) {
     return 'Removed $title';
   }
