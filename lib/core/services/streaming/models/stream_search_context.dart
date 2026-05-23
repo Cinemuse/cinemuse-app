@@ -1,4 +1,4 @@
-import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
+import 'package:cinemuse_app/core/services/anime/models/kitsu_mapping.dart';
 
 /// Context object containing all necessary information to search for media streams
 /// across various providers (Stremio, AnimeTosho, etc.).

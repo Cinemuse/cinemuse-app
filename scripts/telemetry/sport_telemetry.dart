@@ -108,6 +108,14 @@ void main() async {
         sink.writeln('\n*All scraped events were perfectly mapped today!*');
       }
       
+      // Append the raw JSON data in a collapsible section
+      sink.writeln('\n<details>');
+      sink.writeln('<summary>View Raw JSON Data</summary>\n');
+      sink.writeln('```json');
+      sink.writeln(const JsonEncoder.withIndent('  ').convert(report));
+      sink.writeln('```');
+      sink.writeln('</details>\n');
+      
       await sink.flush();
       await sink.close();
     }

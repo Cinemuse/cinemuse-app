@@ -2,7 +2,6 @@ import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart
 import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
-import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 
 class VixSrcSource extends BaseSource {
@@ -63,7 +62,7 @@ class VixSrcSource extends BaseSource {
       final expiresMatch = RegExp(r'''['"]?expires['"]?:\s*['"]([^'"]+)['"]''').firstMatch(html);
 
       if (tokenMatch == null || expiresMatch == null || urlMatch == null) {
-        debugPrint('VixSrcSource: Failed to extract tokens from HTML');
+        print('VixSrcSource: Failed to extract tokens from HTML');
         return [];
       }
 
@@ -105,7 +104,7 @@ class VixSrcSource extends BaseSource {
         ),
       ];
     } catch (e) {
-      debugPrint('VixSrcSource: Search failed: $e');
+      print('VixSrcSource: Search failed: $e');
       return [];
     }
   }
@@ -128,7 +127,7 @@ class VixSrcSource extends BaseSource {
 
       return foundLanguages.toList();
     } catch (e) {
-      debugPrint('VixSrcSource: Failed to determine languages: $e');
+      print('VixSrcSource: Failed to determine languages: $e');
       return [];
     }
   }

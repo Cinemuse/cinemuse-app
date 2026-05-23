@@ -26,10 +26,13 @@ jobs:
         continue-on-error: true
         run: dart run scripts/telemetry/sport_telemetry.dart
         
-      # Add more telemetry scripts here:
-      # - name: Run Another Telemetry Script
-      #   continue-on-error: true
-      #   run: dart run scripts/telemetry/another_telemetry.dart
+      - name: Run VixSrc Telemetry Script
+        continue-on-error: true
+        run: dart run scripts/telemetry/vixsrc_telemetry.dart
+        
+      - name: Run AnimeUnity Telemetry Script
+        continue-on-error: true
+        run: dart run scripts/telemetry/animeunity_telemetry.dart
         
       - name: Upload Telemetry Report Artifacts
         if: always() # Upload the artifacts even if a script failed

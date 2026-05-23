@@ -8,24 +8,9 @@ import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class KitsuMapping {
-  final String kitsuId;
-  final int? absoluteEpisode;
-  final int? anidbId;
-
-  KitsuMapping({required this.kitsuId, this.absoluteEpisode, this.anidbId});
-}
-
-/// Represents a resolved AnimeUnity entry parsed from the Stremio mapping API.
-class AnimeUnityEntry {
-  /// The numeric AnimeUnity anime ID (e.g. 12 from `/anime/12-one-piece`).
-  final int id;
-
-  /// The full path from the mapping (e.g. `/anime/12-one-piece`).
-  final String path;
-
-  AnimeUnityEntry({required this.id, required this.path});
-}
+import 'package:cinemuse_app/core/services/anime/interfaces/anime_unity_mapping_provider.dart';
+import 'package:cinemuse_app/core/services/anime/models/anime_unity_entry.dart';
+import 'package:cinemuse_app/core/services/anime/models/kitsu_mapping.dart';
 
 final kitsuMappingServiceProvider = Provider((ref) {
   return KitsuMappingService(
@@ -34,7 +19,7 @@ final kitsuMappingServiceProvider = Provider((ref) {
   );
 });
 
-class KitsuMappingService {
+class KitsuMappingService implements AnimeUnityMappingProvider {
   static const _stremioMappingBaseUrl = 'https://animemapping.stremio.dpdns.org/kitsu';
 
   final Dio _dio;
@@ -222,7 +207,7 @@ class KitsuMappingService {
   }
 
   /// Resolves a Kitsu ID to a list of [AnimeUnityEntry] using the Stremio mapping API.
-  /// Returns an empty list if the mapping is unavailable or parsing fails.
+  @override
   Future<List<AnimeUnityEntry>> getAnimeUnityIds(String kitsuId) async {
     final cached = _animeUnityCache[kitsuId];
     if (cached != null) return cached;

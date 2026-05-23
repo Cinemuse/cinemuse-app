@@ -1,4 +1,6 @@
-import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
+import 'package:cinemuse_app/core/services/anime/interfaces/anime_unity_mapping_provider.dart';
+import 'package:cinemuse_app/core/services/anime/models/anime_unity_entry.dart';
+import 'package:cinemuse_app/core/services/anime/models/kitsu_mapping.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:dio/dio.dart';
@@ -7,17 +9,17 @@ import 'package:cinemuse_app/core/services/streaming/models/stream_search_contex
 import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 
 class MockDio extends Mock implements Dio {}
-class MockKitsuMappingService extends Mock implements KitsuMappingService {}
+class MockAnimeUnityMappingProvider extends Mock implements AnimeUnityMappingProvider {}
 class MockResponse extends Mock implements Response {}
 
 void main() {
   late AnimeUnitySource source;
   late MockDio mockDio;
-  late MockKitsuMappingService mockMappingService;
+  late MockAnimeUnityMappingProvider mockMappingService;
 
   setUp(() {
     mockDio = MockDio();
-    mockMappingService = MockKitsuMappingService();
+    mockMappingService = MockAnimeUnityMappingProvider();
     source = AnimeUnitySource(mockDio, mockMappingService);
   });
 
