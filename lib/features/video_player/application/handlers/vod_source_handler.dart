@@ -35,10 +35,11 @@ class VodSourceHandler {
     PlayerParams params, {
     required Function(List<ProviderSearchStatus>) onStatusUpdate,
     required Function(Map<String, dynamic>?) onMediaDetailsFetched,
+    Future<void>? skipTrigger,
   }) async {
     final mediaDetails = await _fetchMediaDetails(params, onMediaDetailsFetched);
 
-    final searchResult = await _searchAvailableStreams(params, onStatusUpdate);
+    final searchResult = await _searchAvailableStreams(params, onStatusUpdate, skipTrigger: skipTrigger);
     final resolution = await _resolveBestStream(params, searchResult.candidates);
     
     await _player.open(Media(resolution.stream.url, httpHeaders: resolution.stream.headers), play: true);
@@ -62,14 +63,16 @@ class VodSourceHandler {
 
   Future<StreamSearchResult> _searchAvailableStreams(
     PlayerParams params,
-    Function(List<ProviderSearchStatus>) onStatusUpdate
-  ) async {
+    Function(List<ProviderSearchStatus>) onStatusUpdate, {
+    Future<void>? skipTrigger,
+  }) async {
     final result = await _resolver.searchStreams(
       params.queryId, 
       params.type, 
       season: params.season, 
       episode: params.episode,
       onStatusUpdate: onStatusUpdate,
+      skipTrigger: skipTrigger,
     );
 
     if (result.candidates.isEmpty) {

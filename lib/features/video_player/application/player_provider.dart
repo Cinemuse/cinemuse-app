@@ -61,6 +61,13 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   InitializationManager? _initializationManager;
   LiveTvSourceHandler? _liveTvHandler;
   ProviderSubscription? _qualitySubscription;
+  Completer<void>? _skipCompleter;
+
+  /// Tracks candidate URLs already tried during auto-fallback to avoid retry loops.
+  final Set<String> _exhaustedCandidateUrls = {};
+
+  /// Optional callback to notify the UI of non-fatal player events (e.g. fallback snackbars).
+  void Function(String message)? onNotification;
   
   PlayerHistoryManager get historyManager => _historyManager!;
   
@@ -286,13 +293,21 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   }
 
   Future<void> _handleVodInitialization() async {
+    _skipCompleter = Completer<void>();
     final vodResult = await _initializationManager!.initializeVod(
       params, 
       onStatusUpdate: _onProviderStatusUpdate,
       onMediaDetailsFetched: _onMediaDetailsFetched,
+      skipTrigger: _skipCompleter!.future,
     );
 
     await _performPostInitialization(vodResult);
+  }
+
+  void skipResolution() {
+    if (_skipCompleter != null && !_skipCompleter!.isCompleted) {
+      _skipCompleter!.complete();
+    }
   }
 
   Future<void> _handleLiveTvInitialization() async {
@@ -579,8 +594,11 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     );
   }
 
-  Future<void> changeSource(StreamCandidate candidate) async {
+  Future<void> changeSource(StreamCandidate candidate, {bool isManual = true}) async {
     if (state.value == null || _player == null) return;
+
+    // A manual source change clears the exhausted set so the user can retry anything.
+    if (isManual) _exhaustedCandidateUrls.clear();
 
     state = AsyncValue.data(state.value!.copyWith(isResolving: true, error: null));
     
@@ -784,7 +802,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     }
     
     if (mounted) {
-      // Check if we should attempt a soft-retry for VOD content
+      // 1. First: try soft-retry the same URL (handles transient network blips)
       final currentState = state.valueOrNull;
       if (currentState != null && currentState.currentStream != null && _retryCount < _maxRetries) {
         _retryCount++;
@@ -793,8 +811,50 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         return;
       }
 
+      // 2. Retries exhausted: auto-fallback to the next available candidate
+      if (_tryNextCandidate()) return;
+
+      // 3. All candidates exhausted: surface the error screen
       state = AsyncValue.error(error, StackTrace.current);
     }
+  }
+
+  /// Selects the next untried candidate from [availableStreams] and triggers
+  /// [changeSource] on it. Returns `true` if a fallback was initiated.
+  bool _tryNextCandidate() {
+    final currentState = state.valueOrNull;
+    if (currentState == null) return false;
+
+    // Mark the current candidate as exhausted
+    final currentUrl = currentState.currentStream?.url;
+    if (currentUrl != null) _exhaustedCandidateUrls.add(currentUrl);
+
+    final nextCandidate = currentState.availableStreams.firstWhere(
+      (c) => !_exhaustedCandidateUrls.contains(c.url),
+      orElse: () => currentState.availableStreams.firstWhere(
+        // also cover candidates whose resolved URL we may not know yet — exclude by provider+title
+        (c) => c.url != currentState.currentStream?.candidate.url,
+        orElse: () => currentState.availableStreams.isEmpty
+            ? currentState.availableStreams.first  // will be caught below
+            : currentState.availableStreams.first,
+      ),
+    );
+
+    // Guard: if the only candidate left is the one already exhausted, bail.
+    if (nextCandidate.url == currentState.currentStream?.candidate.url ||
+        _exhaustedCandidateUrls.contains(nextCandidate.url)) {
+      return false;
+    }
+
+    debugPrint('PlayerController: Falling back to next candidate: ${nextCandidate.provider}');
+    _retryCount = 0; // Reset soft-retry counter for the new candidate
+
+    final message = ref.read(localizationsProvider).playerTryingNextSource;
+    onNotification?.call(message);
+
+    // Initiate the source switch without clearing the exhausted set
+    changeSource(nextCandidate, isManual: false);
+    return true;
   }
 
   Future<void> _performSoftRetry() async {

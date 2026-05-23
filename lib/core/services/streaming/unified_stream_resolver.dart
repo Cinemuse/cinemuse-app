@@ -106,12 +106,12 @@ class UnifiedStreamResolver {
   final BaseDebridService? _debridService;
 
   // Simple in-memory cache for search results
-  static final Map<String, _CachedSearch> _searchCache = {};
+  final Map<String, _CachedSearch> _searchCache = {};
   static const Duration _cacheDuration = Duration(minutes: 30);
 
   /// Clears the in-memory search cache.
   @visibleForTesting
-  static void clearCache() {
+  void clearCache() {
     _searchCache.clear();
   }
 
@@ -138,6 +138,7 @@ class UnifiedStreamResolver {
     int? season,
     int? episode,
     void Function(List<ProviderSearchStatus>)? onStatusUpdate,
+    Future<void>? skipTrigger,
   }) async {
     final cacheKey = "$type:$queryId:${season ?? 0}:${episode ?? 0}";
     final cached = _searchCache[cacheKey];
@@ -197,38 +198,75 @@ class UnifiedStreamResolver {
       );
 
       // 3. Search All Sources
+      final stopwatch = Stopwatch()..start();
       final searchStatuses = _sources.map((s) => ProviderSearchStatus(providerName: s.name)).toList();
       onStatusUpdate?.call(searchStatuses);
 
       // Periodically update UI status
-      statusTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+      statusTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+        final elapsed = stopwatch.elapsed;
+        for (int i = 0; i < searchStatuses.length; i++) {
+          if (searchStatuses[i].status == ProviderStatus.searching) {
+            searchStatuses[i] = searchStatuses[i].copyWith(
+              timeElapsed: elapsed,
+            );
+          }
+        }
         onStatusUpdate?.call(searchStatuses);
       });
 
-      final results = await Future.wait(
-        _sources.asMap().entries.map((entry) async {
-          final index = entry.key;
-          final source = entry.value;
-          
+      final taskResults = List.generate(_sources.length, (_) => <StreamCandidate>[]);
+      final taskFutures = <Future<void>>[];
+
+      for (int i = 0; i < _sources.length; i++) {
+        final source = _sources[i];
+        final task = () async {
           try {
             final candidates = await source.search(context);
-            searchStatuses[index] = searchStatuses[index].copyWith(
+            taskResults[i] = candidates;
+            searchStatuses[i] = searchStatuses[i].copyWith(
               status: ProviderStatus.finished,
               resultsCount: candidates.length,
+              timeElapsed: stopwatch.elapsed,
             );
-            return candidates;
+            onStatusUpdate?.call(searchStatuses);
           } catch (e) {
-            searchStatuses[index] = searchStatuses[index].copyWith(
+            searchStatuses[i] = searchStatuses[i].copyWith(
               status: ProviderStatus.failed,
               errorMessage: e.toString(),
+              timeElapsed: stopwatch.elapsed,
             );
-            return <StreamCandidate>[];
+            onStatusUpdate?.call(searchStatuses);
           }
-        }),
-      );
+        }();
+        taskFutures.add(task);
+      }
 
+      if (skipTrigger != null) {
+        await Future.any([
+          Future.wait(taskFutures),
+          skipTrigger,
+        ]);
+      } else {
+        await Future.wait(taskFutures);
+      }
+
+      stopwatch.stop();
       statusTimer.cancel();
-      final allCandidates = results.expand((x) => x).toList();
+
+      // If skipped/bypassed, mark any outstanding 'searching' status as failed/skipped
+      for (int i = 0; i < searchStatuses.length; i++) {
+        if (searchStatuses[i].status == ProviderStatus.searching) {
+          searchStatuses[i] = searchStatuses[i].copyWith(
+            status: ProviderStatus.failed,
+            errorMessage: 'Skipped',
+            timeElapsed: stopwatch.elapsed,
+          );
+        }
+      }
+      onStatusUpdate?.call(searchStatuses);
+
+      final allCandidates = taskResults.expand((x) => x).toList();
 
       if (allCandidates.isEmpty) {
         throw NoResultsFoundException();

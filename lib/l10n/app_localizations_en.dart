@@ -524,6 +524,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playerResolving => 'Resolving stream...';
 
   @override
+  String get playerSkipResolution => 'Skip';
+
+  @override
+  String get playerTryingNextSource => 'Stream failed, trying next source...';
+
+  @override
+  String get playerAllSourcesExhausted =>
+      'All sources failed. Please go back and try again.';
+
+  @override
   String get playerResolvingYoutube => 'Loading YouTube video...';
 
   @override

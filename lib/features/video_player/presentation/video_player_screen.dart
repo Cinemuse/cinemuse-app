@@ -104,83 +104,29 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       },
     );
 
+    // Register the notification callback once so auto-fallback snackbars surface.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(playerControllerProvider(params).notifier).onNotification = (message) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: AppTheme.secondary,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+            margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+          ),
+        );
+      };
+    });
+
     return Scaffold(
       backgroundColor: AppTheme.primary,
       body: playerState.when(
         data: (state) {
           if (state.isResolving) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 24),
-                  Text(
-                    widget.loadingMessage ?? AppLocalizations.of(context)!.playerResolving,
-                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 16),
-                  ),
-                  if (state.providerStatuses.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: 300,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: state.providerStatuses.map((s) {
-                          final isSearching = s.status == ProviderStatus.searching;
-                          final isFailed = s.status == ProviderStatus.failed;
-                          
-                          Color iconColor = Colors.white54;
-                          IconData iconData = Icons.search;
-                          String trailingText = '${(s.timeElapsed.inMilliseconds / 1000).toStringAsFixed(1)}s';
-                          
-                          if (!isSearching) {
-                            if (isFailed) {
-                              iconData = Icons.error_outline;
-                              iconColor = Colors.redAccent;
-                              trailingText = 'Failed ($trailingText)';
-                            } else {
-                              iconData = Icons.check_circle_outline;
-                              iconColor = Colors.greenAccent;
-                              trailingText = '${s.resultsCount} results ($trailingText)';
-                            }
-                          }
-                          
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Row(
-                              children: [
-                                if (isSearching)
-                                  const SizedBox(
-                                    width: 16, 
-                                    height: 16, 
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accent)
-                                  )
-                                else
-                                  Icon(iconData, size: 16, color: iconColor),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    s.providerName,
-                                    style: TextStyle(
-                                      color: isSearching ? Colors.white : Colors.white70,
-                                      fontWeight: isSearching ? FontWeight.bold : FontWeight.normal,
-                                    ),
-                                  ),
-                                ),
-                                Text(
-                                  trailingText,
-                                  style: const TextStyle(color: Colors.white54, fontSize: 12),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            );
+            return _buildResolvingOverlay(state, params);
           }
 
           if (state.isCasting) {
@@ -294,7 +240,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
               Icon(Icons.error, color: Theme.of(context).colorScheme.error, size: 48),
               const SizedBox(height: 16),
               Text(
-                widget.errorMessage ?? AppLocalizations.of(context)!.playerErrorResolving(err.toString()),
+                widget.errorMessage ?? AppLocalizations.of(context)!.playerAllSourcesExhausted,
                 style: const TextStyle(color: AppTheme.textWhite),
                 textAlign: TextAlign.center,
               ),
@@ -337,5 +283,127 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildResolvingOverlay(CinemaPlayerState state, PlayerParams params) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 24),
+          Text(
+            widget.loadingMessage ?? AppLocalizations.of(context)!.playerResolving,
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 16),
+          ),
+          if (state.providerStatuses.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            SizedBox(
+              width: 300,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ...state.providerStatuses.map((s) {
+                    final isSearching = s.status == ProviderStatus.searching;
+                    final isFailed = s.status == ProviderStatus.failed;
+                    
+                    Color iconColor = Colors.white54;
+                    IconData iconData = Icons.search;
+                    String trailingText = '${(s.timeElapsed.inMilliseconds / 1000).toStringAsFixed(1)}s';
+                    
+                    if (!isSearching) {
+                      if (isFailed) {
+                        iconData = Icons.error_outline;
+                        iconColor = Colors.redAccent;
+                        trailingText = 'Failed ($trailingText)';
+                      } else {
+                        iconData = Icons.check_circle_outline;
+                        iconColor = Colors.greenAccent;
+                        trailingText = '${s.resultsCount} results ($trailingText)';
+                      }
+                    }
+                    
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        children: [
+                          if (isSearching)
+                            const SizedBox(
+                              width: 16, 
+                              height: 16, 
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accent)
+                            )
+                          else
+                            Icon(iconData, size: 16, color: iconColor),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              s.providerName,
+                              style: TextStyle(
+                                color: isSearching ? Colors.white : Colors.white70,
+                                fontWeight: isSearching ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            trailingText,
+                            style: const TextStyle(color: Colors.white54, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  if (_canSkipResolution(state)) ...[
+                    const SizedBox(height: 24),
+                    TextButton.icon(
+                      onPressed: () {
+                        ref.read(playerControllerProvider(params).notifier).skipResolution();
+                      },
+                      icon: const Icon(Icons.skip_next, color: AppTheme.accent),
+                      label: Text(
+                        AppLocalizations.of(context)!.playerSkipResolution,
+                        style: const TextStyle(
+                          color: AppTheme.textWhite,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          shadows: [
+                            Shadow(
+                              color: AppTheme.accentGlow,
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        backgroundColor: AppTheme.secondary.withValues(alpha: 0.6),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: AppTheme.border),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  bool _canSkipResolution(CinemaPlayerState state) {
+    final hasResults = state.providerStatuses.any(
+      (s) => s.status == ProviderStatus.finished && s.resultsCount > 0,
+    );
+    if (!hasResults) return false;
+
+    final maxElapsedSeconds = state.providerStatuses.isEmpty
+        ? 0
+        : state.providerStatuses
+            .map((s) => s.timeElapsed.inSeconds)
+            .reduce((a, b) => a > b ? a : b);
+    return maxElapsedSeconds >= 15;
   }
 }

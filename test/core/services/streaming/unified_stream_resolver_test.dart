@@ -7,6 +7,7 @@ import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
 
 import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
@@ -34,7 +35,6 @@ void main() {
   });
 
   setUp(() {
-    UnifiedStreamResolver.clearCache();
     mockSource = MockSource();
     mockTmdb = MockTmdbService();
     mockKitsu = MockKitsuMappingService();
@@ -118,6 +118,39 @@ void main() {
       when(() => mockTmdb.getImdbId(any(), any())).thenAnswer((_) async => null);
 
       expect(() => resolver.searchStreams('123', 'movie'), throwsA(isA<ImdbIdResolutionException>()));
+    });
+
+    test('Should report non-zero time elapsed in onStatusUpdate callbacks', () async {
+      when(() => mockTmdb.getMediaDetails(any(), any())).thenAnswer((_) async => {
+        'id': 123, 'imdb_id': 'tt123', 'title': 'Test Movie',
+      });
+
+      // Simulate a search delay to let some elapsed time accumulate
+      when(() => mockSource.search(any())).thenAnswer((_) async {
+        await Future.delayed(const Duration(milliseconds: 150));
+        return [
+          StreamCandidate(title: 'Stream 1', infoHash: 'abc', magnet: 'm1', seeds: 10, provider: 'MockSource')
+        ];
+      });
+
+      final updates = <List<ProviderSearchStatus>>[];
+      
+      await resolver.searchStreams(
+        '123', 
+        'movie',
+        onStatusUpdate: (statuses) {
+          updates.add(List.from(statuses.map((s) => s.copyWith())));
+        },
+      );
+
+      expect(updates.isNotEmpty, isTrue, reason: 'Should receive status updates');
+      
+      // The final status update should show the provider finished
+      final finalUpdate = updates.last;
+      expect(finalUpdate.length, equals(1));
+      expect(finalUpdate.first.status, equals(ProviderStatus.finished));
+      expect(finalUpdate.first.timeElapsed.inMilliseconds, greaterThanOrEqualTo(100), 
+          reason: 'Finished status should record non-zero elapsed time');
     });
 
     test('Should throw NoResultsFoundException when no streams are found', () async {

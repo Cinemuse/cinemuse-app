@@ -37,12 +37,14 @@ class InitializationManager extends BaseManager {
     PlayerParams params, {
     required Function(List<ProviderSearchStatus>) onStatusUpdate,
     required Function(Map<String, dynamic>?) onMediaDetailsFetched,
+    Future<void>? skipTrigger,
   }) async {
     final handler = VodSourceHandler(rdHandler, resolver, tmdbService, player);
     return await handler.initialize(
       params, 
       onStatusUpdate: onStatusUpdate,
       onMediaDetailsFetched: onMediaDetailsFetched,
+      skipTrigger: skipTrigger,
     );
   }
 

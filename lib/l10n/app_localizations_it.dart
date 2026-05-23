@@ -524,6 +524,17 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playerResolving => 'Risoluzione stream in corso...';
 
   @override
+  String get playerSkipResolution => 'Salta';
+
+  @override
+  String get playerTryingNextSource =>
+      'Stream non disponibile, provo la prossima sorgente...';
+
+  @override
+  String get playerAllSourcesExhausted =>
+      'Tutte le sorgenti hanno fallito. Torna indietro e riprova.';
+
+  @override
   String get playerResolvingYoutube => 'Caricamento video YouTube...';
 
   @override

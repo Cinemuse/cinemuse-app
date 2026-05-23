@@ -1064,6 +1064,24 @@ abstract class AppLocalizations {
   /// **'Resolving stream...'**
   String get playerResolving;
 
+  /// No description provided for @playerSkipResolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get playerSkipResolution;
+
+  /// No description provided for @playerTryingNextSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Stream failed, trying next source...'**
+  String get playerTryingNextSource;
+
+  /// No description provided for @playerAllSourcesExhausted.
+  ///
+  /// In en, this message translates to:
+  /// **'All sources failed. Please go back and try again.'**
+  String get playerAllSourcesExhausted;
+
   /// No description provided for @playerResolvingYoutube.
   ///
   /// In en, this message translates to:
