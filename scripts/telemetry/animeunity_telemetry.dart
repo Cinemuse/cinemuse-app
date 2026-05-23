@@ -10,31 +10,29 @@ import 'package:cinemuse_app/core/services/anime/interfaces/anime_unity_mapping_
 import 'package:cinemuse_app/core/services/anime/models/anime_unity_entry.dart';
 
 class MockAnimeUnityMappingProvider implements AnimeUnityMappingProvider {
-  final Dio dio;
-  MockAnimeUnityMappingProvider(this.dio);
-  
   @override
   Future<List<AnimeUnityEntry>> getAnimeUnityIds(String kitsuId) async {
-    final res = await dio.get('https://animemapping.stremio.dpdns.org/kitsu/$kitsuId');
-    if (res.statusCode != 200 || res.data == null) return [];
-    
-    final paths = res.data['mappings']?['animeunity'] as List?;
-    if (paths == null) return [];
-    
-    final results = <AnimeUnityEntry>[];
-    final idPattern = RegExp(r'/anime/(\d+)');
-    
-    for (final raw in paths) {
-      final path = raw.toString();
-      final match = idPattern.firstMatch(path);
-      if (match != null) {
-        final id = int.tryParse(match.group(1)!);
-        if (id != null) {
-          results.add(AnimeUnityEntry(id: id, path: path));
-        }
-      }
+    // We use hardcoded static mappings for the telemetry script
+    // to strictly test AnimeUnity extraction and not rely on external mapping APIs.
+    switch (kitsuId) {
+      case '11': // Naruto
+        return [
+          AnimeUnityEntry(id: 1469, path: '/anime/1469-naruto'),
+          AnimeUnityEntry(id: 1468, path: '/anime/1468-naruto-ita'),
+        ];
+      case '42765': // Jujutsu Kaisen
+        return [
+          AnimeUnityEntry(id: 2791, path: '/anime/2791-jujutsu-kaisen'),
+          AnimeUnityEntry(id: 3896, path: '/anime/3896-jujutsu-kaisen-ita'),
+        ];
+      case '7442': // Attack on Titan
+        return [
+          AnimeUnityEntry(id: 2616, path: '/anime/2616-attack-on-titan'),
+          AnimeUnityEntry(id: 2617, path: '/anime/2617-attack-on-titan-ita'),
+        ];
+      default:
+        return [];
     }
-    return results;
   }
 }
 
@@ -42,18 +40,18 @@ void main() async {
   print('Starting AnimeUnity Scraper Telemetry...');
   
   final dio = Dio();
-  final mappingProvider = MockAnimeUnityMappingProvider(dio);
+  final mappingProvider = MockAnimeUnityMappingProvider();
   final scraper = AnimeUnitySource(dio, mappingProvider);
   
   // Define our test cases
   final testCases = [
     StreamSearchContext(
       tmdbId: '0',
-      title: 'Solo Leveling',
+      title: 'Naruto',
       type: 'tv',
       isAnime: true,
       mapping: KitsuMapping(
-        kitsuId: '47053',
+        kitsuId: '11',
         absoluteEpisode: 1,
       ),
     ),
