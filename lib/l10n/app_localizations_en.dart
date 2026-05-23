@@ -262,6 +262,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sportRugby => 'Rugby';
 
   @override
+  String get sportF1 => 'Formula 1';
+
+  @override
   String get sportGeneric => 'Sport Event';
 
   @override

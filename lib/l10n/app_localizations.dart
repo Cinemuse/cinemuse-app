@@ -578,6 +578,12 @@ abstract class AppLocalizations {
   /// **'Rugby'**
   String get sportRugby;
 
+  /// No description provided for @sportF1.
+  ///
+  /// In en, this message translates to:
+  /// **'Formula 1'**
+  String get sportF1;
+
   /// No description provided for @sportGeneric.
   ///
   /// In en, this message translates to:

@@ -89,7 +89,15 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
 
   @override
   Widget build(BuildContext context) {
-    final imageAsset = 'assets/sports/${widget.event.sportTranslationKey}.jpg';
+    final String imageAsset;
+    final key = widget.event.sportTranslationKey;
+    if (key == 'sport_motorcycling') {
+      imageAsset = 'assets/sports/sport_motogp.jpg';
+    } else if (key == 'sport_volleyball') {
+      imageAsset = 'assets/sports/sport_volleyball.png';
+    } else {
+      imageAsset = 'assets/sports/$key.jpg';
+    }
 
 
     return Focus(
@@ -301,6 +309,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
       case 'sport_tennis': return l10n.sportTennis;
       case 'sport_cycling': return l10n.sportCycling;
       case 'sport_rugby': return l10n.sportRugby;
+      case 'sport_f1': return l10n.sportF1;
       default: return widget.event.sportName.isNotEmpty ? widget.event.sportName : l10n.sportGeneric;
     }
   }
