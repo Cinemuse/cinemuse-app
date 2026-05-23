@@ -117,5 +117,66 @@ void main() {
       final results = await source.search(context);
       expect(results, isEmpty);
     });
+
+    test('search should construct correct URL for series type', () async {
+      final context = StreamSearchContext(
+        tmdbId: '456',
+        type: 'series',
+        title: 'The Boys',
+        season: 1,
+        episode: 1,
+      );
+
+      final html = '''
+        <html>
+          <body>
+            <script>
+              window.masterPlaylist = {
+                params: {
+                  'token': 'series-token',
+                  'expires': '987654321'
+                },
+                url: 'https://vixsrc.to/playlist/456?b=1'
+              };
+            </script>
+          </body>
+        </html>
+      ''';
+
+      final mockApiResponse = MockResponse();
+      when(() => mockApiResponse.statusCode).thenReturn(200);
+      when(() => mockApiResponse.data).thenReturn({'src': '/embed/456'});
+
+      final mockHtmlResponse = MockResponse();
+      when(() => mockHtmlResponse.statusCode).thenReturn(200);
+      when(() => mockHtmlResponse.data).thenReturn(html);
+
+      final mockPlaylistResponse = MockResponse();
+      when(() => mockPlaylistResponse.statusCode).thenReturn(200);
+      when(() => mockPlaylistResponse.data).thenReturn('#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080\n1080p.m3u8');
+
+      when(() => mockDio.get(
+        'https://vixsrc.to/api/tv/456/1/1',
+        options: any(named: 'options'),
+      )).thenAnswer((_) async => mockApiResponse);
+
+      when(() => mockDio.get(
+        'https://vixsrc.to/embed/456',
+        options: any(named: 'options'),
+      )).thenAnswer((_) async => mockHtmlResponse);
+
+      when(() => mockDio.get(
+        any(that: contains('vixsrc.to/playlist')),
+        options: any(named: 'options'),
+      )).thenAnswer((_) async => mockPlaylistResponse);
+
+      final results = await source.search(context);
+
+      expect(results.length, 1);
+      final candidate = results.first;
+      expect(candidate.provider, 'VixSrc');
+      expect(candidate.url, contains('token=series-token'));
+      expect(candidate.url, contains('expires=987654321'));
+    });
   });
 }

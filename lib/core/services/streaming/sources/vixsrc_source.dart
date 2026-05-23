@@ -14,14 +14,16 @@ class VixSrcSource extends BaseSource {
   VixSrcSource(this._dio);
 
   @override
-  Set<String> get supportedCategories => {'movie', 'tv'};
+  Set<String> get supportedCategories => {'movie', 'tv', 'series'};
 
   @override
   Future<List<StreamCandidate>> search(StreamSearchContext context) async {
     final String path;
     if (context.type == 'movie') {
       path = '/movie/${context.tmdbId}';
-    } else if (context.type == 'tv' && context.season != null && context.episode != null) {
+    } else if ((context.type == 'tv' || context.type == 'series') &&
+        context.season != null &&
+        context.episode != null) {
       path = '/tv/${context.tmdbId}/${context.season}/${context.episode}';
     } else {
       return [];

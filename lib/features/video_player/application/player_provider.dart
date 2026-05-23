@@ -35,6 +35,7 @@ import 'package:cinemuse_app/features/video_player/application/helpers/player_pr
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:cinemuse_app/core/utils/mime_resolver.dart';
+import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 
 // Convert back to StateNotifierProvider for compatibility/simplicity
 final playerControllerProvider = StateNotifierProvider.family.autoDispose<PlayerController, AsyncValue<CinemaPlayerState>, PlayerParams>(
@@ -44,6 +45,7 @@ final playerControllerProvider = StateNotifierProvider.family.autoDispose<Player
 class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   final Ref ref;
   final PlayerParams params;
+  late PlayerParams resolvedParams;
   
   Player? _player;
   VideoController? _controller;
@@ -82,6 +84,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   static const int _maxRetries = 2;
 
   PlayerController(this.ref, this.params) : super(const AsyncValue.loading()) {
+    resolvedParams = params;
     
     // Initialize Handlers
     _youtubeHandler = YoutubeHandler(ref.read(youtubeServiceProvider));
@@ -120,13 +123,45 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   Future<void> _initialize() async {
     try {
       _setupMediaEngine();
+
+      int resolvedSeason = params.season ?? 1;
+      int resolvedEpisode = params.episode ?? 1;
+      int resolvedStartPosition = params.startPosition ?? 0;
+
+      final user = ref.read(authProvider).value;
+      if (user != null) {
+        final repo = ref.read(watchHistoryRepositoryProvider);
+        final history = await repo.getHistoryItem(user.id, params.queryId);
+        if (history != null) {
+          if (params.type == 'tv' || params.type == 'series') {
+            resolvedSeason = params.season ?? history.season ?? 1;
+            resolvedEpisode = params.episode ?? history.episode ?? 1;
+            if (params.startPosition == null &&
+                resolvedSeason == history.season &&
+                resolvedEpisode == history.episode) {
+              resolvedStartPosition = history.progressSeconds;
+            }
+          } else if (params.type == 'movie') {
+            if (params.startPosition == null) {
+              resolvedStartPosition = history.progressSeconds;
+            }
+          }
+        }
+      }
+
+      resolvedParams = params.copyWith(
+        season: params.type == 'movie' ? null : resolvedSeason,
+        episode: params.type == 'movie' ? null : resolvedEpisode,
+        startPosition: resolvedStartPosition,
+      );
+
       _initializeManagers();
       _setupProgressTracking();
 
-      if (params.type == 'youtube') {
+      if (resolvedParams.type == 'youtube') {
         await _handleYouTubeInitialization();
         return;
-      } else if (params.type == 'livetv') {
+      } else if (resolvedParams.type == 'livetv') {
         await _handleLiveTvInitialization();
         return;
       }
@@ -213,7 +248,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   }
 
   void _initializeManagers() {
-    _trackManager = TrackManager(ref: ref, player: _player!, params: params);
+    _trackManager = TrackManager(ref: ref, player: _player!, params: resolvedParams);
     _applyTrackPreferences();
 
     _eventManager = EventManager(
@@ -244,7 +279,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
     _liveTvHandler = LiveTvSourceHandler(_player!);
 
-    if (params.type == 'livetv') {
+    if (resolvedParams.type == 'livetv') {
       _qualitySubscription = ref.listen(
         settingsProvider.select((s) => s.liveTvQuality),
         (prev, next) {
@@ -268,17 +303,17 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         controller: _controller!,
         availableStreams: const [],
         currentStream: null,
-        title: params.episodeTitle ?? params.queryId,
+        title: resolvedParams.episodeTitle ?? resolvedParams.queryId,
         isResolving: true,
         activeAudioTrack: _player!.state.track.audio,
         activeSubtitleTrack: _player!.state.track.subtitle,
-        isLive: params.type == 'livetv',
+        isLive: resolvedParams.type == 'livetv',
       ));
     }
   }
 
   Future<void> _handleYouTubeInitialization() async {
-    final result = await _initializationManager!.initializeYouTube(params);
+    final result = await _initializationManager!.initializeYouTube(resolvedParams);
     if (mounted) {
       state = AsyncValue.data(CinemaPlayerState(
         controller: _controller!,
@@ -287,7 +322,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         title: result.title,
         activeAudioTrack: _player!.state.track.audio,
         activeSubtitleTrack: _player!.state.track.subtitle,
-        isLive: params.type == 'livetv',
+        isLive: resolvedParams.type == 'livetv',
       ));
     }
   }
@@ -295,7 +330,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   Future<void> _handleVodInitialization() async {
     _skipCompleter = Completer<void>();
     final vodResult = await _initializationManager!.initializeVod(
-      params, 
+      resolvedParams, 
       onStatusUpdate: _onProviderStatusUpdate,
       onMediaDetailsFetched: _onMediaDetailsFetched,
       skipTrigger: _skipCompleter!.future,
@@ -472,7 +507,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
   void _onMediaDetailsFetched(Map<String, dynamic>? details) {
     _mediaDetails = details;
-    _historyManager = PlayerHistoryManager(ref, params, details);
+    _historyManager = PlayerHistoryManager(ref, resolvedParams, details);
     
     if (mounted) {
       final currentState = state.valueOrNull;
@@ -486,9 +521,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   }
 
   String _extractLocalizedTitle(Map<String, dynamic>? details, String languageCode) {
-    if (details == null) return params.episodeTitle ?? params.queryId;
+    if (details == null) return resolvedParams.episodeTitle ?? resolvedParams.queryId;
     return MediaItem.extractTitleFromTmdb(details, languageCode) ?? 
-           params.episodeTitle ?? params.queryId;
+           resolvedParams.episodeTitle ?? resolvedParams.queryId;
   }
 
   Future<void> _performPostInitialization(VodInitializationResult vodResult) async {
@@ -507,7 +542,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         isAnime: vodResult.isAnime,
         activeAudioTrack: _player!.state.track.audio,
         activeSubtitleTrack: _player!.state.track.subtitle,
-        isLive: params.type == 'livetv',
+        isLive: resolvedParams.type == 'livetv',
       ));
     }
     
@@ -522,8 +557,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   Future<void> _ensureMediaCached() async {
     final repo = ref.read(watchHistoryRepositoryProvider);
     final mainMediaItem = MediaItem(
-      tmdbId: int.parse(params.queryId),
-      mediaType: params.type == 'movie' ? MediaKind.movie : MediaKind.tv,
+      tmdbId: int.parse(resolvedParams.queryId),
+      mediaType: resolvedParams.type == 'movie' ? MediaKind.movie : MediaKind.tv,
       titleIt: _extractLocalizedTitle(_mediaDetails, 'it'),
       titleEn: _extractLocalizedTitle(_mediaDetails, 'en'),
       posterPath: _mediaDetails?['poster_path'],
@@ -535,28 +570,28 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   }
 
   Future<void> _handleInitialSeek() async {
-    if (params.startPosition > 0) {
+    if (resolvedParams.startPosition != null && resolvedParams.startPosition! > 0) {
       await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
-      await _player!.seek(Duration(seconds: params.startPosition));
+      await _player!.seek(Duration(seconds: resolvedParams.startPosition!));
     }
   }
 
   Future<NextEpisodeInfo?> _calculateNextEpisode() async {
-    if (params.type != 'tv' || params.season == null || params.episode == null || _mediaDetails == null) {
+    if (resolvedParams.type != 'tv' || resolvedParams.season == null || resolvedParams.episode == null || _mediaDetails == null) {
       return null;
     }
 
     final nextEpResult = ref.read(seriesDomainServiceProvider).getNextEpisode(
       _mediaDetails!, 
-      params.season!, 
-      params.episode!,
+      resolvedParams.season!, 
+      resolvedParams.episode!,
     );
     
     if (!nextEpResult.isAired) return null;
 
     NextEpisodeInfo? next = nextEpResult.next;
     if (next != null) {
-      final seasonDetails = await ref.read(tmdbServiceProvider).getSeasonDetails(int.parse(params.queryId), next.season);
+      final seasonDetails = await ref.read(tmdbServiceProvider).getSeasonDetails(int.parse(resolvedParams.queryId), next.season);
       final episodes = seasonDetails?['episodes'] as List? ?? [];
       final nextEpData = episodes.firstWhere(
         (e) => e['episode_number'] == next?.episode,
@@ -588,7 +623,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       position: _player!.state.position.inSeconds,
       duration: _player!.state.duration.inSeconds,
       actualSecondsWatched: _progressTracker?.actualSecondsWatched ?? 0,
-      initialPosition: params.startPosition,
+      initialPosition: resolvedParams.startPosition ?? 0,
       isCompletionLogged: _isCompletionLogged,
       onCompletionLogged: (val) => _isCompletionLogged = val,
     );
@@ -606,8 +641,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         final position = _player!.state.position;
         final resolvedStream = await _rdHandler.resolveAndMerge(
           candidate,
-          season: params.season,
-          episode: params.episode,
+          season: resolvedParams.season,
+          episode: resolvedParams.episode,
           absoluteEpisode: candidate.absoluteEpisode,
         );
 
@@ -686,8 +721,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
            // We can update state here if needed
            debugPrint('PlayerController: Cast stream resolved: ${resolvedStream.url}');
         },
-        season: params.season,
-        episode: params.episode,
+        season: resolvedParams.season,
+        episode: resolvedParams.episode,
         absoluteEpisode: state.value!.currentStream?.candidate.absoluteEpisode,
         detectedMimeType: state.value!.detectedMimeType,
       );
@@ -766,7 +801,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   }
 
   Future<void> _handlePlaybackCompleted() async {
-    if (params.type == 'livetv') {
+    if (resolvedParams.type == 'livetv') {
       if (_isChangingChannel) {
         debugPrint('PlayerController: Ignoring EOS during channel change.');
         return;
@@ -784,7 +819,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   }
 
   void _handlePlayerError(String error) {
-    if (params.type == 'livetv') {
+    if (resolvedParams.type == 'livetv') {
       if (_isChangingChannel) {
         debugPrint('PlayerController: Ignoring Error during channel change: $error');
         return;
@@ -875,8 +910,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     try {
       final resolvedStream = await _rdHandler.resolveAndMerge(
         candidate,
-        season: params.season,
-        episode: params.episode,
+        season: resolvedParams.season,
+        episode: resolvedParams.episode,
         absoluteEpisode: candidate.absoluteEpisode,
         fileId: currentState.currentStream?.activeFileId,
       );

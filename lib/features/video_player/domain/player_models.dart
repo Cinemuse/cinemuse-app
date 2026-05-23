@@ -15,14 +15,32 @@ class PlayerParams {
   final int? season;
   final int? episode;
   final String? episodeTitle;
-  final int startPosition;
+  final int? startPosition;
 
   const PlayerParams(this.queryId, this.type, {
     this.season, 
     this.episode, 
     this.episodeTitle,
-    this.startPosition = 0,
+    this.startPosition,
   });
+
+  PlayerParams copyWith({
+    String? queryId,
+    String? type,
+    int? season,
+    int? episode,
+    String? episodeTitle,
+    int? startPosition,
+  }) {
+    return PlayerParams(
+      queryId ?? this.queryId,
+      type ?? this.type,
+      season: season ?? this.season,
+      episode: episode ?? this.episode,
+      episodeTitle: episodeTitle ?? this.episodeTitle,
+      startPosition: startPosition ?? this.startPosition,
+    );
+  }
 
   @override
   bool operator ==(Object other) =>

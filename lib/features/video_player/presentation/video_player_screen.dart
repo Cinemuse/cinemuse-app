@@ -19,7 +19,7 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
   final int? season;
   final int? episode;
   final String? episodeTitle;
-  final int startPosition;
+  final int? startPosition;
   final String? loadingMessage;
   final String? errorMessage;
 
@@ -30,7 +30,7 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
     this.season,
     this.episode,
     this.episodeTitle,
-    this.startPosition = 0,
+    this.startPosition,
     this.loadingMessage,
     this.errorMessage,
   });
