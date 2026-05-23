@@ -1,0 +1,40 @@
+name: Scrapers Telemetry
+
+on:
+  schedule:
+    # Run every day at 06:00 UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Allow manual triggering from the GitHub Actions UI
+
+jobs:
+  run-telemetry:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          
+      - name: Install Dependencies
+        run: flutter pub get
+        
+      - name: Run Sport Telemetry Script
+        continue-on-error: true
+        run: dart run scripts/telemetry/sport_telemetry.dart
+        
+      # Add more telemetry scripts here:
+      # - name: Run Another Telemetry Script
+      #   continue-on-error: true
+      #   run: dart run scripts/telemetry/another_telemetry.dart
+        
+      - name: Upload Telemetry Report Artifacts
+        if: always() # Upload the artifacts even if a script failed
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrapers-telemetry-reports
+          path: "*_report.json"
+          retention-days: 7
