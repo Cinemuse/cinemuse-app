@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/features/media/data/tvtime_service.dart';
+import 'package:cinemuse_app/features/media/data/tvtime_service_provider.dart';
 import 'package:cinemuse_app/features/media/domain/tvtime_comment.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

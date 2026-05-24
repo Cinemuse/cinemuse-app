@@ -160,7 +160,8 @@ Future<void> main() async {
   print('Failed: $failed');
   print('Report written to: ${proofFile.path}');
 
-  if (passed == 0) {
+  if (passed == 0 || failed > 0) {
     exit(1);
   }
   exit(0);
+}

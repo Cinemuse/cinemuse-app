@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:equatable/equatable.dart';
 import 'package:cinemuse_app/features/media/domain/tvtime_comment.dart';
 import 'package:cinemuse_app/features/media/data/tvtime_service.dart';
+import 'package:cinemuse_app/features/media/data/tvtime_service_provider.dart';
 
 enum CommentSortType { mostLiked, recent }
 

@@ -36,7 +36,7 @@ jobs:
         
       - name: Run TVTime Telemetry Script
         continue-on-error: true
-        run: flutter test scripts/telemetry/tvtime_telemetry.dart
+        run: dart run scripts/telemetry/tvtime_telemetry.dart
         
       - name: Upload Telemetry Report Artifacts
         if: always() # Upload the artifacts even if a script failed

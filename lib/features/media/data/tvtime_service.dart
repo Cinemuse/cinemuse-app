@@ -1,15 +1,8 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'dart:isolate';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:cinemuse_app/features/media/domain/tvtime_comment.dart';
-
-/// Provides the [TvTimeService] singleton.
-final tvTimeServiceProvider = Provider<TvTimeService>((ref) {
-  return TvTimeService(ref.read(dioProvider));
-});
 
 /// Internal scraper for the TVTime comment system.
 ///
@@ -250,7 +243,7 @@ class TvTimeService {
     final rawData = _extractDataList(response.data);
     
     // Parse the massive JSON list in a background isolate to prevent UI stutter
-    return compute(_parseCommentsList, rawData);
+    return Isolate.run(() => _parseCommentsList(rawData));
   }
 
   static List<TvTimeComment> _parseCommentsList(List<dynamic> rawData) {
