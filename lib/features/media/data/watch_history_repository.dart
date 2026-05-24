@@ -285,6 +285,9 @@ class WatchHistoryRepository {
   }
 
   Future<WatchHistory?> getHistoryItem(String userId, String tmdbId) async {
+    if (int.tryParse(tmdbId) == null) {
+      return null;
+    }
     final response = await _client
         .from('watch_history')
         .select()

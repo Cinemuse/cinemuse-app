@@ -6,7 +6,7 @@ import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:drift/native.dart';
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -115,6 +115,12 @@ void main() {
 
       expect(result.length, 1);
       expect(result.first.media?.titleEn, 'Movie Title');
+    });
+
+    test('getHistoryItem returns null immediately for non-numeric tmdbId', () async {
+      final result = await repository.getHistoryItem(userId, 'livetv_session');
+      expect(result, isNull);
+      verifyNever(() => mockSupabase.from(any()));
     });
   });
 }

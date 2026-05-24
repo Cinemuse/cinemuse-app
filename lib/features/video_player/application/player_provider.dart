@@ -129,7 +129,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       int resolvedStartPosition = params.startPosition ?? 0;
 
       final user = ref.read(authProvider).value;
-      if (user != null) {
+      if (user != null && (params.type == 'movie' || params.type == 'tv' || params.type == 'series')) {
         final repo = ref.read(watchHistoryRepositoryProvider);
         final history = await repo.getHistoryItem(user.id, params.queryId);
         if (history != null) {
