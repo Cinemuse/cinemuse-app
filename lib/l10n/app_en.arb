@@ -366,5 +366,16 @@
   "liveTvRemovedFromFavorites": "Removed from favorites",
   "liveTvNoFavorites": "No favorite channels yet",
   "liveTvNoFavoritesHint": "Long-press a channel to add it to favorites",
-  "liveTvNoRecents": "No recently watched channels"
+  "liveTvNoRecents": "No recently watched channels",
+
+  "tvTimeComments": "Comments",
+  "tvTimeNoComments": "No comments yet.",
+  "tvTimeReplies": "{count, plural, one{{count} reply} other{{count} replies}}",
+  "@tvTimeReplies": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "tvTimeLoadingComments": "Loading comments...",
+  "tvTimeCommentsError": "Could not load comments."
 }

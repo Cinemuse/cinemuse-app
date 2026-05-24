@@ -2245,6 +2245,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No recently watched channels'**
   String get liveTvNoRecents;
+
+  /// No description provided for @tvTimeComments.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get tvTimeComments;
+
+  /// No description provided for @tvTimeNoComments.
+  ///
+  /// In en, this message translates to:
+  /// **'No comments yet.'**
+  String get tvTimeNoComments;
+
+  /// No description provided for @tvTimeReplies.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} reply} other{{count} replies}}'**
+  String tvTimeReplies(int count);
+
+  /// No description provided for @tvTimeLoadingComments.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading comments...'**
+  String get tvTimeLoadingComments;
+
+  /// No description provided for @tvTimeCommentsError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load comments.'**
+  String get tvTimeCommentsError;
 }
 
 class _AppLocalizationsDelegate

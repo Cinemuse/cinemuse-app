@@ -66,6 +66,7 @@ class VerdictBox extends StatelessWidget {
   final List<dynamic> reviews;
   final VoidCallback onShowUserReviewModal;
   final VoidCallback onShowReviewsModal;
+  final VoidCallback? onShowTvTimeComments;
 
   const VerdictBox({
     super.key,
@@ -73,6 +74,7 @@ class VerdictBox extends StatelessWidget {
     required this.reviews,
     required this.onShowUserReviewModal,
     required this.onShowReviewsModal,
+    this.onShowTvTimeComments,
   });
 
   @override
@@ -83,8 +85,34 @@ class VerdictBox extends StatelessWidget {
     return BentoBox(
       title: l10n.detailsVerdict,
       icon: Icons.star_outline,
-      action: userReview == null
-          ? MouseRegion(
+      action: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (onShowTvTimeComments != null)
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onShowTvTimeComments,
+                child: HoverScale(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.forum_outlined, size: 14, color: AppTheme.accent),
+                      const SizedBox(width: 4),
+                      Text(
+                        'TVTIME COMMENTS',
+                        style: const TextStyle(color: AppTheme.accent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          if (onShowTvTimeComments != null && userReview == null)
+            const SizedBox(width: 12),
+          if (userReview == null)
+            MouseRegion(
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
@@ -94,7 +122,7 @@ class VerdictBox extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.star_outline, size: 14, color: AppTheme.accent),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Text(
                         l10n.detailsRate,
                         style: const TextStyle(color: AppTheme.accent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2),
@@ -103,8 +131,9 @@ class VerdictBox extends StatelessWidget {
                   ),
                 ),
               ),
-            )
-          : null,
+            ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -14,6 +14,8 @@ import 'package:cinemuse_app/features/media/presentation/widgets/external_links.
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
+import 'package:cinemuse_app/features/media/application/comments_provider.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/comments_bottom_sheet.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_modal.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
@@ -257,6 +259,19 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                             reviews: details['reviews']?['results'] ?? [],
                             onShowUserReviewModal: () {},
                             onShowReviewsModal: () {},
+                            onShowTvTimeComments: () {
+                              final int? tvdbId = details['external_ids']?['tvdb_id'];
+                              final String? imdbId = details['external_ids']?['imdb_id'];
+                              if (isTV && tvdbId != null) {
+                                showCommentsBottomSheet(context, SeriesCommentsRequest(tvdbId));
+                              } else if (!isTV && imdbId != null) {
+                                showCommentsBottomSheet(context, MovieCommentsRequest(imdbId));
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('TVTime Comments not available for this media')),
+                                );
+                              }
+                            },
                           ),
 
                         if (_activeTab == DetailsTab.videos)
@@ -300,6 +315,19 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                         reviews: details['reviews']?['results'] ?? [],
                         onShowUserReviewModal: () {},
                         onShowReviewsModal: () {},
+                        onShowTvTimeComments: () {
+                          final int? tvdbId = details['external_ids']?['tvdb_id'];
+                          final String? imdbId = details['external_ids']?['imdb_id'];
+                          if (isTV && tvdbId != null) {
+                            showCommentsBottomSheet(context, SeriesCommentsRequest(tvdbId));
+                          } else if (!isTV && imdbId != null) {
+                            showCommentsBottomSheet(context, MovieCommentsRequest(imdbId));
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('TVTime Comments not available for this media')),
+                            );
+                          }
+                        },
                       ),
                       const SizedBox(height: 24),
 
@@ -568,8 +596,24 @@ class _SeriesEpisodesSection extends ConsumerWidget {
               seasonNumber: selectedSeason,
               media: details,
               watchedEpisodesCount: watchedEpisodesMap,
-              episodeProgress: episodeProgressMap,
               initialScrollIndex: initialIndex,
+              onShowTvTimeComments: (season, episode) {
+                final int? tvdbId = details['external_ids']?['tvdb_id'];
+                if (tvdbId != null) {
+                  showCommentsBottomSheet(
+                    context, 
+                    EpisodeCommentsRequest(
+                      tvdbId, 
+                      season,
+                      episode,
+                    )
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('TVTime Comments not available for this series')),
+                  );
+                }
+              },
               onEpisodeTap: (s, e, name) {
                 final progress = episodeProgressMap?['$s-$e']?.progressSeconds ?? 0;
                 Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(

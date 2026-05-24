@@ -1167,4 +1167,27 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get liveTvNoRecents => 'Nessun canale guardato di recente';
+
+  @override
+  String get tvTimeComments => 'Commenti';
+
+  @override
+  String get tvTimeNoComments => 'Nessun commento ancora.';
+
+  @override
+  String tvTimeReplies(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count risposte',
+      one: '$count risposta',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tvTimeLoadingComments => 'Caricamento commenti...';
+
+  @override
+  String get tvTimeCommentsError => 'Impossibile caricare i commenti.';
 }

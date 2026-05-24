@@ -366,5 +366,16 @@
   "liveTvRemovedFromFavorites": "Rimosso dai preferiti",
   "liveTvNoFavorites": "Nessun canale preferito",
   "liveTvNoFavoritesHint": "Tieni premuto su un canale per aggiungerlo ai preferiti",
-  "liveTvNoRecents": "Nessun canale guardato di recente"
+  "liveTvNoRecents": "Nessun canale guardato di recente",
+
+  "tvTimeComments": "Commenti",
+  "tvTimeNoComments": "Nessun commento ancora.",
+  "tvTimeReplies": "{count, plural, one{{count} risposta} other{{count} risposte}}",
+  "@tvTimeReplies": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "tvTimeLoadingComments": "Caricamento commenti...",
+  "tvTimeCommentsError": "Impossibile caricare i commenti."
 }

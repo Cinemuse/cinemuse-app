@@ -16,6 +16,7 @@ class EpisodeList extends ConsumerStatefulWidget {
   final Map<String, WatchHistory>? episodeProgress;
   final Function(int season, int episode, String name)? onEpisodeTap;
   final int? initialScrollIndex;
+  final void Function(int season, int episode)? onShowTvTimeComments;
 
   const EpisodeList({
     super.key,
@@ -27,6 +28,7 @@ class EpisodeList extends ConsumerStatefulWidget {
     this.episodeProgress,
     this.onEpisodeTap,
     this.initialScrollIndex,
+    this.onShowTvTimeComments,
   });
 
   @override
@@ -75,7 +77,6 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
   @override
   Widget build(BuildContext context) {
     final controller = ref.read(mediaDetailsControllerProvider.notifier);
-    final l10n = AppLocalizations.of(context)!;
     final tmdbId = int.parse(widget.media['id'].toString());
 
     return ListView.separated(
@@ -120,6 +121,9 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
           watchCount: watchCount,
           resumePercentage: resumePercentage,
           onEpisodeTap: widget.onEpisodeTap,
+          onShowTvTimeComments: widget.onShowTvTimeComments != null 
+              ? () => widget.onShowTvTimeComments!(widget.seasonNumber, epNumber)
+              : null,
           onMarkWatched: (s, e, date) => controller.logEpisodeWatch(tmdbId: tmdbId, season: s, episode: e, loggedAt: date),
           onTrackOptions: (s, e) => _showTrackOptions(context, controller, tmdbId, s, e),
           onFindMissingPreceding: _findMissingPreceding,

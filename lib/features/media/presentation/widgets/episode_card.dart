@@ -18,6 +18,7 @@ class EpisodeCard extends StatefulWidget {
   final Function(int, int) onTrackOptions;
   final List<({int season, int episode})> Function(int, int) onFindMissingPreceding;
   final Function(int, int, List<({int season, int episode})>) onShowMarkPrecedingModal;
+  final VoidCallback? onShowTvTimeComments;
 
   const EpisodeCard({
     super.key,
@@ -32,6 +33,7 @@ class EpisodeCard extends StatefulWidget {
     required this.onTrackOptions,
     required this.onFindMissingPreceding,
     required this.onShowMarkPrecedingModal,
+    this.onShowTvTimeComments,
   });
 
   @override
@@ -275,45 +277,80 @@ class _EpisodeCardState extends State<EpisodeCard> {
                 // Mark Watched Button
                 Padding(
                   padding: const EdgeInsets.only(right: 16),
-                  child: MarkWatchedButton(
-                    isWatched: widget.isWatched,
-                    watchCount: widget.watchCount,
-                    onTap: () {
-                      if (widget.isWatched) {
-                        widget.onTrackOptions(widget.seasonNumber, epNumber);
-                      } else {
-                        final missing = widget.onFindMissingPreceding(widget.seasonNumber, epNumber);
-                        if (missing.isNotEmpty) {
-                          widget.onShowMarkPrecedingModal(widget.seasonNumber, epNumber, missing);
-                        } else {
-                          widget.onMarkWatched?.call(widget.seasonNumber, epNumber, null);
-                        }
-                      }
-                    },
-                    onLongPress: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime.now(),
-                        builder: (context, child) {
-                          return Theme(
-                            data: Theme.of(context).copyWith(
-                              colorScheme: const ColorScheme.dark(
-                                primary: AppTheme.accent,
-                                onPrimary: Colors.white,
-                                surface: AppTheme.secondary,
-                                onSurface: Colors.white,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.onShowTvTimeComments != null)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Tooltip(
+                            message: 'TVTime Comments',
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                onTap: widget.onShowTvTimeComments,
+                                child: HoverScale(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.textWhite.withOpacity(0.05),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: AppTheme.textWhite.withOpacity(0.1),
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.forum_outlined,
+                                      color: AppTheme.accent,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                            child: child!,
-                          );
+                          ),
+                        ),
+                      MarkWatchedButton(
+                        isWatched: widget.isWatched,
+                        watchCount: widget.watchCount,
+                        onTap: () {
+                          if (widget.isWatched) {
+                            widget.onTrackOptions(widget.seasonNumber, epNumber);
+                          } else {
+                            final missing = widget.onFindMissingPreceding(widget.seasonNumber, epNumber);
+                            if (missing.isNotEmpty) {
+                              widget.onShowMarkPrecedingModal(widget.seasonNumber, epNumber, missing);
+                            } else {
+                              widget.onMarkWatched?.call(widget.seasonNumber, epNumber, null);
+                            }
+                          }
                         },
-                      );
-                      if (date != null) {
-                        widget.onMarkWatched?.call(widget.seasonNumber, epNumber, date);
-                      }
-                    },
+                        onLongPress: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime.now(),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: const ColorScheme.dark(
+                                    primary: AppTheme.accent,
+                                    onPrimary: Colors.white,
+                                    surface: AppTheme.secondary,
+                                    onSurface: Colors.white,
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
+                          );
+                          if (date != null) {
+                            widget.onMarkWatched?.call(widget.seasonNumber, epNumber, date);
+                          }
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ],
