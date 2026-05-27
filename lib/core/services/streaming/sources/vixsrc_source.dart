@@ -64,7 +64,6 @@ class VixSrcSource extends BaseSource {
       final expiresMatch = RegExp(r'''['"]?expires['"]?:\s*['"]([^'"]+)['"]''').firstMatch(html);
 
       if (tokenMatch == null || expiresMatch == null || urlMatch == null) {
-        print('VixSrcSource: Failed to extract tokens from HTML');
         return [];
       }
 
@@ -86,9 +85,11 @@ class VixSrcSource extends BaseSource {
         },
       ).toString();
 
-      // 4. Determine languages from the playlist
-      final languages = await _determineLanguagesFromPlaylist(playlistUrl, url);
-
+      // Return the candidate immediately. Language/subtitle metadata is not
+      // pre-fetched here because downloading the HLS master playlist adds
+      // ~30s of latency before playback begins. The player's TrackManager
+      // reactively selects the correct audio/subtitle tracks once the stream
+      // is opened and demuxed.
       return [
         StreamCandidate(
           title: '${context.title} [VixSrc]',
@@ -96,41 +97,22 @@ class VixSrcSource extends BaseSource {
           magnet: '',
           provider: name,
           url: playlistUrl,
-          headers: {'Referer': url},
+          headers: {
+            'Referer': url,
+            'Origin': _baseUrl,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          },
           metadata: StreamMetadata(
-            video: const VideoMetadata(resolution: VideoResolution.r1080p), // Vix usually has 1080p
+            video: const VideoMetadata(resolution: VideoResolution.r1080p),
             audio: const AudioMetadata(),
-            languages: languages,
+            languages: const [],
             quality: ReleaseQuality.webdl,
           ),
         ),
       ];
     } catch (e) {
-      print('VixSrcSource: Search failed: $e');
       return [];
     }
   }
 
-  Future<List<String>> _determineLanguagesFromPlaylist(String playlistUrl, String referer) async {
-    try {
-      final response = await _dio.get(playlistUrl, options: Options(headers: {'Referer': referer}));
-      if (response.statusCode != 200 || response.data == null) return [];
-
-      final String playlist = response.data.toString();
-      final Set<String> foundLanguages = {};
-
-      // Match #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="...",NAME="...",LANGUAGE="it",...
-      final matches = RegExp(r'#EXT-X-MEDIA:TYPE=AUDIO.*LANGUAGE="([^"]+)"').allMatches(playlist);
-      for (final match in matches) {
-        final lang = match.group(1)!.toUpperCase();
-        // Normalize common codes if needed, but usually it's "IT", "EN", etc.
-        foundLanguages.add(lang);
-      }
-
-      return foundLanguages.toList();
-    } catch (e) {
-      print('VixSrcSource: Failed to determine languages: $e');
-      return [];
-    }
-  }
 }

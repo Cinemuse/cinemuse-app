@@ -169,14 +169,18 @@ class TrackManager extends BaseManager {
 
     final match = _findMatchingTrack(tracks, lang);
     if (match != null) {
-      if (current.id != match.id) await player.setSubtitleTrack(match as SubtitleTrack);
+      if (current.id != match.id) {
+        await player.setSubtitleTrack(match as SubtitleTrack);
+      }
       return true;
     }
 
     // Fallback: select first real track if still on 'auto'
     if (current.id == 'auto') {
       final firstReal = tracks.where((t) => t.id != 'auto' && t.id != 'no').firstOrNull;
-      if (firstReal != null) await player.setSubtitleTrack(firstReal);
+      if (firstReal != null) {
+        await player.setSubtitleTrack(firstReal);
+      }
     }
 
     return false;

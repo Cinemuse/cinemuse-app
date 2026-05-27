@@ -124,28 +124,42 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     try {
       _setupMediaEngine();
 
-      int resolvedSeason = params.season ?? 1;
-      int resolvedEpisode = params.episode ?? 1;
+      // Guard against 0: the DB stores 0 as a sentinel for "no season/episode".
+      // `params.season ?? 1` only handles null, not 0, so we must check explicitly.
+      int resolvedSeason = (params.season == null || params.season! < 1) ? 1 : params.season!;
+      int resolvedEpisode = (params.episode == null || params.episode! < 1) ? 1 : params.episode!;
       int resolvedStartPosition = params.startPosition ?? 0;
 
       final user = ref.read(authProvider).value;
       if (user != null && (params.type == 'movie' || params.type == 'tv' || params.type == 'series')) {
-        final repo = ref.read(watchHistoryRepositoryProvider);
-        final history = await repo.getHistoryItem(user.id, params.queryId);
-        if (history != null) {
-          if (params.type == 'tv' || params.type == 'series') {
-            resolvedSeason = params.season ?? history.season ?? 1;
-            resolvedEpisode = params.episode ?? history.episode ?? 1;
-            if (params.startPosition == null &&
-                resolvedSeason == history.season &&
-                resolvedEpisode == history.episode) {
-              resolvedStartPosition = history.progressSeconds;
-            }
-          } else if (params.type == 'movie') {
-            if (params.startPosition == null) {
-              resolvedStartPosition = history.progressSeconds;
+        try {
+          final repo = ref.read(watchHistoryRepositoryProvider);
+          final history = await repo.getHistoryItem(user.id, params.queryId);
+          if (history != null) {
+            if (params.type == 'tv' || params.type == 'series') {
+              // Re-apply the same 0-guard: history also stores 0 as sentinel.
+              final hSeason = (history.season == null || history.season! < 1) ? null : history.season;
+              final hEpisode = (history.episode == null || history.episode! < 1) ? null : history.episode;
+              resolvedSeason = (params.season == null || params.season! < 1)
+                  ? (hSeason ?? 1)
+                  : params.season!;
+              resolvedEpisode = (params.episode == null || params.episode! < 1)
+                  ? (hEpisode ?? 1)
+                  : params.episode!;
+              if (params.startPosition == null &&
+                  resolvedSeason == history.season &&
+                  resolvedEpisode == history.episode) {
+                resolvedStartPosition = history.progressSeconds;
+              }
+            } else if (params.type == 'movie') {
+              if (params.startPosition == null) {
+                resolvedStartPosition = history.progressSeconds;
+              }
             }
           }
+        } catch (e) {
+          // History fetch is best-effort: a network error or DB issue should
+          // never prevent playback. Fall back to playing from the start.
         }
       }
 
@@ -238,10 +252,14 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       // --- Networking & Compatibility ---
       // Fixes "Refusing to load potentially unsafe URL" error
       mpv.setProperty('load-unsafe-playlists', 'yes');
-      mpv.setProperty('user-agent', 'VLC/3.0.18 LibVLC/3.0.18');
-      
-      // MPV Internal logging off
-      mpv.setProperty('log-level', 'no');
+      // Removed global user-agent override as it conflicts with custom headers (e.g., VixSrc user-agent)
+
+      // --- Subtitle Rendering Fix for Windows d3d11va ---
+      // With hardware decoding, video frames live on the GPU. MPV's subtitle compositor
+      // normally blends subtitles *after* GPU output, which silently fails with d3d11va.
+      // 'blend-subtitles: video' forces compositing at decode time (before hardware upload),
+      // making subtitles compatible with any hwdec backend on any platform.
+      mpv.setProperty('blend-subtitles', 'video');
     } catch (e) {
       debugPrint('PlayerController: Failed to set MPV properties: $e');
     }
@@ -860,26 +878,20 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     final currentState = state.valueOrNull;
     if (currentState == null) return false;
 
-    // Mark the current candidate as exhausted
+    // Mark the current stream URL as exhausted
     final currentUrl = currentState.currentStream?.url;
     if (currentUrl != null) _exhaustedCandidateUrls.add(currentUrl);
 
-    final nextCandidate = currentState.availableStreams.firstWhere(
-      (c) => !_exhaustedCandidateUrls.contains(c.url),
-      orElse: () => currentState.availableStreams.firstWhere(
-        // also cover candidates whose resolved URL we may not know yet — exclude by provider+title
-        (c) => c.url != currentState.currentStream?.candidate.url,
-        orElse: () => currentState.availableStreams.isEmpty
-            ? currentState.availableStreams.first  // will be caught below
-            : currentState.availableStreams.first,
-      ),
-    );
+    // Also mark the current candidate's source URL as exhausted
+    final currentCandidateUrl = currentState.currentStream?.candidate.url;
+    if (currentCandidateUrl != null) _exhaustedCandidateUrls.add(currentCandidateUrl);
 
-    // Guard: if the only candidate left is the one already exhausted, bail.
-    if (nextCandidate.url == currentState.currentStream?.candidate.url ||
-        _exhaustedCandidateUrls.contains(nextCandidate.url)) {
-      return false;
-    }
+    // Find the first stream not yet tried — safe null return if none exist
+    final nextCandidate = currentState.availableStreams
+        .where((c) => !_exhaustedCandidateUrls.contains(c.url))
+        .firstOrNull;
+
+    if (nextCandidate == null) return false;
 
     debugPrint('PlayerController: Falling back to next candidate: ${nextCandidate.provider}');
     _retryCount = 0; // Reset soft-retry counter for the new candidate

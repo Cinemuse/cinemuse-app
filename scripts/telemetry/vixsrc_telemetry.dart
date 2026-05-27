@@ -42,11 +42,74 @@ void main() async {
         successfulChecks++;
         final c = candidates.first;
         final urlStr = c.url ?? '';
+        
+        bool subtitleTestPassed = false;
+        String subtitleError = 'No subtitles found to test';
+        
+        // --- SUBTITLE DRY TEST LOGIC ---
+        try {
+          // 1. Fetch the main playlist
+          final playlistRes = await dio.get(urlStr, options: Options(headers: c.headers));
+          final playlistBody = playlistRes.data.toString();
+          
+          // 2. Look for subtitle URIs
+          final subMatches = RegExp(r'#EXT-X-MEDIA:TYPE=SUBTITLES.*URI="([^"]+)"').allMatches(playlistBody);
+          if (subMatches.isNotEmpty) {
+            // Found subtitles, let's try to download the first one
+            final subUriStr = subMatches.first.group(1)!;
+            
+            // Handle relative URIs
+            Uri subUri = Uri.parse(subUriStr);
+            if (!subUri.isAbsolute) {
+              final baseUri = Uri.parse(urlStr);
+              subUri = baseUri.resolve(subUriStr);
+            }
+            
+            // 3. Attempt to fetch the subtitle playlist
+            final subRes = await dio.get(subUri.toString(), options: Options(headers: c.headers));
+            if (subRes.statusCode == 200) {
+              final subPlaylistContent = subRes.data as String;
+              print('Subtitle Playlist Content:\n$subPlaylistContent\n');
+              
+              // Find the first segment (usually .vtt or .m4s or .ts)
+              final segmentLine = subPlaylistContent.split('\n').firstWhere((line) => line.trim().isNotEmpty && !line.startsWith('#'), orElse: () => '');
+              
+              if (segmentLine.isNotEmpty) {
+                Uri segmentUri = Uri.parse(segmentLine);
+                if (!segmentUri.isAbsolute) {
+                  segmentUri = subUri.resolve(segmentLine);
+                }
+                
+                print('Fetching subtitle segment: $segmentUri');
+                final segRes = await dio.get(segmentUri.toString());
+                if (segRes.statusCode == 200) {
+                  subtitleTestPassed = true;
+                  subtitleError = 'None';
+                  
+                  final segData = segRes.data is String ? segRes.data as String : 'Binary data';
+                  print('Subtitle Segment Content:\n$segData\n');
+                } else {
+                  subtitleError = 'Segment HTTP ${segRes.statusCode}';
+                }
+              } else {
+                subtitleError = 'No segments found in sub playlist';
+              }
+            } else {
+              subtitleError = 'Playlist HTTP ${subRes.statusCode}';
+            }
+          }
+        } catch (e) {
+          subtitleError = e.toString();
+        }
+        // -------------------------------
+        
         results[context.title] = {
           'status': 'SUCCESS',
           'candidates_found': candidates.length,
           'sample_url': urlStr.length > 50 ? '${urlStr.substring(0, 50)}...' : urlStr,
           'languages': c.metadata?.languages ?? [],
+          'subtitle_test': subtitleTestPassed ? 'PASSED' : 'FAILED',
+          'subtitle_error': subtitleError,
         };
       } else {
         results[context.title] = {
@@ -89,8 +152,8 @@ void main() async {
     sink.writeln('- **Tests Passed**: $successfulChecks / ${testCases.length}');
     
     sink.writeln('\n#### Test Results');
-    sink.writeln('| Title | Status | Candidates | Languages | Notes |');
-    sink.writeln('| :--- | :--- | :--- | :--- | :--- |');
+    sink.writeln('| Title | Status | Candidates | Languages | Subtitles | Notes |');
+    sink.writeln('| :--- | :--- | :--- | :--- | :--- | :--- |');
     
     for (final entry in results.entries) {
       final title = entry.key;
@@ -99,9 +162,10 @@ void main() async {
       final statusIcon = data['status'] == 'SUCCESS' ? '✅' : '❌';
       final candidates = data['candidates_found'] ?? 0;
       final langs = (data['languages'] as List<dynamic>?)?.join(', ') ?? '';
+      final subTest = data['subtitle_test'] == 'PASSED' ? '✅' : '❌ (${data['subtitle_error']})';
       final notes = data['status'] == 'SUCCESS' ? 'URL parsed correctly' : (data['error'] ?? 'Unknown error');
       
-      sink.writeln('| **$title** | $statusIcon ${data['status']} | $candidates | $langs | $notes |');
+      sink.writeln('| **$title** | $statusIcon ${data['status']} | $candidates | $langs | $subTest | $notes |');
     }
     
     if (healthStatus != 'OK') {

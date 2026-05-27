@@ -2,7 +2,6 @@ import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
 import 'package:cinemuse_app/core/utils/media_parser.dart';
-import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 
 class RealDebridService implements BaseDebridService {
@@ -158,7 +157,6 @@ class RealDebridService implements BaseDebridService {
       }
 
       if (info['status'] != 'downloaded') {
-
         return null;
       }
 
@@ -177,6 +175,7 @@ class RealDebridService implements BaseDebridService {
         if (finalUrl.toLowerCase().contains('.rar')) {
            throw Exception("Resolved URL is an archive (RAR/ZIP), skipping.");
         }
+        
 
         return ResolvedStream(
           url: finalUrl,
@@ -190,7 +189,7 @@ class RealDebridService implements BaseDebridService {
       }
 
     } catch (e) {
-
+      // Ignored failed resolution
     }
     return null;
   }

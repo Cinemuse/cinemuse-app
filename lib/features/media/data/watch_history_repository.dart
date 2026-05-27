@@ -293,6 +293,9 @@ class WatchHistoryRepository {
         .select()
         .eq('user_id', userId)
         .eq('tmdb_id', tmdbId)
+        .eq('status', 'watching')
+        .order('last_watched_at', ascending: false)
+        .limit(1)
         .maybeSingle()
         .withErrorHandling();
 
