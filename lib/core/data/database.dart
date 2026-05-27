@@ -333,9 +333,12 @@ class AppDatabase extends _$AppDatabase {
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'cinemuse.sqlite'));
-    return NativeDatabase.createInBackground(file);
+    final supportDir = await getApplicationSupportDirectory();
+    final dataDir = Directory(p.join(supportDir.path, 'data'));
+    if (!dataDir.existsSync()) await dataDir.create(recursive: true);
+    return NativeDatabase.createInBackground(
+      File(p.join(dataDir.path, 'cinemuse.sqlite')),
+    );
   });
 }
 

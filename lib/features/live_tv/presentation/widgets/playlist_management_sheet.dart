@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
+import 'package:cinemuse_app/core/services/local_playlist_storage.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 
@@ -144,26 +143,24 @@ class PlaylistManagementSheet extends ConsumerWidget {
       allowedExtensions: ['m3u', 'm3u8', 'json'],
     );
 
-    if (result != null && result.files.single.path != null) {
-      final sourceFile = File(result.files.single.path!);
-      final extension = p.extension(sourceFile.path).toLowerCase();
-      final type = extension.contains('json') ? PlaylistType.json : PlaylistType.m3u;
-      
-      // Copy to app documents directory
-      final appDocDir = await getApplicationDocumentsDirectory();
-      final fileName = p.basename(sourceFile.path);
-      final destFile = File('${appDocDir.path}/$fileName');
-      await sourceFile.copy(destFile.path);
+    if (result == null || result.files.single.path == null) return;
 
-      ref.read(customPlaylistsProvider.notifier).addPlaylist(
-            LiveTvPlaylist(
-              name: result.files.single.name,
-              urlOrPath: destFile.path,
-              isLocal: true,
-              type: type,
-            ),
-          );
-    }
+    final sourceFile = File(result.files.single.path!);
+    final extension = sourceFile.path.toLowerCase();
+    final type = extension.contains('json') ? PlaylistType.json : PlaylistType.m3u;
+
+    // Copy into platform-appropriate playlists subfolder and store only the
+    // basename — this makes the entry resilient to OTA updates / reinstalls.
+    final destFile = await LocalPlaylistStorage.copyPlaylistFile(sourceFile);
+
+    ref.read(customPlaylistsProvider.notifier).addPlaylist(
+      LiveTvPlaylist(
+        name: result.files.single.name,
+        urlOrPath: destFile.uri.pathSegments.last, // basename only
+        isLocal: true,
+        type: type,
+      ),
+    );
   }
 }
 

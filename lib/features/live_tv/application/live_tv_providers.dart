@@ -5,6 +5,7 @@ import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
+import 'package:cinemuse_app/core/services/local_playlist_storage.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 
 // ---------------------------------------------------------------------------
@@ -69,7 +70,25 @@ final channelsProvider = FutureProvider<List<Channel>>((ref) async {
   final repo = ref.watch(liveTvRepositoryProvider);
   final region = ref.watch(settingsProvider.select((s) => s.liveTvRegion));
   final customPlaylists = ref.watch(customPlaylistsProvider);
-  return repo.fetchChannels(region: region, customPlaylists: customPlaylists);
+
+  // Resolve local playlist filenames (or legacy absolute paths) to the full
+  // platform-specific path so the repository can read them as File objects.
+  final resolvedPlaylists = await Future.wait(
+    customPlaylists.map((playlist) async {
+      if (!playlist.isLocal) return playlist;
+      final absolutePath =
+          await LocalPlaylistStorage.resolveToAbsolutePath(playlist.urlOrPath);
+      return LiveTvPlaylist(
+        id: playlist.id,
+        name: playlist.name,
+        urlOrPath: absolutePath,
+        isLocal: true,
+        type: playlist.type,
+      );
+    }),
+  );
+
+  return repo.fetchChannels(region: region, customPlaylists: resolvedPlaylists);
 });
 
 /// Full EPG data keyed by source → channel id → programs.
