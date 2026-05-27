@@ -49,6 +49,15 @@ class CustomPlaylistsNotifier extends StateNotifier<List<LiveTvPlaylist>> {
     _save(next);
   }
 
+  Future<void> togglePlaylistEnabled(String id) async {
+    final next = state.map((p) {
+      if (p.id != id) return p;
+      return p.copyWith(isEnabled: !p.isEnabled);
+    }).toList();
+    state = next;
+    _save(next);
+  }
+
   Future<void> _save(List<LiveTvPlaylist> playlists) async {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = playlists.map((p) => p.encode()).toList();
@@ -71,20 +80,17 @@ final channelsProvider = FutureProvider<List<Channel>>((ref) async {
   final region = ref.watch(settingsProvider.select((s) => s.liveTvRegion));
   final customPlaylists = ref.watch(customPlaylistsProvider);
 
+  // Filter out disabled playlists before loading channels.
+  final enabledPlaylists = customPlaylists.where((p) => p.isEnabled).toList();
+
   // Resolve local playlist filenames (or legacy absolute paths) to the full
   // platform-specific path so the repository can read them as File objects.
   final resolvedPlaylists = await Future.wait(
-    customPlaylists.map((playlist) async {
+    enabledPlaylists.map((playlist) async {
       if (!playlist.isLocal) return playlist;
       final absolutePath =
           await LocalPlaylistStorage.resolveToAbsolutePath(playlist.urlOrPath);
-      return LiveTvPlaylist(
-        id: playlist.id,
-        name: playlist.name,
-        urlOrPath: absolutePath,
-        isLocal: true,
-        type: playlist.type,
-      );
+      return playlist.copyWith(urlOrPath: absolutePath);
     }),
   );
 

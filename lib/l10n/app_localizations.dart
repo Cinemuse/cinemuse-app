@@ -2246,6 +2246,102 @@ abstract class AppLocalizations {
   /// **'No recently watched channels'**
   String get liveTvNoRecents;
 
+  /// No description provided for @liveTvCustomPlaylists.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Playlists'**
+  String get liveTvCustomPlaylists;
+
+  /// No description provided for @liveTvCustomPlaylistsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Add M3U/JSON playlists from URLs or local files.'**
+  String get liveTvCustomPlaylistsDesc;
+
+  /// No description provided for @liveTvNoCustomPlaylists.
+  ///
+  /// In en, this message translates to:
+  /// **'No custom playlists added yet'**
+  String get liveTvNoCustomPlaylists;
+
+  /// No description provided for @liveTvAddUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Add URL'**
+  String get liveTvAddUrl;
+
+  /// No description provided for @liveTvAddFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Add File'**
+  String get liveTvAddFile;
+
+  /// No description provided for @liveTvAddRemotePlaylist.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Remote Playlist'**
+  String get liveTvAddRemotePlaylist;
+
+  /// No description provided for @liveTvPlaylistName.
+  ///
+  /// In en, this message translates to:
+  /// **'Playlist Name'**
+  String get liveTvPlaylistName;
+
+  /// No description provided for @liveTvPlaylistUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Playlist URL'**
+  String get liveTvPlaylistUrl;
+
+  /// No description provided for @liveTvPlaylistFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get liveTvPlaylistFormat;
+
+  /// No description provided for @liveTvOpenFileLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Open File Location'**
+  String get liveTvOpenFileLocation;
+
+  /// No description provided for @liveTvOpenLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Link'**
+  String get liveTvOpenLink;
+
+  /// No description provided for @liveTvManagePlaylists.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Playlists'**
+  String get liveTvManagePlaylists;
+
+  /// No description provided for @liveTvTypeM3uFile.
+  ///
+  /// In en, this message translates to:
+  /// **'M3U File'**
+  String get liveTvTypeM3uFile;
+
+  /// No description provided for @liveTvTypeJsonFile.
+  ///
+  /// In en, this message translates to:
+  /// **'JSON File'**
+  String get liveTvTypeJsonFile;
+
+  /// No description provided for @liveTvTypeM3uUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'M3U URL'**
+  String get liveTvTypeM3uUrl;
+
+  /// No description provided for @liveTvTypeJsonUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'JSON URL'**
+  String get liveTvTypeJsonUrl;
+
   /// No description provided for @tvTimeComments.
   ///
   /// In en, this message translates to:

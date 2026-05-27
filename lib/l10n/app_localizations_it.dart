@@ -1169,6 +1169,56 @@ class AppLocalizationsIt extends AppLocalizations {
   String get liveTvNoRecents => 'Nessun canale guardato di recente';
 
   @override
+  String get liveTvCustomPlaylists => 'Playlist Personalizzate';
+
+  @override
+  String get liveTvCustomPlaylistsDesc =>
+      'Aggiungi playlist M3U/JSON da URL o file locali.';
+
+  @override
+  String get liveTvNoCustomPlaylists =>
+      'Nessuna playlist personalizzata aggiunta';
+
+  @override
+  String get liveTvAddUrl => 'Aggiungi URL';
+
+  @override
+  String get liveTvAddFile => 'Aggiungi File';
+
+  @override
+  String get liveTvAddRemotePlaylist => 'Aggiungi Playlist Remota';
+
+  @override
+  String get liveTvPlaylistName => 'Nome Playlist';
+
+  @override
+  String get liveTvPlaylistUrl => 'URL Playlist';
+
+  @override
+  String get liveTvPlaylistFormat => 'Formato';
+
+  @override
+  String get liveTvOpenFileLocation => 'Apri Cartella';
+
+  @override
+  String get liveTvOpenLink => 'Apri Link';
+
+  @override
+  String get liveTvManagePlaylists => 'Gestisci Playlist';
+
+  @override
+  String get liveTvTypeM3uFile => 'File M3U';
+
+  @override
+  String get liveTvTypeJsonFile => 'File JSON';
+
+  @override
+  String get liveTvTypeM3uUrl => 'URL M3U';
+
+  @override
+  String get liveTvTypeJsonUrl => 'URL JSON';
+
+  @override
   String get tvTimeComments => 'Commenti';
 
   @override

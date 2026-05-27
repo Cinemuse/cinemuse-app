@@ -9,6 +9,7 @@ import 'package:cinemuse_app/features/settings/application/settings_service.dart
 import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/stremio_addon_settings.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/subtitle_appearance_form.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/playlist_management_sheet.dart';
 
 class IdentitySettings extends ConsumerWidget {
   const IdentitySettings({super.key});
@@ -254,35 +255,52 @@ class LiveTvSettings extends ConsumerWidget {
     final userSettings = ref.watch(settingsProvider);
     final settingsNotifier = ref.read(settingsProvider.notifier);
 
-    return SettingsSection(
-      title: l10n.settingsLiveTv,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SettingsCard(
+        SettingsSection(
+          title: l10n.settingsLiveTv,
           children: [
-            SettingsTile(
-              label: l10n.settingsLiveTvBufferSize,
-              description: l10n.settingsLiveTvBufferSizeDesc,
-              icon: Icons.history,
-              trailing: buildSmallDropdown<int>(
-                value: userSettings.liveTvBufferSize,
-                items: const [
-                  DropdownMenuItem(value: 256, child: Text('256 MB')),
-                  DropdownMenuItem(value: 512, child: Text('512 MB')),
-                  DropdownMenuItem(value: 1024, child: Text('1 GB')),
-                  DropdownMenuItem(value: 2048, child: Text('2 GB')),
-                ],
-                onChanged: (val) => settingsNotifier.updateSettings({'liveTvBufferSize': val}),
-              ),
+            SettingsCard(
+              children: [
+                SettingsTile(
+                  label: l10n.settingsLiveTvBufferSize,
+                  description: l10n.settingsLiveTvBufferSizeDesc,
+                  icon: Icons.history,
+                  trailing: buildSmallDropdown<int>(
+                    value: userSettings.liveTvBufferSize,
+                    items: const [
+                      DropdownMenuItem(value: 256, child: Text('256 MB')),
+                      DropdownMenuItem(value: 512, child: Text('512 MB')),
+                      DropdownMenuItem(value: 1024, child: Text('1 GB')),
+                      DropdownMenuItem(value: 2048, child: Text('2 GB')),
+                    ],
+                    onChanged: (val) => settingsNotifier.updateSettings({'liveTvBufferSize': val}),
+                  ),
+                ),
+                SettingsTile(
+                  label: l10n.settingsLiveTvDiskCache,
+                  description: l10n.settingsLiveTvDiskCacheDesc,
+                  icon: Icons.save,
+                  showDivider: false,
+                  trailing: SettingToggle(
+                    value: userSettings.enableLiveTvDiskCache,
+                    onChanged: (val) => settingsNotifier.updateSettings({'enableLiveTvDiskCache': val}),
+                  ),
+                ),
+              ],
             ),
-            SettingsTile(
-              label: l10n.settingsLiveTvDiskCache,
-              description: l10n.settingsLiveTvDiskCacheDesc,
-              icon: Icons.save,
-              showDivider: false,
-              trailing: SettingToggle(
-                value: userSettings.enableLiveTvDiskCache,
-                onChanged: (val) => settingsNotifier.updateSettings({'enableLiveTvDiskCache': val}),
-              ),
+          ],
+        ),
+        SettingsSection(
+          title: l10n.liveTvCustomPlaylists,
+          description: l10n.liveTvCustomPlaylistsDesc,
+          children: [
+            SettingsCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              children: const [
+                PlaylistListSection(),
+              ],
             ),
           ],
         ),

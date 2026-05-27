@@ -9,6 +9,7 @@ class LiveTvPlaylist {
   final String urlOrPath;
   final bool isLocal;
   final PlaylistType type;
+  final bool isEnabled;
 
   LiveTvPlaylist({
     String? id,
@@ -16,7 +17,25 @@ class LiveTvPlaylist {
     required this.urlOrPath,
     required this.isLocal,
     required this.type,
+    this.isEnabled = true,
   }) : id = id ?? const Uuid().v4();
+
+  LiveTvPlaylist copyWith({
+    String? name,
+    String? urlOrPath,
+    bool? isLocal,
+    PlaylistType? type,
+    bool? isEnabled,
+  }) {
+    return LiveTvPlaylist(
+      id: id,
+      name: name ?? this.name,
+      urlOrPath: urlOrPath ?? this.urlOrPath,
+      isLocal: isLocal ?? this.isLocal,
+      type: type ?? this.type,
+      isEnabled: isEnabled ?? this.isEnabled,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -25,6 +44,7 @@ class LiveTvPlaylist {
       'urlOrPath': urlOrPath,
       'isLocal': isLocal,
       'type': type.name,
+      'isEnabled': isEnabled,
     };
   }
 
@@ -35,6 +55,7 @@ class LiveTvPlaylist {
       urlOrPath: json['urlOrPath'] as String,
       isLocal: json['isLocal'] as bool,
       type: PlaylistType.values.firstWhere((e) => e.name == json['type']),
+      isEnabled: json['isEnabled'] as bool? ?? true, // default true for legacy entries
     );
   }
 
