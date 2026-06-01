@@ -54,7 +54,8 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   bool _isFullScreen = false;
   /// Tracks whether the window was already maximized before we entered
   /// fullscreen, so we can restore the original state on exit.
-  bool _wasMaximizedBeforeFullscreen = false;
+  static bool _wasMaximizedBeforeFullscreen = false;
+  static Rect? _previousBounds;
 
   @override
   void initState() {
@@ -131,28 +132,49 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
 
   Future<void> _toggleFullscreen() async {
     if (_isFullscreenSafe()) {
-      widget.videoState.exitFullscreen();
-      if ((Platform.isWindows || Platform.isLinux) && !_wasMaximizedBeforeFullscreen) {
-        await windowManager.unmaximize();
+      print("[Fullscreen Debug] Exiting fullscreen. wasMaximized: $_wasMaximizedBeforeFullscreen, prevBounds: $_previousBounds");
+      await widget.videoState.exitFullscreen();
+      if (Platform.isWindows || Platform.isLinux) {
+        if (!_wasMaximizedBeforeFullscreen) {
+          await windowManager.unmaximize();
+          if (_previousBounds != null) {
+            await windowManager.setBounds(_previousBounds!);
+          }
+        } else {
+          print("[Fullscreen Debug] Restoring maximized state");
+          await windowManager.maximize();
+        }
       }
       if (mounted) setState(() => _isFullScreen = false);
     } else {
       if (Platform.isWindows || Platform.isLinux) {
         _wasMaximizedBeforeFullscreen = await windowManager.isMaximized();
+        print("[Fullscreen Debug] Entering fullscreen. initiallyMaximized: $_wasMaximizedBeforeFullscreen");
         if (!_wasMaximizedBeforeFullscreen) {
+          _previousBounds = await windowManager.getBounds();
+          print("[Fullscreen Debug] Saved bounds: $_previousBounds. Maximizing to trick WM.");
           await windowManager.maximize();
         }
       }
-      widget.videoState.enterFullscreen();
+      await widget.videoState.enterFullscreen();
       if (mounted) setState(() => _isFullScreen = true);
     }
   }
 
   Future<void> _handleBack() async {
     if (_isFullscreenSafe()) {
-      widget.videoState.exitFullscreen();
-      if ((Platform.isWindows || Platform.isLinux) && !_wasMaximizedBeforeFullscreen) {
-        await windowManager.unmaximize();
+      print("[Fullscreen Debug] _handleBack: Exiting fullscreen. wasMaximized: $_wasMaximizedBeforeFullscreen, prevBounds: $_previousBounds");
+      await widget.videoState.exitFullscreen();
+      if (Platform.isWindows || Platform.isLinux) {
+        if (!_wasMaximizedBeforeFullscreen) {
+          await windowManager.unmaximize();
+          if (_previousBounds != null) {
+            await windowManager.setBounds(_previousBounds!);
+          }
+        } else {
+          print("[Fullscreen Debug] _handleBack: Restoring maximized state");
+          await windowManager.maximize();
+        }
       }
       _isFullScreen = false;
     }
@@ -198,6 +220,12 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       } else if (key == LogicalKeyboardKey.keyF || key == LogicalKeyboardKey.f11) {
         _toggleFullscreen();
       } else if (key == LogicalKeyboardKey.escape) {
+        if (_isFullscreenSafe()) {
+          _toggleFullscreen();
+        } else {
+          _handleBack();
+        }
+      } else if (key == LogicalKeyboardKey.keyQ) {
         _handleBack();
       } else if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.numpadEnter) {
         final pos = player.state.position.inSeconds;
@@ -313,13 +341,23 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                       top: 0,
                       left: 0,
                       right: 0,
-                      child: VideoTopBar(
-                        playerState: widget.playerState,
-                        params: widget.params,
-                        onSettingsPressed: widget.onSettingsPressed,
-                        onCastPressed: () => _handleCastPressed(context),
-                        onBackPressed: _handleBack,
-                      ),
+                      child: (!_isFullScreen && (Platform.isWindows || Platform.isLinux || Platform.isMacOS))
+                          ? DragToMoveArea(
+                              child: VideoTopBar(
+                                playerState: widget.playerState,
+                                params: widget.params,
+                                onSettingsPressed: widget.onSettingsPressed,
+                                onCastPressed: () => _handleCastPressed(context),
+                                onBackPressed: _handleBack,
+                              ),
+                            )
+                          : VideoTopBar(
+                              playerState: widget.playerState,
+                              params: widget.params,
+                              onSettingsPressed: widget.onSettingsPressed,
+                              onCastPressed: () => _handleCastPressed(context),
+                              onBackPressed: _handleBack,
+                            ),
                     ),
 
                     // Buffering / play-pause center overlay
