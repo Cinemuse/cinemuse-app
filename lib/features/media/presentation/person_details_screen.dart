@@ -158,250 +158,223 @@ class _PersonDetailsContent extends ConsumerWidget {
       }).toList();
     }
 
-    return Stack(
-      children: [
-        CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: responsivePadding, vertical: 32 + 100), // Added top padding for navbar
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: responsivePadding, vertical: 32),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Section: Info + Image
+                Wrap(
+                  spacing: 48,
+                  runSpacing: 32,
                   children: [
-                    // Top Section: Info + Image
-                    Wrap(
-                      spacing: 48,
-                      runSpacing: 32,
-                      children: [
-                        // Profile Image
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 300),
-                          child: AspectRatio(
-                            aspectRatio: 2 / 3,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: profilePath != null
-                                  ? CachedNetworkImage(
-                                      imageUrl: 'https://image.tmdb.org/t/p/w500$profilePath',
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Image.asset(
-                                      'assets/cast_placeholder.png',
-                                      fit: BoxFit.cover,
-                                    ),
+                    // Profile Image
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 300),
+                      child: AspectRatio(
+                        aspectRatio: 2 / 3,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: profilePath != null
+                              ? CachedNetworkImage(
+                                  imageUrl: 'https://image.tmdb.org/t/p/w500$profilePath',
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.asset(
+                                  'assets/cast_placeholder.png',
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
+                      ),
+                    ),
+                    // Details
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 600),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Back Button
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 24.0),
+                            child: AppBackButton(
+                              onTap: () => Navigator.of(context).pop(),
                             ),
                           ),
-                        ),
-                        // Details
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 600),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Back Button
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 24.0),
-                                child: AppBackButton(
-                                  onTap: () => Navigator.of(context).pop(),
-                                ),
-                              ),
-                              Text(
-                                name,
-                                style: GoogleFonts.outfit(
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                  height: 1.1,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              if (birthday != null)
-                                _InfoRow(icon: LucideIcons.calendar, text: birthday),
-                              if (placeOfBirth != null)
-                                _InfoRow(icon: LucideIcons.mapPin, text: placeOfBirth),
-                              const SizedBox(height: 24),
-                              
-                              // Seen Progress
-                              if (totalReleased > 0) ...[
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(l10n.personSeen.toUpperCase(), style: const TextStyle(color: AppTheme.textMuted, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                                    RichText(
-                                      text: TextSpan(
-                                        children: [
-                                          TextSpan(text: '$watchedPercent%', style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold, fontSize: 18)),
-                                          TextSpan(text: ' ($watchedCount/$totalReleased)', style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  height: 6,
-                                  decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(3)),
-                                  child: FractionallySizedBox(
-                                    alignment: Alignment.centerLeft,
-                                    widthFactor: watchedPercent / 100,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.accent,
-                                        borderRadius: BorderRadius.circular(3),
-                                        boxShadow: [
-                                          BoxShadow(color: AppTheme.accent.withOpacity(0.3), blurRadius: 10),
-                                        ],
-                                      ),
-                                    ),
+                          Text(
+                            name,
+                            style: GoogleFonts.outfit(
+                              fontSize: 48,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              height: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          if (birthday != null)
+                            _InfoRow(icon: LucideIcons.calendar, text: birthday),
+                          if (placeOfBirth != null)
+                            _InfoRow(icon: LucideIcons.mapPin, text: placeOfBirth),
+                          const SizedBox(height: 24),
+                          
+                          // Seen Progress
+                          if (totalReleased > 0) ...[
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(l10n.personSeen.toUpperCase(), style: const TextStyle(color: AppTheme.textMuted, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                                RichText(
+                                  text: TextSpan(
+                                    children: [
+                                      TextSpan(text: '$watchedPercent%', style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold, fontSize: 18)),
+                                      TextSpan(text: ' ($watchedCount/$totalReleased)', style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 32),
                               ],
-
-                              ExternalLinks(
-                                externalIds: details['external_ids'],
-                                title: name,
-                                homepage: details['homepage'],
-                                type: 'person',
-                                tmdbId: details['id'],
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              height: 6,
+                              decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(3)),
+                              child: FractionallySizedBox(
+                                alignment: Alignment.centerLeft,
+                                widthFactor: watchedPercent / 100,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.accent,
+                                    borderRadius: BorderRadius.circular(3),
+                                    boxShadow: [
+                                      BoxShadow(color: AppTheme.accent.withOpacity(0.3), blurRadius: 10),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ],
+                            ),
+                            const SizedBox(height: 32),
+                          ],
+
+                          ExternalLinks(
+                            externalIds: details['external_ids'],
+                            title: name,
+                            homepage: details['homepage'],
+                            type: 'person',
+                            tmdbId: details['id'],
                           ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 64),
-
-                    // Biography
-                    if (biography != null && biography.isNotEmpty) ...[
-                      Text(l10n.personBiography, style: DesktopTypography.sectionHeader),
-                      const SizedBox(height: 16),
-                      Text(
-                        biography,
-                        style: DesktopTypography.bodyPrimary,
-                      ),
-                      const SizedBox(height: 64),
-                    ],
-
-                    // Known For
-                    if (topKnownFor.isNotEmpty) ...[
-                      Row(
-                        children: [
-                          const Icon(LucideIcons.film, color: AppTheme.accent, size: 24),
-                          const SizedBox(width: 12),
-                          Text(l10n.personKnownFor, style: DesktopTypography.sectionHeader),
                         ],
                       ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        height: 300,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: topKnownFor.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 16),
-                          itemBuilder: (context, index) {
-                            final item = topKnownFor[index];
-                            return SizedBox(
-                              width: 160,
-                              child: MediaCard(
-                                title: item['title'] ?? item['name'] ?? 'Unknown',
-                                posterPath: item['poster_path'],
-                                releaseDate: item['release_date'] ?? item['first_air_date'],
-                                rating: (item['vote_average'] as num?)?.toDouble(),
-                                onTap: () => _navigateToMedia(context, item),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 64),
-                    ],
+                    ),
+                  ],
+                ),
 
-                    // Filmography
+                const SizedBox(height: 64),
+
+                // Biography
+                if (biography != null && biography.isNotEmpty) ...[
+                  Text(l10n.personBiography, style: DesktopTypography.sectionHeader),
+                  const SizedBox(height: 16),
+                  Text(
+                    biography,
+                    style: DesktopTypography.bodyPrimary,
+                  ),
+                  const SizedBox(height: 64),
+                ],
+
+                // Known For
+                if (topKnownFor.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      const Icon(LucideIcons.film, color: AppTheme.accent, size: 24),
+                      const SizedBox(width: 12),
+                      Text(l10n.personKnownFor, style: DesktopTypography.sectionHeader),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    height: 300,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: topKnownFor.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 16),
+                      itemBuilder: (context, index) {
+                        final item = topKnownFor[index];
+                        return SizedBox(
+                          width: 160,
+                          child: MediaCard(
+                            title: item['title'] ?? item['name'] ?? 'Unknown',
+                            posterPath: item['poster_path'],
+                            releaseDate: item['release_date'] ?? item['first_air_date'],
+                            rating: (item['vote_average'] as num?)?.toDouble(),
+                            onTap: () => _navigateToMedia(context, item),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 64),
+                ],
+
+                // Filmography
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            const Icon(LucideIcons.layoutGrid, color: AppTheme.accent, size: 24),
-                            const SizedBox(width: 12),
-                            Text(l10n.personFilmography, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-                          ],
+                        const Icon(LucideIcons.layoutGrid, color: AppTheme.accent, size: 24),
+                        const SizedBox(width: 12),
+                        Text(l10n.personFilmography, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ],
+                    ),
+                    TextButton.icon(
+                      onPressed: onToggleHidden,
+                      icon: Icon(showHidden ? LucideIcons.eyeOff : LucideIcons.eye, size: 16),
+                      label: Text(showHidden ? l10n.personShowLess : l10n.personShowHidden),
+                      style: TextButton.styleFrom(
+                        foregroundColor: showHidden ? AppTheme.accent : AppTheme.textMuted,
+                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        enabledMouseCursor: SystemMouseCursors.click,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                _FilmographyList(
+                  credits: filmography.take(visibleCredits).toList(),
+                  onMediaTap: (item) => _navigateToMedia(context, item),
+                ),
+
+                if (filmography.length > visibleCredits) ...[
+                  const SizedBox(height: 32),
+                  Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          l10n.personShowingCredits(visibleCredits, filmography.length),
+                          style: const TextStyle(color: AppTheme.textMuted, fontSize: 13, fontStyle: FontStyle.italic),
                         ),
-                        TextButton.icon(
-                          onPressed: onToggleHidden,
-                          icon: Icon(showHidden ? LucideIcons.eyeOff : LucideIcons.eye, size: 16),
-                          label: Text(showHidden ? l10n.personShowLess : l10n.personShowHidden),
-                          style: TextButton.styleFrom(
-                            foregroundColor: showHidden ? AppTheme.accent : AppTheme.textMuted,
-                            textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: onShowMore,
+                          icon: const Icon(LucideIcons.plus, size: 18),
+                          label: Text(l10n.personShowMore.toUpperCase()),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.textWhite.withOpacity(0.05),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Colors.white10)),
                             enabledMouseCursor: SystemMouseCursors.click,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
-                    _FilmographyList(
-                      credits: filmography.take(visibleCredits).toList(),
-                      onMediaTap: (item) => _navigateToMedia(context, item),
-                    ),
+                  ),
+                ],
 
-                    if (filmography.length > visibleCredits) ...[
-                      const SizedBox(height: 32),
-                      Center(
-                        child: Column(
-                          children: [
-                            Text(
-                              l10n.personShowingCredits(visibleCredits, filmography.length),
-                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 13, fontStyle: FontStyle.italic),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed: onShowMore,
-                              icon: const Icon(LucideIcons.plus, size: 18),
-                              label: Text(l10n.personShowMore.toUpperCase()),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.textWhite.withOpacity(0.05),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Colors.white10)),
-                                enabledMouseCursor: SystemMouseCursors.click,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-
-                    const SizedBox(height: 100),
-                  ],
-                ),
-              ),
+                const SizedBox(height: 100),
+              ],
             ),
-          ],
-        ),
-
-        // Top Navbar
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: AppNavbar(
-            currentIndex: ref.watch(navIndexProvider),
-            onTap: (index) {
-              ref.read(navIndexProvider.notifier).state = index;
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
-            onSettingsTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
-            },
-            onLogoutTap: () {
-              ref.read(authProvider.notifier).signOut();
-            },
-            onSearchTap: () => SearchOverlay.show(context),
           ),
         ),
       ],
