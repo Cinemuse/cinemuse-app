@@ -19,6 +19,9 @@ import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
+import 'package:cinemuse_app/shared/widgets/skeleton_box.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
+import 'package:cinemuse_app/features/home/presentation/widgets/cards/continue_watching_card.dart';
 
 class ContinueWatchingRow extends ConsumerStatefulWidget {
   const ContinueWatchingRow({super.key});
@@ -185,162 +188,28 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
     
     if (effectiveItems.isEmpty) return const SizedBox.shrink();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            AppTheme.getResponsiveHorizontalPadding(context), 
-            24, 
-            AppTheme.getResponsiveHorizontalPadding(context), 
-            16
-          ),
-          child: Row(
-            children: [
-              Text(
-                l10n.homeContinueWatching,
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.chevron_right, color: AppTheme.textMuted),
-            ],
-          ),
-        ),
-        
-        SizedBox(
-          height: 200,
-          child: ListView.separated(
-            clipBehavior: Clip.none,
-            padding: EdgeInsets.symmetric(
-              horizontal: AppTheme.getResponsiveHorizontalPadding(context)
-            ),
-            scrollDirection: Axis.horizontal,
-            itemCount: effectiveItems.length,
-            separatorBuilder: (c, i) => const SizedBox(width: 16),
-            itemBuilder: (context, index) {
-              final historyItem = effectiveItems[index];
-              return _ContinueWatchingCard(
-                historyItem: historyItem,
-                watchlistItems: watchlistItems,
-                onRemove: () => _onRemove(historyItem),
-              );
-            },
-          ),
-        ),
-      ],
+    return GenericCarouselRow(
+      theme: CarouselTheme.homeRow,
+      title: l10n.homeContinueWatching,
+      height: 216,
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTheme.getResponsiveHorizontalPadding(context)
+      ),
+      itemCount: effectiveItems.length,
+      separatorBuilder: (c, i) => const SizedBox(width: 16),
+      itemBuilder: (context, index) {
+        final historyItem = effectiveItems[index];
+        return ContinueWatchingCard(
+          historyItem: historyItem,
+          watchlistItems: watchlistItems,
+          onRemove: () => _onRemove(historyItem),
+        );
+      },
     );
   }
 }
 
-class _ContinueWatchingCard extends ConsumerWidget {
-  final WatchHistory historyItem;
-  final List<UserListItem> watchlistItems;
-  final VoidCallback onRemove;
 
-  const _ContinueWatchingCard({
-    required this.historyItem,
-    required this.watchlistItems,
-    required this.onRemove,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // If metadata is already present in historyItem, use it.
-    // Otherwise, resolve it using mediaItemProvider.
-    final localMedia = historyItem.media;
-    
-    if (localMedia != null) {
-      return _buildCard(context, ref, localMedia);
-    }
-
-    // Resolve missing metadata
-    final mediaAsync = ref.watch(mediaItemProvider((
-      id: historyItem.tmdbId, 
-      type: historyItem.mediaType
-    )));
-
-    return mediaAsync.when(
-      data: (media) => _buildCard(context, ref, media),
-      loading: () => _buildSkeleton(),
-      error: (_, __) => _buildCard(context, ref, null),
-    );
-  }
-
-  Widget _buildSkeleton() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SkeletonBox(width: 280, height: 280 * (9 / 16)),
-        const SizedBox(height: 10),
-        const _SkeletonBox(width: 150, height: 16),
-      ],
-    );
-  }
-
-  Widget _buildCard(BuildContext context, WidgetRef ref, MediaItem? media) {
-    final isWatchlisted = watchlistItems.any((i) => 
-      i.tmdbId == historyItem.tmdbId && i.mediaType == historyItem.mediaType
-    );
-    final appLanguage = ref.watch(settingsProvider).appLanguage;
-    final title = media?.getLocalizedTitle(appLanguage) ?? '...';
-    
-    final percentage = (historyItem.totalDuration != null && historyItem.totalDuration! > 0)
-        ? (historyItem.progressSeconds / historyItem.totalDuration!)
-        : 0.0;
-
-    return BackdropCard(
-      key: ValueKey(historyItem.tmdbId),
-      title: title,
-      backdropPath: media?.backdropPath,
-      posterPath: media?.posterPath,
-      progress: percentage,
-      infoText: historyItem.mediaType == MediaKind.tv 
-                ? "S${historyItem.season} E${historyItem.episode}" 
-                : "Movie",
-      isWatchlisted: isWatchlisted,
-      onTap: () {
-        Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
-          builder: (_) => VideoPlayerScreen(
-            queryId: historyItem.tmdbId.toString(),
-            type: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
-            season: historyItem.season,
-            episode: historyItem.episode,
-            startPosition: historyItem.progressSeconds,
-          ),
-        ));
-      },
-      onRestart: () {
-        Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
-          builder: (_) => VideoPlayerScreen(
-            queryId: historyItem.tmdbId.toString(),
-            type: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
-            season: historyItem.season,
-            episode: historyItem.episode,
-            startPosition: 0,
-          ),
-        ));
-      },
-      onDetails: () {
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => MediaDetailsScreen(
-            mediaId: historyItem.tmdbId.toString(), 
-            mediaType: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
-          ),
-        ));
-      },
-      onWatchlistToggle: () {
-        if (media != null) {
-          ref.read(userListsProvider.notifier).toggleWatchlist(media);
-        }
-      },
-      onRemove: onRemove,
-    );
-  }
-}
 class ContinueWatchingSkeleton extends StatelessWidget {
   const ContinueWatchingSkeleton({super.key});
 
@@ -353,24 +222,21 @@ class ContinueWatchingSkeleton extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(horizontalPadding, 24, horizontalPadding, 16),
-          child: const _SkeletonBox(width: 180, height: 25),
+          child: const SkeletonBox(width: 180, height: 25),
         ),
-        SizedBox(
-          height: 200,
-          child: ListView.separated(
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-            scrollDirection: Axis.horizontal,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 4,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
-            itemBuilder: (_, __) => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _SkeletonBox(width: 280, height: 280 * (9/16)),
-                const SizedBox(height: 10),
-                const _SkeletonBox(width: 150, height: 16),
-              ],
-            ),
+        GenericCarouselRow(
+          theme: CarouselTheme.plain,
+          height: 216,
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          itemCount: 4,
+          separatorBuilder: (_, __) => const SizedBox(width: 16),
+          itemBuilder: (_, __) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 280, height: 280 * (9/16)),
+              const SizedBox(height: 10),
+              const SkeletonBox(width: 150, height: 16),
+            ],
           ),
         ),
       ],
@@ -378,58 +244,6 @@ class ContinueWatchingSkeleton extends StatelessWidget {
   }
 }
 
-class _SkeletonBox extends StatefulWidget {
-  final double width;
-  final double height;
-
-  const _SkeletonBox({
-    required this.width,
-    required this.height,
-  });
-
-  @override
-  State<_SkeletonBox> createState() => _SkeletonBoxState();
-}
-
-class _SkeletonBoxState extends State<_SkeletonBox> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _opacityAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-    _opacityAnimation = Tween<double>(begin: 0.05, end: 0.12).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _opacityAnimation,
-      builder: (context, child) {
-        return Container(
-          width: widget.width,
-          height: widget.height,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: _opacityAnimation.value),
-            borderRadius: BorderRadius.circular(8),
-          ),
-        );
-      },
-    );
-  }
-}
 
 class _UndoStack extends ConsumerWidget {
   final List<int> ids;

@@ -1,11 +1,15 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
-import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/profile_stats.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/stats_display.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/agenda_widget.dart';
-import 'package:cinemuse_app/shared/widgets/horizontal_media_list.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/poster_carousel_row.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
+import 'package:cinemuse_app/shared/widgets/media_card.dart';
+import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
+import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -27,6 +31,48 @@ class ProfileOverview extends ConsumerWidget {
       final d = minutes ~/ 1440;
       final h = (minutes % 1440) ~/ 60;
       return '${d}d ${h}h';
+    }
+
+    final appLanguage = ref.watch(settingsProvider).appLanguage;
+
+    Widget buildRecentRow(String title, IconData icon, List<MediaItem> items) {
+      final cards = items.map((item) {
+        return MediaCard(
+          title: item.getLocalizedTitle(appLanguage) ?? 'Unknown',
+          posterPath: item.posterPath,
+          releaseDate: item.releaseDate?.year.toString(),
+          rating: item.voteAverage,
+          tmdbId: item.tmdbId,
+          mediaType: item.mediaType,
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => MediaDetailsScreen(
+                mediaId: item.tmdbId.toString(),
+                mediaType: item.mediaType.name,
+              ),
+            ));
+          },
+          onPlay: () {
+            Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
+              builder: (_) => VideoPlayerScreen(
+                queryId: item.tmdbId.toString(),
+                type: item.mediaType.name,
+              ),
+            ));
+          },
+        );
+      }).toList();
+
+      return PosterCarouselRow(
+        title: title,
+        icon: icon,
+        theme: CarouselTheme.profileRow,
+        items: cards,
+        emptyBuilder: (context) => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 24.0, horizontal: 24),
+          child: Text('No recently watched items', style: TextStyle(color: Colors.grey)),
+        ),
+      );
     }
 
     return LayoutBuilder(
@@ -62,16 +108,16 @@ class ProfileOverview extends ConsumerWidget {
                                 ],
                               ),
                               const SizedBox(height: 24),
-                              _RecentMediaContainer(
-                                title: 'RECENT MOVIES',
-                                icon: LucideIcons.film,
-                                items: groupedMovies.take(10).toList(),
+                              buildRecentRow(
+                                'RECENT MOVIES', 
+                                LucideIcons.film, 
+                                groupedMovies.take(10).map((h) => h.media).whereType<MediaItem>().toList()
                               ),
                               const SizedBox(height: 24),
-                              _RecentMediaContainer(
-                                title: 'RECENT SERIES',
-                                icon: LucideIcons.tv,
-                                items: groupedSeries.take(10).toList(),
+                              buildRecentRow(
+                                'RECENT SERIES', 
+                                LucideIcons.tv, 
+                                groupedSeries.take(10).map((h) => h.media).whereType<MediaItem>().toList()
                               ),
                             ],
                           ),
@@ -114,19 +160,19 @@ class ProfileOverview extends ConsumerWidget {
                     const SizedBox(height: 32),
 
                     // Recent Movies Container
-                    _RecentMediaContainer(
-                      title: 'RECENT MOVIES',
-                      icon: LucideIcons.film,
-                      items: groupedMovies.take(10).toList(),
+                    buildRecentRow(
+                      'RECENT MOVIES', 
+                      LucideIcons.film, 
+                      groupedMovies.take(10).map((h) => h.media).whereType<MediaItem>().toList()
                     ),
 
                     const SizedBox(height: 24),
 
                     // Recent Series Container
-                    _RecentMediaContainer(
-                      title: 'RECENT SERIES',
-                      icon: LucideIcons.tv,
-                      items: groupedSeries.take(10).toList(),
+                    buildRecentRow(
+                      'RECENT SERIES', 
+                      LucideIcons.tv, 
+                      groupedSeries.take(10).map((h) => h.media).whereType<MediaItem>().toList()
                     ),
                     
                     const SizedBox(height: 32),
@@ -142,75 +188,4 @@ class ProfileOverview extends ConsumerWidget {
   }
 }
 
-class _RecentMediaContainer extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final List<WatchHistory> items;
-
-  const _RecentMediaContainer({
-    required this.title,
-    required this.icon,
-    required this.items,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white10),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                children: [
-                  Icon(icon, size: 20, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(LucideIcons.chevronRight, size: 16, color: Colors.grey),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Content
-            if (items.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24.0, horizontal: 24),
-                child: Text(
-                  'No recently watched items',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              )
-            else
-              // We use HorizontalMediaList with balanced dimensions (Height 360, Width 160)
-              // We move padding to the list itself to allow items to scroll to the edge
-              HorizontalMediaList(
-                items: items.map((h) => h.media).whereType<MediaItem>().toList(),
-                height: 340,
-                itemWidth: 200,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 

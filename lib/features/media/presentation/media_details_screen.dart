@@ -7,8 +7,8 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/details_hero.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episode_list.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/cast_carousel.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/videos_carousel.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/cast_row.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/videos_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/info_boxes.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/external_links.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
@@ -246,7 +246,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                         if (_activeTab == DetailsTab.cast) ...[
                           CreativeVisionBox(details: details, isSeries: isTV),
                           const SizedBox(height: 24),
-                          CastCarousel(credits: details['credits']),
+                          CastRow(credits: details['credits']),
                           const SizedBox(height: 24),
                           ProductionDNA(
                             productionCompanies: details['production_companies'] ?? [],
@@ -275,7 +275,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                           ),
 
                         if (_activeTab == DetailsTab.videos)
-                          VideosCarousel(videos: details['videos']),
+                          VideosRow(videos: details['videos']),
 
                         if (_activeTab == DetailsTab.finances)
                           FinancesBox(
@@ -298,10 +298,10 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                           SizedBox(height: 32),
                         ],
 
-                        CastCarousel(credits: details['credits']),
+                        CastRow(credits: details['credits']),
                         SizedBox(height: 32),
 
-                        VideosCarousel(videos: details['videos']),
+                        VideosRow(videos: details['videos']),
                       ],
                     ],
                   ),

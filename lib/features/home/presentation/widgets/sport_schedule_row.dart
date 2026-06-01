@@ -9,6 +9,8 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:intl/intl.dart';
+import 'package:cinemuse_app/shared/widgets/skeleton_box.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
 
 // ---------------------------------------------------------------------------
 // Sealed list item model
@@ -155,42 +157,14 @@ class _SportScheduleRowState extends ConsumerState<SportScheduleRow> {
     // Trigger scroll once after first data is available
     _scrollToNearest(items, horizontalPadding);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildTitle(l10n, horizontalPadding),
-        SizedBox(
-          height: 220,
-          child: ListView.builder(
-            controller: _scrollController,
-            clipBehavior: Clip.none,
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-            scrollDirection: Axis.horizontal,
-            itemCount: items.length,
-            itemBuilder: (context, index) => _buildItem(context, items[index], index, items),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTitle(AppLocalizations l10n, double horizontalPadding) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(horizontalPadding, 24, horizontalPadding, 16),
-      child: Row(
-        children: [
-          Text(
-            l10n.homeSportSchedule,
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Icon(Icons.chevron_right, color: AppTheme.textMuted),
-        ],
-      ),
+    return GenericCarouselRow(
+      theme: CarouselTheme.homeRow,
+      title: l10n.homeSportSchedule,
+      controller: _scrollController,
+      height: 236,
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+      itemCount: items.length,
+      itemBuilder: (context, index) => _buildItem(context, items[index], index, items),
     );
   }
 
@@ -337,77 +311,24 @@ class SportScheduleSkeleton extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(horizontalPadding, 24, horizontalPadding, 16),
-          child: const _SkeletonBox(width: 180, height: 25),
+          child: const SkeletonBox(width: 180, height: 25),
         ),
-        SizedBox(
-          height: 220,
-          child: ListView.separated(
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-            scrollDirection: Axis.horizontal,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 4,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
-            itemBuilder: (_, __) => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _SkeletonBox(width: 280, height: 280 * (9 / 16)),
-                const SizedBox(height: 10),
-                const _SkeletonBox(width: 150, height: 16),
-              ],
-            ),
+        GenericCarouselRow(
+          theme: CarouselTheme.plain,
+          height: 236,
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          itemCount: 4,
+          separatorBuilder: (_, __) => const SizedBox(width: 16),
+          itemBuilder: (_, __) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 280, height: 280 * (9 / 16)),
+              const SizedBox(height: 10),
+              const SkeletonBox(width: 150, height: 16),
+            ],
           ),
         ),
       ],
-    );
-  }
-}
-
-class _SkeletonBox extends StatefulWidget {
-  final double width;
-  final double height;
-
-  const _SkeletonBox({required this.width, required this.height});
-
-  @override
-  State<_SkeletonBox> createState() => _SkeletonBoxState();
-}
-
-class _SkeletonBoxState extends State<_SkeletonBox> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _opacityAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-    _opacityAnimation = Tween<double>(begin: 0.05, end: 0.12).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _opacityAnimation,
-      builder: (context, child) {
-        return Container(
-          width: widget.width,
-          height: widget.height,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: _opacityAnimation.value),
-            borderRadius: BorderRadius.circular(8),
-          ),
-        );
-      },
     );
   }
 }
