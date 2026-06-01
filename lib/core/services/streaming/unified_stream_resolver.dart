@@ -38,6 +38,7 @@ final unifiedStreamResolverProvider = Provider((ref) {
     s.playerLanguage,
     s.splitAnimePreferences,
     s.animeAudioLanguage,
+    s.enableAutoSkipProviders,
   )));
   
   // Create a minimal UserSettings object for the constructor to avoid watching the whole thing
@@ -52,6 +53,7 @@ final unifiedStreamResolverProvider = Provider((ref) {
     playerLanguage: settings.$8,
     splitAnimePreferences: settings.$9,
     animeAudioLanguage: settings.$10,
+    enableAutoSkipProviders: settings.$11,
   );
 
   final dio = ref.read(dioProvider);
@@ -222,11 +224,21 @@ class UnifiedStreamResolver {
         final source = _sources[i];
         final task = () async {
           try {
-            final candidates = await source.search(context);
+            final searchFuture = source.search(context);
+            final candidates = _settings.enableAutoSkipProviders
+                ? await searchFuture.timeout(const Duration(seconds: 30))
+                : await searchFuture;
             taskResults[i] = candidates;
             searchStatuses[i] = searchStatuses[i].copyWith(
               status: ProviderStatus.finished,
               resultsCount: candidates.length,
+              timeElapsed: stopwatch.elapsed,
+            );
+            onStatusUpdate?.call(searchStatuses);
+          } on TimeoutException catch (e) {
+            searchStatuses[i] = searchStatuses[i].copyWith(
+              status: ProviderStatus.failed,
+              errorMessage: 'Timeout after 30s',
               timeElapsed: stopwatch.elapsed,
             );
             onStatusUpdate?.call(searchStatuses);

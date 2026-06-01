@@ -25,6 +25,7 @@ class UserSettings {
   final String playerSecondaryColor;
   final bool showDebugPanel;
   final bool smartSearchFilter;
+  final bool enableAutoSkipProviders;
   final String? liveTvRegion;
   final bool enableAnimeTosho;
   final bool enableVixSrc;
@@ -52,6 +53,7 @@ class UserSettings {
     this.playerSecondaryColor = '',
     this.showDebugPanel = false,
     this.smartSearchFilter = true,
+    this.enableAutoSkipProviders = true,
     this.liveTvRegion,
     this.enableAnimeTosho = true,
     this.enableVixSrc = true,
@@ -82,6 +84,7 @@ class UserSettings {
       playerSecondaryColor: prefs['playerSecondaryColor'] ?? '',
       showDebugPanel: prefs['showDebugPanel'] ?? false,
       smartSearchFilter: prefs['smartSearchFilter'] ?? true,
+      enableAutoSkipProviders: prefs['enableAutoSkipProviders'] ?? true,
       liveTvRegion: prefs['liveTvRegion'],
       enableAnimeTosho: prefs['enableAnimeTosho'] ?? true,
       enableVixSrc: prefs['enableVixSrc'] ?? true,
@@ -119,6 +122,7 @@ class UserSettings {
     String? playerSecondaryColor,
     bool? showDebugPanel,
     bool? smartSearchFilter,
+    bool? enableAutoSkipProviders,
     String? liveTvRegion,
     bool? enableAnimeTosho,
     bool? enableVixSrc,
@@ -146,6 +150,7 @@ class UserSettings {
       playerSecondaryColor: playerSecondaryColor ?? this.playerSecondaryColor,
       showDebugPanel: showDebugPanel ?? this.showDebugPanel,
       smartSearchFilter: smartSearchFilter ?? this.smartSearchFilter,
+      enableAutoSkipProviders: enableAutoSkipProviders ?? this.enableAutoSkipProviders,
       liveTvRegion: liveTvRegion ?? this.liveTvRegion,
       enableAnimeTosho: enableAnimeTosho ?? this.enableAnimeTosho,
       enableVixSrc: enableVixSrc ?? this.enableVixSrc,
@@ -175,6 +180,7 @@ class UserSettings {
       'playerSecondaryColor': playerSecondaryColor,
       'showDebugPanel': showDebugPanel,
       'smartSearchFilter': smartSearchFilter,
+      'enableAutoSkipProviders': enableAutoSkipProviders,
       'liveTvRegion': liveTvRegion,
       'enableAnimeTosho': enableAnimeTosho,
       'enableVixSrc': enableVixSrc,
@@ -235,6 +241,7 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       playerSecondaryColor: updates['playerSecondaryColor'] ?? state.playerSecondaryColor,
       showDebugPanel: updates['showDebugPanel'] ?? state.showDebugPanel,
       smartSearchFilter: updates['smartSearchFilter'] ?? state.smartSearchFilter,
+      enableAutoSkipProviders: updates['enableAutoSkipProviders'] ?? state.enableAutoSkipProviders,
       liveTvRegion: updates['liveTvRegion'] ?? state.liveTvRegion,
       enableAnimeTosho: updates['enableAnimeTosho'] ?? state.enableAnimeTosho,
       enableVixSrc: updates['enableVixSrc'] ?? state.enableVixSrc,

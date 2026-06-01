@@ -650,7 +650,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsIntegrationsDesc =>
-      'Manage Stremio addons and native streaming integrations.';
+      'Manage streaming providers, addons, and external integrations.';
 
   @override
   String get settingsData => 'Data & Storage';
@@ -1229,4 +1229,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tvTimeCommentsError => 'Could not load comments.';
+
+  @override
+  String get settingsSearchPreferences => 'Search Preferences';
+
+  @override
+  String get settingsAutoSkipProviders => 'Auto-Skip Slow Providers';
+
+  @override
+  String get settingsAutoSkipProvidersDesc =>
+      'Skip streaming providers that take longer than 30 seconds to respond.';
 }

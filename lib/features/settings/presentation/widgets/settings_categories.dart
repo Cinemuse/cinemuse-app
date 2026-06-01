@@ -7,7 +7,7 @@ import 'package:cinemuse_app/features/settings/presentation/widgets/setting_inpu
 import 'package:cinemuse_app/features/settings/presentation/widgets/settings_widgets.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
-import 'package:cinemuse_app/features/settings/presentation/widgets/stremio_addon_settings.dart';
+import 'package:cinemuse_app/features/settings/presentation/widgets/addon_settings.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/subtitle_appearance_form.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/playlist_management_sheet.dart';
 
@@ -319,7 +319,7 @@ class IntegrationsSettings extends ConsumerWidget {
       title: l10n.settingsIntegrations,
       description: l10n.settingsIntegrationsDesc,
       children: const [
-        StremioAddonSettings(),
+        AddonSettings(),
       ],
     );
   }

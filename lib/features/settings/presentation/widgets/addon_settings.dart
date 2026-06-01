@@ -8,14 +8,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-class StremioAddonSettings extends ConsumerStatefulWidget {
-  const StremioAddonSettings({super.key});
+class AddonSettings extends ConsumerStatefulWidget {
+  const AddonSettings({super.key});
 
   @override
-  ConsumerState<StremioAddonSettings> createState() => _StremioAddonSettingsState();
+  ConsumerState<AddonSettings> createState() => _AddonSettingsState();
 }
 
-class _StremioAddonSettingsState extends ConsumerState<StremioAddonSettings> {
+class _AddonSettingsState extends ConsumerState<AddonSettings> {
   final _urlController = TextEditingController();
   bool _isLoading = false;
   bool _showApiKey = false;
@@ -269,7 +269,7 @@ class _StremioAddonSettingsState extends ConsumerState<StremioAddonSettings> {
 
         // Global Search Settings
         SettingsSection(
-          title: "Search Preferences",
+          title: l10n.settingsSearchPreferences,
           children: [
             SettingsCard(
               children: [
@@ -277,11 +277,23 @@ class _StremioAddonSettingsState extends ConsumerState<StremioAddonSettings> {
                   label: l10n.settingsSmartSearch,
                   description: l10n.settingsSmartSearchDesc,
                   icon: LucideIcons.filter,
-                  showDivider: false,
+                  showDivider: true,
                   trailing: SettingToggle(
                     value: settings.smartSearchFilter,
                     onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
                       'smartSearchFilter': val,
+                    }),
+                  ),
+                ),
+                SettingsTile(
+                  label: l10n.settingsAutoSkipProviders,
+                  description: l10n.settingsAutoSkipProvidersDesc,
+                  icon: LucideIcons.clock,
+                  showDivider: false,
+                  trailing: SettingToggle(
+                    value: settings.enableAutoSkipProviders,
+                    onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
+                      'enableAutoSkipProviders': val,
                     }),
                   ),
                 ),

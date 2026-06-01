@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
@@ -160,6 +161,106 @@ void main() {
       when(() => mockSource.search(any())).thenAnswer((_) async => []);
 
       expect(() => resolver.searchStreams('123', 'movie'), throwsA(isA<NoResultsFoundException>()));
+    });
+
+    test('Should timeout and mark provider as failed if enableAutoSkipProviders is true and search is slow', () {
+      fakeAsync((async) {
+        when(() => mockTmdb.getMediaDetails(any(), any())).thenAnswer((_) async => {
+          'id': 123, 'imdb_id': 'tt123',
+        });
+
+        // Simulate search taking 35 seconds
+        when(() => mockSource.search(any())).thenAnswer((_) async {
+          await Future.delayed(const Duration(seconds: 35));
+          return [
+            StreamCandidate(title: 'Slow Stream', infoHash: 'abc', magnet: 'm1', seeds: 10, provider: 'MockSource')
+          ];
+        });
+
+        final slowResolver = UnifiedStreamResolver(
+          sources: [mockSource],
+          tmdbService: mockTmdb,
+          kitsuMappingService: mockKitsu,
+          mediaRepository: mockMedia,
+          settings: const UserSettings(enableAutoSkipProviders: true),
+        );
+
+        final updates = <List<ProviderSearchStatus>>[];
+        
+        dynamic futureError;
+        slowResolver.searchStreams(
+          '123', 
+          'movie',
+          onStatusUpdate: (statuses) {
+            updates.add(List.from(statuses.map((s) => s.copyWith())));
+          },
+        ).catchError((e) {
+          futureError = e;
+          return StreamSearchResult(candidates: []);
+        });
+
+        // Elapse 40 seconds to allow the search to time out at 30s
+        async.elapse(const Duration(seconds: 40));
+
+        // The future should have failed with NoResultsFoundException because the only source timed out
+        expect(futureError, isA<NoResultsFoundException>());
+
+        // Let's verify that the update logs showed a failed provider status with the timeout message
+        expect(updates.isNotEmpty, isTrue);
+        final finalUpdate = updates.last;
+        expect(finalUpdate.length, equals(1));
+        expect(finalUpdate.first.status, equals(ProviderStatus.failed));
+        expect(finalUpdate.first.errorMessage, contains('Timeout after 30s'));
+      });
+    });
+
+    test('Should NOT timeout if enableAutoSkipProviders is false and search is slow', () {
+      fakeAsync((async) {
+        when(() => mockTmdb.getMediaDetails(any(), any())).thenAnswer((_) async => {
+          'id': 123, 'imdb_id': 'tt123', 'title': 'Test Movie',
+        });
+
+        // Simulate search taking 35 seconds
+        when(() => mockSource.search(any())).thenAnswer((_) async {
+          await Future.delayed(const Duration(seconds: 35));
+          return [
+            StreamCandidate(title: 'Slow Stream', infoHash: 'abc', magnet: 'm1', seeds: 10, provider: 'MockSource')
+          ];
+        });
+
+        final slowResolver = UnifiedStreamResolver(
+          sources: [mockSource],
+          tmdbService: mockTmdb,
+          kitsuMappingService: mockKitsu,
+          mediaRepository: mockMedia,
+          settings: const UserSettings(enableAutoSkipProviders: false),
+        );
+
+        final updates = <List<ProviderSearchStatus>>[];
+        
+        dynamic result;
+        slowResolver.searchStreams(
+          '123', 
+          'movie',
+          onStatusUpdate: (statuses) {
+            updates.add(List.from(statuses.map((s) => s.copyWith())));
+          },
+        ).then((res) {
+          result = res;
+        });
+
+        // Elapse 40 seconds to allow the search to complete fully
+        async.elapse(const Duration(seconds: 40));
+
+        expect(result, isA<StreamSearchResult>());
+        expect((result as StreamSearchResult).candidates.length, equals(1));
+
+        expect(updates.isNotEmpty, isTrue);
+        final finalUpdate = updates.last;
+        expect(finalUpdate.length, equals(1));
+        expect(finalUpdate.first.status, equals(ProviderStatus.finished));
+        expect(finalUpdate.first.resultsCount, equals(1));
+      });
     });
   });
 

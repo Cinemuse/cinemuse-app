@@ -202,7 +202,7 @@
   "settingsCustomization": "Personalizzazione App",
   "settingsCustomizationDesc": "Personalizza la tua esperienza di visione e l'aspetto dell'app.",
   "settingsIntegrations": "Addon ed Estensioni",
-  "settingsIntegrationsDesc": "Gestisci gli addon di Stremio e le integrazioni native.",
+  "settingsIntegrationsDesc": "Gestisci i provider di streaming, gli addon e le integrazioni esterne.",
   "settingsData": "Dati e Archiviazione",
   "settingsDataDesc": "Gestisci i tuoi dati locali e la cache.",
   "settingsImport": "Importa ed Esporta",
@@ -394,5 +394,8 @@
     }
   },
   "tvTimeLoadingComments": "Caricamento commenti...",
-  "tvTimeCommentsError": "Impossibile caricare i commenti."
+  "tvTimeCommentsError": "Impossibile caricare i commenti.",
+  "settingsSearchPreferences": "Preferenze di Ricerca",
+  "settingsAutoSkipProviders": "Salta Automaticamente Provider Lenti",
+  "settingsAutoSkipProvidersDesc": "Salta i provider di streaming che impiegano più di 30 secondi a rispondere."
 }

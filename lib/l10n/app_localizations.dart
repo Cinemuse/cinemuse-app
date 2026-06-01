@@ -1289,7 +1289,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsIntegrationsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Manage Stremio addons and native streaming integrations.'**
+  /// **'Manage streaming providers, addons, and external integrations.'**
   String get settingsIntegrationsDesc;
 
   /// No description provided for @settingsData.
@@ -2371,6 +2371,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load comments.'**
   String get tvTimeCommentsError;
+
+  /// No description provided for @settingsSearchPreferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Preferences'**
+  String get settingsSearchPreferences;
+
+  /// No description provided for @settingsAutoSkipProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-Skip Slow Providers'**
+  String get settingsAutoSkipProviders;
+
+  /// No description provided for @settingsAutoSkipProvidersDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip streaming providers that take longer than 30 seconds to respond.'**
+  String get settingsAutoSkipProvidersDesc;
 }
 
 class _AppLocalizationsDelegate

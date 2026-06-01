@@ -202,7 +202,7 @@
   "settingsCustomization": "App Customization",
   "settingsCustomizationDesc": "Customize your viewing experience and app appearance.",
   "settingsIntegrations": "Addons & Extensions",
-  "settingsIntegrationsDesc": "Manage Stremio addons and native streaming integrations.",
+  "settingsIntegrationsDesc": "Manage streaming providers, addons, and external integrations.",
   "settingsData": "Data & Storage",
   "settingsDataDesc": "Manage your local data and cache.",
   "settingsImport": "Import & Export",
@@ -394,5 +394,8 @@
     }
   },
   "tvTimeLoadingComments": "Loading comments...",
-  "tvTimeCommentsError": "Could not load comments."
+  "tvTimeCommentsError": "Could not load comments.",
+  "settingsSearchPreferences": "Search Preferences",
+  "settingsAutoSkipProviders": "Auto-Skip Slow Providers",
+  "settingsAutoSkipProvidersDesc": "Skip streaming providers that take longer than 30 seconds to respond."
 }
