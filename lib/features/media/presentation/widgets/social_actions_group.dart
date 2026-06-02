@@ -11,12 +11,15 @@ class SocialActionsGroup extends ConsumerWidget {
   final bool isInWatchlist;
   final VoidCallback onListTap;
 
+  final bool isExpanded;
+
   const SocialActionsGroup({
     super.key,
     required this.mediaItem,
     required this.isFavorite,
     required this.isInWatchlist,
     required this.onListTap,
+    this.isExpanded = false,
   });
 
   @override
@@ -28,28 +31,38 @@ class SocialActionsGroup extends ConsumerWidget {
         border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.05)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: isExpanded ? MainAxisSize.max : MainAxisSize.min,
         children: [
-          _SocialIcon(
-            icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-            color: isFavorite ? AppTheme.favorites : AppTheme.textWhite,
-            onTap: () => ref.read(mediaDetailsControllerProvider.notifier).toggleFavorite(mediaItem),
+          _buildIcon(
+            _SocialIcon(
+              icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: isFavorite ? AppTheme.favorites : AppTheme.textWhite,
+              onTap: () => ref.read(mediaDetailsControllerProvider.notifier).toggleFavorite(mediaItem),
+            ),
           ),
           const _VerticalDivider(),
-          _SocialIcon(
-            icon: isInWatchlist ? Icons.bookmark : Icons.bookmark_border,
-            color: isInWatchlist ? AppTheme.watchlist : AppTheme.textWhite,
-            onTap: () => ref.read(mediaDetailsControllerProvider.notifier).toggleWatchlist(mediaItem),
+          _buildIcon(
+            _SocialIcon(
+              icon: isInWatchlist ? Icons.bookmark : Icons.bookmark_border,
+              color: isInWatchlist ? AppTheme.watchlist : AppTheme.textWhite,
+              onTap: () => ref.read(mediaDetailsControllerProvider.notifier).toggleWatchlist(mediaItem),
+            ),
           ),
           const _VerticalDivider(),
-          _SocialIcon(
-            icon: Icons.format_list_bulleted,
-            onTap: onListTap,
-            showArrow: true,
+          _buildIcon(
+            _SocialIcon(
+              icon: Icons.format_list_bulleted,
+              onTap: onListTap,
+              showArrow: true,
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildIcon(Widget icon) {
+    return isExpanded ? Expanded(child: icon) : icon;
   }
 }
 
@@ -144,10 +157,12 @@ class _SocialIconState extends State<_SocialIcon> with SingleTickerProviderState
             widget.onTap();
           },
           child: Container(
+            alignment: Alignment.center,
             padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 15),
             // FittedBox scales down contents if they still exceed the container width
             child: FittedBox(
               fit: BoxFit.scaleDown,
+              alignment: Alignment.center,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

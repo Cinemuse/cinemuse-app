@@ -20,12 +20,9 @@ class AppBottomNavbar extends StatelessWidget {
     // Check for safe area (especially bottom padding for modern phones)
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppTheme.surface.withValues(alpha: 0.8),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
             border: Border(
               top: BorderSide(
                 color: Colors.white.withValues(alpha: 0.1),
@@ -66,9 +63,7 @@ class AppBottomNavbar extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
+        );
   }
 }
 

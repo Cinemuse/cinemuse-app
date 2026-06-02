@@ -125,8 +125,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ],
                   
-                  const SizedBox(height: 50),
-                  const SizedBox(height: 40), // Standard bottom padding
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

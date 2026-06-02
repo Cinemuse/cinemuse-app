@@ -7,6 +7,7 @@ import 'package:cinemuse_app/features/media/presentation/widgets/external_links.
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
+import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -344,20 +345,40 @@ class _PersonDetailsContent extends ConsumerWidget {
                     child: Column(
                       children: [
                         Text(
-                          l10n.personShowingCredits(visibleCredits, filmography.length),
+                          l10n.personShowingCredits(filmography.length, visibleCredits),
                           style: const TextStyle(color: AppTheme.textMuted, fontSize: 13, fontStyle: FontStyle.italic),
                         ),
                         const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: onShowMore,
-                          icon: const Icon(LucideIcons.plus, size: 18),
-                          label: Text(l10n.personShowMore.toUpperCase()),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.textWhite.withValues(alpha: 0.05),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Colors.white10)),
-                            enabledMouseCursor: SystemMouseCursors.click,
+                        MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: onShowMore,
+                            child: HoverScale(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.textWhite.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.05)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(LucideIcons.plus, color: AppTheme.textWhite, size: 18),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      l10n.personShowMore.toUpperCase(),
+                                      style: const TextStyle(
+                                        color: AppTheme.textWhite,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ],

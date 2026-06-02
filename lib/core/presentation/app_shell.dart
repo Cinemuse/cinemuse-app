@@ -95,71 +95,8 @@ class _AppShellState extends ConsumerState<AppShell> {
         },
         child: Scaffold(
           backgroundColor: Colors.black, // Match "bg-primary"
-        body: Stack(
-          children: [
-            // Main Content Area with Nested Navigator
-            Positioned.fill(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  top: isMobile ? (MediaQuery.of(context).padding.top + 60) : 80,
-                  bottom: 0, // Content fills the screen behind bottom navbar
-                ),
-                child: Navigator(
-                  key: shellNavigatorKey,
-                  onGenerateRoute: (settings) {
-                    return MaterialPageRoute(
-                      settings: settings,
-                      builder: (context) => Consumer(
-                        builder: (context, ref, child) {
-                          final index = ref.watch(navIndexProvider);
-                          return IndexedStack(
-                            index: index,
-                            children: _screens,
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            
-            // Top Navbar (Floating)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: AppNavbar(
-                currentIndex: currentIndex,
-                onTap: (index) {
-                  // Reset nested navigator when switching tabs? 
-                  // For now, just change index.
-                  ref.read(navIndexProvider.notifier).state = index;
-                  // If we want to reset the tab when tapping its icon:
-                  final navigator = shellNavigatorKey.currentState;
-                  if (navigator != null && navigator.canPop()) {
-                    navigator.popUntil((route) => route.isFirst);
-                  }
-                },
-                onSettingsTap: () {
-                  shellNavigatorKey.currentState?.push(
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                  );
-                },
-                onLogoutTap: () {
-                  ref.read(authProvider.notifier).signOut();
-                },
-                onSearchTap: () => SearchOverlay.show(context, navigator: shellNavigatorKey.currentState),
-              ),
-            ),
-
-            // Bottom Navbar (Floating) - Visible only on Mobile
-            if (isMobile)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: AppBottomNavbar(
+          bottomNavigationBar: isMobile 
+              ? AppBottomNavbar(
                   currentIndex: currentIndex,
                   onTap: (index) {
                     ref.read(navIndexProvider.notifier).state = index;
@@ -168,8 +105,54 @@ class _AppShellState extends ConsumerState<AppShell> {
                       navigator.popUntil((route) => route.isFirst);
                     }
                   },
+                )
+              : null,
+        body: Stack(
+          children: [
+            Column(
+              children: [
+                AppNavbar(
+                  currentIndex: currentIndex,
+                  onTap: (index) {
+                    ref.read(navIndexProvider.notifier).state = index;
+                    final navigator = shellNavigatorKey.currentState;
+                    if (navigator != null && navigator.canPop()) {
+                      navigator.popUntil((route) => route.isFirst);
+                    }
+                  },
+                  onSettingsTap: () {
+                    shellNavigatorKey.currentState?.push(
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                  },
+                  onLogoutTap: () {
+                    ref.read(authProvider.notifier).signOut();
+                  },
+                  onSearchTap: () => SearchOverlay.show(context, navigator: shellNavigatorKey.currentState),
                 ),
-              ),
+                Expanded(
+                  child: Navigator(
+                    key: shellNavigatorKey,
+                    onGenerateRoute: (settings) {
+                      return MaterialPageRoute(
+                        settings: settings,
+                        builder: (context) => Consumer(
+                          builder: (context, ref, child) {
+                            final index = ref.watch(navIndexProvider);
+                            return IndexedStack(
+                              index: index,
+                              children: _screens,
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+
+
 
             // Update Notification Overlay
             const Positioned.fill(

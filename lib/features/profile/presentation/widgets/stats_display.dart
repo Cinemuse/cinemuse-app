@@ -4,6 +4,7 @@ import 'package:cinemuse_app/features/profile/domain/profile_stats.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'dart:math';
 
 class StatsDisplay extends ConsumerWidget {
   const StatsDisplay({super.key});
@@ -26,19 +27,9 @@ class StatsDisplay extends ConsumerWidget {
         final isDesktop = constraints.maxWidth > 900;
 
         if (!isDesktop) {
-            // Mobile: Flip Cards (Simplified Grid for now as requested by user to "start by stats card")
-            // The user asked to analyze "cinemuse-web". Web has FlipCards for mobile.
-            // For now, I'll stick to a Grid of Mini Cards to be safe, or stacked Full cards?
-            // "Mobile Stats Grid (Flip Cards)" in web.
-            // Let's render the Full Cards vertically for mobile to ensure all data is visible without interaction complexity first.
-            return Column(
-                children: [
-                    TimeBreakdownCard(stats: stats, formatDuration: formatDuration),
-                    const SizedBox(height: 16),
-                    MoviesStatsCard(stats: stats),
-                    const SizedBox(height: 16),
-                    SeriesStatsCard(stats: stats),
-                ],
+            return _MobileStatsDisplay(
+              stats: stats,
+              formatDuration: formatDuration,
             );
         }
 
@@ -382,4 +373,171 @@ class _FooterStat extends StatelessWidget {
             ),
         );
     }
+}
+
+class _MobileStatsDisplay extends StatefulWidget {
+  final ProfileStats stats;
+  final String Function(int) formatDuration;
+  
+  const _MobileStatsDisplay({required this.stats, required this.formatDuration});
+
+  @override
+  State<_MobileStatsDisplay> createState() => _MobileStatsDisplayState();
+}
+
+class _MobileStatsDisplayState extends State<_MobileStatsDisplay> with SingleTickerProviderStateMixin {
+  int? _expandedIndex;
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
+    _animation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  void _toggleExpanded(int index) {
+    if (_expandedIndex == index) {
+      _controller.reverse().then((_) {
+        if (mounted) {
+          setState(() {
+            _expandedIndex = null;
+          });
+        }
+      });
+    } else {
+      if (_expandedIndex == null) {
+        setState(() {
+          _expandedIndex = index;
+        });
+        _controller.forward();
+      } else {
+        _controller.reverse().then((_) {
+          if (mounted) {
+            setState(() {
+              _expandedIndex = index;
+            });
+            _controller.forward();
+          }
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+      alignment: Alignment.topCenter,
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          final angle = _animation.value * pi;
+          final isBack = angle > pi / 2;
+
+          Widget currentWidget;
+          if (isBack && _expandedIndex != null) {
+            switch (_expandedIndex) {
+              case 0:
+                currentWidget = GestureDetector(
+                  onTap: () => _toggleExpanded(0),
+                  child: TimeBreakdownCard(
+                    stats: widget.stats, 
+                    formatDuration: widget.formatDuration,
+                  ),
+                );
+                break;
+              case 1:
+                currentWidget = GestureDetector(
+                  onTap: () => _toggleExpanded(1),
+                  child: MoviesStatsCard(
+                    stats: widget.stats,
+                  ),
+                );
+                break;
+              case 2:
+                currentWidget = GestureDetector(
+                  onTap: () => _toggleExpanded(2),
+                  child: SeriesStatsCard(
+                    stats: widget.stats,
+                  ),
+                );
+                break;
+              default:
+                currentWidget = const SizedBox.shrink();
+            }
+          } else {
+            currentWidget = _buildCollapsedRow();
+          }
+
+          return Transform(
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..rotateY(isBack ? angle - pi : angle),
+            alignment: Alignment.center,
+            child: currentWidget,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCollapsedRow() {
+    return Row(
+      children: [
+        Expanded(child: _buildSmallCard(0, LucideIcons.clock, 'TIME', Colors.blue, widget.formatDuration(widget.stats.totalMinutesWatched))),
+        const SizedBox(width: 12),
+        Expanded(child: _buildSmallCard(1, LucideIcons.film, 'MOVIES', AppTheme.accent, widget.stats.totalMovies.toString())),
+        const SizedBox(width: 12),
+        Expanded(child: _buildSmallCard(2, LucideIcons.tv, 'SERIES', Colors.green, widget.stats.totalEpisodes.toString())),
+      ],
+    );
+  }
+
+  Widget _buildSmallCard(int index, IconData icon, String title, Color color, String value) {
+    return GestureDetector(
+      onTap: () => _toggleExpanded(index),
+      child: Container(
+        height: 110,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white10),
+          boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4)),
+          ]
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 8),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: const TextStyle(color: Colors.grey, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

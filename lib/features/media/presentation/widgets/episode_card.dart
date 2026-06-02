@@ -192,6 +192,8 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
         ? DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(airDate)
         : null;
 
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return GestureDetector(
       onSecondaryTapDown: (details) => _tapPosition = details.globalPosition,
       onSecondaryTap: () => _showContextMenu(context),
@@ -209,18 +211,51 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
           child: InkWell(
             onTap: () => widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, name),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(width: 12),
-                  _buildEpisodeStill(context, l10n, stillPath, runtime),
-                  const SizedBox(width: 12),
-                  _buildEpisodeInfo(context, l10n, name, overview, formattedAirDate),
-                  const SizedBox(width: 12),
-                  _buildActions(context, l10n),
-                ],
-              ),
+              padding: const EdgeInsets.all(12),
+              child: isMobile
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildEpisodeStill(context, l10n, stillPath, runtime, 160),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildEpisodeHeader(name, formattedAirDate),
+                                  const SizedBox(height: 8),
+                                  _buildActions(context, l10n, isMobile: true),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildExpandableOverview(context, l10n, overview),
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildEpisodeStill(context, l10n, stillPath, runtime, 160),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildEpisodeHeader(name, formattedAirDate),
+                              const SizedBox(height: 4),
+                              _buildExpandableOverview(context, l10n, overview),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        _buildActions(context, l10n, isMobile: false),
+                      ],
+                    ),
             ),
           ),
         ),
@@ -228,9 +263,9 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
     );
   }
 
-  Widget _buildEpisodeStill(BuildContext context, AppLocalizations l10n, String? stillPath, dynamic runtime) {
+  Widget _buildEpisodeStill(BuildContext context, AppLocalizations l10n, String? stillPath, dynamic runtime, double width) {
     return SizedBox(
-      width: 160,
+      width: width,
       child: Stack(
         children: [
           AspectRatio(
@@ -356,38 +391,28 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
     );
   }
 
-  Widget _buildEpisodeInfo(
-    BuildContext context,
-    AppLocalizations l10n,
-    String name,
-    String overview,
-    String? formattedAirDate,
-  ) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            name,
-            style: DesktopTypography.subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (formattedAirDate != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              formattedAirDate,
-              style: TextStyle(
-                color: AppTheme.textMuted.withValues(alpha: 0.8),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+  Widget _buildEpisodeHeader(String name, String? formattedAirDate) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          name,
+          style: DesktopTypography.subtitle,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (formattedAirDate != null) ...[
           const SizedBox(height: 4),
-          _buildExpandableOverview(context, l10n, overview),
+          Text(
+            formattedAirDate,
+            style: TextStyle(
+              color: AppTheme.textMuted.withValues(alpha: 0.8),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
-      ),
+      ],
     );
   }
 
@@ -441,57 +466,25 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
     );
   }
 
-  Widget _buildActions(BuildContext context, AppLocalizations l10n) {
+  Widget _buildActions(BuildContext context, AppLocalizations l10n, {required bool isMobile}) {
     return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      padding: EdgeInsets.only(right: isMobile ? 0 : 4),
+      child: Wrap(
+        spacing: 8.0,
+        runSpacing: 8.0,
         children: [
           // More options (right-click hint) button
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: Tooltip(
-              message: l10n.menuMoreOptions,
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Builder(
-                  builder: (buttonContext) {
-                    return GestureDetector(
-                      onTap: () {
-                        _tapPosition = null;
-                        _showContextMenu(context, anchorContext: buttonContext);
-                      },
-                      child: HoverScale(
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.textWhite.withValues(alpha: 0.05),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
-                      ),
-                      child: Icon(
-                        Icons.more_vert,
-                        color: AppTheme.textWhite.withValues(alpha: 0.6),
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                );
-              }
-            ),
-          ),
-            ),
-          ),
-          // TV Time Comments Button
-          if (widget.onShowTvTimeComments != null)
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: Tooltip(
-                message: 'TVTime Comments',
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: widget.onShowTvTimeComments,
+          Tooltip(
+            message: l10n.menuMoreOptions,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: Builder(
+                builder: (buttonContext) {
+                  return GestureDetector(
+                    onTap: () {
+                      _tapPosition = null;
+                      _showContextMenu(context, anchorContext: buttonContext);
+                    },
                     child: HoverScale(
                       child: Container(
                         padding: const EdgeInsets.all(8),
@@ -501,10 +494,37 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                           border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
                         ),
                         child: Icon(
-                          Icons.forum_outlined,
+                          Icons.more_vert,
                           color: AppTheme.textWhite.withValues(alpha: 0.6),
                           size: 20,
                         ),
+                      ),
+                    ),
+                  );
+                }
+              ),
+            ),
+          ),
+          // TV Time Comments Button
+          if (widget.onShowTvTimeComments != null)
+            Tooltip(
+              message: 'TVTime Comments',
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: widget.onShowTvTimeComments,
+                  child: HoverScale(
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.textWhite.withValues(alpha: 0.05),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
+                      ),
+                      child: Icon(
+                        Icons.forum_outlined,
+                        color: AppTheme.textWhite.withValues(alpha: 0.6),
+                        size: 20,
                       ),
                     ),
                   ),

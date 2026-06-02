@@ -45,6 +45,13 @@ class MediaDetailsScreen extends ConsumerStatefulWidget {
 class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
   bool _hasInitializedSeason = false;
   DetailsTab? _activeTab;
+  final ScrollController _mainScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _mainScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -174,6 +181,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           _activeTab ??= isTV ? DetailsTab.episodes : DetailsTab.cast;
 
           return CustomScrollView(
+            controller: _mainScrollController,
             slivers: [
               if (isOffline)
                 SliverToBoxAdapter(
@@ -242,7 +250,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
 
                         // Mobile Tab Content
                         if (_activeTab == DetailsTab.episodes && isTV)
-                          _SeriesEpisodesSection(mediaId: widget.mediaId, details: details),
+                          _SeriesEpisodesSection(mediaId: widget.mediaId, details: details, mainScrollController: _mainScrollController),
                         
                         if (_activeTab == DetailsTab.cast) ...[
                           CreativeVisionBox(details: details, isSeries: isTV),
@@ -295,7 +303,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                       ] else ...[
                         // Desktop Content
                         if (isTV && (details['number_of_seasons'] ?? 0) > 0) ...[
-                          _SeriesEpisodesSection(mediaId: widget.mediaId, details: details),
+                          _SeriesEpisodesSection(mediaId: widget.mediaId, details: details, mainScrollController: _mainScrollController),
                           SizedBox(height: 32),
                         ],
 
@@ -358,7 +366,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                 ),
                 ),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           );
         },
@@ -526,8 +534,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
 class _SeriesEpisodesSection extends ConsumerWidget {
   final String mediaId;
   final Map<String, dynamic> details;
+  final ScrollController? mainScrollController;
 
-  const _SeriesEpisodesSection({required this.mediaId, required this.details});
+  const _SeriesEpisodesSection({required this.mediaId, required this.details, this.mainScrollController});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -538,13 +547,16 @@ class _SeriesEpisodesSection extends ConsumerWidget {
     
     final watchedEpisodesMap = ref.watch(watchedEpisodesMapProvider(tmdbId));
     final episodeProgressMap = ref.watch(episodeProgressMapProvider(tmdbId)).value;
+    final isMobile = MediaQuery.of(context).size.width < 600;
     
     return BentoBox(
       title: l10n.detailsEpisodesRegistry,
       icon: LucideIcons.tv,
       action: _SeasonSelector(media: details, selectedSeason: selectedSeason, mediaId: mediaId),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 500, maxHeight: 500),
+        constraints: isMobile 
+            ? const BoxConstraints(minHeight: 300) 
+            : const BoxConstraints(minHeight: 500, maxHeight: 500),
         child: seasonDetailsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accent)),
           error: (err, _) => Center(child: Text(l10n.detailsErrorLoadingSeason(err.toString()))),
@@ -598,6 +610,7 @@ class _SeriesEpisodesSection extends ConsumerWidget {
               media: details,
               watchedEpisodesCount: watchedEpisodesMap,
               initialScrollIndex: initialIndex,
+              mainScrollController: mainScrollController,
               onShowTvTimeComments: (season, episode) {
                 final int? tvdbId = details['external_ids']?['tvdb_id'];
                 if (tvdbId != null) {

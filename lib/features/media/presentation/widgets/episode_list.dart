@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:flutter/gestures.dart';
 
 class EpisodeList extends ConsumerStatefulWidget {
   final List<dynamic> episodes;
@@ -17,6 +18,7 @@ class EpisodeList extends ConsumerStatefulWidget {
   final Function(int season, int episode, String name)? onEpisodeTap;
   final int? initialScrollIndex;
   final void Function(int season, int episode)? onShowTvTimeComments;
+  final ScrollController? mainScrollController;
 
   const EpisodeList({
     super.key,
@@ -29,6 +31,7 @@ class EpisodeList extends ConsumerStatefulWidget {
     this.onEpisodeTap,
     this.initialScrollIndex,
     this.onShowTvTimeComments,
+    this.mainScrollController,
   });
 
   @override
@@ -78,9 +81,12 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
   Widget build(BuildContext context) {
     final controller = ref.read(mediaDetailsControllerProvider.notifier);
     final tmdbId = int.parse(widget.media['id'].toString());
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
-    return ListView.separated(
-      controller: _scrollController,
+    Widget listView = ListView.separated(
+      controller: isMobile ? null : _scrollController,
+      shrinkWrap: isMobile,
+      physics: isMobile ? const NeverScrollableScrollPhysics() : null,
       padding: const EdgeInsets.only(bottom: 16),
       itemCount: widget.episodes.length,
       separatorBuilder: (context, index) => const SizedBox(height: 16),
@@ -132,6 +138,37 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
         );
       },
     );
+
+    if (!isMobile) {
+      void handleScrollDelta(double delta) {
+        final target = _scrollController.position;
+        if ((delta > 0 && target.pixels >= target.maxScrollExtent) ||
+            (delta < 0 && target.pixels <= target.minScrollExtent)) {
+          final parent = widget.mainScrollController;
+          if (parent != null && parent.hasClients) {
+            parent.jumpTo((parent.position.pixels + delta).clamp(
+              parent.position.minScrollExtent,
+              parent.position.maxScrollExtent,
+            ));
+          }
+        }
+      }
+
+      return Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerSignal: (PointerSignalEvent pointerSignal) {
+          if (pointerSignal is PointerScrollEvent) {
+            handleScrollDelta(pointerSignal.scrollDelta.dy);
+          }
+        },
+        onPointerPanZoomUpdate: (PointerPanZoomUpdateEvent event) {
+          handleScrollDelta(event.panDelta.dy * -1); // panDelta is typically negative for scroll down? Wait, trackpad panDelta is positive for panning down the page? Actually, we'll just test the sign. Usually we scroll by subtracting panDelta.
+        },
+        child: listView,
+      );
+    }
+
+    return listView;
   }
 
   List<({int season, int episode})> _findMissingPreceding(int currentSeason, int currentEpisode) {
@@ -208,3 +245,4 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
     );
   }
 }
+

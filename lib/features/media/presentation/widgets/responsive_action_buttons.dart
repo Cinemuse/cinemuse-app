@@ -114,6 +114,7 @@ class _ResponsiveActionButtonsState extends ConsumerState<ResponsiveActionButton
                   isFavorite: widget.isFavorite,
                   isInWatchlist: widget.isInWatchlist,
                   onListTap: widget.onListTap,
+                  isExpanded: true,
                 ),
               ),
               if (widget.onTrackTap != null) ...[
@@ -141,6 +142,7 @@ class _ResponsiveActionButtonsState extends ConsumerState<ResponsiveActionButton
           isFavorite: widget.isFavorite,
           isInWatchlist: widget.isInWatchlist,
           onListTap: widget.onListTap,
+          isExpanded: false,
         ),
         if (widget.onTrackTap != null) ...[
           const SizedBox(width: 16),

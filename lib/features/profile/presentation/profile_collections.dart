@@ -110,25 +110,38 @@ class ProfileCollections extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1. System Lists Top Row
-              Row(
-                children: [
-                  if (watchlist != null)
-                    Expanded(
-                      child: SystemListCard(
-                        list: watchlist,
-                        onTap: () => _showListDetails(context, ref, watchlist),
-                      ),
-                    ),
-                  if (watchlist != null && favorites != null)
-                    const SizedBox(width: 24),
-                  if (favorites != null)
-                    Expanded(
-                      child: SystemListCard(
-                        list: favorites,
-                        onTap: () => _showListDetails(context, ref, favorites),
-                      ),
-                    ),
-                ],
+              Builder(
+                builder: (context) {
+                  final isMobile = MediaQuery.of(context).size.width < 600;
+                  
+                  final watchlistCard = watchlist != null ? SystemListCard(
+                    list: watchlist,
+                    onTap: () => _showListDetails(context, ref, watchlist),
+                  ) : null;
+                  
+                  final favoritesCard = favorites != null ? SystemListCard(
+                    list: favorites,
+                    onTap: () => _showListDetails(context, ref, favorites),
+                  ) : null;
+                  
+                  if (isMobile) {
+                    return Column(
+                      children: [
+                        if (watchlistCard != null) watchlistCard,
+                        if (watchlistCard != null && favoritesCard != null) const SizedBox(height: 16),
+                        if (favoritesCard != null) favoritesCard,
+                      ],
+                    );
+                  }
+                  
+                  return Row(
+                    children: [
+                      if (watchlistCard != null) Expanded(child: watchlistCard),
+                      if (watchlistCard != null && favoritesCard != null) const SizedBox(width: 24),
+                      if (favoritesCard != null) Expanded(child: favoritesCard),
+                    ],
+                  );
+                },
               ),
               
               const SizedBox(height: 48),

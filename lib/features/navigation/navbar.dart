@@ -35,7 +35,7 @@ class _AppNavbarState extends State<AppNavbar> {
 
     // Visual styling for the background
     final navbarDecoration = BoxDecoration(
-      color: AppTheme.surface.withValues(alpha: 0.8),
+      color: AppTheme.surface,
       border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
     );
 
@@ -56,10 +56,7 @@ class _AppNavbarState extends State<AppNavbar> {
               // 1. Draggable Background Layer (Visuals + Drag)
               Positioned.fill(
                 child: DragToMoveArea(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                    child: Container(decoration: navbarDecoration),
-                  ),
+                  child: Container(decoration: navbarDecoration),
                 ),
               ),
               
@@ -222,11 +219,9 @@ class _AppNavbarState extends State<AppNavbar> {
                 ),
             ],
           )
-        : BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: Container(
-              decoration: navbarDecoration,
-              padding: mobilePadding,
+        : Container(
+            decoration: navbarDecoration,
+            padding: mobilePadding,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -316,8 +311,7 @@ class _AppNavbarState extends State<AppNavbar> {
                 ],
               ),
             ),
-          ),
-    );
+          );
   }
 }
 

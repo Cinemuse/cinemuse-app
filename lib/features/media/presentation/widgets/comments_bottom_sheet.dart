@@ -44,58 +44,85 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(tvTimeCommentsProvider(widget.request));
-    final width = MediaQuery.of(context).size.width;
-    
-    int crossAxisCount = 1;
-    if (width >= 1200) {
-      crossAxisCount = 4;
-    } else if (width >= 900) {
-      crossAxisCount = 3;
-    } else if (width >= 600) {
-      crossAxisCount = 2;
-    }
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppTheme.primary,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-      child: Column(
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppTheme.textWhite.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(2),
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        
+        int crossAxisCount = 1;
+        if (width >= 1200) {
+          crossAxisCount = 4;
+        } else if (width >= 900) {
+          crossAxisCount = 3;
+        } else if (width >= 600) {
+          crossAxisCount = 2;
+        }
+
+        final bool isMobile = width < 600;
+
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppTheme.primary,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'TVTime Comments',
-                style: DesktopTypography.sectionHeader,
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppTheme.textWhite.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-              if (!state.isLoading && state.hasAnyComments)
+              const SizedBox(height: 24),
+              if (isMobile) ...[
+                Text(
+                  'TVTime Comments',
+                  style: DesktopTypography.sectionHeader,
+                ),
+                if (!state.isLoading && state.hasAnyComments) ...[
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(child: _buildLanguageFilterMenu(context, state, isMobile)),
+                      const SizedBox(width: 8),
+                      Expanded(child: _buildSortMenu(context, state, isMobile)),
+                    ],
+                  ),
+                ],
+              ] else ...[
                 Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildLanguageFilterMenu(context, state),
-                    const SizedBox(width: 12),
-                    _buildSortMenu(context, state),
+                    Text(
+                      'TVTime Comments',
+                      style: DesktopTypography.sectionHeader,
+                    ),
+                    if (!state.isLoading && state.hasAnyComments)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildLanguageFilterMenu(context, state, isMobile),
+                          const SizedBox(width: 12),
+                          _buildSortMenu(context, state, isMobile),
+                        ],
+                      ),
                   ],
                 ),
+              ],
+              const SizedBox(height: 24),
+              Expanded(
+                child: _buildContent(state, crossAxisCount),
+              ),
             ],
           ),
-          const SizedBox(height: 24),
-          Expanded(
-            child: _buildContent(state, crossAxisCount),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -157,7 +184,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     );
   }
 
-  Widget _buildLanguageFilterMenu(BuildContext context, TvTimeCommentsState state) {
+  Widget _buildLanguageFilterMenu(BuildContext context, TvTimeCommentsState state, bool isMobile) {
     String label = 'Any Language';
     switch (state.languageFilter) {
       case CommentLanguageFilter.english: label = 'English'; break;
@@ -182,11 +209,11 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
         _buildPopupMenuItem(CommentLanguageFilter.italian, 'Italian', state.languageFilter),
         _buildPopupMenuItem(CommentLanguageFilter.englishAndItalian, 'English + Italian', state.languageFilter),
       ],
-      child: _buildFilterChip(label, Icons.language),
+      child: _buildFilterChip(label, Icons.language, isMobile),
     );
   }
 
-  Widget _buildSortMenu(BuildContext context, TvTimeCommentsState state) {
+  Widget _buildSortMenu(BuildContext context, TvTimeCommentsState state, bool isMobile) {
     String label = state.sortType == CommentSortType.mostLiked ? 'Most Liked' : 'Recent';
 
     return PopupMenuButton<CommentSortType>(
@@ -203,30 +230,44 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
         _buildPopupMenuItem(CommentSortType.mostLiked, 'Most Liked', state.sortType),
         _buildPopupMenuItem(CommentSortType.recent, 'Recent', state.sortType),
       ],
-      child: _buildFilterChip(label, Icons.sort),
+      child: _buildFilterChip(label, Icons.sort, isMobile),
     );
   }
 
-  Widget _buildFilterChip(String label, IconData icon) {
+  Widget _buildFilterChip(String label, IconData icon, bool isMobile) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppTheme.textWhite.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: isMobile ? MainAxisSize.max : MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(icon, size: 18, color: AppTheme.textWhite),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: DesktopTypography.bodySecondary.copyWith(
-              fontSize: 14,
-              color: AppTheme.textWhite,
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 18, color: AppTheme.textWhite.withValues(alpha: 0.8)),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    style: DesktopTypography.bodySecondary.copyWith(
+                      fontSize: 14,
+                      color: AppTheme.textWhite,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
+          if (isMobile) const SizedBox(width: 4),
+          Icon(Icons.unfold_more_rounded, size: 18, color: AppTheme.textWhite.withValues(alpha: 0.5)),
         ],
       ),
     );
