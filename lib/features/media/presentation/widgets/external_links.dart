@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
-import 'package:cinemuse_app/shared/widgets/app_browser.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ExternalLinks extends StatelessWidget {
@@ -39,13 +39,13 @@ class ExternalLinks extends StatelessWidget {
               children: [
                 if (externalIds!['instagram_id'] != null)
                   _SocialLink(
-                    icon: FontAwesomeIcons.instagram,
+                    icon: LucideIcons.instagram,
                     url: 'https://instagram.com/${externalIds!['instagram_id']}',
                     label: 'Instagram',
                   ),
                 if (externalIds!['facebook_id'] != null)
                   _SocialLink(
-                    icon: FontAwesomeIcons.facebook,
+                    icon: LucideIcons.facebook,
                     url: 'https://facebook.com/${externalIds!['facebook_id']}',
                     label: 'Facebook',
                   ),
@@ -97,7 +97,7 @@ class _SocialLink extends StatelessWidget {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: () => AppBrowser.show(context, url: url, title: label),
+        onTap: () => launchUrl(Uri.parse(url)),
         child: Padding(
           padding: const EdgeInsets.only(right: 16),
           child: HoverScale(
@@ -121,7 +121,7 @@ class _DatabaseLink extends StatelessWidget {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: () => AppBrowser.show(context, url: url, title: label),
+        onTap: () => launchUrl(Uri.parse(url)),
         child: HoverScale(
           scale: 1.1,
           child: Container(
