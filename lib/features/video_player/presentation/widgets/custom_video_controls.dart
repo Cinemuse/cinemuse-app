@@ -16,6 +16,9 @@ import 'package:cinemuse_app/features/video_player/presentation/widgets/cast_dev
 import 'package:cinemuse_app/core/constants/playback_constants.dart';
 import 'package:cinemuse_app/core/presentation/widgets/buffering_indicator.dart';
 import 'package:cinemuse_app/core/presentation/widgets/play_pause_overlay.dart';
+import 'package:cinemuse_app/core/presentation/widgets/seek_feedback_overlay.dart';
+
+enum DragType { none, volume, brightness }
 
 class CustomVideoControls extends ConsumerStatefulWidget {
   final VideoState videoState;
@@ -52,6 +55,17 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   Duration? _virtualPosition;
   Timer? _clearVirtualPositionTimer;
   bool _isFullScreen = false;
+  
+  DragType _currentDragType = DragType.none;
+  double _brightnessLevel = 1.0; // 0.0 to 1.0
+  Timer? _hideIndicatorTimer;
+  double _dragIndicatorValue = 0.0;
+  Offset? _doubleTapPosition;
+
+  bool _showSeekIndicator = false;
+  int _seekAmount = 0;
+  Timer? _seekIndicatorTimer;
+
   /// Tracks whether the window was already maximized before we entered
   /// fullscreen, so we can restore the original state on exit.
   static bool _wasMaximizedBeforeFullscreen = false;
@@ -73,13 +87,15 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     _hideTimer?.cancel();
     _skipTimer?.cancel();
     _clearVirtualPositionTimer?.cancel();
+    _hideIndicatorTimer?.cancel();
+    _seekIndicatorTimer?.cancel();
     super.dispose();
   }
 
   void _startHideTimer() {
     _hideTimer?.cancel();
     _hideTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted && !_dragging && widget.playerState.controller.player.state.playing) {
+      if (mounted && !_dragging && _currentDragType == DragType.none && widget.playerState.controller.player.state.playing) {
         setState(() {
           _visible = false;
         });
@@ -285,12 +301,33 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   }
 
   void _performRealSkip(bool forward) {
+    _showSeekFeedback(forward);
     final player = widget.playerState.controller.player;
     final pos = player.state.position;
     final duration = player.state.duration;
     final target = Duration(seconds: (pos.inSeconds + (forward ? 10 : -10)).clamp(0, duration.inSeconds));
     ref.read(playerControllerProvider(widget.params).notifier).seek(target);
     _onHover();
+  }
+
+  void _showSeekFeedback(bool forward) {
+    _seekIndicatorTimer?.cancel();
+    setState(() {
+      _showSeekIndicator = true;
+      if (forward) {
+        _seekAmount = (_seekAmount > 0) ? _seekAmount + 10 : 10;
+      } else {
+        _seekAmount = (_seekAmount < 0) ? _seekAmount - 10 : -10;
+      }
+    });
+    _seekIndicatorTimer = Timer(const Duration(milliseconds: 1000), () {
+      if (mounted) {
+        setState(() {
+          _showSeekIndicator = false;
+          _seekAmount = 0;
+        });
+      }
+    });
   }
 
   Future<void> _handleCastPressed(BuildContext context) async {
@@ -302,6 +339,67 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     final device = await CastDeviceSelector.show(context);
     if (device != null) {
       await ref.read(playerControllerProvider(widget.params).notifier).startCasting(device);
+    }
+  }
+
+  void _onVerticalDragStart(DragStartDetails details) {
+    _onHover(); // Show controls and restart timer
+    final screenWidth = MediaQuery.of(context).size.width;
+    if (details.globalPosition.dx < screenWidth / 2) {
+      _currentDragType = DragType.brightness;
+      _dragIndicatorValue = _brightnessLevel;
+    } else {
+      _currentDragType = DragType.volume;
+      _dragIndicatorValue = widget.playerState.controller.player.state.volume / 100.0;
+    }
+    _hideIndicatorTimer?.cancel();
+    setState(() {});
+  }
+
+  void _onVerticalDragUpdate(DragUpdateDetails details) {
+    if (_currentDragType == DragType.none) return;
+
+    final screenHeight = MediaQuery.of(context).size.height;
+    final delta = -(details.primaryDelta ?? 0) / screenHeight * 1.5;
+
+    setState(() {
+      if (_currentDragType == DragType.brightness) {
+        _brightnessLevel = (_brightnessLevel + delta).clamp(0.0, 1.0);
+        _dragIndicatorValue = _brightnessLevel;
+      } else {
+        final player = widget.playerState.controller.player;
+        double currentVol = player.state.volume / 100.0;
+        currentVol = (currentVol + delta).clamp(0.0, 1.0);
+        player.setVolume(currentVol * 100.0);
+        _dragIndicatorValue = currentVol;
+      }
+    });
+  }
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    _hideIndicatorTimer?.cancel();
+    _hideIndicatorTimer = Timer(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        setState(() {
+          _currentDragType = DragType.none;
+        });
+        _startHideTimer();
+      }
+    });
+  }
+
+  void _onDoubleTapDown(TapDownDetails details) {
+    _doubleTapPosition = details.globalPosition;
+  }
+
+  void _onDoubleTap() {
+    if (_doubleTapPosition != null) {
+      final screenWidth = MediaQuery.of(context).size.width;
+      if (_doubleTapPosition!.dx < screenWidth / 2) {
+        _performRealSkip(false);
+      } else {
+        _performRealSkip(true);
+      }
     }
   }
 
@@ -328,10 +426,20 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
               _onHover();
             }
           },
-          onDoubleTap: _toggleFullscreen,
+          onDoubleTapDown: _onDoubleTapDown,
+          onDoubleTap: _onDoubleTap,
+          onVerticalDragStart: _onVerticalDragStart,
+          onVerticalDragUpdate: _onVerticalDragUpdate,
+          onVerticalDragEnd: _onVerticalDragEnd,
           behavior: HitTestBehavior.opaque,
           child: Stack(
             children: [
+              // Brightness overlay
+              IgnorePointer(
+                child: Container(
+                  color: Colors.black.withValues(alpha: 1.0 - _brightnessLevel),
+                ),
+              ),
               AnimatedOpacity(
                 opacity: _visible ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 200),
@@ -362,7 +470,63 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
 
                     // Buffering / play-pause center overlay
                     BufferingIndicator(player: player),
-                    PlayPauseOverlay(player: player, visible: _visible),
+                    PlayPauseOverlay(
+                      player: player, 
+                      visible: _visible,
+                      onTogglePlayPause: _togglePlayPause,
+                      onSkip: _performRealSkip,
+                    ),
+
+                    SeekFeedbackOverlay(
+                      amount: _seekAmount,
+                      visible: _showSeekIndicator,
+                    ),
+
+
+                    // Drag Indicator Overlay
+                    if (_currentDragType != DragType.none)
+                      Align(
+                        alignment: Alignment.topCenter,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 72.0),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.1),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _currentDragType == DragType.volume
+                                      ? (_dragIndicatorValue == 0 ? Icons.volume_off : Icons.volume_up)
+                                      : Icons.brightness_6,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                SizedBox(
+                                  width: 100,
+                                  height: 4,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(2),
+                                    child: LinearProgressIndicator(
+                                      value: _dragIndicatorValue,
+                                      backgroundColor: Colors.white.withValues(alpha: 0.2),
+                                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
 
                     Positioned(
                       bottom: 0,

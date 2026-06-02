@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 
@@ -31,11 +32,27 @@ class VolumeControlState extends State<VolumeControl> {
     }
   }
 
+  bool get _isMobile {
+    try {
+      return Platform.isAndroid || Platform.isIOS;
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isMobile) {
+      return const SizedBox.shrink();
+    }
+
     return MouseRegion(
-      onEnter: (_) => setState(() => _showSlider = true),
-      onExit: (_) => setState(() => _showSlider = false),
+      onEnter: (_) {
+        if (!_isMobile) setState(() => _showSlider = true);
+      },
+      onExit: (_) {
+        if (!_isMobile) setState(() => _showSlider = false);
+      },
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

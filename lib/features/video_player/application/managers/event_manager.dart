@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cinemuse_app/features/video_player/application/managers/base_manager.dart';
 import 'package:flutter/foundation.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 /// Centralized manager for player event subscriptions and state bridging.
 class EventManager extends BaseManager {
@@ -24,7 +25,14 @@ class EventManager extends BaseManager {
   void initialize() {
     _cancelSubscriptions();
 
-    _subscriptions.add(player.stream.playing.listen((_) => onStateChanged()));
+    _subscriptions.add(player.stream.playing.listen((playing) {
+      if (playing) {
+        WakelockPlus.enable();
+      } else {
+        WakelockPlus.disable();
+      }
+      onStateChanged();
+    }));
     _subscriptions.add(player.stream.buffering.listen((_) => onStateChanged()));
     _subscriptions.add(player.stream.duration.listen((d) {
        if (d.inSeconds > 0) {
@@ -77,6 +85,7 @@ class EventManager extends BaseManager {
 
   @override
   void dispose() {
+    WakelockPlus.disable();
     _cancelSubscriptions();
     super.dispose();
   }

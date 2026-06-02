@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/core/presentation/widgets/volume_control.dart';
@@ -32,37 +33,40 @@ class VideoPlaybackControls extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final player = playerState.controller.player;
     final l10n = ref.watch(localizationsProvider);
+    final isMobile = defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
 
     return Row(
       children: [
-        // Play / Pause
-        StreamBuilder<bool>(
-          stream: player.stream.playing,
-          initialData: player.state.playing,
-          builder: (context, snapshot) {
-            final isPlaying = snapshot.data ?? player.state.playing;
-            return IconButton(
-              icon: Icon(
-                isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                color: Colors.white,
-                size: 32,
-              ),
-              onPressed: onTogglePlayPause,
-            );
-          },
-        ),
+        if (!isMobile) ...[
+          // Play / Pause
+          StreamBuilder<bool>(
+            stream: player.stream.playing,
+            initialData: player.state.playing,
+            builder: (context, snapshot) {
+              final isPlaying = snapshot.data ?? player.state.playing;
+              return IconButton(
+                icon: Icon(
+                  isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: 32,
+                ),
+                onPressed: onTogglePlayPause,
+              );
+            },
+          ),
 
-        // Skip backward / forward
-        IconButton(
-          icon: const Icon(Icons.replay_10_rounded, color: Colors.white),
-          onPressed: () => onSkip(false),
-        ),
-        IconButton(
-          icon: const Icon(Icons.forward_10_rounded, color: Colors.white),
-          onPressed: () => onSkip(true),
-        ),
+          // Skip backward / forward
+          IconButton(
+            icon: const Icon(Icons.replay_10_rounded, color: Colors.white),
+            onPressed: () => onSkip(false),
+          ),
+          IconButton(
+            icon: const Icon(Icons.forward_10_rounded, color: Colors.white),
+            onPressed: () => onSkip(true),
+          ),
 
-        const SizedBox(width: 4),
+          const SizedBox(width: 4),
+        ],
 
         // Volume — shared widget
         VolumeControl(player: player),
