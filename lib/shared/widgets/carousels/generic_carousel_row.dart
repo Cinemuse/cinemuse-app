@@ -269,8 +269,6 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.chevron_right, color: AppTheme.textMuted),
                       ],
                     ),
                   ),
