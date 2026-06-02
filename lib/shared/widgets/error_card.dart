@@ -1,7 +1,5 @@
 import 'package:cinemuse_app/core/error/app_exception.dart';
-import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ErrorCard extends StatelessWidget {
   final String message;
@@ -37,9 +35,9 @@ class ErrorCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
+        color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -52,7 +50,7 @@ class ErrorCard extends StatelessWidget {
               children: [
                 Text(
                   message,
-                  style: GoogleFonts.outfit(
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: Colors.white,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -62,7 +60,7 @@ class ErrorCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     hint!,
-                    style: GoogleFonts.outfit(
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                       color: Colors.white60,
                       fontSize: 12,
                     ),

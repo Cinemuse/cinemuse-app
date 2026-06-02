@@ -5,8 +5,6 @@ import 'package:cinemuse_app/features/home/presentation/home_screen.dart';
 import 'package:cinemuse_app/features/explore/presentation/pages/explore_screen.dart';
 import 'package:cinemuse_app/features/navigation/navbar.dart';
 import 'package:cinemuse_app/features/profile/presentation/profile_hub.dart';
-import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/core/presentation/intents.dart';
 import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/search/presentation/search_overlay.dart';

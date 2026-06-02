@@ -30,11 +30,11 @@ class BentoBox extends StatelessWidget {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppTheme.secondary.withOpacity(0.3),
+        color: backgroundColor ?? AppTheme.secondary.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(isMobile ? 16 : 24),
         border: showBorder
             ? Border.all(
-                color: AppTheme.border.withOpacity(0.1),
+                color: AppTheme.border.withValues(alpha: 0.1),
                 width: 1,
               )
             : null,

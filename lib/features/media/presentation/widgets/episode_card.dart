@@ -1,12 +1,10 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
-import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
 class EpisodeCard extends ConsumerStatefulWidget {
@@ -201,9 +199,9 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
       onLongPress: () => _showContextMenu(context),
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.secondary.withOpacity(0.5),
+          color: AppTheme.secondary.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.textWhite.withOpacity(0.05)),
+          border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.05)),
         ),
         clipBehavior: Clip.antiAlias,
         child: Material(
@@ -260,7 +258,7 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withOpacity(0.3),
+                  color: AppTheme.primary.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.play_arrow, color: AppTheme.textWhite, size: 24),
@@ -290,13 +288,13 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: AppTheme.textWhite.withOpacity(0.1)),
+                border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
               ),
               child: Text(
                 l10n.detailsEpisodeNumber(_epNumber),
-                style: GoogleFonts.firaCode(
+                style: AppTheme.monoStyle(
                   color: AppTheme.textWhite,
                   fontSize: 9,
                   fontWeight: FontWeight.bold,
@@ -313,7 +311,7 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(
@@ -338,7 +336,7 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
               child: Container(
                 height: 3,
                 decoration: BoxDecoration(
-                  color: AppTheme.textWhite.withOpacity(0.1),
+                  color: AppTheme.textWhite.withValues(alpha: 0.1),
                   borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
                 ),
                 alignment: Alignment.centerLeft,
@@ -380,7 +378,7 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
             Text(
               formattedAirDate,
               style: TextStyle(
-                color: AppTheme.textMuted.withOpacity(0.8),
+                color: AppTheme.textMuted.withValues(alpha: 0.8),
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -467,13 +465,13 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppTheme.textWhite.withOpacity(0.05),
+                        color: AppTheme.textWhite.withValues(alpha: 0.05),
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.textWhite.withOpacity(0.1)),
+                        border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
                       ),
                       child: Icon(
                         Icons.more_vert,
-                        color: AppTheme.textWhite.withOpacity(0.6),
+                        color: AppTheme.textWhite.withValues(alpha: 0.6),
                         size: 20,
                       ),
                     ),
@@ -498,13 +496,13 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppTheme.textWhite.withOpacity(0.05),
+                          color: AppTheme.textWhite.withValues(alpha: 0.05),
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.textWhite.withOpacity(0.1)),
+                          border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
                         ),
                         child: Icon(
                           Icons.forum_outlined,
-                          color: AppTheme.textWhite.withOpacity(0.6),
+                          color: AppTheme.textWhite.withValues(alpha: 0.6),
                           size: 20,
                         ),
                       ),
@@ -568,10 +566,10 @@ class MarkWatchedButton extends StatelessWidget {
                 vertical: 8,
               ),
               decoration: BoxDecoration(
-                color: isWatched ? Colors.green : AppTheme.textWhite.withOpacity(0.05),
+                color: isWatched ? Colors.green : AppTheme.textWhite.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isWatched ? Colors.green : AppTheme.textWhite.withOpacity(0.1),
+                  color: isWatched ? Colors.green : AppTheme.textWhite.withValues(alpha: 0.1),
                 ),
               ),
               child: watchCount > 1

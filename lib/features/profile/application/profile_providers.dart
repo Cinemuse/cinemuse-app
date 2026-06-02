@@ -117,44 +117,41 @@ final profileStatsProvider = StreamProvider<ProfileStats>((ref) async* {
   // Local database stream acts as an invalidator trigger
   // Every time a user watches something, the local watch_histories table is merged/updated,
   // triggering this stream, which in turn fetches the true aggregated stats from backend.
-  final localStream = ref.watch(watchHistoryStreamProvider.stream);
+  ref.watch(watchHistoryStreamProvider);
   
-  // Initial fetch and subsequent re-fetches
-  await for (final _ in localStream) {
-    try {
-      final res = await supabase.from('user_stats').select().eq('user_id', userId).maybeSingle();
-      if (res == null) {
-        yield ProfileStats.empty();
-        continue;
-      }
-      
-      yield ProfileStats(
-          totalMinutesWatched: (res['total_minutes_watched'] as num?)?.toInt() ?? 0,
-          totalEpisodes: (res['total_episodes'] as num?)?.toInt() ?? 0,
-          totalMovies: (res['total_movies'] as num?)?.toInt() ?? 0,
-          totalSeries: (res['total_series'] as num?)?.toInt() ?? 0,
-          totalSeasons: (res['total_seasons'] as num?)?.toInt() ?? 0,
-          last7Days: PeriodStats(
-            totalMinutes: (res['p7_minutes'] as num?)?.toInt() ?? 0,
-            movieCount: (res['p7_movies'] as num?)?.toInt() ?? 0,
-            episodeCount: (res['p7_episodes'] as num?)?.toInt() ?? 0,
-          ),
-          last30Days: PeriodStats(
-            totalMinutes: (res['p30_minutes'] as num?)?.toInt() ?? 0,
-            movieCount: (res['p30_movies'] as num?)?.toInt() ?? 0,
-            episodeCount: (res['p30_episodes'] as num?)?.toInt() ?? 0,
-          ),
-          last365Days: PeriodStats(
-            totalMinutes: (res['p365_minutes'] as num?)?.toInt() ?? 0,
-            movieCount: (res['p365_movies'] as num?)?.toInt() ?? 0,
-            episodeCount: (res['p365_episodes'] as num?)?.toInt() ?? 0,
-          ),
-          movieMinutes: (res['movie_minutes'] as num?)?.toInt() ?? 0,
-          seriesMinutes: (res['series_minutes'] as num?)?.toInt() ?? 0,
-      );
-    } catch (e) {
-      // Return empty stats on failure or keep previous
+  try {
+    final res = await supabase.from('user_stats').select().eq('user_id', userId).maybeSingle();
+    if (res == null) {
       yield ProfileStats.empty();
+      return;
     }
+    
+    yield ProfileStats(
+        totalMinutesWatched: (res['total_minutes_watched'] as num?)?.toInt() ?? 0,
+        totalEpisodes: (res['total_episodes'] as num?)?.toInt() ?? 0,
+        totalMovies: (res['total_movies'] as num?)?.toInt() ?? 0,
+        totalSeries: (res['total_series'] as num?)?.toInt() ?? 0,
+        totalSeasons: (res['total_seasons'] as num?)?.toInt() ?? 0,
+        last7Days: PeriodStats(
+          totalMinutes: (res['p7_minutes'] as num?)?.toInt() ?? 0,
+          movieCount: (res['p7_movies'] as num?)?.toInt() ?? 0,
+          episodeCount: (res['p7_episodes'] as num?)?.toInt() ?? 0,
+        ),
+        last30Days: PeriodStats(
+          totalMinutes: (res['p30_minutes'] as num?)?.toInt() ?? 0,
+          movieCount: (res['p30_movies'] as num?)?.toInt() ?? 0,
+          episodeCount: (res['p30_episodes'] as num?)?.toInt() ?? 0,
+        ),
+        last365Days: PeriodStats(
+          totalMinutes: (res['p365_minutes'] as num?)?.toInt() ?? 0,
+          movieCount: (res['p365_movies'] as num?)?.toInt() ?? 0,
+          episodeCount: (res['p365_episodes'] as num?)?.toInt() ?? 0,
+        ),
+        movieMinutes: (res['movie_minutes'] as num?)?.toInt() ?? 0,
+        seriesMinutes: (res['series_minutes'] as num?)?.toInt() ?? 0,
+    );
+  } catch (e) {
+    // Return empty stats on failure or keep previous
+    yield ProfileStats.empty();
   }
 });

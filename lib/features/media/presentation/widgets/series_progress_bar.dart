@@ -1,7 +1,6 @@
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
@@ -33,7 +32,7 @@ class SeriesProgressBar extends ConsumerWidget {
             children: [
               Text(
                 l10n.detailsSeriesProgress.toUpperCase(),
-                style: GoogleFonts.firaCode(
+                style: AppTheme.monoStyle(
                   color: AppTheme.textMuted,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
@@ -42,7 +41,7 @@ class SeriesProgressBar extends ConsumerWidget {
               ),
               Text(
                 '${progress.percentage}% (${progress.watchedCount}/${progress.totalCount})',
-                style: GoogleFonts.firaCode(
+                style: AppTheme.monoStyle(
                   color: AppTheme.textMuted,
                   fontSize: 10,
                 ),
@@ -54,7 +53,7 @@ class SeriesProgressBar extends ConsumerWidget {
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: progress.percentage / 100,
-              backgroundColor: AppTheme.textWhite.withOpacity(0.1),
+              backgroundColor: AppTheme.textWhite.withValues(alpha: 0.1),
               valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accent),
               minHeight: 6,
             ),

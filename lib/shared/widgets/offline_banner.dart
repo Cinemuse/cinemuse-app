@@ -1,6 +1,5 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class OfflineBanner extends StatelessWidget {
   final VoidCallback? onRetry;
@@ -24,15 +23,15 @@ class OfflineBanner extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Colors.orange.withOpacity(0.15),
-            Colors.orange.withOpacity(0.05),
+            Colors.orange.withValues(alpha: 0.15),
+            Colors.orange.withValues(alpha: 0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.orange.withOpacity(0.3),
+          color: Colors.orange.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -41,7 +40,7 @@ class OfflineBanner extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.2),
+              color: Colors.orange.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -58,7 +57,7 @@ class OfflineBanner extends StatelessWidget {
               children: [
                 Text(
                   'Offline Mode',
-                  style: GoogleFonts.outfit(
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: Colors.white,
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -66,7 +65,7 @@ class OfflineBanner extends StatelessWidget {
                 ),
                 Text(
                   'Showing locally cached content only.',
-                  style: GoogleFonts.outfit(
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: Colors.white70,
                     fontSize: 13,
                   ),
@@ -81,7 +80,7 @@ class OfflineBanner extends StatelessWidget {
                 foregroundColor: Colors.orangeAccent,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
-              child: const Text('Retry'),
+              child: Text('Retry'),
             ),
         ],
       ),

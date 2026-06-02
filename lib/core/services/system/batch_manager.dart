@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 
 /// BatchManager
 /// 
@@ -35,7 +36,7 @@ class BatchManager {
       try {
         await callback();
       } catch (e) {
-        print('BatchManager error for $key: $e');
+        debugPrint('BatchManager error for $key: $e');
       } finally {
         _timers.remove(key);
         _pendingCallbacks.remove(key);
@@ -72,7 +73,7 @@ class BatchManager {
       try {
         await entry.value();
       } catch (e) {
-        print('BatchManager flush error for ${entry.key}: $e');
+        debugPrint('BatchManager flush error for ${entry.key}: $e');
       }
     }
   }

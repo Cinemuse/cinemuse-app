@@ -35,8 +35,8 @@ class _AppNavbarState extends State<AppNavbar> {
 
     // Visual styling for the background
     final navbarDecoration = BoxDecoration(
-      color: AppTheme.surface.withOpacity(0.8),
-      border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1))),
+      color: AppTheme.surface.withValues(alpha: 0.8),
+      border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
     );
 
     // Common padding for both layers to ensure alignment
@@ -87,9 +87,9 @@ class _AppNavbarState extends State<AppNavbar> {
                     if (isDesktop && MediaQuery.of(context).size.width >= 600)
                       Container(
                         decoration: BoxDecoration(
-                          color: AppTheme.surface.withOpacity(0.5),
+                          color: AppTheme.surface.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                         child: Row(
@@ -138,7 +138,7 @@ class _AppNavbarState extends State<AppNavbar> {
                                   textStyle: const TextStyle(color: Colors.white),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    side: BorderSide(color: Colors.white.withOpacity(0.1)),
+                                    side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                                   ),
                                 ),
                               ),
@@ -189,7 +189,7 @@ class _AppNavbarState extends State<AppNavbar> {
                                     onTap: () => _settingsMenuKey.currentState?.showButtonMenu(),
                                     mouseCursor: SystemMouseCursors.click,
                                     borderRadius: BorderRadius.circular(20),
-                                    hoverColor: Colors.white.withOpacity(0.1),
+                                    hoverColor: Colors.white.withValues(alpha: 0.1),
                                     child: const Padding(
                                       padding: EdgeInsets.all(8),
                                       child: Icon(
@@ -260,7 +260,7 @@ class _AppNavbarState extends State<AppNavbar> {
                             textStyle: const TextStyle(color: Colors.white),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+                              side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                             ),
                           ),
                         ),
@@ -374,7 +374,7 @@ class _WindowButton extends StatelessWidget {
         onTap: onTap,
         hoverColor: isClose 
             ? const Color(0xFFE81123) // Standard Windows close red
-            : Colors.white.withOpacity(0.1),
+            : Colors.white.withValues(alpha: 0.1),
         child: SizedBox(
           width: 46, // Standard Windows title bar button width
           child: Center(
@@ -452,17 +452,17 @@ class _NavItem extends StatelessWidget {
         onTap: onTap,
         borderRadius: effectiveRadius,
         mouseCursor: SystemMouseCursors.click,
-        hoverColor: AppTheme.accent.withOpacity(0.1),
-        focusColor: AppTheme.accent.withOpacity(0.2),
+        hoverColor: AppTheme.accent.withValues(alpha: 0.1),
+        focusColor: AppTheme.accent.withValues(alpha: 0.2),
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.accent.withOpacity(0.2) : Colors.transparent,
+            color: isSelected ? AppTheme.accent.withValues(alpha: 0.2) : Colors.transparent,
             borderRadius: effectiveRadius,
             border: Border.all(
-              color: isSelected ? AppTheme.accent.withOpacity(0.5) : Colors.transparent,
+              color: isSelected ? AppTheme.accent.withValues(alpha: 0.5) : Colors.transparent,
             ),
           ),
           child: Text(
@@ -498,7 +498,7 @@ class _IconAction extends StatelessWidget {
         mouseCursor: SystemMouseCursors.click,
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
-        hoverColor: Colors.white.withOpacity(0.1),
+        hoverColor: Colors.white.withValues(alpha: 0.1),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Icon(icon, color: Colors.white, size: size),
@@ -517,7 +517,7 @@ class _NavDivider extends StatelessWidget {
       width: 1,
       height: 24,
       margin: const EdgeInsets.symmetric(horizontal: 12),
-      color: Colors.white.withOpacity(0.1),
+      color: Colors.white.withValues(alpha: 0.1),
     );
   }
 }

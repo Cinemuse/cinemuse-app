@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 enum CarouselTheme {
   homeRow,     // Title + chevron right (no box)
@@ -264,7 +263,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
                       children: [
                         Text(
                           widget.title ?? '',
-                          style: GoogleFonts.outfit(
+                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,

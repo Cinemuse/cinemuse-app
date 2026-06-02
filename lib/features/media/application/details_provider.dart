@@ -1,6 +1,4 @@
-import 'package:cinemuse_app/core/application/l10n_provider.dart';
 import 'package:cinemuse_app/core/error/app_exception.dart';
-import 'package:cinemuse_app/core/error/supabase_error_handler.dart';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
@@ -9,7 +7,6 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';

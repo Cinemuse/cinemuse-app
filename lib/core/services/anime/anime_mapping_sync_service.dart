@@ -1,9 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
-import 'package:cinemuse_app/core/services/system/batch_manager.dart';
-import 'package:cinemuse_app/core/services/system/supabase_service.dart';
-import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,16 +33,16 @@ class AnimeMappingSyncService {
 
     if (isEmpty || lastSync == null || DateTime.now().difference(lastSync).inHours > 24) {
       if (isEmpty) {
-        print('AnimeMappingSyncService: Mapping table is empty, forcing sync...');
+        debugPrint('AnimeMappingSyncService: Mapping table is empty, forcing sync...');
       } else {
-        print('AnimeMappingSyncService: Starting daily sync...');
+        debugPrint('AnimeMappingSyncService: Starting daily sync...');
       }
       
       await _sync();
       await prefs.setString(_lastSyncKey, DateTime.now().toIso8601String());
-      print('AnimeMappingSyncService: Sync completed.');
+      debugPrint('AnimeMappingSyncService: Sync completed.');
     } else {
-      print('AnimeMappingSyncService: Mapping is up to date (last sync: $lastSync, count: $count).');
+      debugPrint('AnimeMappingSyncService: Mapping is up to date (last sync: $lastSync, count: $count).');
     }
   }
 
@@ -91,7 +89,7 @@ class AnimeMappingSyncService {
         await _db.replaceAnimeExternalMappings(companions);
       }
     } catch (e) {
-      print('AnimeMappingSyncService: Sync failed: $e');
+      debugPrint('AnimeMappingSyncService: Sync failed: $e');
     }
   }
 

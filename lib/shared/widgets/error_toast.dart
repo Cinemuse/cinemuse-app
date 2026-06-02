@@ -1,7 +1,5 @@
 import 'package:cinemuse_app/core/error/app_exception.dart';
-import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ErrorToast extends StatelessWidget {
   final String message;
@@ -44,12 +42,12 @@ class ErrorToast extends StatelessWidget {
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.85),
+          color: Colors.black.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               blurRadius: 20,
               spreadRadius: 2,
             ),
@@ -60,7 +58,7 @@ class ErrorToast extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 20),
@@ -69,7 +67,7 @@ class ErrorToast extends StatelessWidget {
             Expanded(
               child: Text(
                 message,
-                style: GoogleFonts.outfit(
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                   color: Colors.white,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,

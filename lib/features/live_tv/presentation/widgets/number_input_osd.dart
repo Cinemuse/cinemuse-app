@@ -30,19 +30,19 @@ class NumberInputOsd extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           decoration: BoxDecoration(
-            color: AppTheme.surface.withOpacity(0.85),
+            color: AppTheme.surface.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppTheme.accent.withOpacity(0.3),
+              color: AppTheme.accent.withValues(alpha: 0.3),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.4),
+                color: Colors.black.withValues(alpha: 0.4),
                 blurRadius: 20,
                 spreadRadius: 2,
               ),
               BoxShadow(
-                color: AppTheme.accent.withOpacity(0.1),
+                color: AppTheme.accent.withValues(alpha: 0.1),
                 blurRadius: 12,
               ),
             ],
@@ -110,7 +110,7 @@ class _BlinkingCursorState extends State<_BlinkingCursor>
           width: 2,
           height: 28,
           margin: const EdgeInsets.only(left: 2),
-          color: AppTheme.accent.withOpacity(_controller.value),
+          color: AppTheme.accent.withValues(alpha: _controller.value),
         );
       },
     );

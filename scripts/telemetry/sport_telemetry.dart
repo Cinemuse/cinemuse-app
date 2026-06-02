@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 
 // Use a relative import to access the actual app logic directly!
-import '../../lib/features/home/application/sport_schedule_scraper.dart';
+import 'package:cinemuse_app/features/home/application/sport_schedule_scraper.dart';
 
 void main() async {
   print('Starting Sport Schedule Scraper Telemetry...');

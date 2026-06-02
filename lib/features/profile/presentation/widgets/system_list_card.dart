@@ -17,7 +17,7 @@ class SystemListCard extends StatelessWidget {
     final isWatchlist = list.type == ListType.watchlist;
     
     final Color baseColor = isWatchlist ? AppTheme.watchlist : AppTheme.favorites;
-    final Color iconBoxColor = isWatchlist ? AppTheme.watchlist.withOpacity(0.2) : AppTheme.favorites.withOpacity(0.2);
+    final Color iconBoxColor = isWatchlist ? AppTheme.watchlist.withValues(alpha: 0.2) : AppTheme.favorites.withValues(alpha: 0.2);
     final Color iconColor = isWatchlist ? AppTheme.watchlist : AppTheme.favorites;
     final IconData icon = isWatchlist ? Icons.bookmark : Icons.favorite;
     final String title = isWatchlist ? "Watch Later" : "Favorites";
@@ -33,11 +33,11 @@ class SystemListCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              baseColor.withOpacity(0.8),
-              baseColor.withOpacity(0.4),
+              baseColor.withValues(alpha: 0.8),
+              baseColor.withValues(alpha: 0.4),
             ],
           ),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         child: Row(
           children: [
@@ -45,7 +45,7 @@ class SystemListCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: iconBoxColor.withOpacity(0.3),
+                color: iconBoxColor.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: iconColor, size: 24),
@@ -69,7 +69,7 @@ class SystemListCard extends StatelessWidget {
                   Text(
                     subtitle,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                       fontSize: 14,
                     ),
                   ),

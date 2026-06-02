@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final dioProvider = Provider<Dio>((ref) {
@@ -44,7 +44,7 @@ class RetryInterceptor extends Interceptor {
       
       // Exponential backoff
       final delay = Duration(milliseconds: 500 * (retryCount * retryCount));
-      print('NetworkInterceptor: Retrying request (${requestOptions.path}) - Attempt $retryCount after ${delay.inMilliseconds}ms');
+      debugPrint('NetworkInterceptor: Retrying request (${requestOptions.path}) - Attempt $retryCount after ${delay.inMilliseconds}ms');
       
       await Future.delayed(delay);
       

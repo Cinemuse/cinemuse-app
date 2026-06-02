@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppMenuOption {
   final IconData icon;
@@ -79,7 +78,7 @@ class AppMenu {
                     padding: const EdgeInsets.only(bottom: 16, left: 24, right: 24),
                     child: Text(
                       title,
-                      style: GoogleFonts.outfit(
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -93,7 +92,7 @@ class AppMenu {
                       ),
                       title: Text(
                         option.label,
-                        style: GoogleFonts.outfit(
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                           color: option.isDestructive ? AppTheme.favorites : Colors.white,
                           fontSize: 16,
                         ),
@@ -177,7 +176,7 @@ class AppMenu {
                         children: [
                           Text(
                             option.label,
-                            style: GoogleFonts.outfit(
+                            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                               color: option.isDestructive ? AppTheme.favorites : Colors.white,
                               fontSize: 14,
                             ),
@@ -187,7 +186,7 @@ class AppMenu {
                           if (option.subtitle != null)
                             Text(
                               option.subtitle!,
-                              style: GoogleFonts.outfit(
+                              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                                 color: Colors.white.withValues(alpha: 0.5),
                                 fontSize: 12,
                               ),

@@ -97,7 +97,7 @@ class _EditListModalState extends State<EditListModal> {
                 hintText: 'Enter list name...',
                 hintStyle: const TextStyle(color: Colors.white24),
                 filled: true,
-                fillColor: Colors.black.withOpacity(0.3),
+                fillColor: Colors.black.withValues(alpha: 0.3),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: Colors.white10),
@@ -131,7 +131,7 @@ class _EditListModalState extends State<EditListModal> {
                 hintText: 'Add a description...',
                 hintStyle: const TextStyle(color: Colors.white24),
                 filled: true,
-                fillColor: Colors.black.withOpacity(0.3),
+                fillColor: Colors.black.withValues(alpha: 0.3),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: Colors.white10),

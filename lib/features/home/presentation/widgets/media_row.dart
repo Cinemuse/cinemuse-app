@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
@@ -144,7 +143,7 @@ class MediaRow extends ConsumerWidget {
       child: Row(
         children: [
           Text(title,
-              style: GoogleFonts.outfit(
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.bold)),

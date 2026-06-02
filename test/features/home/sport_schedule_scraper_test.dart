@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
-import '../../../lib/features/home/application/sport_schedule_scraper.dart';
+import 'package:cinemuse_app/features/home/application/sport_schedule_scraper.dart';
 
 void main() {
   group('SportScheduleScraper', () {

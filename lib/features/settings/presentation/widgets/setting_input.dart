@@ -114,7 +114,7 @@ class _SettingInputState extends State<SettingInput> {
             decoration: InputDecoration(
               hintText: widget.placeholder,
               filled: true,
-              fillColor: Colors.black.withOpacity(0.3),
+              fillColor: Colors.black.withValues(alpha: 0.3),
               suffixIcon: widget.isPassword
                   ? IconButton(
                       icon: Icon(
@@ -131,11 +131,11 @@ class _SettingInputState extends State<SettingInput> {
                   : null,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -151,7 +151,7 @@ class _SettingInputState extends State<SettingInput> {
           child: ElevatedButton.icon(
             onPressed: (_isDirty && !_isSaving) ? _handleSave : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _isDirty && !_isSaving ? Colors.white : Colors.white.withOpacity(0.05),
+              backgroundColor: _isDirty && !_isSaving ? Colors.white : Colors.white.withValues(alpha: 0.05),
               foregroundColor: _isDirty && !_isSaving ? Colors.black : Colors.grey,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

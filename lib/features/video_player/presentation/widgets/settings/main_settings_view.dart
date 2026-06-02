@@ -33,7 +33,7 @@ class MainSettingsView extends ConsumerWidget {
               child: Text(
                 l10n.playerSettings.toUpperCase(),
                 style: TextStyle(
-                  color: AppTheme.textWhite.withOpacity(0.9),
+                  color: AppTheme.textWhite.withValues(alpha: 0.9),
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,

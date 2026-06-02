@@ -83,7 +83,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
         children: [
-          Container(height: 1, color: AppTheme.textWhite.withOpacity(0.1)),
+          Container(height: 1, color: AppTheme.textWhite.withValues(alpha: 0.1)),
           const SizedBox(height: 32),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -174,7 +174,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                           values: widget.filters.runtime,
                           onChanged: (v) => widget.onChanged(widget.filters.copyWith(runtime: v)),
                           label: l10n.searchRuntime,
-                          valueLabel: '${widget.filters.runtime.start.round()}m - ${widget.filters.runtime.end.round() >= 240 ? l10n.filterMax : widget.filters.runtime.end.round().toString() + 'm'}',
+                          valueLabel: '${widget.filters.runtime.start.round()}m - ${widget.filters.runtime.end.round() >= 240 ? l10n.filterMax : '${widget.filters.runtime.end.round()}m'}',
                           icon: Icons.access_time,
                         ),
                       ],
@@ -185,7 +185,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
             },
           ),
           const SizedBox(height: 32),
-          Container(height: 1, color: AppTheme.textWhite.withOpacity(0.1)),
+          Container(height: 1, color: AppTheme.textWhite.withValues(alpha: 0.1)),
         ],
       ),
     );
@@ -202,7 +202,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
           const SizedBox(width: 8),
           Text(
             subtitle,
-            style: TextStyle(color: AppTheme.textWhite.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.normal),
+            style: TextStyle(color: AppTheme.textWhite.withValues(alpha: 0.4), fontSize: 12, fontWeight: FontWeight.normal),
           ),
         ],
       ],
@@ -219,19 +219,19 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.textWhite : AppTheme.textWhite.withOpacity(0.02),
+          color: isSelected ? AppTheme.textWhite : AppTheme.textWhite.withValues(alpha: 0.02),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AppTheme.textWhite : AppTheme.textWhite.withOpacity(0.1),
+            color: isSelected ? AppTheme.textWhite : AppTheme.textWhite.withValues(alpha: 0.1),
           ),
           boxShadow: isSelected ? [
-            BoxShadow(color: AppTheme.textWhite.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))
+            BoxShadow(color: AppTheme.textWhite.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4))
           ] : null,
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? AppTheme.primary : AppTheme.textWhite.withOpacity(0.6),
+            color: isSelected ? AppTheme.primary : AppTheme.textWhite.withValues(alpha: 0.6),
             fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
@@ -254,10 +254,10 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? Colors.white : Colors.white.withOpacity(0.02),
+              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.02),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isSelected ? Colors.white : Colors.white.withOpacity(0.1),
+                color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.1),
               ),
             ),
             child: Row(
@@ -266,7 +266,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                 Text(
                   g['name'] as String,
                   style: TextStyle(
-                    color: isSelected ? AppTheme.primary : AppTheme.textWhite.withOpacity(0.6),
+                    color: isSelected ? AppTheme.primary : AppTheme.textWhite.withValues(alpha: 0.6),
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
@@ -333,7 +333,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
           dense: true,
           title: Text(lang['name']!, style: const TextStyle(color: AppTheme.textSecondary)),
           onTap: () => _handleLanguageSelect(lang['code']!),
-          hoverColor: AppTheme.textWhite.withOpacity(0.05),
+          hoverColor: AppTheme.textWhite.withValues(alpha: 0.05),
         );
       },
     );
@@ -347,8 +347,8 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
         final lang = TmdbConstants.languagesList.firstWhere((l) => l['code'] == code);
         return Chip(
           label: Text(lang['name']!, style: const TextStyle(fontSize: 12)),
-          backgroundColor: AppTheme.textWhite.withOpacity(0.1),
-          side: BorderSide(color: AppTheme.textWhite.withOpacity(0.1)),
+          backgroundColor: AppTheme.textWhite.withValues(alpha: 0.1),
+          side: BorderSide(color: AppTheme.textWhite.withValues(alpha: 0.1)),
           deleteIcon: const Icon(Icons.close, size: 14),
           onDeleted: () => _removeLanguage(code),
           labelStyle: const TextStyle(color: AppTheme.textWhite),
@@ -397,9 +397,9 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      color: isSelected ? AppTheme.textWhite.withOpacity(0.05) : Colors.transparent,
+                      color: isSelected ? AppTheme.textWhite.withValues(alpha: 0.05) : Colors.transparent,
                       border: Border.all(
-                        color: isSelected ? AppTheme.accent : AppTheme.textWhite.withOpacity(0.1),
+                        color: isSelected ? AppTheme.accent : AppTheme.textWhite.withValues(alpha: 0.1),
                         width: 2,
                       ),
                     ),

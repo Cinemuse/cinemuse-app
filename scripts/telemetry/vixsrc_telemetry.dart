@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 
 import 'package:cinemuse_app/core/services/streaming/sources/vixsrc_source.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 
 void main() async {
   print('Starting VixSrc Scraper Telemetry...');

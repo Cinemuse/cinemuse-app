@@ -1,4 +1,3 @@
-import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 
 /// Represents a normalized stream result from various sources.

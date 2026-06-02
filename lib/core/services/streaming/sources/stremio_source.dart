@@ -3,7 +3,6 @@ import 'package:cinemuse_app/core/utils/url_utils.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
-import 'package:cinemuse_app/core/services/streaming/ranking/stream_ranker.dart';
 import 'package:cinemuse_app/core/services/streaming/ranking/stream_parser.dart';
 import 'package:dio/dio.dart';
 
@@ -70,7 +69,7 @@ class StremioSource implements BaseSource {
                 ? "magnet:?xt=urn:btih:$infoHash&dn=${Uri.encodeComponent(title)}"
                 : "",
             seeds: s['seeds'] ?? 0,
-            provider: this.name,
+            provider: name,
             absoluteEpisode: context.mapping?.absoluteEpisode,
             metadata: metadata,
             resolution: metadata.video.resolution.label,

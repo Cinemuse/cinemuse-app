@@ -235,7 +235,7 @@ class _SplitPlayButton extends StatelessWidget {
       color: AppTheme.accent,
       borderRadius: BorderRadius.circular(12),
       boxShadow: [
-        BoxShadow(color: AppTheme.accent.withOpacity(0.4), blurRadius: 25, offset: const Offset(0, 8)),
+        BoxShadow(color: AppTheme.accent.withValues(alpha: 0.4), blurRadius: 25, offset: const Offset(0, 8)),
       ],
     );
 
@@ -268,7 +268,7 @@ class _SplitPlayButton extends StatelessWidget {
     final divider = Container(
       width: 1,
       height: 28,
-      color: AppTheme.textWhite.withOpacity(0.3),
+      color: AppTheme.textWhite.withValues(alpha: 0.3),
     );
 
     final chevronButton = PopupMenuButton<int>(
@@ -291,7 +291,7 @@ class _SplitPlayButton extends StatelessWidget {
               Icon(
                 item.icon,
                 size: 18,
-                color: item.isDestructive ? AppTheme.favorites : AppTheme.textWhite.withOpacity(0.8),
+                color: item.isDestructive ? AppTheme.favorites : AppTheme.textWhite.withValues(alpha: 0.8),
               ),
               const SizedBox(width: 12),
               Text(
@@ -364,7 +364,7 @@ class _PlayButton extends StatelessWidget {
               color: AppTheme.accent,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
-                BoxShadow(color: AppTheme.accent.withOpacity(0.4), blurRadius: 25, offset: const Offset(0, 8)),
+                BoxShadow(color: AppTheme.accent.withValues(alpha: 0.4), blurRadius: 25, offset: const Offset(0, 8)),
               ],
             ),
             child: Row(
@@ -421,13 +421,13 @@ class _TrackButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
             decoration: BoxDecoration(
               color: isFullyWatched
-                  ? Colors.green.withOpacity(0.15)
-                  : AppTheme.textWhite.withOpacity(0.08),
+                  ? Colors.green.withValues(alpha: 0.15)
+                  : AppTheme.textWhite.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isFullyWatched
-                    ? Colors.green.withOpacity(0.3)
-                    : AppTheme.textWhite.withOpacity(0.05),
+                    ? Colors.green.withValues(alpha: 0.3)
+                    : AppTheme.textWhite.withValues(alpha: 0.05),
               ),
             ),
             child: Row(

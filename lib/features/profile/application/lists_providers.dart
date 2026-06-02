@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -22,7 +23,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
     final repo = ref.watch(listsRepositoryProvider);
 
     // Background sync
-    repo.syncUserLists(user.id).catchError((e) => print('UserListsNotifier: Sync failed: $e'));
+    repo.syncUserLists(user.id).catchError((e) => debugPrint('UserListsNotifier: Sync failed: $e'));
 
     return repo.watchUserLists(user.id);
   }
@@ -56,7 +57,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
     } else {
       // Naturally cache the item when it's being added to a system list
       ref.read(watchHistoryRepositoryProvider).saveMediaItem(media)
-          .catchError((e) => print('Background caching failed: $e'));
+          .catchError((e) => debugPrint('Background caching failed: $e'));
 
       await repo.addItemToList(
         listId: targetList.id,
@@ -110,7 +111,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
 
     // Naturally cache the item when it's being added to a custom list
     ref.read(watchHistoryRepositoryProvider).saveMediaItem(media)
-        .catchError((e) => print('Background caching failed: $e'));
+        .catchError((e) => debugPrint('Background caching failed: $e'));
 
     await repo.addItemToList(
       listId: listId,

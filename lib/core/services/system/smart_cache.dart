@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// SmartCache - Local caching utility for Supabase and API data
@@ -23,7 +24,7 @@ class SmartCache {
         return jsonDecode(cached) as Map<String, dynamic>;
       }
     } catch (e) {
-      print('SmartCache: Failed to load cache for $_key: $e');
+      debugPrint('SmartCache: Failed to load cache for $_key: $e');
     }
     return null;
   }
@@ -34,7 +35,7 @@ class SmartCache {
     try {
       await _prefs!.setString(_key, jsonEncode(data));
     } catch (e) {
-      print('SmartCache: Failed to save cache for $_key: $e');
+      debugPrint('SmartCache: Failed to save cache for $_key: $e');
     }
   }
 

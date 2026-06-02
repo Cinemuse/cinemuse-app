@@ -48,7 +48,7 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
       if (response.user == null) {
         throw 'Sign in failed';
       }
-    } catch (e, st) {
+    } catch (e) {
       final appEx = SupabaseErrorHandler.handleError(e);
       state = AsyncValue.data(_supabaseClient.auth.currentUser);
       throw appEx;
@@ -65,7 +65,7 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
       if (response.user == null) {
         throw 'Sign up failed';
       }
-    } catch (e, st) {
+    } catch (e) {
       final appEx = SupabaseErrorHandler.handleError(e);
       state = AsyncValue.data(_supabaseClient.auth.currentUser); 
       throw appEx;

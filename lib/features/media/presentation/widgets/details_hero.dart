@@ -1,11 +1,9 @@
 import 'package:cinemuse_app/features/media/presentation/widgets/series_progress_bar.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/social_actions_group.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/responsive_action_buttons.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -157,12 +155,7 @@ class DetailsHero extends ConsumerWidget {
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Text(
                       '"$tagline"',
-                      style: GoogleFonts.lora(
-                        color: AppTheme.accent,
-                        fontStyle: FontStyle.italic,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: AppTheme.taglineStyle,
                     ),
                   ),
 
@@ -221,12 +214,12 @@ class DetailsHero extends ConsumerWidget {
                     children: [
                       Text(
                       '${details['number_of_seasons'] ?? 0} ${l10n.detailsSeasonLabel}${details['number_of_seasons'] != 1 ? 's' : ''}',
-                      style: TextStyle(color: AppTheme.textWhite.withOpacity(0.6), fontSize: 13),
+                      style: TextStyle(color: AppTheme.textWhite.withValues(alpha: 0.6), fontSize: 13),
                     ),
                     const _DotSeparator(),
                     Text(
                       '${details['number_of_episodes'] ?? 0} ${l10n.detailsEpisodes}',
-                      style: TextStyle(color: AppTheme.textWhite.withOpacity(0.6), fontSize: 13),
+                      style: TextStyle(color: AppTheme.textWhite.withValues(alpha: 0.6), fontSize: 13),
                     ),
                       if (details['status'] != null) ...[
                         const _DotSeparator(),
@@ -259,13 +252,13 @@ class DetailsHero extends ConsumerWidget {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.08),
+                                color: Colors.white.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 g['name'],
                                 style: TextStyle(
-                                  color: AppTheme.textWhite.withOpacity(0.6),
+                                  color: AppTheme.textWhite.withValues(alpha: 0.6),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -352,7 +345,7 @@ class _DotSeparator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       '•',
-      style: TextStyle(color: AppTheme.textWhite.withOpacity(0.2), fontSize: 16),
+      style: TextStyle(color: AppTheme.textWhite.withValues(alpha: 0.2), fontSize: 16),
     );
   }
 }

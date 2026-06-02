@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cinemuse_app/core/utils/url_utils.dart';
-import 'package:cinemuse_app/core/services/streaming/sources/stremio_source.dart';
 
 void main() {
   group('StremioSource URL Cleaning', () {

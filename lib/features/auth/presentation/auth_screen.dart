@@ -4,9 +4,7 @@ import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/main.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
@@ -92,7 +90,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               border: Border.all(color: AppTheme.border),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.accent.withOpacity(0.1),
+                  color: AppTheme.accent.withValues(alpha: 0.1),
                   blurRadius: 20,
                   spreadRadius: 0,
                 )
@@ -107,7 +105,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   Image.asset(
                     'assets/wordmark-logo.png',
                     height: 48,
-                    errorBuilder: (c, e, s) => const Text(
+                    errorBuilder: (c, e, s) => Text(
                       "CINEMUSE",
                       style: TextStyle(
                         fontSize: 32, 
@@ -122,7 +120,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   // Title
                   Text(
                     isLogin ? l10n.authWelcomeBack : l10n.authJoinCineMuse,
-                    style: GoogleFonts.outfit(
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
@@ -143,7 +141,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       l10n.authEmail, 
-                      style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textMuted)
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textMuted)
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -163,7 +161,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       l10n.authPassword, 
-                      style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textMuted)
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textMuted)
                     ),
                   ),
                   const SizedBox(height: 8),

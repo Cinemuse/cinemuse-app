@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:cinemuse_app/features/media/application/comments_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/comment_tile.dart';
 
 class CommentsBottomSheet extends ConsumerStatefulWidget {
@@ -45,7 +44,6 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(tvTimeCommentsProvider(widget.request));
-    final l10n = AppLocalizations.of(context)!;
     final width = MediaQuery.of(context).size.width;
     
     int crossAxisCount = 1;
@@ -69,7 +67,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppTheme.textWhite.withOpacity(0.2),
+              color: AppTheme.textWhite.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -213,9 +211,9 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.textWhite.withOpacity(0.05),
+        color: AppTheme.textWhite.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.textWhite.withOpacity(0.1)),
+        border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

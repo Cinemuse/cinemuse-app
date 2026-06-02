@@ -25,9 +25,6 @@ class TvTimeService {
   static const _webBase = 'https://www.tvtime.com';
 
   // TVTime IDs 81189 = TVDB ID used for sidecar. Series in URLs use TVDB IDs.
-  static const _movieHrefPrefix = '/movie/';
-  static const _showHrefPrefix = '/show/';
-
   final Dio _dio;
 
   TvTimeService(this._dio);

@@ -27,8 +27,11 @@ class AgendaRepository {
     for (final row in (historyRes as List)) {
       final type = MediaItem.fromString(row['media_type']);
       final id = row['tmdb_id'] as int;
-      if (type == MediaKind.movie) movieIds.add(id);
-      else if (type == MediaKind.tv) seriesIds.add(id);
+      if (type == MediaKind.movie) {
+        movieIds.add(id);
+      } else if (type == MediaKind.tv) {
+        seriesIds.add(id);
+      }
     }
 
     // 2. From Lists (Watchlist, Favorites, Custom)
@@ -43,8 +46,11 @@ class AgendaRepository {
       for (final item in items) {
         final type = MediaItem.fromString(item['media_type']);
         final id = item['media_tmdb_id'] as int;
-        if (type == MediaKind.movie) movieIds.add(id);
-        else if (type == MediaKind.tv) seriesIds.add(id);
+        if (type == MediaKind.movie) {
+          movieIds.add(id);
+        } else if (type == MediaKind.tv) {
+          seriesIds.add(id);
+        }
       }
     }
 
@@ -96,9 +102,6 @@ class AgendaRepository {
   Future<List<AgendaEvent>> fetchUpcomingEpisodes(String userId, Set<int> followedIds) async {
     if (followedIds.isEmpty) return [];
 
-    final today = DateTime.now();
-    final todayNoTime = DateTime(today.year, today.month, today.day);
-    final startDate = todayNoTime.subtract(const Duration(days: 30));
     final events = <AgendaEvent>[];
 
     // Get current watch history for all followed series to check for "caught up" status
@@ -123,7 +126,7 @@ class AgendaRepository {
     // To respect rate limits, we'll fetch details for each series sequentially with a small delay
     for (final seriesId in followedIds) {
       // 1. Check media_cache for status if possible (Optimization)
-      final cacheRes = await _supabase
+      await _supabase
           .from('media_cache')
           .select('updated_at')
           .eq('tmdb_id', seriesId)

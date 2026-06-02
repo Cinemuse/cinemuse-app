@@ -23,9 +23,9 @@ class SocialActionsGroup extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.textWhite.withOpacity(0.08),
+        color: AppTheme.textWhite.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.textWhite.withOpacity(0.05)),
+        border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.05)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -58,14 +58,12 @@ class _SocialIcon extends StatefulWidget {
   final Color? color;
   final VoidCallback onTap;
   final bool showArrow;
-  final String? label;
 
   const _SocialIcon({
     required this.icon,
     this.color,
     required this.onTap,
     this.showArrow = false,
-    this.label,
   });
 
   @override
@@ -158,27 +156,17 @@ class _SocialIconState extends State<_SocialIcon> with SingleTickerProviderState
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 150),
                       transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
-                      child: widget.label != null
-                          ? Text(
-                              widget.label!,
-                              key: ValueKey(widget.label),
-                              style: TextStyle(
-                                color: effectiveColor,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : Icon(
-                              effectiveIcon,
-                              key: ValueKey(effectiveIcon),
-                              color: effectiveColor,
-                              size: 24,
-                            ),
+                      child: Icon(
+                        effectiveIcon,
+                        key: ValueKey(effectiveIcon),
+                        color: effectiveColor,
+                        size: 24,
+                      ),
                     ),
                   ),
                   if (widget.showArrow) ...[
                     const SizedBox(width: 4),
-                    Icon(Icons.keyboard_arrow_down, color: effectiveColor.withOpacity(0.5), size: 14),
+                    Icon(Icons.keyboard_arrow_down, color: effectiveColor.withValues(alpha: 0.5), size: 14),
                   ],
                 ],
               ),
@@ -198,7 +186,7 @@ class _VerticalDivider extends StatelessWidget {
     return Container(
       height: 24,
       width: 1,
-      color: AppTheme.textWhite.withOpacity(0.1),
+      color: AppTheme.textWhite.withValues(alpha: 0.1),
     );
   }
 }

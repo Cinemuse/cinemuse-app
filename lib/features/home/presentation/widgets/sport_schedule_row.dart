@@ -4,7 +4,6 @@ import 'package:cinemuse_app/features/home/presentation/widgets/sport_event_card
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
@@ -260,7 +259,7 @@ class _DayHeader extends StatelessWidget {
               child: Text(
                 label,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                   color: isToday ? AppTheme.accent : Colors.white70,
                   fontSize: 11,
                   fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,

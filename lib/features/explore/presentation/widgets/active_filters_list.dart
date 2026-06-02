@@ -80,7 +80,7 @@ class ActiveFiltersList extends StatelessWidget {
         // Runtime
         if (filters.runtime.start != 0 || filters.runtime.end != 240)
           _FilterChip(
-            label: '${filters.runtime.start.round()}m - ${filters.runtime.end.round() >= 240 ? l10n.filterMax : filters.runtime.end.round().toString() + 'm'}',
+            label: '${filters.runtime.start.round()}m - ${filters.runtime.end.round() >= 240 ? l10n.filterMax : '${filters.runtime.end.round()}m'}',
             icon: Icons.access_time,
             onDelete: () => onChanged(filters.copyWith(runtime: const RangeValues(0, 240))),
           ),
@@ -114,7 +114,7 @@ class _FilterChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.secondary,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.textWhite.withOpacity(0.1)),
+        border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -131,7 +131,7 @@ class _FilterChip extends StatelessWidget {
           HoverScale(
             onTap: onDelete,
             scale: 1.2,
-            child: Icon(Icons.close, size: 12, color: AppTheme.textWhite.withOpacity(0.4)),
+            child: Icon(Icons.close, size: 12, color: AppTheme.textWhite.withValues(alpha: 0.4)),
           ),
         ],
       ),
@@ -159,9 +159,9 @@ class _ClearAllButtonState extends State<_ClearAllButton> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: _isHovered ? Theme.of(context).colorScheme.error.withOpacity(0.2) : Theme.of(context).colorScheme.error.withOpacity(0.1),
+          color: _isHovered ? Theme.of(context).colorScheme.error.withValues(alpha: 0.2) : Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Theme.of(context).colorScheme.error.withOpacity(_isHovered ? 0.4 : 0.2)),
+          border: Border.all(color: Theme.of(context).colorScheme.error.withValues(alpha: _isHovered ? 0.4 : 0.2)),
         ),
         child: Text(
           widget.l10n.searchClearAll,

@@ -58,7 +58,7 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
         gradient: LinearGradient(
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
-          colors: [AppTheme.primary.withOpacity(0.87), Colors.transparent],
+          colors: [AppTheme.primary.withValues(alpha: 0.87), Colors.transparent],
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -101,7 +101,7 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
                                   thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
                                   overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
                                   activeTrackColor: AppTheme.textWhite,
-                                  inactiveTrackColor: AppTheme.textWhite.withOpacity(0.24),
+                                  inactiveTrackColor: AppTheme.textWhite.withValues(alpha: 0.24),
                                   thumbColor: AppTheme.textWhite,
                                 ),
                                 child: Slider(
@@ -120,9 +120,9 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.primary.withOpacity(0.8),
+                                      color: AppTheme.primary.withValues(alpha: 0.8),
                                       borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(color: AppTheme.textWhite.withOpacity(0.24), width: 0.5),
+                                      border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.24), width: 0.5),
                                     ),
                                     child: Text(
                                       _formatDuration(_hoverDuration!),
@@ -139,7 +139,7 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
                   const SizedBox(width: 12),
                   Text(
                     '${_formatDuration(position)} / ${_formatDuration(duration)}',
-                    style: TextStyle(color: AppTheme.textWhite.withOpacity(0.7), fontSize: 13, fontFamily: 'monospace'),
+                    style: TextStyle(color: AppTheme.textWhite.withValues(alpha: 0.7), fontSize: 13, fontFamily: 'monospace'),
                   ),
                   const SizedBox(width: 8),
                 ],

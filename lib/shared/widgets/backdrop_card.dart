@@ -3,7 +3,6 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 
 class BackdropCard extends StatefulWidget {
@@ -239,7 +238,7 @@ class _BackdropCardState extends State<BackdropCard> {
                         widget.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.outfit(
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                           color: _isHovered ? AppTheme.accent : Colors.white,
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
@@ -307,7 +306,7 @@ class _BackdropCardState extends State<BackdropCard> {
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.outfit(
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                   color: Colors.white.withValues(alpha: 0.2),
                   fontSize: 12,
                 ),

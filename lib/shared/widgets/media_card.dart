@@ -3,7 +3,6 @@ import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/premium_hover_text.dart';
@@ -261,7 +260,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                 // Title
                 PremiumHoverText(
                   text: widget.title,
-                  style: GoogleFonts.outfit(
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: _isHovered ? AppTheme.accent : Colors.white,
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
@@ -275,7 +274,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                     if (widget.rating != null && widget.rating! > 0)
                       const SizedBox(width: 4),
                     if (widget.rating != null && widget.rating! > 0)
-                      const Text(
+                      Text(
                         "", // Placeholder logic if needed, otherwise removed rating display
                         style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
                       ),

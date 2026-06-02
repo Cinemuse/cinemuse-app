@@ -158,7 +158,7 @@ class ProfileCollections extends ConsumerWidget {
                       const SizedBox(height: 4),
                       Text(
                         l10n.detailsCollectionsDesc,
-                        style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14),
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14),
                       ),
                     ],
                   ),
@@ -188,14 +188,14 @@ class ProfileCollections extends ConsumerWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 60),
                   decoration: BoxDecoration(
-                    color: AppTheme.surface.withOpacity(0.5),
+                    color: AppTheme.surface.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.05)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                   ),
                   child: Center(
                     child: Text(
                       l10n.detailsNoCollections,
-                      style: TextStyle(color: Colors.white.withOpacity(0.3)),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
                     ),
                   ),
                 )

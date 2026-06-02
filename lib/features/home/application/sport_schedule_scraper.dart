@@ -96,7 +96,7 @@ class SportScheduleScraper {
         for (var row in el.querySelectorAll('tr')) {
           final cells = row.querySelectorAll('td');
           if (cells.isNotEmpty) {
-            final time = cells.length > 0 ? cells[0].text.trim() : '';
+            final time = cells.isNotEmpty ? cells[0].text.trim() : '';
             final descRaw = cells.length > 1 
                 ? cells[1].text.trim().replaceAll('\n', ' ').replaceAll(RegExp(r'\s+'), ' ') 
                 : '';

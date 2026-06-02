@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Colors extracted from index.css
@@ -52,7 +51,8 @@ class AppTheme {
       primaryColor: primary,
       
       // Text Theme
-      textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme).apply(
+      textTheme: ThemeData.dark().textTheme.apply(
+        fontFamily: 'Outfit',
         bodyColor: textWhite,
         displayColor: textWhite,
       ),
@@ -73,7 +73,7 @@ class AppTheme {
       // Input Decoration
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: secondary.withOpacity(0.5),
+        fillColor: secondary.withValues(alpha: 0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: border),
@@ -97,7 +97,7 @@ class AppTheme {
           foregroundColor: textWhite,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          textStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16),
+          textStyle: const TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold, fontSize: 16),
           elevation: 5,
           shadowColor: accentGlow,
         ),
@@ -107,7 +107,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: textWhite,
-          textStyle: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600),
         ),
       ),
 
@@ -133,49 +133,83 @@ class AppTheme {
     if (width < 600) return 16;
     return width * 0.05;
   }
+
+  static TextStyle monoStyle({
+    double? fontSize,
+    FontWeight? fontWeight,
+    Color? color,
+    double? letterSpacing,
+    double? height,
+  }) {
+    return TextStyle(
+      fontFamily: 'Fira Code',
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      letterSpacing: letterSpacing,
+      height: height,
+    );
+  }
+
+  static TextStyle get taglineStyle {
+    return const TextStyle(
+      fontFamily: 'Lora',
+      color: accent,
+      fontStyle: FontStyle.italic,
+      fontSize: 18,
+      fontWeight: FontWeight.w500,
+    );
+  }
 }
 
 class DesktopTypography {
-  static TextStyle heroTitle = GoogleFonts.outfit(
+  static TextStyle heroTitle = const TextStyle(
+    fontFamily: 'Outfit',
     fontSize: 48,
     fontWeight: FontWeight.w900,
     height: 1.1,
     color: AppTheme.textWhite,
   );
 
-  static TextStyle sectionHeader = GoogleFonts.outfit(
+  static TextStyle sectionHeader = const TextStyle(
+    fontFamily: 'Outfit',
     fontSize: 24,
     fontWeight: FontWeight.w700,
     color: AppTheme.textWhite,
   );
 
-  static TextStyle bentoHeader = GoogleFonts.outfit(
+  static TextStyle bentoHeader = const TextStyle(
+    fontFamily: 'Outfit',
     fontSize: 20,
     fontWeight: FontWeight.w700,
     color: AppTheme.textWhite,
     letterSpacing: 1.1,
   );
 
-  static TextStyle subtitle = GoogleFonts.outfit(
+  static TextStyle subtitle = const TextStyle(
+    fontFamily: 'Outfit',
     fontSize: 20,
     fontWeight: FontWeight.w600,
     color: AppTheme.textWhite,
   );
 
-  static TextStyle bodyPrimary = GoogleFonts.outfit(
+  static TextStyle bodyPrimary = const TextStyle(
+    fontFamily: 'Outfit',
     fontSize: 16,
     fontWeight: FontWeight.w400,
     color: AppTheme.textSecondary,
     height: 1.6,
   );
 
-  static TextStyle bodySecondary = GoogleFonts.outfit(
+  static TextStyle bodySecondary = const TextStyle(
+    fontFamily: 'Outfit',
     fontSize: 16,
     fontWeight: FontWeight.w500,
     color: AppTheme.textSecondary,
   );
 
-  static TextStyle captionMeta = GoogleFonts.outfit(
+  static TextStyle captionMeta = const TextStyle(
+    fontFamily: 'Outfit',
     fontSize: 16,
     fontWeight: FontWeight.w400, // Reduced from 500 for better secondary feel
     color: AppTheme.textMuted,

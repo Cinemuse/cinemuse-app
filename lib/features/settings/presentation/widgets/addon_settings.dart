@@ -90,14 +90,14 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                         labelText: l10n.settingsRealDebridKey,
                         labelStyle: const TextStyle(color: AppTheme.textMuted),
                         filled: true,
-                        fillColor: Colors.black.withOpacity(0.3),
+                        fillColor: Colors.black.withValues(alpha: 0.3),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+                          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+                          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -145,14 +145,14 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                       labelText: l10n.settingsOpenSubtitlesKey,
                       labelStyle: const TextStyle(color: AppTheme.textMuted),
                       filled: true,
-                      fillColor: Colors.black.withOpacity(0.3),
+                      fillColor: Colors.black.withValues(alpha: 0.3),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -325,14 +325,14 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                                 hintStyle: const TextStyle(color: Colors.white24),
                                 errorText: _error,
                                 filled: true,
-                                fillColor: Colors.black.withOpacity(0.3),
+                                fillColor: Colors.black.withValues(alpha: 0.3),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+                                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+                                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -454,7 +454,7 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   padding: const EdgeInsets.symmetric(vertical: 48),
                   child: Column(
                     children: [
-                      Icon(LucideIcons.box, size: 64, color: Colors.white.withOpacity(0.05)),
+                      Icon(LucideIcons.box, size: 64, color: Colors.white.withValues(alpha: 0.05)),
                       const SizedBox(height: 16),
                       Text(
                         l10n.settingsNoAddons,

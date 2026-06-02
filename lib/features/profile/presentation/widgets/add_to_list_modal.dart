@@ -66,11 +66,11 @@ class AddToListModal extends ConsumerWidget {
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(LucideIcons.list, color: Colors.white.withOpacity(0.2), size: 48),
+                          Icon(LucideIcons.list, color: Colors.white.withValues(alpha: 0.2), size: 48),
                           const SizedBox(height: 16),
                           Text(
                             l10n.detailsNoCustomLists,
-                            style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
                           ),
                         ],
                       ),

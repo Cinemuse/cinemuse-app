@@ -3,6 +3,7 @@
 /// These models represent the comment and user data returned by the
 /// TVTime internal comments API. They are intentionally kept free of
 /// any UI or service-layer concerns.
+library;
 
 class TvTimeUser {
   final int id;

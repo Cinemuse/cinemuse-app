@@ -64,20 +64,20 @@ class _NextEpisodeOverlayState extends ConsumerState<NextEpisodeOverlay> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Colors.white.withOpacity(_isNextButtonHovered ? 0.95 : 0.85),
-                            Colors.white.withOpacity(_isNextButtonHovered ? 0.85 : 0.65),
+                            Colors.white.withValues(alpha: _isNextButtonHovered ? 0.95 : 0.85),
+                            Colors.white.withValues(alpha: _isNextButtonHovered ? 0.85 : 0.65),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Colors.white.withOpacity(_isNextButtonHovered ? 0.4 : 0.2),
+                          color: Colors.white.withValues(alpha: _isNextButtonHovered ? 0.4 : 0.2),
                           width: 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(_isNextButtonHovered ? 0.4 : 0.3),
+                            color: Colors.black.withValues(alpha: _isNextButtonHovered ? 0.4 : 0.3),
                             blurRadius: _isNextButtonHovered ? 30 : 25,
                             offset: Offset(0, _isNextButtonHovered ? 12 : 10),
                             spreadRadius: -5,
@@ -90,7 +90,7 @@ class _NextEpisodeOverlayState extends ConsumerState<NextEpisodeOverlay> {
                           Text(
                             ref.watch(localizationsProvider).playerNextEpisode.toUpperCase(),
                             style: TextStyle(
-                              color: Colors.black.withOpacity(0.85),
+                              color: Colors.black.withValues(alpha: 0.85),
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1.5,
@@ -99,7 +99,7 @@ class _NextEpisodeOverlayState extends ConsumerState<NextEpisodeOverlay> {
                           const SizedBox(width: 14),
                           Icon(
                             Icons.arrow_forward_ios_rounded,
-                            color: Colors.black.withOpacity(0.85),
+                            color: Colors.black.withValues(alpha: 0.85),
                             size: 18,
                           ),
                         ],

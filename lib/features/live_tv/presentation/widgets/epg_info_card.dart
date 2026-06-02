@@ -32,9 +32,9 @@ class EpgInfoCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.surface.withOpacity(0.5),
+            color: AppTheme.surface.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.08)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,7 +48,7 @@ class EpgInfoCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppTheme.accent.withOpacity(0.2),
+                        color: AppTheme.accent.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -104,7 +104,7 @@ class EpgInfoCard extends StatelessWidget {
               if (currentProgram != null && nextProgram != null) ...[
                 const SizedBox(height: 14),
                 Divider(
-                  color: Colors.white.withOpacity(0.06),
+                  color: Colors.white.withValues(alpha: 0.06),
                   height: 1,
                 ),
                 const SizedBox(height: 14),
@@ -118,7 +118,7 @@ class EpgInfoCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
+                        color: Colors.white.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -165,9 +165,9 @@ class EpgInfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surface.withOpacity(0.3),
+        color: AppTheme.surface.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
@@ -197,7 +197,7 @@ class _EpgProgressBar extends StatelessWidget {
     return Container(
       height: 4,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(2),
       ),
       child: FractionallySizedBox(
@@ -208,13 +208,13 @@ class _EpgProgressBar extends StatelessWidget {
             gradient: LinearGradient(
               colors: [
                 AppTheme.accent,
-                AppTheme.accent.withOpacity(0.7),
+                AppTheme.accent.withValues(alpha: 0.7),
               ],
             ),
             borderRadius: BorderRadius.circular(2),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.accent.withOpacity(0.3),
+                color: AppTheme.accent.withValues(alpha: 0.3),
                 blurRadius: 4,
               ),
             ],

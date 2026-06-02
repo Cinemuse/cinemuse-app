@@ -1,21 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/external_links.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:cinemuse_app/features/navigation/navbar.dart';
-import 'package:cinemuse_app/features/navigation/nav_providers.dart';
-import 'package:cinemuse_app/features/settings/presentation/settings_screen.dart';
-import 'package:cinemuse_app/features/search/presentation/search_overlay.dart';
-import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 final personDetailsProvider = FutureProvider.family<Map<String, dynamic>?, int>((ref, id) async {
@@ -205,7 +198,7 @@ class _PersonDetailsContent extends ConsumerWidget {
                           ),
                           Text(
                             name,
-                            style: GoogleFonts.outfit(
+                            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                               fontSize: 48,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
@@ -247,7 +240,7 @@ class _PersonDetailsContent extends ConsumerWidget {
                                     color: AppTheme.accent,
                                     borderRadius: BorderRadius.circular(3),
                                     boxShadow: [
-                                      BoxShadow(color: AppTheme.accent.withOpacity(0.3), blurRadius: 10),
+                                      BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 10),
                                     ],
                                   ),
                                 ),
@@ -360,7 +353,7 @@ class _PersonDetailsContent extends ConsumerWidget {
                           icon: const Icon(LucideIcons.plus, size: 18),
                           label: Text(l10n.personShowMore.toUpperCase()),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.textWhite.withOpacity(0.05),
+                            backgroundColor: AppTheme.textWhite.withValues(alpha: 0.05),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Colors.white10)),
@@ -446,9 +439,9 @@ class _FilmographyList extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.02),
+              color: Colors.white.withValues(alpha: 0.02),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.05)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
             ),
             child: Row(
               children: [
@@ -496,9 +489,9 @@ class _FilmographyList extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: isTv ? Colors.blue.withOpacity(0.1) : AppTheme.accent.withOpacity(0.1),
+                              color: isTv ? Colors.blue.withValues(alpha: 0.1) : AppTheme.accent.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: (isTv ? Colors.blue : AppTheme.accent).withOpacity(0.2)),
+                              border: Border.all(color: (isTv ? Colors.blue : AppTheme.accent).withValues(alpha: 0.2)),
                             ),
                             child: Text(
                               isTv ? l10n.personSeries.toUpperCase() : l10n.personMovie.toUpperCase(),
@@ -523,9 +516,9 @@ class _FilmographyList extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
+                      color: Colors.green.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.green.withOpacity(0.2)),
+                      border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
                     ),
                     child: Row(
                       children: [

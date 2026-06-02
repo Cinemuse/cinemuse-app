@@ -29,7 +29,7 @@ class _CommentTileState extends State<CommentTile> {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.textWhite.withOpacity(0.05)),
+        border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,7 +54,7 @@ class _CommentTileState extends State<CommentTile> {
       children: [
         CircleAvatar(
           radius: 16,
-          backgroundColor: AppTheme.accent.withOpacity(0.2),
+          backgroundColor: AppTheme.accent.withValues(alpha: 0.2),
           backgroundImage: user?.avatarUrl != null
               ? CachedNetworkImageProvider(user!.avatarUrl!)
               : null,
@@ -129,7 +129,7 @@ class _CommentTileState extends State<CommentTile> {
       imageUrl: url,
       fit: BoxFit.cover,
       placeholder: (context, url) => Container(
-        color: AppTheme.textWhite.withOpacity(0.05),
+        color: AppTheme.textWhite.withValues(alpha: 0.05),
         height: 200,
         width: double.infinity,
         child: const Center(
@@ -146,9 +146,9 @@ class _CommentTileState extends State<CommentTile> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 24),
         decoration: BoxDecoration(
-          color: AppTheme.textWhite.withOpacity(0.05),
+          color: AppTheme.textWhite.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+          border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -181,11 +181,11 @@ class _CommentTileState extends State<CommentTile> {
         ),
         const Spacer(),
         if (comment.reportCount > 0) ...[
-          Icon(Icons.flag_outlined, size: 16, color: Colors.redAccent.withOpacity(0.5)),
+          Icon(Icons.flag_outlined, size: 16, color: Colors.redAccent.withValues(alpha: 0.5)),
           const SizedBox(width: 4),
           Text(
             '${comment.reportCount}',
-            style: TextStyle(color: Colors.redAccent.withOpacity(0.5), fontSize: 12),
+            style: TextStyle(color: Colors.redAccent.withValues(alpha: 0.5), fontSize: 12),
           ),
         ],
       ],

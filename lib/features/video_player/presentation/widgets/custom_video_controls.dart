@@ -132,7 +132,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
 
   Future<void> _toggleFullscreen() async {
     if (_isFullscreenSafe()) {
-      print("[Fullscreen Debug] Exiting fullscreen. wasMaximized: $_wasMaximizedBeforeFullscreen, prevBounds: $_previousBounds");
+      debugPrint("[Fullscreen Debug] Exiting fullscreen. wasMaximized: $_wasMaximizedBeforeFullscreen, prevBounds: $_previousBounds");
       await widget.videoState.exitFullscreen();
       if (Platform.isWindows || Platform.isLinux) {
         if (!_wasMaximizedBeforeFullscreen) {
@@ -141,7 +141,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
             await windowManager.setBounds(_previousBounds!);
           }
         } else {
-          print("[Fullscreen Debug] Restoring maximized state");
+          debugPrint("[Fullscreen Debug] Restoring maximized state");
           await windowManager.maximize();
         }
       }
@@ -149,10 +149,10 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     } else {
       if (Platform.isWindows || Platform.isLinux) {
         _wasMaximizedBeforeFullscreen = await windowManager.isMaximized();
-        print("[Fullscreen Debug] Entering fullscreen. initiallyMaximized: $_wasMaximizedBeforeFullscreen");
+        debugPrint("[Fullscreen Debug] Entering fullscreen. initiallyMaximized: $_wasMaximizedBeforeFullscreen");
         if (!_wasMaximizedBeforeFullscreen) {
           _previousBounds = await windowManager.getBounds();
-          print("[Fullscreen Debug] Saved bounds: $_previousBounds. Maximizing to trick WM.");
+          debugPrint("[Fullscreen Debug] Saved bounds: $_previousBounds. Maximizing to trick WM.");
           await windowManager.maximize();
         }
       }
@@ -163,7 +163,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
 
   Future<void> _handleBack() async {
     if (_isFullscreenSafe()) {
-      print("[Fullscreen Debug] _handleBack: Exiting fullscreen. wasMaximized: $_wasMaximizedBeforeFullscreen, prevBounds: $_previousBounds");
+      debugPrint("[Fullscreen Debug] _handleBack: Exiting fullscreen. wasMaximized: $_wasMaximizedBeforeFullscreen, prevBounds: $_previousBounds");
       await widget.videoState.exitFullscreen();
       if (Platform.isWindows || Platform.isLinux) {
         if (!_wasMaximizedBeforeFullscreen) {
@@ -172,7 +172,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
             await windowManager.setBounds(_previousBounds!);
           }
         } else {
-          print("[Fullscreen Debug] _handleBack: Restoring maximized state");
+          debugPrint("[Fullscreen Debug] _handleBack: Restoring maximized state");
           await windowManager.maximize();
         }
       }

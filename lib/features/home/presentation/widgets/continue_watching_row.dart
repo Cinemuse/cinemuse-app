@@ -5,20 +5,14 @@ import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
-import 'package:cinemuse_app/features/media/domain/media_item.dart';
-import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
-import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
-import 'package:cinemuse_app/shared/widgets/backdrop_card.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
-import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/shared/widgets/skeleton_box.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/cards/continue_watching_card.dart';
@@ -383,7 +377,7 @@ class _UndoToastState extends State<_UndoToast> with SingleTickerProviderStateMi
                   Flexible(
                     child: Text(
                       l10n.homeRemovedFromContinueWatching(widget.title),
-                      style: GoogleFonts.outfit(
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -422,7 +416,7 @@ class _UndoToastState extends State<_UndoToast> with SingleTickerProviderStateMi
                         ),
                         child: Text(
                           l10n.commonUndo.toUpperCase(),
-                          style: GoogleFonts.outfit(
+                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                             fontSize: 10,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 0.8,

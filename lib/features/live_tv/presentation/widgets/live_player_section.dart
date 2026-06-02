@@ -40,7 +40,7 @@ class LivePlayerSection extends StatelessWidget {
           color: AppTheme.primary,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.white.withOpacity(0.08),
+            color: Colors.white.withValues(alpha: 0.08),
           ),
         ),
         child: playerState == null
@@ -80,21 +80,21 @@ class LivePlayerSection extends StatelessWidget {
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
       child: Container(
-        color: AppTheme.surface.withOpacity(0.5),
+        color: AppTheme.surface.withValues(alpha: 0.5),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.live_tv_rounded,
-                color: AppTheme.textMuted.withOpacity(0.5),
+                color: AppTheme.textMuted.withValues(alpha: 0.5),
                 size: 48,
               ),
               const SizedBox(height: 12),
               Text(
                 l10n.liveTvSelectChannel,
                 style: TextStyle(
-                  color: AppTheme.textMuted.withOpacity(0.7),
+                  color: AppTheme.textMuted.withValues(alpha: 0.7),
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),
@@ -108,14 +108,14 @@ class LivePlayerSection extends StatelessWidget {
 
   Widget _buildErrorState(AppLocalizations l10n, String error) {
     return Container(
-      color: AppTheme.surface.withOpacity(0.8),
+      color: AppTheme.surface.withValues(alpha: 0.8),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.signal_wifi_off_rounded,
-              color: Colors.red.withOpacity(0.7),
+              color: Colors.red.withValues(alpha: 0.7),
               size: 42,
             ),
             const SizedBox(height: 12),

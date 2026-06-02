@@ -423,7 +423,7 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
                             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
                             overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
                             activeTrackColor: AppTheme.accent,
-                            inactiveTrackColor: AppTheme.textWhite.withOpacity(0.24),
+                            inactiveTrackColor: AppTheme.textWhite.withValues(alpha: 0.24),
                             thumbColor: AppTheme.textWhite,
                             activeTickMarkColor: Colors.transparent,
                             inactiveTickMarkColor: Colors.transparent,
@@ -476,9 +476,9 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppTheme.primary.withOpacity(0.8),
+                                color: AppTheme.primary.withValues(alpha: 0.8),
                                 borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: AppTheme.textWhite.withOpacity(0.24), width: 0.5),
+                                border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.24), width: 0.5),
                               ),
                               child: Text(
                                 '-${_formatDuration(_hoverDuration!)}',
@@ -582,7 +582,7 @@ class _LivePill extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: isAtLive ? [
                 BoxShadow(
-                  color: AppTheme.favorites.withOpacity(0.4),
+                  color: AppTheme.favorites.withValues(alpha: 0.4),
                   blurRadius: 8,
                   spreadRadius: 0,
                 )

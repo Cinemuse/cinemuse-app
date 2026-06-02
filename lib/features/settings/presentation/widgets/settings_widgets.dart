@@ -74,9 +74,9 @@ class SettingsCard extends StatelessWidget {
       padding: padding,
       margin: margin,
       decoration: BoxDecoration(
-        color: AppTheme.surface.withOpacity(0.3),
+        color: AppTheme.surface.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16), // Increased from 12 for a smoother look
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: crossAxisAlignment,
@@ -119,7 +119,7 @@ class SettingsTile extends StatelessWidget {
               padding: leading != null ? EdgeInsets.zero : const EdgeInsets.all(8),
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: leading ?? (icon != null ? Icon(icon, size: 20, color: Colors.white70) : null),
@@ -180,7 +180,7 @@ class SettingsTile extends StatelessWidget {
           Divider(
             height: 1,
             thickness: 1,
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             indent: icon != null ? 52 : 0,
           ),
       ],
@@ -208,7 +208,7 @@ class SettingsLanguageButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.accent : Colors.white.withOpacity(0.05),
+          color: isSelected ? AppTheme.accent : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(16), // Standardized to 16
         ),
         child: Text(
@@ -308,9 +308,9 @@ class SettingsDropdown<T> extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           height: 40,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.07),
+            color: Colors.white.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<T>(

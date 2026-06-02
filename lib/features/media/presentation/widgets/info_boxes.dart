@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class CreativeVisionBox extends StatelessWidget {
@@ -162,7 +160,11 @@ class VerdictBox extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               '"${featuredReview['content']}"',
-              style: GoogleFonts.outfit(color: AppTheme.textWhite.withOpacity(0.8), fontSize: 13, fontStyle: FontStyle.italic),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.textWhite.withValues(alpha: 0.8),
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                  ),
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
@@ -191,7 +193,7 @@ class VerdictBox extends StatelessWidget {
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Shrink tap target
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(color: AppTheme.textWhite.withOpacity(0.1)),
+                          side: BorderSide(color: AppTheme.textWhite.withValues(alpha: 0.1)),
                         ),
                       ),
                       child: Text(l10n.detailsReviewsAll.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
@@ -276,13 +278,13 @@ class ProductionDNA extends StatelessWidget {
                   ? Image.network(
                       'https://image.tmdb.org/t/p/w200$logoPath',
                       height: 24,
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                       colorBlendMode: BlendMode.srcIn,
                     )
                   : Text(
                       pc['name'],
                       style: DesktopTypography.bodySecondary.copyWith(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 12,
                       ),
                     ),
@@ -323,14 +325,14 @@ class _PersonLink extends StatelessWidget {
         },
         child: Container(
           decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: isMuted ? Colors.transparent : AppTheme.textWhite.withOpacity(0.2))),
+            border: Border(bottom: BorderSide(color: isMuted ? Colors.transparent : AppTheme.textWhite.withValues(alpha: 0.2))),
           ),
           child: Text(
             name,
             style: DesktopTypography.bodySecondary.copyWith(
               color: isMuted ? AppTheme.textMuted : AppTheme.textWhite,
               decoration: isMuted ? TextDecoration.none : TextDecoration.underline,
-              decorationColor: AppTheme.textWhite.withOpacity(0.2),
+              decorationColor: AppTheme.textWhite.withValues(alpha: 0.2),
             ),
           ),
         ),
@@ -359,14 +361,14 @@ class _FinanceItem extends StatelessWidget {
       children: [
         Text(label, style: DesktopTypography.captionMeta.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 6),
-        Text(value, style: GoogleFonts.firaCode(color: AppTheme.textWhite, fontSize: 20)),
+        Text(value, style: AppTheme.monoStyle(color: AppTheme.textWhite, fontSize: 20)),
         const SizedBox(height: 8),
         ClipRRect(
           borderRadius: BorderRadius.circular(2),
           child: LinearProgressIndicator(
             value: progress,
-            backgroundColor: AppTheme.textWhite.withOpacity(0.05),
-            valueColor: AlwaysStoppedAnimation<Color>(color.withOpacity(0.8)),
+            backgroundColor: AppTheme.textWhite.withValues(alpha: 0.05),
+            valueColor: AlwaysStoppedAnimation<Color>(color.withValues(alpha: 0.8)),
             minHeight: 4,
           ),
         ),

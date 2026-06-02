@@ -1,7 +1,6 @@
 import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
-import 'package:cinemuse_app/core/services/streaming/ranking/stream_ranker.dart';
 import 'package:cinemuse_app/core/services/streaming/ranking/stream_parser.dart';
 import 'package:cinemuse_app/core/utils/media_parser.dart';
 import 'package:flutter/foundation.dart';

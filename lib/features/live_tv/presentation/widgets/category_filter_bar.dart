@@ -38,13 +38,13 @@ class CategoryFilterBar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: isActive
-                    ? AppTheme.accent.withOpacity(0.2)
-                    : AppTheme.surface.withOpacity(0.5),
+                    ? AppTheme.accent.withValues(alpha: 0.2)
+                    : AppTheme.surface.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isActive
-                      ? AppTheme.accent.withOpacity(0.5)
-                      : Colors.white.withOpacity(0.1),
+                      ? AppTheme.accent.withValues(alpha: 0.5)
+                      : Colors.white.withValues(alpha: 0.1),
                 ),
               ),
               child: Center(

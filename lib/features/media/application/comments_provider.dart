@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:equatable/equatable.dart';
 import 'package:cinemuse_app/features/media/domain/tvtime_comment.dart';
-import 'package:cinemuse_app/features/media/data/tvtime_service.dart';
 import 'package:cinemuse_app/features/media/data/tvtime_service_provider.dart';
 
 enum CommentSortType { mostLiked, recent }
@@ -85,7 +84,7 @@ class TvTimeCommentsNotifier
       final service = ref.read(tvTimeServiceProvider);
       List<TvTimeComment> fetchedComments = [];
 
-      final request = this.arg;
+      final request = arg;
 
       // We pass limit=9999 just in case, though TVTime currently ignores it and returns all.
       // We also don't rely on their sort since we do it client-side.

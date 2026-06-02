@@ -32,7 +32,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       return Container(
         width: isMobile ? double.infinity : 320,
         decoration: BoxDecoration(
-          color: AppTheme.surface.withOpacity(0.8),
+          color: AppTheme.surface.withValues(alpha: 0.8),
           border: const Border(right: BorderSide(color: Colors.white10)),
         ),
         child: Column(
@@ -58,7 +58,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   final category = categories[index];
                   final isActive = _activeCategory == category['id'];
                   return Material(
-                    color: isActive ? Colors.white.withOpacity(0.05) : Colors.transparent,
+                    color: isActive ? Colors.white.withValues(alpha: 0.05) : Colors.transparent,
                     child: InkWell(
                       onTap: () {
                         setState(() {
@@ -158,9 +158,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               : Container(
                   margin: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.01),
+                    color: Colors.white.withValues(alpha: 0.01),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white.withOpacity(0.05)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Row(
@@ -168,7 +168,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       buildSidebar(),
                       Expanded(
                         child: Container(
-                          color: AppTheme.surface.withOpacity(0.5),
+                          color: AppTheme.surface.withValues(alpha: 0.5),
                           child: contentWidget,
                         ),
                       ),

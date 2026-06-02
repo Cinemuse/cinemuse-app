@@ -119,10 +119,10 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? AppTheme.accent.withOpacity(0.12) : Colors.white.withOpacity(0.04),
+                                    color: isSelected ? AppTheme.accent.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.04),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: isSelected ? AppTheme.accent.withOpacity(0.6) : Colors.white.withOpacity(0.08),
+                                      color: isSelected ? AppTheme.accent.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
                                       width: 1,
                                     ),
                                   ),
@@ -135,7 +135,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                             Text(
                                               fileName,
                                               style: TextStyle(
-                                                color: isSelected ? Colors.white : AppTheme.textWhite.withOpacity(0.7),
+                                                color: isSelected ? Colors.white : AppTheme.textWhite.withValues(alpha: 0.7),
                                                 fontSize: 13,
                                                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                                               ),
@@ -145,7 +145,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                             const SizedBox(height: 2),
                                             Text(
                                               "${size.toStringAsFixed(2)} GB",
-                                              style: TextStyle(color: AppTheme.textMuted.withOpacity(0.5), fontSize: 10),
+                                              style: TextStyle(color: AppTheme.textMuted.withValues(alpha: 0.5), fontSize: 10),
                                             ),
                                           ],
                                         ),
@@ -186,10 +186,10 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                             child: Container(
                               padding: EdgeInsets.all(isLandscape ? 12 : 16),
                               decoration: BoxDecoration(
-                                color: isSelected ? AppTheme.accent.withOpacity(0.1) : Colors.white.withOpacity(0.03),
+                                color: isSelected ? AppTheme.accent.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.03),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: isSelected ? AppTheme.accent.withOpacity(0.5) : Colors.white.withOpacity(0.05),
+                                  color: isSelected ? AppTheme.accent.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.05),
                                   width: 1,
                                 ),
                               ),
@@ -208,7 +208,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                   Text(
                                     stream.title,
                                     style: TextStyle(
-                                      color: isSelected ? Colors.white.withOpacity(0.9) : AppTheme.textMuted.withOpacity(0.6),
+                                      color: isSelected ? Colors.white.withValues(alpha: 0.9) : AppTheme.textMuted.withValues(alpha: 0.6),
                                       fontSize: 11,
                                       fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
                                       height: 1.4,
@@ -234,7 +234,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withValues(alpha: 0.7),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Center(
@@ -246,7 +246,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                     Text(
                       "Resolving Stream...",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -255,7 +255,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                     Text(
                       "Checking debrid cache",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 13,
                       ),
                     ),
@@ -274,11 +274,11 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.redAccent.withOpacity(0.9),
+                color: Colors.redAccent.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),

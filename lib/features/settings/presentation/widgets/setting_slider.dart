@@ -54,7 +54,7 @@ class SettingSlider extends StatelessWidget {
               inactiveTrackColor: Colors.white10,
               thumbColor: AppTheme.accent,
               tickMarkShape: divisions != null ? const RoundSliderTickMarkShape(tickMarkRadius: 1.5) : null,
-              activeTickMarkColor: divisions != null ? AppTheme.accent.withOpacity(0.5) : null,
+              activeTickMarkColor: divisions != null ? AppTheme.accent.withValues(alpha: 0.5) : null,
               inactiveTickMarkColor: divisions != null ? Colors.white24 : null,
             ),
             child: Slider(

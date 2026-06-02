@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
@@ -115,13 +114,8 @@ class HeroSection extends StatelessWidget {
 
                 // Title
                 Text(
-                  title.toUpperCase(),
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 48,
-                    fontWeight: FontWeight.w900,
-                    height: 1.1,
-                  ),
+                  title,
+                  style: DesktopTypography.heroTitle,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -134,11 +128,12 @@ class HeroSection extends StatelessWidget {
                     overview,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.outfit(
+                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                       color: Colors.white70,
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
                       height: 1.5,
+                      letterSpacing: 0.0,
                     ),
                   ),
                 ),
@@ -165,7 +160,7 @@ class HeroSection extends StatelessWidget {
                           backgroundColor: AppTheme.accent,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-                          textStyle: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
+                          textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           elevation: 10,
                           shadowColor: AppTheme.accent.withValues(alpha: 0.5),
@@ -189,7 +184,7 @@ class HeroSection extends StatelessWidget {
                           foregroundColor: Colors.white,
                           side: BorderSide(color: Colors.white.withValues(alpha: 0.2), width: 2),
                           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-                          textStyle: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
+                          textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           backgroundColor: Colors.white.withValues(alpha: 0.1),
                         ),

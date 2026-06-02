@@ -68,7 +68,7 @@ class ListDetailsModal extends StatelessWidget {
                             Text(
                               '${list.items.length} items',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.5),
+                                color: Colors.white.withValues(alpha: 0.5),
                                 fontSize: 14,
                               ),
                             ),
@@ -101,13 +101,13 @@ class ListDetailsModal extends StatelessWidget {
                       padding: const EdgeInsets.only(left: 16),
                       decoration: BoxDecoration(
                         border: Border(
-                          left: BorderSide(color: AppTheme.accent.withOpacity(0.5), width: 2),
+                          left: BorderSide(color: AppTheme.accent.withValues(alpha: 0.5), width: 2),
                         ),
                       ),
                       child: Text(
                         list.description!,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 14,
                           fontStyle: FontStyle.italic,
                           height: 1.5,
@@ -128,7 +128,7 @@ class ListDetailsModal extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(icon, size: 64, color: iconColor.withOpacity(0.2)),
+                          Icon(icon, size: 64, color: iconColor.withValues(alpha: 0.2)),
                           const SizedBox(height: 16),
                           const Text(
                             "This list is empty",
@@ -137,7 +137,7 @@ class ListDetailsModal extends StatelessWidget {
                           const SizedBox(height: 8),
                           Text(
                             "Add media from the details page",
-                            style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
                           ),
                         ],
                       ),

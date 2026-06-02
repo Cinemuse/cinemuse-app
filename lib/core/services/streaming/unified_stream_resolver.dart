@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
-import 'package:meta/meta.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
 import 'package:flutter/foundation.dart';
@@ -12,9 +10,7 @@ import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stremio_addon.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/stremio_source.dart';
-import 'package:cinemuse_app/core/services/streaming/sources/dummy_source.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
@@ -266,7 +262,7 @@ class UnifiedStreamResolver {
               timeElapsed: stopwatch.elapsed,
             );
             onStatusUpdate?.call(searchStatuses);
-          } on TimeoutException catch (e) {
+          } on TimeoutException {
             searchStatuses[i] = searchStatuses[i].copyWith(
               status: ProviderStatus.failed,
               errorMessage: 'Timeout after 30s',
@@ -353,7 +349,7 @@ class UnifiedStreamResolver {
     var results = List<StreamCandidate>.from(candidates);
 
     // 1. Proactive Debrid Availability Check
-    if (_debridService != null && _debridService!.isEnabled) {
+    if (_debridService != null && _debridService.isEnabled) {
       final hashes = results
           .where((c) => c.infoHash.isNotEmpty)
           .map((c) => c.infoHash)
@@ -361,13 +357,13 @@ class UnifiedStreamResolver {
           .toList();
 
       if (hashes.isNotEmpty) {
-        debugPrint('UnifiedStreamResolver: Checking availability for ${hashes.length} hashes on ${_debridService!.name}');
+        debugPrint('UnifiedStreamResolver: Checking availability for ${hashes.length} hashes on ${_debridService.name}');
         
         // Split into chunks if there are many (RD has limits, though usually 100 is fine)
         final Map<String, bool> availability = {};
         for (var i = 0; i < hashes.length; i += 100) {
           final chunk = hashes.sublist(i, i + 100 > hashes.length ? hashes.length : i + 100);
-          final chunkRes = await _debridService!.checkAvailability(chunk);
+          final chunkRes = await _debridService.checkAvailability(chunk);
           availability.addAll(chunkRes);
         }
 
@@ -375,7 +371,7 @@ class UnifiedStreamResolver {
           final isAvailable = availability[c.infoHash.toLowerCase()] ?? false;
           if (isAvailable) {
             final updatedCachedOn = Map<String, bool>.from(c.cachedOn);
-            updatedCachedOn[_debridService!.name] = true;
+            updatedCachedOn[_debridService.name] = true;
             return c.copyWith(cachedOn: updatedCachedOn);
           }
           return c;
@@ -429,8 +425,8 @@ class UnifiedStreamResolver {
     }
     
     // Fallback to Debrid for magnets (native sources like AnimeTosho)
-    if (candidate.magnet.isNotEmpty && _debridService != null && _debridService!.isEnabled) {
-      return _debridService!.resolve(
+    if (candidate.magnet.isNotEmpty && _debridService != null && _debridService.isEnabled) {
+      return _debridService.resolve(
         candidate,
         season: season,
         episode: episode,

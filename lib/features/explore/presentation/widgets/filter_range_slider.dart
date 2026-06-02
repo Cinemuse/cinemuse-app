@@ -59,9 +59,9 @@ class FilterRangeSlider extends StatelessWidget {
           data: SliderThemeData(
             trackHeight: 2,
             activeTrackColor: AppTheme.accent,
-            inactiveTrackColor: Colors.white.withOpacity(0.1),
+            inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
             thumbColor: Colors.white,
-            overlayColor: AppTheme.accent.withOpacity(0.2),
+            overlayColor: AppTheme.accent.withValues(alpha: 0.2),
             rangeThumbShape: const RoundRangeSliderThumbShape(
               enabledThumbRadius: 8,
               elevation: 4,

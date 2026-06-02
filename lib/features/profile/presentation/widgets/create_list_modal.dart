@@ -64,7 +64,7 @@ class _CreateListModalState extends State<CreateListModal> {
                 hintText: l10n.detailsCollectionNameHint,
                 hintStyle: const TextStyle(color: Colors.white38),
                 filled: true,
-                fillColor: Colors.black.withOpacity(0.3),
+                fillColor: Colors.black.withValues(alpha: 0.3),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: Colors.white10),
@@ -103,7 +103,7 @@ class _CreateListModalState extends State<CreateListModal> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.accent,
                       foregroundColor: Colors.white,
-                      disabledBackgroundColor: AppTheme.accent.withOpacity(0.3),
+                      disabledBackgroundColor: AppTheme.accent.withValues(alpha: 0.3),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     child: Text(l10n.commonCreate),

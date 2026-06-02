@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -9,7 +10,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 
-class MockSupabaseClient extends Mock implements SupabaseClient {}
 class MockTmdbService extends Mock implements TmdbService {}
 
 class FakeTransformBuilder<T> extends Fake implements PostgrestTransformBuilder<T> {
@@ -63,7 +63,6 @@ class FakeQueryBuilder extends Fake implements SupabaseQueryBuilder {
 
 void main() {
   late MediaRepository repository;
-  late MockSupabaseClient mockSupabase;
   late MockTmdbService mockTmdb;
   late AppDatabase database;
 

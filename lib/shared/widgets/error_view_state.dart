@@ -1,7 +1,5 @@
 import 'package:cinemuse_app/core/error/app_exception.dart';
-import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ErrorViewState extends StatelessWidget {
   final String title;
@@ -56,11 +54,11 @@ class ErrorViewState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: color.withOpacity(0.05),
+                    color: color.withValues(alpha: 0.05),
                     blurRadius: 40,
                     spreadRadius: 10,
                   ),
@@ -74,7 +72,7 @@ class ErrorViewState extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                 color: Colors.white,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -86,7 +84,7 @@ class ErrorViewState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                 color: Colors.white70,
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
@@ -98,8 +96,8 @@ class ErrorViewState extends StatelessWidget {
               Text(
                 hint!,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(
-                  color: color.withOpacity(0.8),
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: color.withValues(alpha: 0.8),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   fontStyle: FontStyle.italic,
@@ -113,18 +111,18 @@ class ErrorViewState extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onRetry,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: color.withOpacity(0.2),
+                  backgroundColor: color.withValues(alpha: 0.2),
                   foregroundColor: color,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: color.withOpacity(0.4)),
+                    side: BorderSide(color: color.withValues(alpha: 0.4)),
                   ),
                 ),
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(
                   "Retry",
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
           ],

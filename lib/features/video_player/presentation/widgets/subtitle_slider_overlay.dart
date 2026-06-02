@@ -178,7 +178,7 @@ class SubtitleSliderOverlay extends ConsumerWidget {
                               label: l10n.commonOk,
                               isPrimary: true,
                               onPressed: () {
-                                if (onSave != null) onSave!();
+                                if (onSave != null) onSave();
                                 onClose(true);
                               },
                             ),

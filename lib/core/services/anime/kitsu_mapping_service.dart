@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
-import 'package:cinemuse_app/core/services/system/smart_cache.dart';
-import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
@@ -87,9 +85,9 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
         final Map<String, dynamic> tmdbMap = mapping.mappingsData != null ? jsonDecode(mapping.mappingsData!) : {};
         
         // Find the "primary" season key for this mapping (usually only one)
-        final String? mappingSeasonKey = tmdbMap.keys.firstWhere((k) => k.startsWith('s'), orElse: () => '');
+        final String mappingSeasonKey = tmdbMap.keys.firstWhere((k) => k.startsWith('s'), orElse: () => '');
         
-        if (mappingSeasonKey != null && mappingSeasonKey.startsWith('s')) {
+        if (mappingSeasonKey.startsWith('s')) {
           final mappingSeasonNum = int.tryParse(mappingSeasonKey.substring(1)) ?? 0;
           
           // If this candidate maps to a season < our target season, skip it (it's in the past)
@@ -201,7 +199,7 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
         }
       }
     } catch (e) {
-
+      debugPrint('[KitsuMapping] Failed to get Kitsu data: $e');
     }
     return null;
   }

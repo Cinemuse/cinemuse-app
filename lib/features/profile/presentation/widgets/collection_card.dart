@@ -27,37 +27,37 @@ class CollectionCard extends StatelessWidget {
     Color badgeBg = Colors.white10;
     IconData icon = LucideIcons.list;
     List<Color> backgroundGradient = [AppTheme.surface, AppTheme.surface];
-    List<Color> headerGradient = [Colors.black.withOpacity(0.05), Colors.black.withOpacity(0.05)];
+    List<Color> headerGradient = [Colors.black.withValues(alpha: 0.05), Colors.black.withValues(alpha: 0.05)];
 
     if (isWatchlist) {
-      borderColor = const Color(0xFFCA8A04).withOpacity(0.4); // yellow-600/40
+      borderColor = const Color(0xFFCA8A04).withValues(alpha: 0.4); // yellow-600/40
       borderWidth = 2.0;
       iconColor = const Color(0xFFEAB308); // yellow-500
       badgeColor = const Color(0xFFEAB308); // yellow-500
-      badgeBg = const Color(0xFFEAB308).withOpacity(0.2); // yellow-500/20
+      badgeBg = const Color(0xFFEAB308).withValues(alpha: 0.2); // yellow-500/20
       icon = LucideIcons.bookmark;
       backgroundGradient = [
-        const Color(0xFF713F12).withOpacity(0.3), // yellow-900/30
-        const Color(0xFF7C2D12).withOpacity(0.2), // orange-900/20
+        const Color(0xFF713F12).withValues(alpha: 0.3), // yellow-900/30
+        const Color(0xFF7C2D12).withValues(alpha: 0.2), // orange-900/20
       ];
       headerGradient = [
-        const Color(0xFFCA8A04).withOpacity(0.2), // yellow-600/20
-        const Color(0xFFEA580C).withOpacity(0.2), // orange-600/20
+        const Color(0xFFCA8A04).withValues(alpha: 0.2), // yellow-600/20
+        const Color(0xFFEA580C).withValues(alpha: 0.2), // orange-600/20
       ];
     } else if (isFavorites) {
-      borderColor = const Color(0xFFDC2626).withOpacity(0.4); // red-600/40
+      borderColor = const Color(0xFFDC2626).withValues(alpha: 0.4); // red-600/40
       borderWidth = 2.0;
       iconColor = const Color(0xFFEF4444); // red-500
       badgeColor = const Color(0xFFEF4444); // red-500
-      badgeBg = const Color(0xFFEF4444).withOpacity(0.2); // red-500/20
+      badgeBg = const Color(0xFFEF4444).withValues(alpha: 0.2); // red-500/20
       icon = LucideIcons.heart;
       backgroundGradient = [
-        const Color(0xFF7F1D1D).withOpacity(0.3), // red-900/30
-        const Color(0xFF831843).withOpacity(0.2), // pink-900/20
+        const Color(0xFF7F1D1D).withValues(alpha: 0.3), // red-900/30
+        const Color(0xFF831843).withValues(alpha: 0.2), // pink-900/20
       ];
       headerGradient = [
-        const Color(0xFFDC2626).withOpacity(0.2), // red-600/20
-        const Color(0xFFDB2777).withOpacity(0.2), // pink-600/20
+        const Color(0xFFDC2626).withValues(alpha: 0.2), // red-600/20
+        const Color(0xFFDB2777).withValues(alpha: 0.2), // pink-600/20
       ];
     }
 
@@ -120,7 +120,7 @@ class CollectionCard extends StatelessWidget {
                     )
                   else
                     Center(
-                      child: Icon(icon, size: 32, color: iconColor.withOpacity(0.5)),
+                      child: Icon(icon, size: 32, color: iconColor.withValues(alpha: 0.5)),
                     ),
                   
                   // Bottom Fade Gradient (matches web)
@@ -132,7 +132,7 @@ class CollectionCard extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.4),
+                            Colors.black.withValues(alpha: 0.4),
                           ],
                         ),
                       ),

@@ -25,10 +25,10 @@ class AppBottomNavbar extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
           decoration: BoxDecoration(
-            color: AppTheme.surface.withOpacity(0.8),
+            color: AppTheme.surface.withValues(alpha: 0.8),
             border: Border(
               top: BorderSide(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
                 width: 0.5,
               ),
             ),
@@ -102,7 +102,7 @@ class _BottomNavItem extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.accent.withOpacity(0.1) : Colors.transparent,
+                  color: isSelected ? AppTheme.accent.withValues(alpha: 0.1) : Colors.transparent,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(

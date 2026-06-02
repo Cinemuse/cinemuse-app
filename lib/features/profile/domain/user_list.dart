@@ -36,9 +36,13 @@ class UserList {
     // Determine type from string
     ListType type = ListType.custom;
     final typeStr = json['type'] as String?;
-    if (typeStr == 'watchlist') type = ListType.watchlist;
-    else if (typeStr == 'favorites') type = ListType.favorites;
-    else if (typeStr == 'tierlist') type = ListType.tierlist;
+    if (typeStr == 'watchlist') {
+      type = ListType.watchlist;
+    } else if (typeStr == 'favorites') {
+      type = ListType.favorites;
+    } else if (typeStr == 'tierlist') {
+      type = ListType.tierlist;
+    }
 
     return UserList(
       id: json['id'] as String,

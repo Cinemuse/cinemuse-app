@@ -3,7 +3,6 @@ import 'package:cinemuse_app/features/profile/application/profile_providers.dart
 import 'package:cinemuse_app/features/profile/domain/profile_stats.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class StatsDisplay extends ConsumerWidget {
@@ -85,7 +84,7 @@ class TimeBreakdownCard extends StatelessWidget {
                   children: [
                     Text(
                       formatDuration(stats.totalMinutesWatched),
-                      style: GoogleFonts.outfit(
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         fontSize: 32, // slightly smaller to fit
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
@@ -93,7 +92,7 @@ class TimeBreakdownCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text('ALL TIME', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    Text('ALL TIME', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ],
                 ),
                 const SizedBox(width: 24),
@@ -162,7 +161,7 @@ class MoviesStatsCard extends StatelessWidget {
                 children: [
                     Text(
                       stats.totalMovies.toString(),
-                      style: GoogleFonts.outfit(
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         fontSize: 48,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
@@ -170,7 +169,7 @@ class MoviesStatsCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text('MOVIES', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    Text('MOVIES', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
                 ],
             ),
           ),
@@ -227,7 +226,7 @@ class SeriesStatsCard extends StatelessWidget {
                   children: [
                     Text(
                       stats.totalEpisodes.toString(),
-                      style: GoogleFonts.outfit(
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         fontSize: 32,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
@@ -235,7 +234,7 @@ class SeriesStatsCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text('EPISODES', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    Text('EPISODES', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ],
                 ),
                 const SizedBox(width: 24),

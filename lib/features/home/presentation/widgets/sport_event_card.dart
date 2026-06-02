@@ -3,7 +3,6 @@ import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
@@ -208,7 +207,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                                       ),
                                       child: Text(
                                         channel,
-                                        style: GoogleFonts.outfit(
+                                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                                           color: Colors.white,
                                           fontSize: 9,
                                           fontWeight: FontWeight.w500,
@@ -243,7 +242,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                             : widget.event.description,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.outfit(
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                           color: _isHovered ? AppTheme.accent : Colors.white,
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
@@ -330,7 +329,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.outfit(
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                   color: Colors.white.withValues(alpha: 0.2),
                   fontSize: 12,
                 ),

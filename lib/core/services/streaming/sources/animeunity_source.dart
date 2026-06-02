@@ -1,5 +1,4 @@
-import 'dart:convert';
-
+import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/core/services/anime/interfaces/anime_unity_mapping_provider.dart';
 import 'package:cinemuse_app/core/services/anime/models/anime_unity_entry.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
@@ -46,7 +45,7 @@ class AnimeUnitySource extends BaseSource {
       }
       return candidates;
     } catch (e) {
-      print('AnimeUnitySource: Search failed: $e');
+      debugPrint('AnimeUnitySource: Search failed: $e');
       return [];
     }
   }
@@ -66,7 +65,7 @@ class AnimeUnitySource extends BaseSource {
 
       return _extractVixCloudStream(embedUrl, episodeData, context, entry);
     } catch (e) {
-      print('AnimeUnitySource: Failed for entry ${entry.id}: $e');
+      debugPrint('AnimeUnitySource: Failed for entry ${entry.id}: $e');
       return null;
     }
   }
@@ -175,7 +174,7 @@ class AnimeUnitySource extends BaseSource {
         RegExp(r'<script[^>]*>([\s\S]*?masterPlaylist[\s\S]*?)</script>');
     final scriptMatch = scriptPattern.firstMatch(html);
     if (scriptMatch == null) {
-      print('AnimeUnitySource: No masterPlaylist script found');
+      debugPrint('AnimeUnitySource: No masterPlaylist script found');
       return null;
     }
     final script = scriptMatch.group(1)!;
@@ -183,7 +182,7 @@ class AnimeUnitySource extends BaseSource {
     final url = _extractWindowValue(script, 'masterPlaylistUrl') ??
         _extractMasterPlaylistUrl(script);
     if (url == null || url.isEmpty) {
-      print('AnimeUnitySource: masterPlaylist.url not found');
+      debugPrint('AnimeUnitySource: masterPlaylist.url not found');
       return null;
     }
 
@@ -224,7 +223,7 @@ class AnimeUnitySource extends BaseSource {
     bool canPlayFHD,
   ) {
     if (token == null || expires == null) {
-      print('AnimeUnitySource: Missing token or expires');
+      debugPrint('AnimeUnitySource: Missing token or expires');
       return null;
     }
 
@@ -272,7 +271,7 @@ class AnimeUnitySource extends BaseSource {
       }
       return languages.toList();
     } catch (e) {
-      print('AnimeUnitySource: Language detection failed: $e');
+      debugPrint('AnimeUnitySource: Language detection failed: $e');
       return [];
     }
   }

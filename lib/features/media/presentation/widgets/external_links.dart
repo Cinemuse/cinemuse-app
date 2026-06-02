@@ -4,7 +4,6 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ExternalLinks extends StatelessWidget {
   final Map<String, dynamic>? externalIds;
@@ -102,7 +101,7 @@ class _SocialLink extends StatelessWidget {
           padding: const EdgeInsets.only(right: 16),
           child: HoverScale(
             scale: 1.2,
-            child: Icon(icon, color: AppTheme.textWhite.withOpacity(0.6), size: 20),
+            child: Icon(icon, color: AppTheme.textWhite.withValues(alpha: 0.6), size: 20),
           ),
         ),
       ),
@@ -127,14 +126,14 @@ class _DatabaseLink extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: AppTheme.secondary.withOpacity(0.5),
+              color: AppTheme.secondary.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppTheme.textWhite.withOpacity(0.05)),
+              border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.05)),
             ),
             child: Text(
               label,
-              style: GoogleFonts.firaCode(
-                color: AppTheme.textWhite.withOpacity(0.6),
+              style: AppTheme.monoStyle(
+                color: AppTheme.textWhite.withValues(alpha: 0.6),
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
               ),

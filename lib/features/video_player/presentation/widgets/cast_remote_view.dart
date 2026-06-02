@@ -33,7 +33,7 @@ class CastRemoteView extends ConsumerWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    theme.colorScheme.primary.withOpacity(0.2),
+                    theme.colorScheme.primary.withValues(alpha: 0.2),
                     Colors.black,
                   ],
                 ),
@@ -98,7 +98,7 @@ class CastRemoteView extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: theme.colorScheme.primary.withOpacity(0.3),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.3),
                           blurRadius: 40,
                           spreadRadius: 2,
                         ),

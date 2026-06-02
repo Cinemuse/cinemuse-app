@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ErrorService extends Notifier<UserFriendlyError?> {
@@ -7,9 +8,9 @@ class ErrorService extends Notifier<UserFriendlyError?> {
 
   void handle(Object error, {StackTrace? stackTrace}) {
     // 0. Log for debugging
-    print('ErrorService: Handling error: $error');
+    debugPrint('ErrorService: Handling error: $error');
     if (stackTrace != null) {
-      print(stackTrace);
+      debugPrint(stackTrace.toString());
     }
 
     // 1. Map to user friendly error

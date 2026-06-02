@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
-import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:drift/drift.dart';
-import 'package:cinemuse_app/core/data/database.dart' hide MediaItem;
+import 'package:cinemuse_app/core/data/database.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 
 class ListsRepository {
   final SupabaseClient _client;
@@ -140,7 +140,7 @@ class ListsRepository {
       await _db.syncUserLists(userId, lists, items);
     } catch (e) {
       if (!e.toString().contains('Failed host lookup') && !e.toString().contains('SocketException')) {
-        print('ListsRepository: Sync failed: $e');
+        debugPrint('ListsRepository: Sync failed: $e');
       }
     }
   }
