@@ -858,6 +858,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Automatically hide items like CAM, Screener, 3D, or junk from addon results.';
 
   @override
+  String get settingsMaxResolution => 'Max Resolution';
+
+  @override
+  String get settingsMaxResolutionDesc =>
+      'Hide streams with a resolution higher than the selected one.';
+
+  @override
   String get settingsTotalDocSize => 'Total Document Size';
 
   @override

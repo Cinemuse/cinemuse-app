@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 import 'package:cinemuse_app/core/services/streaming/ranking/stream_ranker.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,6 +36,7 @@ final unifiedStreamResolverProvider = Provider((ref) {
     s.splitAnimePreferences,
     s.animeAudioLanguage,
     s.enableAutoSkipProviders,
+    s.maxResolution,
   )));
   
   // Create a minimal UserSettings object for the constructor to avoid watching the whole thing
@@ -50,6 +52,7 @@ final unifiedStreamResolverProvider = Provider((ref) {
     splitAnimePreferences: settings.$9,
     animeAudioLanguage: settings.$10,
     enableAutoSkipProviders: settings.$11,
+    maxResolution: settings.$12,
   );
 
   final dio = ref.read(dioProvider);
@@ -388,7 +391,33 @@ class UnifiedStreamResolver {
       }).toList();
     }
 
-    // 3. Rank and Sort
+    // 3. Filter by maximum resolution
+    if (_settings.maxResolution != VideoResolution.unknown) {
+      results = results.where((c) {
+        VideoResolution res = c.metadata?.video.resolution ?? VideoResolution.unknown;
+        if (res == VideoResolution.unknown) {
+          final t = c.title.toLowerCase();
+          if (t.contains('2160p') || t.contains('4k')) {
+            res = VideoResolution.r2160p;
+          } else if (t.contains('1440p') || t.contains('2k')) {
+            res = VideoResolution.r1440p;
+          } else if (t.contains('1080p') || t.contains('fhd')) {
+            res = VideoResolution.r1080p;
+          } else if (t.contains('720p') || t.contains('hd')) {
+            res = VideoResolution.r720p;
+          } else if (t.contains('480p') || t.contains('sd')) {
+            res = VideoResolution.r480p;
+          }
+        }
+        
+        if (res != VideoResolution.unknown && res.index < _settings.maxResolution.index) {
+          return false;
+        }
+        return true;
+      }).toList();
+    }
+
+    // 4. Rank and Sort
     final preferredLanguage = (context.isAnime && _settings.splitAnimePreferences) 
         ? _settings.animeAudioLanguage 
         : _settings.playerLanguage;

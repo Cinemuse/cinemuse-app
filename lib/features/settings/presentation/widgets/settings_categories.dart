@@ -10,6 +10,7 @@ import 'package:cinemuse_app/features/settings/application/local_settings_servic
 import 'package:cinemuse_app/features/settings/presentation/widgets/addon_settings.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/subtitle_appearance_form.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/playlist_management_sheet.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 
 class IdentitySettings extends ConsumerWidget {
   const IdentitySettings({super.key});
@@ -48,6 +49,8 @@ class CustomizationSettings extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final userSettings = ref.watch(settingsProvider);
     final settingsNotifier = ref.read(settingsProvider.notifier);
+    final localSettings = ref.watch(localSettingsProvider);
+    final localNotifier = ref.read(localSettingsProvider.notifier);
 
     return Column(
       children: [
@@ -121,6 +124,32 @@ class CustomizationSettings extends ConsumerWidget {
                   trailing: SettingToggle(
                     value: userSettings.splitAnimePreferences,
                     onChanged: (val) => settingsNotifier.updateSettings({'splitAnimePreferences': val}),
+                  ),
+                ),
+                SettingsTile(
+                  label: l10n.settingsMaxResolution,
+                  description: l10n.settingsMaxResolutionDesc,
+                  icon: Icons.hd,
+                  showDivider: false,
+                  trailing: buildSmallDropdown<VideoResolution>(
+                    value: localSettings.maxResolution,
+                    items: VideoResolution.values.map((res) {
+                      String text;
+                      switch (res) {
+                        case VideoResolution.r2160p: text = '4K'; break;
+                        case VideoResolution.r1440p: text = '1440p'; break;
+                        case VideoResolution.r1080p: text = '1080p'; break;
+                        case VideoResolution.r720p: text = '720p'; break;
+                        case VideoResolution.r480p: text = '480p'; break;
+                        case VideoResolution.unknown: text = 'Any'; break;
+                      }
+                      return DropdownMenuItem(value: res, child: Text(text));
+                    }).toList(),
+                    onChanged: (res) {
+                      if (res != null) {
+                        localNotifier.updateMaxResolution(res);
+                      }
+                    },
                   ),
                 ),
               ],

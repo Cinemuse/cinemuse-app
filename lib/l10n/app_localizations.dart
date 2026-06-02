@@ -1670,6 +1670,18 @@ abstract class AppLocalizations {
   /// **'Automatically hide items like CAM, Screener, 3D, or junk from addon results.'**
   String get settingsSmartSearchDesc;
 
+  /// No description provided for @settingsMaxResolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Max Resolution'**
+  String get settingsMaxResolution;
+
+  /// No description provided for @settingsMaxResolutionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide streams with a resolution higher than the selected one.'**
+  String get settingsMaxResolutionDesc;
+
   /// No description provided for @settingsTotalDocSize.
   ///
   /// In en, this message translates to:

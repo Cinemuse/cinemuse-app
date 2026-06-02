@@ -861,7 +861,14 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get settingsSmartSearchDesc =>
-      'Nasconde automaticamente CAM, Screener, versioni 3D o link spazzatura dai risultati degli addon.';
+      'Nascondi automaticamente i risultati CAM, Screener, 3D o spazzatura dai risultati degli addon.';
+
+  @override
+  String get settingsMaxResolution => 'Risoluzione Massima';
+
+  @override
+  String get settingsMaxResolutionDesc =>
+      'Nascondi i link con una risoluzione superiore a quella selezionata.';
 
   @override
   String get settingsTotalDocSize => 'Dimensione Totale Documenti';
