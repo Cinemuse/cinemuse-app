@@ -94,7 +94,7 @@ class _SportScheduleRowState extends ConsumerState<SportScheduleRow> {
 
   /// Calculates the pixel offset for a given flat-list index.
   double _offsetForIndex(int index, List<_ScheduleItem> items, double horizontalPadding) {
-    double offset = horizontalPadding;
+    double offset = 0.0;
     for (int i = 0; i < index; i++) {
       final item = items[i];
       if (item is _DayHeaderItem) {
