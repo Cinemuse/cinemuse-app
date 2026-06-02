@@ -16,6 +16,7 @@ class DetailsHero extends ConsumerWidget {
   final Map<String, dynamic> details;
   final Map<String, dynamic>? resumeData;
   final VoidCallback onPlayClick;
+  final VoidCallback? onRestartClick;
   final Function(Map<String, dynamic>) onDeepSearch;
   final double contentPadding;
   final bool isFavorite;
@@ -31,6 +32,7 @@ class DetailsHero extends ConsumerWidget {
     required this.details,
     this.resumeData,
     required this.onPlayClick,
+    this.onRestartClick,
     required this.onDeepSearch,
     this.contentPadding = 24.0,
     this.isFavorite = false,
@@ -281,6 +283,7 @@ class DetailsHero extends ConsumerWidget {
                 // Action Buttons (Responsive)
                 ResponsiveActionButtons(
                   onPlayClick: onPlayClick,
+                  onRestartClick: onRestartClick,
                   playButtonLabel: _getPlayButtonLabel(l10n, type, resumeData),
                   mediaItem: mediaItem,
                   isFavorite: isFavorite,
@@ -289,6 +292,11 @@ class DetailsHero extends ConsumerWidget {
                   onTrackTap: onTrackTap,
                   seriesWatchStatus: seriesWatchStatus,
                   movieWatchCount: movieWatchCount,
+                  hasResumeProgress: (resumeData?['progress'] as int? ?? 0) > 0,
+                  mediaId: media['id']?.toString() ?? '',
+                  mediaType: type == 'series' ? 'tv' : type,
+                  season: resumeData?['season'] as int?,
+                  episode: resumeData?['episode'] as int?,
                 ),
 
                 // Series Progress Bar (extracted)

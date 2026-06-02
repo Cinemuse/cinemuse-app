@@ -1113,10 +1113,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuRestart => 'Restart';
 
   @override
+  String get menuMarkWatchedNow => 'Mark as watched (now)';
+
+  @override
+  String get menuMarkWatchedCustomDate => 'Mark as watched (custom date)';
+
+  @override
   String get menuPlay => 'Play';
 
   @override
   String get menuRemoveFromContinueWatching => 'Remove from Continue Watching';
+
+  @override
+  String get menuRemoveCachedProvider => 'Remove Cached Stream';
 
   @override
   String get liveTvTabAll => 'All';

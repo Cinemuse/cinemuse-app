@@ -199,6 +199,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                   } : null,
                   seriesWatchStatus: seriesWatchStatus,
                   onPlayClick: () => _handlePlay(context, watchHistory, typeForTmdb),
+                  onRestartClick: () => _handlePlay(context, watchHistory, typeForTmdb, restart: true),
                   onDeepSearch: (params) => {},
                   onListTap: () => _showAddToList(context, tmdbId, typeForTmdb, details),
                   onTrackTap: isTV 
@@ -365,7 +366,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     );
   }
 
-  void _handlePlay(BuildContext context, WatchHistory? watchHistory, String type) {
+  void _handlePlay(BuildContext context, WatchHistory? watchHistory, String type, {bool restart = false}) {
     int? season;
     int? episode;
     
@@ -380,7 +381,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         type: type,
         season: season,
         episode: episode,
-        startPosition: watchHistory?.progressSeconds ?? 0,
+        startPosition: restart ? 0 : (watchHistory?.progressSeconds ?? 0),
       ),
     ));
   }

@@ -117,6 +117,37 @@ class UnifiedStreamResolver {
     _searchCache.clear();
   }
 
+  /// Checks if a valid (non-expired) cache entry exists for the given item.
+  bool hasCachedStream(
+    String queryId,
+    String type, {
+    int? season,
+    int? episode,
+  }) {
+    final cacheKey = "$type:$queryId:${season ?? 0}:${episode ?? 0}";
+    final cached = _searchCache[cacheKey];
+    if (cached == null) return false;
+    
+    final isExpired = DateTime.now().difference(cached.timestamp) >= _cacheDuration;
+    if (isExpired) {
+      _searchCache.remove(cacheKey);
+      return false;
+    }
+    return true;
+  }
+
+  /// Removes the cache entry for the given item from the cache.
+  void clearCachedStream(
+    String queryId,
+    String type, {
+    int? season,
+    int? episode,
+  }) {
+    final cacheKey = "$type:$queryId:${season ?? 0}:${episode ?? 0}";
+    _searchCache.remove(cacheKey);
+    debugPrint('UnifiedStreamResolver: Cleared cached results for $cacheKey');
+  }
+
   @visibleForTesting
   List<BaseSource> get sources => _sources;
 

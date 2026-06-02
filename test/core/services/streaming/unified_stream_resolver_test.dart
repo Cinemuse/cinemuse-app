@@ -277,4 +277,32 @@ void main() {
       expect(result?.provider, equals('S'));
     });
   });
+
+  group('UnifiedStreamResolver Cache Management', () {
+    test('Should check and clear cache correctly', () async {
+      when(() => mockTmdb.getMediaDetails(any(), any())).thenAnswer((_) async => {
+        'id': 123,
+        'imdb_id': 'tt123',
+        'title': 'Test Movie',
+      });
+      when(() => mockSource.search(any())).thenAnswer((_) async => [
+        StreamCandidate(title: 'Test Candidate', infoHash: 'hash1', magnet: 'mag1', seeds: 1, provider: 'MockSource'),
+      ]);
+
+      // Initially cache is empty
+      expect(resolver.hasCachedStream('123', 'movie'), isFalse);
+
+      // Search to populate cache
+      await resolver.searchStreams('123', 'movie');
+
+      // Now cache should exist
+      expect(resolver.hasCachedStream('123', 'movie'), isTrue);
+
+      // Clear the specific cache entry
+      resolver.clearCachedStream('123', 'movie');
+
+      // Now cache should be gone
+      expect(resolver.hasCachedStream('123', 'movie'), isFalse);
+    });
+  });
 }

@@ -117,6 +117,7 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
           episode: episode,
           seasonNumber: widget.seasonNumber,
           media: widget.media,
+          mediaId: widget.media['id']?.toString() ?? '',
           isWatched: isWatched,
           watchCount: watchCount,
           resumePercentage: resumePercentage,

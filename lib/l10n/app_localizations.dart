@@ -2156,6 +2156,18 @@ abstract class AppLocalizations {
   /// **'Restart'**
   String get menuRestart;
 
+  /// No description provided for @menuMarkWatchedNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as watched (now)'**
+  String get menuMarkWatchedNow;
+
+  /// No description provided for @menuMarkWatchedCustomDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as watched (custom date)'**
+  String get menuMarkWatchedCustomDate;
+
   /// No description provided for @menuPlay.
   ///
   /// In en, this message translates to:
@@ -2167,6 +2179,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove from Continue Watching'**
   String get menuRemoveFromContinueWatching;
+
+  /// No description provided for @menuRemoveCachedProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Cached Stream'**
+  String get menuRemoveCachedProvider;
 
   /// No description provided for @liveTvTabAll.
   ///

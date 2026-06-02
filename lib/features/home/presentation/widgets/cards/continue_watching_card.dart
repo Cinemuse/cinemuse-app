@@ -7,11 +7,12 @@ import 'package:cinemuse_app/features/settings/application/settings_service.dart
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
+import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/shared/widgets/backdrop_card.dart';
 import 'package:cinemuse_app/shared/widgets/skeleton_box.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
-class ContinueWatchingCard extends ConsumerWidget {
+class ContinueWatchingCard extends ConsumerStatefulWidget {
   final WatchHistory historyItem;
   final List<UserListItem> watchlistItems;
   final VoidCallback onRemove;
@@ -24,16 +25,21 @@ class ContinueWatchingCard extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final localMedia = historyItem.media;
+  ConsumerState<ContinueWatchingCard> createState() => _ContinueWatchingCardState();
+}
+
+class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
+  @override
+  Widget build(BuildContext context) {
+    final localMedia = widget.historyItem.media;
     
     if (localMedia != null) {
       return _buildCard(context, ref, localMedia);
     }
 
     final mediaAsync = ref.watch(mediaItemProvider((
-      id: historyItem.tmdbId, 
-      type: historyItem.mediaType
+      id: widget.historyItem.tmdbId, 
+      type: widget.historyItem.mediaType
     )));
 
     return mediaAsync.when(
@@ -55,44 +61,52 @@ class ContinueWatchingCard extends ConsumerWidget {
   }
 
   Widget _buildCard(BuildContext context, WidgetRef ref, MediaItem? media) {
-    final isWatchlisted = watchlistItems.any((i) => 
-      i.tmdbId == historyItem.tmdbId && i.mediaType == historyItem.mediaType
+    final isWatchlisted = widget.watchlistItems.any((i) => 
+      i.tmdbId == widget.historyItem.tmdbId && i.mediaType == widget.historyItem.mediaType
     );
     final appLanguage = ref.watch(settingsProvider).appLanguage;
     final title = media?.getLocalizedTitle(appLanguage) ?? '...';
     
-    final percentage = (historyItem.totalDuration != null && historyItem.totalDuration! > 0)
-        ? (historyItem.progressSeconds / historyItem.totalDuration!)
+    final percentage = (widget.historyItem.totalDuration != null && widget.historyItem.totalDuration! > 0)
+        ? (widget.historyItem.progressSeconds / widget.historyItem.totalDuration!)
         : 0.0;
 
+    final resolver = ref.read(unifiedStreamResolverProvider);
+    final hasCache = resolver.hasCachedStream(
+      widget.historyItem.tmdbId.toString(),
+      widget.historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+      season: widget.historyItem.season,
+      episode: widget.historyItem.episode,
+    );
+
     return BackdropCard(
-      key: ValueKey(historyItem.tmdbId),
+      key: ValueKey(widget.historyItem.tmdbId),
       title: title,
       backdropPath: media?.backdropPath,
       posterPath: media?.posterPath,
       progress: percentage,
-      infoText: historyItem.mediaType == MediaKind.tv 
-                ? "S${historyItem.season} E${historyItem.episode}" 
+      infoText: widget.historyItem.mediaType == MediaKind.tv 
+                ? "S${widget.historyItem.season} E${widget.historyItem.episode}" 
                 : "Movie",
       isWatchlisted: isWatchlisted,
       onTap: () {
         Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
           builder: (_) => VideoPlayerScreen(
-            queryId: historyItem.tmdbId.toString(),
-            type: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
-            season: historyItem.season,
-            episode: historyItem.episode,
-            startPosition: historyItem.progressSeconds,
+            queryId: widget.historyItem.tmdbId.toString(),
+            type: widget.historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+            season: widget.historyItem.season,
+            episode: widget.historyItem.episode,
+            startPosition: widget.historyItem.progressSeconds,
           ),
         ));
       },
       onRestart: () {
         Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
           builder: (_) => VideoPlayerScreen(
-            queryId: historyItem.tmdbId.toString(),
-            type: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
-            season: historyItem.season,
-            episode: historyItem.episode,
+            queryId: widget.historyItem.tmdbId.toString(),
+            type: widget.historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+            season: widget.historyItem.season,
+            episode: widget.historyItem.episode,
             startPosition: 0,
           ),
         ));
@@ -100,8 +114,8 @@ class ContinueWatchingCard extends ConsumerWidget {
       onDetails: () {
         Navigator.of(context).push(MaterialPageRoute(
           builder: (_) => MediaDetailsScreen(
-            mediaId: historyItem.tmdbId.toString(), 
-            mediaType: historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+            mediaId: widget.historyItem.tmdbId.toString(), 
+            mediaType: widget.historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
           ),
         ));
       },
@@ -110,7 +124,16 @@ class ContinueWatchingCard extends ConsumerWidget {
           ref.read(userListsProvider.notifier).toggleWatchlist(media);
         }
       },
-      onRemove: onRemove,
+      onRemove: widget.onRemove,
+      onClearCache: hasCache ? () {
+        resolver.clearCachedStream(
+          widget.historyItem.tmdbId.toString(),
+          widget.historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+          season: widget.historyItem.season,
+          episode: widget.historyItem.episode,
+        );
+        setState(() {});
+      } : null,
     );
   }
 }

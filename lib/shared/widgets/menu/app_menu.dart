@@ -25,13 +25,14 @@ class AppMenu {
     required List<AppMenuOption> options,
     String? title,
     BuildContext? anchorContext,
+    Offset? position,
   }) async {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     if (isMobile) {
       return _showBottomSheet(context, options, title);
     } else {
-      return _showPopupMenu(context, options, anchorContext);
+      return _showPopupMenu(context, options, anchorContext, position);
     }
   }
 
@@ -114,13 +115,22 @@ class AppMenu {
     BuildContext context,
     List<AppMenuOption> options,
     BuildContext? anchorContext,
+    Offset? position,
   ) {
     final RenderBox? overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
     if (overlay == null) return Future.value();
 
     final RelativeRect relativePosition;
 
-    if (anchorContext != null) {
+    if (position != null) {
+      // Prioritize explicit position
+      relativePosition = RelativeRect.fromLTRB(
+        position.dx,
+        position.dy,
+        overlay.size.width - position.dx,
+        overlay.size.height - position.dy,
+      );
+    } else if (anchorContext != null) {
       // Anchor to the trigger widget
       final RenderBox button = anchorContext.findRenderObject() as RenderBox;
       final Offset buttonPosition = button.localToGlobal(Offset.zero, ancestor: overlay);
@@ -160,26 +170,32 @@ class AppMenu {
                       color: option.isDestructive ? AppTheme.favorites : Colors.white.withValues(alpha: 0.7),
                     ),
                     const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          option.label,
-                          style: GoogleFonts.outfit(
-                            color: option.isDestructive ? AppTheme.favorites : Colors.white,
-                            fontSize: 14,
-                          ),
-                        ),
-                        if (option.subtitle != null)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           Text(
-                            option.subtitle!,
+                            option.label,
                             style: GoogleFonts.outfit(
-                              color: Colors.white.withValues(alpha: 0.5),
-                              fontSize: 12,
+                              color: option.isDestructive ? AppTheme.favorites : Colors.white,
+                              fontSize: 14,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                      ],
+                          if (option.subtitle != null)
+                            Text(
+                              option.subtitle!,
+                              style: GoogleFonts.outfit(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

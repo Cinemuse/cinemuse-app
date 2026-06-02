@@ -17,6 +17,7 @@ class BackdropCard extends StatefulWidget {
   final VoidCallback? onDetails;
   final VoidCallback? onRestart;
   final VoidCallback? onWatchlistToggle;
+  final VoidCallback? onClearCache;
   final bool isWatchlisted;
 
   const BackdropCard({
@@ -31,6 +32,7 @@ class BackdropCard extends StatefulWidget {
     this.onDetails,
     this.onRestart,
     this.onWatchlistToggle,
+    this.onClearCache,
     this.isWatchlisted = false,
   });
 
@@ -69,6 +71,12 @@ class _BackdropCardState extends State<BackdropCard> {
           icon: widget.isWatchlisted ? Icons.bookmark_remove : Icons.bookmark_add_outlined,
           label: widget.isWatchlisted ? l10n.menuRemoveFromWatchlist : l10n.menuAddToWatchlist,
           onTap: widget.onWatchlistToggle!,
+        ),
+      if (widget.onClearCache != null)
+        AppMenuOption(
+          icon: Icons.cached,
+          label: l10n.menuRemoveCachedProvider,
+          onTap: widget.onClearCache!,
         ),
       if (widget.onRemove != null)
         AppMenuOption(
