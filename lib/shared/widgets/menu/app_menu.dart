@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 
 class AppMenuOption {
   final IconData icon;
@@ -40,71 +41,49 @@ class AppMenu {
     List<AppMenuOption> options,
     String? title,
   ) {
-    return showModalBottomSheet(
+    return AppBottomSheet.show(
       context: context,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black54,
-      isScrollControlled: true,
-      builder: (context) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: Container(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).padding.bottom + 16,
-              top: 8,
-            ),
-            decoration: BoxDecoration(
-              color: AppTheme.primary.withValues(alpha: 0.8),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              border: Border.all(color: AppTheme.border, width: 0.5),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Handle bar
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
+      child: AppBottomSheet(
+        blurSigma: 15.0,
+        backgroundColor: AppTheme.primary.withValues(alpha: 0.8),
+        border: Border.all(color: AppTheme.border, width: 0.5),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).padding.bottom + 16,
+          top: 8,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (title != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16, left: 24, right: 24),
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
-                if (title != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16, left: 24, right: 24),
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+              ),
+            ...options.map((option) => ListTile(
+                  leading: Icon(
+                    option.icon,
+                    color: option.isDestructive ? AppTheme.favorites : Colors.white70,
+                  ),
+                  title: Text(
+                    option.label,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                      color: option.isDestructive ? AppTheme.favorites : Colors.white,
+                      fontSize: 16,
                     ),
                   ),
-                ...options.map((option) => ListTile(
-                      leading: Icon(
-                        option.icon,
-                        color: option.isDestructive ? AppTheme.favorites : Colors.white70,
-                      ),
-                      title: Text(
-                        option.label,
-                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                          color: option.isDestructive ? AppTheme.favorites : Colors.white,
-                          fontSize: 16,
-                        ),
-                      ),
-                      onTap: () {
-                        Navigator.pop(context);
-                        option.onTap();
-                      },
-                    )),
-              ],
-            ),
-          ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    option.onTap();
+                  },
+                )),
+          ],
         ),
       ),
     );

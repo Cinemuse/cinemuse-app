@@ -3,18 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
-import 'dart:ui';
+import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 
 /// Shows the channel filter sheet as a bottom sheet (mobile) or dialog (desktop).
 void showChannelFilterSheet(BuildContext context) {
   final isMobile = MediaQuery.of(context).size.width < 600;
 
   if (isMobile) {
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => const _FilterSheetContent(),
+      child: const _FilterSheetContent(isMobile: true),
     );
   } else {
     showDialog(
@@ -23,7 +21,7 @@ void showChannelFilterSheet(BuildContext context) {
         backgroundColor: Colors.transparent,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
-          child: const _FilterSheetContent(),
+          child: const _FilterSheetContent(isMobile: false),
         ),
       ),
     );
@@ -31,7 +29,8 @@ void showChannelFilterSheet(BuildContext context) {
 }
 
 class _FilterSheetContent extends ConsumerStatefulWidget {
-  const _FilterSheetContent();
+  final bool isMobile;
+  const _FilterSheetContent({required this.isMobile});
 
   @override
   ConsumerState<_FilterSheetContent> createState() =>
@@ -74,18 +73,16 @@ class _FilterSheetContentState extends ConsumerState<_FilterSheetContent> {
     // Derive sub-providers for the current _selectedGroup locally
     final subProviders = _deriveSubProviders(ref);
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppTheme.surface.withValues(alpha: 0.85),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          ),
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
+    return AppBottomSheet(
+      blurSigma: 16,
+      backgroundColor: AppTheme.surface.withValues(alpha: 0.85),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      borderRadius: widget.isMobile 
+          ? const BorderRadius.vertical(top: Radius.circular(24))
+          : BorderRadius.circular(20),
+      showHandle: widget.isMobile,
+      padding: const EdgeInsets.all(24).copyWith(top: widget.isMobile ? 0 : 24),
+      child: ConstrainedBox(
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.75,
             ),
@@ -116,8 +113,6 @@ class _FilterSheetContentState extends ConsumerState<_FilterSheetContent> {
               ],
             ),
           ),
-        ),
-      ),
     );
   }
 

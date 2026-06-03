@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 
 import 'settings/main_settings_view.dart';
 import 'settings/quality_settings_view.dart';
@@ -35,12 +36,9 @@ class PlayerSettingsBottomSheet extends ConsumerStatefulWidget {
     ValueChanged<SliderOverlayType> onOverlayRequested, {
     SettingsView initialView = SettingsView.main,
   }) {
-    return showModalBottomSheet(
+    return AppBottomSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black54,
-      isScrollControlled: true,
-      builder: (ctx) => PlayerSettingsBottomSheet(
+      child: PlayerSettingsBottomSheet(
         state: state, 
         params: params, 
         onOverlayRequested: onOverlayRequested,
@@ -78,34 +76,16 @@ class _PlayerSettingsBottomSheetState extends ConsumerState<PlayerSettingsBottom
     final maxSheetHeight = screenHeight * (isLandscape ? 0.9 : 0.6);
     final minSheetHeight = screenHeight * 0.15;
 
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-      child: Container(
+    return AppBottomSheet(
+      blurSigma: 12,
+      backgroundColor: AppTheme.glass.withValues(alpha: 0.8),
+      border: Border.all(color: AppTheme.border.withValues(alpha: 0.1), width: 1.5),
+      child: ConstrainedBox(
         constraints: BoxConstraints(
           minHeight: minSheetHeight,
           maxHeight: maxSheetHeight,
         ),
-        decoration: BoxDecoration(
-          color: AppTheme.glass.withValues(alpha: 0.8),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border.all(color: AppTheme.border.withValues(alpha: 0.1), width: 1.5),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            // Drag handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            // Content area
-            Flexible(
-              child: AnimatedSize(
+        child: AnimatedSize(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOutCubic,
                 alignment: Alignment.topCenter,
@@ -135,9 +115,6 @@ class _PlayerSettingsBottomSheetState extends ConsumerState<PlayerSettingsBottom
                 ),
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 

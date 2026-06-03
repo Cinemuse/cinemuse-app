@@ -4,6 +4,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:cinemuse_app/features/media/application/comments_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/comment_tile.dart';
+import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 
 class CommentsBottomSheet extends ConsumerStatefulWidget {
   final CommentsRequest request;
@@ -60,26 +61,13 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
 
         final bool isMobile = width < 600;
 
-        return Container(
-          decoration: const BoxDecoration(
-            color: AppTheme.primary,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
+        return AppBottomSheet(
+          backgroundColor: AppTheme.primary,
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppTheme.textWhite.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 8), // Extra space after handle
               if (isMobile) ...[
                 Text(
                   'TVTime Comments',
@@ -289,18 +277,9 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
 }
 
 void showCommentsBottomSheet(BuildContext context, CommentsRequest request) {
-  final width = MediaQuery.of(context).size.width;
-  showModalBottomSheet(
+  AppBottomSheet.show(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    useSafeArea: true,
-    constraints: BoxConstraints(
-      maxWidth: width > 1200 ? 1200 : width,
-    ),
-    builder: (context) => FractionallySizedBox(
-      heightFactor: 0.85,
-      child: CommentsBottomSheet(request: request),
-    ),
+    heightFactor: 0.85,
+    child: CommentsBottomSheet(request: request),
   );
 }
