@@ -68,6 +68,15 @@ final seasonDetailsProvider = FutureProvider.family<Map<String, dynamic>?, ({int
   return tmdbService.getSeasonDetails(args.tmdbId, args.seasonNumber);
 });
 
+// Family provider to fetch collection details
+final collectionDetailsProvider = FutureProvider.family<Map<String, dynamic>?, int>((ref, collectionId) async {
+  final connectivity = ref.watch(connectivityProvider).valueOrNull;
+  if (connectivity == ConnectivityResult.none) return null;
+
+  final tmdbService = ref.read(tmdbServiceProvider);
+  return tmdbService.getCollectionDetails(collectionId);
+});
+
 // Family state provider for the currently selected season number of a specific series
 final selectedSeasonProvider = StateProvider.family<int, String>((ref, mediaId) {
   // We want to default to the season of the next unwatched episode (or resume point).

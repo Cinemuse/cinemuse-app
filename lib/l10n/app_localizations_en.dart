@@ -186,6 +186,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailsCollectionsDesc => 'Your custom themed lists.';
 
   @override
+  String get detailsCollection => 'Collection';
+
+  @override
+  String get detailsMoreLikeThis => 'More Like This';
+
+  @override
   String get detailsNewCollection => 'New Collection';
 
   @override

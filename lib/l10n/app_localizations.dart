@@ -434,6 +434,18 @@ abstract class AppLocalizations {
   /// **'Your custom themed lists.'**
   String get detailsCollectionsDesc;
 
+  /// No description provided for @detailsCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection'**
+  String get detailsCollection;
+
+  /// No description provided for @detailsMoreLikeThis.
+  ///
+  /// In en, this message translates to:
+  /// **'More Like This'**
+  String get detailsMoreLikeThis;
+
   /// No description provided for @detailsNewCollection.
   ///
   /// In en, this message translates to:

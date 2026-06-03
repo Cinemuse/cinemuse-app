@@ -29,8 +29,8 @@ class VideosRow extends StatelessWidget {
       icon: Icons.movie_filter,
       theme: CarouselTheme.bentoBox,
       itemCount: trailers.length,
-      height: 290, // Standardized BentoBox-style carousels height
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      height: 250, // Adjusted to fit 16:9 thumbnail + text + scrollbar
+      padding: EdgeInsets.zero, // BentoBox already provides padding, avoid double padding
       itemBuilder: (context, index) {
         final trailer = trailers[index];
         final key = trailer['key'];

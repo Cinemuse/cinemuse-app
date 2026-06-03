@@ -56,6 +56,8 @@
   "detailsDeleteListConfirm": "Sei sicuro di voler eliminare '{name}'?",
   "detailsCollectionsTitle": "Collezioni",
   "detailsCollectionsDesc": "Le tue liste personalizzate a tema.",
+  "detailsCollection": "Collezione",
+  "detailsMoreLikeThis": "Altri simili",
   "detailsNewCollection": "Nuova Collezione",
   "detailsNoCollections": "Nessuna Collezione presente. Creane una per iniziare a organizzare!",
   "detailsAddToList": "Aggiungi alla Lista",

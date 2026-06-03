@@ -42,7 +42,7 @@ class TmdbService {
         queryParameters: {
           'api_key': _apiKey, 
           'language': 'en-US',
-          'append_to_response': 'credits,videos,similar,recommendations,external_ids,translations'
+          'append_to_response': 'credits,videos,similar,recommendations,external_ids,translations,reviews'
         },
       );
       return res.data;
@@ -57,6 +57,21 @@ class TmdbService {
         '$_baseUrl/tv/$tmdbId/season/$seasonNumber',
          queryParameters: {
           'api_key': _apiKey, 
+          'language': 'en-US',
+        },
+      );
+      return res.data;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getCollectionDetails(int collectionId) async {
+    try {
+      final res = await _dio.get(
+        '$_baseUrl/collection/$collectionId',
+        queryParameters: {
+          'api_key': _apiKey,
           'language': 'en-US',
         },
       );

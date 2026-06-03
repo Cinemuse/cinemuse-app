@@ -25,6 +25,9 @@ import 'package:cinemuse_app/features/media/presentation/widgets/responsive_deta
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/shared/widgets/offline_banner.dart';
 import 'package:cinemuse_app/shared/widgets/offline_placeholder.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/collection_tile.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/media_list_row.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -96,6 +99,10 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
 
           // Watch history data
           final watchHistory = ref.watch(mediaWatchHistoryProvider(widget.mediaId)).value;
+          
+          final collection = details['belongs_to_collection'];
+          final recommendations = details['recommendations']?['results'] as List? ?? [];
+          final moreLikeThisList = [...recommendations];
           
           // Auto-select season based on history
           ref.listen(mediaWatchHistoryProvider(widget.mediaId), (previous, next) {
@@ -299,6 +306,15 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                             type: typeForTmdb,
                             tmdbId: details['id'],
                           ),
+
+                        if (collection != null) ...[
+                          const SizedBox(height: 24),
+                          BentoBox(
+                            title: l10n.detailsCollection,
+                            icon: LucideIcons.film,
+                            child: CollectionTile(collection: collection),
+                          ),
+                        ],
                       ] else ...[
                         // Desktop Content
                         if (isTV && (details['number_of_seasons'] ?? 0) > 0) ...[
@@ -310,6 +326,17 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                         SizedBox(height: 32),
 
                         VideosRow(videos: details['videos']),
+                      ],
+                      
+                      // Both Desktop and Mobile
+                      if (moreLikeThisList.isNotEmpty) ...[
+                        SizedBox(height: isMobile ? 24 : 32),
+                        MediaListRow(
+                          title: l10n.detailsMoreLikeThis,
+                          icon: LucideIcons.sparkles,
+                          items: moreLikeThisList,
+                          theme: CarouselTheme.bentoBox,
+                        ),
                       ],
                     ],
                   ),
@@ -360,6 +387,15 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                         type: typeForTmdb,
                         tmdbId: details['id'],
                       ),
+                      
+                      if (collection != null) ...[
+                        const SizedBox(height: 24),
+                        BentoBox(
+                          title: l10n.detailsCollection,
+                          icon: LucideIcons.film,
+                          child: CollectionTile(collection: collection),
+                        ),
+                      ],
                     ],
                   ),
                 ),

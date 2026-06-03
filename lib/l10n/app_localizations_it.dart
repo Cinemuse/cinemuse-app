@@ -186,6 +186,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsCollectionsDesc => 'Le tue liste personalizzate a tema.';
 
   @override
+  String get detailsCollection => 'Collezione';
+
+  @override
+  String get detailsMoreLikeThis => 'Altri simili';
+
+  @override
   String get detailsNewCollection => 'Nuova Collezione';
 
   @override

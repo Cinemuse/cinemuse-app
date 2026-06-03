@@ -56,6 +56,8 @@
   "detailsDeleteListConfirm": "Are you sure you want to delete '{name}'?",
   "detailsCollectionsTitle": "Collections",
   "detailsCollectionsDesc": "Your custom themed lists.",
+  "detailsCollection": "Collection",
+  "detailsMoreLikeThis": "More Like This",
   "detailsNewCollection": "New Collection",
   "detailsNoCollections": "No Collections yet. Create one to start organizing!",
   "detailsAddToList": "Add to List",
