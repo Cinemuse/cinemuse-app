@@ -15,6 +15,7 @@ class DummySource extends BaseSource {
     // Simulate finding a high quality stream for any search
     return [
       StreamCandidate(
+        kind: StreamSourceKind.vod,
         title: 'Cinemuse [Dummy Source] ${context.type == 'movie' ? 'Movie' : 'Series'} 4K HDR ITA',
         infoHash: 'dummyhash1234567890',
         magnet: 'magnet:?xt=urn:btih:dummyhash1234567890',

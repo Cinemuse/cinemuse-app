@@ -1112,6 +1112,36 @@ abstract class AppLocalizations {
   /// **'No quality options available for this stream.'**
   String get playerNoQualityOptions;
 
+  /// No description provided for @youtubeDefaultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'YouTube Video'**
+  String get youtubeDefaultTitle;
+
+  /// No description provided for @youtubeStreamLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'YouTube Stream'**
+  String get youtubeStreamLabel;
+
+  /// No description provided for @playerResolvingStream.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolving Stream...'**
+  String get playerResolvingStream;
+
+  /// No description provided for @playerCheckingDebridCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking debrid cache'**
+  String get playerCheckingDebridCache;
+
+  /// No description provided for @sectionVisualArchives.
+  ///
+  /// In en, this message translates to:
+  /// **'Visual Archives'**
+  String get sectionVisualArchives;
+
   /// No description provided for @streamingErrorNoProviders.
   ///
   /// In en, this message translates to:

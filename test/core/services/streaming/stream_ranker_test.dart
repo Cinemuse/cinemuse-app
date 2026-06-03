@@ -7,14 +7,14 @@ import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart
 void main() {
   group('StreamRanker scoring', () {
     test('Should prioritize Italian streams', () {
-      final itaStream = StreamCandidate(
+      final itaStream = StreamCandidate(kind: StreamSourceKind.vod,
         title: 'Movie Title ITA ENG 1080p',
         infoHash: 'hash1',
         magnet: 'mag1',
         seeds: 10,
         provider: 'P1',
       );
-      final engStream = StreamCandidate(
+      final engStream = StreamCandidate(kind: StreamSourceKind.vod,
         title: 'Movie Title ENG 1080p',
         infoHash: 'hash2',
         magnet: 'mag2',
@@ -29,14 +29,14 @@ void main() {
     });
 
     test('Should massively boost Multi (ITA+ENG)', () {
-      final multiStream = StreamCandidate(
+      final multiStream = StreamCandidate(kind: StreamSourceKind.vod,
         title: 'Movie.Title.MULTI.ITA.ENG.1080p',
         infoHash: 'hash1',
         magnet: 'mag1',
         seeds: 10,
         provider: 'P1',
       );
-      final itaOnlyStream = StreamCandidate(
+      final itaOnlyStream = StreamCandidate(kind: StreamSourceKind.vod,
         title: 'Movie.Title.ITA.1080p',
         infoHash: 'hash2',
         magnet: 'mag2',
@@ -51,14 +51,14 @@ void main() {
     });
 
     test('Should prioritize 4K/2160p over 1080p', () {
-      final k4Stream = StreamCandidate(
+      final k4Stream = StreamCandidate(kind: StreamSourceKind.vod,
         title: 'Movie 4K HEVC',
         infoHash: 'hash1',
         magnet: 'mag1',
         seeds: 10,
         provider: 'P1',
       );
-      final hdStream = StreamCandidate(
+      final hdStream = StreamCandidate(kind: StreamSourceKind.vod,
         title: 'Movie 1080p HEVC',
         infoHash: 'hash2',
         magnet: 'mag2',
@@ -70,7 +70,7 @@ void main() {
     });
 
     test('Should penalize Russian releases without Italian', () {
-      final rusStream = StreamCandidate(
+      final rusStream = StreamCandidate(kind: StreamSourceKind.vod,
         title: 'Movie.RUSSIAN.lostfilm',
         infoHash: 'hash1',
         magnet: 'mag1',
@@ -108,7 +108,7 @@ void main() {
 
   group('StreamRanker ranking', () {
     test('Should sort by cache status first, then score', () {
-      final uncachedHigh = StreamCandidate(
+      final uncachedHigh = StreamCandidate(kind: StreamSourceKind.vod,
         title: 'Movie ITA 4K Uncached',
         infoHash: 'h1',
         magnet: 'm1',
@@ -116,7 +116,7 @@ void main() {
         provider: 'P1',
         cachedOn: {}, // Not cached
       );
-      final cachedLow = StreamCandidate(
+      final cachedLow = StreamCandidate(kind: StreamSourceKind.vod,
         title: 'Movie ENG 720p Cached',
         infoHash: 'h2',
         magnet: 'm2',
@@ -131,3 +131,4 @@ void main() {
     });
   });
 }
+

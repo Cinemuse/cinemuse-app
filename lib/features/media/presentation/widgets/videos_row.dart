@@ -25,7 +25,7 @@ class VideosRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
 
     return GenericCarouselRow(
-      title: 'Visual Archives',
+      title: l10n?.sectionVisualArchives ?? 'Visual Archives',
       icon: Icons.movie_filter,
       theme: CarouselTheme.bentoBox,
       itemCount: trailers.length,
@@ -47,6 +47,7 @@ class VideosRow extends StatelessWidget {
                   builder: (context) => VideoPlayerScreen(
                     queryId: key,
                     type: 'youtube',
+                    episodeTitle: name,
                     loadingMessage: l10n?.playerResolvingYoutube,
                     errorMessage: l10n?.playerErrorResolvingYoutube(''),
                   ),

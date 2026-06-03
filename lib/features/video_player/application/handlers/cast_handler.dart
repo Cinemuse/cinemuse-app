@@ -156,7 +156,7 @@ class CastHandler {
       int metadataType = CastConstants.metadataGeneric;
       if (season != null || episode != null) {
         metadataType = CastConstants.metadataTvShow;
-      } else if (candidate.provider != 'YouTube') {
+      } else if (candidate.kind != StreamSourceKind.youtube) {
         metadataType = CastConstants.metadataMovie;
       }
 

@@ -63,6 +63,7 @@ class StremioSource implements BaseSource {
           );
 
           return StreamCandidate(
+            kind: StreamSourceKind.vod,
             title: context.mapping != null ? " (Kitsu) $title" : title,
             infoHash: infoHash,
             magnet: infoHash.isNotEmpty 

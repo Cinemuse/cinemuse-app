@@ -127,6 +127,7 @@ class AnimeToshoSource extends BaseSource {
         final metadata = StreamParser.parse(title);
 
         candidates.add(StreamCandidate(
+          kind: StreamSourceKind.vod,
           title: title,
           infoHash: infoHash,
           magnet: magnet,

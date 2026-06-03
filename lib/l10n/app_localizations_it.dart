@@ -555,6 +555,21 @@ class AppLocalizationsIt extends AppLocalizations {
       'Nessuna opzione di qualità disponibile per questo stream.';
 
   @override
+  String get youtubeDefaultTitle => 'Video YouTube';
+
+  @override
+  String get youtubeStreamLabel => 'Stream YouTube';
+
+  @override
+  String get playerResolvingStream => 'Risoluzione stream in corso...';
+
+  @override
+  String get playerCheckingDebridCache => 'Controllo cache debrid';
+
+  @override
+  String get sectionVisualArchives => 'Archivi Visivi';
+
+  @override
   String get streamingErrorNoProviders =>
       'Nessun addon di streaming abilitato. Controlla le impostazioni.';
 

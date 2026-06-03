@@ -9,6 +9,7 @@ import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dar
 import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
+import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 
 import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
@@ -31,7 +32,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(FakeStreamSearchContext());
-    registerFallbackValue(StreamCandidate(title: '', infoHash: '', magnet: '', provider: ''));
+    registerFallbackValue(StreamCandidate(kind: StreamSourceKind.vod,title: '', infoHash: '', magnet: '', provider: ''));
     registerFallbackValue(MediaItem(tmdbId: 0, mediaType: MediaKind.movie, updatedAt: DateTime.now()));
   });
 
@@ -58,7 +59,7 @@ void main() {
       tmdbService: mockTmdb,
       kitsuMappingService: mockKitsu,
       mediaRepository: mockMedia,
-      settings: const UserSettings(),
+      settings: const UserSettings(), maxResolution: VideoResolution.r2160p,
     );
   });
 
@@ -73,9 +74,9 @@ void main() {
       when(() => mockTmdb.getImdbId(any(), any())).thenAnswer((_) async => 'tt123');
 
       // Setup Source mock with duplicate hashes
-      final c1 = StreamCandidate(title: 'Stream 1', infoHash: 'abc', magnet: 'm1', seeds: 10, provider: 'S1');
-      final c2 = StreamCandidate(title: 'Stream 1 copy', infoHash: 'abc', magnet: 'm1', seeds: 5, provider: 'S1');
-      final c3 = StreamCandidate(title: 'Stream 2', infoHash: 'def', magnet: 'm2', seeds: 2, provider: 'S1');
+      final c1 = StreamCandidate(kind: StreamSourceKind.vod,title: 'Stream 1', infoHash: 'abc', magnet: 'm1', seeds: 10, provider: 'S1');
+      final c2 = StreamCandidate(kind: StreamSourceKind.vod,title: 'Stream 1 copy', infoHash: 'abc', magnet: 'm1', seeds: 5, provider: 'S1');
+      final c3 = StreamCandidate(kind: StreamSourceKind.vod,title: 'Stream 2', infoHash: 'def', magnet: 'm2', seeds: 2, provider: 'S1');
       
       when(() => mockSource.search(any())).thenAnswer((_) async => [c1, c2, c3]);
 
@@ -100,7 +101,7 @@ void main() {
         tmdbService: mockTmdb,
         kitsuMappingService: mockKitsu,
         mediaRepository: mockMedia,
-        settings: const UserSettings(),
+        settings: const UserSettings(), maxResolution: VideoResolution.r2160p,
       );
 
       expect(() => emptyResolver.searchStreams('123', 'movie'), throwsA(isA<NoProvidersEnabledException>()));
@@ -130,7 +131,7 @@ void main() {
       when(() => mockSource.search(any())).thenAnswer((_) async {
         await Future.delayed(const Duration(milliseconds: 150));
         return [
-          StreamCandidate(title: 'Stream 1', infoHash: 'abc', magnet: 'm1', seeds: 10, provider: 'MockSource')
+          StreamCandidate(kind: StreamSourceKind.vod,title: 'Stream 1', infoHash: 'abc', magnet: 'm1', seeds: 10, provider: 'MockSource')
         ];
       });
 
@@ -173,7 +174,7 @@ void main() {
         when(() => mockSource.search(any())).thenAnswer((_) async {
           await Future.delayed(const Duration(seconds: 35));
           return [
-            StreamCandidate(title: 'Slow Stream', infoHash: 'abc', magnet: 'm1', seeds: 10, provider: 'MockSource')
+            StreamCandidate(kind: StreamSourceKind.vod,title: 'Slow Stream', infoHash: 'abc', magnet: 'm1', seeds: 10, provider: 'MockSource')
           ];
         });
 
@@ -182,7 +183,7 @@ void main() {
           tmdbService: mockTmdb,
           kitsuMappingService: mockKitsu,
           mediaRepository: mockMedia,
-          settings: const UserSettings(enableAutoSkipProviders: true),
+          settings: const UserSettings(enableAutoSkipProviders: true), maxResolution: VideoResolution.r2160p,
         );
 
         final updates = <List<ProviderSearchStatus>>[];
@@ -224,7 +225,7 @@ void main() {
         when(() => mockSource.search(any())).thenAnswer((_) async {
           await Future.delayed(const Duration(seconds: 35));
           return [
-            StreamCandidate(title: 'Slow Stream', infoHash: 'abc', magnet: 'm1', seeds: 10, provider: 'MockSource')
+            StreamCandidate(kind: StreamSourceKind.vod,title: 'Slow Stream', infoHash: 'abc', magnet: 'm1', seeds: 10, provider: 'MockSource')
           ];
         });
 
@@ -233,7 +234,7 @@ void main() {
           tmdbService: mockTmdb,
           kitsuMappingService: mockKitsu,
           mediaRepository: mockMedia,
-          settings: const UserSettings(enableAutoSkipProviders: false),
+          settings: const UserSettings(enableAutoSkipProviders: false), maxResolution: VideoResolution.r2160p,
         );
 
         final updates = <List<ProviderSearchStatus>>[];
@@ -266,7 +267,7 @@ void main() {
 
   group('UnifiedStreamResolver.resolveStream', () {
     test('Should return resolved stream directly if URL is present', () async {
-      final candidate = StreamCandidate(
+      final candidate = StreamCandidate(kind: StreamSourceKind.vod,
         title: 'Test', infoHash: 'abc', magnet: 'mag', seeds: 1, provider: 'S',
         url: 'https://direct-link.com',
       );
@@ -286,7 +287,7 @@ void main() {
         'title': 'Test Movie',
       });
       when(() => mockSource.search(any())).thenAnswer((_) async => [
-        StreamCandidate(title: 'Test Candidate', infoHash: 'hash1', magnet: 'mag1', seeds: 1, provider: 'MockSource'),
+        StreamCandidate(kind: StreamSourceKind.vod,title: 'Test Candidate', infoHash: 'hash1', magnet: 'mag1', seeds: 1, provider: 'MockSource'),
       ]);
 
       // Initially cache is empty
@@ -306,3 +307,4 @@ void main() {
     });
   });
 }
+

@@ -656,54 +656,19 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     state = AsyncValue.data(state.value!.copyWith(isResolving: true, error: null));
     
     try {
-        final position = _player!.state.position;
-        final resolvedStream = await _rdHandler.resolveAndMerge(
-          candidate,
-          season: resolvedParams.season,
-          episode: resolvedParams.episode,
-          absoluteEpisode: candidate.absoluteEpisode,
-        );
-
-        if (resolvedStream != null) {
-          if (candidate.provider == 'YouTube') {
-            final meta = candidate.metadata;
-            String? localAudioPath;
-            if (meta?.custom?['needsAudio'] == true) {
-              localAudioPath = await _youtubeHandler.downloadAudioToTempFile();
-            }
-
-            await _player!.open(
-              Media(resolvedStream.url, httpHeaders: _youtubeHandler.youtubeHeaders),
-              play: false,
-            );
-            if (localAudioPath != null) {
-              await _player!.setAudioTrack(AudioTrack.uri(localAudioPath));
-            }
-          } else {
-            await _player!.open(
-              Media(resolvedStream.url, httpHeaders: resolvedStream.headers),
-              play: false,
-            );
-            unawaited(_trackManager?.ensurePreferredTrack(isAnime: state.valueOrNull?.isAnime ?? false) ?? Future.value());
-          }
-
-          final newDuration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
-          final seekTo = position.inSeconds < newDuration.inSeconds ? position : Duration(seconds: newDuration.inSeconds - 2);
-          
-          await _player!.seek(seekTo.isNegative ? Duration.zero : seekTo);
-          await _player!.play();
-
-          if (mounted) {
-            _retryCount = 0; // Reset on manual source change
-            state = AsyncValue.data(state.value!.copyWith(
-              currentStream: resolvedStream,
-              isResolving: false,
-              error: null,
-            ));
-          }
-        } else {
-          throw Exception(ref.read(localizationsProvider).streamingErrorResolutionFailed);
-        }
+      final position = _player!.state.position;
+      
+      switch (candidate.kind) {
+        case StreamSourceKind.youtube:
+          await _changeToYouTubeSource(candidate, position);
+          break;
+        case StreamSourceKind.vod:
+          await _changeToVodSource(candidate, position);
+          break;
+        case StreamSourceKind.live:
+          // Should not happen here since Live TV has changeChannel
+          throw Exception("Cannot change source on Live TV kind via changeSource.");
+      }
     } catch (e) {
       debugPrint("PlayerController: Error changing source: $e");
       if (mounted && state.value != null) {
@@ -712,6 +677,70 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           error: ref.read(errorMapperProvider).map(e).message,
         ));
       }
+    }
+  }
+
+  Future<void> _changeToYouTubeSource(StreamCandidate candidate, Duration position) async {
+    final meta = candidate.metadata;
+    String? localAudioPath;
+    if (meta?.custom?['needsAudio'] == true) {
+      localAudioPath = await _youtubeHandler.downloadAudioToTempFile();
+    }
+
+    final resolvedStream = ResolvedStream(
+      url: candidate.url!,
+      provider: candidate.provider,
+      candidate: candidate,
+      headers: _youtubeHandler.youtubeHeaders,
+    );
+
+    await _player!.open(
+      Media(resolvedStream.url, httpHeaders: resolvedStream.headers),
+      play: false,
+    );
+    
+    if (localAudioPath != null) {
+      await _player!.setAudioTrack(AudioTrack.uri(localAudioPath));
+    }
+
+    await _finalizeSourceChange(resolvedStream, position);
+  }
+
+  Future<void> _changeToVodSource(StreamCandidate candidate, Duration position) async {
+    final resolvedStream = await _rdHandler.resolveAndMerge(
+      candidate,
+      season: resolvedParams.season,
+      episode: resolvedParams.episode,
+      absoluteEpisode: candidate.absoluteEpisode,
+    );
+
+    if (resolvedStream == null) {
+      throw Exception(ref.read(localizationsProvider).streamingErrorResolutionFailed);
+    }
+
+    await _player!.open(
+      Media(resolvedStream.url, httpHeaders: resolvedStream.headers),
+      play: false,
+    );
+    unawaited(_trackManager?.ensurePreferredTrack(isAnime: state.valueOrNull?.isAnime ?? false) ?? Future.value());
+
+    await _finalizeSourceChange(resolvedStream, position);
+  }
+
+  Future<void> _finalizeSourceChange(ResolvedStream resolvedStream, Duration position) async {
+    final newDuration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
+    final seekTo = position.inSeconds < newDuration.inSeconds ? position : Duration(seconds: newDuration.inSeconds - 2);
+    
+    await _player!.seek(seekTo.isNegative ? Duration.zero : seekTo);
+    await _player!.play();
+
+    if (mounted) {
+      _retryCount = 0; // Reset on manual source change
+      state = AsyncValue.data(state.value!.copyWith(
+        currentStream: resolvedStream,
+        isResolving: false,
+        error: null,
+      ));
     }
   }
 

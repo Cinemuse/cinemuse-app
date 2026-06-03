@@ -1,10 +1,24 @@
 import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 
+/// Identifies the source pipeline a candidate belongs to.
+/// Used for routing in changeSource() and resolveStream().
+enum StreamSourceKind {
+  /// Standard VOD: torrent/debrid/direct from Stremio/AnimeTosho/etc.
+  vod,
+  /// YouTube trailer/video: direct URL, optional separate audio track.
+  youtube,
+  /// Live TV channel: direct HLS/TS URL, no resolution needed.
+  live,
+}
+
 /// Represents a normalized stream result from various sources.
 /// 
 /// This class acts as the single source of truth for the UI and the resolution logic,
 /// abstracting away source-specific data structures.
 class StreamCandidate {
+  /// Identifies the source pipeline this candidate belongs to.
+  final StreamSourceKind kind;
+
   /// The display title extracted from the source (usually contains metadata like quality, release group).
   final String title;
 
@@ -47,9 +61,10 @@ class StreamCandidate {
   final Map<String, String>? headers;
 
   StreamCandidate({
+    required this.kind,
     required this.title,
-    required this.infoHash,
-    required this.magnet,
+    this.infoHash = '',
+    this.magnet = '',
     this.seeds = 0,
     required this.provider,
     this.absoluteEpisode,
@@ -66,8 +81,11 @@ class StreamCandidate {
   bool get isCached => cachedOn.values.any((v) => v);
 
   /// A robust unique identifier for the stream.
-  /// Priority: infoHash > url > fallback (provider:title)
+  /// Priority: url (for youtube/live) > infoHash > url > fallback (provider:title)
   String get uniqueId {
+    if ((kind == StreamSourceKind.youtube || kind == StreamSourceKind.live) && url != null && url!.isNotEmpty) {
+      return url!.toLowerCase();
+    }
     if (infoHash.isNotEmpty) return infoHash.toLowerCase();
     if (url != null && url!.isNotEmpty) return url!.toLowerCase();
     // Normalize title for fallback identification
@@ -81,6 +99,7 @@ class StreamCandidate {
     StreamMetadata? metadata,
   }) {
     return StreamCandidate(
+      kind: kind,
       title: title,
       infoHash: infoHash,
       magnet: magnet,

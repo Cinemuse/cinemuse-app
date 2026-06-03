@@ -146,6 +146,7 @@ class AnimeUnitySource extends BaseSource {
     final resolution = _inferResolutionFromFileName(fileName);
 
     return StreamCandidate(
+      kind: StreamSourceKind.vod,
       title: '${context.title} Ep.$episodeNum $langSuffix [$name]',
       infoHash: '',
       magnet: '',

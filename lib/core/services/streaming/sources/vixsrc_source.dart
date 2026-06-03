@@ -92,6 +92,7 @@ class VixSrcSource extends BaseSource {
       // is opened and demuxed.
       return [
         StreamCandidate(
+          kind: StreamSourceKind.vod,
           title: '${context.title} [VixSrc]',
           infoHash: '',
           magnet: '',

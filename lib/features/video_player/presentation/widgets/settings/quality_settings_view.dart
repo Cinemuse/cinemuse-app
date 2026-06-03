@@ -244,7 +244,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                     const CircularProgressIndicator(color: AppTheme.accent),
                     const SizedBox(height: 20),
                     Text(
-                      "Resolving Stream...",
+                      l10n.playerResolvingStream,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 16,
@@ -253,7 +253,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Checking debrid cache",
+                      l10n.playerCheckingDebridCache,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 13,

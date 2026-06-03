@@ -21,6 +21,7 @@ import 'package:cinemuse_app/core/services/streaming/sources/vixsrc_source.dart'
 import 'package:cinemuse_app/core/services/streaming/sources/animeunity_source.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
+import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
 
 final unifiedStreamResolverProvider = Provider((ref) {
   // Only watch settings that affect streaming sources and ranking
@@ -36,7 +37,6 @@ final unifiedStreamResolverProvider = Provider((ref) {
     s.splitAnimePreferences,
     s.animeAudioLanguage,
     s.enableAutoSkipProviders,
-    s.maxResolution,
   )));
   
   // Create a minimal UserSettings object for the constructor to avoid watching the whole thing
@@ -52,8 +52,9 @@ final unifiedStreamResolverProvider = Provider((ref) {
     splitAnimePreferences: settings.$9,
     animeAudioLanguage: settings.$10,
     enableAutoSkipProviders: settings.$11,
-    maxResolution: settings.$12,
   );
+
+  final maxResolution = ref.watch(localSettingsProvider.select((s) => s.maxResolution));
 
   final dio = ref.read(dioProvider);
   final sources = <BaseSource>[];
@@ -92,6 +93,7 @@ final unifiedStreamResolverProvider = Provider((ref) {
     kitsuMappingService: ref.read(kitsuMappingServiceProvider),
     mediaRepository: ref.read(mediaRepositoryProvider),
     settings: userSettings,
+    maxResolution: maxResolution,
     debridService: userSettings.enableRealDebrid 
         ? RealDebridService(dio, userSettings.realDebridKey) 
         : null,
@@ -104,6 +106,7 @@ class UnifiedStreamResolver {
   final KitsuMappingService _kitsuMappingService;
   final MediaRepository _mediaRepository;
   final UserSettings _settings;
+  final VideoResolution _maxResolution;
   final BaseDebridService? _debridService;
 
   // Simple in-memory cache for search results
@@ -156,12 +159,14 @@ class UnifiedStreamResolver {
     required KitsuMappingService kitsuMappingService,
     required MediaRepository mediaRepository,
     required UserSettings settings,
+    required VideoResolution maxResolution,
     BaseDebridService? debridService,
   })  : _sources = sources,
         _tmdbService = tmdbService,
         _kitsuMappingService = kitsuMappingService,
         _mediaRepository = mediaRepository,
         _settings = settings,
+        _maxResolution = maxResolution,
         _debridService = debridService;
 
   Future<StreamSearchResult> searchStreams(
@@ -392,7 +397,7 @@ class UnifiedStreamResolver {
     }
 
     // 3. Filter by maximum resolution
-    if (_settings.maxResolution != VideoResolution.unknown) {
+    if (_maxResolution != VideoResolution.unknown) {
       results = results.where((c) {
         VideoResolution res = c.metadata?.video.resolution ?? VideoResolution.unknown;
         if (res == VideoResolution.unknown) {
@@ -410,7 +415,7 @@ class UnifiedStreamResolver {
           }
         }
         
-        if (res != VideoResolution.unknown && res.index < _settings.maxResolution.index) {
+        if (res != VideoResolution.unknown && res.index < _maxResolution.index) {
           return false;
         }
         return true;
@@ -443,6 +448,12 @@ class UnifiedStreamResolver {
     int? episode,
     int? fileId,
   }) async {
+    // Guard against non-VOD sources
+    if (candidate.kind != StreamSourceKind.vod) {
+      debugPrint('UnifiedStreamResolver: Ignoring non-VOD candidate kind=${candidate.kind}');
+      return null;
+    }
+
     // Stremio addons usually return direct URLs
     if (candidate.url != null && candidate.url!.isNotEmpty) {
       return ResolvedStream(

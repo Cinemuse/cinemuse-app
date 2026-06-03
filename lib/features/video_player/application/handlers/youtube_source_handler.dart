@@ -26,7 +26,6 @@ class YouTubeSourceHandler {
 
   Future<YouTubeInitializationResult> initialize(PlayerParams params) async {
     final streams = await _fetchAvailableStreams(params.queryId);
-    _sortStreamsByQuality(streams);
     
     final initialStream = _selectInitialStream(streams);
     final localAudioPath = await _prepareAudioIfNecessary(initialStream);
@@ -42,8 +41,9 @@ class YouTubeSourceHandler {
         url: initialStream['url'],
         provider: 'YouTube',
         candidate: initialCandidate,
+        headers: _handler.youtubeHeaders,
       ),
-      title: initialStream['title'] ?? 'YouTube Video',
+      title: params.episodeTitle ?? initialStream['title'] ?? 'YouTube Video',
     );
   }
 
@@ -53,21 +53,6 @@ class YouTubeSourceHandler {
       throw Exception("Could not resolve YouTube streams");
     }
     return streams;
-  }
-
-  void _sortStreamsByQuality(List<Map<String, dynamic>> streams) {
-    streams.sort((a, b) {
-       if (a['isHls'] == true) return -1;
-       if (b['isHls'] == true) return 1;
-       
-       final aIsSeparate = a.containsKey('audioUrl');
-       final bIsSeparate = b.containsKey('audioUrl');
-       
-       if (!aIsSeparate && bIsSeparate) return -1;
-       if (aIsSeparate && !bIsSeparate) return 1;
-
-       return (b['res'] as int) - (a['res'] as int);
-    });
   }
 
   Map<String, dynamic> _selectInitialStream(List<Map<String, dynamic>> streams) {
@@ -99,17 +84,41 @@ class YouTubeSourceHandler {
 
   List<StreamCandidate> _createStreamCandidates(List<Map<String, dynamic>> streams) {
     return streams.map((s) => StreamCandidate(
-      title: s['title'] ?? 'YouTube Stream',
-      infoHash: s['url'],
-      magnet: s['url'],
+      kind: StreamSourceKind.youtube,
+      title: s['title']?.toString() ?? 'YouTube Stream',
+      url: s['url']?.toString(),
       provider: 'YouTube',
-      metadata: StreamMetadata.empty().copyWithCustom(s),
+      metadata: _buildYouTubeMetadata(s),
+      headers: _handler.youtubeHeaders,
     )).toList();
+  }
+
+  StreamMetadata _buildYouTubeMetadata(Map<String, dynamic> s) {
+    return StreamMetadata(
+      video: VideoMetadata(resolution: _parseResolution(s['res']) ?? VideoResolution.unknown),
+      audio: const AudioMetadata(),
+      custom: {
+        'needsAudio': s['needsAudio'],
+        'audioUrl': s['audioUrl']?.toString(),
+        'isHls': s['isHls'],
+      },
+    );
+  }
+
+  VideoResolution? _parseResolution(dynamic res) {
+    if (res is int) {
+      if (res >= 2160) return VideoResolution.r2160p;
+      if (res >= 1080) return VideoResolution.r1080p;
+      if (res >= 720) return VideoResolution.r720p;
+      if (res >= 480) return VideoResolution.r480p;
+      if (res >= 360) return VideoResolution.unknown; // Use unknown for 360p or ignore
+    }
+    return null;
   }
 
   StreamCandidate _findInitialCandidate(List<StreamCandidate> candidates, Map<String, dynamic> initialStream) {
     return candidates.firstWhere(
-      (c) => c.infoHash == initialStream['url'],
+      (c) => c.url == initialStream['url'],
       orElse: () => candidates.first,
     );
   }

@@ -80,11 +80,12 @@ class LiveTvSourceHandler {
 
     // 6. Create ResolvedStream
     final candidate = StreamCandidate(
+      kind: StreamSourceKind.live,
       title: channel.name,
-      infoHash: url,
+      url: url,
       provider: 'Live TV',
-      magnet: url,
       metadata: StreamMetadata.empty(),
+      headers: headers,
     );
 
     final resolvedStream = ResolvedStream(
