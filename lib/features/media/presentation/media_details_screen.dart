@@ -25,6 +25,7 @@ import 'package:cinemuse_app/features/media/presentation/widgets/responsive_deta
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/shared/widgets/offline_banner.dart';
 import 'package:cinemuse_app/shared/widgets/offline_placeholder.dart';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -64,9 +65,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     final connectivity = ref.watch(connectivityProvider);
     final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
 
-    return Scaffold(
-      backgroundColor: AppTheme.primary,
-      body: detailsAsync.when(
+    final bodyContent = detailsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.accent)),
         error: (err, stack) {
           if (isOffline) {
@@ -370,7 +369,11 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             ],
           );
         },
-      ),
+      );
+
+    return Scaffold(
+      backgroundColor: AppTheme.primary,
+      body: bodyContent,
     );
   }
 

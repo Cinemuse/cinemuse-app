@@ -3,14 +3,14 @@ import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 
 class AppBackButton extends StatelessWidget {
   final VoidCallback onTap;
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final Color iconColor;
   final double padding;
 
   const AppBackButton({
     super.key,
     required this.onTap,
-    this.backgroundColor = Colors.black54,
+    this.backgroundColor,
     this.iconColor = Colors.white,
     this.padding = 12.0,
   });
@@ -26,11 +26,11 @@ class AppBackButton extends StatelessWidget {
           child: Container(
             padding: EdgeInsets.all(padding),
             decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(12),
+              color: backgroundColor ?? Colors.white.withValues(alpha: 0.05),
+              shape: BoxShape.circle,
               border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
-            child: Icon(Icons.chevron_left, color: iconColor, size: 24),
+            child: Icon(Icons.arrow_back, color: iconColor, size: 20),
           ),
         ),
       ),

@@ -38,9 +38,7 @@ class _PersonDetailsScreenState extends ConsumerState<PersonDetailsScreen> {
 
     final responsivePadding = AppTheme.getResponsiveHorizontalPadding(context);
 
-    return Scaffold(
-      backgroundColor: AppTheme.primary,
-      body: detailsAsync.when(
+    final bodyContent = detailsAsync.when(
         data: (details) {
           if (details == null) return Center(child: Text(l10n.commonError));
 
@@ -57,7 +55,11 @@ class _PersonDetailsScreenState extends ConsumerState<PersonDetailsScreen> {
         },
         loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.accent)),
         error: (err, _) => Center(child: Text(l10n.detailsErrorLoading(err.toString()))),
-      ),
+      );
+
+    return Scaffold(
+      backgroundColor: AppTheme.primary,
+      body: bodyContent,
     );
   }
 }
@@ -160,6 +162,10 @@ class _PersonDetailsContent extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                AppBackButton(
+                  onTap: () => Navigator.of(context).pop(),
+                ),
+                const SizedBox(height: 32),
                 // Top Section: Info + Image
                 Wrap(
                   spacing: 48,
@@ -190,13 +196,6 @@ class _PersonDetailsContent extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Back Button
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 24.0),
-                            child: AppBackButton(
-                              onTap: () => Navigator.of(context).pop(),
-                            ),
-                          ),
                           Text(
                             name,
                             style: Theme.of(context).textTheme.bodyMedium!.copyWith(

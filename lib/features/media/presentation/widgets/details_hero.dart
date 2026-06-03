@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
-import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
+import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 
 class DetailsHero extends ConsumerWidget {
   final Map<String, dynamic> media;
@@ -134,6 +134,15 @@ class DetailsHero extends ConsumerWidget {
             ),
           ),
 
+          Positioned(
+            top: MediaQuery.of(context).padding.top > 0 ? MediaQuery.of(context).padding.top + 16 : 24,
+            left: contentPadding,
+            child: AppBackButton(
+              onTap: () => Navigator.of(context).pop(),
+              backgroundColor: Colors.black.withValues(alpha: 0.4),
+            ),
+          ),
+
           // Content
           Padding(
             padding: EdgeInsets.fromLTRB(contentPadding, 0, contentPadding, 48),
@@ -141,14 +150,6 @@ class DetailsHero extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                // Back Button
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 24.0),
-                  child: AppBackButton(
-                    onTap: () => Navigator.of(context).pop(),
-                  ),
-                ),
-
                 // Tagline
                 if (tagline != null && tagline.toString().isNotEmpty)
                   Padding(

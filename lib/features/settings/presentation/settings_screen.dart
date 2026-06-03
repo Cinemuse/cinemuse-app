@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/settings_categories.dart';
+import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -39,16 +40,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.all(24.0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  l10n.settingsTitle,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+              child: Row(
+                children: [
+                  if (!isMobile) ...[
+                    AppBackButton(
+                      onTap: () => Navigator.of(context).pop(),
+                    ),
+                    const SizedBox(width: 16),
+                  ],
+                  Text(
+                    l10n.settingsTitle,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
             Expanded(
@@ -145,11 +153,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     )
                   : const BackButton(),
             )
-          : AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: const BackButton(color: Colors.white),
-            ),
+          : null,
       body: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 1200),
