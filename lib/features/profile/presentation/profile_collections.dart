@@ -4,7 +4,7 @@ import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/collection_card.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/create_list_modal.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/edit_list_modal.dart';
-import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_modal.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_sheet.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/system_list_card.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -47,17 +47,16 @@ class ProfileCollections extends ConsumerWidget {
 
   void _showListDetails(BuildContext context, WidgetRef ref, UserList list) {
     final l10n = AppLocalizations.of(context)!;
-    showDialog(
-      context: context,
-      builder: (context) => ListDetailsModal(
-        list: list,
-        onEdit: () {
-          Navigator.pop(context); // Close details modal
-          _showEditListModal(context, ref, list);
-        },
-        onDelete: () async {
-          // Confirm delete
-          final confirm = await showDialog<bool>(
+    ListDetailsSheet.show(
+      context,
+      list: list,
+      onEdit: () {
+        Navigator.pop(context); // Close details modal
+        _showEditListModal(context, ref, list);
+      },
+      onDelete: () async {
+        // Confirm delete
+        final confirm = await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
               backgroundColor: AppTheme.surface,
@@ -82,8 +81,7 @@ class ProfileCollections extends ConsumerWidget {
             ref.invalidate(userListsProvider);
             if (context.mounted) Navigator.pop(context); // Close details modal
           }
-        },
-      ),
+      },
     );
   }
 

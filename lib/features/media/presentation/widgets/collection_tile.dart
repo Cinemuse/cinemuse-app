@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
-import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_modal.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_sheet.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -74,9 +74,9 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
         userId: 'system',
       );
 
-      showDialog(
-        context: context,
-        builder: (context) => ListDetailsModal(list: userList),
+      ListDetailsSheet.show(
+        context,
+        list: userList,
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
