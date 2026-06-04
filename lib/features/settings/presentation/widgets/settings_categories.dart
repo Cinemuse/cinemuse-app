@@ -204,34 +204,6 @@ class CustomizationSettings extends ConsumerWidget {
                 ],
               ),
 
-            // Region & Other
-            SettingsSection(
-              title: l10n.settingsOther,
-              children: [
-                SettingsCard(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.settingsLiveTvRegion,
-                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
-                          ),
-                          const SizedBox(height: 12),
-                          SettingsRegionSelector(
-                            selectedRegion: userSettings.liveTvRegion,
-                            onChanged: (region) => settingsNotifier.updateSettings({'liveTvRegion': region}),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
             const SubtitleAppearanceSettings(),
           ],
         ),

@@ -10,78 +10,12 @@ import 'package:cinemuse_app/features/live_tv/data/m3u_parser.dart';
 class LiveTvRepository {
   final Dio _dio;
 
-  static const _channelsUrl =
-      'https://raw.githubusercontent.com/ZapprTV/channels/refs/heads/main/it/dtt/national.json';
-  static const _epgUrl =
-      'https://epg.zappr.stream/it/dtt/national.json';
-
   LiveTvRepository(this._dio);
 
-  /// Parses response data — handles both String and pre-parsed Map/List.
-  dynamic _parseResponse(dynamic data) {
-    if (data is String) {
-      return json.decode(data);
-    }
-    return data;
-  }
-
   /// Fetches the channel list, filtering to only playable channels.
-  /// If [region] is provided, it also fetches regional channels.
-  Future<List<Channel>> fetchChannels({String? region, List<LiveTvPlaylist>? customPlaylists}) async {
+  Future<List<Channel>> fetchChannels({List<LiveTvPlaylist>? customPlaylists}) async {
     try {
-      final List<dynamic> allChannelsJson = [];
-
-      // 1. Fetch National Channels
-      final nationalResponse = await _dio.get(_channelsUrl);
-      final nationalData = _parseResponse(nationalResponse.data) as Map<String, dynamic>;
-      allChannelsJson.addAll(nationalData['channels'] as List<dynamic>);
-
-      if (region != null && region.isNotEmpty) {
-        final regionalUrl = 'https://raw.githubusercontent.com/ZapprTV/channels/refs/heads/main/it/dtt/regional/$region.json';
-        try {
-          final regionalResponse = await _dio.get(regionalUrl);
-          final regionalData = _parseResponse(regionalResponse.data) as Map<String, dynamic>;
-          allChannelsJson.addAll(regionalData['channels'] as List<dynamic>);
-        } catch (_) {
-          // Regional fail is non-critical
-        }
-      }
-
-      // ── Build channel map ──
-      // Keys are LCNs. Stable DTT channels get priority seat on the LCN bus.
       final Map<int, Channel> channelMap = {};
-
-      for (final json in allChannelsJson) {
-        try {
-          final channel = Channel.fromJson(json as Map<String, dynamic>);
-          if (channel.isPlayable) {
-            final existing = channelMap[channel.lcn];
-            if (existing == null || !_isMpvIncompatible(channel.url)) {
-              // Assign "DTT" as default category for national channels
-              final withGroup = Channel(
-                lcn: channel.lcn,
-                name: channel.name,
-                logo: channel.logo,
-                hd: channel.hd,
-                uhd: channel.uhd,
-                type: channel.type,
-                urlOverride: channel.urlOverride,
-                links: channel.links,
-                group: 'DTT',
-                subtitle: channel.subtitle,
-                epgSource: channel.epgSource,
-                epgId: channel.epgId,
-                isGeoblocked: channel.isGeoblocked,
-                isDisabled: channel.isDisabled,
-                isFeed: channel.isFeed,
-                isRadio: channel.isRadio,
-                isAdult: channel.isAdult,
-              );
-              channelMap[channel.lcn] = withGroup;
-            }
-          }
-        } catch (_) {}
-      }
 
       // ── Load & Merge Custom Playlists ──
       try {
@@ -161,42 +95,6 @@ class LiveTvRepository {
         // Log but don't crash
       }
 
-      // Second pass: fix channels stuck with incompatible URLs.
-      // Look for a national counterpart (same base name, different LCN)
-      // that has a working URL, and borrow it.
-      for (final lcn in channelMap.keys.toList()) {
-        final ch = channelMap[lcn]!;
-        if (!_isMpvIncompatible(ch.url)) continue;
-
-        // Find a counterpart: e.g. "Rai 3" matches "Rai 3 TGR Piemonte"
-        final donor = channelMap.values.where((other) =>
-          other.lcn != ch.lcn &&
-          !_isMpvIncompatible(other.url) &&
-          _isNameMatch(ch.name, other.name),
-        ).firstOrNull;
-
-        if (donor != null) {
-          channelMap[lcn] = Channel(
-            lcn: ch.lcn,
-            name: ch.name,
-            logo: ch.logo,
-            hd: ch.hd,
-            uhd: ch.uhd,
-            type: ch.type,
-            urlOverride: donor.url,  // borrow the working URL
-            subtitle: ch.subtitle,
-            epgSource: ch.epgSource,
-            epgId: ch.epgId,
-            isGeoblocked: ch.isGeoblocked,
-            isDisabled: ch.isDisabled,
-            isFeed: ch.isFeed,
-            isRadio: ch.isRadio,
-            isAdult: ch.isAdult,
-          );
-
-        }
-      }
-
       final channels = channelMap.values.toList();
       
       // Sort: LCN 1-999 first, then alphabetically for channels without LCN
@@ -213,59 +111,11 @@ class LiveTvRepository {
     }
   }
 
-  /// CDN hosts that require specific HTTP headers. 
-  /// Previously we blocked these, but now we handle them in LiveTvSourceHandler.
-  static bool _isMpvIncompatible(String url) => false;
-
-  /// Checks if two channel names share a common base.
-  /// e.g. "Rai 3 TGR Piemonte" and "Rai 3" → the longer starts with the shorter.
-  static bool _isNameMatch(String a, String b) {
-    final la = a.toLowerCase().trim();
-    final lb = b.toLowerCase().trim();
-    if (la == lb) return false; // skip exact duplicates at same LCN
-    return la.startsWith(lb) || lb.startsWith(la);
-  }
-
   /// Fetches the EPG data.
   ///
   /// Returns a map: `{ "source": { "channelId": [EpgProgram, ...] } }`
   Future<Map<String, Map<String, List<EpgProgram>>>> fetchEpg() async {
-    try {
-      final response = await _dio.get(_epgUrl);
-      final data = _parseResponse(response.data) as Map<String, dynamic>;
-      final result = <String, Map<String, List<EpgProgram>>>{};
-
-      for (final sourceEntry in data.entries) {
-        final sourceMap = <String, List<EpgProgram>>{};
-        final sourceData = sourceEntry.value;
-
-        if (sourceData is Map<String, dynamic>) {
-          for (final channelEntry in sourceData.entries) {
-            final programs = channelEntry.value;
-            if (programs is List) {
-              sourceMap[channelEntry.key] = programs
-                  .map((p) {
-                    try {
-                      return EpgProgram.fromJson(p as Map<String, dynamic>);
-                    } catch (_) {
-                      return null;
-                    }
-                  })
-                  .whereType<EpgProgram>()
-                  .toList();
-            }
-          }
-        }
-
-        result[sourceEntry.key] = sourceMap;
-      }
-
-
-      return result;
-    } catch (_) {
-      // EPG is optional — return empty if unavailable
-      return {};
-    }
+    return {};
   }
 
   /// Looks up the current and next programs for a given channel.

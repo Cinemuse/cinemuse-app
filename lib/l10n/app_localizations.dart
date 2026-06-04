@@ -1934,18 +1934,6 @@ abstract class AppLocalizations {
   /// **'Search channels...'**
   String get liveTvSearchPlaceholder;
 
-  /// No description provided for @settingsLiveTvRegion.
-  ///
-  /// In en, this message translates to:
-  /// **'Live TV Region'**
-  String get settingsLiveTvRegion;
-
-  /// No description provided for @settingsLiveTvRegionDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Select your local region for regional channels.'**
-  String get settingsLiveTvRegionDesc;
-
   /// No description provided for @settingsLiveTv.
   ///
   /// In en, this message translates to:

@@ -4,7 +4,6 @@ import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stremio_addon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/profile/data/profile_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/profile.dart';
@@ -26,7 +25,6 @@ class UserSettings {
   final bool showDebugPanel;
   final bool smartSearchFilter;
   final bool enableAutoSkipProviders;
-  final String? liveTvRegion;
   final bool enableAnimeTosho;
   final bool enableVixSrc;
   final bool enableAnimeUnity;
@@ -54,7 +52,6 @@ class UserSettings {
     this.showDebugPanel = false,
     this.smartSearchFilter = true,
     this.enableAutoSkipProviders = true,
-    this.liveTvRegion,
     this.enableAnimeTosho = true,
     this.enableVixSrc = true,
     this.enableAnimeUnity = true,
@@ -85,7 +82,6 @@ class UserSettings {
       showDebugPanel: prefs['showDebugPanel'] ?? false,
       smartSearchFilter: prefs['smartSearchFilter'] ?? true,
       enableAutoSkipProviders: prefs['enableAutoSkipProviders'] ?? true,
-      liveTvRegion: prefs['liveTvRegion'],
       enableAnimeTosho: prefs['enableAnimeTosho'] ?? true,
       enableVixSrc: prefs['enableVixSrc'] ?? true,
       enableAnimeUnity: prefs['enableAnimeUnity'] ?? true,
@@ -123,7 +119,6 @@ class UserSettings {
     bool? showDebugPanel,
     bool? smartSearchFilter,
     bool? enableAutoSkipProviders,
-    String? liveTvRegion,
     bool? enableAnimeTosho,
     bool? enableVixSrc,
     bool? enableAnimeUnity,
@@ -151,7 +146,6 @@ class UserSettings {
       showDebugPanel: showDebugPanel ?? this.showDebugPanel,
       smartSearchFilter: smartSearchFilter ?? this.smartSearchFilter,
       enableAutoSkipProviders: enableAutoSkipProviders ?? this.enableAutoSkipProviders,
-      liveTvRegion: liveTvRegion ?? this.liveTvRegion,
       enableAnimeTosho: enableAnimeTosho ?? this.enableAnimeTosho,
       enableVixSrc: enableVixSrc ?? this.enableVixSrc,
       enableAnimeUnity: enableAnimeUnity ?? this.enableAnimeUnity,
@@ -181,7 +175,6 @@ class UserSettings {
       'showDebugPanel': showDebugPanel,
       'smartSearchFilter': smartSearchFilter,
       'enableAutoSkipProviders': enableAutoSkipProviders,
-      'liveTvRegion': liveTvRegion,
       'enableAnimeTosho': enableAnimeTosho,
       'enableVixSrc': enableVixSrc,
       'enableAnimeUnity': enableAnimeUnity,
@@ -242,7 +235,6 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       showDebugPanel: updates['showDebugPanel'] ?? state.showDebugPanel,
       smartSearchFilter: updates['smartSearchFilter'] ?? state.smartSearchFilter,
       enableAutoSkipProviders: updates['enableAutoSkipProviders'] ?? state.enableAutoSkipProviders,
-      liveTvRegion: updates['liveTvRegion'] ?? state.liveTvRegion,
       enableAnimeTosho: updates['enableAnimeTosho'] ?? state.enableAnimeTosho,
       enableVixSrc: updates['enableVixSrc'] ?? state.enableVixSrc,
       enableAnimeUnity: updates['enableAnimeUnity'] ?? state.enableAnimeUnity,

@@ -315,8 +315,6 @@
   "liveTvHd": "HD",
   "liveTvNoChannels": "No channels found",
   "liveTvSearchPlaceholder": "Search channels...",
-  "settingsLiveTvRegion": "Live TV Region",
-  "settingsLiveTvRegionDesc": "Select your local region for regional channels.",
   "settingsLiveTv": "Live TV",
   "settingsLiveTvBufferSize": "DVR Buffer Size",
   "settingsLiveTvBufferSizeDesc": "Maximum amount of history (in MB) to keep in memory/disk for the current channel.",

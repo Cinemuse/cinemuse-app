@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class SettingsSection extends StatelessWidget {
   final String title;
@@ -219,63 +218,6 @@ class SettingsLanguageButton extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class SettingsRegionSelector extends StatelessWidget {
-  final String? selectedRegion;
-  final ValueChanged<String?> onChanged;
-
-  const SettingsRegionSelector({
-    super.key,
-    required this.selectedRegion,
-    required this.onChanged,
-  });
-
-  static const regions = {
-    'abruzzo': 'Abruzzo',
-    'basilicata': 'Basilicata',
-    'bolzano': 'Bolzano',
-    'calabria': 'Calabria',
-    'campania': 'Campania',
-    'er': 'Emilia-Romagna',
-    'fvg': 'Friuli-Venezia Giulia',
-    'lazio': 'Lazio',
-    'liguria': 'Liguria',
-    'lombardia': 'Lombardia',
-    'marche': 'Marche',
-    'molise': 'Molise',
-    'piemonte': 'Piemonte',
-    'puglia': 'Puglia',
-    'sardegna': 'Sardegna',
-    'sicilia': 'Sicilia',
-    'toscana': 'Toscana',
-    'trento': 'Trento',
-    'umbria': 'Umbria',
-    'vda': 'Valle d\'Aosta',
-    'veneto': 'Veneto',
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        SettingsLanguageButton(
-          label: l10n.settingsNone,
-          isSelected: selectedRegion == null || selectedRegion!.isEmpty,
-          onTap: () => onChanged(null),
-        ),
-        ...regions.entries.map((e) => SettingsLanguageButton(
-              label: e.value,
-              isSelected: selectedRegion == e.key,
-              onTap: () => onChanged(e.key),
-            )),
-      ],
     );
   }
 }

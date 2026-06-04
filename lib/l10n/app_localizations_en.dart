@@ -995,13 +995,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get liveTvSearchPlaceholder => 'Search channels...';
 
   @override
-  String get settingsLiveTvRegion => 'Live TV Region';
-
-  @override
-  String get settingsLiveTvRegionDesc =>
-      'Select your local region for regional channels.';
-
-  @override
   String get settingsLiveTv => 'Live TV';
 
   @override

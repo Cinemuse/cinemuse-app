@@ -6,7 +6,6 @@ import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 import 'package:cinemuse_app/core/services/local_playlist_storage.dart';
-import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 
 // ---------------------------------------------------------------------------
 // Repository
@@ -77,7 +76,6 @@ final customPlaylistsProvider =
 /// All playable channels, sorted by LCN.
 final channelsProvider = FutureProvider<List<Channel>>((ref) async {
   final repo = ref.watch(liveTvRepositoryProvider);
-  final region = ref.watch(settingsProvider.select((s) => s.liveTvRegion));
   final customPlaylists = ref.watch(customPlaylistsProvider);
 
   // Filter out disabled playlists before loading channels.
@@ -94,7 +92,7 @@ final channelsProvider = FutureProvider<List<Channel>>((ref) async {
     }),
   );
 
-  return repo.fetchChannels(region: region, customPlaylists: resolvedPlaylists);
+  return repo.fetchChannels(customPlaylists: resolvedPlaylists);
 });
 
 /// Full EPG data keyed by source → channel id → programs.
