@@ -180,6 +180,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String detailsListDeleted(Object name) {
+    return 'List \'$name\' deleted.';
+  }
+
+  @override
   String get detailsCollectionsTitle => 'Collections';
 
   @override
@@ -1124,6 +1129,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get menuRemoveFromWatchlist => 'Remove from Watchlist';
+
+  @override
+  String get menuRemoveFromList => 'Remove from List';
 
   @override
   String get menuMarkAsWatched => 'Mark as Watched';

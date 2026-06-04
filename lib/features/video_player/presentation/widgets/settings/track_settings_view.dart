@@ -11,6 +11,7 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:cinemuse_app/core/services/streaming/subtitles/external_subtitle.dart';
 import 'package:cinemuse_app/core/services/streaming/subtitles/subtitle_service.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'settings_widgets.dart';
 
 class TrackSettingsView extends ConsumerStatefulWidget {
@@ -302,12 +303,12 @@ class _ExternalSubtitleTileState extends ConsumerState<_ExternalSubtitleTile> {
         widget.onBack();
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to load external subtitle.')));
+          AppSnackBar.show(context, message: 'Failed to load external subtitle.');
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppSnackBar.show(context, message: 'Error: $e');
       }
     } finally {
       if (mounted) setState(() => _isApplying = false);

@@ -422,6 +422,12 @@ abstract class AppLocalizations {
   /// **'Are you sure you want to delete \'{name}\'?'**
   String detailsDeleteListConfirm(Object name);
 
+  /// No description provided for @detailsListDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'List \'{name}\' deleted.'**
+  String detailsListDeleted(Object name);
+
   /// No description provided for @detailsCollectionsTitle.
   ///
   /// In en, this message translates to:
@@ -2179,6 +2185,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove from Watchlist'**
   String get menuRemoveFromWatchlist;
+
+  /// No description provided for @menuRemoveFromList.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from List'**
+  String get menuRemoveFromList;
 
   /// No description provided for @menuMarkAsWatched.
   ///

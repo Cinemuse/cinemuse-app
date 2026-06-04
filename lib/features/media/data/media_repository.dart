@@ -1,25 +1,31 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:cinemuse_app/core/data/database.dart'; 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:cinemuse_app/core/services/system/supabase_service.dart';
+import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 
 final mediaRepositoryProvider = Provider<MediaRepository>((ref) {
   return MediaRepository(
     ref.watch(appDatabaseProvider),
     ref.watch(tmdbServiceProvider),
+    Supabase.instance.client,
   );
 });
 
 class MediaRepository {
   final AppDatabase _db;
   final TmdbService _tmdbService;
+  final SupabaseClient _supabase;
 
   /// Session-based in-memory cache
   final Map<String, MediaItem> _memoryCache = {};
 
-  MediaRepository(this._db, this._tmdbService);
+  MediaRepository(this._db, this._tmdbService, this._supabase);
 
   /// Default TTL for cached items: 7 days
   static const Duration defaultTTL = Duration(days: 7);
@@ -74,7 +80,7 @@ class MediaRepository {
     }
   }
 
-  /// Ensures a media item exists in the local cache.
+  /// Ensures a media item exists in the local cache and remote database.
   Future<void> saveMediaItem(MediaItem item) async {
     final key = '${item.mediaType.name}-${item.tmdbId}';
     
@@ -98,6 +104,26 @@ class MediaRepository {
         updatedAt: Value(item.updatedAt),
       ));
     } catch (_) {}
+
+    // Save to Remote Cache (Supabase)
+    try {
+      await _supabase.from('media_cache').upsert({
+        'tmdb_id': item.tmdbId,
+        'media_type': item.mediaType.name,
+        'title_en': item.titleEn,
+        'title_it': item.titleIt,
+        'poster_path': item.posterPath,
+        'backdrop_path': item.backdropPath,
+        'runtime_minutes': item.runtimeMinutes,
+        'genres': item.genres ?? [],
+        'cast_members': item.castMembers ?? [],
+        'release_date': item.releaseDate?.toIso8601String().split('T')[0],
+        'updated_at': item.updatedAt.toIso8601String(),
+      }).withErrorHandling();
+    } catch (e, stackTrace) {
+      debugPrint('MediaRepository: Failed to sync media cache to remote: $e');
+      debugPrint('Stack trace: $stackTrace');
+    }
   }
 
   /// Alias for compatibility

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 
 class SettingInput extends StatefulWidget {
   final String? label;
@@ -86,8 +87,9 @@ class _SettingInputState extends State<SettingInput> {
         setState(() {
           _isSaving = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.settingsErrorSaving(e.toString()))),
+        AppSnackBar.show(
+          context,
+          message: AppLocalizations.of(context)!.settingsErrorSaving(e.toString()),
         );
       }
     }

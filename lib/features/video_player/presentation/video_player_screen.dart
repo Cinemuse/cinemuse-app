@@ -12,6 +12,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 
 class VideoPlayerScreen extends ConsumerStatefulWidget {
   final String queryId;
@@ -91,13 +92,11 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           final err = next.value.error;
           final prevErr = previous?.valueOrNull?.error;
           if (err != null && err != prevErr) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(err),
-                backgroundColor: Theme.of(context).colorScheme.error,
-                behavior: SnackBarBehavior.floating,
-                margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
-              ),
+            AppSnackBar.show(
+              context,
+              message: err,
+              backgroundColor: Theme.of(context).colorScheme.error,
+              margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
             );
           }
         }
@@ -109,14 +108,12 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       if (!mounted) return;
       ref.read(playerControllerProvider(params).notifier).onNotification = (message) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: AppTheme.secondary,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 3),
-            margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
-          ),
+        AppSnackBar.show(
+          context,
+          message: message,
+          backgroundColor: AppTheme.secondary,
+          duration: const Duration(seconds: 3),
+          margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
         );
       };
     });

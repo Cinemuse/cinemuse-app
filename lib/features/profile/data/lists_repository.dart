@@ -7,6 +7,7 @@ import 'package:drift/drift.dart';
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 
 class ListsRepository {
   final SupabaseClient _client;
@@ -18,21 +19,22 @@ class ListsRepository {
   Future<List<UserList>> getUserLists(String userId) async {
     // Sync then rely on watchUserLists for reactive UI
     await syncUserLists(userId);
-    
+
     // Fallback fetch from remote if needed for direct await (rarely used now)
     final connectivity = await Connectivity().checkConnectivity();
-    if (connectivity.isNotEmpty && connectivity.first == ConnectivityResult.none) {
+    if (connectivity.isNotEmpty &&
+        connectivity.first == ConnectivityResult.none) {
       // Return local immediately if offline
       return watchUserLists(userId).first;
     }
-    
+
     final response = await _client
         .from('lists')
         .select('*, list_items(*, media:media_cache(*))')
         .eq('user_id', userId)
         .order('sort_order', ascending: true)
         .withErrorHandling();
-    
+
     final data = response as List<dynamic>;
     return data.map((json) => UserList.fromJson(json)).toList();
   }
@@ -40,13 +42,20 @@ class ListsRepository {
   /// Watch user lists locally
   Stream<List<UserList>> watchUserLists(String userId) {
     // Using a join ensures the stream triggers when either table changes
-    final query = _db.select(_db.cachedUserLists).join([
-      leftOuterJoin(
-        _db.cachedListItems,
-        _db.cachedListItems.listId.equalsExp(_db.cachedUserLists.id),
-      ),
-    ])..where(_db.cachedUserLists.userId.equals(userId))
-      ..orderBy([OrderingTerm.asc(_db.cachedUserLists.sortOrder)]);
+    final query =
+        _db.select(_db.cachedUserLists).join([
+            leftOuterJoin(
+              _db.cachedListItems,
+              _db.cachedListItems.listId.equalsExp(_db.cachedUserLists.id),
+            ),
+            leftOuterJoin(
+              _db.cachedMediaItems,
+              _db.cachedMediaItems.tmdbId.equalsExp(_db.cachedListItems.mediaTmdbId) &
+                  _db.cachedMediaItems.mediaType.equalsExp(_db.cachedListItems.mediaType),
+            ),
+          ])
+          ..where(_db.cachedUserLists.userId.equals(userId))
+          ..orderBy([OrderingTerm.asc(_db.cachedUserLists.sortOrder)]);
 
     return query.watch().asyncMap((rows) async {
       // Group items by list ID to reconstruct the UserList objects
@@ -59,14 +68,40 @@ class ListsRepository {
 
         final item = row.readTableOrNull(_db.cachedListItems);
         if (item != null) {
-          listMap.putIfAbsent(list.id, () => []).add(UserListItem(
-            listId: item.listId,
-            tmdbId: item.mediaTmdbId,
-            mediaType: MediaItem.fromString(item.mediaType),
-            sortOrder: item.sortOrder,
-            meta: item.meta != null ? jsonDecode(item.meta!) as Map<String, dynamic> : {},
-            addedAt: item.addedAt,
-          ));
+          final mediaRow = row.readTableOrNull(_db.cachedMediaItems);
+          MediaItem? mediaItem;
+          if (mediaRow != null) {
+            mediaItem = MediaItem(
+              tmdbId: mediaRow.tmdbId,
+              mediaType: MediaItem.fromString(mediaRow.mediaType),
+              titleIt: mediaRow.titleIt,
+              titleEn: mediaRow.titleEn,
+              posterPath: mediaRow.posterPath,
+              backdropPath: mediaRow.backdropPath,
+              runtimeMinutes: mediaRow.runtimeMinutes,
+              genres: mediaRow.genres != null ? (jsonDecode(mediaRow.genres!) as List).cast<int>() : null,
+              castMembers: mediaRow.castMembers != null ? (jsonDecode(mediaRow.castMembers!) as List).cast<int>() : null,
+              releaseDate: mediaRow.releaseDate,
+              voteAverage: mediaRow.voteAverage,
+              updatedAt: mediaRow.updatedAt ?? DateTime.now(),
+            );
+          }
+
+          listMap
+              .putIfAbsent(list.id, () => [])
+              .add(
+                UserListItem(
+                  listId: item.listId,
+                  tmdbId: item.mediaTmdbId,
+                  mediaType: MediaItem.fromString(item.mediaType),
+                  sortOrder: item.sortOrder,
+                  meta: item.meta != null
+                      ? jsonDecode(item.meta!) as Map<String, dynamic>
+                      : {},
+                  addedAt: item.addedAt,
+                  media: mediaItem,
+                ),
+              );
         }
       }
 
@@ -89,7 +124,8 @@ class ListsRepository {
   Future<void> syncUserLists(String userId) async {
     try {
       final connectivity = await Connectivity().checkConnectivity();
-      if (connectivity.isNotEmpty && connectivity.first == ConnectivityResult.none) {
+      if (connectivity.isNotEmpty &&
+          connectivity.first == ConnectivityResult.none) {
         return; // Don't attempt to sync if offline
       }
 
@@ -99,15 +135,24 @@ class ListsRepository {
           .eq('user_id', userId)
           .withErrorHandling();
 
-      final lists = (response as List).map((json) => CachedUserListsCompanion(
-        id: Value(json['id'] as String),
-        userId: Value(userId),
-        name: Value(json['name'] as String),
-        type: Value(json['type'] as String),
-        description: Value(json['description'] as String?),
-        sortOrder: Value(json['sort_order'] as int? ?? 0),
-        createdAt: Value(DateTime.parse(json['created_at'] as String? ?? DateTime.now().toIso8601String())),
-      )).toList();
+      final lists = (response as List)
+          .map(
+            (json) => CachedUserListsCompanion(
+              id: Value(json['id'] as String),
+              userId: Value(userId),
+              name: Value(json['name'] as String),
+              type: Value(json['type'] as String),
+              description: Value(json['description'] as String?),
+              sortOrder: Value(json['sort_order'] as int? ?? 0),
+              createdAt: Value(
+                DateTime.parse(
+                  json['created_at'] as String? ??
+                      DateTime.now().toIso8601String(),
+                ),
+              ),
+            ),
+          )
+          .toList();
 
       final items = <CachedListItemsCompanion>[];
       for (final listJson in (response as List)) {
@@ -118,28 +163,38 @@ class ListsRepository {
           if (itemJson['media'] != null) {
             final media = itemJson['media'] as Map<String, dynamic>;
             metaData = {
-              'title': media['title'],
+              'title': media['title_en'] ?? media['title_it'],
               'poster_path': media['poster_path'],
               'backdrop_path': media['backdrop_path'],
               'rating': media['vote_average'],
-              'year': media['release_date'] != null ? DateTime.tryParse(media['release_date'])?.year : null,
+              'year': media['release_date'] != null
+                  ? DateTime.tryParse(media['release_date'])?.year
+                  : null,
             };
           }
 
-          items.add(CachedListItemsCompanion(
-            listId: Value(listId),
-            mediaTmdbId: Value(itemJson['media_tmdb_id'] as int),
-            mediaType: Value(itemJson['media_type'] as String),
-            meta: Value(metaData != null ? jsonEncode(metaData) : null),
-            sortOrder: Value(itemJson['sort_order'] as int? ?? 0),
-            addedAt: Value(DateTime.parse(itemJson['added_at'] as String? ?? DateTime.now().toIso8601String())),
-          ));
+          items.add(
+            CachedListItemsCompanion(
+              listId: Value(listId),
+              mediaTmdbId: Value(itemJson['media_tmdb_id'] as int),
+              mediaType: Value(itemJson['media_type'] as String),
+              meta: Value(metaData != null ? jsonEncode(metaData) : null),
+              sortOrder: Value(itemJson['sort_order'] as int? ?? 0),
+              addedAt: Value(
+                DateTime.parse(
+                  itemJson['added_at'] as String? ??
+                      DateTime.now().toIso8601String(),
+                ),
+              ),
+            ),
+          );
         }
       }
 
       await _db.syncUserLists(userId, lists, items);
     } catch (e) {
-      if (!e.toString().contains('Failed host lookup') && !e.toString().contains('SocketException')) {
+      if (!e.toString().contains('Failed host lookup') &&
+          !e.toString().contains('SocketException')) {
         debugPrint('ListsRepository: Sync failed: $e');
       }
     }
@@ -153,33 +208,59 @@ class ListsRepository {
     String? description,
     int sortOrder = 0,
   }) async {
-    final response = await _client
-        .from('lists')
-        .insert({
-          'user_id': userId,
-          'name': name,
-          'type': type.name,
-          'description': description,
-          'sort_order': sortOrder,
-        })
-        .select()
-        .single()
-        .withErrorHandling();
-    
-    final newList = UserList.fromJson(response);
+    final tempId = const Uuid().v4();
+    final now = DateTime.now().toUtc();
 
-    // Update Local
-    await _db.upsertUserList(CachedUserListsCompanion(
-      id: Value(newList.id),
-      userId: Value(userId),
-      name: Value(name),
-      type: Value(type.name),
-      description: Value(description),
-      sortOrder: Value(sortOrder),
-      createdAt: Value(newList.createdAt),
-    ));
+    // Optimistic Local Update
+    await _db.upsertUserList(
+      CachedUserListsCompanion(
+        id: Value(tempId),
+        userId: Value(userId),
+        name: Value(name),
+        type: Value(type.name),
+        description: Value(description),
+        sortOrder: Value(sortOrder),
+        createdAt: Value(now),
+      ),
+    );
 
-    return newList;
+    try {
+      final response = await _client
+          .from('lists')
+          .insert({
+            'id': tempId,
+            'user_id': userId,
+            'name': name,
+            'type': type.name,
+            'description': description,
+            'sort_order': sortOrder,
+            'created_at': now.toIso8601String(),
+          })
+          .select()
+          .single()
+          .withErrorHandling();
+
+      final newList = UserList.fromJson(response);
+
+      // Re-upsert with authoritative server response (in case of slight changes or triggers)
+      await _db.upsertUserList(
+        CachedUserListsCompanion(
+          id: Value(newList.id),
+          userId: Value(newList.userId),
+          name: Value(newList.name),
+          type: Value(newList.type.name),
+          description: Value(newList.description),
+          sortOrder: Value(newList.sortOrder),
+          createdAt: Value(newList.createdAt),
+        ),
+      );
+
+      return newList;
+    } catch (e) {
+      // Revert optimistic insert on failure
+      await _db.deleteUserList(tempId);
+      rethrow;
+    }
   }
 
   /// Add an item to a specific list.
@@ -190,17 +271,21 @@ class ListsRepository {
     required Map<String, dynamic> meta,
     int? sortOrder,
   }) async {
-    final normalizedType = (mediaType == 'series' || mediaType == 'tv') ? 'tv' : mediaType;
+    final normalizedType = (mediaType == 'series' || mediaType == 'tv')
+        ? 'tv'
+        : mediaType;
 
     // Update Local
-    await _db.upsertListItem(CachedListItemsCompanion(
-      listId: Value(listId),
-      mediaTmdbId: Value(tmdbId),
-      mediaType: Value(normalizedType),
-      meta: Value(jsonEncode(meta)),
-      sortOrder: Value(sortOrder ?? 0),
-      addedAt: Value(DateTime.now()),
-    ));
+    await _db.upsertListItem(
+      CachedListItemsCompanion(
+        listId: Value(listId),
+        mediaTmdbId: Value(tmdbId),
+        mediaType: Value(normalizedType),
+        meta: Value(jsonEncode(meta)),
+        sortOrder: Value(sortOrder ?? 0),
+        addedAt: Value(DateTime.now()),
+      ),
+    );
 
     // Update Remote
     await _client.from('list_items').upsert({
@@ -217,7 +302,9 @@ class ListsRepository {
     required int tmdbId,
     required String mediaType,
   }) async {
-    final normalizedType = (mediaType == 'series' || mediaType == 'tv') ? 'tv' : mediaType;
+    final normalizedType = (mediaType == 'series' || mediaType == 'tv')
+        ? 'tv'
+        : mediaType;
 
     // Update Local
     await _db.deleteListItem(listId, tmdbId, normalizedType);
@@ -236,12 +323,11 @@ class ListsRepository {
   Future<void> deleteList(String listId) async {
     // Update Local
     await _db.deleteUserList(listId);
-    
+
     // Update Remote
     await _client.from('lists').delete().eq('id', listId).withErrorHandling();
   }
 
-  /// Update a list's basic info.
   Future<void> updateList({
     required String listId,
     String? name,
@@ -250,9 +336,22 @@ class ListsRepository {
     final updates = <String, dynamic>{};
     if (name != null) updates['name'] = name;
     if (description != null) updates['description'] = description;
-    
+
     if (updates.isEmpty) return;
 
+    // 1. Optimistic Local Update
+    final companion = CachedUserListsCompanion(
+      id: Value(listId),
+      name: name != null ? Value(name) : const Value.absent(),
+      description: description != null
+          ? Value(description)
+          : const Value.absent(),
+    );
+    await (_db.update(
+      _db.cachedUserLists,
+    )..where((t) => t.id.equals(listId))).write(companion);
+
+    // 2. Remote Sync
     await _client
         .from('lists')
         .update(updates)

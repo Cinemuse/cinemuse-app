@@ -77,7 +77,7 @@ class MediaItem {
     }
 
     // Fallback to primary title/name if translation is missing or language matches English
-    return _nullIfEmpty(data['title'] ?? data['name']);
+    return _nullIfEmpty(data['title'] ?? data['name'] ?? data['original_title'] ?? data['original_name']);
   }
 
   /// Creates a MediaItem from full TMDB details (Map representation).

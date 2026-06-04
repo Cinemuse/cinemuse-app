@@ -149,7 +149,7 @@ class CollectionCard extends StatelessWidget {
                 padding: const EdgeInsets.all(16), // Increased padding to match web feel
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -195,15 +195,17 @@ class CollectionCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      list.description ?? (list.items.isEmpty ? 'No items yet' : 'Click to view all items'),
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 12,
-                        height: 1.4,
+                    Expanded(
+                      child: Text(
+                        list.description ?? (list.items.isEmpty ? 'No items yet' : 'Click to view all items'),
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),

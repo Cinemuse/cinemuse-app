@@ -3,10 +3,10 @@ import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/collection_card.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/create_list_modal.dart';
-import 'package:cinemuse_app/features/profile/presentation/widgets/edit_list_modal.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_sheet.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/system_list_card.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,58 +29,41 @@ class ProfileCollections extends ConsumerWidget {
     );
   }
 
-  void _showEditListModal(BuildContext context, WidgetRef ref, UserList list) {
-    showDialog(
-      context: context,
-      builder: (context) => EditListModal(
-        list: list,
-        onUpdate: (name, description) async {
-          await ref.read(userListsProvider.notifier).updateList(
-            list.id,
-            name,
-            description,
-          );
-        },
-      ),
-    );
-  }
-
   void _showListDetails(BuildContext context, WidgetRef ref, UserList list) {
     final l10n = AppLocalizations.of(context)!;
+    final isSystemList = list.type == ListType.watchlist || list.type == ListType.favorites;
+    
     ListDetailsSheet.show(
       context,
       list: list,
-      onEdit: () {
-        Navigator.pop(context); // Close details modal
-        _showEditListModal(context, ref, list);
+      onUpdate: isSystemList ? null : (name, description) async {
+        await ref.read(userListsProvider.notifier).updateList(
+          list.id,
+          name,
+          description,
+        );
       },
       onDelete: () async {
-        // Confirm delete
-        final confirm = await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              backgroundColor: AppTheme.surface,
-              title: Text(l10n.detailsDeleteListTitle, style: const TextStyle(color: Colors.white)),
-              content: Text(l10n.detailsDeleteListConfirm(list.name), style: const TextStyle(color: Colors.white70)),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: Text(l10n.commonCancel),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: Text(l10n.commonDelete, style: const TextStyle(color: Colors.redAccent)),
-                ),
-              ],
-            ),
-          );
+        // Optimistic delete
+        // The modal is closed by ListDetailsSheet itself to avoid context issues
+        final notifier = ref.read(userListsProvider.notifier);
+        notifier.optimisticRemove(list.id);
 
-          if (confirm == true) {
-            final repo = ref.read(listsRepositoryProvider);
-            await repo.deleteList(list.id);
-            ref.invalidate(userListsProvider);
-            if (context.mounted) Navigator.pop(context); // Close details modal
-          }
+        final reason = await AppSnackBar.show(
+          context,
+          message: l10n.detailsListDeleted(list.name),
+          actionLabel: l10n.commonUndo,
+          showTimer: true,
+          onAction: () {}, // Action just closes the snackbar with 'action' reason
+        ).closed;
+
+        if (reason != SnackBarClosedReason.action) {
+          final repo = ref.read(listsRepositoryProvider);
+          await repo.deleteList(list.id);
+        } else {
+          // User undid the deletion, restore the UI state
+          ref.invalidate(userListsProvider);
+        }
       },
     );
   }

@@ -55,16 +55,19 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
         mediaType: media.mediaType.name,
       );
     } else {
-      // Naturally cache the item when it's being added to a system list
-      ref.read(watchHistoryRepositoryProvider).saveMediaItem(media)
-          .catchError((e) => debugPrint('Background caching failed: $e'));
+      // Cache the item before adding it to ensure FK constraints are met
+      try {
+        await ref.read(watchHistoryRepositoryProvider).saveMediaItem(media);
+      } catch (e) {
+        debugPrint('Background caching failed: $e');
+      }
 
       await repo.addItemToList(
         listId: targetList.id,
         tmdbId: media.tmdbId,
         mediaType: media.mediaType.name,
         meta: {
-          'title': media.titleEn,
+          'title': media.titleEn ?? media.titleIt ?? 'Unknown',
           'poster_path': media.posterPath,
           'backdrop_path': media.backdropPath,
           'rating': media.voteAverage,
@@ -109,21 +112,33 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
   Future<void> addItemToCustomList(String listId, MediaItem media) async {
     final repo = ref.read(listsRepositoryProvider);
 
-    // Naturally cache the item when it's being added to a custom list
-    ref.read(watchHistoryRepositoryProvider).saveMediaItem(media)
-        .catchError((e) => debugPrint('Background caching failed: $e'));
+    // Cache the item before adding it to ensure FK constraints are met
+    try {
+      await ref.read(watchHistoryRepositoryProvider).saveMediaItem(media);
+    } catch (e) {
+      debugPrint('Background caching failed: $e');
+    }
 
     await repo.addItemToList(
       listId: listId,
       tmdbId: media.tmdbId,
       mediaType: media.mediaType.name,
       meta: {
-        'title': media.titleEn,
+        'title': media.titleEn ?? media.titleIt ?? 'Unknown',
         'poster_path': media.posterPath,
         'backdrop_path': media.backdropPath,
         'rating': media.voteAverage,
         'year': media.releaseDate?.year,
       },
+    );
+  }
+
+  Future<void> removeItemFromList(String listId, int tmdbId, MediaKind mediaType) async {
+    final repo = ref.read(listsRepositoryProvider);
+    await repo.removeItemFromList(
+      listId: listId,
+      tmdbId: tmdbId,
+      mediaType: mediaType.name,
     );
   }
 
@@ -141,6 +156,13 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
     final favorites = lists.where((l) => l.type == ListType.favorites).firstOrNull;
     if (favorites == null) return false;
     return favorites.items.any((i) => i.tmdbId == tmdbId && i.mediaType == mediaType);
+  }
+
+  /// Optimistically remove a list from the current state.
+  /// Used in conjunction with Undo-based deletions.
+  void optimisticRemove(String listId) {
+    final lists = state.value ?? [];
+    state = AsyncValue.data(lists.where((l) => l.id != listId).toList());
   }
 }
 

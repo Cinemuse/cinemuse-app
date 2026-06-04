@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 
 class AddonSettings extends ConsumerStatefulWidget {
   const AddonSettings({super.key});
@@ -42,8 +43,9 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
       await ref.read(settingsProvider.notifier).installAddon(url);
       _urlController.clear();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.settingsAddonSuccess)),
+        AppSnackBar.show(
+          context,
+          message: l10n.settingsAddonSuccess,
         );
       }
     } catch (e) {
@@ -420,13 +422,10 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                           icon: const Icon(LucideIcons.copy, color: AppTheme.textMuted, size: 18),
                           onPressed: () {
                             Clipboard.setData(ClipboardData(text: addon.baseUrl));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(l10n.settingsCopiedToClipboard),
-                                duration: const Duration(seconds: 1),
-                                behavior: SnackBarBehavior.floating,
-                                width: 200,
-                              ),
+                            AppSnackBar.show(
+                              context,
+                              message: l10n.settingsCopiedToClipboard,
+                              duration: const Duration(seconds: 1),
                             );
                           },
                           tooltip: l10n.settingsCopy,
