@@ -19,17 +19,17 @@ final sportScheduleProvider = FutureProvider<List<SportTvEvent>>((ref) async {
 });
 
 final trendingProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final tmdbService = ref.read(tmdbServiceProvider);
+  final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getTrending();
 });
 
 final popularMoviesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final tmdbService = ref.read(tmdbServiceProvider);
+  final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getPopularMovies();
 });
 
 final popularSeriesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final tmdbService = ref.read(tmdbServiceProvider);
+  final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getPopularSeries();
 });
 

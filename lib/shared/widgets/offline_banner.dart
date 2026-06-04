@@ -1,5 +1,7 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+
 
 class OfflineBanner extends StatelessWidget {
   final VoidCallback? onRetry;
@@ -12,6 +14,7 @@ class OfflineBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final horizontalPadding = AppTheme.getResponsiveHorizontalPadding(context);
+    final l10n = AppLocalizations.of(context)!;
     
     return Container(
       width: double.infinity,
@@ -56,7 +59,7 @@ class OfflineBanner extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Offline Mode',
+                  l10n.offlineBannerTitle,
                   style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: Colors.white,
                     fontSize: 15,
@@ -64,7 +67,7 @@ class OfflineBanner extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Showing locally cached content only.',
+                  l10n.offlineBannerMessage,
                   style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: Colors.white70,
                     fontSize: 13,
@@ -80,7 +83,7 @@ class OfflineBanner extends StatelessWidget {
                 foregroundColor: Colors.orangeAccent,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
-              child: Text('Retry'),
+              child: Text(l10n.commonRetry),
             ),
         ],
       ),

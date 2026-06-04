@@ -197,7 +197,7 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
                 size: 22,
                 color: Colors.white30,
               ),
-              tooltip: 'Manage Playlists',
+              tooltip: l10n.liveTvManagePlaylists,
             ),
             _FilterIconButton(isActive: filterIsActive),
           ],

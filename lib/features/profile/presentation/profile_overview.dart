@@ -12,6 +12,7 @@ import 'package:cinemuse_app/features/video_player/presentation/video_player_scr
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class ProfileOverview extends ConsumerWidget {
@@ -26,11 +27,12 @@ class ProfileOverview extends ConsumerWidget {
     final groupedSeries = history.where((h) => h.mediaType == MediaKind.tv).toList();
     final statsAsync = ref.watch(profileStatsProvider);
     final stats = statsAsync.valueOrNull ?? ProfileStats.empty();
+    final l10n = AppLocalizations.of(context)!;
 
     String formatDuration(int minutes) {
       final d = minutes ~/ 1440;
       final h = (minutes % 1440) ~/ 60;
-      return '${d}d ${h}h';
+      return l10n.statsDaysHours(d, h);
     }
 
     final appLanguage = ref.watch(settingsProvider).appLanguage;
@@ -68,9 +70,9 @@ class ProfileOverview extends ConsumerWidget {
         icon: icon,
         theme: CarouselTheme.profileRow,
         items: cards,
-        emptyBuilder: (context) => const Padding(
-          padding: EdgeInsets.symmetric(vertical: 24.0, horizontal: 24),
-          child: Text('No recently watched items', style: TextStyle(color: Colors.grey)),
+        emptyBuilder: (context) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 24),
+          child: Text(l10n.profileNoRecentItems, style: const TextStyle(color: Colors.grey)),
         ),
       );
     }
@@ -109,13 +111,13 @@ class ProfileOverview extends ConsumerWidget {
                               ),
                               const SizedBox(height: 24),
                               buildRecentRow(
-                                'RECENT MOVIES', 
+                                l10n.profileRecentMovies.toUpperCase(), 
                                 LucideIcons.film, 
                                 groupedMovies.take(10).map((h) => h.media).whereType<MediaItem>().toList()
                               ),
                               const SizedBox(height: 24),
                               buildRecentRow(
-                                'RECENT SERIES', 
+                                l10n.profileRecentSeries.toUpperCase(), 
                                 LucideIcons.tv, 
                                 groupedSeries.take(10).map((h) => h.media).whereType<MediaItem>().toList()
                               ),
@@ -161,7 +163,7 @@ class ProfileOverview extends ConsumerWidget {
 
                     // Recent Movies Container
                     buildRecentRow(
-                      'RECENT MOVIES', 
+                      l10n.profileRecentMovies.toUpperCase(), 
                       LucideIcons.film, 
                       groupedMovies.take(10).map((h) => h.media).whereType<MediaItem>().toList()
                     ),
@@ -170,7 +172,7 @@ class ProfileOverview extends ConsumerWidget {
 
                     // Recent Series Container
                     buildRecentRow(
-                      'RECENT SERIES', 
+                      l10n.profileRecentSeries.toUpperCase(), 
                       LucideIcons.tv, 
                       groupedSeries.take(10).map((h) => h.media).whereType<MediaItem>().toList()
                     ),
@@ -187,5 +189,3 @@ class ProfileOverview extends ConsumerWidget {
     );
   }
 }
-
-

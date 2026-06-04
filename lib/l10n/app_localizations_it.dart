@@ -48,7 +48,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get commonUndo => 'Annulla';
 
   @override
-  String get commonFeatured => 'IN PRIMA PIANO';
+  String get commonFeatured => 'IN PRIMO PIANO';
 
   @override
   String get commonUnexpectedError => 'Si è verificato un errore inaspettato';
@@ -58,6 +58,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get commonUnknown => 'Sconosciuto';
+
+  @override
+  String get commonAnonymous => 'Anonimo';
 
   @override
   String get filterMax => 'Max';
@@ -125,10 +128,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get searchRating => 'Valutazione';
 
   @override
-  String get searchYearRange => 'Intervallo Anni';
+  String get searchYearRange => 'Anno';
 
   @override
-  String get searchVoteCount => 'Conteggio Voti';
+  String get searchVoteCount => 'Numero di voti';
 
   @override
   String get searchRuntime => 'Durata';
@@ -146,10 +149,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get searchTryAdjusting => 'Prova a modificare i filtri';
 
   @override
-  String get searchMatchAny => 'Corrispondenza Qualsiasi';
+  String get searchMatchAny => 'Qualsiasi';
 
   @override
-  String get searchMatchAll => 'Corrispondenza Tutte';
+  String get searchMatchAll => 'Tutte';
 
   @override
   String get searchLanguagePlaceholder => 'Aggiungi una lingua...';
@@ -234,7 +237,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get homeMoreInfo => 'Più Info';
 
   @override
-  String get homeTrendingNow => 'Tendenze';
+  String get homeTrendingNow => 'Di tendenza';
 
   @override
   String get homePopularMovies => 'Film Popolari';
@@ -246,7 +249,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get homeContinueWatching => 'Continua a guardare';
 
   @override
-  String get homeSportSchedule => 'Programma Sportivo';
+  String get homeSportSchedule => 'Sport in programma';
 
   @override
   String get sportFootball => 'Calcio';
@@ -408,6 +411,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsReviewsAll => 'Leggi tutte le recensioni';
 
   @override
+  String get detailsNoReviews => 'Nessuna recensione trovata.';
+
+  @override
   String get detailsFinances => 'Finanze';
 
   @override
@@ -435,7 +441,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsRevenue => 'Incassi';
 
   @override
-  String get detailsExternalLinks => 'Link Esterni';
+  String get detailsExternalLinks => 'Link esterni';
 
   @override
   String get detailsVideos => 'Video';
@@ -575,10 +581,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playerResolvingStream => 'Risoluzione stream in corso...';
 
   @override
-  String get playerCheckingDebridCache => 'Controllo cache debrid';
+  String get playerCheckingDebridCache => 'Verifica cache debrid';
 
   @override
-  String get sectionVisualArchives => 'Archivi Visivi';
+  String get sectionVisualArchives => 'Archivio Video';
 
   @override
   String get streamingErrorNoProviders =>
@@ -661,7 +667,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsTitle => 'Impostazioni';
 
   @override
-  String get settingsIdentity => 'Identità e Accesso';
+  String get settingsIdentity => 'Account e accesso';
 
   @override
   String get settingsIdentityDesc =>
@@ -897,7 +903,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Nascondi i link con una risoluzione superiore a quella selezionata.';
 
   @override
-  String get settingsTotalDocSize => 'Dimensione Totale Documenti';
+  String get settingsTotalDocSize => 'Spazio occupato';
 
   @override
   String get settingsTotalDocSizeDesc =>
@@ -916,7 +922,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsLists => 'Liste';
 
   @override
-  String get settingsAggregatedStats => 'Statistiche Aggregate';
+  String get settingsAggregatedStats => 'Riepilogo statistiche';
 
   @override
   String get settingsSave => 'Salva';
@@ -970,7 +976,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get liveTvNow => 'ORA';
 
   @override
-  String get liveTvNext => 'DOPO';
+  String get liveTvNext => 'A SEGUIRE';
 
   @override
   String get liveTvLive => 'LIVE';
@@ -1060,7 +1066,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get agendaNextWeek => 'Prossima Settimana';
 
   @override
-  String get agendaLater => 'In Futuro';
+  String get agendaLater => 'Più avanti';
 
   @override
   String get agendaMovie => 'Film';
@@ -1091,7 +1097,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get updateNow => 'Aggiorna Ora';
 
   @override
-  String get later => 'Dopo';
+  String get later => 'Più tardi';
 
   @override
   String downloadingUpdate(Object progress) {
@@ -1268,7 +1274,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get tvTimeComments => 'Commenti';
 
   @override
-  String get tvTimeNoComments => 'Nessun commento ancora.';
+  String get tvTimeNoComments => 'Ancora nessun commento.';
 
   @override
   String tvTimeReplies(int count) {
@@ -1297,4 +1303,193 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get settingsAutoSkipProvidersDesc =>
       'Salta i provider di streaming che impiegano più di 30 secondi a rispondere.';
+
+  @override
+  String get profileRecentMovies => 'Film recenti';
+
+  @override
+  String get profileRecentSeries => 'Serie recenti';
+
+  @override
+  String get statsTimeBreakdown => 'Suddivisione tempo';
+
+  @override
+  String get statsAllTime => 'Totale';
+
+  @override
+  String get statsMovies => 'Film';
+
+  @override
+  String get statsSeries => 'Serie';
+
+  @override
+  String get statsLast7Days => 'Ultimi 7 giorni';
+
+  @override
+  String get statsLast30Days => 'Ultimi 30 giorni';
+
+  @override
+  String get statsLastYear => 'Ultimo anno';
+
+  @override
+  String get statsMoviesStats => 'Statistiche film';
+
+  @override
+  String get statsSeriesStats => 'Statistiche serie';
+
+  @override
+  String get statsEpisodes => 'Episodi';
+
+  @override
+  String get statsSeasons => 'Stagioni';
+
+  @override
+  String get statsTime => 'Tempo';
+
+  @override
+  String get detailsCreatorsAndDirectors => 'Creatori e registi';
+
+  @override
+  String get detailsDirector => 'Regista';
+
+  @override
+  String get detailsWriters => 'Sceneggiatori';
+
+  @override
+  String get detailsTvTimeComments => 'Commenti TvTime';
+
+  @override
+  String get detailsTrack => 'Segna';
+
+  @override
+  String get detailsWatched => 'Visto';
+
+  @override
+  String detailsWatchedCount(int count) {
+    return 'Visto x$count';
+  }
+
+  @override
+  String get detailsUpToDate => 'In pari';
+
+  @override
+  String detailsUpToDateCount(int count) {
+    return 'In pari x$count';
+  }
+
+  @override
+  String get detailsFinishSeries => 'Finisci serie';
+
+  @override
+  String get commonNoContent => 'Nessun contenuto disponibile';
+
+  @override
+  String get commonStopCasting => 'INTERROMPI TRASMISSIONE';
+
+  @override
+  String get castConnectDevice => 'Connetti al dispositivo';
+
+  @override
+  String get castNoDevices => 'Nessun dispositivo trovato';
+
+  @override
+  String get castRefresh => 'Aggiorna';
+
+  @override
+  String get profileNoRecentItems => 'Nessun elemento guardato di recente';
+
+  @override
+  String get detailsEditList => 'Modifica lista';
+
+  @override
+  String get detailsDeleteList => 'Elimina lista';
+
+  @override
+  String get detailsTvTimeCommentsNotAvailable =>
+      'Commenti TVTime non disponibili per questo contenuto';
+
+  @override
+  String get detailsTvTimeCommentsNotAvailableSeries =>
+      'Commenti TVTime non disponibili per questa serie';
+
+  @override
+  String get detailsFailedLoadCollection =>
+      'Impossibile caricare i dettagli della collezione';
+
+  @override
+  String get detailsFeaturedCritic => 'Critico in evidenza';
+
+  @override
+  String get offlineBannerTitle => 'Modalità offline';
+
+  @override
+  String get offlineBannerMessage =>
+      'Mostrati solo i contenuti salvati in cache.';
+
+  @override
+  String get castSearching => 'Ricerca dispositivi in corso...';
+
+  @override
+  String castError(String error) {
+    return 'Errore: $error';
+  }
+
+  @override
+  String castCastingTo(String deviceName) {
+    return 'Trasmissione su $deviceName';
+  }
+
+  @override
+  String castSeasonEpisode(int season, int episode) {
+    return 'Stagione $season • Episodio $episode';
+  }
+
+  @override
+  String statsDaysHours(int days, int hours) {
+    return '${days}g ${hours}o';
+  }
+
+  @override
+  String get listWatchLater => 'Guarda più tardi';
+
+  @override
+  String get listFavorites => 'Preferiti';
+
+  @override
+  String get listYourQueue => 'La tua coda';
+
+  @override
+  String get listCuratedPicks => 'I tuoi elementi selezionati';
+
+  @override
+  String get listUntitled => 'Lista senza nome';
+
+  @override
+  String get listNameHint => 'Nome lista';
+
+  @override
+  String get listDescriptionHint => 'Aggiungi una descrizione...';
+
+  @override
+  String listItemsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count elementi',
+      one: '$count elemento',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get listEmptyTitle => 'Questa lista è vuota';
+
+  @override
+  String get listEmptyMessage => 'Aggiungi contenuti dalla pagina dei dettagli';
+
+  @override
+  String get collectionTitleFallback => 'Collezione';
+
+  @override
+  String get collectionSubtitle => 'Collezione di film';
 }

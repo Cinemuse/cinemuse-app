@@ -23,7 +23,7 @@ final mediaItemProvider = FutureProvider.family<MediaItem?, ({int id, MediaKind 
   if (connectivity == ConnectivityResult.none) return null;
 
   // 2. Fetch from TMDB
-  final tmdbService = ref.read(tmdbServiceProvider);
+  final tmdbService = ref.watch(tmdbServiceProvider);
   final details = await tmdbService.getMediaDetails(args.id.toString(), args.type.name);
   
   if (details != null) {
@@ -40,7 +40,7 @@ final mediaDetailsProvider = FutureProvider.family<Map<String, dynamic>?, ({Stri
   final connectivity = ref.watch(connectivityProvider).valueOrNull;
   if (connectivity == ConnectivityResult.none) return null;
 
-  final tmdbService = ref.read(tmdbServiceProvider);
+  final tmdbService = ref.watch(tmdbServiceProvider);
   final repo = ref.read(mediaRepositoryProvider);
   final type = MediaItem.fromString(args.type);
   
@@ -64,7 +64,7 @@ final seasonDetailsProvider = FutureProvider.family<Map<String, dynamic>?, ({int
   final connectivity = ref.watch(connectivityProvider).valueOrNull;
   if (connectivity == ConnectivityResult.none) return null;
 
-  final tmdbService = ref.read(tmdbServiceProvider);
+  final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getSeasonDetails(args.tmdbId, args.seasonNumber);
 });
 
@@ -73,7 +73,7 @@ final collectionDetailsProvider = FutureProvider.family<Map<String, dynamic>?, i
   final connectivity = ref.watch(connectivityProvider).valueOrNull;
   if (connectivity == ConnectivityResult.none) return null;
 
-  final tmdbService = ref.read(tmdbServiceProvider);
+  final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getCollectionDetails(collectionId);
 });
 

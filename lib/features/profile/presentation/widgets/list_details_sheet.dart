@@ -4,6 +4,7 @@ import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
@@ -48,14 +49,16 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
   bool _isSystemList(UserList list) => list.type == ListType.watchlist || list.type == ListType.favorites;
   
   String _displayTitle(UserList list) {
-    if (list.type == ListType.watchlist) return "Watch Later";
-    if (list.type == ListType.favorites) return "Favorites";
+    final l10n = AppLocalizations.of(context)!;
+    if (list.type == ListType.watchlist) return l10n.listWatchLater;
+    if (list.type == ListType.favorites) return l10n.listFavorites;
     return _titleController.text.isEmpty ? list.name : _titleController.text;
   }
 
   String _displaySubtitle(UserList list) {
-    if (list.type == ListType.watchlist) return "Your queue";
-    if (list.type == ListType.favorites) return "Your curated picks";
+    final l10n = AppLocalizations.of(context)!;
+    if (list.type == ListType.watchlist) return l10n.listYourQueue;
+    if (list.type == ListType.favorites) return l10n.listCuratedPicks;
     return _descController.text.isEmpty ? (list.description ?? '') : _descController.text;
   }
 
@@ -83,9 +86,10 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
   }
 
   void _saveChanges() {
+    final l10n = AppLocalizations.of(context)!;
     if (widget.onUpdate != null) {
       widget.onUpdate!(
-        _titleController.text.trim().isEmpty ? 'Untitled List' : _titleController.text.trim(),
+        _titleController.text.trim().isEmpty ? l10n.listUntitled : _titleController.text.trim(),
         _descController.text.trim().isEmpty ? null : _descController.text.trim(),
       );
     }
@@ -95,6 +99,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
   }
 
   Widget _buildTitle(UserList list) {
+    final l10n = AppLocalizations.of(context)!;
     if (_isEditing) {
       return TextField(
         controller: _titleController,
@@ -106,15 +111,15 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
           fontSize: 24,
           fontWeight: FontWeight.bold,
         ),
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(vertical: 0),
+          contentPadding: const EdgeInsets.symmetric(vertical: 0),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
           filled: false,
-          hintText: 'List Name',
-          hintStyle: TextStyle(color: Colors.white54),
+          hintText: l10n.listNameHint,
+          hintStyle: const TextStyle(color: Colors.white54),
         ),
         textInputAction: TextInputAction.next,
         onSubmitted: (_) => FocusScope.of(context).requestFocus(_descFocus),
@@ -132,6 +137,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
   }
 
   Widget _buildDescription(UserList list) {
+    final l10n = AppLocalizations.of(context)!;
     if (_isEditing) {
       return Container(
         margin: const EdgeInsets.only(top: 16),
@@ -161,15 +167,15 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
             fontStyle: FontStyle.italic,
             height: 1.5,
           ),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             isDense: true,
             contentPadding: EdgeInsets.zero,
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
             filled: false,
-            hintText: 'Add a description...',
-            hintStyle: TextStyle(color: Colors.white54),
+            hintText: l10n.listDescriptionHint,
+            hintStyle: const TextStyle(color: Colors.white54),
           ),
         ),
       );
@@ -210,6 +216,8 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     // Watch the lists provider to reflect item removals immediately
     final userListsState = ref.watch(userListsProvider);
     final currentList = userListsState.valueOrNull?.firstWhere(
@@ -255,7 +263,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                           _buildTitle(currentList),
                           const SizedBox(height: 4),
                           Text(
-                            '${currentList.items.length} items',
+                            l10n.listItemsCount(currentList.items.length),
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.5),
                               fontSize: 14,
@@ -288,24 +296,24 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                             }
                           },
                           itemBuilder: (context) => [
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'edit',
                               child: Row(
                                 children: [
-                                  Icon(LucideIcons.edit3, size: 18, color: Colors.white),
-                                  SizedBox(width: 12),
-                                  Text('Edit List', style: TextStyle(color: Colors.white)),
+                                  const Icon(LucideIcons.edit3, size: 18, color: Colors.white),
+                                  const SizedBox(width: 12),
+                                  Text(l10n.detailsEditList, style: const TextStyle(color: Colors.white)),
                                 ],
                               ),
                             ),
                             if (widget.onDelete != null)
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: 'delete',
                                 child: Row(
                                   children: [
-                                    Icon(LucideIcons.trash2, size: 18, color: Colors.redAccent),
-                                    SizedBox(width: 12),
-                                    Text('Delete List', style: TextStyle(color: Colors.redAccent)),
+                                    const Icon(LucideIcons.trash2, size: 18, color: Colors.redAccent),
+                                    const SizedBox(width: 12),
+                                    Text(l10n.detailsDeleteList, style: const TextStyle(color: Colors.redAccent)),
                                   ],
                                 ),
                               ),
@@ -332,13 +340,13 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                         children: [
                           Icon(icon, size: 64, color: iconColor.withValues(alpha: 0.2)),
                           const SizedBox(height: 16),
-                          const Text(
-                            "This list is empty",
-                            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                          Text(
+                            l10n.listEmptyTitle,
+                            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            "Add media from the details page",
+                            l10n.listEmptyMessage,
                             style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
                           ),
                         ],
@@ -385,19 +393,20 @@ class _ListMediaCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = Localizations.localeOf(context).languageCode;
+    final l10n = AppLocalizations.of(context)!;
     
     // Initial local fallback values
-    String title = item.media?.getLocalizedTitle(locale) ?? (item.meta['title'] as String? ?? 'Unknown');
+    String title = item.media?.getLocalizedTitle(locale) ?? (item.meta['title'] as String? ?? l10n.commonUnknown);
     String? posterPath = item.media?.posterPath ?? (item.meta['poster_path'] as String?);
     double? rating = item.media?.voteAverage ?? (item.meta['rating'] as num?)?.toDouble();
     String? year = item.media?.releaseDate?.year.toString() ?? item.meta['year']?.toString();
 
     // If local title is still missing/Unknown, fetch from TMDB lazily
-    if (title.isEmpty || title == 'Unknown') {
+    if (title.isEmpty || title == l10n.commonUnknown) {
       final asyncMedia = ref.watch(mediaItemProvider((id: item.tmdbId, type: item.mediaType)));
       final fetchedMedia = asyncMedia.valueOrNull;
       if (fetchedMedia != null) {
-        title = fetchedMedia.getLocalizedTitle(locale) ?? 'Unknown';
+        title = fetchedMedia.getLocalizedTitle(locale) ?? l10n.commonUnknown;
         posterPath = fetchedMedia.posterPath ?? posterPath;
         rating = fetchedMedia.voteAverage ?? rating;
         year = fetchedMedia.releaseDate?.year.toString() ?? year;

@@ -13,10 +13,11 @@
   "commonCreate": "Crea",
   "commonDelete": "Elimina",
   "commonUndo": "Annulla",
-  "commonFeatured": "IN PRIMA PIANO",
+  "commonFeatured": "IN PRIMO PIANO",
   "commonUnexpectedError": "Si è verificato un errore inaspettato",
   "commonOk": "OK",
   "commonUnknown": "Sconosciuto",
+  "commonAnonymous": "Anonimo",
   "filterMax": "Max",
   "offlineScreenTitle": "Connessione Richiesta",
   "offlineScreenMessage": "Questa funzione richiede una connessione internet per sfogliare i contenuti e avviare lo streaming.",
@@ -37,15 +38,15 @@
   "searchLanguages": "Lingue",
   "searchGenres": "Generi",
   "searchRating": "Valutazione",
-  "searchYearRange": "Intervallo Anni",
-  "searchVoteCount": "Conteggio Voti",
+  "searchYearRange": "Anno",
+  "searchVoteCount": "Numero di voti",
   "searchRuntime": "Durata",
   "searchWatchProviders": "Piattaforme",
   "searchClearAll": "Cancella Tutto",
   "searchNoResultsTitle": "Nessun risultato trovato",
   "searchTryAdjusting": "Prova a modificare i filtri",
-  "searchMatchAny": "Corrispondenza Qualsiasi",
-  "searchMatchAll": "Corrispondenza Tutte",
+  "searchMatchAny": "Qualsiasi",
+  "searchMatchAll": "Tutte",
   "searchLanguagePlaceholder": "Aggiungi una lingua...",
   "searchNoLanguagesFound": "Nessuna lingua trovata",
   "searchFilteredByPerson": "Filtrato per persona",
@@ -70,11 +71,11 @@
   "detailsCollectionNameHint": "Nome Collezione (es., 'Gemme Sci-Fi')",
   "homeErrorLoadingFeatures": "Errore caricamento contenuti",
   "homeMoreInfo": "Più Info",
-  "homeTrendingNow": "Tendenze",
+  "homeTrendingNow": "Di tendenza",
   "homePopularMovies": "Film Popolari",
   "homePopularSeries": "Serie Popolari",
   "homeContinueWatching": "Continua a guardare",
-  "homeSportSchedule": "Programma Sportivo",
+  "homeSportSchedule": "Sport in programma",
   "sportFootball": "Calcio",
   "sportBasketball": "Pallacanestro",
   "sportMotorcycling": "Motociclismo",
@@ -125,6 +126,7 @@
   "detailsVerdictPoor": "Dimenticabile",
   "detailsReviews": "Recensioni",
   "detailsReviewsAll": "Leggi tutte le recensioni",
+  "detailsNoReviews": "Nessuna recensione trovata.",
   "detailsFinances": "Finanze",
   "detailsProductionDNA": "DNA Produzione",
   "detailsRate": "VOTA",
@@ -178,8 +180,8 @@
   "youtubeDefaultTitle": "Video YouTube",
   "youtubeStreamLabel": "Stream YouTube",
   "playerResolvingStream": "Risoluzione stream in corso...",
-  "playerCheckingDebridCache": "Controllo cache debrid",
-  "sectionVisualArchives": "Archivi Visivi",
+  "playerCheckingDebridCache": "Verifica cache debrid",
+  "sectionVisualArchives": "Archivio Video",
   "streamingErrorNoProviders": "Nessun addon di streaming abilitato. Controlla le impostazioni.",
   "streamingErrorCapabilityMissing": "Nessun addon abilitato supporta {category}. Controlla le impostazioni.",
   "streamingErrorNoResults": "Nessun risultato trovato tra gli addon.",
@@ -205,7 +207,7 @@
   "playerSubtitleSync": "Sincronizzazione",
 
   "settingsTitle": "Impostazioni",
-  "settingsIdentity": "Identità e Accesso",
+  "settingsIdentity": "Account e accesso",
   "settingsIdentityDesc": "Gestisci i tuoi dettagli personali e le preferenze di accesso.",
   "settingsCustomization": "Personalizzazione App",
   "settingsCustomizationDesc": "Personalizza la tua esperienza di visione e l'aspetto dell'app.",
@@ -279,13 +281,13 @@
   "settingsMaxResolution": "Risoluzione Massima",
   "settingsMaxResolutionDesc": "Nascondi i link con una risoluzione superiore a quella selezionata.",
   
-  "settingsTotalDocSize": "Dimensione Totale Documenti",
+  "settingsTotalDocSize": "Spazio occupato",
   "settingsTotalDocSizeDesc": "Dimensione totale di tutti i tuoi dati salvati.",
   "settingsUserProfile": "Libreria Utente",
   "settingsWatchedMovies": "Film Visti",
   "settingsWatchedSeries": "Serie Viste",
   "settingsLists": "Liste",
-  "settingsAggregatedStats": "Statistiche Aggregate",
+  "settingsAggregatedStats": "Riepilogo statistiche",
 
   "settingsSave": "Salva",
   "settingsSaved": "Salvato",
@@ -304,7 +306,7 @@
   "liveTvTitle": "Live TV",
   "liveTvSelectChannel": "Seleziona un canale per iniziare a guardare",
   "liveTvNow": "ORA",
-  "liveTvNext": "DOPO",
+  "liveTvNext": "A SEGUIRE",
   "liveTvLive": "LIVE",
   "liveTvNoEpg": "Nessuna informazione sul programma",
   "liveTvLoading": "Caricamento canali...",
@@ -333,7 +335,7 @@
   "agendaTomorrow": "Domani",
   "agendaThisWeek": "Questa Settimana",
   "agendaNextWeek": "Prossima Settimana",
-  "agendaLater": "In Futuro",
+  "agendaLater": "Più avanti",
   "agendaMovie": "Film",
   "agendaSeries": "Serie TV",
   "agendaRecentlyReleased": "Usciti di Recente",
@@ -343,7 +345,7 @@
   "updateDialogTitle": "Nuova versione disponibile",
   "updateDialogMessage": "Una nuova versione di Cinemuse è disponibile. Vuoi aggiornare ora?",
   "updateNow": "Aggiorna Ora",
-  "later": "Dopo",
+  "later": "Più tardi",
   "downloadingUpdate": "Scaricamento aggiornamento {progress}%",
   "updateReadyToInstall": "Aggiornamento pronto per l'installazione",
   "updateFailed": "Aggiornamento fallito. Riprova più tardi.",
@@ -400,7 +402,7 @@
   "liveTvTypeJsonUrl": "URL JSON",
 
   "tvTimeComments": "Commenti",
-  "tvTimeNoComments": "Nessun commento ancora.",
+  "tvTimeNoComments": "Ancora nessun commento.",
   "tvTimeReplies": "{count, plural, one{{count} risposta} other{{count} risposte}}",
   "@tvTimeReplies": {
     "placeholders": {
@@ -411,5 +413,98 @@
   "tvTimeCommentsError": "Impossibile caricare i commenti.",
   "settingsSearchPreferences": "Preferenze di Ricerca",
   "settingsAutoSkipProviders": "Salta Automaticamente Provider Lenti",
-  "settingsAutoSkipProvidersDesc": "Salta i provider di streaming che impiegano più di 30 secondi a rispondere."
+  "settingsAutoSkipProvidersDesc": "Salta i provider di streaming che impiegano più di 30 secondi a rispondere.",
+  "profileRecentMovies": "Film recenti",
+  "profileRecentSeries": "Serie recenti",
+  "statsTimeBreakdown": "Suddivisione tempo",
+  "statsAllTime": "Totale",
+  "statsMovies": "Film",
+  "statsSeries": "Serie",
+  "statsLast7Days": "Ultimi 7 giorni",
+  "statsLast30Days": "Ultimi 30 giorni",
+  "statsLastYear": "Ultimo anno",
+  "statsMoviesStats": "Statistiche film",
+  "statsSeriesStats": "Statistiche serie",
+  "statsEpisodes": "Episodi",
+  "statsSeasons": "Stagioni",
+  "statsTime": "Tempo",
+  "detailsCreatorsAndDirectors": "Creatori e registi",
+  "detailsDirector": "Regista",
+  "detailsWriters": "Sceneggiatori",
+  "detailsTvTimeComments": "Commenti TvTime",
+  "detailsExternalLinks": "Link esterni",
+  "detailsTrack": "Segna",
+  "detailsWatched": "Visto",
+  "detailsWatchedCount": "Visto x{count}",
+  "@detailsWatchedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsUpToDate": "In pari",
+  "detailsUpToDateCount": "In pari x{count}",
+  "@detailsUpToDateCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsFinishSeries": "Finisci serie",
+  "commonNoContent": "Nessun contenuto disponibile",
+  "commonStopCasting": "INTERROMPI TRASMISSIONE",
+  "castConnectDevice": "Connetti al dispositivo",
+  "castNoDevices": "Nessun dispositivo trovato",
+  "castRefresh": "Aggiorna",
+  "profileNoRecentItems": "Nessun elemento guardato di recente",
+  "detailsEditList": "Modifica lista",
+  "detailsDeleteList": "Elimina lista",
+  "detailsTvTimeCommentsNotAvailable": "Commenti TVTime non disponibili per questo contenuto",
+  "detailsTvTimeCommentsNotAvailableSeries": "Commenti TVTime non disponibili per questa serie",
+  "detailsFailedLoadCollection": "Impossibile caricare i dettagli della collezione",
+  "detailsFeaturedCritic": "Critico in evidenza",
+  "offlineBannerTitle": "Modalità offline",
+  "offlineBannerMessage": "Mostrati solo i contenuti salvati in cache.",
+  "castSearching": "Ricerca dispositivi in corso...",
+  "castError": "Errore: {error}",
+  "@castError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "castCastingTo": "Trasmissione su {deviceName}",
+  "@castCastingTo": {
+    "placeholders": {
+      "deviceName": { "type": "String" }
+    }
+  },
+  "castSeasonEpisode": "Stagione {season} • Episodio {episode}",
+  "@castSeasonEpisode": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "episode": { "type": "int" }
+    }
+  },
+  "statsDaysHours": "{days}g {hours}o",
+  "@statsDaysHours": {
+    "placeholders": {
+      "days": { "type": "int" },
+      "hours": { "type": "int" }
+    }
+  },
+  "listWatchLater": "Guarda più tardi",
+  "listFavorites": "Preferiti",
+  "listYourQueue": "La tua coda",
+  "listCuratedPicks": "I tuoi elementi selezionati",
+  "listUntitled": "Lista senza nome",
+  "listNameHint": "Nome lista",
+  "listDescriptionHint": "Aggiungi una descrizione...",
+  "listItemsCount": "{count, plural, one{{count} elemento} other{{count} elementi}}",
+  "@listItemsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "listEmptyTitle": "Questa lista è vuota",
+  "listEmptyMessage": "Aggiungi contenuti dalla pagina dei dettagli",
+  "collectionTitleFallback": "Collezione",
+  "collectionSubtitle": "Collezione di film"
 }

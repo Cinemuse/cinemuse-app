@@ -17,6 +17,7 @@
   "commonUnexpectedError": "An unexpected error occurred",
   "commonOk": "OK",
   "commonUnknown": "Unknown",
+  "commonAnonymous": "Anonymous",
   "filterMax": "Max",
   "offlineScreenTitle": "Connection Required",
   "offlineScreenMessage": "This feature requires an internet connection to browse content and stream media.",
@@ -125,6 +126,7 @@
   "detailsVerdictPoor": "Forgettable",
   "detailsReviews": "Reviews",
   "detailsReviewsAll": "Read all reviews",
+  "detailsNoReviews": "No reviews found.",
   "detailsFinances": "Finances",
   "detailsProductionDNA": "Production DNA",
   "detailsRate": "RATE",
@@ -411,5 +413,98 @@
   "tvTimeCommentsError": "Could not load comments.",
   "settingsSearchPreferences": "Search Preferences",
   "settingsAutoSkipProviders": "Auto-Skip Slow Providers",
-  "settingsAutoSkipProvidersDesc": "Skip streaming providers that take longer than 30 seconds to respond."
+  "settingsAutoSkipProvidersDesc": "Skip streaming providers that take longer than 30 seconds to respond.",
+  "profileRecentMovies": "Recent Movies",
+  "profileRecentSeries": "Recent Series",
+  "statsTimeBreakdown": "Time Breakdown",
+  "statsAllTime": "All Time",
+  "statsMovies": "Movies",
+  "statsSeries": "Series",
+  "statsLast7Days": "Last 7 Days",
+  "statsLast30Days": "Last 30 Days",
+  "statsLastYear": "Last Year",
+  "statsMoviesStats": "Movies Stats",
+  "statsSeriesStats": "Series Stats",
+  "statsEpisodes": "Episodes",
+  "statsSeasons": "Seasons",
+  "statsTime": "Time",
+  "detailsCreatorsAndDirectors": "Creators & Directors",
+  "detailsDirector": "Director",
+  "detailsWriters": "Writers",
+  "detailsTvTimeComments": "TvTime Comments",
+  "detailsExternalLinks": "External Links",
+  "detailsTrack": "Track",
+  "detailsWatched": "Watched",
+  "detailsWatchedCount": "Watched x{count}",
+  "@detailsWatchedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsUpToDate": "Up to date",
+  "detailsUpToDateCount": "Up to date x{count}",
+  "@detailsUpToDateCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsFinishSeries": "Finish Series",
+  "commonNoContent": "No content available",
+  "commonStopCasting": "STOP CASTING",
+  "castConnectDevice": "Connect to device",
+  "castNoDevices": "No devices found",
+  "castRefresh": "Refresh",
+  "profileNoRecentItems": "No recently watched items",
+  "detailsEditList": "Edit List",
+  "detailsDeleteList": "Delete List",
+  "detailsTvTimeCommentsNotAvailable": "TVTime Comments not available for this media",
+  "detailsTvTimeCommentsNotAvailableSeries": "TVTime Comments not available for this series",
+  "detailsFailedLoadCollection": "Failed to load collection details",
+  "detailsFeaturedCritic": "Featured Critic",
+  "offlineBannerTitle": "Offline Mode",
+  "offlineBannerMessage": "Showing locally cached content only.",
+  "castSearching": "Searching for devices...",
+  "castError": "Error: {error}",
+  "@castError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "castCastingTo": "Casting to {deviceName}",
+  "@castCastingTo": {
+    "placeholders": {
+      "deviceName": { "type": "String" }
+    }
+  },
+  "castSeasonEpisode": "Season {season} • Episode {episode}",
+  "@castSeasonEpisode": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "episode": { "type": "int" }
+    }
+  },
+  "statsDaysHours": "{days}d {hours}h",
+  "@statsDaysHours": {
+    "placeholders": {
+      "days": { "type": "int" },
+      "hours": { "type": "int" }
+    }
+  },
+  "listWatchLater": "Watch Later",
+  "listFavorites": "Favorites",
+  "listYourQueue": "Your queue",
+  "listCuratedPicks": "Your curated picks",
+  "listUntitled": "Untitled List",
+  "listNameHint": "List Name",
+  "listDescriptionHint": "Add a description...",
+  "listItemsCount": "{count, plural, one{{count} item} other{{count} items}}",
+  "@listItemsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "listEmptyTitle": "This list is empty",
+  "listEmptyMessage": "Add media from the details page",
+  "collectionTitleFallback": "Collection",
+  "collectionSubtitle": "Movie Collection"
 }

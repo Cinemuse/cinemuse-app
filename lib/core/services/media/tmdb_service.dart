@@ -1,17 +1,21 @@
 import 'package:cinemuse_app/core/network/network_providers.dart';
+import 'package:cinemuse_app/core/application/locale_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 final tmdbServiceProvider = Provider<TmdbService>((ref) {
-  return TmdbService(ref.read(dioProvider));
+  final locale = ref.watch(localeProvider);
+  final language = locale.languageCode == 'it' ? 'it-IT' : 'en-US';
+  return TmdbService(ref.read(dioProvider), language);
 });
 
 class TmdbService {
   final Dio _dio;
+  final String _language;
   final String _baseUrl = 'https://api.themoviedb.org/3';
 
-  TmdbService(this._dio);
+  TmdbService(this._dio, this._language);
 
   String get _apiKey => dotenv.env['TMDB_API_KEY'] ?? '';
 
@@ -41,7 +45,7 @@ class TmdbService {
         '$_baseUrl/$normalizedType/$tmdbId',
         queryParameters: {
           'api_key': _apiKey, 
-          'language': 'en-US',
+          'language': _language,
           'append_to_response': 'credits,videos,similar,recommendations,external_ids,translations,reviews'
         },
       );
@@ -57,7 +61,7 @@ class TmdbService {
         '$_baseUrl/tv/$tmdbId/season/$seasonNumber',
          queryParameters: {
           'api_key': _apiKey, 
-          'language': 'en-US',
+          'language': _language,
         },
       );
       return res.data;
@@ -72,7 +76,7 @@ class TmdbService {
         '$_baseUrl/collection/$collectionId',
         queryParameters: {
           'api_key': _apiKey,
-          'language': 'en-US',
+          'language': _language,
         },
       );
       return res.data;
@@ -98,7 +102,7 @@ class TmdbService {
   Future<List<Map<String, dynamic>>> getTrending() async {
     final res = await _dio.get(
       '$_baseUrl/trending/all/week',
-      queryParameters: {'api_key': _apiKey, 'language': 'en-US'},
+      queryParameters: {'api_key': _apiKey, 'language': _language},
     );
     return List<Map<String, dynamic>>.from(res.data['results']);
   }
@@ -106,7 +110,7 @@ class TmdbService {
   Future<List<Map<String, dynamic>>> getPopularMovies() async {
     final res = await _dio.get(
       '$_baseUrl/movie/popular',
-      queryParameters: {'api_key': _apiKey, 'language': 'en-US'},
+      queryParameters: {'api_key': _apiKey, 'language': _language},
     );
     final results = List<Map<String, dynamic>>.from(res.data['results']);
     return results.map((item) => {...item, 'media_type': 'movie'}).toList();
@@ -115,7 +119,7 @@ class TmdbService {
   Future<List<Map<String, dynamic>>> getPopularSeries() async {
     final res = await _dio.get(
       '$_baseUrl/tv/popular',
-      queryParameters: {'api_key': _apiKey, 'language': 'en-US'},
+      queryParameters: {'api_key': _apiKey, 'language': _language},
     );
     final results = List<Map<String, dynamic>>.from(res.data['results']);
     return results.map((item) => {...item, 'media_type': 'tv'}).toList();
@@ -128,7 +132,7 @@ class TmdbService {
         '$_baseUrl/search/multi',
         queryParameters: {
           'api_key': _apiKey, 
-          'language': 'en-US',
+          'language': _language,
           'query': query,
           'include_adult': false,
           'page': page,
@@ -162,7 +166,7 @@ class TmdbService {
       final queryParams = <String, dynamic>{
         'api_key': _apiKey,
         'page': page,
-        'language': 'en-US',
+        'language': _language,
         'include_adult': false,
         'sort_by': sortBy ?? 'popularity.desc',
       };
@@ -205,7 +209,7 @@ class TmdbService {
         '$_baseUrl/person/$id',
         queryParameters: {
           'api_key': _apiKey,
-          'language': 'en-US',
+          'language': _language,
           'append_to_response': 'combined_credits,external_ids,images',
         },
       );
@@ -222,7 +226,7 @@ class TmdbService {
         queryParameters: {
           'api_key': _apiKey,
           'page': page,
-          'language': 'en-US',
+          'language': _language,
         },
       );
       return res.data;
@@ -238,7 +242,7 @@ class TmdbService {
         queryParameters: {
           'api_key': _apiKey,
           'watch_region': region,
-          'language': 'en-US',
+          'language': _language,
         },
       );
       return List<Map<String, dynamic>>.from(res.data['results']);

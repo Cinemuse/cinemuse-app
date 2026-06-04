@@ -61,15 +61,20 @@ class FakeQueryBuilder extends Fake implements SupabaseQueryBuilder {
   }
 }
 
+class MockSupabaseClient extends Mock implements SupabaseClient {}
+
 void main() {
   late MediaRepository repository;
   late MockTmdbService mockTmdb;
   late AppDatabase database;
+  late MockSupabaseClient mockSupabase;
 
   setUp(() {
     mockTmdb = MockTmdbService();
     database = AppDatabase(NativeDatabase.memory());
-    repository = MediaRepository(database, mockTmdb);
+    mockSupabase = MockSupabaseClient();
+    when(() => mockSupabase.from(any())).thenAnswer((_) => FakeQueryBuilder());
+    repository = MediaRepository(database, mockTmdb, mockSupabase);
   });
 
   tearDown(() async {

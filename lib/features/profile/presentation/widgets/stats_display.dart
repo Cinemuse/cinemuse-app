@@ -3,6 +3,7 @@ import 'package:cinemuse_app/features/profile/application/profile_providers.dart
 import 'package:cinemuse_app/features/profile/domain/profile_stats.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'dart:math';
 
@@ -13,12 +14,13 @@ class StatsDisplay extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(profileStatsProvider);
     final stats = statsAsync.valueOrNull ?? ProfileStats.empty();
+    final l10n = AppLocalizations.of(context)!;
 
     // Helpers
     String formatDuration(int minutes) {
       final d = minutes ~/ 1440;
       final h = (minutes % 1440) ~/ 60;
-      return '${d}d ${h}h';
+      return l10n.statsDaysHours(d, h);
     }
 
     return LayoutBuilder(
@@ -57,9 +59,11 @@ class TimeBreakdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BaseCard(
       icon: LucideIcons.clock,
-      title: 'TIME BREAKDOWN',
+      title: l10n.statsTimeBreakdown.toUpperCase(),
       iconColor: Colors.blue,
       child: Column(
         children: [
@@ -83,7 +87,7 @@ class TimeBreakdownCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text('ALL TIME', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    Text(l10n.statsAllTime.toUpperCase(), style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ],
                 ),
                 const SizedBox(width: 24),
@@ -96,9 +100,9 @@ class TimeBreakdownCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                        _SubStatItem(value: formatDuration(stats.movieMinutes), label: 'MOVIES'),
+                        _SubStatItem(value: formatDuration(stats.movieMinutes), label: l10n.statsMovies.toUpperCase()),
                         const SizedBox(height: 8),
-                        _SubStatItem(value: formatDuration(stats.seriesMinutes), label: 'SERIES'),
+                        _SubStatItem(value: formatDuration(stats.seriesMinutes), label: l10n.statsSeries.toUpperCase()),
                     ],
                   ),
                 ),
@@ -112,16 +116,16 @@ class TimeBreakdownCard extends StatelessWidget {
             children: [
                _FooterStat(
                    value: formatDuration(stats.last7Days.totalMinutes), 
-                   label: 'LAST 7 DAYS',
+                   label: l10n.statsLast7Days.toUpperCase(),
                ),
                _FooterStat(
                    value: formatDuration(stats.last30Days.totalMinutes), 
-                   label: 'LAST 30 DAYS',
+                   label: l10n.statsLast30Days.toUpperCase(),
                    showBorder: true,
                ),
                _FooterStat(
                    value: formatDuration(stats.last365Days.totalMinutes), 
-                   label: 'LAST YEAR',
+                   label: l10n.statsLastYear.toUpperCase(),
                    showBorder: true,
                ),
             ],
@@ -140,9 +144,11 @@ class MoviesStatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BaseCard(
       icon: LucideIcons.film,
-      title: 'MOVIES STATS',
+      title: l10n.statsMoviesStats.toUpperCase(),
       iconColor: AppTheme.accent,
       child: Column(
         children: [
@@ -160,7 +166,7 @@ class MoviesStatsCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text('MOVIES', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    Text(l10n.statsMovies.toUpperCase(), style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
                 ],
             ),
           ),
@@ -171,16 +177,16 @@ class MoviesStatsCard extends StatelessWidget {
             children: [
                _FooterStat(
                    value: stats.last7Days.movieCount.toString(), 
-                   label: 'LAST 7 DAYS',
+                   label: l10n.statsLast7Days.toUpperCase(),
                ),
                _FooterStat(
                    value: stats.last30Days.movieCount.toString(), 
-                   label: 'LAST 30 DAYS',
+                   label: l10n.statsLast30Days.toUpperCase(),
                    showBorder: true,
                ),
                _FooterStat(
                    value: stats.last365Days.movieCount.toString(), 
-                   label: 'LAST YEAR',
+                   label: l10n.statsLastYear.toUpperCase(),
                    showBorder: true,
                ),
             ],
@@ -199,9 +205,11 @@ class SeriesStatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BaseCard(
       icon: LucideIcons.tv,
-      title: 'SERIES STATS',
+      title: l10n.statsSeriesStats.toUpperCase(),
       iconColor: Colors.green,
       child: Column(
         children: [
@@ -225,7 +233,7 @@ class SeriesStatsCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text('EPISODES', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    Text(l10n.statsEpisodes.toUpperCase(), style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ],
                 ),
                 const SizedBox(width: 24),
@@ -238,9 +246,9 @@ class SeriesStatsCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                        _SubStatItem(value: stats.totalSeries.toString(), label: 'SERIES'),
+                        _SubStatItem(value: stats.totalSeries.toString(), label: l10n.statsSeries.toUpperCase()),
                         const SizedBox(height: 8),
-                        _SubStatItem(value: stats.totalSeasons.toString(), label: 'SEASONS'),
+                        _SubStatItem(value: stats.totalSeasons.toString(), label: l10n.statsSeasons.toUpperCase()),
                     ],
                   ),
                 ),
@@ -254,16 +262,16 @@ class SeriesStatsCard extends StatelessWidget {
             children: [
                _FooterStat(
                    value: stats.last7Days.episodeCount.toString(), 
-                   label: 'LAST 7 DAYS',
+                   label: l10n.statsLast7Days.toUpperCase(),
                ),
                _FooterStat(
                    value: stats.last30Days.episodeCount.toString(), 
-                   label: 'LAST 30 DAYS',
+                   label: l10n.statsLast30Days.toUpperCase(),
                    showBorder: true,
                ),
                _FooterStat(
                    value: stats.last365Days.episodeCount.toString(), 
-                   label: 'LAST YEAR',
+                   label: l10n.statsLastYear.toUpperCase(),
                    showBorder: true,
                ),
             ],
@@ -433,6 +441,8 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay> with SingleTic
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return AnimatedSize(
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeInOut,
@@ -475,7 +485,7 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay> with SingleTic
                 currentWidget = const SizedBox.shrink();
             }
           } else {
-            currentWidget = _buildCollapsedRow();
+            currentWidget = _buildCollapsedRow(l10n);
           }
 
           return Transform(
@@ -490,14 +500,14 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay> with SingleTic
     );
   }
 
-  Widget _buildCollapsedRow() {
+  Widget _buildCollapsedRow(AppLocalizations l10n) {
     return Row(
       children: [
-        Expanded(child: _buildSmallCard(0, LucideIcons.clock, 'TIME', Colors.blue, widget.formatDuration(widget.stats.totalMinutesWatched))),
+        Expanded(child: _buildSmallCard(0, LucideIcons.clock, l10n.statsTime.toUpperCase(), Colors.blue, widget.formatDuration(widget.stats.totalMinutesWatched))),
         const SizedBox(width: 12),
-        Expanded(child: _buildSmallCard(1, LucideIcons.film, 'MOVIES', AppTheme.accent, widget.stats.totalMovies.toString())),
+        Expanded(child: _buildSmallCard(1, LucideIcons.film, l10n.statsMovies.toUpperCase(), AppTheme.accent, widget.stats.totalMovies.toString())),
         const SizedBox(width: 12),
-        Expanded(child: _buildSmallCard(2, LucideIcons.tv, 'SERIES', Colors.green, widget.stats.totalEpisodes.toString())),
+        Expanded(child: _buildSmallCard(2, LucideIcons.tv, l10n.statsSeries.toUpperCase(), Colors.green, widget.stats.totalEpisodes.toString())),
       ],
     );
   }

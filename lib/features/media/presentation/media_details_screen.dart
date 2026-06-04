@@ -283,7 +283,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                                 showCommentsBottomSheet(context, MovieCommentsRequest(imdbId));
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('TVTime Comments not available for this media')),
+                                  SnackBar(content: Text(l10n.detailsTvTimeCommentsNotAvailable)),
                                 );
                               }
                             },
@@ -359,7 +359,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                             showCommentsBottomSheet(context, MovieCommentsRequest(imdbId));
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('TVTime Comments not available for this media')),
+                              SnackBar(content: Text(l10n.detailsTvTimeCommentsNotAvailable)),
                             );
                           }
                         },
@@ -496,8 +496,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     Map<String, dynamic> details,
     int watchCount,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     // Provide a fallback title just in case
-    final title = details['title'] ?? details['name'] ?? 'Movie';
+    final title = details['title'] ?? details['name'] ?? l10n.agendaMovie;
     
     showDialog(
       context: context,
@@ -663,7 +664,7 @@ class _SeriesEpisodesSection extends ConsumerWidget {
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('TVTime Comments not available for this series')),
+                    SnackBar(content: Text(l10n.detailsTvTimeCommentsNotAvailableSeries)),
                   );
                 }
               },

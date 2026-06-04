@@ -27,7 +27,7 @@ class ExploreResultsNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
   Future<List<Map<String, dynamic>>> _fetch() async {
     final mediaType = ref.watch(exploreMediaTypeProvider);
     final filters = ref.watch(exploreFiltersProvider);
-    final tmdbService = ref.read(tmdbServiceProvider);
+    final tmdbService = ref.watch(tmdbServiceProvider);
 
     if (mediaType == MediaType.person) {
       final res = await tmdbService.getPopularPersons(_currentPage);
@@ -82,7 +82,7 @@ class ExploreResultsNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
 }
 
 final watchProvidersListProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final tmdbService = ref.read(tmdbServiceProvider);
+  final tmdbService = ref.watch(tmdbServiceProvider);
   final mediaType = ref.watch(exploreMediaTypeProvider);
   final watchRegion = ref.watch(exploreFiltersProvider.select((f) => f.watchRegion));
   

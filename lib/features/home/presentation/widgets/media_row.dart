@@ -10,6 +10,7 @@ import 'package:cinemuse_app/features/media/presentation/media_details_screen.da
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart'; // for CarouselTheme
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class MediaRow extends ConsumerWidget {
   final String title;
@@ -65,11 +66,13 @@ class MediaRow extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildTitle(context),
-          const SizedBox(
+          SizedBox(
             height: 356,
             child: Center(
-              child: Text("No content available",
-                  style: TextStyle(color: Colors.white54)),
+              child: Text(
+                AppLocalizations.of(context)!.commonNoContent,
+                style: const TextStyle(color: Colors.white54),
+              ),
             ),
           ),
         ],

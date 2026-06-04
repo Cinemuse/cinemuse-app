@@ -4,6 +4,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class ExternalLinks extends StatelessWidget {
   final Map<String, dynamic>? externalIds;
@@ -24,9 +25,10 @@ class ExternalLinks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (externalIds == null && homepage == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context)!;
 
     return BentoBox(
-      title: 'EXTERNAL LINKS',
+      title: l10n.detailsExternalLinks.toUpperCase(),
       icon: Icons.link,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

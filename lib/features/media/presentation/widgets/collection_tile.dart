@@ -5,6 +5,7 @@ import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_sheet.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class CollectionTile extends ConsumerStatefulWidget {
@@ -24,6 +25,8 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
 
   void _openCollection(BuildContext context, WidgetRef ref) async {
     if (_isLoading) return;
+
+    final l10n = AppLocalizations.of(context)!;
 
     setState(() {
       _isLoading = true;
@@ -46,7 +49,7 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
         final mediaItem = MediaItem(
           tmdbId: itemMap['id'] as int,
           mediaType: MediaKind.movie, // Collections are only for movies
-          titleEn: itemMap['title'] ?? itemMap['name'] ?? 'Unknown',
+          titleEn: itemMap['title'] ?? itemMap['name'] ?? l10n.commonUnknown,
           posterPath: itemMap['poster_path'],
           backdropPath: itemMap['backdrop_path'],
           releaseDate: DateTime.tryParse(itemMap['release_date'] ?? ''),
@@ -66,7 +69,7 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
 
       final userList = UserList(
         id: 'collection_$collectionId',
-        name: collectionData['name'] ?? widget.collection['name'] ?? 'Collection',
+        name: collectionData['name'] ?? widget.collection['name'] ?? l10n.collectionTitleFallback,
         description: collectionData['overview'],
         type: ListType.custom,
         items: listItems,
@@ -80,14 +83,15 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to load collection details')),
+        SnackBar(content: Text(l10n.detailsFailedLoadCollection)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.collection['name'] ?? 'Collection';
+    final l10n = AppLocalizations.of(context)!;
+    final title = widget.collection['name'] ?? l10n.collectionTitleFallback;
     final backdropPath = widget.collection['backdrop_path'];
 
     return GestureDetector(
@@ -141,7 +145,7 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Movie Collection",
+                          l10n.collectionSubtitle,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.7),
                             fontSize: 14,

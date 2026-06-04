@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cast/cast.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class CastDeviceSelector extends StatefulWidget {
   const CastDeviceSelector({super.key});
@@ -29,30 +30,30 @@ class _CastDeviceSelectorState extends State<CastDeviceSelector> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppTheme.surface,
-      title: const Text('Connect to device', style: TextStyle(color: AppTheme.textWhite)),
+      title: Text(AppLocalizations.of(context)!.castConnectDevice, style: const TextStyle(color: AppTheme.textWhite)),
       content: SizedBox(
         width: double.maxFinite,
         child: FutureBuilder<List<CastDevice>>(
           future: _discoveryFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Column(
+              return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Searching for devices...', style: TextStyle(color: AppTheme.textMuted)),
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(AppLocalizations.of(context)!.castSearching, style: const TextStyle(color: AppTheme.textMuted)),
                 ],
               );
             }
             
             if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red));
+              return Text(AppLocalizations.of(context)!.castError(snapshot.error.toString()), style: const TextStyle(color: Colors.red));
             }
 
             final devices = snapshot.data ?? [];
             if (devices.isEmpty) {
-              return const Text('No devices found', style: TextStyle(color: AppTheme.textMuted));
+              return Text(AppLocalizations.of(context)!.castNoDevices, style: const TextStyle(color: AppTheme.textMuted));
             }
 
             return ListView.builder(
@@ -73,7 +74,7 @@ class _CastDeviceSelectorState extends State<CastDeviceSelector> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel', style: TextStyle(color: AppTheme.accent)),
+          child: Text(AppLocalizations.of(context)!.commonCancel, style: const TextStyle(color: AppTheme.accent)),
         ),
         TextButton(
           onPressed: () {
@@ -81,7 +82,7 @@ class _CastDeviceSelectorState extends State<CastDeviceSelector> {
               _discoveryFuture = CastDiscoveryService().search();
             });
           },
-          child: const Text('Refresh', style: TextStyle(color: AppTheme.accent)),
+          child: Text(AppLocalizations.of(context)!.castRefresh, style: const TextStyle(color: AppTheme.accent)),
         ),
       ],
     );

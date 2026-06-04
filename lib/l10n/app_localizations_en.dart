@@ -60,6 +60,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonUnknown => 'Unknown';
 
   @override
+  String get commonAnonymous => 'Anonymous';
+
+  @override
   String get filterMax => 'Max';
 
   @override
@@ -406,6 +409,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get detailsReviewsAll => 'Read all reviews';
+
+  @override
+  String get detailsNoReviews => 'No reviews found.';
 
   @override
   String get detailsFinances => 'Finances';
@@ -1284,4 +1290,191 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsAutoSkipProvidersDesc =>
       'Skip streaming providers that take longer than 30 seconds to respond.';
+
+  @override
+  String get profileRecentMovies => 'Recent Movies';
+
+  @override
+  String get profileRecentSeries => 'Recent Series';
+
+  @override
+  String get statsTimeBreakdown => 'Time Breakdown';
+
+  @override
+  String get statsAllTime => 'All Time';
+
+  @override
+  String get statsMovies => 'Movies';
+
+  @override
+  String get statsSeries => 'Series';
+
+  @override
+  String get statsLast7Days => 'Last 7 Days';
+
+  @override
+  String get statsLast30Days => 'Last 30 Days';
+
+  @override
+  String get statsLastYear => 'Last Year';
+
+  @override
+  String get statsMoviesStats => 'Movies Stats';
+
+  @override
+  String get statsSeriesStats => 'Series Stats';
+
+  @override
+  String get statsEpisodes => 'Episodes';
+
+  @override
+  String get statsSeasons => 'Seasons';
+
+  @override
+  String get statsTime => 'Time';
+
+  @override
+  String get detailsCreatorsAndDirectors => 'Creators & Directors';
+
+  @override
+  String get detailsDirector => 'Director';
+
+  @override
+  String get detailsWriters => 'Writers';
+
+  @override
+  String get detailsTvTimeComments => 'TvTime Comments';
+
+  @override
+  String get detailsTrack => 'Track';
+
+  @override
+  String get detailsWatched => 'Watched';
+
+  @override
+  String detailsWatchedCount(int count) {
+    return 'Watched x$count';
+  }
+
+  @override
+  String get detailsUpToDate => 'Up to date';
+
+  @override
+  String detailsUpToDateCount(int count) {
+    return 'Up to date x$count';
+  }
+
+  @override
+  String get detailsFinishSeries => 'Finish Series';
+
+  @override
+  String get commonNoContent => 'No content available';
+
+  @override
+  String get commonStopCasting => 'STOP CASTING';
+
+  @override
+  String get castConnectDevice => 'Connect to device';
+
+  @override
+  String get castNoDevices => 'No devices found';
+
+  @override
+  String get castRefresh => 'Refresh';
+
+  @override
+  String get profileNoRecentItems => 'No recently watched items';
+
+  @override
+  String get detailsEditList => 'Edit List';
+
+  @override
+  String get detailsDeleteList => 'Delete List';
+
+  @override
+  String get detailsTvTimeCommentsNotAvailable =>
+      'TVTime Comments not available for this media';
+
+  @override
+  String get detailsTvTimeCommentsNotAvailableSeries =>
+      'TVTime Comments not available for this series';
+
+  @override
+  String get detailsFailedLoadCollection => 'Failed to load collection details';
+
+  @override
+  String get detailsFeaturedCritic => 'Featured Critic';
+
+  @override
+  String get offlineBannerTitle => 'Offline Mode';
+
+  @override
+  String get offlineBannerMessage => 'Showing locally cached content only.';
+
+  @override
+  String get castSearching => 'Searching for devices...';
+
+  @override
+  String castError(String error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String castCastingTo(String deviceName) {
+    return 'Casting to $deviceName';
+  }
+
+  @override
+  String castSeasonEpisode(int season, int episode) {
+    return 'Season $season • Episode $episode';
+  }
+
+  @override
+  String statsDaysHours(int days, int hours) {
+    return '${days}d ${hours}h';
+  }
+
+  @override
+  String get listWatchLater => 'Watch Later';
+
+  @override
+  String get listFavorites => 'Favorites';
+
+  @override
+  String get listYourQueue => 'Your queue';
+
+  @override
+  String get listCuratedPicks => 'Your curated picks';
+
+  @override
+  String get listUntitled => 'Untitled List';
+
+  @override
+  String get listNameHint => 'List Name';
+
+  @override
+  String get listDescriptionHint => 'Add a description...';
+
+  @override
+  String listItemsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '$count item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get listEmptyTitle => 'This list is empty';
+
+  @override
+  String get listEmptyMessage => 'Add media from the details page';
+
+  @override
+  String get collectionTitleFallback => 'Collection';
+
+  @override
+  String get collectionSubtitle => 'Movie Collection';
 }

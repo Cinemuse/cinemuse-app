@@ -13,7 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 final personDetailsProvider = FutureProvider.family<Map<String, dynamic>?, int>((ref, id) async {
-  final tmdbService = ref.read(tmdbServiceProvider);
+  final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getPersonDetails(id);
 });
 

@@ -200,6 +200,12 @@ abstract class AppLocalizations {
   /// **'Unknown'**
   String get commonUnknown;
 
+  /// No description provided for @commonAnonymous.
+  ///
+  /// In en, this message translates to:
+  /// **'Anonymous'**
+  String get commonAnonymous;
+
   /// No description provided for @filterMax.
   ///
   /// In en, this message translates to:
@@ -841,6 +847,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Read all reviews'**
   String get detailsReviewsAll;
+
+  /// No description provided for @detailsNoReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'No reviews found.'**
+  String get detailsNoReviews;
 
   /// No description provided for @detailsFinances.
   ///
@@ -2473,6 +2485,336 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Skip streaming providers that take longer than 30 seconds to respond.'**
   String get settingsAutoSkipProvidersDesc;
+
+  /// No description provided for @profileRecentMovies.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Movies'**
+  String get profileRecentMovies;
+
+  /// No description provided for @profileRecentSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Series'**
+  String get profileRecentSeries;
+
+  /// No description provided for @statsTimeBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Breakdown'**
+  String get statsTimeBreakdown;
+
+  /// No description provided for @statsAllTime.
+  ///
+  /// In en, this message translates to:
+  /// **'All Time'**
+  String get statsAllTime;
+
+  /// No description provided for @statsMovies.
+  ///
+  /// In en, this message translates to:
+  /// **'Movies'**
+  String get statsMovies;
+
+  /// No description provided for @statsSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'Series'**
+  String get statsSeries;
+
+  /// No description provided for @statsLast7Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 Days'**
+  String get statsLast7Days;
+
+  /// No description provided for @statsLast30Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 30 Days'**
+  String get statsLast30Days;
+
+  /// No description provided for @statsLastYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Year'**
+  String get statsLastYear;
+
+  /// No description provided for @statsMoviesStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Movies Stats'**
+  String get statsMoviesStats;
+
+  /// No description provided for @statsSeriesStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Series Stats'**
+  String get statsSeriesStats;
+
+  /// No description provided for @statsEpisodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Episodes'**
+  String get statsEpisodes;
+
+  /// No description provided for @statsSeasons.
+  ///
+  /// In en, this message translates to:
+  /// **'Seasons'**
+  String get statsSeasons;
+
+  /// No description provided for @statsTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get statsTime;
+
+  /// No description provided for @detailsCreatorsAndDirectors.
+  ///
+  /// In en, this message translates to:
+  /// **'Creators & Directors'**
+  String get detailsCreatorsAndDirectors;
+
+  /// No description provided for @detailsDirector.
+  ///
+  /// In en, this message translates to:
+  /// **'Director'**
+  String get detailsDirector;
+
+  /// No description provided for @detailsWriters.
+  ///
+  /// In en, this message translates to:
+  /// **'Writers'**
+  String get detailsWriters;
+
+  /// No description provided for @detailsTvTimeComments.
+  ///
+  /// In en, this message translates to:
+  /// **'TvTime Comments'**
+  String get detailsTvTimeComments;
+
+  /// No description provided for @detailsTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'Track'**
+  String get detailsTrack;
+
+  /// No description provided for @detailsWatched.
+  ///
+  /// In en, this message translates to:
+  /// **'Watched'**
+  String get detailsWatched;
+
+  /// No description provided for @detailsWatchedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Watched x{count}'**
+  String detailsWatchedCount(int count);
+
+  /// No description provided for @detailsUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to date'**
+  String get detailsUpToDate;
+
+  /// No description provided for @detailsUpToDateCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to date x{count}'**
+  String detailsUpToDateCount(int count);
+
+  /// No description provided for @detailsFinishSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish Series'**
+  String get detailsFinishSeries;
+
+  /// No description provided for @commonNoContent.
+  ///
+  /// In en, this message translates to:
+  /// **'No content available'**
+  String get commonNoContent;
+
+  /// No description provided for @commonStopCasting.
+  ///
+  /// In en, this message translates to:
+  /// **'STOP CASTING'**
+  String get commonStopCasting;
+
+  /// No description provided for @castConnectDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to device'**
+  String get castConnectDevice;
+
+  /// No description provided for @castNoDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'No devices found'**
+  String get castNoDevices;
+
+  /// No description provided for @castRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get castRefresh;
+
+  /// No description provided for @profileNoRecentItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No recently watched items'**
+  String get profileNoRecentItems;
+
+  /// No description provided for @detailsEditList.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit List'**
+  String get detailsEditList;
+
+  /// No description provided for @detailsDeleteList.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete List'**
+  String get detailsDeleteList;
+
+  /// No description provided for @detailsTvTimeCommentsNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'TVTime Comments not available for this media'**
+  String get detailsTvTimeCommentsNotAvailable;
+
+  /// No description provided for @detailsTvTimeCommentsNotAvailableSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'TVTime Comments not available for this series'**
+  String get detailsTvTimeCommentsNotAvailableSeries;
+
+  /// No description provided for @detailsFailedLoadCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load collection details'**
+  String get detailsFailedLoadCollection;
+
+  /// No description provided for @detailsFeaturedCritic.
+  ///
+  /// In en, this message translates to:
+  /// **'Featured Critic'**
+  String get detailsFeaturedCritic;
+
+  /// No description provided for @offlineBannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline Mode'**
+  String get offlineBannerTitle;
+
+  /// No description provided for @offlineBannerMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing locally cached content only.'**
+  String get offlineBannerMessage;
+
+  /// No description provided for @castSearching.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching for devices...'**
+  String get castSearching;
+
+  /// No description provided for @castError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {error}'**
+  String castError(String error);
+
+  /// No description provided for @castCastingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Casting to {deviceName}'**
+  String castCastingTo(String deviceName);
+
+  /// No description provided for @castSeasonEpisode.
+  ///
+  /// In en, this message translates to:
+  /// **'Season {season} • Episode {episode}'**
+  String castSeasonEpisode(int season, int episode);
+
+  /// No description provided for @statsDaysHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d {hours}h'**
+  String statsDaysHours(int days, int hours);
+
+  /// No description provided for @listWatchLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch Later'**
+  String get listWatchLater;
+
+  /// No description provided for @listFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get listFavorites;
+
+  /// No description provided for @listYourQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'Your queue'**
+  String get listYourQueue;
+
+  /// No description provided for @listCuratedPicks.
+  ///
+  /// In en, this message translates to:
+  /// **'Your curated picks'**
+  String get listCuratedPicks;
+
+  /// No description provided for @listUntitled.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled List'**
+  String get listUntitled;
+
+  /// No description provided for @listNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'List Name'**
+  String get listNameHint;
+
+  /// No description provided for @listDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a description...'**
+  String get listDescriptionHint;
+
+  /// No description provided for @listItemsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} item} other{{count} items}}'**
+  String listItemsCount(int count);
+
+  /// No description provided for @listEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This list is empty'**
+  String get listEmptyTitle;
+
+  /// No description provided for @listEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add media from the details page'**
+  String get listEmptyMessage;
+
+  /// No description provided for @collectionTitleFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection'**
+  String get collectionTitleFallback;
+
+  /// No description provided for @collectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Movie Collection'**
+  String get collectionSubtitle;
 }
 
 class _AppLocalizationsDelegate

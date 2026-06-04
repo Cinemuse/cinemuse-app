@@ -408,6 +408,7 @@ class _TrackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isMovie = movieWatchCount != null;
     final isFullyWatched = seriesWatchStatus?.isFullyWatched ?? (isMovie && movieWatchCount! > 0);
     final isPartiallyWatched = seriesWatchStatus?.isPartiallyWatched ?? false;
@@ -448,9 +449,9 @@ class _TrackButton extends StatelessWidget {
                   child: Text(
                     isFullyWatched
                         ? (isMovie
-                            ? (minWatchCount > 1 ? 'Watched x$minWatchCount' : 'Watched')
-                            : (minWatchCount > 1 ? 'Up to date x$minWatchCount' : 'Up to date'))
-                        : (isPartiallyWatched ? 'Finish Series' : 'Track'),
+                            ? (minWatchCount > 1 ? l10n.detailsWatchedCount(minWatchCount) : l10n.detailsWatched)
+                            : (minWatchCount > 1 ? l10n.detailsUpToDateCount(minWatchCount) : l10n.detailsUpToDate))
+                        : (isPartiallyWatched ? l10n.detailsFinishSeries : l10n.detailsTrack),
                     style: TextStyle(
                       color: isFullyWatched ? Colors.green : AppTheme.textWhite,
                       fontSize: 16,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class PosterCarouselRow extends StatelessWidget {
   final List<Widget> items;
@@ -32,9 +33,14 @@ class PosterCarouselRow extends StatelessWidget {
       icon: icon,
       theme: theme,
       controller: controller,
-      emptyBuilder: emptyBuilder ?? (context) => const SizedBox(
+      emptyBuilder: emptyBuilder ?? (context) => SizedBox(
         height: 100,
-        child: Center(child: Text("No content available", style: TextStyle(color: Colors.white54))),
+        child: Center(
+          child: Text(
+            AppLocalizations.of(context)!.commonNoContent,
+            style: const TextStyle(color: Colors.white54),
+          ),
+        ),
       ),
       height: height,
       itemCount: items.length,

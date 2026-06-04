@@ -37,7 +37,7 @@ class CreativeVisionBox extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (finalDirectors.isNotEmpty) ...[
-            _Label(isSeries ? 'Creators & Directors' : 'Director'),
+            _Label(isSeries ? l10n.detailsCreatorsAndDirectors : l10n.detailsDirector),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -46,7 +46,7 @@ class CreativeVisionBox extends StatelessWidget {
             const SizedBox(height: 16),
           ],
           if (writers.isNotEmpty) ...[
-            const _Label('Writers'),
+            _Label(l10n.detailsWriters),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -99,7 +99,7 @@ class VerdictBox extends StatelessWidget {
                       Icon(Icons.forum_outlined, size: 14, color: AppTheme.accent),
                       const SizedBox(width: 4),
                       Text(
-                        'TVTIME COMMENTS',
+                        l10n.detailsTvTimeComments.toUpperCase(),
                         style: const TextStyle(color: AppTheme.accent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2),
                       ),
                     ],
@@ -150,8 +150,8 @@ class VerdictBox extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(featuredReview['author'] ?? 'Anonymous', style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
-                      const Text('Featured Critic', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                      Text(featuredReview['author'] ?? l10n.commonAnonymous, style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
+                      Text(l10n.detailsFeaturedCritic, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
                     ],
                   ),
                 ),
@@ -169,10 +169,10 @@ class VerdictBox extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ] else
-            const Center(
+            Center(
               child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Text('No transmissions found.', style: TextStyle(color: AppTheme.textMuted, fontSize: 13, fontStyle: FontStyle.italic)),
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text(l10n.detailsNoReviews, style: const TextStyle(color: AppTheme.textMuted, fontSize: 13, fontStyle: FontStyle.italic)),
               ),
             ),
           
@@ -230,14 +230,14 @@ class FinancesBox extends StatelessWidget {
         children: [
           _FinanceItem(
             label: l10n.detailsBudget.toUpperCase(),
-            value: budget > 0 ? '\$${(budget / 1000000).toStringAsFixed(1)}M' : 'Unknown',
+            value: budget > 0 ? '\$${(budget / 1000000).toStringAsFixed(1)}M' : l10n.commonUnknown,
             progress: 0.5,
             color: AppTheme.textMuted,
           ),
           const SizedBox(height: 20),
           _FinanceItem(
             label: l10n.detailsRevenue.toUpperCase(),
-            value: revenue > 0 ? '\$${(revenue / 1000000).toStringAsFixed(1)}M' : 'Unknown',
+            value: revenue > 0 ? '\$${(revenue / 1000000).toStringAsFixed(1)}M' : l10n.commonUnknown,
             progress: revenuePercentage.clamp(0.0, 1.0),
             color: Colors.green,
           ),

@@ -6,18 +6,17 @@ import 'package:cinemuse_app/features/search/application/search_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final searchProvider = StateNotifierProvider<SearchNotifier, SearchState>((ref) {
+  ref.watch(tmdbServiceProvider);
   return SearchNotifier(ref);
 });
 
 class SearchNotifier extends StateNotifier<SearchState> {
   final Ref _ref;
-  final TmdbService _tmdbService;
+  TmdbService get _tmdbService => _ref.read(tmdbServiceProvider);
   Timer? _debounce;
   bool _isLoadingMore = false;
 
-  SearchNotifier(this._ref) 
-    : _tmdbService = _ref.read(tmdbServiceProvider),
-      super(const SearchState());
+  SearchNotifier(this._ref) : super(const SearchState());
 
   @override
   void dispose() {

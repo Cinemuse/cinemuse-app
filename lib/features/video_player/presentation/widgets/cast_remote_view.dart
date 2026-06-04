@@ -3,6 +3,7 @@ import 'package:cinemuse_app/features/video_player/application/player_provider.d
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class CastRemoteView extends ConsumerWidget {
   final CinemaPlayerState playerState;
@@ -69,7 +70,7 @@ class CastRemoteView extends ConsumerWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              'Casting to ${playerState.selectedCastDevice?.name ?? "Chromecast"}',
+                              AppLocalizations.of(context)!.castCastingTo(playerState.selectedCastDevice?.name ?? "Chromecast"),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: Colors.white70,
                               ),
@@ -125,7 +126,7 @@ class CastRemoteView extends ConsumerWidget {
                       ),
                       if (params.type == 'tv' && params.season != null && params.episode != null)
                         Text(
-                          'Season ${params.season} • Episode ${params.episode}',
+                          AppLocalizations.of(context)!.castSeasonEpisode(params.season!, params.episode!),
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: Colors.white60,
                           ),
@@ -231,7 +232,7 @@ class CastRemoteView extends ConsumerWidget {
                   child: TextButton.icon(
                     style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
                     icon: const Icon(Icons.stop),
-                    label: const Text('STOP CASTING'),
+                    label: Text(AppLocalizations.of(context)!.commonStopCasting),
                     onPressed: () => notifier.stopCasting(),
                   ),
                 ),

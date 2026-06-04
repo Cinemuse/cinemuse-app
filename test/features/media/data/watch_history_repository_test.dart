@@ -54,9 +54,10 @@ void main() {
 
   setUp(() {
     mockSupabase = MockSupabaseClient();
+    when(() => mockSupabase.from(any())).thenAnswer((_) => FakeQueryBuilder());
     database = AppDatabase(NativeDatabase.memory());
     mockTmdb = MockTmdbService();
-    mediaRepo = MediaRepository(database, mockTmdb);
+    mediaRepo = MediaRepository(database, mockTmdb, mockSupabase);
     mockSeriesService = MockSeriesDomainService();
     repository = WatchHistoryRepository(mockSupabase, mediaRepo, database, mockSeriesService);
     
