@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:ui';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
@@ -25,119 +25,67 @@ class ContinueWatchingRow extends ConsumerStatefulWidget {
 }
 
 class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
-  // Map of tmdbId -> {item, timer} to support multiple simultaneous removals
-  final Map<int, ({WatchHistory item, Timer timer})> _pendingRemovals = {};
-  
-  // Set of tmdbId that have been finalized but not yet reflected in the provider's data.
-  // This prevents the "reappearing" bug when the undo timer elapses.
-  final Set<int> _flushingRemovals = {};
-  
-  // List of tmdbId in order of removal to manage the stack UI
-  final List<int> _activeToastIds = [];
+  // Set of tmdbId that are hidden because they are pending removal or being removed.
+  final Set<int> _hiddenItems = {};
 
-  OverlayEntry? _undoOverlay;
-
-  void _onRemove(WatchHistory item) {
+  void _onRemove(WatchHistory item) async {
+    final tmdbId = item.tmdbId;
     setState(() {
-      // If there's already a timer for this item, cancel it before replacing
-      _pendingRemovals[item.tmdbId]?.timer.cancel();
+      _hiddenItems.add(tmdbId);
+    });
 
-      final timer = Timer(const Duration(seconds: 5), () {
-        _finalizeRemoval(item.tmdbId);
-      });
+    final l10n = AppLocalizations.of(context)!;
+    final appLanguage = ref.read(settingsProvider).appLanguage;
+    final title = item.media?.getLocalizedTitle(appLanguage) ?? 'Item';
+    
+    // Read the providers needed for finalization now
+    final authState = ref.read(authProvider);
+    final repository = ref.read(watchHistoryRepositoryProvider);
 
-      _pendingRemovals[item.tmdbId] = (item: item, timer: timer);
-      
-      // Add to toast list if not already there
-      if (!_activeToastIds.contains(item.tmdbId)) {
-        _activeToastIds.add(item.tmdbId);
+    final controller = AppSnackBar.show(
+      context,
+      message: l10n.homeRemovedFromContinueWatching(title),
+      actionLabel: l10n.commonUndo.toUpperCase(),
+      duration: const Duration(seconds: 5),
+      showTimer: true,
+      onAction: () {},
+    );
+
+    final reason = await controller.closed;
+    
+    if (reason == SnackBarClosedReason.action) {
+      if (mounted) {
+        setState(() {
+          _hiddenItems.remove(tmdbId);
+        });
       }
-    });
-
-    _updateUndoOverlay();
-  }
-
-  void _updateUndoOverlay() {
-    if (_activeToastIds.isEmpty) {
-      _hideOverlay();
-      return;
-    }
-
-    if (_undoOverlay == null) {
-      _undoOverlay = OverlayEntry(
-        builder: (context) => _UndoStack(
-          ids: _activeToastIds,
-          pendingRemovals: _pendingRemovals,
-          onUndo: _onUndo,
-        ),
-      );
-      Overlay.of(context).insert(_undoOverlay!);
     } else {
-      _undoOverlay?.markNeedsBuild();
+      _finalizeRemoval(tmdbId, authState.value?.id, repository);
     }
   }
 
-  void _hideOverlay() {
-    _undoOverlay?.remove();
-    _undoOverlay = null;
-  }
-
-  Future<void> _finalizeRemoval(int tmdbId) async {
-    final pending = _pendingRemovals[tmdbId];
-    if (pending == null) return;
-
-    setState(() {
-      _pendingRemovals.remove(tmdbId);
-      _flushingRemovals.add(tmdbId);
-      _activeToastIds.remove(tmdbId);
-    });
-
-    // Refresh overlay to reflect removed toast
-    _updateUndoOverlay();
-
-    final user = ref.read(authProvider).value;
-    if (user != null) {
+  Future<void> _finalizeRemoval(int tmdbId, String? userId, WatchHistoryRepository repository) async {
+    if (userId != null) {
       try {
-        await ref.read(watchHistoryRepositoryProvider).removeFromContinueWatching(user.id, tmdbId);
+        await repository.removeFromContinueWatching(userId, tmdbId);
         
-        // Wait a bit for the provider to update before clearing the flushing state
+        // Wait a bit for the provider to update before clearing the hidden state
         // This ensures the item doesn't "reappear" if the database update is slightly delayed
         await Future.delayed(const Duration(milliseconds: 500));
       } finally {
         if (mounted) {
           setState(() {
-            _flushingRemovals.remove(tmdbId);
+            _hiddenItems.remove(tmdbId);
           });
         }
       }
     } else {
        if (mounted) {
           setState(() {
-            _flushingRemovals.remove(tmdbId);
+            _hiddenItems.remove(tmdbId);
           });
        }
     }
-  }
-
-  void _onUndo(int tmdbId) {
-    final pending = _pendingRemovals[tmdbId];
-    if (pending != null) {
-      pending.timer.cancel();
-      setState(() {
-        _pendingRemovals.remove(tmdbId);
-        _activeToastIds.remove(tmdbId);
-      });
-      _updateUndoOverlay();
-    }
-  }
-
-  @override
-  void dispose() {
-    for (final pending in _pendingRemovals.values) {
-      pending.timer.cancel();
-    }
-    _hideOverlay();
-    super.dispose();
   }
 
   @override
@@ -175,9 +123,9 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
         .firstOrNull
         ?.items ?? [];
     
-    // Filter out locally pending or flushing removals
+    // Filter out locally hidden items
     final effectiveItems = items.where((i) {
-      return !_pendingRemovals.containsKey(i.tmdbId) && !_flushingRemovals.contains(i.tmdbId);
+      return !_hiddenItems.contains(i.tmdbId);
     }).toList();
     
     if (effectiveItems.isEmpty) return const SizedBox.shrink();
@@ -239,199 +187,5 @@ class ContinueWatchingSkeleton extends StatelessWidget {
 }
 
 
-class _UndoStack extends ConsumerWidget {
-  final List<int> ids;
-  final Map<int, ({WatchHistory item, Timer timer})> pendingRemovals;
-  final Function(int) onUndo;
 
-  const _UndoStack({
-    required this.ids,
-    required this.pendingRemovals,
-    required this.onUndo,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appLanguage = ref.watch(settingsProvider).appLanguage;
-    final isMobile = MediaQuery.of(context).size.width < 600;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final baseOffset = isMobile ? ((bottomPadding > 0 ? bottomPadding : 12.0) + 96.0) : 32.0;
-    final rightOffset = isMobile ? 16.0 : 32.0;
-
-    return Stack(
-      children: ids.map((id) {
-        final index = ids.indexOf(id);
-        final pending = pendingRemovals[id];
-        if (pending == null) return const SizedBox.shrink();
-        
-        // Calculate bottom position based on index in list.
-        // Newest is at the end of the list, should be at bottom (baseOffset).
-        // Reduced gap for a tighter feel (offset 64).
-        final bottomOffset = baseOffset + (ids.length - 1 - index) * 64.0;
-
-        return AnimatedPositioned(
-          key: ValueKey('undo_pos_$id'),
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-          bottom: bottomOffset,
-          right: rightOffset,
-          child: _UndoToast(
-            key: ValueKey('undo_item_$id'),
-            title: pending.item.media?.getLocalizedTitle(appLanguage) ?? 'Item',
-            onUndo: () => onUndo(id),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _UndoToast extends StatefulWidget {
-  final String title;
-  final VoidCallback onUndo;
-
-  const _UndoToast({
-    super.key,
-    required this.title,
-    required this.onUndo,
-  });
-
-  @override
-  State<_UndoToast> createState() => _UndoToastState();
-}
-
-class _UndoToastState extends State<_UndoToast> with SingleTickerProviderStateMixin {
-  late AnimationController _countdownController;
-
-  @override
-  void initState() {
-    super.initState();
-    _countdownController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 5),
-    )..forward();
-  }
-
-  @override
-  void dispose() {
-    _countdownController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 600;
-    
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value.clamp(0.0, 1.0),
-          child: Transform.translate(
-            offset: Offset(40 * (1 - value), 0),
-            child: child,
-          ),
-        );
-      },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              constraints: BoxConstraints(
-                maxWidth: isMobile ? (screenWidth - 32) : 500,
-              ),
-              decoration: BoxDecoration(
-                color: AppTheme.surface.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    spreadRadius: -5,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                   Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.accent.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.delete_sweep_rounded, color: AppTheme.accent, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Flexible(
-                    child: Text(
-                      l10n.homeRemovedFromContinueWatching(widget.title),
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        width: 44,
-                        height: 44,
-                        child: AnimatedBuilder(
-                          animation: _countdownController,
-                          builder: (context, child) {
-                            return CircularProgressIndicator(
-                              value: 1.0 - _countdownController.value,
-                              strokeWidth: 2.5,
-                              backgroundColor: Colors.white.withValues(alpha: 0.05),
-                              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accent),
-                            );
-                          },
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: widget.onUndo,
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppTheme.accent,
-                          padding: EdgeInsets.zero,
-                          minimumSize: const Size(44, 44),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: const CircleBorder(),
-                        ),
-                        child: Text(
-                          l10n.commonUndo.toUpperCase(),
-                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
