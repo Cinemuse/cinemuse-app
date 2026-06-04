@@ -930,7 +930,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileOverview => 'OVERVIEW';
 
   @override
-  String get profileCollections => 'COLLEZIONI';
+  String get profileCollections => 'COLLECTIONS';
 
   @override
   String get profileActivity => 'ACTIVITY';

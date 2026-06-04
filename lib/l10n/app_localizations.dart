@@ -1811,7 +1811,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileCollections.
   ///
   /// In en, this message translates to:
-  /// **'COLLEZIONI'**
+  /// **'COLLECTIONS'**
   String get profileCollections;
 
   /// No description provided for @profileActivity.
