@@ -13,6 +13,7 @@ import '../../../../shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/shared/widgets/offline_placeholder.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../../../../shared/widgets/app_bottom_sheet.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
@@ -23,7 +24,6 @@ class ExploreScreen extends ConsumerStatefulWidget {
 
 class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   final ScrollController _scrollController = ScrollController();
-  bool _showFilters = false;
 
   @override
   void initState() {
@@ -98,14 +98,25 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                                     ref.read(exploreResultsProvider.notifier).reset();
                                   },
                                 ),
-                                if (mediaType != MediaType.person) ...[
-                                  const SizedBox(height: 16),
-                                  _FilterToggleButton(
-                                    isOpen: _showFilters,
-                                    onTap: () => setState(() => _showFilters = !_showFilters),
-                                    label: l10n.searchFilterAction,
-                                  ),
-                                ],
+                                  if (mediaType != MediaType.person) ...[
+                                    const SizedBox(height: 16),
+                                    _FilterToggleButton(
+                                      onTap: () {
+                                        AppBottomSheet.show(
+                                          context: context,
+                                          child: const AppBottomSheet(
+                                            child: SingleChildScrollView(
+                                              child: Padding(
+                                                padding: EdgeInsets.symmetric(horizontal: 24.0),
+                                                child: ExploreFilterPanel(),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      label: l10n.searchFilterAction,
+                                    ),
+                                  ],
                               ],
                             )
                           : Stack(
@@ -122,8 +133,19 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                                   Positioned(
                                     right: 0,
                                     child: _FilterToggleButton(
-                                      isOpen: _showFilters,
-                                      onTap: () => setState(() => _showFilters = !_showFilters),
+                                      onTap: () {
+                                        AppBottomSheet.show(
+                                          context: context,
+                                          child: const AppBottomSheet(
+                                            child: SingleChildScrollView(
+                                              child: Padding(
+                                                padding: EdgeInsets.symmetric(horizontal: 24.0),
+                                                child: ExploreFilterPanel(),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
                                       label: l10n.searchFilterAction,
                                     ),
                                   ),
@@ -134,18 +156,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   ),
                   const SizedBox(height: 24),
                   ActiveFiltersList(
-                    filters: filters,
-                    onChanged: (newFilters) {
-                      ref.read(exploreFiltersProvider.notifier).state = newFilters;
-                      ref.read(exploreResultsProvider.notifier).reset();
-                    },
-                    onClear: () {
-                      ref.invalidate(exploreFiltersProvider);
-                      ref.read(exploreResultsProvider.notifier).reset();
-                    },
-                  ),
-                  ExploreFilterPanel(
-                    show: _showFilters,
                     filters: filters,
                     onChanged: (newFilters) {
                       ref.read(exploreFiltersProvider.notifier).state = newFilters;
@@ -299,12 +309,10 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 }
 
 class _FilterToggleButton extends StatelessWidget {
-  final bool isOpen;
   final VoidCallback onTap;
   final String label;
 
   const _FilterToggleButton({
-    required this.isOpen,
     required this.onTap,
     required this.label,
   });
@@ -318,41 +326,28 @@ class _FilterToggleButton extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: isOpen ? AppTheme.textWhite : AppTheme.secondary,
+          color: AppTheme.secondary,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isOpen ? AppTheme.textWhite : AppTheme.border,
+            color: AppTheme.border,
           ),
-          boxShadow: isOpen ? [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ] : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              isOpen ? Icons.tune : Icons.tune_outlined,
+            const Icon(
+              Icons.tune_outlined,
               size: 18,
-              color: isOpen ? Colors.black : AppTheme.textSecondary,
+              color: AppTheme.textSecondary,
             ),
             const SizedBox(width: 8),
             Text(
               label,
-              style: TextStyle(
-                color: isOpen ? Colors.black : AppTheme.textSecondary,
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              isOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-              size: 16,
-              color: isOpen ? Colors.black : AppTheme.textSecondary,
             ),
           ],
         ),

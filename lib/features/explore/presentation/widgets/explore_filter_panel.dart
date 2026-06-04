@@ -12,18 +12,7 @@ import '../../../../shared/widgets/premium_hover_text.dart';
 import '../../../../shared/widgets/hover_scale.dart';
 
 class ExploreFilterPanel extends ConsumerStatefulWidget {
-  final bool show;
-  final ExploreFilters filters;
-  final ValueChanged<ExploreFilters> onChanged;
-  final VoidCallback onClear;
-
-  const ExploreFilterPanel({
-    super.key,
-    required this.show,
-    required this.filters,
-    required this.onChanged,
-    required this.onClear,
-  });
+  const ExploreFilterPanel({super.key});
 
   @override
   ConsumerState<ExploreFilterPanel> createState() => _ExploreFilterPanelState();
@@ -33,38 +22,47 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
   final TextEditingController _langSearchController = TextEditingController();
   bool _isLangOpen = false;
 
+  void _updateFilters(ExploreFilters newFilters) {
+    ref.read(exploreFiltersProvider.notifier).state = newFilters;
+    ref.read(exploreResultsProvider.notifier).reset();
+  }
+
   void _toggleGenre(int genreId) {
-    final newGenres = List<int>.from(widget.filters.genres);
+    final filters = ref.read(exploreFiltersProvider);
+    final newGenres = List<int>.from(filters.genres);
     if (newGenres.contains(genreId)) {
       newGenres.remove(genreId);
     } else {
       newGenres.add(genreId);
     }
-    widget.onChanged(widget.filters.copyWith(genres: newGenres));
+    _updateFilters(filters.copyWith(genres: newGenres));
   }
 
   void _handleLanguageSelect(String code) {
-    if (!widget.filters.languages.contains(code)) {
-      final newLangs = List<String>.from(widget.filters.languages)..add(code);
-      widget.onChanged(widget.filters.copyWith(languages: newLangs));
+    final filters = ref.read(exploreFiltersProvider);
+    if (!filters.languages.contains(code)) {
+      final newLangs = List<String>.from(filters.languages)..add(code);
+      _updateFilters(filters.copyWith(languages: newLangs));
     }
     _langSearchController.clear();
     setState(() => _isLangOpen = false);
   }
 
   void _removeLanguage(String code) {
-    final newLangs = List<String>.from(widget.filters.languages)..remove(code);
-    widget.onChanged(widget.filters.copyWith(languages: newLangs));
+    final filters = ref.read(exploreFiltersProvider);
+    final newLangs = List<String>.from(filters.languages)..remove(code);
+    _updateFilters(filters.copyWith(languages: newLangs));
   }
 
   void _toggleWatchProvider(int providerId) {
-    final newProviders = List<int>.from(widget.filters.watchProviders);
+    final filters = ref.read(exploreFiltersProvider);
+    final newProviders = List<int>.from(filters.watchProviders);
     if (newProviders.contains(providerId)) {
       newProviders.remove(providerId);
     } else {
       newProviders.add(providerId);
     }
-    widget.onChanged(widget.filters.copyWith(watchProviders: newProviders));
+    _updateFilters(filters.copyWith(watchProviders: newProviders));
   }
 
   @override
@@ -75,16 +73,13 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.show) return const SizedBox.shrink();
-
     final l10n = AppLocalizations.of(context)!;
+    final filters = ref.watch(exploreFiltersProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
         children: [
-          Container(height: 1, color: AppTheme.textWhite.withValues(alpha: 0.1)),
-          const SizedBox(height: 32),
           LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth > 800;
@@ -100,17 +95,17 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                       children: [
                         _buildSectionLabel(l10n.searchSortBy),
                         const SizedBox(height: 12),
-                        _buildSortOption(l10n.searchMostPopular, 'popularity.desc'),
+                        _buildSortOption(l10n.searchMostPopular, 'popularity.desc', filters),
                         const SizedBox(height: 8),
-                        _buildSortOption(l10n.searchHighestRated, 'vote_average.desc'),
+                        _buildSortOption(l10n.searchHighestRated, 'vote_average.desc', filters),
                         const SizedBox(height: 8),
-                        _buildSortOption(l10n.searchNewestReleases, 'primary_release_date.desc'),
+                        _buildSortOption(l10n.searchNewestReleases, 'primary_release_date.desc', filters),
                         const SizedBox(height: 32),
                         _buildSectionLabel(l10n.searchLanguages, subtitle: l10n.searchMatchAny),
                         const SizedBox(height: 12),
                         _buildLanguageSearch(),
                         const SizedBox(height: 12),
-                        _buildSelectedLanguages(),
+                        _buildSelectedLanguages(filters),
                       ],
                     ),
                   ),
@@ -123,11 +118,11 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                       children: [
                         _buildSectionLabel(l10n.searchGenres, subtitle: l10n.searchMatchAll),
                         const SizedBox(height: 16),
-                        _buildGenreGrid(),
+                        _buildGenreGrid(filters),
                         const SizedBox(height: 32),
                         _buildSectionLabel(l10n.searchWatchProviders),
                         const SizedBox(height: 12),
-                        _buildWatchProviders(),
+                        _buildWatchProviders(filters),
                       ],
                     ),
                   ),
@@ -141,40 +136,40 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                         FilterRangeSlider(
                           min: 0,
                           max: 10,
-                          values: widget.filters.rating,
-                          onChanged: (v) => widget.onChanged(widget.filters.copyWith(rating: v)),
+                          values: filters.rating,
+                          onChanged: (v) => _updateFilters(filters.copyWith(rating: v)),
                           label: l10n.searchRating,
-                          valueLabel: '${widget.filters.rating.start.round()} - ${widget.filters.rating.end.round()}',
+                          valueLabel: '${filters.rating.start.round()} - ${filters.rating.end.round()}',
                           icon: Icons.whatshot,
                         ),
                         const SizedBox(height: 32),
                          FilterRangeSlider(
                           min: 1900,
                           max: 2025,
-                          values: widget.filters.year,
-                          onChanged: (v) => widget.onChanged(widget.filters.copyWith(year: v)),
+                          values: filters.year,
+                          onChanged: (v) => _updateFilters(filters.copyWith(year: v)),
                           label: l10n.searchYearRange,
-                          valueLabel: '${widget.filters.year.start.round()} - ${widget.filters.year.end.round()}',
+                          valueLabel: '${filters.year.start.round()} - ${filters.year.end.round()}',
                           icon: Icons.calendar_today_outlined,
                         ),
                         const SizedBox(height: 32),
                          FilterRangeSlider(
                           min: 0,
                           max: 20000,
-                          values: widget.filters.voteCount,
-                          onChanged: (v) => widget.onChanged(widget.filters.copyWith(voteCount: v)),
+                          values: filters.voteCount,
+                          onChanged: (v) => _updateFilters(filters.copyWith(voteCount: v)),
                           label: l10n.searchVoteCount,
-                          valueLabel: '${widget.filters.voteCount.start.round()} - ${widget.filters.voteCount.end.round() >= 20000 ? l10n.filterMax : widget.filters.voteCount.end.round()}',
+                          valueLabel: '${filters.voteCount.start.round()} - ${filters.voteCount.end.round() >= 20000 ? l10n.filterMax : filters.voteCount.end.round()}',
                           icon: Icons.thumb_up_outlined,
                         ),
                         const SizedBox(height: 32),
                          FilterRangeSlider(
                           min: 0,
                           max: 240,
-                          values: widget.filters.runtime,
-                          onChanged: (v) => widget.onChanged(widget.filters.copyWith(runtime: v)),
+                          values: filters.runtime,
+                          onChanged: (v) => _updateFilters(filters.copyWith(runtime: v)),
                           label: l10n.searchRuntime,
-                          valueLabel: '${widget.filters.runtime.start.round()}m - ${widget.filters.runtime.end.round() >= 240 ? l10n.filterMax : '${widget.filters.runtime.end.round()}m'}',
+                          valueLabel: '${filters.runtime.start.round()}m - ${filters.runtime.end.round() >= 240 ? l10n.filterMax : '${filters.runtime.end.round()}m'}',
                           icon: Icons.access_time,
                         ),
                       ],
@@ -184,8 +179,6 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
               );
             },
           ),
-          const SizedBox(height: 32),
-          Container(height: 1, color: AppTheme.textWhite.withValues(alpha: 0.1)),
         ],
       ),
     );
@@ -209,10 +202,10 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
     );
   }
 
-  Widget _buildSortOption(String label, String value) {
-    final isSelected = widget.filters.sortBy == value;
+  Widget _buildSortOption(String label, String value, ExploreFilters filters) {
+    final isSelected = filters.sortBy == value;
     return HoverScale(
-      onTap: () => widget.onChanged(widget.filters.copyWith(sortBy: value)),
+      onTap: () => _updateFilters(filters.copyWith(sortBy: value)),
       scale: 1.02,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -240,13 +233,13 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
     );
   }
 
-  Widget _buildGenreGrid() {
+  Widget _buildGenreGrid(ExploreFilters filters) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: TmdbConstants.genresList.map((g) {
         final genreId = g['id'] as int;
-        final isSelected = widget.filters.genres.contains(genreId);
+        final isSelected = filters.genres.contains(genreId);
         return HoverScale(
           onTap: () => _toggleGenre(genreId),
           scale: 1.08,
@@ -339,11 +332,11 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
     );
   }
 
-  Widget _buildSelectedLanguages() {
+  Widget _buildSelectedLanguages(ExploreFilters filters) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: widget.filters.languages.map((code) {
+      children: filters.languages.map((code) {
         final lang = TmdbConstants.languagesList.firstWhere((l) => l['code'] == code);
         return Chip(
           label: Text(lang['name']!, style: const TextStyle(fontSize: 12)),
@@ -357,7 +350,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
     );
   }
 
-  Widget _buildWatchProviders() {
+  Widget _buildWatchProviders(ExploreFilters filters) {
     final providersAsync = ref.watch(watchProvidersListProvider);
 
     return providersAsync.when(
@@ -383,7 +376,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
           runSpacing: 8,
           children: mainProviders.map((p) {
             final id = p['provider_id'] as int;
-            final isSelected = widget.filters.watchProviders.contains(id);
+            final isSelected = filters.watchProviders.contains(id);
             final imageUrl = "https://image.tmdb.org/t/p/original${p['logo_path']}";
 
             return HoverScale(
