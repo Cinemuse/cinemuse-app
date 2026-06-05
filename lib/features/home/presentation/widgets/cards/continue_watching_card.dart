@@ -11,6 +11,7 @@ import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dar
 import 'package:cinemuse_app/shared/widgets/backdrop_card.dart';
 import 'package:cinemuse_app/shared/widgets/skeleton_box.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class ContinueWatchingCard extends ConsumerStatefulWidget {
   final WatchHistory historyItem;
@@ -33,22 +34,60 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
   @override
   Widget build(BuildContext context) {
     final localMedia = widget.historyItem.media;
+    final appLanguage = ref.watch(settingsProvider).appLanguage;
 
-    if (localMedia != null) {
+    final hasValidTitle = localMedia != null &&
+        (localMedia.getLocalizedTitle(appLanguage) ?? '').isNotEmpty &&
+        localMedia.getLocalizedTitle(appLanguage) != 'Unknown' &&
+        localMedia.getLocalizedTitle(appLanguage) != '...';
+
+    if (hasValidTitle) {
       return _buildCard(context, ref, localMedia);
     }
 
-    final mediaAsync = ref.watch(
-      mediaItemProvider((
-        id: widget.historyItem.tmdbId,
-        type: widget.historyItem.mediaType,
-      )),
+    final providerArg = (
+      id: widget.historyItem.tmdbId,
+      type: widget.historyItem.mediaType,
     );
+    final mediaAsync = ref.watch(mediaItemProvider(providerArg));
+
+    final fetchedMedia = mediaAsync.valueOrNull;
+    final hasFetchedValidTitle = fetchedMedia != null &&
+        (fetchedMedia.getLocalizedTitle(appLanguage) ?? '').isNotEmpty &&
+        fetchedMedia.getLocalizedTitle(appLanguage) != 'Unknown' &&
+        fetchedMedia.getLocalizedTitle(appLanguage) != '...';
+
+    if (fetchedMedia != null && !hasFetchedValidTitle) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await ref.read(
+          mediaDetailsProvider((
+            id: widget.historyItem.tmdbId.toString(),
+            type: widget.historyItem.mediaType.name,
+          )).future,
+        );
+        ref.invalidate(mediaItemProvider(providerArg));
+      });
+    } else if (!mediaAsync.isLoading && !mediaAsync.hasError && fetchedMedia == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await ref.read(
+          mediaDetailsProvider((
+            id: widget.historyItem.tmdbId.toString(),
+            type: widget.historyItem.mediaType.name,
+          )).future,
+        );
+        ref.invalidate(mediaItemProvider(providerArg));
+      });
+    }
 
     return mediaAsync.when(
-      data: (media) => _buildCard(context, ref, media),
+      data: (media) {
+        if (media != null && hasFetchedValidTitle) {
+          return _buildCard(context, ref, media);
+        }
+        return _buildSkeleton();
+      },
       loading: () => _buildSkeleton(),
-      error: (_, __) => _buildCard(context, ref, null),
+      error: (_, __) => _buildCard(context, ref, localMedia),
     );
   }
 
@@ -70,7 +109,12 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
           i.mediaType == widget.historyItem.mediaType,
     );
     final appLanguage = ref.watch(settingsProvider).appLanguage;
-    final title = media?.getLocalizedTitle(appLanguage) ?? '...';
+    final l10n = AppLocalizations.of(context)!;
+    
+    String title = media?.getLocalizedTitle(appLanguage) ?? '';
+    if (title.isEmpty || title == '...') {
+      title = l10n.commonUnknown;
+    }
 
     final percentage =
         (widget.historyItem.totalDuration != null &&

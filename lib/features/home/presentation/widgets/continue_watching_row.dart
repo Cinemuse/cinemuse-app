@@ -37,7 +37,10 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
 
     final l10n = AppLocalizations.of(context)!;
     final appLanguage = ref.read(settingsProvider).appLanguage;
-    final title = item.media?.getLocalizedTitle(appLanguage) ?? 'Item';
+    String title = item.media?.getLocalizedTitle(appLanguage) ?? '';
+    if (title.isEmpty || title == '...') {
+      title = l10n.commonUnknown;
+    }
 
     // Read the providers needed for finalization now
     final authState = ref.read(authProvider);
