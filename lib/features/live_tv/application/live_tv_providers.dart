@@ -226,61 +226,6 @@ final recentChannelIdsProvider =
     });
 
 // ---------------------------------------------------------------------------
-// Derived: Groups & Sub-Providers (for filter sheet)
-// ---------------------------------------------------------------------------
-
-/// All available groups (Categories or Providers) for the filter sheet.
-final groupsProvider = Provider<AsyncValue<List<String>>>((ref) {
-  final channelsAsync = ref.watch(channelsProvider);
-  final mode = ref.watch(channelFilterProvider.select((f) => f.groupMode));
-
-  return channelsAsync.whenData((channels) {
-    final groups = channels
-        .map((ch) => mode == LiveTvGroupMode.category ? ch.group : ch.provider)
-        .where((g) => g != null && g.isNotEmpty)
-        .cast<String>()
-        .toSet()
-        .toList();
-    groups.sort();
-
-    if (mode == LiveTvGroupMode.category && groups.contains('DTT')) {
-      groups.remove('DTT');
-      groups.insert(0, 'DTT');
-    }
-    return groups;
-  });
-});
-
-/// Sub-providers available for the currently selected group.
-final subProvidersForGroupProvider = Provider<List<String>>((ref) {
-  final channelsAsync = ref.watch(channelsProvider);
-  final filter = ref.watch(channelFilterProvider);
-
-  return channelsAsync.whenOrNull(
-        data: (channels) {
-          if (filter.selectedGroup == null) return <String>[];
-
-          final inGroup = channels.where((ch) {
-            final chGroup = filter.groupMode == LiveTvGroupMode.category
-                ? ch.group
-                : ch.provider;
-            return chGroup == filter.selectedGroup;
-          });
-
-          final subs = inGroup
-              .map((ch) => ch.subProvider)
-              .where((s) => s != null && s.isNotEmpty)
-              .cast<String>()
-              .toSet()
-              .toList();
-          subs.sort();
-          return subs;
-        },
-      ) ??
-      [];
-});
-
-// ---------------------------------------------------------------------------
 // Derived: Sectioned channels for the main list
 // ---------------------------------------------------------------------------
 
