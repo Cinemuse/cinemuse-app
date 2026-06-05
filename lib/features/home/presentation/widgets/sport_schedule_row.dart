@@ -42,12 +42,9 @@ class SportScheduleRow extends ConsumerStatefulWidget {
 
 class _SportScheduleRowState extends ConsumerState<SportScheduleRow> {
   final ScrollController _scrollController = ScrollController();
-  bool _hasScrolled = false;
 
   // Layout constants
-  static const double _cardWidth = 280.0;
   static const double _cardSpacing = 16.0;
-  static const double _dayHeaderWidth = 72.0;
   static const double _dayHeaderSpacing = 16.0;
 
   @override
@@ -78,57 +75,6 @@ class _SportScheduleRowState extends ConsumerState<SportScheduleRow> {
     }
 
     return items;
-  }
-
-  /// Finds the flat-list index of the first event at or after [now].
-  int _findNearestEventIndex(List<_ScheduleItem> items) {
-    final now = DateTime.now();
-    for (int i = 0; i < items.length; i++) {
-      final item = items[i];
-      if (item is _EventItem && item.event.dateTime != null) {
-        if (!item.event.dateTime!.isBefore(now)) return i;
-      }
-    }
-    // All events are in the past — scroll to the last one
-    for (int i = items.length - 1; i >= 0; i--) {
-      if (items[i] is _EventItem) return i;
-    }
-    return 0;
-  }
-
-  /// Calculates the pixel offset for a given flat-list index.
-  double _offsetForIndex(
-    int index,
-    List<_ScheduleItem> items,
-    double horizontalPadding,
-  ) {
-    double offset = 0.0;
-    for (int i = 0; i < index; i++) {
-      final item = items[i];
-      if (item is _DayHeaderItem) {
-        offset += _dayHeaderWidth + _dayHeaderSpacing;
-      } else {
-        offset += _cardWidth + _cardSpacing;
-      }
-    }
-    // Snap to the day-header before this event for better context
-    if (index > 0 && items[index - 1] is _DayHeaderItem) {
-      offset -= _dayHeaderWidth + _dayHeaderSpacing;
-    }
-    return offset.clamp(0.0, double.infinity);
-  }
-
-  void _scrollToNearest(List<_ScheduleItem> items, double horizontalPadding) {
-    if (_hasScrolled) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_scrollController.hasClients) return;
-      final index = _findNearestEventIndex(items);
-      final offset = _offsetForIndex(index, items, horizontalPadding);
-      final maxExtent = _scrollController.position.maxScrollExtent;
-      if (maxExtent <= 0) return; // list not laid out yet
-      _scrollController.jumpTo(offset.clamp(0.0, maxExtent));
-      _hasScrolled = true;
-    });
   }
 
   bool _isSameDay(DateTime a, DateTime b) =>
@@ -163,9 +109,6 @@ class _SportScheduleRowState extends ConsumerState<SportScheduleRow> {
     if (events.isEmpty) return const SizedBox.shrink();
 
     final items = _buildItems(events);
-
-    // Trigger scroll once after first data is available
-    _scrollToNearest(items, horizontalPadding);
 
     return GenericCarouselRow(
       theme: CarouselTheme.homeRow,
