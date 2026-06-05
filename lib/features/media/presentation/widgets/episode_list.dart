@@ -7,6 +7,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/gestures.dart';
+import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 
 class EpisodeList extends ConsumerStatefulWidget {
   final List<dynamic> episodes;
@@ -147,7 +148,7 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
             loggedAt: date,
           ),
           onTrackOptions: (s, e) =>
-              _showTrackOptions(context, controller, tmdbId, s, e),
+              _showTrackOptions(context, controller, tmdbId, s, e, watchCount),
           onFindMissingPreceding: _findMissingPreceding,
           onShowMarkPrecedingModal: (s, e, m) =>
               _showMarkPrecedingModal(context, controller, tmdbId, s, e, m),
@@ -225,62 +226,83 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
     List<({int season, int episode})> missing,
   ) {
     final l10n = AppLocalizations.of(context)!;
-    showDialog(
+    AppBottomSheet.show<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.secondary,
-        surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          l10n.detailsMarkPreviousTitle,
-          style: const TextStyle(color: Colors.white),
-        ),
-        content: Text(
-          l10n.detailsMarkPreviousDesc(
-            episode.toString(),
-            missing.length.toString(),
-          ),
-          style: const TextStyle(color: AppTheme.textMuted),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              controller.logEpisodeWatch(
-                tmdbId: tmdbId,
-                season: season,
-                episode: episode,
-              );
-            },
-            child: Text(
-              l10n.detailsOnlyThisOne,
-              style: const TextStyle(color: AppTheme.textMuted),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              final allToMark = [
-                ...missing,
-                (season: season, episode: episode),
-              ];
-              controller.logMultipleEpisodes(
-                tmdbId: tmdbId,
-                episodes: allToMark,
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.accent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+      constraints: const BoxConstraints(maxWidth: 400),
+      child: AppBottomSheet(
+        padding: EdgeInsets.fromLTRB(
+            24, 0, 24, MediaQuery.viewInsetsOf(context).bottom + 24),
+        child: Builder(
+          builder: (modalContext) => Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.playlist_add_check,
+                      color: AppTheme.accent, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      l10n.detailsMarkPreviousTitle,
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            child: Text(l10n.detailsMarkAll),
+              const SizedBox(height: 12),
+              Text(
+                l10n.detailsMarkPreviousDesc(
+                  missing.length.toString(),
+                ),
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(modalContext, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(l10n.detailsMarkAll,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => Navigator.pop(modalContext, false),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.textMuted,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: Text(l10n.detailsOnlyThisOne),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-    );
+    ).then((markAll) {
+      if (markAll == true) {
+        final allToMark = [
+          ...missing,
+          (season: season, episode: episode),
+        ];
+        controller.logMultipleEpisodes(
+          tmdbId: tmdbId,
+          episodes: allToMark,
+        );
+      } else {
+        // markAll is false or null (dismissed)
+        controller.logEpisodeWatch(
+          tmdbId: tmdbId,
+          season: season,
+          episode: episode,
+        );
+      }
+    });
   }
 
   void _showTrackOptions(
@@ -289,28 +311,28 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
     int tmdbId,
     int season,
     int episode,
+    int watchCount,
   ) {
-    showDialog(
+    TrackOptionsModal.show(
       context: context,
-      builder: (context) => TrackOptionsModal(
+      season: season,
+      episode: episode,
+      watchCount: watchCount,
+      onRewatch: (date) => controller.logEpisodeWatch(
+        tmdbId: tmdbId,
         season: season,
         episode: episode,
-        onRewatch: (date) => controller.logEpisodeWatch(
-          tmdbId: tmdbId,
-          season: season,
-          episode: episode,
-          loggedAt: date,
-        ),
-        onRemoveOne: () => controller.deleteLatestEpisodeLog(
-          tmdbId: tmdbId,
-          season: season,
-          episode: episode,
-        ),
-        onRemoveAll: () => controller.deleteAllEpisodeLogs(
-          tmdbId: tmdbId,
-          season: season,
-          episode: episode,
-        ),
+        loggedAt: date,
+      ),
+      onRemoveOne: () => controller.deleteLatestEpisodeLog(
+        tmdbId: tmdbId,
+        season: season,
+        episode: episode,
+      ),
+      onRemoveAll: () => controller.deleteAllEpisodeLogs(
+        tmdbId: tmdbId,
+        season: season,
+        episode: episode,
       ),
     );
   }

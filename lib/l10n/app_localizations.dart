@@ -497,8 +497,8 @@ abstract class AppLocalizations {
   /// No description provided for @detailsMarkPreviousDesc.
   ///
   /// In en, this message translates to:
-  /// **'You marked Episode {episode}. Do you also want to mark the {count} previous unwatched episode(s) as watched?'**
-  String detailsMarkPreviousDesc(Object count, Object episode);
+  /// **'Do you also want to mark the {count} previous unwatched episode(s) as watched?'**
+  String detailsMarkPreviousDesc(Object count);
 
   /// No description provided for @detailsOnlyThisOne.
   ///
@@ -893,7 +893,7 @@ abstract class AppLocalizations {
   /// No description provided for @detailsRemoveAll.
   ///
   /// In en, this message translates to:
-  /// **'Remove All'**
+  /// **'Clear Watch History'**
   String get detailsRemoveAll;
 
   /// No description provided for @detailsBudget.

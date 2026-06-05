@@ -246,7 +246,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                 details: details,
                 isFavorite: isFavorite,
                 isInWatchlist: isInWatchlist,
-                resumeData: watchHistory != null
+                resumeData: (watchHistory != null && !watchHistory.isCompleted)
                     ? {
                         // map 'tv' mediaType to 'tv' string to ensure DetailsHero picks it up
                         'type':
@@ -570,27 +570,25 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     if (status == null) return;
     final l10n = AppLocalizations.of(context)!;
 
-    showDialog(
+    SeriesTrackModal.show(
       context: context,
-      builder: (context) => SeriesTrackModal(
-        title: details['name'] ?? l10n.searchSeries,
-        status: status,
-        onMarkRemaining: (date) => _markAllEpisodes(
-          controller,
-          tmdbId,
-          details,
-          date,
-          onlyRemaining: true,
-        ),
-        onMarkAll: (date) => _markAllEpisodes(
-          controller,
-          tmdbId,
-          details,
-          date,
-          onlyRemaining: false,
-        ),
-        onRemoveAll: () => controller.deleteAllSeriesLogs(tmdbId: tmdbId),
+      title: details['name'] ?? l10n.searchSeries,
+      status: status,
+      onMarkRemaining: (date) => _markAllEpisodes(
+        controller,
+        tmdbId,
+        details,
+        date,
+        onlyRemaining: true,
       ),
+      onMarkAll: (date) => _markAllEpisodes(
+        controller,
+        tmdbId,
+        details,
+        date,
+        onlyRemaining: false,
+      ),
+      onRemoveAll: () => controller.deleteAllSeriesLogs(tmdbId: tmdbId),
     );
   }
 
@@ -605,16 +603,14 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     // Provide a fallback title just in case
     final title = details['title'] ?? details['name'] ?? l10n.agendaMovie;
 
-    showDialog(
+    MovieTrackModal.show(
       context: context,
-      builder: (context) => MovieTrackModal(
-        title: title,
-        watchCount: watchCount,
-        onRewatch: (date) =>
-            controller.logMovieWatch(tmdbId: tmdbId, loggedAt: date),
-        onRemoveOne: () => controller.deleteLatestMovieLog(tmdbId: tmdbId),
-        onRemoveAll: () => controller.deleteAllMovieLogs(tmdbId: tmdbId),
-      ),
+      title: title,
+      watchCount: watchCount,
+      onRewatch: (date) =>
+          controller.logMovieWatch(tmdbId: tmdbId, loggedAt: date),
+      onRemoveOne: () => controller.deleteLatestMovieLog(tmdbId: tmdbId),
+      onRemoveAll: () => controller.deleteAllMovieLogs(tmdbId: tmdbId),
     );
   }
 

@@ -219,8 +219,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailsMarkPreviousTitle => 'Mark previous?';
 
   @override
-  String detailsMarkPreviousDesc(Object count, Object episode) {
-    return 'You marked Episode $episode. Do you also want to mark the $count previous unwatched episode(s) as watched?';
+  String detailsMarkPreviousDesc(Object count) {
+    return 'Do you also want to mark the $count previous unwatched episode(s) as watched?';
   }
 
   @override
@@ -432,7 +432,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailsRewatchSeries => 'Rewatch Series';
 
   @override
-  String get detailsRemoveAll => 'Remove All';
+  String get detailsRemoveAll => 'Clear Watch History';
 
   @override
   String get detailsBudget => 'Budget';

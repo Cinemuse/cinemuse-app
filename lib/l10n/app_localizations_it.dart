@@ -219,8 +219,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsMarkPreviousTitle => 'Segna precedenti?';
 
   @override
-  String detailsMarkPreviousDesc(Object count, Object episode) {
-    return 'Hai segnato l\'Episodio $episode. Vuoi segnare anche i $count episodi precedenti non visti come visti?';
+  String detailsMarkPreviousDesc(Object count) {
+    return 'Vuoi segnare anche i $count episodi precedenti non visti come visti?';
   }
 
   @override
@@ -432,7 +432,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsRewatchSeries => 'Riguarda Serie';
 
   @override
-  String get detailsRemoveAll => 'Rimuovi Tutto';
+  String get detailsRemoveAll => 'Cancella cronologia visualizzazioni';
 
   @override
   String get detailsBudget => 'Budget';

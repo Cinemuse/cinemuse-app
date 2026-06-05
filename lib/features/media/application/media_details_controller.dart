@@ -77,8 +77,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
         );
       }
 
-      // Success: Invalidate to fetch real data (optimistic state will be cleared naturally or manually)
-      _invalidateLogs(tmdbId);
+      // Success: stream will update automatically
     } catch (e) {
       // Error: Revert optimistic update
       ref
@@ -109,7 +108,6 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
         season: season,
         episode: episode,
       );
-      _invalidateLogs(tmdbId);
     } catch (e) {
       ref
           .read(seriesWatchLogsProvider(tmdbId).notifier)
@@ -139,7 +137,6 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
         season: season,
         episode: episode,
       );
-      _invalidateLogs(tmdbId);
     } catch (e) {
       ref
           .read(seriesWatchLogsProvider(tmdbId).notifier)
@@ -201,8 +198,6 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
           seriesDetails: details,
         );
       }
-
-      _invalidateLogs(tmdbId);
     } catch (e) {
       notifier.clearOptimisticUpdates();
       rethrow;
@@ -236,15 +231,6 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     // For now, let's keep it simple and just await. The debounce removal will help speed it up anyway.
 
     await _repository.deleteAllSeriesLogs(userId: userId, tmdbId: tmdbId);
-
-    _invalidateLogs(tmdbId);
-  }
-
-  /// Helper to invalidate providers and trigger real-time updates.
-  void _invalidateLogs(int tmdbId) {
-    ref.invalidate(seriesWatchLogsProvider(tmdbId));
-    // Also invalidate the map which depends on it, although Riverpod usually handles this automatically
-    ref.invalidate(watchedEpisodesMapProvider(tmdbId));
   }
 
   Future<void> ensureEpisodeWatching({
@@ -261,9 +247,6 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       season: season,
       episode: episode,
     );
-
-    // Invalidate to refresh UI
-    _invalidateLogs(tmdbId);
   }
 
   Future<void> logMovieWatch({required int tmdbId, DateTime? loggedAt}) async {
@@ -316,18 +299,12 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
 
     try {
       await _repository.deleteAllMovieLogs(userId: userId, tmdbId: tmdbId);
-      _invalidateMovieLogs(tmdbId);
     } catch (e) {
       ref
           .read(movieWatchLogsProvider(tmdbId).notifier)
           .clearOptimisticUpdates();
       rethrow;
     }
-  }
-
-  void _invalidateMovieLogs(int tmdbId) {
-    ref.invalidate(movieWatchLogsProvider(tmdbId));
-    ref.invalidate(movieWatchCountProvider(tmdbId));
   }
 }
 

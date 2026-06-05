@@ -43,6 +43,8 @@ class WatchHistory {
     this.media,
   });
 
+  bool get isCompleted => status == WatchStatus.completed;
+
   factory WatchHistory.fromJson(Map<String, dynamic> json) {
     return WatchHistory(
       userId: json['user_id'] as String,
