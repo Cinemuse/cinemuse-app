@@ -481,17 +481,43 @@ class _ListMediaCard extends ConsumerWidget {
         item.media?.releaseDate?.year.toString() ??
         item.meta['year']?.toString();
 
-    // If local title is still missing/Unknown, fetch from TMDB lazily
-    if (title.isEmpty || title == l10n.commonUnknown) {
+    // If local title is still missing/Unknown, attempt a lazy patch
+    if (title.isEmpty || title == l10n.commonUnknown || title == 'Unknown') {
+      // Use mediaItemProvider for initial render if cache exists
       final asyncMedia = ref.watch(
         mediaItemProvider((id: item.tmdbId, type: item.mediaType)),
       );
       final fetchedMedia = asyncMedia.valueOrNull;
+
       if (fetchedMedia != null) {
-        title = fetchedMedia.getLocalizedTitle(locale) ?? l10n.commonUnknown;
-        posterPath = fetchedMedia.posterPath ?? posterPath;
-        rating = fetchedMedia.voteAverage ?? rating;
-        year = fetchedMedia.releaseDate?.year.toString() ?? year;
+        final newTitle = fetchedMedia.getLocalizedTitle(locale);
+        if (newTitle != null && newTitle.isNotEmpty) {
+          title = newTitle;
+          posterPath = fetchedMedia.posterPath ?? posterPath;
+          rating = fetchedMedia.voteAverage ?? rating;
+          year = fetchedMedia.releaseDate?.year.toString() ?? year;
+        } else {
+          // The cached item itself is stale/incomplete (null titles).
+          // Force a fresh TMDB fetch to overwrite the cache permanently.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(
+              mediaDetailsProvider((
+                id: item.tmdbId.toString(),
+                type: item.mediaType.name,
+              )),
+            );
+          });
+        }
+      } else if (!asyncMedia.isLoading && !asyncMedia.hasError) {
+        // Not in cache, force fetch
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(
+            mediaDetailsProvider((
+              id: item.tmdbId.toString(),
+              type: item.mediaType.name,
+            )),
+          );
+        });
       }
     }
 

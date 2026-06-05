@@ -71,7 +71,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
         tmdbId: media.tmdbId,
         mediaType: media.mediaType.name,
         meta: {
-          'title': media.titleEn ?? media.titleIt ?? 'Unknown',
+          'title': media.getLocalizedTitle('en') ?? media.getLocalizedTitle('it') ?? 'Unknown',
           'poster_path': media.posterPath,
           'backdrop_path': media.backdropPath,
           'rating': media.voteAverage,
@@ -128,7 +128,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
       tmdbId: media.tmdbId,
       mediaType: media.mediaType.name,
       meta: {
-        'title': media.titleEn ?? media.titleIt ?? 'Unknown',
+        'title': media.getLocalizedTitle('en') ?? media.getLocalizedTitle('it') ?? 'Unknown',
         'poster_path': media.posterPath,
         'backdrop_path': media.backdropPath,
         'rating': media.voteAverage,

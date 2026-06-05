@@ -552,30 +552,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     String type,
     Map<String, dynamic> details,
   ) {
-    final translations = details['translations']?['translations'] as List?;
-    String? titleIt;
-    String? titleEn;
-    if (translations != null) {
-      for (final t in translations) {
-        final data = t['data'] as Map<String, dynamic>;
-        if (t['iso_3166_1'] == 'IT') titleIt = data['title'] ?? data['name'];
-        if (t['iso_3166_1'] == 'US') titleEn = data['title'] ?? data['name'];
-      }
-    }
-    titleEn ??= details['title'] ?? details['name'] ?? '';
-
-    final mediaItem = MediaItem(
-      tmdbId: tmdbId,
-      mediaType: MediaItem.fromString(type),
-      titleIt: titleIt,
-      titleEn: titleEn,
-      posterPath: details['poster_path'],
-      backdropPath: details['backdrop_path'],
-      voteAverage: (details['vote_average'] as num?)?.toDouble(),
-      releaseDate: DateTime.tryParse(
-        details['release_date'] ?? details['first_air_date'] ?? '',
-      ),
-      updatedAt: DateTime.now(),
+    final mediaItem = MediaItem.fromTmdbDetails(
+      {...details, 'id': tmdbId}, // Ensure id is present in details
+      MediaItem.fromString(type),
     );
 
     AddToListSheet.show(context, mediaItem);
@@ -759,8 +738,9 @@ class _SeriesEpisodesSection extends ConsumerWidget {
             child: Text(l10n.detailsErrorLoadingSeason(err.toString())),
           ),
           data: (season) {
-            if (season == null)
+            if (season == null) {
               return Center(child: Text(l10n.detailsSeasonNotFound));
+            }
             final episodes = season['episodes'] as List? ?? [];
 
             // Calculate initial scroll index (first unwatched episode)
