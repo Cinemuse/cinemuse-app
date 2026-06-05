@@ -19,7 +19,8 @@ class _LiveTimerSnackBarContent extends StatefulWidget {
   });
 
   @override
-  State<_LiveTimerSnackBarContent> createState() => _LiveTimerSnackBarContentState();
+  State<_LiveTimerSnackBarContent> createState() =>
+      _LiveTimerSnackBarContentState();
 }
 
 class _LiveTimerSnackBarContentState extends State<_LiveTimerSnackBarContent> {
@@ -71,9 +72,11 @@ class _LiveTimerSnackBarContentState extends State<_LiveTimerSnackBarContent> {
         SizedBox(width: widget.isDesktop ? 16 : 12),
         Expanded(
           child: Text(
-            widget.showTimer && _secondsLeft > 0 ? "${widget.message} ($_secondsLeft)" : widget.message,
+            widget.showTimer && _secondsLeft > 0
+                ? "${widget.message} ($_secondsLeft)"
+                : widget.message,
             style: TextStyle(
-              color: Colors.white, 
+              color: Colors.white,
               fontSize: widget.isDesktop ? 16 : 14,
               fontWeight: FontWeight.w500,
             ),
@@ -101,10 +104,10 @@ class AppSnackBar {
 
     final size = MediaQuery.sizeOf(context);
     final isDesktop = size.width > 800;
-    
+
     // Desktop: ~ 1/4th of screen, clamped between 300 and 400.
     final double snackBarWidth = (size.width * 0.25).clamp(300.0, 400.0);
-    
+
     EdgeInsetsGeometry resolvedMargin;
     if (isDesktop) {
       final double bottomMargin = margin is EdgeInsets ? margin.bottom : 24.0;
@@ -117,7 +120,11 @@ class AppSnackBar {
       resolvedMargin = margin ?? const EdgeInsets.all(16);
     }
 
-    final effectiveBgColor = backgroundColor ?? (isError ? Colors.red.shade800 : AppTheme.surface.withValues(alpha: 0.95));
+    final effectiveBgColor =
+        backgroundColor ??
+        (isError
+            ? Colors.red.shade800
+            : AppTheme.surface.withValues(alpha: 0.95));
 
     return scaffoldMessenger.showSnackBar(
       SnackBar(
@@ -141,9 +148,12 @@ class AppSnackBar {
         margin: resolvedMargin,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(isDesktop ? 16 : 12),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1.0),
+          side: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1.0,
+          ),
         ),
-        padding: isDesktop 
+        padding: isDesktop
             ? const EdgeInsets.symmetric(horizontal: 24, vertical: 12)
             : const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         elevation: 12,

@@ -25,6 +25,8 @@ class ErrorService extends Notifier<UserFriendlyError?> {
   }
 }
 
-final errorServiceProvider = NotifierProvider<ErrorService, UserFriendlyError?>(() {
-  return ErrorService();
-});
+final errorServiceProvider = NotifierProvider<ErrorService, UserFriendlyError?>(
+  () {
+    return ErrorService();
+  },
+);

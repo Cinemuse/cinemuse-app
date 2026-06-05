@@ -44,12 +44,16 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   SliderOverlayType _activeOverlay = SliderOverlayType.none;
   bool _settingsOpen = false;
 
-  void _openSettings(CinemaPlayerState state, PlayerParams params, {SettingsView initialView = SettingsView.main}) {
+  void _openSettings(
+    CinemaPlayerState state,
+    PlayerParams params, {
+    SettingsView initialView = SettingsView.main,
+  }) {
     if (_settingsOpen) return;
     setState(() => _settingsOpen = true);
     PlayerSettingsBottomSheet.show(
-      context, 
-      state, 
+      context,
+      state,
       params,
       (type) => setState(() => _activeOverlay = type),
       initialView: initialView,
@@ -83,7 +87,8 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       startPosition: widget.startPosition,
     );
     final playerState = ref.watch(playerControllerProvider(params));
-    final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+    final isPortrait =
+        MediaQuery.of(context).orientation == Orientation.portrait;
 
     ref.listen<AsyncValue<CinemaPlayerState>>(
       playerControllerProvider(params),
@@ -106,7 +111,9 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     // Register the notification callback once so auto-fallback snackbars surface.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(playerControllerProvider(params).notifier).onNotification = (message) {
+      ref
+          .read(playerControllerProvider(params).notifier)
+          .onNotification = (message) {
         if (!mounted) return;
         AppSnackBar.show(
           context,
@@ -133,14 +140,17 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
               onBackPressed: () => Navigator.of(context).pop(),
             );
           }
-          
+
           final localSettings = ref.watch(localSettingsProvider);
-          final subtitleStyle = state.customSubtitleStyle ?? localSettings.subtitleStyle;
+          final subtitleStyle =
+              state.customSubtitleStyle ?? localSettings.subtitleStyle;
 
           return AnimatedAlign(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,
-            alignment: (_settingsOpen && isPortrait) ? Alignment.topCenter : Alignment.center,
+            alignment: (_settingsOpen && isPortrait)
+                ? Alignment.topCenter
+                : Alignment.center,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutCubic,
@@ -154,8 +164,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                       : MediaQuery.of(context).size.height;
 
                   // Base padding of 24, plus scaled height minus offset
-                  final calculatedPadding = 24.0 + (videoHeight - 80.0) * subtitleStyle.verticalPosition;
-                  
+                  final calculatedPadding =
+                      24.0 +
+                      (videoHeight - 80.0) * subtitleStyle.verticalPosition;
+
                   final subtitleConfig = SubtitleViewConfiguration(
                     style: TextStyle(
                       fontSize: subtitleStyle.fontSize,
@@ -163,7 +175,11 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                       backgroundColor: subtitleStyle.backgroundColor,
                       shadows: [
                         if (subtitleStyle.backgroundColor == Colors.transparent)
-                          const Shadow(blurRadius: 2.0, color: Colors.black, offset: Offset(0, 2)),
+                          const Shadow(
+                            blurRadius: 2.0,
+                            color: Colors.black,
+                            offset: Offset(0, 2),
+                          ),
                       ],
                     ),
                     padding: EdgeInsets.fromLTRB(24, 24, 24, calculatedPadding),
@@ -181,7 +197,9 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                         Positioned.fill(
                           child: IgnorePointer(
                             child: SubtitleView(
-                              key: ValueKey('${subtitleStyle.verticalPosition}_${subtitleStyle.fontSize}_${subtitleStyle.color}'),
+                              key: ValueKey(
+                                '${subtitleStyle.verticalPosition}_${subtitleStyle.fontSize}_${subtitleStyle.color}',
+                              ),
                               controller: state.controller,
                               configuration: subtitleConfig,
                             ),
@@ -196,18 +214,35 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                           onOverlayRequested: (type) {
                             setState(() => _activeOverlay = type);
                           },
-                          onNextEpisode: state.nextEpisode != null ? () async {
-                            // Ensure the current episode is marked as completed if threshold is met
-                            // and cleanup any stale watching entries before navigating
-                            await ref.read(playerControllerProvider(params).notifier)
-                                .historyManager
-                                .markCurrentEpisodeCompleted(
-                                  position: state.controller.player.state.position.inSeconds,
-                                  duration: state.controller.player.state.duration.inSeconds,
-                                );
-                                
-                            _navigateToNextEpisode(state.nextEpisode!);
-                          } : null,
+                          onNextEpisode: state.nextEpisode != null
+                              ? () async {
+                                  // Ensure the current episode is marked as completed if threshold is met
+                                  // and cleanup any stale watching entries before navigating
+                                  await ref
+                                      .read(
+                                        playerControllerProvider(
+                                          params,
+                                        ).notifier,
+                                      )
+                                      .historyManager
+                                      .markCurrentEpisodeCompleted(
+                                        position: state
+                                            .controller
+                                            .player
+                                            .state
+                                            .position
+                                            .inSeconds,
+                                        duration: state
+                                            .controller
+                                            .player
+                                            .state
+                                            .duration
+                                            .inSeconds,
+                                      );
+
+                                  _navigateToNextEpisode(state.nextEpisode!);
+                                }
+                              : null,
                         ),
                         if (_activeOverlay != SliderOverlayType.none)
                           SubtitleSliderOverlay(
@@ -215,10 +250,16 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                             params: params,
                             state: state,
                             onClose: (wasSaved) {
-                              setState(() => _activeOverlay = SliderOverlayType.none);
+                              setState(
+                                () => _activeOverlay = SliderOverlayType.none,
+                              );
                               if (wasSaved) {
                                 // Return to appearance settings menu
-                                _openSettings(state, params, initialView: SettingsView.appearance);
+                                _openSettings(
+                                  state,
+                                  params,
+                                  initialView: SettingsView.appearance,
+                                );
                               }
                             },
                           ),
@@ -234,10 +275,15 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error, color: Theme.of(context).colorScheme.error, size: 48),
+              Icon(
+                Icons.error,
+                color: Theme.of(context).colorScheme.error,
+                size: 48,
+              ),
               const SizedBox(height: 16),
               Text(
-                widget.errorMessage ?? AppLocalizations.of(context)!.playerAllSourcesExhausted,
+                widget.errorMessage ??
+                    AppLocalizations.of(context)!.playerAllSourcesExhausted,
                 style: const TextStyle(color: AppTheme.textWhite),
                 textAlign: TextAlign.center,
               ),
@@ -250,14 +296,20 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.textWhite,
                       side: const BorderSide(color: Colors.white54),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 24,
+                      ),
                     ),
                     child: Text(AppLocalizations.of(context)!.commonGoBack),
                   ),
                   const SizedBox(width: 16),
                   ElevatedButton(
-                    onPressed: () => ref.refresh(playerControllerProvider(params)),
+                    onPressed: () =>
+                        ref.refresh(playerControllerProvider(params)),
                     child: Text(AppLocalizations.of(context)!.commonRetry),
                   ),
                 ],
@@ -272,7 +324,8 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
               const CircularProgressIndicator(),
               const SizedBox(height: 16),
               Text(
-                widget.loadingMessage ?? AppLocalizations.of(context)!.playerResolving,
+                widget.loadingMessage ??
+                    AppLocalizations.of(context)!.playerResolving,
                 style: const TextStyle(color: AppTheme.textMuted),
               ),
             ],
@@ -290,7 +343,8 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           const CircularProgressIndicator(),
           const SizedBox(height: 24),
           Text(
-            widget.loadingMessage ?? AppLocalizations.of(context)!.playerResolving,
+            widget.loadingMessage ??
+                AppLocalizations.of(context)!.playerResolving,
             style: const TextStyle(color: AppTheme.textMuted, fontSize: 16),
           ),
           if (state.providerStatuses.isNotEmpty) ...[
@@ -303,11 +357,12 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                   ...state.providerStatuses.map((s) {
                     final isSearching = s.status == ProviderStatus.searching;
                     final isFailed = s.status == ProviderStatus.failed;
-                    
+
                     Color iconColor = Colors.white54;
                     IconData iconData = Icons.search;
-                    String trailingText = '${(s.timeElapsed.inMilliseconds / 1000).toStringAsFixed(1)}s';
-                    
+                    String trailingText =
+                        '${(s.timeElapsed.inMilliseconds / 1000).toStringAsFixed(1)}s';
+
                     if (!isSearching) {
                       if (isFailed) {
                         iconData = Icons.error_outline;
@@ -316,19 +371,23 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                       } else {
                         iconData = Icons.check_circle_outline;
                         iconColor = Colors.greenAccent;
-                        trailingText = '${s.resultsCount} results ($trailingText)';
+                        trailingText =
+                            '${s.resultsCount} results ($trailingText)';
                       }
                     }
-                    
+
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4.0),
                       child: Row(
                         children: [
                           if (isSearching)
                             const SizedBox(
-                              width: 16, 
-                              height: 16, 
-                              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accent)
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppTheme.accent,
+                              ),
                             )
                           else
                             Icon(iconData, size: 16, color: iconColor),
@@ -337,14 +396,21 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                             child: Text(
                               s.providerName,
                               style: TextStyle(
-                                color: isSearching ? Colors.white : Colors.white70,
-                                fontWeight: isSearching ? FontWeight.bold : FontWeight.normal,
+                                color: isSearching
+                                    ? Colors.white
+                                    : Colors.white70,
+                                fontWeight: isSearching
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                               ),
                             ),
                           ),
                           Text(
                             trailingText,
-                            style: const TextStyle(color: Colors.white54, fontSize: 12),
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -354,7 +420,9 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                     const SizedBox(height: 24),
                     TextButton.icon(
                       onPressed: () {
-                        ref.read(playerControllerProvider(params).notifier).skipResolution();
+                        ref
+                            .read(playerControllerProvider(params).notifier)
+                            .skipResolution();
                       },
                       icon: const Icon(Icons.skip_next, color: AppTheme.accent),
                       label: Text(
@@ -364,16 +432,18 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                           shadows: [
-                            Shadow(
-                              color: AppTheme.accentGlow,
-                              blurRadius: 10,
-                            ),
+                            Shadow(color: AppTheme.accentGlow, blurRadius: 10),
                           ],
                         ),
                       ),
                       style: TextButton.styleFrom(
-                        backgroundColor: AppTheme.secondary.withValues(alpha: 0.6),
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                        backgroundColor: AppTheme.secondary.withValues(
+                          alpha: 0.6,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 20,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: const BorderSide(color: AppTheme.border),
@@ -399,8 +469,8 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     final maxElapsedSeconds = state.providerStatuses.isEmpty
         ? 0
         : state.providerStatuses
-            .map((s) => s.timeElapsed.inSeconds)
-            .reduce((a, b) => a > b ? a : b);
+              .map((s) => s.timeElapsed.inSeconds)
+              .reduce((a, b) => a > b ? a : b);
     return maxElapsedSeconds >= 15;
   }
 }

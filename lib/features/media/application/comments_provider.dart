@@ -14,13 +14,15 @@ abstract class CommentsRequest extends Equatable {
 class SeriesCommentsRequest extends CommentsRequest {
   final int tvdbId;
   const SeriesCommentsRequest(this.tvdbId);
-  @override List<Object?> get props => [tvdbId];
+  @override
+  List<Object?> get props => [tvdbId];
 }
 
 class MovieCommentsRequest extends CommentsRequest {
   final String imdbId;
   const MovieCommentsRequest(this.imdbId);
-  @override List<Object?> get props => [imdbId];
+  @override
+  List<Object?> get props => [imdbId];
 }
 
 class EpisodeCommentsRequest extends CommentsRequest {
@@ -28,7 +30,8 @@ class EpisodeCommentsRequest extends CommentsRequest {
   final int season;
   final int episode;
   const EpisodeCommentsRequest(this.tvdbShowId, this.season, this.episode);
-  @override List<Object?> get props => [tvdbShowId, season, episode];
+  @override
+  List<Object?> get props => [tvdbShowId, season, episode];
 }
 
 class TvTimeCommentsState {
@@ -89,9 +92,15 @@ class TvTimeCommentsNotifier
       // We pass limit=9999 just in case, though TVTime currently ignores it and returns all.
       // We also don't rely on their sort since we do it client-side.
       if (request is SeriesCommentsRequest) {
-        fetchedComments = await service.fetchSeriesComments(request.tvdbId, limit: 9999);
+        fetchedComments = await service.fetchSeriesComments(
+          request.tvdbId,
+          limit: 9999,
+        );
       } else if (request is MovieCommentsRequest) {
-        fetchedComments = await service.fetchMovieComments(request.imdbId, limit: 9999);
+        fetchedComments = await service.fetchMovieComments(
+          request.imdbId,
+          limit: 9999,
+        );
       } else if (request is EpisodeCommentsRequest) {
         fetchedComments = await service.fetchEpisodeComments(
           request.tvdbShowId,
@@ -131,7 +140,9 @@ class TvTimeCommentsNotifier
         filtered = filtered.where((c) => c.language == 'it').toList();
         break;
       case CommentLanguageFilter.englishAndItalian:
-        filtered = filtered.where((c) => c.language == 'en' || c.language == 'it').toList();
+        filtered = filtered
+            .where((c) => c.language == 'en' || c.language == 'it')
+            .toList();
         break;
       case CommentLanguageFilter.unfiltered:
         break;
@@ -155,7 +166,7 @@ class TvTimeCommentsNotifier
   }
 }
 
-final tvTimeCommentsProvider = NotifierProvider.autoDispose.family<
-    TvTimeCommentsNotifier, TvTimeCommentsState, CommentsRequest>(
-  TvTimeCommentsNotifier.new,
-);
+final tvTimeCommentsProvider = NotifierProvider.autoDispose
+    .family<TvTimeCommentsNotifier, TvTimeCommentsState, CommentsRequest>(
+      TvTimeCommentsNotifier.new,
+    );

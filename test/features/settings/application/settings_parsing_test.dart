@@ -7,49 +7,55 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('UserSettings Parsing', () {
-    test('UserSettings.fromProfile handles installedAddons as List of Maps', () {
-      final profile = Profile(
-        id: 'user1',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        preferences: {
-          'installedAddons': [
-            {
-              'id': 'torrentio',
-              'name': 'Torrentio',
-              'baseUrl': 'https://torrentio.strem.io',
-              'enabled': true,
-            }
-          ],
-        },
-      );
+    test(
+      'UserSettings.fromProfile handles installedAddons as List of Maps',
+      () {
+        final profile = Profile(
+          id: 'user1',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          preferences: {
+            'installedAddons': [
+              {
+                'id': 'torrentio',
+                'name': 'Torrentio',
+                'baseUrl': 'https://torrentio.strem.io',
+                'enabled': true,
+              },
+            ],
+          },
+        );
 
-      final settings = UserSettings.fromProfile(profile);
-      expect(settings.installedAddons.length, 1);
-      expect(settings.installedAddons[0].id, 'torrentio');
-    });
+        final settings = UserSettings.fromProfile(profile);
+        expect(settings.installedAddons.length, 1);
+        expect(settings.installedAddons[0].id, 'torrentio');
+      },
+    );
 
-    test('UserSettings.fromProfile handles installedAddons as List of JSON Strings', () {
-      final profile = Profile(
-        id: 'user1',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        preferences: {
-          'installedAddons': [
-            jsonEncode({
-              'id': 'torrentio',
-              'name': 'Torrentio',
-              'baseUrl': 'https://torrentio.strem.io',
-              'enabled': true,
-            })
-          ],
-        },
-      );
+    test(
+      'UserSettings.fromProfile handles installedAddons as List of JSON Strings',
+      () {
+        final profile = Profile(
+          id: 'user1',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          preferences: {
+            'installedAddons': [
+              jsonEncode({
+                'id': 'torrentio',
+                'name': 'Torrentio',
+                'baseUrl': 'https://torrentio.strem.io',
+                'enabled': true,
+              }),
+            ],
+          },
+        );
 
-      final settings = UserSettings.fromProfile(profile);
-      expect(settings.installedAddons.length, 1);
-      expect(settings.installedAddons[0].id, 'torrentio');
-    });
+        final settings = UserSettings.fromProfile(profile);
+        expect(settings.installedAddons.length, 1);
+        expect(settings.installedAddons[0].id, 'torrentio');
+      },
+    );
 
     test('UserSettings.fromProfile handles mixed Maps and Strings', () {
       final profile = Profile(
@@ -69,7 +75,7 @@ void main() {
               'name': 'String Addon',
               'baseUrl': 'https://string.io',
               'enabled': true,
-            })
+            }),
           ],
         },
       );
@@ -77,7 +83,10 @@ void main() {
       final settings = UserSettings.fromProfile(profile);
       expect(settings.installedAddons.length, 2);
       expect(settings.installedAddons.any((a) => a.id == 'map_addon'), isTrue);
-      expect(settings.installedAddons.any((a) => a.id == 'string_addon'), isTrue);
+      expect(
+        settings.installedAddons.any((a) => a.id == 'string_addon'),
+        isTrue,
+      );
     });
 
     test('StremioAddon.fromJson handles shorthand resources and catalogs', () {
@@ -90,15 +99,15 @@ void main() {
       };
 
       final addon = StremioAddon.fromJson(json);
-      
+
       expect(addon.resources.length, 2);
       expect(addon.resources[0]['name'], 'stream');
       expect(addon.resources[1]['name'], 'meta');
-      
+
       expect(addon.catalogs.length, 2);
       expect(addon.catalogs[0]['name'], 'movie.top');
       expect(addon.catalogs[1]['name'], 'tv.top');
-      
+
       expect(addon.isStreamingAddon, isTrue);
     });
 
@@ -134,17 +143,21 @@ void main() {
 
   group('UrlUtils Tests', () {
     test('splitStremioUrl splits correctly', () {
-      const url = 'https://torrentio.strem.fun/config|key=val/manifest.json?apikey=abc';
+      const url =
+          'https://torrentio.strem.fun/config|key=val/manifest.json?apikey=abc';
       final parts = UrlUtils.splitStremioUrl(url);
-      
-      expect(parts.baseUrl, equals('https://torrentio.strem.fun/config|key=val'));
+
+      expect(
+        parts.baseUrl,
+        equals('https://torrentio.strem.fun/config|key=val'),
+      );
       expect(parts.queryParams, equals('apikey=abc'));
     });
 
     test('splitStremioUrl handles stremio:// protocol', () {
       const url = 'stremio://torrentio.strem.fun/manifest.json';
       final parts = UrlUtils.splitStremioUrl(url);
-      
+
       expect(parts.baseUrl, equals('https://torrentio.strem.fun'));
       expect(parts.queryParams, isNull);
     });

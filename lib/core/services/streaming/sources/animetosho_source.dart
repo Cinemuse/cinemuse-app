@@ -22,16 +22,20 @@ class AnimeToshoSource extends BaseSource {
   Future<List<StreamCandidate>> search(StreamSearchContext context) async {
     // Only search AnimeTosho if it's actually an anime and we have an AniDB ID
     if (!context.isAnime || context.mapping?.anidbId == null) {
-      debugPrint('AnimeToshoSource: Skipping search. isAnime: ${context.isAnime}, anidbId: ${context.mapping?.anidbId}');
+      debugPrint(
+        'AnimeToshoSource: Skipping search. isAnime: ${context.isAnime}, anidbId: ${context.mapping?.anidbId}',
+      );
       return [];
     }
 
     final anidbId = context.mapping!.anidbId;
     // Treat 0 as invalid (movies get mapped with absEp=0 from fallback)
-    final absoluteEpisode = (context.mapping?.absoluteEpisode != null && context.mapping!.absoluteEpisode! > 0)
+    final absoluteEpisode =
+        (context.mapping?.absoluteEpisode != null &&
+            context.mapping!.absoluteEpisode! > 0)
         ? context.mapping!.absoluteEpisode
         : null;
-    
+
     // We perform two searches in parallel:
     // 1. Specific absolute episode (e.g., "05")
     // 2. Batches/Complete releases
@@ -48,21 +52,12 @@ class AnimeToshoSource extends BaseSource {
       searchTasks.add(_fetch(epParams, context, absoluteEpisode));
     } else {
       // General series search if no specific episode
-      final seriesParams = {
-        'qx': 1,
-        'only_tor': 1,
-        'aids': anidbId,
-      };
+      final seriesParams = {'qx': 1, 'only_tor': 1, 'aids': anidbId};
       searchTasks.add(_fetch(seriesParams, context, null));
     }
 
     // Batch search
-    final batchParams = {
-      'qx': 1,
-      'only_tor': 1,
-      'aids': anidbId,
-      'q': 'batch',
-    };
+    final batchParams = {'qx': 1, 'only_tor': 1, 'aids': anidbId, 'q': 'batch'};
     searchTasks.add(_fetch(batchParams, context, absoluteEpisode));
 
     // Complete series search (often distinct from "batch")
@@ -77,7 +72,7 @@ class AnimeToshoSource extends BaseSource {
     try {
       final results = await Future.wait(searchTasks);
       final allCandidates = results.expand((x) => x).toList();
-      
+
       // Deduplicate by infoHash
       final uniqueMap = <String, StreamCandidate>{};
       for (final c in allCandidates) {
@@ -85,7 +80,7 @@ class AnimeToshoSource extends BaseSource {
           uniqueMap[c.infoHash] = c;
         }
       }
-      
+
       return uniqueMap.values.toList();
     } catch (e) {
       debugPrint('AnimeToshoSource: Search failed: $e');
@@ -93,10 +88,14 @@ class AnimeToshoSource extends BaseSource {
     }
   }
 
-  Future<List<StreamCandidate>> _fetch(Map<String, dynamic> params, StreamSearchContext context, int? absoluteEpisode) async {
+  Future<List<StreamCandidate>> _fetch(
+    Map<String, dynamic> params,
+    StreamSearchContext context,
+    int? absoluteEpisode,
+  ) async {
     try {
       final response = await _dio.get(_baseUrl, queryParameters: params);
-      
+
       if (response.statusCode != 200 || response.data == null) {
         return [];
       }
@@ -120,24 +119,26 @@ class AnimeToshoSource extends BaseSource {
             targetSeason: context.season,
             targetEpisode: context.episode,
           )) {
-            continue; 
+            continue;
           }
         }
 
         final metadata = StreamParser.parse(title);
 
-        candidates.add(StreamCandidate(
-          kind: StreamSourceKind.vod,
-          title: title,
-          infoHash: infoHash,
-          magnet: magnet,
-          seeds: seeds,
-          provider: name,
-          absoluteEpisode: absoluteEpisode,
-          metadata: metadata,
-          sizeInBytes: sizeBytes,
-          resolution: metadata.video.resolution.label,
-        ));
+        candidates.add(
+          StreamCandidate(
+            kind: StreamSourceKind.vod,
+            title: title,
+            infoHash: infoHash,
+            magnet: magnet,
+            seeds: seeds,
+            provider: name,
+            absoluteEpisode: absoluteEpisode,
+            metadata: metadata,
+            sizeInBytes: sizeBytes,
+            resolution: metadata.video.resolution.label,
+          ),
+        );
       }
 
       return candidates;

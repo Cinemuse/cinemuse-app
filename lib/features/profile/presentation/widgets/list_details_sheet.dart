@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/constants/app_constants.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
@@ -46,8 +47,9 @@ class ListDetailsSheet extends ConsumerStatefulWidget {
 class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
   bool _isEditing = false;
 
-  bool _isSystemList(UserList list) => list.type == ListType.watchlist || list.type == ListType.favorites;
-  
+  bool _isSystemList(UserList list) =>
+      list.type == ListType.watchlist || list.type == ListType.favorites;
+
   String _displayTitle(UserList list) {
     final l10n = AppLocalizations.of(context)!;
     if (list.type == ListType.watchlist) return l10n.listWatchLater;
@@ -59,7 +61,9 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
     final l10n = AppLocalizations.of(context)!;
     if (list.type == ListType.watchlist) return l10n.listYourQueue;
     if (list.type == ListType.favorites) return l10n.listCuratedPicks;
-    return _descController.text.isEmpty ? (list.description ?? '') : _descController.text;
+    return _descController.text.isEmpty
+        ? (list.description ?? '')
+        : _descController.text;
   }
 
   late TextEditingController _titleController;
@@ -71,7 +75,9 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.list.name);
-    _descController = TextEditingController(text: widget.list.description ?? '');
+    _descController = TextEditingController(
+      text: widget.list.description ?? '',
+    );
     _titleFocus = FocusNode();
     _descFocus = FocusNode();
   }
@@ -89,8 +95,12 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
     final l10n = AppLocalizations.of(context)!;
     if (widget.onUpdate != null) {
       widget.onUpdate!(
-        _titleController.text.trim().isEmpty ? l10n.listUntitled : _titleController.text.trim(),
-        _descController.text.trim().isEmpty ? null : _descController.text.trim(),
+        _titleController.text.trim().isEmpty
+            ? l10n.listUntitled
+            : _titleController.text.trim(),
+        _descController.text.trim().isEmpty
+            ? null
+            : _descController.text.trim(),
       );
     }
     setState(() {
@@ -104,8 +114,14 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
       return TextField(
         controller: _titleController,
         focusNode: _titleFocus,
-        maxLength: 50,
-        buildCounter: (context, {required currentLength, required isFocused, required maxLength}) => null,
+        maxLength: AppConstants.maxListNameLength,
+        buildCounter:
+            (
+              context, {
+              required currentLength,
+              required isFocused,
+              required maxLength,
+            }) => null,
         style: const TextStyle(
           color: Colors.white,
           fontSize: 24,
@@ -144,23 +160,32 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
         padding: const EdgeInsets.only(left: 16),
         decoration: BoxDecoration(
           border: Border(
-            left: BorderSide(color: AppTheme.accent.withValues(alpha: 0.5), width: 2),
+            left: BorderSide(
+              color: AppTheme.accent.withValues(alpha: 0.5),
+              width: 2,
+            ),
           ),
         ),
         child: TextField(
           controller: _descController,
           focusNode: _descFocus,
           maxLines: null,
-          maxLength: 1000,
-          buildCounter: (context, {required currentLength, required isFocused, required maxLength}) {
-            return Text(
-              '$currentLength / $maxLength',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.4),
-                fontSize: 11,
-              ),
-            );
-          },
+          maxLength: AppConstants.maxListDescriptionLength,
+          buildCounter:
+              (
+                context, {
+                required currentLength,
+                required isFocused,
+                required maxLength,
+              }) {
+                return Text(
+                  '$currentLength / $maxLength',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.4),
+                    fontSize: 11,
+                  ),
+                );
+              },
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.7),
             fontSize: 14,
@@ -181,7 +206,10 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
       );
     }
 
-    final hasDescription = _isSystemList(list) || _descController.text.isNotEmpty || (list.description?.isNotEmpty ?? false);
+    final hasDescription =
+        _isSystemList(list) ||
+        _descController.text.isNotEmpty ||
+        (list.description?.isNotEmpty ?? false);
 
     if (hasDescription) {
       return Container(
@@ -189,7 +217,10 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
         padding: const EdgeInsets.only(left: 16),
         decoration: BoxDecoration(
           border: Border(
-            left: BorderSide(color: AppTheme.accent.withValues(alpha: 0.5), width: 2),
+            left: BorderSide(
+              color: AppTheme.accent.withValues(alpha: 0.5),
+              width: 2,
+            ),
           ),
         ),
         child: Row(
@@ -220,20 +251,28 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
 
     // Watch the lists provider to reflect item removals immediately
     final userListsState = ref.watch(userListsProvider);
-    final currentList = userListsState.valueOrNull?.firstWhere(
-      (l) => l.id == widget.list.id,
-      orElse: () => widget.list,
-    ) ?? widget.list;
+    final currentList =
+        userListsState.valueOrNull?.firstWhere(
+          (l) => l.id == widget.list.id,
+          orElse: () => widget.list,
+        ) ??
+        widget.list;
 
     // Determine icon and color based on list type
-    final isSystemList = currentList.type == ListType.watchlist || currentList.type == ListType.favorites;
-    final icon = currentList.type == ListType.watchlist 
-        ? LucideIcons.bookmark 
-        : (currentList.type == ListType.favorites ? LucideIcons.heart : LucideIcons.list);
-    
-    final iconColor = currentList.type == ListType.watchlist 
-        ? AppTheme.watchlist 
-        : (currentList.type == ListType.favorites ? AppTheme.favorites : Colors.white);
+    final isSystemList =
+        currentList.type == ListType.watchlist ||
+        currentList.type == ListType.favorites;
+    final icon = currentList.type == ListType.watchlist
+        ? LucideIcons.bookmark
+        : (currentList.type == ListType.favorites
+              ? LucideIcons.heart
+              : LucideIcons.list);
+
+    final iconColor = currentList.type == ListType.watchlist
+        ? AppTheme.watchlist
+        : (currentList.type == ListType.favorites
+              ? AppTheme.favorites
+              : Colors.white);
 
     return AppBottomSheet(
       backgroundColor: AppTheme.surface.withValues(alpha: 0.9),
@@ -278,13 +317,22 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                       if (_isEditing)
                         IconButton(
                           onPressed: _saveChanges,
-                          icon: const Icon(LucideIcons.check, color: AppTheme.accent, size: 28),
+                          icon: const Icon(
+                            LucideIcons.check,
+                            color: AppTheme.accent,
+                            size: 28,
+                          ),
                         )
                       else
                         PopupMenuButton<String>(
-                          icon: const Icon(LucideIcons.moreVertical, color: Colors.white54),
+                          icon: const Icon(
+                            LucideIcons.moreVertical,
+                            color: Colors.white54,
+                          ),
                           color: AppTheme.surface,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           onSelected: (value) {
                             if (value == 'edit') {
                               setState(() => _isEditing = true);
@@ -300,9 +348,16 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                               value: 'edit',
                               child: Row(
                                 children: [
-                                  const Icon(LucideIcons.edit3, size: 18, color: Colors.white),
+                                  const Icon(
+                                    LucideIcons.edit3,
+                                    size: 18,
+                                    color: Colors.white,
+                                  ),
                                   const SizedBox(width: 12),
-                                  Text(l10n.detailsEditList, style: const TextStyle(color: Colors.white)),
+                                  Text(
+                                    l10n.detailsEditList,
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
                                 ],
                               ),
                             ),
@@ -311,9 +366,18 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                                 value: 'delete',
                                 child: Row(
                                   children: [
-                                    const Icon(LucideIcons.trash2, size: 18, color: Colors.redAccent),
+                                    const Icon(
+                                      LucideIcons.trash2,
+                                      size: 18,
+                                      color: Colors.redAccent,
+                                    ),
                                     const SizedBox(width: 12),
-                                    Text(l10n.detailsDeleteList, style: const TextStyle(color: Colors.redAccent)),
+                                    Text(
+                                      l10n.detailsDeleteList,
+                                      style: const TextStyle(
+                                        color: Colors.redAccent,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -326,28 +390,40 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
               ],
             ),
           ),
-          
+
           const Divider(color: Colors.white10, height: 1),
 
           // Content
           Expanded(
             child: currentList.items.isEmpty
                 ? Padding(
-                    padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.paddingOf(context).bottom,
+                    ),
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(icon, size: 64, color: iconColor.withValues(alpha: 0.2)),
+                          Icon(
+                            icon,
+                            size: 64,
+                            color: iconColor.withValues(alpha: 0.2),
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             l10n.listEmptyTitle,
-                            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             l10n.listEmptyMessage,
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.5),
+                            ),
                           ),
                         ],
                       ),
@@ -355,17 +431,18 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                   )
                 : GridView.builder(
                     padding: EdgeInsets.fromLTRB(
-                      24, 
-                      24, 
-                      24, 
+                      24,
+                      24,
+                      24,
                       24 + MediaQuery.paddingOf(context).bottom,
                     ),
-                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 180,
-                      childAspectRatio: 0.65,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 180,
+                          childAspectRatio: 0.65,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                        ),
                     itemCount: currentList.items.length,
                     itemBuilder: (context, index) {
                       return _ListMediaCard(
@@ -385,25 +462,30 @@ class _ListMediaCard extends ConsumerWidget {
   final UserListItem item;
   final String listId;
 
-  const _ListMediaCard({
-    required this.item,
-    required this.listId,
-  });
+  const _ListMediaCard({required this.item, required this.listId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = Localizations.localeOf(context).languageCode;
     final l10n = AppLocalizations.of(context)!;
-    
+
     // Initial local fallback values
-    String title = item.media?.getLocalizedTitle(locale) ?? (item.meta['title'] as String? ?? l10n.commonUnknown);
-    String? posterPath = item.media?.posterPath ?? (item.meta['poster_path'] as String?);
-    double? rating = item.media?.voteAverage ?? (item.meta['rating'] as num?)?.toDouble();
-    String? year = item.media?.releaseDate?.year.toString() ?? item.meta['year']?.toString();
+    String title =
+        item.media?.getLocalizedTitle(locale) ??
+        (item.meta['title'] as String? ?? l10n.commonUnknown);
+    String? posterPath =
+        item.media?.posterPath ?? (item.meta['poster_path'] as String?);
+    double? rating =
+        item.media?.voteAverage ?? (item.meta['rating'] as num?)?.toDouble();
+    String? year =
+        item.media?.releaseDate?.year.toString() ??
+        item.meta['year']?.toString();
 
     // If local title is still missing/Unknown, fetch from TMDB lazily
     if (title.isEmpty || title == l10n.commonUnknown) {
-      final asyncMedia = ref.watch(mediaItemProvider((id: item.tmdbId, type: item.mediaType)));
+      final asyncMedia = ref.watch(
+        mediaItemProvider((id: item.tmdbId, type: item.mediaType)),
+      );
       final fetchedMedia = asyncMedia.valueOrNull;
       if (fetchedMedia != null) {
         title = fetchedMedia.getLocalizedTitle(locale) ?? l10n.commonUnknown;
@@ -421,11 +503,9 @@ class _ListMediaCard extends ConsumerWidget {
       tmdbId: item.tmdbId,
       mediaType: item.mediaType,
       onRemoveFromList: () {
-        ref.read(userListsProvider.notifier).removeItemFromList(
-          listId, 
-          item.tmdbId, 
-          item.mediaType,
-        );
+        ref
+            .read(userListsProvider.notifier)
+            .removeItemFromList(listId, item.tmdbId, item.mediaType);
       },
       onTap: () {
         Navigator.of(context).push(

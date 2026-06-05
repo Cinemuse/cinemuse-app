@@ -26,7 +26,9 @@ class SettingToggle extends StatelessWidget {
           width: 44,
           height: 22,
           decoration: BoxDecoration(
-            color: value ? AppTheme.accent : Colors.white.withValues(alpha: 0.1),
+            color: value
+                ? AppTheme.accent
+                : Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(11),
           ),
           child: Stack(
@@ -73,10 +75,7 @@ class SettingToggle extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     description!,
-                    style: TextStyle(
-                      color: AppTheme.textMuted,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
                   ),
                 ],
               ],

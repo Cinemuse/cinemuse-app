@@ -63,9 +63,9 @@ class SubtitleAppearanceForm extends StatelessWidget {
           valueLabelBuilder: (val) => '${(val * 100).toInt()}%',
           onChanged: (val) {
             final newAlpha = (val * 255).round();
-            onChanged(style.copyWith(
-              backgroundColor: Colors.black.withAlpha(newAlpha),
-            ));
+            onChanged(
+              style.copyWith(backgroundColor: Colors.black.withAlpha(newAlpha)),
+            );
           },
         ),
 
@@ -99,7 +99,9 @@ class _SettingsSliderTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final valueText = valueLabelBuilder != null ? valueLabelBuilder!(value) : value.toInt().toString();
+    final valueText = valueLabelBuilder != null
+        ? valueLabelBuilder!(value)
+        : value.toInt().toString();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -110,7 +112,13 @@ class _SettingsSliderTile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(label, style: DesktopTypography.subtitle),
-              Text(valueText, style: DesktopTypography.bodyPrimary.copyWith(color: AppTheme.accent, fontWeight: FontWeight.bold)),
+              Text(
+                valueText,
+                style: DesktopTypography.bodyPrimary.copyWith(
+                  color: AppTheme.accent,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
           SliderTheme(
@@ -149,7 +157,7 @@ class _PositionSliderTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final percentage = (value * 100).toInt();
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
@@ -159,7 +167,13 @@ class _PositionSliderTile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(label, style: DesktopTypography.subtitle),
-              Text('$percentage%', style: DesktopTypography.bodyPrimary.copyWith(color: AppTheme.accent, fontWeight: FontWeight.bold)),
+              Text(
+                '$percentage%',
+                style: DesktopTypography.bodyPrimary.copyWith(
+                  color: AppTheme.accent,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
           SliderTheme(
@@ -170,7 +184,9 @@ class _PositionSliderTile extends StatelessWidget {
               activeTrackColor: AppTheme.accent,
               inactiveTrackColor: Colors.white10,
               thumbColor: AppTheme.accent,
-              tickMarkShape: const RoundSliderTickMarkShape(tickMarkRadius: 1.5),
+              tickMarkShape: const RoundSliderTickMarkShape(
+                tickMarkRadius: 1.5,
+              ),
               activeTickMarkColor: AppTheme.accent.withAlpha(128),
               inactiveTickMarkColor: Colors.white24,
             ),
@@ -188,7 +204,10 @@ class _PositionSliderTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _AnchorLabel(label: 'BOTTOM', isSelected: value < 0.2),
-                _AnchorLabel(label: 'MIDDLE', isSelected: value > 0.4 && value < 0.6),
+                _AnchorLabel(
+                  label: 'MIDDLE',
+                  isSelected: value > 0.4 && value < 0.6,
+                ),
                 _AnchorLabel(label: 'TOP', isSelected: value > 0.8),
               ],
             ),
@@ -251,7 +270,7 @@ class _ColorSelectorTile extends StatelessWidget {
                 final color = colors[index];
                 // Handle both direct reference and hex match for consistency
                 final isSelected = color.toARGB32() == selectedColor.toARGB32();
-                
+
                 return GestureDetector(
                   onTap: () => onColorSelected(color),
                   child: Container(
@@ -277,7 +296,9 @@ class _ColorSelectorTile extends StatelessWidget {
                         ? Icon(
                             Icons.check,
                             size: 20,
-                            color: color.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+                            color: color.computeLuminance() > 0.5
+                                ? Colors.black
+                                : Colors.white,
                           )
                         : null,
                   ),
@@ -307,7 +328,9 @@ class _SubtitlePreview extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white12),
         image: const DecorationImage(
-          image: NetworkImage('https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2059&auto=format&fit=crop'),
+          image: NetworkImage(
+            'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2059&auto=format&fit=crop',
+          ),
           fit: BoxFit.cover,
           opacity: 0.3,
         ),

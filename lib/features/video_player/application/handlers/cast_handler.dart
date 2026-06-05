@@ -23,16 +23,17 @@ class CastHandler {
   bool _isPlaying = false;
   Duration _currentPosition = Duration.zero;
   Duration _duration = Duration.zero;
-  void Function(bool isPlaying, Duration position, Duration duration)? onStatusSync;
+  void Function(bool isPlaying, Duration position, Duration duration)?
+  onStatusSync;
 
   CastHandler(this._ref, this._resolver);
 
   bool get isCasting => _castSession != null;
 
   Future<void> startCasting(
-    CastDevice device, 
-    StreamCandidate candidate, 
-    String title, 
+    CastDevice device,
+    StreamCandidate candidate,
+    String title,
     Duration currentPosition,
     Function(ResolvedStream) onStreamResolved, {
     int? season,
@@ -43,33 +44,38 @@ class CastHandler {
     try {
       _castSession = await CastSessionManager().startSession(device);
       _mediaSessionId = null; // Reset for new session
-      
+
       _castSession!.messageStream.listen((message) {
         // Unnecessary type check removed (message is always Map)
-        
+
         if (message['type'] == 'MEDIA_STATUS') {
           debugPrint('CastHandler: Received MEDIA_STATUS: $message');
           final statusList = message['status'] as List?;
           if (statusList != null && statusList.isNotEmpty) {
             final Map<String, dynamic> status = statusList[0];
-            
+
             // 1. Update Media Session ID
             final mediaSessionId = status['mediaSessionId'];
             if (mediaSessionId != null && _mediaSessionId != mediaSessionId) {
               _mediaSessionId = mediaSessionId;
-              debugPrint('CastHandler: Media Session ID established/updated: $_mediaSessionId');
+              debugPrint(
+                'CastHandler: Media Session ID established/updated: $_mediaSessionId',
+              );
             }
 
             // 2. Update Playback State
             final playerState = status['playerState'];
             if (playerState != null) {
-              _isPlaying = playerState == 'PLAYING' || playerState == 'BUFFERING';
+              _isPlaying =
+                  playerState == 'PLAYING' || playerState == 'BUFFERING';
             }
 
             // 3. Update Position
             final currentTime = status['currentTime'];
             if (currentTime != null) {
-              _currentPosition = Duration(seconds: (currentTime as num).toInt());
+              _currentPosition = Duration(
+                seconds: (currentTime as num).toInt(),
+              );
             }
 
             // 4. Update Duration
@@ -89,10 +95,13 @@ class CastHandler {
             for (final app in apps) {
               if (app['appId'] == CastConstants.defaultAppId) {
                 _appSessionId = app['sessionId'];
-                debugPrint('CastHandler: Captured Application Session ID: $_appSessionId');
-                
+                debugPrint(
+                  'CastHandler: Captured Application Session ID: $_appSessionId',
+                );
+
                 // Resolve the launch completer if it's waiting
-                if (_appLaunchCompleter != null && !_appLaunchCompleter!.isCompleted) {
+                if (_appLaunchCompleter != null &&
+                    !_appLaunchCompleter!.isCompleted) {
                   _appLaunchCompleter!.complete();
                 }
               }
@@ -102,9 +111,11 @@ class CastHandler {
       });
 
       // 1. Launch the default media receiver
-      debugPrint('CastHandler: Launching Default Media Receiver (${CastConstants.defaultAppId})');
+      debugPrint(
+        'CastHandler: Launching Default Media Receiver (${CastConstants.defaultAppId})',
+      );
       _appLaunchCompleter = Completer<void>();
-      
+
       _castSession!.sendMessage(CastConstants.nsReceiver, {
         'type': 'LAUNCH',
         'appId': CastConstants.defaultAppId,
@@ -114,7 +125,9 @@ class CastHandler {
       // 2. Wait for the receiver app to start (max 10 seconds)
       await _appLaunchCompleter!.future.timeout(
         const Duration(seconds: 10),
-        onTimeout: () => debugPrint('CastHandler: Warning: App launch timeout, proceeding anyway...'),
+        onTimeout: () => debugPrint(
+          'CastHandler: Warning: App launch timeout, proceeding anyway...',
+        ),
       );
 
       // 3. Attempt to resolve the stream
@@ -133,24 +146,32 @@ class CastHandler {
 
       // Determine contentType: Engine Probed > HTTP Sniffing > URL Resolver
       debugPrint('CastHandler: Resolving MIME type for $urlToCasting');
-      
+
       String contentType;
 
       if (detectedMimeType != null) {
-        debugPrint('CastHandler: Using Engine-detected MIME: $detectedMimeType');
+        debugPrint(
+          'CastHandler: Using Engine-detected MIME: $detectedMimeType',
+        );
         contentType = detectedMimeType;
       } else {
         String? sniffedType = await _sniffMimeType(urlToCasting);
-        contentType = MimeResolver.resolve(urlToCasting, sniffedType ?? resolvedStream.mimeType);
-        debugPrint('CastHandler: Final resolved MIME: $contentType (Sniffed: $sniffedType, Resolution: ${resolvedStream.mimeType})');
+        contentType = MimeResolver.resolve(
+          urlToCasting,
+          sniffedType ?? resolvedStream.mimeType,
+        );
+        debugPrint(
+          'CastHandler: Final resolved MIME: $contentType (Sniffed: $sniffedType, Resolution: ${resolvedStream.mimeType})',
+        );
       }
 
       // 4. Send CONNECT to the application namespace
-      _castSession!.sendMessage(CastConstants.nsConnection, {'type': 'CONNECT'});
-      
+      _castSession!.sendMessage(CastConstants.nsConnection, {
+        'type': 'CONNECT',
+      });
+
       // 5. Start Heartbeat
       _startHeartbeat();
-    
 
       // Metadata types: Movie, TV Show, or Generic
       int metadataType = CastConstants.metadataGeneric;
@@ -170,7 +191,9 @@ class CastHandler {
         if (episode != null) mediaMetadata['episode'] = episode;
       }
 
-      debugPrint('CastHandler: Sending LOAD command for $urlToCasting ($contentType)');
+      debugPrint(
+        'CastHandler: Sending LOAD command for $urlToCasting ($contentType)',
+      );
 
       _castSession!.sendMessage(CastConstants.nsMedia, {
         'type': 'LOAD',
@@ -189,10 +212,13 @@ class CastHandler {
 
       // 4. Proactively request status to confirm session ID if not received yet
       _requestStatus();
-      
+
       // 5. Start Polling for status updates (every 5 seconds)
       _statusTimer?.cancel();
-      _statusTimer = Timer.periodic(const Duration(seconds: 5), (_) => _requestStatus());
+      _statusTimer = Timer.periodic(
+        const Duration(seconds: 5),
+        (_) => _requestStatus(),
+      );
     } catch (e) {
       debugPrint('CastHandler: Error starting cast: $e');
       stopCasting();
@@ -273,13 +299,13 @@ class CastHandler {
         debugPrint('CastHandler: Error sending stop commands: $e');
       }
     }
-    
+
     debugPrint('CastHandler: Disconnecting session and notifying exit');
     _statusTimer?.cancel();
     _statusTimer = null;
     _heartbeatTimer?.cancel();
     _heartbeatTimer = null;
-    
+
     _castSession = null;
     _mediaSessionId = null;
     _appSessionId = null;
@@ -287,14 +313,14 @@ class CastHandler {
     _isPlaying = false;
     _currentPosition = Duration.zero;
     _duration = Duration.zero;
-    
+
     // Final notify of state change
     onStatusSync?.call(false, Duration.zero, Duration.zero);
   }
 
   void _requestStatus() {
     if (_castSession == null) return;
-    
+
     // Request overall media status
     _castSession!.sendMessage(CastConstants.nsMedia, {
       'type': 'GET_STATUS',
@@ -318,7 +344,7 @@ class CastHandler {
           validateStatus: (status) => status != null && status < 400,
         ),
       );
-      
+
       final contentType = response.headers.value('content-type');
       if (contentType != null) {
         debugPrint('CastHandler: Sniffed Content-Type: $contentType');
@@ -330,6 +356,7 @@ class CastHandler {
     }
     return null;
   }
+
   void dispose() {
     _statusTimer?.cancel();
     _statusTimer = null;
@@ -338,4 +365,3 @@ class CastHandler {
     _castSession = null;
   }
 }
-

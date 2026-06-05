@@ -7,19 +7,16 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 class SeriesProgressBar extends ConsumerWidget {
   final Map<String, dynamic> details;
 
-  const SeriesProgressBar({
-    super.key,
-    required this.details,
-  });
+  const SeriesProgressBar({super.key, required this.details});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final tmdbId = details['id'] as int;
-    
+
     final watchedEpisodesMap = ref.watch(watchedEpisodesMapProvider(tmdbId));
     final progress = _calculateProgress(watchedEpisodesMap);
-    
+
     if (progress == null) return const SizedBox.shrink();
 
     return Padding(
@@ -63,7 +60,9 @@ class SeriesProgressBar extends ConsumerWidget {
     );
   }
 
-  ({int percentage, int watchedCount, int totalCount})? _calculateProgress(Map<String, int> watchedMap) {
+  ({int percentage, int watchedCount, int totalCount})? _calculateProgress(
+    Map<String, int> watchedMap,
+  ) {
     final seasons = details['seasons'] as List?;
     if (seasons == null) return null;
 
@@ -82,7 +81,8 @@ class SeriesProgressBar extends ConsumerWidget {
 
         if (lastAired != null && seasonNum == lastAired['season_number']) {
           totalEpisodes += (lastAired['episode_number'] as int);
-        } else if (lastAired == null || seasonNum < (lastAired['season_number'] as int)) {
+        } else if (lastAired == null ||
+            seasonNum < (lastAired['season_number'] as int)) {
           totalEpisodes += (season['episode_count'] as int);
         }
       }
@@ -94,7 +94,10 @@ class SeriesProgressBar extends ConsumerWidget {
     if (totalEpisodes == 0) return null;
 
     return (
-      percentage: ((watchedEpisodesCount / totalEpisodes) * 100).round().clamp(0, 100),
+      percentage: ((watchedEpisodesCount / totalEpisodes) * 100).round().clamp(
+        0,
+        100,
+      ),
       watchedCount: watchedEpisodesCount,
       totalCount: totalEpisodes,
     );

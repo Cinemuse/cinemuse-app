@@ -39,7 +39,8 @@ class PersonCard extends StatelessWidget {
                           ? 'https://image.tmdb.org/t/p/w185$profilePath'
                           : '', // Provide an empty string or placeholder URL if profilePath is null
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(color: AppTheme.secondary),
+                      placeholder: (context, url) =>
+                          Container(color: AppTheme.secondary),
                       errorWidget: (context, url, error) => Image.asset(
                         'assets/cast_placeholder.png',
                         fit: BoxFit.cover,

@@ -34,7 +34,9 @@ class _NextEpisodeOverlayState extends ConsumerState<NextEpisodeOverlay> {
         final pos = snapshot.data?.inSeconds ?? player.state.position.inSeconds;
         final dur = player.state.duration.inSeconds;
         if (dur <= 0) return const SizedBox.shrink();
-        final isFinished = (dur - pos < PlaybackThresholds.completionRemainingSeconds) || (pos / dur > PlaybackThresholds.completionPercentage);
+        final isFinished =
+            (dur - pos < PlaybackThresholds.completionRemainingSeconds) ||
+            (pos / dur > PlaybackThresholds.completionPercentage);
 
         return AnimatedPositioned(
           duration: const Duration(milliseconds: 600),
@@ -60,24 +62,35 @@ class _NextEpisodeOverlayState extends ConsumerState<NextEpisodeOverlay> {
                     ),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 28,
+                        vertical: 18,
+                      ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Colors.white.withValues(alpha: _isNextButtonHovered ? 0.95 : 0.85),
-                            Colors.white.withValues(alpha: _isNextButtonHovered ? 0.85 : 0.65),
+                            Colors.white.withValues(
+                              alpha: _isNextButtonHovered ? 0.95 : 0.85,
+                            ),
+                            Colors.white.withValues(
+                              alpha: _isNextButtonHovered ? 0.85 : 0.65,
+                            ),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: _isNextButtonHovered ? 0.4 : 0.2),
+                          color: Colors.white.withValues(
+                            alpha: _isNextButtonHovered ? 0.4 : 0.2,
+                          ),
                           width: 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: _isNextButtonHovered ? 0.4 : 0.3),
+                            color: Colors.black.withValues(
+                              alpha: _isNextButtonHovered ? 0.4 : 0.3,
+                            ),
                             blurRadius: _isNextButtonHovered ? 30 : 25,
                             offset: Offset(0, _isNextButtonHovered ? 12 : 10),
                             spreadRadius: -5,
@@ -88,7 +101,10 @@ class _NextEpisodeOverlayState extends ConsumerState<NextEpisodeOverlay> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            ref.watch(localizationsProvider).playerNextEpisode.toUpperCase(),
+                            ref
+                                .watch(localizationsProvider)
+                                .playerNextEpisode
+                                .toUpperCase(),
                             style: TextStyle(
                               color: Colors.black.withValues(alpha: 0.85),
                               fontSize: 16,

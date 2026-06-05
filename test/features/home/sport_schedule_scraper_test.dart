@@ -12,8 +12,10 @@ void main() {
       scraper = SportScheduleScraper(dio);
     });
 
-    test('parseHtml correctly extracts events from Virgilio HTML structure with dateTime and translationKeys', () {
-      const sampleHtml = '''
+    test(
+      'parseHtml correctly extracts events from Virgilio HTML structure with dateTime and translationKeys',
+      () {
+        const sampleHtml = '''
       <html>
         <body>
           <div class="entry-content">
@@ -47,31 +49,32 @@ void main() {
       </html>
       ''';
 
-      final events = scraper.parseHtml(sampleHtml);
+        final events = scraper.parseHtml(sampleHtml);
 
-      expect(events.length, 3);
+        expect(events.length, 3);
 
-      // Verify the first event
-      expect(events[0].dateTime, DateTime(2026, 5, 17, 12, 30));
-      expect(events[0].sportName, 'Ciclismo');
-      expect(events[0].sportTranslationKey, 'sport_cycling');
-      expect(events[0].description, 'Giro d’Italia – 9a tappa');
-      expect(events[0].channels, ['Eurosport', 'Rai 2']);
+        // Verify the first event
+        expect(events[0].dateTime, DateTime(2026, 5, 17, 12, 30));
+        expect(events[0].sportName, 'Ciclismo');
+        expect(events[0].sportTranslationKey, 'sport_cycling');
+        expect(events[0].description, 'Giro d’Italia – 9a tappa');
+        expect(events[0].channels, ['Eurosport', 'Rai 2']);
 
-      // Verify the second event
-      expect(events[1].dateTime, DateTime(2026, 5, 17, 15, 0));
-      expect(events[1].sportName, 'Calcio');
-      expect(events[1].sportTranslationKey, 'sport_football');
-      expect(events[1].description, 'Serie A: Inter-Verona');
-      expect(events[1].channels, ['Dazn']);
+        // Verify the second event
+        expect(events[1].dateTime, DateTime(2026, 5, 17, 15, 0));
+        expect(events[1].sportName, 'Calcio');
+        expect(events[1].sportTranslationKey, 'sport_football');
+        expect(events[1].description, 'Serie A: Inter-Verona');
+        expect(events[1].channels, ['Dazn']);
 
-      // Verify the third event
-      expect(events[2].dateTime, DateTime(2026, 5, 18, 20, 0));
-      expect(events[2].sportName, 'Basket');
-      expect(events[2].sportTranslationKey, 'sport_basketball');
-      expect(events[2].description, 'Serie A: Brescia-Trieste');
-      expect(events[2].channels, ['Sky Sport Basket']);
-    });
+        // Verify the third event
+        expect(events[2].dateTime, DateTime(2026, 5, 18, 20, 0));
+        expect(events[2].sportName, 'Basket');
+        expect(events[2].sportTranslationKey, 'sport_basketball');
+        expect(events[2].description, 'Serie A: Brescia-Trieste');
+        expect(events[2].channels, ['Sky Sport Basket']);
+      },
+    );
 
     test('parseHtml handles malformed or empty content gracefully', () {
       const emptyHtml = '<html><body></body></html>';

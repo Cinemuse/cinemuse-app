@@ -18,8 +18,6 @@ import 'package:cinemuse_app/core/services/anime/anime_mapping_sync_service.dart
 import 'package:cinemuse_app/core/error/error_service.dart';
 import 'package:cinemuse_app/shared/widgets/error_toast.dart';
 
-
-
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
 
@@ -28,7 +26,6 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-
   final List<Widget> _screens = [
     const HomeScreen(),
     const ExploreScreen(),
@@ -48,7 +45,6 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-
     final currentIndex = ref.watch(navIndexProvider);
     final isMobile = MediaQuery.of(context).size.width < 600;
     final shellNavigatorKey = ref.watch(shellNavigatorKeyProvider);
@@ -95,7 +91,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         },
         child: Scaffold(
           backgroundColor: Colors.black, // Match "bg-primary"
-          bottomNavigationBar: isMobile 
+          bottomNavigationBar: isMobile
               ? AppBottomNavbar(
                   currentIndex: currentIndex,
                   onTap: (index) {
@@ -107,61 +103,62 @@ class _AppShellState extends ConsumerState<AppShell> {
                   },
                 )
               : null,
-        body: Stack(
-          children: [
-            Column(
-              children: [
-                AppNavbar(
-                  currentIndex: currentIndex,
-                  onTap: (index) {
-                    ref.read(navIndexProvider.notifier).state = index;
-                    final navigator = shellNavigatorKey.currentState;
-                    if (navigator != null && navigator.canPop()) {
-                      navigator.popUntil((route) => route.isFirst);
-                    }
-                  },
-                  onSettingsTap: () {
-                    shellNavigatorKey.currentState?.push(
-                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                    );
-                  },
-                  onLogoutTap: () {
-                    ref.read(authProvider.notifier).signOut();
-                  },
-                  onSearchTap: () => SearchOverlay.show(context, navigator: shellNavigatorKey.currentState),
-                ),
-                Expanded(
-                  child: Navigator(
-                    key: shellNavigatorKey,
-                    onGenerateRoute: (settings) {
-                      return MaterialPageRoute(
-                        settings: settings,
-                        builder: (context) => Consumer(
-                          builder: (context, ref, child) {
-                            final index = ref.watch(navIndexProvider);
-                            return IndexedStack(
-                              index: index,
-                              children: _screens,
-                            );
-                          },
+          body: Stack(
+            children: [
+              Column(
+                children: [
+                  AppNavbar(
+                    currentIndex: currentIndex,
+                    onTap: (index) {
+                      ref.read(navIndexProvider.notifier).state = index;
+                      final navigator = shellNavigatorKey.currentState;
+                      if (navigator != null && navigator.canPop()) {
+                        navigator.popUntil((route) => route.isFirst);
+                      }
+                    },
+                    onSettingsTap: () {
+                      shellNavigatorKey.currentState?.push(
+                        MaterialPageRoute(
+                          builder: (_) => const SettingsScreen(),
                         ),
                       );
                     },
+                    onLogoutTap: () {
+                      ref.read(authProvider.notifier).signOut();
+                    },
+                    onSearchTap: () => SearchOverlay.show(
+                      context,
+                      navigator: shellNavigatorKey.currentState,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  Expanded(
+                    child: Navigator(
+                      key: shellNavigatorKey,
+                      onGenerateRoute: (settings) {
+                        return MaterialPageRoute(
+                          settings: settings,
+                          builder: (context) => Consumer(
+                            builder: (context, ref, child) {
+                              final index = ref.watch(navIndexProvider);
+                              return IndexedStack(
+                                index: index,
+                                children: _screens,
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
 
-
-
-            // Update Notification Overlay
-            const Positioned.fill(
-              child: UpdateOverlay(),
-            ),
-          ],
+              // Update Notification Overlay
+              const Positioned.fill(child: UpdateOverlay()),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

@@ -12,16 +12,16 @@ class AppHttpOverrides extends HttpOverrides {
           'supabase.it',
           'tmdb.org',
         ];
-        
+
         final isTrusted = trustedDomains.any((domain) => host.contains(domain));
-        
+
         if (isTrusted) {
-          // In production, you'd ideally only allow this if the error is specifically 
-          // about an outdated root, but for this app's use-case on older systems, 
+          // In production, you'd ideally only allow this if the error is specifically
+          // about an outdated root, but for this app's use-case on older systems,
           // allowing these specific high-trust domains is a robust fix.
           return true;
         }
-        
+
         return false;
       };
   }

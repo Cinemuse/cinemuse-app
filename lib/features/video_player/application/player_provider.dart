@@ -19,7 +19,6 @@ import 'package:cinemuse_app/features/settings/application/settings_service.dart
 import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
 import 'package:flutter/foundation.dart';
 
-
 import 'package:cast/cast.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/application/managers/playback_manager.dart';
@@ -38,21 +37,22 @@ import 'package:cinemuse_app/core/utils/mime_resolver.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 
 // Convert back to StateNotifierProvider for compatibility/simplicity
-final playerControllerProvider = StateNotifierProvider.family.autoDispose<PlayerController, AsyncValue<CinemaPlayerState>, PlayerParams>(
-  (ref, params) => PlayerController(ref, params),
-);
+final playerControllerProvider = StateNotifierProvider.family
+    .autoDispose<PlayerController, AsyncValue<CinemaPlayerState>, PlayerParams>(
+      (ref, params) => PlayerController(ref, params),
+    );
 
 class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   final Ref ref;
   final PlayerParams params;
   late PlayerParams resolvedParams;
-  
+
   Player? _player;
   VideoController? _controller;
   late final YoutubeHandler _youtubeHandler;
   late final RdHandler _rdHandler;
   late final CastHandler _castHandler;
-  
+
   Map<String, dynamic>? _mediaDetails;
   bool _isCompletionLogged = false;
   PlayerHistoryManager? _historyManager;
@@ -70,36 +70,38 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
   /// Optional callback to notify the UI of non-fatal player events (e.g. fallback snackbars).
   void Function(String message)? onNotification;
-  
+
   PlayerHistoryManager get historyManager => _historyManager!;
-  
+
   // --- Live TV Failover State ---
   bool _isChangingChannel = false;
   int _activeRequestId = 0;
   Channel? _currentChannel;
   StreamLink? _currentLink;
-  
+
   // --- Auto-retry State ---
   int _retryCount = 0;
   static const int _maxRetries = 2;
 
   PlayerController(this.ref, this.params) : super(const AsyncValue.loading()) {
     resolvedParams = params;
-    
+
     // Initialize Handlers
     _youtubeHandler = YoutubeHandler(ref.read(youtubeServiceProvider));
     _rdHandler = RdHandler(ref.read(unifiedStreamResolverProvider));
     _castHandler = CastHandler(ref, ref.read(unifiedStreamResolverProvider));
-    
+
     _castHandler.onStatusSync = (isPlaying, position, duration) {
-       final currentState = state.valueOrNull;
-       if (currentState != null) {
-         state = AsyncValue.data(currentState.copyWith(
-           remotePlaying: isPlaying,
-           remotePosition: position,
-           remoteDuration: duration,
-         ));
-       }
+      final currentState = state.valueOrNull;
+      if (currentState != null) {
+        state = AsyncValue.data(
+          currentState.copyWith(
+            remotePlaying: isPlaying,
+            remotePosition: position,
+            remoteDuration: duration,
+          ),
+        );
+      }
     };
 
     _initialize();
@@ -126,20 +128,31 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
       // Guard against 0: the DB stores 0 as a sentinel for "no season/episode".
       // `params.season ?? 1` only handles null, not 0, so we must check explicitly.
-      int resolvedSeason = (params.season == null || params.season! < 1) ? 1 : params.season!;
-      int resolvedEpisode = (params.episode == null || params.episode! < 1) ? 1 : params.episode!;
+      int resolvedSeason = (params.season == null || params.season! < 1)
+          ? 1
+          : params.season!;
+      int resolvedEpisode = (params.episode == null || params.episode! < 1)
+          ? 1
+          : params.episode!;
       int resolvedStartPosition = params.startPosition ?? 0;
 
       final user = ref.read(authProvider).value;
-      if (user != null && (params.type == 'movie' || params.type == 'tv' || params.type == 'series')) {
+      if (user != null &&
+          (params.type == 'movie' ||
+              params.type == 'tv' ||
+              params.type == 'series')) {
         try {
           final repo = ref.read(watchHistoryRepositoryProvider);
           final history = await repo.getHistoryItem(user.id, params.queryId);
           if (history != null) {
             if (params.type == 'tv' || params.type == 'series') {
               // Re-apply the same 0-guard: history also stores 0 as sentinel.
-              final hSeason = (history.season == null || history.season! < 1) ? null : history.season;
-              final hEpisode = (history.episode == null || history.episode! < 1) ? null : history.episode;
+              final hSeason = (history.season == null || history.season! < 1)
+                  ? null
+                  : history.season;
+              final hEpisode = (history.episode == null || history.episode! < 1)
+                  ? null
+                  : history.episode;
               resolvedSeason = (params.season == null || params.season! < 1)
                   ? (hSeason ?? 1)
                   : params.season!;
@@ -188,11 +201,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
   void _setupMediaEngine() {
     if (_player != null) return;
-    
+
     _player = Player(
-      configuration: const PlayerConfiguration(
-        logLevel: MPVLogLevel.warn,
-      ),
+      configuration: const PlayerConfiguration(logLevel: MPVLogLevel.warn),
     );
 
     _controller = VideoController(
@@ -217,10 +228,10 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       // We disable this on Linux/WSL as it can cause crashes with virtualised GPU drivers.
       if (!io.Platform.isLinux) {
         mpv.setProperty('video-sync', 'display-resample');
-        
+
         // Interpolation to smooth out frame pacing (reduces judder on 24fps content).
         mpv.setProperty('interpolation', 'yes');
-        mpv.setProperty('tscale', 'oversample'); 
+        mpv.setProperty('tscale', 'oversample');
       }
 
       // ── Network & Caching ─────────────────────────────────────────────────
@@ -240,10 +251,10 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       // ── Audio & Volume ────────────────────────────────────────────────────
       // Allow boosting volume up to 150% for quiet sources.
       mpv.setProperty('volume-max', '150');
-      
+
       // Fallback strategies for unsupported audio codecs.
       mpv.setProperty('audio-fallback-to-null', 'yes');
-      
+
       // Force PulseAudio on Linux to avoid PipeWire issues in WSL
       if (io.Platform.isLinux) {
         mpv.setProperty('ao', 'pulse');
@@ -266,7 +277,11 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   }
 
   void _initializeManagers() {
-    _trackManager = TrackManager(ref: ref, player: _player!, params: resolvedParams);
+    _trackManager = TrackManager(
+      ref: ref,
+      player: _player!,
+      params: resolvedParams,
+    );
     _applyTrackPreferences();
 
     _eventManager = EventManager(
@@ -280,7 +295,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     _eventManager!.initialize();
 
     _playbackManager = PlaybackManager(
-      ref: ref, 
+      ref: ref,
       player: _player!,
       castHandler: _castHandler,
       isCasting: () => state.value?.isCasting ?? false,
@@ -302,7 +317,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         settingsProvider.select((s) => s.liveTvQuality),
         (prev, next) {
           if (prev != null && prev != next && _currentChannel != null) {
-            debugPrint('PlayerController: Quality preference changed to $next. Re-resolving channel...');
+            debugPrint(
+              'PlayerController: Quality preference changed to $next. Re-resolving channel...',
+            );
             changeChannel(_currentChannel!);
           }
         },
@@ -317,38 +334,44 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     )..start();
 
     if (mounted) {
-      state = AsyncValue.data(CinemaPlayerState(
-        controller: _controller!,
-        availableStreams: const [],
-        currentStream: null,
-        title: resolvedParams.episodeTitle ?? resolvedParams.queryId,
-        isResolving: true,
-        activeAudioTrack: _player!.state.track.audio,
-        activeSubtitleTrack: _player!.state.track.subtitle,
-        isLive: resolvedParams.type == 'livetv',
-      ));
+      state = AsyncValue.data(
+        CinemaPlayerState(
+          controller: _controller!,
+          availableStreams: const [],
+          currentStream: null,
+          title: resolvedParams.episodeTitle ?? resolvedParams.queryId,
+          isResolving: true,
+          activeAudioTrack: _player!.state.track.audio,
+          activeSubtitleTrack: _player!.state.track.subtitle,
+          isLive: resolvedParams.type == 'livetv',
+        ),
+      );
     }
   }
 
   Future<void> _handleYouTubeInitialization() async {
-    final result = await _initializationManager!.initializeYouTube(resolvedParams);
+    final result = await _initializationManager!.initializeYouTube(
+      resolvedParams,
+    );
     if (mounted) {
-      state = AsyncValue.data(CinemaPlayerState(
-        controller: _controller!,
-        availableStreams: result.candidates,
-        currentStream: result.resolvedStream,
-        title: result.title,
-        activeAudioTrack: _player!.state.track.audio,
-        activeSubtitleTrack: _player!.state.track.subtitle,
-        isLive: resolvedParams.type == 'livetv',
-      ));
+      state = AsyncValue.data(
+        CinemaPlayerState(
+          controller: _controller!,
+          availableStreams: result.candidates,
+          currentStream: result.resolvedStream,
+          title: result.title,
+          activeAudioTrack: _player!.state.track.audio,
+          activeSubtitleTrack: _player!.state.track.subtitle,
+          isLive: resolvedParams.type == 'livetv',
+        ),
+      );
     }
   }
 
   Future<void> _handleVodInitialization() async {
     _skipCompleter = Completer<void>();
     final vodResult = await _initializationManager!.initializeVod(
-      resolvedParams, 
+      resolvedParams,
       onStatusUpdate: _onProviderStatusUpdate,
       onMediaDetailsFetched: _onMediaDetailsFetched,
       skipTrigger: _skipCompleter!.future,
@@ -368,24 +391,28 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     // LiveTvScreen's build method detects `currentStream == null && !isResolving`
     // and immediately calls `changeChannel` for the currently selected channel.
     if (mounted) {
-      state = AsyncValue.data(CinemaPlayerState(
-        controller: _controller!,
-        availableStreams: const [],
-        currentStream: null,
-        title: params.episodeTitle ?? 'Live TV',
-        isResolving: false,
-        isLive: true,
-      ));
+      state = AsyncValue.data(
+        CinemaPlayerState(
+          controller: _controller!,
+          availableStreams: const [],
+          currentStream: null,
+          title: params.episodeTitle ?? 'Live TV',
+          isResolving: false,
+          isLive: true,
+        ),
+      );
     }
   }
 
   Future<void> changeChannel(Channel channel, {bool isFailover = false}) async {
     if (_player == null || _initializationManager == null) return;
-    
+
     // Guard against multiple simultaneous failover attempts for the same issue.
     // However, ALWAYS allow manual changes (!isFailover) to proceed and override.
     if (isFailover && _isChangingChannel) {
-      debugPrint('PlayerController: Skipping failover request; change already in progress.');
+      debugPrint(
+        'PlayerController: Skipping failover request; change already in progress.',
+      );
       return;
     }
 
@@ -407,59 +434,71 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       if (channel.links.isNotEmpty) {
         final settings = ref.read(settingsProvider);
         final preferredQuality = settings.liveTvQuality;
-        
+
         // Try to filter links by preferred quality
-        final qualityLinks = channel.links.where((l) => l.quality == preferredQuality && !l.isFailed).toList();
-        
+        final qualityLinks = channel.links
+            .where((l) => l.quality == preferredQuality && !l.isFailed)
+            .toList();
+
         if (qualityLinks.isNotEmpty) {
           _currentLink = qualityLinks.first;
         } else {
-          // If no links match preferred quality (or all of them failed), 
+          // If no links match preferred quality (or all of them failed),
           // allow any non-failed link as fallback to avoid black screen.
-          _currentLink = channel.links.firstWhere((l) => !l.isFailed, orElse: () => channel.links.first);
+          _currentLink = channel.links.firstWhere(
+            (l) => !l.isFailed,
+            orElse: () => channel.links.first,
+          );
         }
       }
 
       // During failover, keep the last video frame visible ("freeze frame")
       // instead of showing the resolving spinner (black screen).
       if (mounted && requestId == _activeRequestId) {
-        state = AsyncValue.data(state.valueOrNull?.copyWith(
-          title: channel.name,
-          isResolving: !isFailover,
-          currentStream: isFailover ? state.valueOrNull?.currentStream : null,
-          error: null,
-          currentChannel: channel,
-        ) ?? CinemaPlayerState(
-          controller: _controller!,
-          availableStreams: const [],
-          currentStream: null,
-          title: channel.name,
-          isResolving: true,
-          isLive: true,
-          currentChannel: channel,
-        ));
+        state = AsyncValue.data(
+          state.valueOrNull?.copyWith(
+                title: channel.name,
+                isResolving: !isFailover,
+                currentStream: isFailover
+                    ? state.valueOrNull?.currentStream
+                    : null,
+                error: null,
+                currentChannel: channel,
+              ) ??
+              CinemaPlayerState(
+                controller: _controller!,
+                availableStreams: const [],
+                currentStream: null,
+                title: channel.name,
+                isResolving: true,
+                isLive: true,
+                currentChannel: channel,
+              ),
+        );
       }
 
       // 4. Initialize stream
       final settings = ref.read(settingsProvider);
-      
+
       // Ensure previous stall watchdogs are stopped
       _liveTvHandler?.dispose();
       _liveTvHandler = LiveTvSourceHandler(_player!);
-      
+
       final result = await _liveTvHandler!.initialize(
-        channel, 
+        channel,
         settings,
         onStall: () => _handleLiveTvFailover('Stream stalled'),
       );
-      
+
       // Only update state if this is still the most recent request
       if (mounted && requestId == _activeRequestId) {
-        state = AsyncValue.data(state.value!.copyWith(
-          currentStream: result.resolvedStream,
-          isResolving: false,
-          error: null,
-        ));
+        state = AsyncValue.data(
+          state.value!.copyWith(
+            currentStream: result.resolvedStream,
+            isResolving: false,
+            error: null,
+          ),
+        );
       }
     } catch (e, st) {
       if (requestId == _activeRequestId) {
@@ -477,24 +516,33 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   /// EOS (stream ended) retries the same link infinitely since the server was working.
   static const int _maxErrorRetries = 1;
 
-  Future<void> _handleLiveTvFailover(String error, {bool isConnectionError = false}) async {
+  Future<void> _handleLiveTvFailover(
+    String error, {
+    bool isConnectionError = false,
+  }) async {
     if (_currentChannel == null) return;
-    
+
     // 1. Decide: persist on same link or rotate?
     if (_currentLink != null) {
       if (isConnectionError) {
         // Connection errors (timeout, refused, HTTP error): rotate after a few tries
         _currentLink!.softRetryCount++;
         if (_currentLink!.softRetryCount >= _maxErrorRetries) {
-          debugPrint('PlayerController: Link unreachable after ${_currentLink!.softRetryCount} errors. Rotating.');
+          debugPrint(
+            'PlayerController: Link unreachable after ${_currentLink!.softRetryCount} errors. Rotating.',
+          );
           _currentLink!.isFailed = true;
           _currentLink!.softRetryCount = 0;
         } else {
-          debugPrint('PlayerController: Connection error (${_currentLink!.softRetryCount}/$_maxErrorRetries). Retrying SAME link.');
+          debugPrint(
+            'PlayerController: Connection error (${_currentLink!.softRetryCount}/$_maxErrorRetries). Retrying SAME link.',
+          );
         }
       } else {
         // EOS (stream ended): the server WAS streaming. Retry same link forever.
-        debugPrint('PlayerController: EOS on link. Retrying SAME link (server was active).');
+        debugPrint(
+          'PlayerController: EOS on link. Retrying SAME link (server was active).',
+        );
         // Don't increment counter, don't mark as failed. Just retry.
       }
     }
@@ -502,13 +550,13 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     // 2. If all links are failed, reset and start over
     bool hasWorkingLinks = _currentChannel!.links.any((l) => !l.isFailed);
     if (!hasWorkingLinks) {
-       debugPrint('PlayerController: All links exhausted. Restarting loop...');
-       for (final link in _currentChannel!.links) {
-         link.isFailed = false;
-         link.softRetryCount = 0;
-       }
+      debugPrint('PlayerController: All links exhausted. Restarting loop...');
+      for (final link in _currentChannel!.links) {
+        link.isFailed = false;
+        link.softRetryCount = 0;
+      }
     }
-    
+
     // 3. Trigger the reconnection with no artificial delay.
     if (mounted) {
       await changeChannel(_currentChannel!, isFailover: true);
@@ -519,97 +567,130 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     if (!mounted) return;
     final currentState = state.valueOrNull;
     if (currentState != null) {
-      state = AsyncValue.data(currentState.copyWith(providerStatuses: statuses));
+      state = AsyncValue.data(
+        currentState.copyWith(providerStatuses: statuses),
+      );
     }
   }
 
   void _onMediaDetailsFetched(Map<String, dynamic>? details) {
     _mediaDetails = details;
     _historyManager = PlayerHistoryManager(ref, resolvedParams, details);
-    
+
     if (mounted) {
       final currentState = state.valueOrNull;
       if (currentState != null) {
         final appLanguage = ref.read(settingsProvider).appLanguage;
-        state = AsyncValue.data(currentState.copyWith(
-          title: _extractLocalizedTitle(details, appLanguage),
-        ));
+        state = AsyncValue.data(
+          currentState.copyWith(
+            title: _extractLocalizedTitle(details, appLanguage),
+          ),
+        );
       }
     }
   }
 
-  String _extractLocalizedTitle(Map<String, dynamic>? details, String languageCode) {
-    if (details == null) return resolvedParams.episodeTitle ?? resolvedParams.queryId;
-    return MediaItem.extractTitleFromTmdb(details, languageCode) ?? 
-           resolvedParams.episodeTitle ?? resolvedParams.queryId;
+  String _extractLocalizedTitle(
+    Map<String, dynamic>? details,
+    String languageCode,
+  ) {
+    if (details == null)
+      return resolvedParams.episodeTitle ?? resolvedParams.queryId;
+    return MediaItem.extractTitleFromTmdb(details, languageCode) ??
+        resolvedParams.episodeTitle ??
+        resolvedParams.queryId;
   }
 
-  Future<void> _performPostInitialization(VodInitializationResult vodResult) async {
+  Future<void> _performPostInitialization(
+    VodInitializationResult vodResult,
+  ) async {
     await _ensureMediaCached();
     await _handleInitialSeek();
     final nextEpisode = await _calculateNextEpisode();
 
     if (mounted) {
-      state = AsyncValue.data(CinemaPlayerState(
-        controller: _controller!,
-        availableStreams: vodResult.candidates,
-        currentStream: vodResult.resolvedStream,
-        title: _extractLocalizedTitle(_mediaDetails, ref.read(settingsProvider).appLanguage),
-        nextEpisode: nextEpisode,
-        providerStatuses: state.valueOrNull?.providerStatuses ?? const [],
-        isAnime: vodResult.isAnime,
-        activeAudioTrack: _player!.state.track.audio,
-        activeSubtitleTrack: _player!.state.track.subtitle,
-        isLive: resolvedParams.type == 'livetv',
-      ));
+      state = AsyncValue.data(
+        CinemaPlayerState(
+          controller: _controller!,
+          availableStreams: vodResult.candidates,
+          currentStream: vodResult.resolvedStream,
+          title: _extractLocalizedTitle(
+            _mediaDetails,
+            ref.read(settingsProvider).appLanguage,
+          ),
+          nextEpisode: nextEpisode,
+          providerStatuses: state.valueOrNull?.providerStatuses ?? const [],
+          isAnime: vodResult.isAnime,
+          activeAudioTrack: _player!.state.track.audio,
+          activeSubtitleTrack: _player!.state.track.subtitle,
+          isLive: resolvedParams.type == 'livetv',
+        ),
+      );
     }
-    
+
     // Reset retry count on successful initialization
     _retryCount = 0;
-    
+
     // Apply track preferences after state is updated with isAnime
     _applyTrackPreferences();
-    unawaited(_trackManager?.ensurePreferredTrack(isAnime: vodResult.isAnime) ?? Future.value());
+    unawaited(
+      _trackManager?.ensurePreferredTrack(isAnime: vodResult.isAnime) ??
+          Future.value(),
+    );
   }
 
   Future<void> _ensureMediaCached() async {
     final repo = ref.read(watchHistoryRepositoryProvider);
     final mainMediaItem = MediaItem(
       tmdbId: int.parse(resolvedParams.queryId),
-      mediaType: resolvedParams.type == 'movie' ? MediaKind.movie : MediaKind.tv,
+      mediaType: resolvedParams.type == 'movie'
+          ? MediaKind.movie
+          : MediaKind.tv,
       titleIt: _extractLocalizedTitle(_mediaDetails, 'it'),
       titleEn: _extractLocalizedTitle(_mediaDetails, 'en'),
       posterPath: _mediaDetails?['poster_path'],
       backdropPath: _mediaDetails?['backdrop_path'],
-      releaseDate: DateTime.tryParse(_mediaDetails?['release_date'] ?? _mediaDetails?['first_air_date'] ?? ''),
+      releaseDate: DateTime.tryParse(
+        _mediaDetails?['release_date'] ??
+            _mediaDetails?['first_air_date'] ??
+            '',
+      ),
       updatedAt: DateTime.now(),
     );
     await repo.saveMediaItem(mainMediaItem);
   }
 
   Future<void> _handleInitialSeek() async {
-    if (resolvedParams.startPosition != null && resolvedParams.startPosition! > 0) {
+    if (resolvedParams.startPosition != null &&
+        resolvedParams.startPosition! > 0) {
       await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
       await _player!.seek(Duration(seconds: resolvedParams.startPosition!));
     }
   }
 
   Future<NextEpisodeInfo?> _calculateNextEpisode() async {
-    if (resolvedParams.type != 'tv' || resolvedParams.season == null || resolvedParams.episode == null || _mediaDetails == null) {
+    if (resolvedParams.type != 'tv' ||
+        resolvedParams.season == null ||
+        resolvedParams.episode == null ||
+        _mediaDetails == null) {
       return null;
     }
 
-    final nextEpResult = ref.read(seriesDomainServiceProvider).getNextEpisode(
-      _mediaDetails!, 
-      resolvedParams.season!, 
-      resolvedParams.episode!,
-    );
-    
+    final nextEpResult = ref
+        .read(seriesDomainServiceProvider)
+        .getNextEpisode(
+          _mediaDetails!,
+          resolvedParams.season!,
+          resolvedParams.episode!,
+        );
+
     if (!nextEpResult.isAired) return null;
 
     NextEpisodeInfo? next = nextEpResult.next;
     if (next != null) {
-      final seasonDetails = await ref.read(tmdbServiceProvider).getSeasonDetails(int.parse(resolvedParams.queryId), next.season);
+      final seasonDetails = await ref
+          .read(tmdbServiceProvider)
+          .getSeasonDetails(int.parse(resolvedParams.queryId), next.season);
       final episodes = seasonDetails?['episodes'] as List? ?? [];
       final nextEpData = episodes.firstWhere(
         (e) => e['episode_number'] == next?.episode,
@@ -617,7 +698,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       );
       if (nextEpData != null) {
         next = NextEpisodeInfo(
-          season: next.season, 
+          season: next.season,
           episode: next.episode,
           title: nextEpData['name'],
         );
@@ -633,10 +714,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     }
   }
 
-
   Future<void> _saveProgress({bool force = false}) async {
     if (_player == null || _historyManager == null) return;
-    
+
     await _historyManager!.saveProgress(
       position: _player!.state.position.inSeconds,
       duration: _player!.state.duration.inSeconds,
@@ -647,17 +727,22 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     );
   }
 
-  Future<void> changeSource(StreamCandidate candidate, {bool isManual = true}) async {
+  Future<void> changeSource(
+    StreamCandidate candidate, {
+    bool isManual = true,
+  }) async {
     if (state.value == null || _player == null) return;
 
     // A manual source change clears the exhausted set so the user can retry anything.
     if (isManual) _exhaustedCandidateUrls.clear();
 
-    state = AsyncValue.data(state.value!.copyWith(isResolving: true, error: null));
-    
+    state = AsyncValue.data(
+      state.value!.copyWith(isResolving: true, error: null),
+    );
+
     try {
       final position = _player!.state.position;
-      
+
       switch (candidate.kind) {
         case StreamSourceKind.youtube:
           await _changeToYouTubeSource(candidate, position);
@@ -667,20 +752,27 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           break;
         case StreamSourceKind.live:
           // Should not happen here since Live TV has changeChannel
-          throw Exception("Cannot change source on Live TV kind via changeSource.");
+          throw Exception(
+            "Cannot change source on Live TV kind via changeSource.",
+          );
       }
     } catch (e) {
       debugPrint("PlayerController: Error changing source: $e");
       if (mounted && state.value != null) {
-        state = AsyncValue.data(state.value!.copyWith(
-          isResolving: false,
-          error: ref.read(errorMapperProvider).map(e).message,
-        ));
+        state = AsyncValue.data(
+          state.value!.copyWith(
+            isResolving: false,
+            error: ref.read(errorMapperProvider).map(e).message,
+          ),
+        );
       }
     }
   }
 
-  Future<void> _changeToYouTubeSource(StreamCandidate candidate, Duration position) async {
+  Future<void> _changeToYouTubeSource(
+    StreamCandidate candidate,
+    Duration position,
+  ) async {
     final meta = candidate.metadata;
     String? localAudioPath;
     if (meta?.custom?['needsAudio'] == true) {
@@ -698,7 +790,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       Media(resolvedStream.url, httpHeaders: resolvedStream.headers),
       play: false,
     );
-    
+
     if (localAudioPath != null) {
       await _player!.setAudioTrack(AudioTrack.uri(localAudioPath));
     }
@@ -706,7 +798,10 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     await _finalizeSourceChange(resolvedStream, position);
   }
 
-  Future<void> _changeToVodSource(StreamCandidate candidate, Duration position) async {
+  Future<void> _changeToVodSource(
+    StreamCandidate candidate,
+    Duration position,
+  ) async {
     final resolvedStream = await _rdHandler.resolveAndMerge(
       candidate,
       season: resolvedParams.season,
@@ -715,32 +810,48 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     );
 
     if (resolvedStream == null) {
-      throw Exception(ref.read(localizationsProvider).streamingErrorResolutionFailed);
+      throw Exception(
+        ref.read(localizationsProvider).streamingErrorResolutionFailed,
+      );
     }
 
     await _player!.open(
       Media(resolvedStream.url, httpHeaders: resolvedStream.headers),
       play: false,
     );
-    unawaited(_trackManager?.ensurePreferredTrack(isAnime: state.valueOrNull?.isAnime ?? false) ?? Future.value());
+    unawaited(
+      _trackManager?.ensurePreferredTrack(
+            isAnime: state.valueOrNull?.isAnime ?? false,
+          ) ??
+          Future.value(),
+    );
 
     await _finalizeSourceChange(resolvedStream, position);
   }
 
-  Future<void> _finalizeSourceChange(ResolvedStream resolvedStream, Duration position) async {
-    final newDuration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
-    final seekTo = position.inSeconds < newDuration.inSeconds ? position : Duration(seconds: newDuration.inSeconds - 2);
-    
+  Future<void> _finalizeSourceChange(
+    ResolvedStream resolvedStream,
+    Duration position,
+  ) async {
+    final newDuration = await _player!.stream.duration.firstWhere(
+      (d) => d.inSeconds > 0,
+    );
+    final seekTo = position.inSeconds < newDuration.inSeconds
+        ? position
+        : Duration(seconds: newDuration.inSeconds - 2);
+
     await _player!.seek(seekTo.isNegative ? Duration.zero : seekTo);
     await _player!.play();
 
     if (mounted) {
       _retryCount = 0; // Reset on manual source change
-      state = AsyncValue.data(state.value!.copyWith(
-        currentStream: resolvedStream,
-        isResolving: false,
-        error: null,
-      ));
+      state = AsyncValue.data(
+        state.value!.copyWith(
+          currentStream: resolvedStream,
+          isResolving: false,
+          error: null,
+        ),
+      );
     }
   }
 
@@ -753,20 +864,21 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   Future<void> startCasting(CastDevice device) async {
     try {
       if (state.value == null) return;
-      
-      state = AsyncValue.data(state.value!.copyWith(
-        isCasting: true,
-        selectedCastDevice: device,
-      ));
+
+      state = AsyncValue.data(
+        state.value!.copyWith(isCasting: true, selectedCastDevice: device),
+      );
 
       await _playbackManager?.startCasting(
-        device, 
-        state.value!.currentStream!.candidate, 
-        state.value!.title, 
+        device,
+        state.value!.currentStream!.candidate,
+        state.value!.title,
         _player?.state.position ?? Duration.zero,
         (ResolvedStream resolvedStream) {
-           // We can update state here if needed
-           debugPrint('PlayerController: Cast stream resolved: ${resolvedStream.url}');
+          // We can update state here if needed
+          debugPrint(
+            'PlayerController: Cast stream resolved: ${resolvedStream.url}',
+          );
         },
         season: resolvedParams.season,
         episode: resolvedParams.episode,
@@ -782,9 +894,14 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   }
 
   Future<void> changeFile(int fileId) async {
-    if (state.value == null || _player == null || state.value!.currentStream == null) return;
+    if (state.value == null ||
+        _player == null ||
+        state.value!.currentStream == null)
+      return;
 
-    state = AsyncValue.data(state.value!.copyWith(isResolving: true, error: null));
+    state = AsyncValue.data(
+      state.value!.copyWith(isResolving: true, error: null),
+    );
 
     try {
       final resolvedStream = await _rdHandler.resolveAndMerge(
@@ -792,33 +909,43 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         absoluteEpisode: state.value!.currentStream!.candidate.absoluteEpisode,
         fileId: fileId,
       );
-      
+
       if (resolvedStream != null) {
         await _player!.open(Media(resolvedStream.url), play: true);
-        unawaited(_trackManager?.ensurePreferredTrack(isAnime: state.valueOrNull?.isAnime ?? false) ?? Future.value());
-        
-        state = AsyncValue.data(state.value!.copyWith(
-          currentStream: resolvedStream,
-          isResolving: false,
-          error: null,
-        ));
+        unawaited(
+          _trackManager?.ensurePreferredTrack(
+                isAnime: state.valueOrNull?.isAnime ?? false,
+              ) ??
+              Future.value(),
+        );
+
+        state = AsyncValue.data(
+          state.value!.copyWith(
+            currentStream: resolvedStream,
+            isResolving: false,
+            error: null,
+          ),
+        );
       } else {
-        state = AsyncValue.data(state.value!.copyWith(
-          isResolving: false,
-          error: "Failed to resolve the selected file.",
-        ));
+        state = AsyncValue.data(
+          state.value!.copyWith(
+            isResolving: false,
+            error: "Failed to resolve the selected file.",
+          ),
+        );
       }
     } catch (e) {
       debugPrint("Error changing file: $e");
       if (state.value != null) {
-        state = AsyncValue.data(state.value!.copyWith(
-          isResolving: false,
-          error: "Error changing file: ${e.toString()}",
-        ));
+        state = AsyncValue.data(
+          state.value!.copyWith(
+            isResolving: false,
+            error: "Error changing file: ${e.toString()}",
+          ),
+        );
       }
     }
   }
-
 
   Future<void> pause() async {
     await _playbackManager?.pause();
@@ -836,13 +963,15 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     await _castHandler.stopCasting();
     final currentState = state.valueOrNull;
     if (currentState != null) {
-      state = AsyncValue.data(currentState.copyWith(
-        isCasting: false,
-        selectedCastDevice: null,
-        remotePosition: Duration.zero,
-        remoteDuration: Duration.zero,
-        remotePlaying: false,
-      ));
+      state = AsyncValue.data(
+        currentState.copyWith(
+          isCasting: false,
+          selectedCastDevice: null,
+          remotePosition: Duration.zero,
+          remoteDuration: Duration.zero,
+          remotePlaying: false,
+        ),
+      );
     }
     _player?.play();
   }
@@ -860,7 +989,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
     // 1. Initial log
     await _saveProgress(force: true);
-    
+
     // 2. Logic for next episode or auto-play can go here
     debugPrint('PlayerController: Playback finished. Ready for next actions.');
   }
@@ -868,7 +997,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   void _handlePlayerError(String error) {
     if (resolvedParams.type == 'livetv') {
       if (_isChangingChannel) {
-        debugPrint('PlayerController: Ignoring Error during channel change: $error');
+        debugPrint(
+          'PlayerController: Ignoring Error during channel change: $error',
+        );
         return;
       }
       // Connection error: retry same link a few times, then rotate.
@@ -878,17 +1009,22 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
     // Filter out benign MPV errors that shouldn't crash the player state
     final lowerError = error.toLowerCase();
-    if (lowerError.contains('already selected') || lowerError.contains('track')) {
+    if (lowerError.contains('already selected') ||
+        lowerError.contains('track')) {
       debugPrint('PlayerController: Ignoring benign MPV error: $error');
       return;
     }
-    
+
     if (mounted) {
       // 1. First: try soft-retry the same URL (handles transient network blips)
       final currentState = state.valueOrNull;
-      if (currentState != null && currentState.currentStream != null && _retryCount < _maxRetries) {
+      if (currentState != null &&
+          currentState.currentStream != null &&
+          _retryCount < _maxRetries) {
         _retryCount++;
-        debugPrint('PlayerController: Auto-retrying playback (attempt $_retryCount/$_maxRetries) after error: $error');
+        debugPrint(
+          'PlayerController: Auto-retrying playback (attempt $_retryCount/$_maxRetries) after error: $error',
+        );
         _performSoftRetry();
         return;
       }
@@ -913,7 +1049,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
     // Also mark the current candidate's source URL as exhausted
     final currentCandidateUrl = currentState.currentStream?.candidate.url;
-    if (currentCandidateUrl != null) _exhaustedCandidateUrls.add(currentCandidateUrl);
+    if (currentCandidateUrl != null)
+      _exhaustedCandidateUrls.add(currentCandidateUrl);
 
     // Find the first stream not yet tried — safe null return if none exist
     final nextCandidate = currentState.availableStreams
@@ -922,7 +1059,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
     if (nextCandidate == null) return false;
 
-    debugPrint('PlayerController: Falling back to next candidate: ${nextCandidate.provider}');
+    debugPrint(
+      'PlayerController: Falling back to next candidate: ${nextCandidate.provider}',
+    );
     _retryCount = 0; // Reset soft-retry counter for the new candidate
 
     final message = ref.read(localizationsProvider).playerTryingNextSource;
@@ -935,17 +1074,22 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
   Future<void> _performSoftRetry() async {
     final currentState = state.valueOrNull;
-    if (currentState == null || currentState.currentStream == null || _player == null) return;
+    if (currentState == null ||
+        currentState.currentStream == null ||
+        _player == null)
+      return;
 
     final lastPosition = _player!.state.position;
     final candidate = currentState.currentStream!.candidate;
 
     if (mounted) {
-      state = AsyncValue.data(currentState.copyWith(
-        isResolving: true,
-        providerStatuses: const [], // Clear statuses to show simple spinner
-        error: null,
-      ));
+      state = AsyncValue.data(
+        currentState.copyWith(
+          isResolving: true,
+          providerStatuses: const [], // Clear statuses to show simple spinner
+          error: null,
+        ),
+      );
     }
 
     try {
@@ -962,23 +1106,29 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           Media(resolvedStream.url, httpHeaders: resolvedStream.headers),
           play: false,
         );
-        
+
         // Wait for duration to be known before seeking
-        final duration = await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0)
-            .timeout(const Duration(seconds: 5), onTimeout: () => Duration.zero);
-            
+        final duration = await _player!.stream.duration
+            .firstWhere((d) => d.inSeconds > 0)
+            .timeout(
+              const Duration(seconds: 5),
+              onTimeout: () => Duration.zero,
+            );
+
         if (duration > Duration.zero) {
           final seekTo = lastPosition < duration ? lastPosition : Duration.zero;
           await _player!.seek(seekTo);
         }
-        
+
         await _player!.play();
 
         if (mounted) {
-          state = AsyncValue.data(state.value!.copyWith(
-            currentStream: resolvedStream,
-            isResolving: false,
-          ));
+          state = AsyncValue.data(
+            state.value!.copyWith(
+              currentStream: resolvedStream,
+              isResolving: false,
+            ),
+          );
         }
       } else {
         throw Exception('Failed to re-resolve stream during auto-retry');
@@ -993,18 +1143,20 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
   void _triggerStateUpdate() {
     if (mounted && state.hasValue) {
-      state = AsyncValue.data(state.value!.copyWith(
-        activeAudioTrack: _player?.state.track.audio,
-        activeSubtitleTrack: _player?.state.track.subtitle,
-      ));
+      state = AsyncValue.data(
+        state.value!.copyWith(
+          activeAudioTrack: _player?.state.track.audio,
+          activeSubtitleTrack: _player?.state.track.subtitle,
+        ),
+      );
     }
   }
 
   void updateSubtitleStyle(SubtitleStyle style) {
     if (mounted && state.hasValue) {
-      state = AsyncValue.data(state.value!.copyWith(
-        customSubtitleStyle: style,
-      ));
+      state = AsyncValue.data(
+        state.value!.copyWith(customSubtitleStyle: style),
+      );
     }
   }
 
@@ -1014,7 +1166,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       final mpv = _player!.platform as dynamic;
       mpv.setProperty('sub-delay', delaySeconds.toString());
       if (state.hasValue) {
-        state = AsyncValue.data(state.value!.copyWith(subtitleDelay: delaySeconds));
+        state = AsyncValue.data(
+          state.value!.copyWith(subtitleDelay: delaySeconds),
+        );
       }
     } catch (e) {
       debugPrint('PlayerController: Failed to set sub-delay: \$e');
@@ -1022,19 +1176,23 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   }
 
   void _applyTrackPreferences() {
-    _trackManager?.applyEnginePreferences(isAnime: state.valueOrNull?.isAnime ?? false);
+    _trackManager?.applyEnginePreferences(
+      isAnime: state.valueOrNull?.isAnime ?? false,
+    );
   }
 
   void _handleFormatDetected(String? format) {
     if (format == null) return;
-    
+
     final mimeType = MimeResolver.fromEngineFormat(format);
     if (mimeType != null && mimeType != state.valueOrNull?.detectedMimeType) {
-      debugPrint('PlayerController: Engine detected format: $format -> $mimeType');
+      debugPrint(
+        'PlayerController: Engine detected format: $format -> $mimeType',
+      );
       if (mounted) {
-        state = AsyncValue.data(state.value!.copyWith(
-          detectedMimeType: mimeType,
-        ));
+        state = AsyncValue.data(
+          state.value!.copyWith(detectedMimeType: mimeType),
+        );
       }
     }
   }

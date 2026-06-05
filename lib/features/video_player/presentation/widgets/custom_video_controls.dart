@@ -41,7 +41,8 @@ class CustomVideoControls extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<CustomVideoControls> createState() => _CustomVideoControlsState();
+  ConsumerState<CustomVideoControls> createState() =>
+      _CustomVideoControlsState();
 }
 
 class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
@@ -55,7 +56,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   Duration? _virtualPosition;
   Timer? _clearVirtualPositionTimer;
   bool _isFullScreen = false;
-  
+
   DragType _currentDragType = DragType.none;
   double _brightnessLevel = 1.0; // 0.0 to 1.0
   Timer? _hideIndicatorTimer;
@@ -95,7 +96,10 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   void _startHideTimer() {
     _hideTimer?.cancel();
     _hideTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted && !_dragging && _currentDragType == DragType.none && widget.playerState.controller.player.state.playing) {
+      if (mounted &&
+          !_dragging &&
+          _currentDragType == DragType.none &&
+          widget.playerState.controller.player.state.playing) {
         setState(() {
           _visible = false;
         });
@@ -115,7 +119,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   void _togglePlayPause() {
     final notifier = ref.read(playerControllerProvider(widget.params).notifier);
     final player = widget.playerState.controller.player;
-    
+
     if (player.state.playing) {
       notifier.pause();
     } else {
@@ -127,7 +131,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   void _toggleMute() {
     final player = widget.playerState.controller.player;
     final currentVolume = player.state.volume;
-    
+
     if (currentVolume > 0) {
       _lastVolume = currentVolume;
       player.setVolume(0);
@@ -148,7 +152,9 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
 
   Future<void> _toggleFullscreen() async {
     if (_isFullscreenSafe()) {
-      debugPrint("[Fullscreen Debug] Exiting fullscreen. wasMaximized: $_wasMaximizedBeforeFullscreen, prevBounds: $_previousBounds");
+      debugPrint(
+        "[Fullscreen Debug] Exiting fullscreen. wasMaximized: $_wasMaximizedBeforeFullscreen, prevBounds: $_previousBounds",
+      );
       await widget.videoState.exitFullscreen();
       if (Platform.isWindows || Platform.isLinux) {
         if (!_wasMaximizedBeforeFullscreen) {
@@ -165,10 +171,14 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     } else {
       if (Platform.isWindows || Platform.isLinux) {
         _wasMaximizedBeforeFullscreen = await windowManager.isMaximized();
-        debugPrint("[Fullscreen Debug] Entering fullscreen. initiallyMaximized: $_wasMaximizedBeforeFullscreen");
+        debugPrint(
+          "[Fullscreen Debug] Entering fullscreen. initiallyMaximized: $_wasMaximizedBeforeFullscreen",
+        );
         if (!_wasMaximizedBeforeFullscreen) {
           _previousBounds = await windowManager.getBounds();
-          debugPrint("[Fullscreen Debug] Saved bounds: $_previousBounds. Maximizing to trick WM.");
+          debugPrint(
+            "[Fullscreen Debug] Saved bounds: $_previousBounds. Maximizing to trick WM.",
+          );
           await windowManager.maximize();
         }
       }
@@ -179,7 +189,9 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
 
   Future<void> _handleBack() async {
     if (_isFullscreenSafe()) {
-      debugPrint("[Fullscreen Debug] _handleBack: Exiting fullscreen. wasMaximized: $_wasMaximizedBeforeFullscreen, prevBounds: $_previousBounds");
+      debugPrint(
+        "[Fullscreen Debug] _handleBack: Exiting fullscreen. wasMaximized: $_wasMaximizedBeforeFullscreen, prevBounds: $_previousBounds",
+      );
       await widget.videoState.exitFullscreen();
       if (Platform.isWindows || Platform.isLinux) {
         if (!_wasMaximizedBeforeFullscreen) {
@@ -188,7 +200,9 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
             await windowManager.setBounds(_previousBounds!);
           }
         } else {
-          debugPrint("[Fullscreen Debug] _handleBack: Restoring maximized state");
+          debugPrint(
+            "[Fullscreen Debug] _handleBack: Restoring maximized state",
+          );
           await windowManager.maximize();
         }
       }
@@ -206,10 +220,11 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
 
       if (key == LogicalKeyboardKey.space) {
         _togglePlayPause();
-      } else if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.arrowRight) {
+      } else if (key == LogicalKeyboardKey.arrowLeft ||
+          key == LogicalKeyboardKey.arrowRight) {
         _lastSkipKey = key;
         _skipCount = 0;
-        
+
         _clearVirtualPositionTimer?.cancel();
         if (_virtualPosition == null) {
           setState(() {
@@ -218,7 +233,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
         }
 
         _performVirtualSkip(key == LogicalKeyboardKey.arrowRight, step: 10);
-        
+
         _skipTimer?.cancel();
         _skipTimer = Timer(const Duration(milliseconds: 400), () {
           _startContinuousVirtualSkip(key == LogicalKeyboardKey.arrowRight);
@@ -233,7 +248,8 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
         _onHover();
       } else if (key == LogicalKeyboardKey.keyM) {
         _toggleMute();
-      } else if (key == LogicalKeyboardKey.keyF || key == LogicalKeyboardKey.f11) {
+      } else if (key == LogicalKeyboardKey.keyF ||
+          key == LogicalKeyboardKey.f11) {
         _toggleFullscreen();
       } else if (key == LogicalKeyboardKey.escape) {
         if (_isFullscreenSafe()) {
@@ -243,11 +259,15 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
         }
       } else if (key == LogicalKeyboardKey.keyQ) {
         _handleBack();
-      } else if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.numpadEnter) {
+      } else if (key == LogicalKeyboardKey.enter ||
+          key == LogicalKeyboardKey.numpadEnter) {
         final pos = player.state.position.inSeconds;
         final dur = player.state.duration.inSeconds;
-        final isFinished = dur > 0 && (dur - pos < PlaybackThresholds.completionRemainingSeconds || (pos / dur) > PlaybackThresholds.completionPercentage);
-        
+        final isFinished =
+            dur > 0 &&
+            (dur - pos < PlaybackThresholds.completionRemainingSeconds ||
+                (pos / dur) > PlaybackThresholds.completionPercentage);
+
         if (isFinished && widget.onNextEpisode != null) {
           widget.onNextEpisode!();
         }
@@ -256,18 +276,23 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       if (key == _lastSkipKey) {
         _skipTimer?.cancel();
         _lastSkipKey = null;
-        
+
         if (_virtualPosition != null) {
-          ref.read(playerControllerProvider(widget.params).notifier).seek(_virtualPosition!);
-          
+          ref
+              .read(playerControllerProvider(widget.params).notifier)
+              .seek(_virtualPosition!);
+
           _clearVirtualPositionTimer?.cancel();
-          _clearVirtualPositionTimer = Timer(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              setState(() {
-                _virtualPosition = null;
-              });
-            }
-          });
+          _clearVirtualPositionTimer = Timer(
+            const Duration(milliseconds: 500),
+            () {
+              if (mounted) {
+                setState(() {
+                  _virtualPosition = null;
+                });
+              }
+            },
+          );
         }
       }
     }
@@ -280,7 +305,10 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     setState(() {
       final offset = forward ? step : -step;
       _virtualPosition = Duration(
-        seconds: (_virtualPosition!.inSeconds + offset).clamp(0, duration.inSeconds),
+        seconds: (_virtualPosition!.inSeconds + offset).clamp(
+          0,
+          duration.inSeconds,
+        ),
       );
     });
     _onHover();
@@ -289,14 +317,14 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   void _startContinuousVirtualSkip(bool forward) {
     _onHover();
     _skipTimer?.cancel();
-    
+
     _skipTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
-       _performVirtualSkip(forward, step: 5);
-       _skipCount++;
-       
-       if (_skipCount > 40) {
-          _performVirtualSkip(forward, step: 10); 
-       }
+      _performVirtualSkip(forward, step: 5);
+      _skipCount++;
+
+      if (_skipCount > 40) {
+        _performVirtualSkip(forward, step: 10);
+      }
     });
   }
 
@@ -305,7 +333,12 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     final player = widget.playerState.controller.player;
     final pos = player.state.position;
     final duration = player.state.duration;
-    final target = Duration(seconds: (pos.inSeconds + (forward ? 10 : -10)).clamp(0, duration.inSeconds));
+    final target = Duration(
+      seconds: (pos.inSeconds + (forward ? 10 : -10)).clamp(
+        0,
+        duration.inSeconds,
+      ),
+    );
     ref.read(playerControllerProvider(widget.params).notifier).seek(target);
     _onHover();
   }
@@ -332,13 +365,17 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
 
   Future<void> _handleCastPressed(BuildContext context) async {
     if (widget.playerState.isCasting) {
-      await ref.read(playerControllerProvider(widget.params).notifier).stopCasting();
+      await ref
+          .read(playerControllerProvider(widget.params).notifier)
+          .stopCasting();
       return;
     }
 
     final device = await CastDeviceSelector.show(context);
     if (device != null) {
-      await ref.read(playerControllerProvider(widget.params).notifier).startCasting(device);
+      await ref
+          .read(playerControllerProvider(widget.params).notifier)
+          .startCasting(device);
     }
   }
 
@@ -350,7 +387,8 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       _dragIndicatorValue = _brightnessLevel;
     } else {
       _currentDragType = DragType.volume;
-      _dragIndicatorValue = widget.playerState.controller.player.state.volume / 100.0;
+      _dragIndicatorValue =
+          widget.playerState.controller.player.state.volume / 100.0;
     }
     _hideIndicatorTimer?.cancel();
     setState(() {});
@@ -415,8 +453,8 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       },
       child: MouseRegion(
         onHover: (_) => _onHover(),
-        cursor: (_visible || !_isFullScreen) 
-            ? SystemMouseCursors.basic 
+        cursor: (_visible || !_isFullScreen)
+            ? SystemMouseCursors.basic
             : SystemMouseCursors.none,
         child: GestureDetector(
           onTap: () {
@@ -449,13 +487,18 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                       top: 0,
                       left: 0,
                       right: 0,
-                      child: (!_isFullScreen && (Platform.isWindows || Platform.isLinux || Platform.isMacOS))
+                      child:
+                          (!_isFullScreen &&
+                              (Platform.isWindows ||
+                                  Platform.isLinux ||
+                                  Platform.isMacOS))
                           ? DragToMoveArea(
                               child: VideoTopBar(
                                 playerState: widget.playerState,
                                 params: widget.params,
                                 onSettingsPressed: widget.onSettingsPressed,
-                                onCastPressed: () => _handleCastPressed(context),
+                                onCastPressed: () =>
+                                    _handleCastPressed(context),
                                 onBackPressed: _handleBack,
                               ),
                             )
@@ -471,7 +514,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                     // Buffering / play-pause center overlay
                     BufferingIndicator(player: player),
                     PlayPauseOverlay(
-                      player: player, 
+                      player: player,
                       visible: _visible,
                       onTogglePlayPause: _togglePlayPause,
                       onSkip: _performRealSkip,
@@ -482,7 +525,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                       visible: _showSeekIndicator,
                     ),
 
-
                     // Drag Indicator Overlay
                     if (_currentDragType != DragType.none)
                       Align(
@@ -490,7 +532,10 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                         child: Padding(
                           padding: const EdgeInsets.only(top: 72.0),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.black.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(30),
@@ -504,7 +549,9 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                               children: [
                                 Icon(
                                   _currentDragType == DragType.volume
-                                      ? (_dragIndicatorValue == 0 ? Icons.volume_off : Icons.volume_up)
+                                      ? (_dragIndicatorValue == 0
+                                            ? Icons.volume_off
+                                            : Icons.volume_up)
                                       : Icons.brightness_6,
                                   color: Colors.white,
                                   size: 20,
@@ -517,8 +564,13 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                                     borderRadius: BorderRadius.circular(2),
                                     child: LinearProgressIndicator(
                                       value: _dragIndicatorValue,
-                                      backgroundColor: Colors.white.withValues(alpha: 0.2),
-                                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                                      backgroundColor: Colors.white.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      valueColor:
+                                          const AlwaysStoppedAnimation<Color>(
+                                            Colors.white,
+                                          ),
                                     ),
                                   ),
                                 ),
@@ -546,18 +598,32 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                         },
                         onChangeEnd: (value) {
                           final target = Duration(seconds: value.toInt());
-                          ref.read(playerControllerProvider(widget.params).notifier).seek(target);
+                          ref
+                              .read(
+                                playerControllerProvider(
+                                  widget.params,
+                                ).notifier,
+                              )
+                              .seek(target);
                           setState(() {
                             _dragging = false;
                             _virtualPosition = target;
                           });
                           _startHideTimer();
                           _clearVirtualPositionTimer?.cancel();
-                          _clearVirtualPositionTimer = Timer(const Duration(milliseconds: 500), () {
-                            if (mounted) setState(() => _virtualPosition = null);
-                          });
+                          _clearVirtualPositionTimer = Timer(
+                            const Duration(milliseconds: 500),
+                            () {
+                              if (mounted)
+                                setState(() => _virtualPosition = null);
+                            },
+                          );
                         },
-                        onChanged: (value) => setState(() => _virtualPosition = Duration(seconds: value.toInt())),
+                        onChanged: (value) => setState(
+                          () => _virtualPosition = Duration(
+                            seconds: value.toInt(),
+                          ),
+                        ),
                         onTogglePlayPause: _togglePlayPause,
                         onSkip: _performRealSkip,
                         onToggleMute: _toggleMute,

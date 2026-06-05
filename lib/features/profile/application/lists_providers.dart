@@ -19,23 +19,27 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
   Stream<List<UserList>> build() {
     final user = ref.watch(authProvider).asData?.value;
     if (user == null) return Stream.value([]);
-    
+
     final repo = ref.watch(listsRepositoryProvider);
 
     // Background sync
-    repo.syncUserLists(user.id).catchError((e) => debugPrint('UserListsNotifier: Sync failed: $e'));
+    repo
+        .syncUserLists(user.id)
+        .catchError((e) => debugPrint('UserListsNotifier: Sync failed: $e'));
 
     return repo.watchUserLists(user.id);
   }
 
   /// Toggles an item in a system list (Watchlist or Favorites).
   Future<void> toggleSystemList(MediaItem media, ListType type) async {
-    final lists = state.value ?? []; 
-    
+    final lists = state.value ?? [];
+
     // Find the specific list of this type
     var targetList = lists.firstWhere(
       (l) => l.type == type,
-      orElse: () => throw Exception('System list $type not found. Ensure it exists in DB.'),
+      orElse: () => throw Exception(
+        'System list $type not found. Ensure it exists in DB.',
+      ),
     );
 
     // Find if the item exists in the list (checking both 'tv' and 'series' for series)
@@ -75,7 +79,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
         },
       );
     }
-    // No need to invalidateSelf(), the repository updates the local Drift DB 
+    // No need to invalidateSelf(), the repository updates the local Drift DB
     // which automatically triggers a new event in our stream.
   }
 
@@ -100,13 +104,13 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
     );
   }
 
-  Future<void> updateList(String listId, String name, String? description) async {
+  Future<void> updateList(
+    String listId,
+    String name,
+    String? description,
+  ) async {
     final repo = ref.read(listsRepositoryProvider);
-    await repo.updateList(
-      listId: listId,
-      name: name,
-      description: description,
-    );
+    await repo.updateList(listId: listId, name: name, description: description);
   }
 
   Future<void> addItemToCustomList(String listId, MediaItem media) async {
@@ -133,7 +137,11 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
     );
   }
 
-  Future<void> removeItemFromList(String listId, int tmdbId, MediaKind mediaType) async {
+  Future<void> removeItemFromList(
+    String listId,
+    int tmdbId,
+    MediaKind mediaType,
+  ) async {
     final repo = ref.read(listsRepositoryProvider);
     await repo.removeItemFromList(
       listId: listId,
@@ -145,17 +153,25 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
   /// Helper to check if a specific item is in the Watchlist.
   bool isInWatchlist(int tmdbId, MediaKind mediaType) {
     final lists = state.value ?? [];
-    final watchlist = lists.where((l) => l.type == ListType.watchlist).firstOrNull;
+    final watchlist = lists
+        .where((l) => l.type == ListType.watchlist)
+        .firstOrNull;
     if (watchlist == null) return false;
-    return watchlist.items.any((i) => i.tmdbId == tmdbId && i.mediaType == mediaType);
+    return watchlist.items.any(
+      (i) => i.tmdbId == tmdbId && i.mediaType == mediaType,
+    );
   }
 
   /// Helper to check if a specific item is in Favorites.
   bool isFavorite(int tmdbId, MediaKind mediaType) {
     final lists = state.value ?? [];
-    final favorites = lists.where((l) => l.type == ListType.favorites).firstOrNull;
+    final favorites = lists
+        .where((l) => l.type == ListType.favorites)
+        .firstOrNull;
     if (favorites == null) return false;
-    return favorites.items.any((i) => i.tmdbId == tmdbId && i.mediaType == mediaType);
+    return favorites.items.any(
+      (i) => i.tmdbId == tmdbId && i.mediaType == mediaType,
+    );
   }
 
   /// Optimistically remove a list from the current state.
@@ -166,6 +182,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
   }
 }
 
-final userListsProvider = StreamNotifierProvider<UserListsNotifier, List<UserList>>(() {
-  return UserListsNotifier();
-});
+final userListsProvider =
+    StreamNotifierProvider<UserListsNotifier, List<UserList>>(() {
+      return UserListsNotifier();
+    });

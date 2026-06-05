@@ -27,7 +27,8 @@ class M3uParser {
         if (commaIndex != -1 && commaIndex + 1 < line.length) {
           currentName = line.substring(commaIndex + 1).trim();
         } else {
-          currentName = _extractAttribute(line, 'tvg-name') ?? 'Unknown Channel';
+          currentName =
+              _extractAttribute(line, 'tvg-name') ?? 'Unknown Channel';
         }
       } else if (!line.startsWith('#')) {
         // This is the URL line
@@ -42,7 +43,7 @@ class M3uParser {
           );
           channels.add(channel);
         }
-        
+
         // Reset for next entry
         currentName = null;
         currentLogo = null;

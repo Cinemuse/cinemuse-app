@@ -11,6 +11,7 @@ class EpisodeCard extends ConsumerStatefulWidget {
   final Map<String, dynamic> episode;
   final int seasonNumber;
   final Map<String, dynamic> media;
+
   /// TMDB ID string used for cache key lookup.
   final String mediaId;
   final bool isWatched;
@@ -19,8 +20,10 @@ class EpisodeCard extends ConsumerStatefulWidget {
   final Function(int, int, String)? onEpisodeTap;
   final Function(int, int, DateTime?)? onMarkWatched;
   final Function(int, int) onTrackOptions;
-  final List<({int season, int episode})> Function(int, int) onFindMissingPreceding;
-  final Function(int, int, List<({int season, int episode})>) onShowMarkPrecedingModal;
+  final List<({int season, int episode})> Function(int, int)
+  onFindMissingPreceding;
+  final Function(int, int, List<({int season, int episode})>)
+  onShowMarkPrecedingModal;
   final VoidCallback? onShowTvTimeComments;
 
   const EpisodeCard({
@@ -100,13 +103,15 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
       AppMenuOption(
         icon: Icons.play_arrow_outlined,
         label: hasProgress ? l10n.menuResume : l10n.detailsPlay,
-        onTap: () => widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, epName),
+        onTap: () =>
+            widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, epName),
       ),
       if (hasProgress)
         AppMenuOption(
           icon: Icons.replay,
           label: l10n.menuRestart,
-          onTap: () => widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, epName),
+          onTap: () =>
+              widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, epName),
         ),
       if (_hasCachedStream)
         AppMenuOption(
@@ -125,9 +130,16 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
           icon: Icons.remove_red_eye_outlined,
           label: l10n.menuMarkWatchedNow,
           onTap: () {
-            final missing = widget.onFindMissingPreceding(widget.seasonNumber, _epNumber);
+            final missing = widget.onFindMissingPreceding(
+              widget.seasonNumber,
+              _epNumber,
+            );
             if (missing.isNotEmpty) {
-              widget.onShowMarkPrecedingModal(widget.seasonNumber, _epNumber, missing);
+              widget.onShowMarkPrecedingModal(
+                widget.seasonNumber,
+                _epNumber,
+                missing,
+              );
             } else {
               widget.onMarkWatched?.call(widget.seasonNumber, _epNumber, null);
             }
@@ -187,9 +199,13 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
     final stillPath = widget.episode['still_path'];
     final runtime = widget.episode['runtime'];
     final airDateStr = widget.episode['air_date']?.toString();
-    final DateTime? airDate = airDateStr != null ? DateTime.tryParse(airDateStr) : null;
+    final DateTime? airDate = airDateStr != null
+        ? DateTime.tryParse(airDateStr)
+        : null;
     final formattedAirDate = airDate != null
-        ? DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(airDate)
+        ? DateFormat.yMMMd(
+            Localizations.localeOf(context).languageCode,
+          ).format(airDate)
         : null;
 
     final isMobile = MediaQuery.of(context).size.width < 600;
@@ -209,7 +225,8 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, name),
+            onTap: () =>
+                widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, name),
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: isMobile
@@ -219,7 +236,13 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildEpisodeStill(context, l10n, stillPath, runtime, 160),
+                            _buildEpisodeStill(
+                              context,
+                              l10n,
+                              stillPath,
+                              runtime,
+                              160,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -240,7 +263,13 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                   : Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildEpisodeStill(context, l10n, stillPath, runtime, 160),
+                        _buildEpisodeStill(
+                          context,
+                          l10n,
+                          stillPath,
+                          runtime,
+                          160,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -263,7 +292,13 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
     );
   }
 
-  Widget _buildEpisodeStill(BuildContext context, AppLocalizations l10n, String? stillPath, dynamic runtime, double width) {
+  Widget _buildEpisodeStill(
+    BuildContext context,
+    AppLocalizations l10n,
+    String? stillPath,
+    dynamic runtime,
+    double width,
+  ) {
     return SizedBox(
       width: width,
       child: Stack(
@@ -276,13 +311,21 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                 borderRadius: BorderRadius.circular(8),
                 image: stillPath != null
                     ? DecorationImage(
-                        image: NetworkImage('https://image.tmdb.org/t/p/w300$stillPath'),
+                        image: NetworkImage(
+                          'https://image.tmdb.org/t/p/w300$stillPath',
+                        ),
                         fit: BoxFit.cover,
                       )
                     : null,
               ),
               child: stillPath == null
-                  ? const Center(child: Icon(Icons.tv, color: AppTheme.textMuted, size: 32))
+                  ? const Center(
+                      child: Icon(
+                        Icons.tv,
+                        color: AppTheme.textMuted,
+                        size: 32,
+                      ),
+                    )
                   : null,
             ),
           ),
@@ -296,7 +339,11 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                   color: AppTheme.primary.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.play_arrow, color: AppTheme.textWhite, size: 24),
+                child: const Icon(
+                  Icons.play_arrow,
+                  color: AppTheme.textWhite,
+                  size: 24,
+                ),
               ),
             ),
           ),
@@ -325,7 +372,9 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
+                border: Border.all(
+                  color: AppTheme.textWhite.withValues(alpha: 0.1),
+                ),
               ),
               child: Text(
                 l10n.detailsEpisodeNumber(_epNumber),
@@ -351,11 +400,18 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.access_time, color: AppTheme.textWhite, size: 9),
+                    const Icon(
+                      Icons.access_time,
+                      color: AppTheme.textWhite,
+                      size: 9,
+                    ),
                     const SizedBox(width: 3),
                     Text(
                       '${runtime}m',
-                      style: const TextStyle(color: AppTheme.textWhite, fontSize: 9),
+                      style: const TextStyle(
+                        color: AppTheme.textWhite,
+                        fontSize: 9,
+                      ),
                     ),
                   ],
                 ),
@@ -363,7 +419,9 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
             ),
 
           // Progress Bar
-          if (!widget.isWatched && widget.resumePercentage != null && widget.resumePercentage! > 0)
+          if (!widget.isWatched &&
+              widget.resumePercentage != null &&
+              widget.resumePercentage! > 0)
             Positioned(
               bottom: 0,
               left: 0,
@@ -372,7 +430,9 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                 height: 3,
                 decoration: BoxDecoration(
                   color: AppTheme.textWhite.withValues(alpha: 0.1),
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(8),
+                  ),
                 ),
                 alignment: Alignment.centerLeft,
                 child: FractionallySizedBox(
@@ -380,7 +440,9 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                   child: Container(
                     decoration: const BoxDecoration(
                       color: AppTheme.accent,
-                      borderRadius: BorderRadius.vertical(bottom: Radius.circular(8)),
+                      borderRadius: BorderRadius.vertical(
+                        bottom: Radius.circular(8),
+                      ),
                     ),
                   ),
                 ),
@@ -416,12 +478,20 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
     );
   }
 
-  Widget _buildExpandableOverview(BuildContext context, AppLocalizations l10n, String overview) {
+  Widget _buildExpandableOverview(
+    BuildContext context,
+    AppLocalizations l10n,
+    String overview,
+  ) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final textSpan = TextSpan(
           text: overview,
-          style: TextStyle(color: AppTheme.textMuted, fontSize: 12, height: 1.4),
+          style: TextStyle(
+            color: AppTheme.textMuted,
+            fontSize: 12,
+            height: 1.4,
+          ),
         );
         final textPainter = TextPainter(
           text: textSpan,
@@ -440,9 +510,15 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
             children: [
               Text(
                 overview,
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 12, height: 1.4),
+                style: TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
                 maxLines: _isExpanded ? null : 2,
-                overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                overflow: _isExpanded
+                    ? TextOverflow.visible
+                    : TextOverflow.ellipsis,
               ),
               if (isOverflowing)
                 GestureDetector(
@@ -466,7 +542,11 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
     );
   }
 
-  Widget _buildActions(BuildContext context, AppLocalizations l10n, {required bool isMobile}) {
+  Widget _buildActions(
+    BuildContext context,
+    AppLocalizations l10n, {
+    required bool isMobile,
+  }) {
     return Padding(
       padding: EdgeInsets.only(right: isMobile ? 0 : 4),
       child: Wrap(
@@ -491,7 +571,9 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                         decoration: BoxDecoration(
                           color: AppTheme.textWhite.withValues(alpha: 0.05),
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
+                          border: Border.all(
+                            color: AppTheme.textWhite.withValues(alpha: 0.1),
+                          ),
                         ),
                         child: Icon(
                           Icons.more_vert,
@@ -501,7 +583,7 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                       ),
                     ),
                   );
-                }
+                },
               ),
             ),
           ),
@@ -519,7 +601,9 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                       decoration: BoxDecoration(
                         color: AppTheme.textWhite.withValues(alpha: 0.05),
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
+                        border: Border.all(
+                          color: AppTheme.textWhite.withValues(alpha: 0.1),
+                        ),
                       ),
                       child: Icon(
                         Icons.forum_outlined,
@@ -539,15 +623,27 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
               if (widget.isWatched) {
                 widget.onTrackOptions(widget.seasonNumber, _epNumber);
               } else {
-                final missing = widget.onFindMissingPreceding(widget.seasonNumber, _epNumber);
+                final missing = widget.onFindMissingPreceding(
+                  widget.seasonNumber,
+                  _epNumber,
+                );
                 if (missing.isNotEmpty) {
-                  widget.onShowMarkPrecedingModal(widget.seasonNumber, _epNumber, missing);
+                  widget.onShowMarkPrecedingModal(
+                    widget.seasonNumber,
+                    _epNumber,
+                    missing,
+                  );
                 } else {
-                  widget.onMarkWatched?.call(widget.seasonNumber, _epNumber, null);
+                  widget.onMarkWatched?.call(
+                    widget.seasonNumber,
+                    _epNumber,
+                    null,
+                  );
                 }
               }
             },
-            onLongPress: () {}, // Empty to prevent default behavior, or just remove if we modify the widget
+            onLongPress:
+                () {}, // Empty to prevent default behavior, or just remove if we modify the widget
           ),
         ],
       ),
@@ -573,7 +669,9 @@ class MarkWatchedButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Tooltip(
-      message: isWatched ? l10n.detailsTooltipWatched : l10n.detailsTooltipMarkWatched,
+      message: isWatched
+          ? l10n.detailsTooltipWatched
+          : l10n.detailsTooltipMarkWatched,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
@@ -586,16 +684,24 @@ class MarkWatchedButton extends StatelessWidget {
                 vertical: 8,
               ),
               decoration: BoxDecoration(
-                color: isWatched ? Colors.green : AppTheme.textWhite.withValues(alpha: 0.05),
+                color: isWatched
+                    ? Colors.green
+                    : AppTheme.textWhite.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isWatched ? Colors.green : AppTheme.textWhite.withValues(alpha: 0.1),
+                  color: isWatched
+                      ? Colors.green
+                      : AppTheme.textWhite.withValues(alpha: 0.1),
                 ),
               ),
               child: watchCount > 1
                   ? Text(
                       'x$watchCount',
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     )
                   : Icon(
                       isWatched ? Icons.check : Icons.remove_red_eye_outlined,

@@ -25,7 +25,7 @@ final profileStreamProvider = StreamProvider<Profile?>((ref) async* {
   }
 
   final db = ref.watch(appDatabaseProvider);
-  
+
   // 1. Instant Cache Fallback
   try {
     final cached = await db.getCachedProfile(userId);
@@ -34,8 +34,8 @@ final profileStreamProvider = StreamProvider<Profile?>((ref) async* {
         id: cached.id,
         username: cached.username,
         avatarUrl: cached.avatarUrl,
-        preferences: cached.preferences != null 
-            ? jsonDecode(cached.preferences!) as Map<String, dynamic> 
+        preferences: cached.preferences != null
+            ? jsonDecode(cached.preferences!) as Map<String, dynamic>
             : {},
         createdAt: cached.createdAt,
         updatedAt: cached.updatedAt,
@@ -59,14 +59,18 @@ final profileStreamProvider = StreamProvider<Profile?>((ref) async* {
     await for (final profile in stream) {
       // Sync remote update to local cache background
       if (profile != null) {
-        db.upsertProfile(CachedProfilesCompanion(
-          id: Value(profile.id),
-          username: Value(profile.username),
-          avatarUrl: Value(profile.avatarUrl),
-          preferences: Value(jsonEncode(profile.preferences)),
-          createdAt: Value(profile.createdAt),
-          updatedAt: Value(profile.updatedAt),
-        )).catchError((_) {});
+        db
+            .upsertProfile(
+              CachedProfilesCompanion(
+                id: Value(profile.id),
+                username: Value(profile.username),
+                avatarUrl: Value(profile.avatarUrl),
+                preferences: Value(jsonEncode(profile.preferences)),
+                createdAt: Value(profile.createdAt),
+                updatedAt: Value(profile.updatedAt),
+              ),
+            )
+            .catchError((_) {});
       }
       yield profile;
     }
@@ -80,30 +84,34 @@ final profileStreamProvider = StreamProvider<Profile?>((ref) async* {
 final watchHistoryStreamProvider = StreamProvider<List<WatchHistory>>((ref) {
   final userId = ref.watch(userIdProvider);
   if (userId == null) return Stream.value([]);
-  
-  return ref.watch(watchHistoryRepositoryProvider).watchAllHistory(userId)
+
+  return ref
+      .watch(watchHistoryRepositoryProvider)
+      .watchAllHistory(userId)
       .handleError((error, stackTrace) {
-    // On expired JWT or channel errors, return empty list.
-    // The session refresh will eventually trigger a rebuild via authProvider.
-    if (error is RealtimeSubscribeException) {
-      return <WatchHistory>[];
-    }
-    throw error;
-  });
+        // On expired JWT or channel errors, return empty list.
+        // The session refresh will eventually trigger a rebuild via authProvider.
+        if (error is RealtimeSubscribeException) {
+          return <WatchHistory>[];
+        }
+        throw error;
+      });
 });
 
 // 4. Recently Watched Stream Provider (Log-based, permanent history)
 final recentlyWatchedStreamProvider = StreamProvider<List<WatchHistory>>((ref) {
   final userId = ref.watch(userIdProvider);
   if (userId == null) return Stream.value([]);
-  
-  return ref.watch(watchHistoryRepositoryProvider).watchRecentHistoryStream(userId)
+
+  return ref
+      .watch(watchHistoryRepositoryProvider)
+      .watchRecentHistoryStream(userId)
       .handleError((error, stackTrace) {
-    if (error is RealtimeSubscribeException) {
-      return <WatchHistory>[];
-    }
-    throw error;
-  });
+        if (error is RealtimeSubscribeException) {
+          return <WatchHistory>[];
+        }
+        throw error;
+      });
 });
 
 // 5. Computed Stats Provider (Fetching from Supabase View)
@@ -118,37 +126,41 @@ final profileStatsProvider = StreamProvider<ProfileStats>((ref) async* {
   // Every time a user watches something, the local watch_histories table is merged/updated,
   // triggering this stream, which in turn fetches the true aggregated stats from backend.
   ref.watch(watchHistoryStreamProvider);
-  
+
   try {
-    final res = await supabase.from('user_stats').select().eq('user_id', userId).maybeSingle();
+    final res = await supabase
+        .from('user_stats')
+        .select()
+        .eq('user_id', userId)
+        .maybeSingle();
     if (res == null) {
       yield ProfileStats.empty();
       return;
     }
-    
+
     yield ProfileStats(
-        totalMinutesWatched: (res['total_minutes_watched'] as num?)?.toInt() ?? 0,
-        totalEpisodes: (res['total_episodes'] as num?)?.toInt() ?? 0,
-        totalMovies: (res['total_movies'] as num?)?.toInt() ?? 0,
-        totalSeries: (res['total_series'] as num?)?.toInt() ?? 0,
-        totalSeasons: (res['total_seasons'] as num?)?.toInt() ?? 0,
-        last7Days: PeriodStats(
-          totalMinutes: (res['p7_minutes'] as num?)?.toInt() ?? 0,
-          movieCount: (res['p7_movies'] as num?)?.toInt() ?? 0,
-          episodeCount: (res['p7_episodes'] as num?)?.toInt() ?? 0,
-        ),
-        last30Days: PeriodStats(
-          totalMinutes: (res['p30_minutes'] as num?)?.toInt() ?? 0,
-          movieCount: (res['p30_movies'] as num?)?.toInt() ?? 0,
-          episodeCount: (res['p30_episodes'] as num?)?.toInt() ?? 0,
-        ),
-        last365Days: PeriodStats(
-          totalMinutes: (res['p365_minutes'] as num?)?.toInt() ?? 0,
-          movieCount: (res['p365_movies'] as num?)?.toInt() ?? 0,
-          episodeCount: (res['p365_episodes'] as num?)?.toInt() ?? 0,
-        ),
-        movieMinutes: (res['movie_minutes'] as num?)?.toInt() ?? 0,
-        seriesMinutes: (res['series_minutes'] as num?)?.toInt() ?? 0,
+      totalMinutesWatched: (res['total_minutes_watched'] as num?)?.toInt() ?? 0,
+      totalEpisodes: (res['total_episodes'] as num?)?.toInt() ?? 0,
+      totalMovies: (res['total_movies'] as num?)?.toInt() ?? 0,
+      totalSeries: (res['total_series'] as num?)?.toInt() ?? 0,
+      totalSeasons: (res['total_seasons'] as num?)?.toInt() ?? 0,
+      last7Days: PeriodStats(
+        totalMinutes: (res['p7_minutes'] as num?)?.toInt() ?? 0,
+        movieCount: (res['p7_movies'] as num?)?.toInt() ?? 0,
+        episodeCount: (res['p7_episodes'] as num?)?.toInt() ?? 0,
+      ),
+      last30Days: PeriodStats(
+        totalMinutes: (res['p30_minutes'] as num?)?.toInt() ?? 0,
+        movieCount: (res['p30_movies'] as num?)?.toInt() ?? 0,
+        episodeCount: (res['p30_episodes'] as num?)?.toInt() ?? 0,
+      ),
+      last365Days: PeriodStats(
+        totalMinutes: (res['p365_minutes'] as num?)?.toInt() ?? 0,
+        movieCount: (res['p365_movies'] as num?)?.toInt() ?? 0,
+        episodeCount: (res['p365_episodes'] as num?)?.toInt() ?? 0,
+      ),
+      movieMinutes: (res['movie_minutes'] as num?)?.toInt() ?? 0,
+      seriesMinutes: (res['series_minutes'] as num?)?.toInt() ?? 0,
     );
   } catch (e) {
     // Return empty stats on failure or keep previous

@@ -9,7 +9,8 @@ final dioProvider = Provider<Dio>((ref) {
       sendTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
       headers: {
-        'User-Agent': 'Cinemuse/1.0.0 (Windows 10; Desktop) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'User-Agent':
+            'Cinemuse/1.0.0 (Windows 10; Desktop) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       },
     ),
   );
@@ -24,30 +25,38 @@ class RetryInterceptor extends Interceptor {
   final int maxRetries;
   final List<int> retryStatusCodes;
 
-  RetryInterceptor(this.dio, {this.maxRetries = 3, this.retryStatusCodes = const [502, 503, 504]});
+  RetryInterceptor(
+    this.dio, {
+    this.maxRetries = 3,
+    this.retryStatusCodes = const [502, 503, 504],
+  });
 
   @override
   Future onError(DioException err, ErrorInterceptorHandler handler) async {
     var requestOptions = err.requestOptions;
-    
+
     // Check if we should retry
     int retryCount = requestOptions.extra['retry_count'] ?? 0;
-    
-    bool shouldRetry = retryCount < maxRetries && 
+
+    bool shouldRetry =
+        retryCount < maxRetries &&
         (err.type == DioExceptionType.connectionTimeout ||
-         err.type == DioExceptionType.receiveTimeout ||
-         (err.response != null && retryStatusCodes.contains(err.response?.statusCode)));
+            err.type == DioExceptionType.receiveTimeout ||
+            (err.response != null &&
+                retryStatusCodes.contains(err.response?.statusCode)));
 
     if (shouldRetry) {
       retryCount++;
       requestOptions.extra['retry_count'] = retryCount;
-      
+
       // Exponential backoff
       final delay = Duration(milliseconds: 500 * (retryCount * retryCount));
-      debugPrint('NetworkInterceptor: Retrying request (${requestOptions.path}) - Attempt $retryCount after ${delay.inMilliseconds}ms');
-      
+      debugPrint(
+        'NetworkInterceptor: Retrying request (${requestOptions.path}) - Attempt $retryCount after ${delay.inMilliseconds}ms',
+      );
+
       await Future.delayed(delay);
-      
+
       try {
         final response = await dio.fetch(requestOptions);
         return handler.resolve(response);
@@ -55,7 +64,7 @@ class RetryInterceptor extends Interceptor {
         return super.onError(e, handler);
       }
     }
-    
+
     return super.onError(err, handler);
   }
 }

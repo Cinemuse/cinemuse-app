@@ -55,7 +55,8 @@ class LiveTvPlaylist {
       urlOrPath: json['urlOrPath'] as String,
       isLocal: json['isLocal'] as bool,
       type: PlaylistType.values.firstWhere((e) => e.name == json['type']),
-      isEnabled: json['isEnabled'] as bool? ?? true, // default true for legacy entries
+      isEnabled:
+          json['isEnabled'] as bool? ?? true, // default true for legacy entries
     );
   }
 

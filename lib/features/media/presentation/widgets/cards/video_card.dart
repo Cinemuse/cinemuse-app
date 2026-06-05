@@ -35,10 +35,13 @@ class VideoCard extends StatelessWidget {
                       alignment: Alignment.center,
                       children: [
                         CachedNetworkImage(
-                          imageUrl: 'https://img.youtube.com/vi/$youtubeKey/mqdefault.jpg',
+                          imageUrl:
+                              'https://img.youtube.com/vi/$youtubeKey/mqdefault.jpg',
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(color: Colors.white10),
-                          errorWidget: (context, url, error) => Container(color: Colors.white10),
+                          placeholder: (context, url) =>
+                              Container(color: Colors.white10),
+                          errorWidget: (context, url, error) =>
+                              Container(color: Colors.white10),
                         ),
                         Container(
                           padding: const EdgeInsets.all(8),
@@ -47,7 +50,11 @@ class VideoCard extends StatelessWidget {
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white30),
                           ),
-                          child: const Icon(Icons.play_arrow, color: Colors.white, size: 24),
+                          child: const Icon(
+                            Icons.play_arrow,
+                            color: Colors.white,
+                            size: 24,
+                          ),
                         ),
                       ],
                     ),

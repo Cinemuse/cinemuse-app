@@ -66,23 +66,29 @@ class AppMenu {
                   ),
                 ),
               ),
-            ...options.map((option) => ListTile(
-                  leading: Icon(
-                    option.icon,
-                    color: option.isDestructive ? AppTheme.favorites : Colors.white70,
+            ...options.map(
+              (option) => ListTile(
+                leading: Icon(
+                  option.icon,
+                  color: option.isDestructive
+                      ? AppTheme.favorites
+                      : Colors.white70,
+                ),
+                title: Text(
+                  option.label,
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    color: option.isDestructive
+                        ? AppTheme.favorites
+                        : Colors.white,
+                    fontSize: 16,
                   ),
-                  title: Text(
-                    option.label,
-                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                      color: option.isDestructive ? AppTheme.favorites : Colors.white,
-                      fontSize: 16,
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    option.onTap();
-                  },
-                )),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  option.onTap();
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -95,7 +101,8 @@ class AppMenu {
     BuildContext? anchorContext,
     Offset? position,
   ) {
-    final RenderBox? overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+    final RenderBox? overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox?;
     if (overlay == null) return Future.value();
 
     final RelativeRect relativePosition;
@@ -111,7 +118,10 @@ class AppMenu {
     } else if (anchorContext != null) {
       // Anchor to the trigger widget
       final RenderBox button = anchorContext.findRenderObject() as RenderBox;
-      final Offset buttonPosition = button.localToGlobal(Offset.zero, ancestor: overlay);
+      final Offset buttonPosition = button.localToGlobal(
+        Offset.zero,
+        ancestor: overlay,
+      );
       relativePosition = RelativeRect.fromLTRB(
         buttonPosition.dx,
         buttonPosition.dy + button.size.height,
@@ -138,46 +148,54 @@ class AppMenu {
         side: const BorderSide(color: AppTheme.border, width: 1),
       ),
       items: options
-          .map((option) => PopupMenuItem(
-                onTap: option.onTap,
-                child: Row(
-                  children: [
-                    Icon(
-                      option.icon,
-                      size: 18,
-                      color: option.isDestructive ? AppTheme.favorites : Colors.white.withValues(alpha: 0.7),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+          .map(
+            (option) => PopupMenuItem(
+              onTap: option.onTap,
+              child: Row(
+                children: [
+                  Icon(
+                    option.icon,
+                    size: 18,
+                    color: option.isDestructive
+                        ? AppTheme.favorites
+                        : Colors.white.withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          option.label,
+                          style: Theme.of(context).textTheme.bodyMedium!
+                              .copyWith(
+                                color: option.isDestructive
+                                    ? AppTheme.favorites
+                                    : Colors.white,
+                                fontSize: 14,
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (option.subtitle != null)
                           Text(
-                            option.label,
-                            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                              color: option.isDestructive ? AppTheme.favorites : Colors.white,
-                              fontSize: 14,
-                            ),
+                            option.subtitle!,
+                            style: Theme.of(context).textTheme.bodyMedium!
+                                .copyWith(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  fontSize: 12,
+                                ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (option.subtitle != null)
-                            Text(
-                              option.subtitle!,
-                              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                color: Colors.white.withValues(alpha: 0.5),
-                                fontSize: 12,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                        ],
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ))
+                  ),
+                ],
+              ),
+            ),
+          )
           .toList(),
     );
   }

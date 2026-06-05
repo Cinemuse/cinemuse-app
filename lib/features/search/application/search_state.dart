@@ -41,23 +41,23 @@ class SearchState {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-  
+
     return other is SearchState &&
-      other.query == query &&
-      listEquals(other.results, results) &&
-      other.status == status &&
-      other.page == page &&
-      other.hasMore == hasMore &&
-      other.errorMessage == errorMessage;
+        other.query == query &&
+        listEquals(other.results, results) &&
+        other.status == status &&
+        other.page == page &&
+        other.hasMore == hasMore &&
+        other.errorMessage == errorMessage;
   }
 
   @override
   int get hashCode {
     return query.hashCode ^
-      results.hashCode ^
-      status.hashCode ^
-      page.hashCode ^
-      hasMore.hashCode ^
-      errorMessage.hashCode;
+        results.hashCode ^
+        status.hashCode ^
+        page.hashCode ^
+        hasMore.hashCode ^
+        errorMessage.hashCode;
   }
 }

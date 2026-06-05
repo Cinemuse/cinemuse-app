@@ -125,8 +125,9 @@ class AnimeUnitySource extends BaseSource {
     StreamSearchContext context,
     AnimeUnityEntry entry,
   ) async {
-    final normalizedUrl =
-        embedUrl.startsWith('http') ? embedUrl : 'https:$embedUrl';
+    final normalizedUrl = embedUrl.startsWith('http')
+        ? embedUrl
+        : 'https:$embedUrl';
 
     final res = await _dio.get(normalizedUrl, options: _embedOptions());
     if (res.statusCode != 200 || res.data == null) return null;
@@ -152,10 +153,7 @@ class AnimeUnitySource extends BaseSource {
       magnet: '',
       provider: name,
       url: hlsResult.url,
-      headers: {
-        'Referer': normalizedUrl,
-        'User-Agent': _userAgent,
-      },
+      headers: {'Referer': normalizedUrl, 'User-Agent': _userAgent},
       metadata: StreamMetadata(
         video: VideoMetadata(resolution: resolution),
         audio: const AudioMetadata(),
@@ -171,8 +169,9 @@ class AnimeUnitySource extends BaseSource {
   /// the final `.m3u8` URL with token, expires, and FHD params.
   _VixCloudHlsResult? _parseVixCloudScript(String html) {
     // Find script tag containing masterPlaylist
-    final scriptPattern =
-        RegExp(r'<script[^>]*>([\s\S]*?masterPlaylist[\s\S]*?)</script>');
+    final scriptPattern = RegExp(
+      r'<script[^>]*>([\s\S]*?masterPlaylist[\s\S]*?)</script>',
+    );
     final scriptMatch = scriptPattern.firstMatch(html);
     if (scriptMatch == null) {
       debugPrint('AnimeUnitySource: No masterPlaylist script found');
@@ -180,7 +179,8 @@ class AnimeUnitySource extends BaseSource {
     }
     final script = scriptMatch.group(1)!;
 
-    final url = _extractWindowValue(script, 'masterPlaylistUrl') ??
+    final url =
+        _extractWindowValue(script, 'masterPlaylistUrl') ??
         _extractMasterPlaylistUrl(script);
     if (url == null || url.isEmpty) {
       debugPrint('AnimeUnitySource: masterPlaylist.url not found');
@@ -189,17 +189,19 @@ class AnimeUnitySource extends BaseSource {
 
     final token = _extractParamValue(script, 'token');
     final expires = _extractParamValue(script, 'expires');
-    final canPlayFHD = script.contains('canPlayFHD') &&
-        RegExp(r'canPlayFHD\s*[:=]\s*true', caseSensitive: false)
-            .hasMatch(script);
+    final canPlayFHD =
+        script.contains('canPlayFHD') &&
+        RegExp(
+          r'canPlayFHD\s*[:=]\s*true',
+          caseSensitive: false,
+        ).hasMatch(script);
 
     return _buildHlsUrl(url, token, expires, canPlayFHD);
   }
 
   /// Extracts a value assigned to `window.<key>` from a script block.
   String? _extractWindowValue(String script, String key) {
-    final pattern =
-        RegExp('window\\.$key\\s*=\\s*[\'"]([^\'"]*?)[\'"]');
+    final pattern = RegExp('window\\.$key\\s*=\\s*[\'"]([^\'"]*?)[\'"]');
     return pattern.firstMatch(script)?.group(1);
   }
 
@@ -211,8 +213,9 @@ class AnimeUnitySource extends BaseSource {
 
   /// Extracts a named param (token/expires) from script content.
   String? _extractParamValue(String script, String paramName) {
-    final pattern =
-        RegExp('''['"]?$paramName['"]?\\s*:\\s*['"]([^'"]*?)['"]''');
+    final pattern = RegExp(
+      '''['"]?$paramName['"]?\\s*:\\s*['"]([^'"]*?)['"]''',
+    );
     return pattern.firstMatch(script)?.group(1);
   }
 
@@ -240,7 +243,8 @@ class AnimeUnitySource extends BaseSource {
 
     // Add authentication params
     final separator = finalUrl.contains('?') ? '&' : '?';
-    finalUrl += '${separator}token=${Uri.encodeComponent(token)}'
+    finalUrl +=
+        '${separator}token=${Uri.encodeComponent(token)}'
         '&expires=${Uri.encodeComponent(expires)}';
 
     if (canPlayFHD) finalUrl += '&h=1';
@@ -256,17 +260,17 @@ class AnimeUnitySource extends BaseSource {
     try {
       final res = await _dio.get(
         playlistUrl,
-        options: Options(headers: {
-          'Referer': referer,
-          'User-Agent': _userAgent,
-        }),
+        options: Options(
+          headers: {'Referer': referer, 'User-Agent': _userAgent},
+        ),
       );
       if (res.statusCode != 200 || res.data == null) return [];
 
       final playlist = res.data.toString();
       final languages = <String>{};
-      final matches = RegExp(r'#EXT-X-MEDIA:TYPE=AUDIO.*LANGUAGE="([^"]+)"')
-          .allMatches(playlist);
+      final matches = RegExp(
+        r'#EXT-X-MEDIA:TYPE=AUDIO.*LANGUAGE="([^"]+)"',
+      ).allMatches(playlist);
       for (final match in matches) {
         languages.add(match.group(1)!.toUpperCase());
       }
@@ -299,10 +303,7 @@ class AnimeUnitySource extends BaseSource {
 
   Options _defaultOptions({bool followRedirects = true}) {
     return Options(
-      headers: {
-        'User-Agent': _userAgent,
-        'Referer': _animeUnityBase,
-      },
+      headers: {'User-Agent': _userAgent, 'Referer': _animeUnityBase},
       followRedirects: followRedirects,
       receiveTimeout: const Duration(seconds: 15),
     );

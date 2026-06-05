@@ -58,5 +58,6 @@ class SubtitleStyle {
           verticalPosition == other.verticalPosition;
 
   @override
-  int get hashCode => Object.hash(fontSize, color, backgroundColor, verticalPosition);
+  int get hashCode =>
+      Object.hash(fontSize, color, backgroundColor, verticalPosition);
 }

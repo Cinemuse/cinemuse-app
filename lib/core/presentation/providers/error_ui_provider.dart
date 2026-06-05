@@ -11,7 +11,7 @@ class ErrorUiHandler {
   void showError(BuildContext context, dynamic error) {
     final l10n = AppLocalizations.of(context)!;
     String message = l10n.commonUnexpectedError;
-    
+
     if (error is AppException) {
       message = error.message;
     } else if (error is String) {

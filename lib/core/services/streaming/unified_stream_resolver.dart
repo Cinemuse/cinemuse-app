@@ -25,20 +25,24 @@ import 'package:cinemuse_app/features/settings/application/local_settings_servic
 
 final unifiedStreamResolverProvider = Provider((ref) {
   // Only watch settings that affect streaming sources and ranking
-  final settings = ref.watch(settingsProvider.select((s) => (
-    s.installedAddons,
-    s.enableAnimeTosho,
-    s.enableVixSrc,
-    s.enableAnimeUnity,
-    s.enableRealDebrid,
-    s.realDebridKey,
-    s.smartSearchFilter,
-    s.playerLanguage,
-    s.splitAnimePreferences,
-    s.animeAudioLanguage,
-    s.enableAutoSkipProviders,
-  )));
-  
+  final settings = ref.watch(
+    settingsProvider.select(
+      (s) => (
+        s.installedAddons,
+        s.enableAnimeTosho,
+        s.enableVixSrc,
+        s.enableAnimeUnity,
+        s.enableRealDebrid,
+        s.realDebridKey,
+        s.smartSearchFilter,
+        s.playerLanguage,
+        s.splitAnimePreferences,
+        s.animeAudioLanguage,
+        s.enableAutoSkipProviders,
+      ),
+    ),
+  );
+
   // Create a minimal UserSettings object for the constructor to avoid watching the whole thing
   final userSettings = UserSettings(
     installedAddons: settings.$1,
@@ -54,26 +58,30 @@ final unifiedStreamResolverProvider = Provider((ref) {
     enableAutoSkipProviders: settings.$11,
   );
 
-  final maxResolution = ref.watch(localSettingsProvider.select((s) => s.maxResolution));
+  final maxResolution = ref.watch(
+    localSettingsProvider.select((s) => s.maxResolution),
+  );
 
   final dio = ref.read(dioProvider);
   final sources = <BaseSource>[];
-  
+
   // Dynamic Stremio Addons
   for (final addon in userSettings.installedAddons) {
     if (!addon.enabled || !addon.isStreamingAddon) {
       continue;
     }
-    
-    sources.add(StremioSource(
-      dio, 
-      addon.baseUrl,
-      name: addon.name,
-      supportedCategories: addon.types.toSet(),
-      queryParams: addon.queryParams,
-    ));
+
+    sources.add(
+      StremioSource(
+        dio,
+        addon.baseUrl,
+        name: addon.name,
+        supportedCategories: addon.types.toSet(),
+        queryParams: addon.queryParams,
+      ),
+    );
   }
-  
+
   // Native Build-in Sources
   if (userSettings.enableAnimeTosho) {
     sources.add(AnimeToshoSource(dio));
@@ -94,8 +102,8 @@ final unifiedStreamResolverProvider = Provider((ref) {
     mediaRepository: ref.read(mediaRepositoryProvider),
     settings: userSettings,
     maxResolution: maxResolution,
-    debridService: userSettings.enableRealDebrid 
-        ? RealDebridService(dio, userSettings.realDebridKey) 
+    debridService: userSettings.enableRealDebrid
+        ? RealDebridService(dio, userSettings.realDebridKey)
         : null,
   );
 });
@@ -129,8 +137,9 @@ class UnifiedStreamResolver {
     final cacheKey = "$type:$queryId:${season ?? 0}:${episode ?? 0}";
     final cached = _searchCache[cacheKey];
     if (cached == null) return false;
-    
-    final isExpired = DateTime.now().difference(cached.timestamp) >= _cacheDuration;
+
+    final isExpired =
+        DateTime.now().difference(cached.timestamp) >= _cacheDuration;
     if (isExpired) {
       _searchCache.remove(cacheKey);
       return false;
@@ -161,13 +170,13 @@ class UnifiedStreamResolver {
     required UserSettings settings,
     required VideoResolution maxResolution,
     BaseDebridService? debridService,
-  })  : _sources = sources,
-        _tmdbService = tmdbService,
-        _kitsuMappingService = kitsuMappingService,
-        _mediaRepository = mediaRepository,
-        _settings = settings,
-        _maxResolution = maxResolution,
-        _debridService = debridService;
+  }) : _sources = sources,
+       _tmdbService = tmdbService,
+       _kitsuMappingService = kitsuMappingService,
+       _mediaRepository = mediaRepository,
+       _settings = settings,
+       _maxResolution = maxResolution,
+       _debridService = debridService;
 
   Future<StreamSearchResult> searchStreams(
     String queryId, // Can be TMDB ID (digits) or IMDB ID (tt...)
@@ -179,18 +188,27 @@ class UnifiedStreamResolver {
   }) async {
     final cacheKey = "$type:$queryId:${season ?? 0}:${episode ?? 0}";
     final cached = _searchCache[cacheKey];
-    
-    if (cached != null && DateTime.now().difference(cached.timestamp) < _cacheDuration) {
-      debugPrint('UnifiedStreamResolver: Returning cached results for $cacheKey');
+
+    if (cached != null &&
+        DateTime.now().difference(cached.timestamp) < _cacheDuration) {
+      debugPrint(
+        'UnifiedStreamResolver: Returning cached results for $cacheKey',
+      );
       // Proactively check availability again if needed, or return cached ones
       // Since ranking depends on cache status, we might want to re-check if we have a debrid service
-      final rankedCandidates = await _finalizeResults(cached.candidates, context: cached.context);
-      return StreamSearchResult(candidates: rankedCandidates, isAnime: cached.context.isAnime);
+      final rankedCandidates = await _finalizeResults(
+        cached.candidates,
+        context: cached.context,
+      );
+      return StreamSearchResult(
+        candidates: rankedCandidates,
+        isAnime: cached.context.isAnime,
+      );
     }
 
     Timer? statusTimer;
     final kind = MediaItem.fromString(type);
-    
+
     try {
       if (_sources.isEmpty) {
         throw NoProvidersEnabledException();
@@ -204,8 +222,10 @@ class UnifiedStreamResolver {
       final item = MediaItem.fromTmdbDetails(details, kind);
       _mediaRepository.saveMediaItem(item).catchError((_) {});
 
-      final tmdbId = int.tryParse(queryId) ?? int.tryParse(details['id'].toString());
-      String? imdbId = details['external_ids']?['imdb_id'] ?? details['imdb_id'];
+      final tmdbId =
+          int.tryParse(queryId) ?? int.tryParse(details['id'].toString());
+      String? imdbId =
+          details['external_ids']?['imdb_id'] ?? details['imdb_id'];
       if (imdbId == null && tmdbId != null) {
         imdbId = await _tmdbService.getImdbId(tmdbId, type);
       }
@@ -213,13 +233,13 @@ class UnifiedStreamResolver {
       if (imdbId == null) throw ImdbIdResolutionException();
 
       // 2. Resolve Anime Mapping
-      final kitsuMapping = tmdbId != null 
+      final kitsuMapping = tmdbId != null
           ? await _kitsuMappingService.getMapping(
               tmdbId: tmdbId,
               type: type,
               season: season,
               episode: episode,
-            ) 
+            )
           : null;
 
       final isAnime = kitsuMapping != null;
@@ -236,7 +256,9 @@ class UnifiedStreamResolver {
 
       // 3. Search All Sources
       final stopwatch = Stopwatch()..start();
-      final searchStatuses = _sources.map((s) => ProviderSearchStatus(providerName: s.name)).toList();
+      final searchStatuses = _sources
+          .map((s) => ProviderSearchStatus(providerName: s.name))
+          .toList();
       onStatusUpdate?.call(searchStatuses);
 
       // Periodically update UI status
@@ -252,7 +274,10 @@ class UnifiedStreamResolver {
         onStatusUpdate?.call(searchStatuses);
       });
 
-      final taskResults = List.generate(_sources.length, (_) => <StreamCandidate>[]);
+      final taskResults = List.generate(
+        _sources.length,
+        (_) => <StreamCandidate>[],
+      );
       final taskFutures = <Future<void>>[];
 
       for (int i = 0; i < _sources.length; i++) {
@@ -290,10 +315,7 @@ class UnifiedStreamResolver {
       }
 
       if (skipTrigger != null) {
-        await Future.any([
-          Future.wait(taskFutures),
-          skipTrigger,
-        ]);
+        await Future.any([Future.wait(taskFutures), skipTrigger]);
       } else {
         await Future.wait(taskFutures);
       }
@@ -323,8 +345,9 @@ class UnifiedStreamResolver {
       final uniqueMap = <String, StreamCandidate>{};
       for (var c in allCandidates) {
         final dedupeKey = c.uniqueId;
-            
-        if (!uniqueMap.containsKey(dedupeKey) || c.seeds > uniqueMap[dedupeKey]!.seeds) {
+
+        if (!uniqueMap.containsKey(dedupeKey) ||
+            c.seeds > uniqueMap[dedupeKey]!.seeds) {
           uniqueMap[dedupeKey] = c;
         }
       }
@@ -365,12 +388,17 @@ class UnifiedStreamResolver {
           .toList();
 
       if (hashes.isNotEmpty) {
-        debugPrint('UnifiedStreamResolver: Checking availability for ${hashes.length} hashes on ${_debridService.name}');
-        
+        debugPrint(
+          'UnifiedStreamResolver: Checking availability for ${hashes.length} hashes on ${_debridService.name}',
+        );
+
         // Split into chunks if there are many (RD has limits, though usually 100 is fine)
         final Map<String, bool> availability = {};
         for (var i = 0; i < hashes.length; i += 100) {
-          final chunk = hashes.sublist(i, i + 100 > hashes.length ? hashes.length : i + 100);
+          final chunk = hashes.sublist(
+            i,
+            i + 100 > hashes.length ? hashes.length : i + 100,
+          );
           final chunkRes = await _debridService.checkAvailability(chunk);
           availability.addAll(chunkRes);
         }
@@ -391,15 +419,21 @@ class UnifiedStreamResolver {
     if (_settings.smartSearchFilter) {
       results = results.where((c) {
         final t = c.title.toLowerCase();
-        return !(t.contains('cam') || t.contains(' ts ') || t.contains('hdcam') || 
-                 t.contains('screener') || t.contains(' scr ') || t.contains(' 3d ') || t.contains('sbs'));
+        return !(t.contains('cam') ||
+            t.contains(' ts ') ||
+            t.contains('hdcam') ||
+            t.contains('screener') ||
+            t.contains(' scr ') ||
+            t.contains(' 3d ') ||
+            t.contains('sbs'));
       }).toList();
     }
 
     // 3. Filter by maximum resolution
     if (_maxResolution != VideoResolution.unknown) {
       results = results.where((c) {
-        VideoResolution res = c.metadata?.video.resolution ?? VideoResolution.unknown;
+        VideoResolution res =
+            c.metadata?.video.resolution ?? VideoResolution.unknown;
         if (res == VideoResolution.unknown) {
           final t = c.title.toLowerCase();
           if (t.contains('2160p') || t.contains('4k')) {
@@ -414,8 +448,9 @@ class UnifiedStreamResolver {
             res = VideoResolution.r480p;
           }
         }
-        
-        if (res != VideoResolution.unknown && res.index < _maxResolution.index) {
+
+        if (res != VideoResolution.unknown &&
+            res.index < _maxResolution.index) {
           return false;
         }
         return true;
@@ -423,10 +458,11 @@ class UnifiedStreamResolver {
     }
 
     // 4. Rank and Sort
-    final preferredLanguage = (context.isAnime && _settings.splitAnimePreferences) 
-        ? _settings.animeAudioLanguage 
+    final preferredLanguage =
+        (context.isAnime && _settings.splitAnimePreferences)
+        ? _settings.animeAudioLanguage
         : _settings.playerLanguage;
-        
+
     return StreamRanker.rank(results, preferredLanguage: preferredLanguage);
   }
 
@@ -450,7 +486,9 @@ class UnifiedStreamResolver {
   }) async {
     // Guard against non-VOD sources
     if (candidate.kind != StreamSourceKind.vod) {
-      debugPrint('UnifiedStreamResolver: Ignoring non-VOD candidate kind=${candidate.kind}');
+      debugPrint(
+        'UnifiedStreamResolver: Ignoring non-VOD candidate kind=${candidate.kind}',
+      );
       return null;
     }
 
@@ -463,16 +501,18 @@ class UnifiedStreamResolver {
         headers: candidate.headers,
       );
     }
-    
+
     // Fallback to Debrid for magnets (native sources like AnimeTosho)
-    if (candidate.magnet.isNotEmpty && _debridService != null && _debridService.isEnabled) {
+    if (candidate.magnet.isNotEmpty &&
+        _debridService != null &&
+        _debridService.isEnabled) {
       return _debridService.resolve(
         candidate,
         season: season,
         episode: episode,
       );
     }
-    
+
     return null;
   }
 }

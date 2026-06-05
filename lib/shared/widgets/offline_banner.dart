@@ -2,26 +2,19 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
-
 class OfflineBanner extends StatelessWidget {
   final VoidCallback? onRetry;
 
-  const OfflineBanner({
-    super.key,
-    this.onRetry,
-  });
+  const OfflineBanner({super.key, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
     final horizontalPadding = AppTheme.getResponsiveHorizontalPadding(context);
     final l10n = AppLocalizations.of(context)!;
-    
+
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.symmetric(
-        horizontal: horizontalPadding,
-        vertical: 8,
-      ),
+      margin: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(

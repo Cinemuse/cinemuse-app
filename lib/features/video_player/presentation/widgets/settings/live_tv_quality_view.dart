@@ -20,9 +20,13 @@ class LiveTvQualityView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-    final availableQualities = state.currentChannel?.links.map((l) => l.quality).toSet() ?? {};
-    final currentQuality = ref.watch(settingsProvider.select((s) => s.liveTvQuality));
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final availableQualities =
+        state.currentChannel?.links.map((l) => l.quality).toSet() ?? {};
+    final currentQuality = ref.watch(
+      settingsProvider.select((s) => s.liveTvQuality),
+    );
 
     return Column(
       children: [
@@ -45,16 +49,18 @@ class LiveTvQualityView extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               shrinkWrap: true,
               children: [
-                ...StreamQuality.values.reversed.where((q) => availableQualities.contains(q)).map((q) {
-                  return _buildQualityTile(
-                    context: context,
-                    ref: ref,
-                    quality: q,
-                    icon: _getQualityIcon(q),
-                    current: currentQuality,
-                    label: q == StreamQuality.fhd ? 'FULL HD' : null,
-                  );
-                }),
+                ...StreamQuality.values.reversed
+                    .where((q) => availableQualities.contains(q))
+                    .map((q) {
+                      return _buildQualityTile(
+                        context: context,
+                        ref: ref,
+                        quality: q,
+                        icon: _getQualityIcon(q),
+                        current: currentQuality,
+                        label: q == StreamQuality.fhd ? 'FULL HD' : null,
+                      );
+                    }),
                 const SizedBox(height: 24),
               ],
             ),
@@ -80,16 +86,22 @@ class LiveTvQualityView extends ConsumerWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () {
-            ref.read(settingsProvider.notifier).updateSettings({'liveTvQuality': quality});
+            ref.read(settingsProvider.notifier).updateSettings({
+              'liveTvQuality': quality,
+            });
             onBack();
           },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.accent.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.04),
+              color: isSelected
+                  ? AppTheme.accent.withValues(alpha: 0.1)
+                  : Colors.white.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? AppTheme.accent.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.08),
+                color: isSelected
+                    ? AppTheme.accent.withValues(alpha: 0.4)
+                    : Colors.white.withValues(alpha: 0.08),
                 width: 1,
               ),
             ),
@@ -105,9 +117,13 @@ class LiveTvQualityView extends ConsumerWidget {
                   child: Text(
                     label ?? quality.label,
                     style: TextStyle(
-                      color: isSelected ? AppTheme.accent : AppTheme.textWhite.withValues(alpha: 0.9),
+                      color: isSelected
+                          ? AppTheme.accent
+                          : AppTheme.textWhite.withValues(alpha: 0.9),
                       fontSize: 14,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -124,6 +140,7 @@ class LiveTvQualityView extends ConsumerWidget {
       ),
     );
   }
+
   IconData _getQualityIcon(StreamQuality quality) {
     switch (quality) {
       case StreamQuality.uhd:

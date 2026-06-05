@@ -5,42 +5,34 @@ class AppTheme {
   static const Color primary = Color(0xFF0f0518);
   static const Color secondary = Color(0xFF1a0b2e);
   static const Color glass = Color(0xF20f0518); // rgba(15, 5, 24, 0.95)
-  
+
   static const Color accent = Color(0xFFd946ef); // Pink/Purple
   static const Color accentHover = Color(0xFFc026d3);
   static const Color accentGlow = Color(0x80d946ef); // rgba(217, 70, 239, 0.5)
-  
+
   static const Color favorites = Color(0xFFef4444); // Red 500
   static const Color favoritesGlow = Color(0x80ef4444);
   static const Color watchlist = Color(0xFFeab308); // Yellow 500
   static const Color watchlistGlow = Color(0x80eab308);
-  
+
   static const Color star = Color(0xFFffc107); // Amber 500
   static const Color starGlow = Color(0x80ffc107);
-  
+
   static const Color surface = Color(0xFF1a0b2e);
   static const Color border = Color(0x33d946ef); // rgba(217, 70, 239, 0.2)
   static const Color borderHover = Color(0x66d946ef); // rgba(217, 70, 239, 0.4)
-  
+
   static const Color textWhite = Color(0xFFffffff);
   static const Color textSecondary = Color(0xFFe5e7eb); // Gray 200
   static const Color textMuted = Color(0xFF9ca3af); // Gray 400
 
   // Shadows
   static const List<BoxShadow> shadowNeon = [
-    BoxShadow(
-      color: accentGlow,
-      blurRadius: 20,
-      spreadRadius: 0,
-    ),
+    BoxShadow(color: accentGlow, blurRadius: 20, spreadRadius: 0),
   ];
 
   static const List<BoxShadow> shadowNeonSm = [
-    BoxShadow(
-      color: accentGlow,
-      blurRadius: 10,
-      spreadRadius: 0,
-    ),
+    BoxShadow(color: accentGlow, blurRadius: 10, spreadRadius: 0),
   ];
 
   static ThemeData get darkTheme {
@@ -49,7 +41,7 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: primary,
       primaryColor: primary,
-      
+
       // Text Theme
       textTheme: ThemeData.dark().textTheme.apply(
         fontFamily: 'Outfit',
@@ -87,7 +79,10 @@ class AppTheme {
           borderSide: const BorderSide(color: accent),
         ),
         hintStyle: const TextStyle(color: textMuted),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
 
       // ElevatedButton Theme
@@ -97,7 +92,11 @@ class AppTheme {
           foregroundColor: textWhite,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          textStyle: const TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.bold, fontSize: 16),
+          textStyle: const TextStyle(
+            fontFamily: 'Outfit',
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
           elevation: 5,
           shadowColor: accentGlow,
         ),
@@ -107,15 +106,16 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: textWhite,
-          textStyle: const TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(
+            fontFamily: 'Outfit',
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
 
       // Icon Theme
-      iconTheme: const IconThemeData(
-        color: textWhite,
-      ),
-      
+      iconTheme: const IconThemeData(color: textWhite),
+
       // Color Scheme
       colorScheme: const ColorScheme.dark(
         primary: accent,

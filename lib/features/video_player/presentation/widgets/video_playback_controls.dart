@@ -33,7 +33,9 @@ class VideoPlaybackControls extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final player = playerState.controller.player;
     final l10n = ref.watch(localizationsProvider);
-    final isMobile = defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+    final isMobile =
+        defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
 
     return Row(
       children: [
@@ -78,7 +80,11 @@ class VideoPlaybackControls extends ConsumerWidget {
           MouseRegion(
             cursor: SystemMouseCursors.click,
             child: IconButton(
-              icon: const Icon(Icons.skip_next_rounded, color: Colors.white, size: 28),
+              icon: const Icon(
+                Icons.skip_next_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
               onPressed: onNextEpisode,
               tooltip: l10n.playerNextEpisode,
             ),

@@ -67,7 +67,7 @@ class ErrorViewState extends StatelessWidget {
               child: Icon(icon, color: color, size: 64),
             ),
             const SizedBox(height: 24),
-            
+
             // Title
             Text(
               title,
@@ -79,7 +79,7 @@ class ErrorViewState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            
+
             // Message
             Text(
               message,
@@ -90,7 +90,7 @@ class ErrorViewState extends StatelessWidget {
                 fontWeight: FontWeight.w400,
               ),
             ),
-            
+
             if (hint != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -104,16 +104,19 @@ class ErrorViewState extends StatelessWidget {
                 ),
               ),
             ],
-            
+
             const SizedBox(height: 32),
-            
+
             if (onRetry != null)
               ElevatedButton.icon(
                 onPressed: onRetry,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: color.withValues(alpha: 0.2),
                   foregroundColor: color,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(color: color.withValues(alpha: 0.4)),
@@ -122,7 +125,9 @@ class ErrorViewState extends StatelessWidget {
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(
                   "Retry",
-                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
           ],

@@ -5,14 +5,16 @@ import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart
 enum StreamSourceKind {
   /// Standard VOD: torrent/debrid/direct from Stremio/AnimeTosho/etc.
   vod,
+
   /// YouTube trailer/video: direct URL, optional separate audio track.
   youtube,
+
   /// Live TV channel: direct HLS/TS URL, no resolution needed.
   live,
 }
 
 /// Represents a normalized stream result from various sources.
-/// 
+///
 /// This class acts as the single source of truth for the UI and the resolution logic,
 /// abstracting away source-specific data structures.
 class StreamCandidate {
@@ -83,13 +85,18 @@ class StreamCandidate {
   /// A robust unique identifier for the stream.
   /// Priority: url (for youtube/live) > infoHash > url > fallback (provider:title)
   String get uniqueId {
-    if ((kind == StreamSourceKind.youtube || kind == StreamSourceKind.live) && url != null && url!.isNotEmpty) {
+    if ((kind == StreamSourceKind.youtube || kind == StreamSourceKind.live) &&
+        url != null &&
+        url!.isNotEmpty) {
       return url!.toLowerCase();
     }
     if (infoHash.isNotEmpty) return infoHash.toLowerCase();
     if (url != null && url!.isNotEmpty) return url!.toLowerCase();
     // Normalize title for fallback identification
-    final normalizedTitle = title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    final normalizedTitle = title.toLowerCase().replaceAll(
+      RegExp(r'[^a-z0-9]'),
+      '',
+    );
     return "${provider.toLowerCase()}:$normalizedTitle";
   }
 

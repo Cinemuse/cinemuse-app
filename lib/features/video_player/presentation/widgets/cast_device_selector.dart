@@ -30,7 +30,10 @@ class _CastDeviceSelectorState extends State<CastDeviceSelector> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppTheme.surface,
-      title: Text(AppLocalizations.of(context)!.castConnectDevice, style: const TextStyle(color: AppTheme.textWhite)),
+      title: Text(
+        AppLocalizations.of(context)!.castConnectDevice,
+        style: const TextStyle(color: AppTheme.textWhite),
+      ),
       content: SizedBox(
         width: double.maxFinite,
         child: FutureBuilder<List<CastDevice>>(
@@ -42,18 +45,29 @@ class _CastDeviceSelectorState extends State<CastDeviceSelector> {
                 children: [
                   const CircularProgressIndicator(),
                   const SizedBox(height: 16),
-                  Text(AppLocalizations.of(context)!.castSearching, style: const TextStyle(color: AppTheme.textMuted)),
+                  Text(
+                    AppLocalizations.of(context)!.castSearching,
+                    style: const TextStyle(color: AppTheme.textMuted),
+                  ),
                 ],
               );
             }
-            
+
             if (snapshot.hasError) {
-              return Text(AppLocalizations.of(context)!.castError(snapshot.error.toString()), style: const TextStyle(color: Colors.red));
+              return Text(
+                AppLocalizations.of(
+                  context,
+                )!.castError(snapshot.error.toString()),
+                style: const TextStyle(color: Colors.red),
+              );
             }
 
             final devices = snapshot.data ?? [];
             if (devices.isEmpty) {
-              return Text(AppLocalizations.of(context)!.castNoDevices, style: const TextStyle(color: AppTheme.textMuted));
+              return Text(
+                AppLocalizations.of(context)!.castNoDevices,
+                style: const TextStyle(color: AppTheme.textMuted),
+              );
             }
 
             return ListView.builder(
@@ -63,7 +77,10 @@ class _CastDeviceSelectorState extends State<CastDeviceSelector> {
                 final device = devices[index];
                 return ListTile(
                   leading: const Icon(Icons.cast, color: AppTheme.textWhite),
-                  title: Text(device.name, style: const TextStyle(color: AppTheme.textWhite)),
+                  title: Text(
+                    device.name,
+                    style: const TextStyle(color: AppTheme.textWhite),
+                  ),
                   onTap: () => Navigator.pop(context, device),
                 );
               },
@@ -74,7 +91,10 @@ class _CastDeviceSelectorState extends State<CastDeviceSelector> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(AppLocalizations.of(context)!.commonCancel, style: const TextStyle(color: AppTheme.accent)),
+          child: Text(
+            AppLocalizations.of(context)!.commonCancel,
+            style: const TextStyle(color: AppTheme.accent),
+          ),
         ),
         TextButton(
           onPressed: () {
@@ -82,7 +102,10 @@ class _CastDeviceSelectorState extends State<CastDeviceSelector> {
               _discoveryFuture = CastDiscoveryService().search();
             });
           },
-          child: Text(AppLocalizations.of(context)!.castRefresh, style: const TextStyle(color: AppTheme.accent)),
+          child: Text(
+            AppLocalizations.of(context)!.castRefresh,
+            style: const TextStyle(color: AppTheme.accent),
+          ),
         ),
       ],
     );

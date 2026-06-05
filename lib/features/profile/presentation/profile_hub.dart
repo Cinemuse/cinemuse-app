@@ -16,7 +16,8 @@ class ProfileHub extends ConsumerStatefulWidget {
   ConsumerState<ProfileHub> createState() => _ProfileHubState();
 }
 
-class _ProfileHubState extends ConsumerState<ProfileHub> with SingleTickerProviderStateMixin {
+class _ProfileHubState extends ConsumerState<ProfileHub>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -56,31 +57,39 @@ class _ProfileHubState extends ConsumerState<ProfileHub> with SingleTickerProvid
                   ],
                   Padding(
                     padding: EdgeInsets.symmetric(
-                      horizontal: AppTheme.getResponsiveHorizontalPadding(context), 
+                      horizontal: AppTheme.getResponsiveHorizontalPadding(
+                        context,
+                      ),
                     ),
                     child: Column(
                       children: [
                         const ProfileHero(),
-                    const SizedBox(height: 24),
-                    // Navigation Tabs
-                    TabBar(
-                      controller: _tabController,
-                      isScrollable: true,
-                      indicatorColor: AppTheme.accent,
-                      indicatorWeight: 2,
-                      labelColor: Colors.white,
-                      unselectedLabelColor: Colors.grey,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      dividerColor: Colors.transparent,
-                      tabAlignment: TabAlignment.start,
-                      tabs: [
-                        Tab(text: l10n.profileOverview),
-                        Tab(text: l10n.profileCollections),
-                        Tab(text: l10n.profileActivity),
-                      ],
-                    ),
-                    const Divider(height: 1, color: Colors.white24),
+                        const SizedBox(height: 24),
+                        // Navigation Tabs
+                        TabBar(
+                          controller: _tabController,
+                          isScrollable: true,
+                          indicatorColor: AppTheme.accent,
+                          indicatorWeight: 2,
+                          labelColor: Colors.white,
+                          unselectedLabelColor: Colors.grey,
+                          labelStyle: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                          unselectedLabelStyle: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                          dividerColor: Colors.transparent,
+                          tabAlignment: TabAlignment.start,
+                          tabs: [
+                            Tab(text: l10n.profileOverview),
+                            Tab(text: l10n.profileCollections),
+                            Tab(text: l10n.profileActivity),
+                          ],
+                        ),
+                        const Divider(height: 1, color: Colors.white24),
                       ],
                     ),
                   ),
@@ -94,7 +103,12 @@ class _ProfileHubState extends ConsumerState<ProfileHub> with SingleTickerProvid
           children: [
             const ProfileOverview(),
             const ProfileCollections(),
-            Center(child: Text(l10n.profileActivityComingSoon, style: const TextStyle(color: Colors.grey))),
+            Center(
+              child: Text(
+                l10n.profileActivityComingSoon,
+                style: const TextStyle(color: Colors.grey),
+              ),
+            ),
           ],
         ),
       ),

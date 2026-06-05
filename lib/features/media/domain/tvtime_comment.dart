@@ -10,18 +10,14 @@ class TvTimeUser {
   final String name;
   final String? avatarUrl;
 
-  const TvTimeUser({
-    required this.id,
-    required this.name,
-    this.avatarUrl,
-  });
+  const TvTimeUser({required this.id, required this.name, this.avatarUrl});
 
   factory TvTimeUser.fromJson(Map<String, dynamic> json) {
     String? avatar;
     if (json['avatar'] is Map) {
       avatar = json['avatar']['url']?.toString();
     }
-    
+
     return TvTimeUser(
       id: _parseInt(json['id']),
       name: json['name']?.toString() ?? 'Unknown User',
@@ -30,16 +26,16 @@ class TvTimeUser {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'avatar_url': avatarUrl,
-      };
+    'id': id,
+    'name': name,
+    'avatar_url': avatarUrl,
+  };
 
   static String? _nullIfEmpty(String? value) {
     if (value == null || value.trim().isEmpty) return null;
     return value;
   }
-  
+
   static int _parseInt(dynamic value) {
     if (value == null) return 0;
     if (value is int) return value;
@@ -87,13 +83,13 @@ class TvTimeComment {
     bool meme = false;
     int? imgWidth;
     int? imgHeight;
-    
+
     if (json['image'] is Map) {
       image = json['image']['url']?.toString();
       meme = json['image']['is_meme'] == true;
       imgWidth = _parseInt(json['image']['width']);
       imgHeight = _parseInt(json['image']['height']);
-      
+
       // If parsing fails or gives 0, make it null
       if (imgWidth == 0) imgWidth = null;
       if (imgHeight == 0) imgHeight = null;
@@ -108,9 +104,7 @@ class TvTimeComment {
       reportCount: _parseInt(json['report_count']),
       isSpoiler: json['is_spoiler'] == true,
       language: json['language']?.toString() ?? 'en',
-      user: TvTimeUser.fromJson(
-        (json['user'] as Map<String, dynamic>?) ?? {},
-      ),
+      user: TvTimeUser.fromJson((json['user'] as Map<String, dynamic>?) ?? {}),
       imageUrl: _nullIfEmpty(image),
       isMeme: meme,
       imageWidth: imgWidth,
@@ -123,19 +117,19 @@ class TvTimeComment {
   }
 
   Map<String, dynamic> toJson() => {
-        'uuid': uuid,
-        'text': text,
-        'created_at': createdAt?.toIso8601String(),
-        'like_count': likeCount,
-        'reply_count': replyCount,
-        'report_count': reportCount,
-        'is_spoiler': isSpoiler,
-        'language': language,
-        'user': user.toJson(),
-        'image_url': imageUrl,
-        'is_meme': isMeme,
-        'replies': replies.map((r) => r.toJson()).toList(),
-      };
+    'uuid': uuid,
+    'text': text,
+    'created_at': createdAt?.toIso8601String(),
+    'like_count': likeCount,
+    'reply_count': replyCount,
+    'report_count': reportCount,
+    'is_spoiler': isSpoiler,
+    'language': language,
+    'user': user.toJson(),
+    'image_url': imageUrl,
+    'is_meme': isMeme,
+    'replies': replies.map((r) => r.toJson()).toList(),
+  };
 
   static DateTime? _parseDate(String? value) {
     if (value == null || value.isEmpty) return null;

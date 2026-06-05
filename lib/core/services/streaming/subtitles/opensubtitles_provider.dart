@@ -9,20 +9,23 @@ import 'package:dio/io.dart';
 class OpenSubtitlesProvider implements SubtitleProvider {
   final String _apiKey;
   final Dio _dio;
-  
+
   static const String _baseUrl = 'https://api.opensubtitles.com/api/v1';
   static const String _userAgent = 'Cinemuse v1.0.0';
 
-  OpenSubtitlesProvider(this._apiKey) : _dio = Dio(BaseOptions(
-    baseUrl: _baseUrl,
-    headers: {
-      'Api-Key': _apiKey,
-      'Accept': 'application/json',
-      'User-Agent': _userAgent,
-      'X-User-Agent': _userAgent,
-    },
-    validateStatus: (status) => true,
-  )) {
+  OpenSubtitlesProvider(this._apiKey)
+    : _dio = Dio(
+        BaseOptions(
+          baseUrl: _baseUrl,
+          headers: {
+            'Api-Key': _apiKey,
+            'Accept': 'application/json',
+            'User-Agent': _userAgent,
+            'X-User-Agent': _userAgent,
+          },
+          validateStatus: (status) => true,
+        ),
+      ) {
     // Set User-Agent at the transport level so dart:io doesn't override it
     (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
@@ -61,12 +64,17 @@ class OpenSubtitlesProvider implements SubtitleProvider {
         language: language,
       );
       if (queryParams == null) {
-        debugPrint('[OpenSubtitles] No valid search params (imdb=$imdbId, tmdb=$tmdbId, query=$query)');
+        debugPrint(
+          '[OpenSubtitles] No valid search params (imdb=$imdbId, tmdb=$tmdbId, query=$query)',
+        );
         return [];
       }
 
       debugPrint('[OpenSubtitles] Searching: $queryParams');
-      final response = await _dio.get('/subtitles', queryParameters: queryParams);
+      final response = await _dio.get(
+        '/subtitles',
+        queryParameters: queryParams,
+      );
       debugPrint('[OpenSubtitles] Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
@@ -74,7 +82,9 @@ class OpenSubtitlesProvider implements SubtitleProvider {
         debugPrint('[OpenSubtitles] Found ${results.length} subtitles');
         return results;
       } else {
-        debugPrint('[OpenSubtitles] Error response: ${response.statusCode} — ${response.data}');
+        debugPrint(
+          '[OpenSubtitles] Error response: ${response.statusCode} — ${response.data}',
+        );
       }
     } catch (e, st) {
       debugPrint('[OpenSubtitles] Exception during search: $e');
@@ -90,15 +100,18 @@ class OpenSubtitlesProvider implements SubtitleProvider {
 
     try {
       debugPrint('[OpenSubtitles] Downloading file_id=${subtitle.id}');
-      final response = await _dio.post('/download', data: {
-        'file_id': int.tryParse(subtitle.id) ?? subtitle.id,
-      });
+      final response = await _dio.post(
+        '/download',
+        data: {'file_id': int.tryParse(subtitle.id) ?? subtitle.id},
+      );
 
       if (response.statusCode == 200) {
         debugPrint('[OpenSubtitles] Download URL obtained');
         return response.data['link']?.toString();
       } else {
-        debugPrint('[OpenSubtitles] Download failed: ${response.statusCode} — ${response.data}');
+        debugPrint(
+          '[OpenSubtitles] Download failed: ${response.statusCode} — ${response.data}',
+        );
       }
     } catch (e) {
       debugPrint('[OpenSubtitles] Download exception: $e');
@@ -154,7 +167,8 @@ class OpenSubtitlesProvider implements SubtitleProvider {
     int? episode,
   }) {
     final parsedId = int.tryParse(tmdbId) ?? tmdbId;
-    final isSeries = (season != null && season > 0) && (episode != null && episode > 0);
+    final isSeries =
+        (season != null && season > 0) && (episode != null && episode > 0);
 
     params['type'] = isSeries ? 'episode' : 'movie';
     params[isSeries ? 'parent_tmdb_id' : 'tmdb_id'] = parsedId;
@@ -166,7 +180,10 @@ class OpenSubtitlesProvider implements SubtitleProvider {
     String fallbackLanguage,
   ) {
     final List<dynamic> data = responseData['data'] ?? [];
-    return data.map((item) => _parseSubtitleEntry(item, fallbackLanguage)).whereType<ExternalSubtitle>().toList();
+    return data
+        .map((item) => _parseSubtitleEntry(item, fallbackLanguage))
+        .whereType<ExternalSubtitle>()
+        .toList();
   }
 
   /// Parses a single subtitle entry from the API response.

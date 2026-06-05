@@ -4,7 +4,7 @@ import 'package:media_kit/media_kit.dart';
 class PlayerProgressTracker {
   final Player player;
   final Function(int position, int duration) onProgress;
-  
+
   StreamSubscription? _posSub;
   int _lastPlaybackTick = -1;
   int _actualSecondsWatched = 0;
@@ -12,10 +12,7 @@ class PlayerProgressTracker {
 
   int get actualSecondsWatched => _actualSecondsWatched;
 
-  PlayerProgressTracker({
-    required this.player,
-    required this.onProgress,
-  });
+  PlayerProgressTracker({required this.player, required this.onProgress});
 
   void start() {
     _posSub?.cancel();

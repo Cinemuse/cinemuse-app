@@ -5,31 +5,31 @@ import 'package:cinemuse_app/core/services/anime/models/kitsu_mapping.dart';
 class StreamSearchContext {
   /// The primary TMDB identifier for the content.
   final String tmdbId;
-  
+
   /// The type of media: 'movie' or 'tv'.
   final String type;
-  
+
   /// The primary title of the content (Movie title or Show title).
   final String title;
-  
+
   /// The Standard Industry identifier (tt1234567).
   final String? imdbId;
-  
+
   /// For series, the season number (1-indexed).
   final int? season;
-  
+
   /// For series, the episode number (1-indexed).
   final int? episode;
-  
+
   /// The name of the specific episode being searched (if available).
   final String? episodeName;
-  
+
   /// The name of the season (if available).
   final String? seasonName;
-  
+
   /// External mapping data (e.g. Kitsu) used for non-western ID resolution.
   final KitsuMapping? mapping;
-  
+
   /// Whether this search is specifically for an Anime title.
   final bool isAnime;
 

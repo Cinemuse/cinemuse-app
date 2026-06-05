@@ -16,7 +16,8 @@ class SkeletonBox extends StatefulWidget {
   State<SkeletonBox> createState() => _SkeletonBoxState();
 }
 
-class _SkeletonBoxState extends State<SkeletonBox> with SingleTickerProviderStateMixin {
+class _SkeletonBoxState extends State<SkeletonBox>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacityAnimation;
 
@@ -27,9 +28,10 @@ class _SkeletonBoxState extends State<SkeletonBox> with SingleTickerProviderStat
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
-    _opacityAnimation = Tween<double>(begin: 0.05, end: 0.12).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _opacityAnimation = Tween<double>(
+      begin: 0.05,
+      end: 0.12,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override

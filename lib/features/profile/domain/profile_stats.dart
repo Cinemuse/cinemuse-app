@@ -2,7 +2,7 @@ class ProfileStats {
   final int totalMinutesWatched; // From DB or Calc
   final int totalEpisodes;
   final int totalMovies;
-  
+
   // Period Stats
   final PeriodStats last7Days;
   final PeriodStats last30Days;

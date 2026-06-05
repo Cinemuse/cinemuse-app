@@ -5,11 +5,7 @@ class NextEpisodeInfo {
   final int episode;
   final String? title;
 
-  NextEpisodeInfo({
-    required this.season,
-    required this.episode,
-    this.title,
-  });
+  NextEpisodeInfo({required this.season, required this.episode, this.title});
 
   Map<String, dynamic> toJson() => {
     'season': season,
@@ -18,11 +14,7 @@ class NextEpisodeInfo {
   };
 }
 
-enum SeriesProgressState {
-  watchingNext,
-  caughtUp,
-  finished,
-}
+enum SeriesProgressState { watchingNext, caughtUp, finished }
 
 final seriesDomainServiceProvider = Provider((ref) => SeriesDomainService());
 
@@ -38,7 +30,7 @@ class SeriesDomainService {
     int? nextE;
 
     final seasons = seriesDetails['seasons'] as List? ?? [];
-    
+
     // 1. Find Current Season Info
     final currentSeasonData = seasons.firstWhere(
       (s) => s['season_number'] == currentSeason,
@@ -53,11 +45,12 @@ class SeriesDomainService {
         nextE = currentEpisode + 1;
       } else {
         // Check for next season
-        final nextSeasons = seasons
-            .map((s) => s['season_number'] as int? ?? 0)
-            .where((n) => n > currentSeason)
-            .toList()
-          ..sort();
+        final nextSeasons =
+            seasons
+                .map((s) => s['season_number'] as int? ?? 0)
+                .where((n) => n > currentSeason)
+                .toList()
+              ..sort();
 
         if (nextSeasons.isNotEmpty) {
           nextS = nextSeasons.first;

@@ -104,21 +104,20 @@ class TvTimeService {
     int tvdbShowId, {
     required int season,
     required int episode,
-  }) =>
-      _resolveEpisodeUuid(tvdbShowId, season: season, episode: episode);
+  }) => _resolveEpisodeUuid(tvdbShowId, season: season, episode: episode);
 
   // ─── Internal Resolution Helpers ──────────────────────────────────────────
 
   Future<String?> _resolveSeriesUuid(int tvdbId) async {
-    final encodedUrl =
-        Uri.encodeComponent('$_msApiBase/series/$tvdbId');
+    final encodedUrl = Uri.encodeComponent('$_msApiBase/series/$tvdbId');
     final response = await _dio.get('$_sidecarBase$encodedUrl');
     final data = _extractDataMap(response.data);
     return data?['uuid']?.toString();
   }
 
   Future<String?> _resolveMovieUuidBySearch(String imdbId) async {
-    final searchUrl = '$_webBase/discover/search?q=${Uri.encodeComponent(imdbId)}';
+    final searchUrl =
+        '$_webBase/discover/search?q=${Uri.encodeComponent(imdbId)}';
     final response = await _dio.get<String>(
       searchUrl,
       options: Options(
@@ -238,7 +237,7 @@ class TvTimeService {
     final response = await _dio.get('$_sidecarBase$encodedUrl');
 
     final rawData = _extractDataList(response.data);
-    
+
     // Parse the massive JSON list in a background isolate to prevent UI stutter
     return Isolate.run(() => _parseCommentsList(rawData));
   }

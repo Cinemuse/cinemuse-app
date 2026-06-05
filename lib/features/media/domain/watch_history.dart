@@ -22,10 +22,10 @@ class WatchHistory {
   final int? totalDuration;
   final int watchCount;
   final DateTime lastWatchedAt;
-  
+
   final int? season;
   final int? episode;
-  
+
   // Optional embedded MediaItem if joined
   final MediaItem? media;
 
@@ -47,9 +47,14 @@ class WatchHistory {
     return WatchHistory(
       userId: json['user_id'] as String,
       tmdbId: json['tmdb_id'] as int,
-      mediaType: MediaItem.fromString(json['media_type']?.toString() ?? 'movie'),
-      status: json['status'] != null 
-          ? WatchStatus.values.firstWhere((e) => e.name == json['status'], orElse: () => WatchStatus.watching)
+      mediaType: MediaItem.fromString(
+        json['media_type']?.toString() ?? 'movie',
+      ),
+      status: json['status'] != null
+          ? WatchStatus.values.firstWhere(
+              (e) => e.name == json['status'],
+              orElse: () => WatchStatus.watching,
+            )
           : null,
       progressSeconds: json['progress_seconds'] as int? ?? 0,
       totalDuration: json['total_duration'] as int?,
@@ -57,12 +62,12 @@ class WatchHistory {
       lastWatchedAt: DateTime.parse(json['last_watched_at'] as String),
       season: json['season'] as int?,
       episode: json['episode'] as int?,
-      media: json['media_cache'] != null 
-          ? (json['media_cache'] is List 
-              ? (json['media_cache'] as List).isNotEmpty 
-                  ? MediaItem.fromJson(json['media_cache'][0]) 
-                  : null
-              : MediaItem.fromJson(json['media_cache']))
+      media: json['media_cache'] != null
+          ? (json['media_cache'] is List
+                ? (json['media_cache'] as List).isNotEmpty
+                      ? MediaItem.fromJson(json['media_cache'][0])
+                      : null
+                : MediaItem.fromJson(json['media_cache']))
           : null,
     );
   }

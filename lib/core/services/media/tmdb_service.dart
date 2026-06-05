@@ -22,31 +22,34 @@ class TmdbService {
   Future<Map<String, dynamic>?> getMediaDetails(String id, String type) async {
     try {
       // Normalize type (tmdb uses 'tv' for series)
-      final normalizedType = (type == 'series' || type == 'tv') ? 'tv' : 'movie';
-      
+      final normalizedType = (type == 'series' || type == 'tv')
+          ? 'tv'
+          : 'movie';
+
       // Handle IMDB ID conversion if needed
       String tmdbId = id;
       if (id.startsWith('tt')) {
-         final findRes = await _dio.get(
+        final findRes = await _dio.get(
           '$_baseUrl/find/$id',
           queryParameters: {'api_key': _apiKey, 'external_source': 'imdb_id'},
         );
         final data = findRes.data;
         if (normalizedType == 'movie' && data['movie_results'].isNotEmpty) {
-           tmdbId = data['movie_results'][0]['id'].toString();
+          tmdbId = data['movie_results'][0]['id'].toString();
         } else if (normalizedType == 'tv' && data['tv_results'].isNotEmpty) {
-           tmdbId = data['tv_results'][0]['id'].toString();
+          tmdbId = data['tv_results'][0]['id'].toString();
         } else {
-           return null;
+          return null;
         }
       }
 
       final res = await _dio.get(
         '$_baseUrl/$normalizedType/$tmdbId',
         queryParameters: {
-          'api_key': _apiKey, 
+          'api_key': _apiKey,
           'language': _language,
-          'append_to_response': 'credits,videos,similar,recommendations,external_ids,translations,reviews'
+          'append_to_response':
+              'credits,videos,similar,recommendations,external_ids,translations,reviews',
         },
       );
       return res.data;
@@ -55,14 +58,14 @@ class TmdbService {
     }
   }
 
-  Future<Map<String, dynamic>?> getSeasonDetails(int tmdbId, int seasonNumber) async {
+  Future<Map<String, dynamic>?> getSeasonDetails(
+    int tmdbId,
+    int seasonNumber,
+  ) async {
     try {
       final res = await _dio.get(
         '$_baseUrl/tv/$tmdbId/season/$seasonNumber',
-         queryParameters: {
-          'api_key': _apiKey, 
-          'language': _language,
-        },
+        queryParameters: {'api_key': _apiKey, 'language': _language},
       );
       return res.data;
     } catch (e) {
@@ -74,10 +77,7 @@ class TmdbService {
     try {
       final res = await _dio.get(
         '$_baseUrl/collection/$collectionId',
-        queryParameters: {
-          'api_key': _apiKey,
-          'language': _language,
-        },
+        queryParameters: {'api_key': _apiKey, 'language': _language},
       );
       return res.data;
     } catch (e) {
@@ -86,7 +86,7 @@ class TmdbService {
   }
 
   Future<String?> getImdbId(int tmdbId, String type) async {
-     final endpoint = type == 'movie' ? 'movie' : 'tv';
+    final endpoint = type == 'movie' ? 'movie' : 'tv';
     try {
       final res = await _dio.get(
         '$_baseUrl/$endpoint/$tmdbId/external_ids',
@@ -97,7 +97,7 @@ class TmdbService {
       return null;
     }
   }
-  
+
   // Trending & Popular
   Future<List<Map<String, dynamic>>> getTrending() async {
     final res = await _dio.get(
@@ -125,13 +125,16 @@ class TmdbService {
     return results.map((item) => {...item, 'media_type': 'tv'}).toList();
   }
 
-  Future<List<Map<String, dynamic>>> searchMulti(String query, {int page = 1}) async {
+  Future<List<Map<String, dynamic>>> searchMulti(
+    String query, {
+    int page = 1,
+  }) async {
     try {
       if (query.isEmpty) return [];
       final res = await _dio.get(
         '$_baseUrl/search/multi',
         queryParameters: {
-          'api_key': _apiKey, 
+          'api_key': _apiKey,
           'language': _language,
           'query': query,
           'include_adult': false,
@@ -145,6 +148,7 @@ class TmdbService {
       return [];
     }
   }
+
   Future<Map<String, dynamic>> discover({
     required String type,
     required int page,
@@ -189,7 +193,9 @@ class TmdbService {
         queryParams['watch_region'] = watchRegion ?? 'IT';
       }
 
-      final dateField = type == 'movie' ? 'primary_release_date' : 'first_air_date';
+      final dateField = type == 'movie'
+          ? 'primary_release_date'
+          : 'first_air_date';
       if (minYear != null) queryParams['$dateField.gte'] = '$minYear-01-01';
       if (maxYear != null) queryParams['$dateField.lte'] = '$maxYear-12-31';
 
@@ -235,7 +241,10 @@ class TmdbService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getWatchProviders(String type, String region) async {
+  Future<List<Map<String, dynamic>>> getWatchProviders(
+    String type,
+    String region,
+  ) async {
     try {
       final res = await _dio.get(
         '$_baseUrl/watch/providers/${type == 'series' ? 'tv' : 'movie'}',
@@ -250,5 +259,4 @@ class TmdbService {
       return [];
     }
   }
-
 }

@@ -12,8 +12,11 @@ import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MockSupabaseClient extends Mock implements SupabaseClient {}
+
 class MockMediaRepository extends Mock implements MediaRepository {}
+
 class MockSeriesDomainService extends Mock implements SeriesDomainService {}
+
 class MockTmdbService extends Mock implements TmdbService {}
 
 class FakeFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
@@ -24,7 +27,10 @@ class FakeFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
   PostgrestFilterBuilder<T> eq(String column, Object value) => this;
 
   @override
-  Future<R> then<R>(FutureOr<R> Function(T value) onValue, {Function? onError}) {
+  Future<R> then<R>(
+    FutureOr<R> Function(T value) onValue, {
+    Function? onError,
+  }) {
     return Future.value(_value).then(onValue, onError: onError);
   }
 }
@@ -34,12 +40,21 @@ class FakeQueryBuilder extends Fake implements SupabaseQueryBuilder {
   FakeQueryBuilder([this._value]);
 
   @override
-  PostgrestFilterBuilder<List<Map<String, dynamic>>> select([String columns = '*']) {
-    return FakeFilterBuilder<List<Map<String, dynamic>>>(_value as List<Map<String, dynamic>>? ?? []);
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> select([
+    String columns = '*',
+  ]) {
+    return FakeFilterBuilder<List<Map<String, dynamic>>>(
+      _value as List<Map<String, dynamic>>? ?? [],
+    );
   }
 
   @override
-  PostgrestFilterBuilder<List<Map<String, dynamic>>> upsert(Object values, {String? onConflict, bool ignoreDuplicates = false, bool defaultToNull = true}) {
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> upsert(
+    Object values, {
+    String? onConflict,
+    bool ignoreDuplicates = false,
+    bool defaultToNull = true,
+  }) {
     return FakeFilterBuilder<List<Map<String, dynamic>>>([]);
   }
 }
@@ -59,8 +74,13 @@ void main() {
     mockTmdb = MockTmdbService();
     mediaRepo = MediaRepository(database, mockTmdb, mockSupabase);
     mockSeriesService = MockSeriesDomainService();
-    repository = WatchHistoryRepository(mockSupabase, mediaRepo, database, mockSeriesService);
-    
+    repository = WatchHistoryRepository(
+      mockSupabase,
+      mediaRepo,
+      database,
+      mockSeriesService,
+    );
+
     // Register Fallbacks
     registerFallbackValue(MediaKind.movie);
     registerFallbackValue((id: 1, type: MediaKind.movie));
@@ -82,10 +102,12 @@ void main() {
           'progress_seconds': 100,
           'total_duration': 1000,
           'last_watched_at': DateTime.now().toIso8601String(),
-        }
+        },
       ];
 
-      when(() => mockSupabase.from(any())).thenAnswer((_) => FakeQueryBuilder(remoteData) as SupabaseQueryBuilder);
+      when(
+        () => mockSupabase.from(any()),
+      ).thenAnswer((_) => FakeQueryBuilder(remoteData) as SupabaseQueryBuilder);
 
       await repository.syncWatchHistory(userId);
 
@@ -94,34 +116,47 @@ void main() {
       expect(history.first.tmdbId, 1);
     });
 
-    test('watchHistory stream maps local database results and media metadata', () async {
-      await database.upsertWatchHistory(LocalWatchHistoriesCompanion.insert(
-        userId: userId,
-        tmdbId: 1,
-        mediaType: 'movie',
-        status: 'watching',
-        lastWatchedAt: DateTime.now(),
-      ));
+    test(
+      'watchHistory stream maps local database results and media metadata',
+      () async {
+        await database.upsertWatchHistory(
+          LocalWatchHistoriesCompanion.insert(
+            userId: userId,
+            tmdbId: 1,
+            mediaType: 'movie',
+            status: 'watching',
+            lastWatchedAt: DateTime.now(),
+          ),
+        );
 
-      // Add metadata in database for the stream to find it
-      await database.upsertMediaItem(CachedMediaItemsCompanion.insert(
-        tmdbId: 1,
-        mediaType: 'movie',
-        titleEn: Value('Movie Title'),
-        updatedAt: DateTime.now(),
-      ));
+        // Add metadata in database for the stream to find it
+        await database.upsertMediaItem(
+          CachedMediaItemsCompanion.insert(
+            tmdbId: 1,
+            mediaType: 'movie',
+            titleEn: Value('Movie Title'),
+            updatedAt: DateTime.now(),
+          ),
+        );
 
-      final stream = repository.watchHistory(userId);
-      final result = await stream.first;
+        final stream = repository.watchHistory(userId);
+        final result = await stream.first;
 
-      expect(result.length, 1);
-      expect(result.first.media?.titleEn, 'Movie Title');
-    });
+        expect(result.length, 1);
+        expect(result.first.media?.titleEn, 'Movie Title');
+      },
+    );
 
-    test('getHistoryItem returns null immediately for non-numeric tmdbId', () async {
-      final result = await repository.getHistoryItem(userId, 'livetv_session');
-      expect(result, isNull);
-      verifyNever(() => mockSupabase.from(any()));
-    });
+    test(
+      'getHistoryItem returns null immediately for non-numeric tmdbId',
+      () async {
+        final result = await repository.getHistoryItem(
+          userId,
+          'livetv_session',
+        );
+        expect(result, isNull);
+        verifyNever(() => mockSupabase.from(any()));
+      },
+    );
   });
 }

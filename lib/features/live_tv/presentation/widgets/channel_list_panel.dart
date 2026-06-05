@@ -66,8 +66,9 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
   @override
   void initState() {
     super.initState();
-    _controller =
-        TextEditingController(text: ref.read(channelSearchQueryProvider));
+    _controller = TextEditingController(
+      text: ref.read(channelSearchQueryProvider),
+    );
   }
 
   @override
@@ -88,7 +89,9 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final currentTab = ref.watch(liveTvTabProvider);
-    final filterIsActive = ref.watch(channelFilterProvider.select((f) => f.isActive));
+    final filterIsActive = ref.watch(
+      channelFilterProvider.select((f) => f.isActive),
+    );
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     // Sync controller when the provider is changed externally (e.g. from sport cards)
@@ -127,20 +130,27 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
                   onChanged: _onChanged,
                   decoration: InputDecoration(
                     hintText: l10n.liveTvSearchPlaceholder,
-                    hintStyle:
-                        const TextStyle(color: Colors.white30, fontSize: 13),
-                    prefixIcon: const Icon(Icons.search,
-                        size: 18, color: Colors.white30),
+                    hintStyle: const TextStyle(
+                      color: Colors.white30,
+                      fontSize: 13,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      size: 18,
+                      color: Colors.white30,
+                    ),
                     border: InputBorder.none,
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     suffixIcon: ValueListenableBuilder<TextEditingValue>(
                       valueListenable: _controller,
                       builder: (context, value, child) {
                         return value.text.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.close,
-                                    size: 16, color: Colors.white30),
+                                icon: const Icon(
+                                  Icons.close,
+                                  size: 16,
+                                  color: Colors.white30,
+                                ),
                                 onPressed: () {
                                   _controller.clear();
                                   _onChanged('');
@@ -151,34 +161,45 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
                       },
                     ),
                   ),
-                  style:
-                      const TextStyle(color: Colors.white, fontSize: 13),
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
                 ),
               ),
             ),
             // Favorites Tab Icon
             IconButton(
               onPressed: () {
-                ref.read(liveTvTabProvider.notifier).state = 
-                    currentTab == LiveTvTab.favorites ? LiveTvTab.all : LiveTvTab.favorites;
+                ref
+                    .read(liveTvTabProvider.notifier)
+                    .state = currentTab == LiveTvTab.favorites
+                    ? LiveTvTab.all
+                    : LiveTvTab.favorites;
               },
               icon: Icon(
-                currentTab == LiveTvTab.favorites ? Icons.star_rounded : Icons.star_outline_rounded,
+                currentTab == LiveTvTab.favorites
+                    ? Icons.star_rounded
+                    : Icons.star_outline_rounded,
                 size: 20,
-                color: currentTab == LiveTvTab.favorites ? AppTheme.accent : Colors.white30,
+                color: currentTab == LiveTvTab.favorites
+                    ? AppTheme.accent
+                    : Colors.white30,
               ),
               tooltip: l10n.liveTvTabFavorites,
             ),
             // Recents Tab Icon
             IconButton(
               onPressed: () {
-                ref.read(liveTvTabProvider.notifier).state = 
-                    currentTab == LiveTvTab.recents ? LiveTvTab.all : LiveTvTab.recents;
+                ref
+                    .read(liveTvTabProvider.notifier)
+                    .state = currentTab == LiveTvTab.recents
+                    ? LiveTvTab.all
+                    : LiveTvTab.recents;
               },
               icon: Icon(
                 Icons.history_rounded,
                 size: 20,
-                color: currentTab == LiveTvTab.recents ? AppTheme.accent : Colors.white30,
+                color: currentTab == LiveTvTab.recents
+                    ? AppTheme.accent
+                    : Colors.white30,
               ),
               tooltip: l10n.liveTvTabRecents,
             ),
@@ -277,8 +298,10 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
     final index = channels.indexWhere((ch) => ch.uniqueId == selected.uniqueId);
     if (index < 0) return;
 
-    final offset =
-        (index * 60.0).clamp(0.0, _scrollController.position.maxScrollExtent);
+    final offset = (index * 60.0).clamp(
+      0.0,
+      _scrollController.position.maxScrollExtent,
+    );
     _scrollController.animateTo(
       offset,
       duration: const Duration(milliseconds: 300),
@@ -301,8 +324,7 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
 
     return sectionsAsync.when(
       data: (sections) {
-        if (sections.isEmpty ||
-            sections.every((s) => s.channels.isEmpty)) {
+        if (sections.isEmpty || sections.every((s) => s.channels.isEmpty)) {
           return _buildEmptyState(tab);
         }
 
@@ -311,8 +333,7 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
             sections.length == 1 && sections.first.title.isEmpty;
 
         if (isSingleSection) {
-          return _buildFlatList(
-              sections.first.channels, selectedChannel);
+          return _buildFlatList(sections.first.channels, selectedChannel);
         }
 
         return _buildSectionedList(sections, selectedChannel);
@@ -396,8 +417,7 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
     );
   }
 
-  Widget _buildSectionedList(
-      List<ChannelSection> sections, Channel? selected) {
+  Widget _buildSectionedList(List<ChannelSection> sections, Channel? selected) {
     // Build a flat list of items: headers + channels
     final items = <_ListItem>[];
     for (final section in sections) {
@@ -435,8 +455,7 @@ class _ListItem {
 
   const _ListItem._({this.headerTitle, this.channel});
 
-  factory _ListItem.header(String title) =>
-      _ListItem._(headerTitle: title);
+  factory _ListItem.header(String title) => _ListItem._(headerTitle: title);
   factory _ListItem.channel(Channel ch) => _ListItem._(channel: ch);
 
   bool get isHeader => headerTitle != null;
@@ -478,10 +497,7 @@ class _ChannelTileWrapper extends ConsumerWidget {
   final Channel channel;
   final Channel? selectedChannel;
 
-  const _ChannelTileWrapper({
-    required this.channel,
-    this.selectedChannel,
-  });
+  const _ChannelTileWrapper({required this.channel, this.selectedChannel});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -35,7 +35,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         isLoading = true;
         errorMessage = null;
       });
-      
+
       final actions = ref.read(authActionsProvider);
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
@@ -93,7 +93,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   color: AppTheme.accent.withValues(alpha: 0.1),
                   blurRadius: 20,
                   spreadRadius: 0,
-                )
+                ),
               ],
             ),
             child: Form(
@@ -101,18 +101,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                   // Logo
+                  // Logo
                   Image.asset(
                     'assets/wordmark-logo.png',
                     height: 48,
                     errorBuilder: (c, e, s) => Text(
                       "CINEMUSE",
                       style: TextStyle(
-                        fontSize: 32, 
-                        fontWeight: FontWeight.bold, 
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
                         color: Colors.white,
-                        letterSpacing: 2
-                      )
+                        letterSpacing: 2,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -128,20 +128,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    isLogin 
-                      ? l10n.authEnterCredentials
-                      : l10n.authCreateAccount,
+                    isLogin
+                        ? l10n.authEnterCredentials
+                        : l10n.authCreateAccount,
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: AppTheme.textMuted),
                   ),
                   const SizedBox(height: 32),
 
                   // E-mail Input
-                   Align(
+                  Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      l10n.authEmail, 
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textMuted)
+                      l10n.authEmail,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textMuted,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -149,19 +153,28 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     controller: _emailController,
                     decoration: const InputDecoration(
                       hintText: 'hello@example.com',
-                      prefixIcon: Icon(Icons.email_outlined, color: AppTheme.textMuted),
+                      prefixIcon: Icon(
+                        Icons.email_outlined,
+                        color: AppTheme.textMuted,
+                      ),
                     ),
                     style: const TextStyle(color: Colors.white),
-                    validator: (value) => value != null && value.contains('@') ? null : 'Enter a valid email',
+                    validator: (value) => value != null && value.contains('@')
+                        ? null
+                        : 'Enter a valid email',
                   ),
                   const SizedBox(height: 16),
 
                   // Password Input
-                   Align(
+                  Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      l10n.authPassword, 
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textMuted)
+                      l10n.authPassword,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textMuted,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -170,10 +183,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     obscureText: true,
                     decoration: const InputDecoration(
                       hintText: '••••••••',
-                      prefixIcon: Icon(Icons.lock_outline, color: AppTheme.textMuted),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: AppTheme.textMuted,
+                      ),
                     ),
                     style: const TextStyle(color: Colors.white),
-                    validator: (value) => value != null && value.length >= 6 ? null : 'Password must be 6+ chars',
+                    validator: (value) => value != null && value.length >= 6
+                        ? null
+                        : 'Password must be 6+ chars',
                   ),
                   const SizedBox(height: 24),
 
@@ -182,43 +200,61 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: isLoading ? null : _submit,
-                      child: isLoading 
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) 
-                        : Text(isLogin ? l10n.authSignIn : l10n.authCreateAccountAction),
+                      child: isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              isLogin
+                                  ? l10n.authSignIn
+                                  : l10n.authCreateAccountAction,
+                            ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
 
                   // Toggle Login/Signup
                   TextButton(
                     onPressed: () {
-                       setState(() => isLogin = !isLogin);
+                      setState(() => isLogin = !isLogin);
                     },
                     child: Text(
                       isLogin ? l10n.authNoAccount : l10n.authHaveAccount,
                       style: const TextStyle(color: AppTheme.textMuted),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Divider
-                   Row(
+                  Row(
                     children: [
                       const Expanded(child: Divider(color: AppTheme.border)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(l10n.authOr, style: const TextStyle(color: Colors.white24, fontSize: 12, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          l10n.authOr,
+                          style: const TextStyle(
+                            color: Colors.white24,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                       const Expanded(child: Divider(color: AppTheme.border)),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Guest Button (Visual only)
-                   SizedBox(
+                  SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       icon: const Icon(LucideIcons.user),
@@ -232,14 +268,20 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Debug Login
                   if (kDebugMode)
                     SizedBox(
                       width: double.infinity,
                       child: TextButton.icon(
-                        icon: const Icon(Icons.developer_mode, color: Colors.amber),
-                        label: Text(l10n.authDebugLogin, style: const TextStyle(color: Colors.amber)),
+                        icon: const Icon(
+                          Icons.developer_mode,
+                          color: Colors.amber,
+                        ),
+                        label: Text(
+                          l10n.authDebugLogin,
+                          style: const TextStyle(color: Colors.amber),
+                        ),
                         onPressed: () {
                           ref.read(authActionsProvider).debugSignIn();
                         },

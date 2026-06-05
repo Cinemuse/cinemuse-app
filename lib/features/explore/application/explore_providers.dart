@@ -3,13 +3,20 @@ import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import '../presentation/widgets/explore_filters.dart';
 import '../presentation/widgets/media_type_selector.dart';
 
-final exploreMediaTypeProvider = StateProvider<MediaType>((ref) => MediaType.movie);
+final exploreMediaTypeProvider = StateProvider<MediaType>(
+  (ref) => MediaType.movie,
+);
 
-final exploreFiltersProvider = StateProvider<ExploreFilters>((ref) => const ExploreFilters());
+final exploreFiltersProvider = StateProvider<ExploreFilters>(
+  (ref) => const ExploreFilters(),
+);
 
-final exploreResultsProvider = AsyncNotifierProvider<ExploreResultsNotifier, List<Map<String, dynamic>>>(() {
-  return ExploreResultsNotifier();
-});
+final exploreResultsProvider =
+    AsyncNotifierProvider<ExploreResultsNotifier, List<Map<String, dynamic>>>(
+      () {
+        return ExploreResultsNotifier();
+      },
+    );
 
 class ExploreResultsNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
   int _currentPage = 1;
@@ -61,13 +68,10 @@ class ExploreResultsNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
 
     _isFetching = true;
     _currentPage++;
-    
+
     try {
       final nextResults = await _fetch();
-      state = AsyncValue.data([
-        ...state.value ?? [],
-        ...nextResults,
-      ]);
+      state = AsyncValue.data([...state.value ?? [], ...nextResults]);
     } finally {
       _isFetching = false;
     }
@@ -81,11 +85,15 @@ class ExploreResultsNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
   }
 }
 
-final watchProvidersListProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final watchProvidersListProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
   final tmdbService = ref.watch(tmdbServiceProvider);
   final mediaType = ref.watch(exploreMediaTypeProvider);
-  final watchRegion = ref.watch(exploreFiltersProvider.select((f) => f.watchRegion));
-  
+  final watchRegion = ref.watch(
+    exploreFiltersProvider.select((f) => f.watchRegion),
+  );
+
   return tmdbService.getWatchProviders(
     mediaType == MediaType.movie ? 'movie' : 'tv',
     watchRegion,

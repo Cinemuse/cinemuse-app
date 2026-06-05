@@ -87,21 +87,38 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                 spacing: 32,
                 runSpacing: 32,
                 children: [
-                   // Sort & Languages
+                  // Sort & Languages
                   SizedBox(
-                    width: isWide ? (constraints.maxWidth - 64) / 3 : constraints.maxWidth,
+                    width: isWide
+                        ? (constraints.maxWidth - 64) / 3
+                        : constraints.maxWidth,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSectionLabel(l10n.searchSortBy),
                         const SizedBox(height: 12),
-                        _buildSortOption(l10n.searchMostPopular, 'popularity.desc', filters),
+                        _buildSortOption(
+                          l10n.searchMostPopular,
+                          'popularity.desc',
+                          filters,
+                        ),
                         const SizedBox(height: 8),
-                        _buildSortOption(l10n.searchHighestRated, 'vote_average.desc', filters),
+                        _buildSortOption(
+                          l10n.searchHighestRated,
+                          'vote_average.desc',
+                          filters,
+                        ),
                         const SizedBox(height: 8),
-                        _buildSortOption(l10n.searchNewestReleases, 'primary_release_date.desc', filters),
+                        _buildSortOption(
+                          l10n.searchNewestReleases,
+                          'primary_release_date.desc',
+                          filters,
+                        ),
                         const SizedBox(height: 32),
-                        _buildSectionLabel(l10n.searchLanguages, subtitle: l10n.searchMatchAny),
+                        _buildSectionLabel(
+                          l10n.searchLanguages,
+                          subtitle: l10n.searchMatchAny,
+                        ),
                         const SizedBox(height: 12),
                         _buildLanguageSearch(),
                         const SizedBox(height: 12),
@@ -112,11 +129,16 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
 
                   // Genres
                   SizedBox(
-                    width: isWide ? (constraints.maxWidth - 64) / 3 : constraints.maxWidth,
+                    width: isWide
+                        ? (constraints.maxWidth - 64) / 3
+                        : constraints.maxWidth,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionLabel(l10n.searchGenres, subtitle: l10n.searchMatchAll),
+                        _buildSectionLabel(
+                          l10n.searchGenres,
+                          subtitle: l10n.searchMatchAll,
+                        ),
                         const SizedBox(height: 16),
                         _buildGenreGrid(filters),
                         const SizedBox(height: 32),
@@ -129,7 +151,9 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
 
                   // Sliders
                   SizedBox(
-                    width: isWide ? (constraints.maxWidth - 64) / 3 : constraints.maxWidth,
+                    width: isWide
+                        ? (constraints.maxWidth - 64) / 3
+                        : constraints.maxWidth,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -137,39 +161,47 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                           min: 0,
                           max: 10,
                           values: filters.rating,
-                          onChanged: (v) => _updateFilters(filters.copyWith(rating: v)),
+                          onChanged: (v) =>
+                              _updateFilters(filters.copyWith(rating: v)),
                           label: l10n.searchRating,
-                          valueLabel: '${filters.rating.start.round()} - ${filters.rating.end.round()}',
+                          valueLabel:
+                              '${filters.rating.start.round()} - ${filters.rating.end.round()}',
                           icon: Icons.whatshot,
                         ),
                         const SizedBox(height: 32),
-                         FilterRangeSlider(
+                        FilterRangeSlider(
                           min: 1900,
                           max: 2025,
                           values: filters.year,
-                          onChanged: (v) => _updateFilters(filters.copyWith(year: v)),
+                          onChanged: (v) =>
+                              _updateFilters(filters.copyWith(year: v)),
                           label: l10n.searchYearRange,
-                          valueLabel: '${filters.year.start.round()} - ${filters.year.end.round()}',
+                          valueLabel:
+                              '${filters.year.start.round()} - ${filters.year.end.round()}',
                           icon: Icons.calendar_today_outlined,
                         ),
                         const SizedBox(height: 32),
-                         FilterRangeSlider(
+                        FilterRangeSlider(
                           min: 0,
                           max: 20000,
                           values: filters.voteCount,
-                          onChanged: (v) => _updateFilters(filters.copyWith(voteCount: v)),
+                          onChanged: (v) =>
+                              _updateFilters(filters.copyWith(voteCount: v)),
                           label: l10n.searchVoteCount,
-                          valueLabel: '${filters.voteCount.start.round()} - ${filters.voteCount.end.round() >= 20000 ? l10n.filterMax : filters.voteCount.end.round()}',
+                          valueLabel:
+                              '${filters.voteCount.start.round()} - ${filters.voteCount.end.round() >= 20000 ? l10n.filterMax : filters.voteCount.end.round()}',
                           icon: Icons.thumb_up_outlined,
                         ),
                         const SizedBox(height: 32),
-                         FilterRangeSlider(
+                        FilterRangeSlider(
                           min: 0,
                           max: 240,
                           values: filters.runtime,
-                          onChanged: (v) => _updateFilters(filters.copyWith(runtime: v)),
+                          onChanged: (v) =>
+                              _updateFilters(filters.copyWith(runtime: v)),
                           label: l10n.searchRuntime,
-                          valueLabel: '${filters.runtime.start.round()}m - ${filters.runtime.end.round() >= 240 ? l10n.filterMax : '${filters.runtime.end.round()}m'}',
+                          valueLabel:
+                              '${filters.runtime.start.round()}m - ${filters.runtime.end.round() >= 240 ? l10n.filterMax : '${filters.runtime.end.round()}m'}',
                           icon: Icons.access_time,
                         ),
                       ],
@@ -189,13 +221,21 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
       children: [
         Text(
           label,
-          style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 16),
+          style: const TextStyle(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
         ),
         if (subtitle != null) ...[
           const SizedBox(width: 8),
           Text(
             subtitle,
-            style: TextStyle(color: AppTheme.textWhite.withValues(alpha: 0.4), fontSize: 12, fontWeight: FontWeight.normal),
+            style: TextStyle(
+              color: AppTheme.textWhite.withValues(alpha: 0.4),
+              fontSize: 12,
+              fontWeight: FontWeight.normal,
+            ),
           ),
         ],
       ],
@@ -212,19 +252,31 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.textWhite : AppTheme.textWhite.withValues(alpha: 0.02),
+          color: isSelected
+              ? AppTheme.textWhite
+              : AppTheme.textWhite.withValues(alpha: 0.02),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AppTheme.textWhite : AppTheme.textWhite.withValues(alpha: 0.1),
+            color: isSelected
+                ? AppTheme.textWhite
+                : AppTheme.textWhite.withValues(alpha: 0.1),
           ),
-          boxShadow: isSelected ? [
-            BoxShadow(color: AppTheme.textWhite.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4))
-          ] : null,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppTheme.textWhite.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? AppTheme.primary : AppTheme.textWhite.withValues(alpha: 0.6),
+            color: isSelected
+                ? AppTheme.primary
+                : AppTheme.textWhite.withValues(alpha: 0.6),
             fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
@@ -247,10 +299,14 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.02),
+              color: isSelected
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.02),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.1),
+                color: isSelected
+                    ? Colors.white
+                    : Colors.white.withValues(alpha: 0.1),
               ),
             ),
             child: Row(
@@ -259,7 +315,9 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                 Text(
                   g['name'] as String,
                   style: TextStyle(
-                    color: isSelected ? AppTheme.primary : AppTheme.textWhite.withValues(alpha: 0.6),
+                    color: isSelected
+                        ? AppTheme.primary
+                        : AppTheme.textWhite.withValues(alpha: 0.6),
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
@@ -285,8 +343,12 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
             prefixIcon: const Icon(Icons.search, size: 20),
             filled: false,
             contentPadding: const EdgeInsets.symmetric(vertical: 8),
-            enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
-            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.textWhite)),
+            enabledBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.white24),
+            ),
+            focusedBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: AppTheme.textWhite),
+            ),
           ),
         ),
         if (_isLangOpen) ...[
@@ -307,13 +369,17 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
 
   Widget _buildFilteredLanguages() {
     final query = _langSearchController.text.toLowerCase();
-    final filtered = TmdbConstants.languagesList.where((l) =>
-      l['name']!.toLowerCase().contains(query)).toList();
+    final filtered = TmdbConstants.languagesList
+        .where((l) => l['name']!.toLowerCase().contains(query))
+        .toList();
 
     if (filtered.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Text(AppLocalizations.of(context)!.searchNoLanguagesFound, style: TextStyle(color: AppTheme.textMuted)),
+        child: Text(
+          AppLocalizations.of(context)!.searchNoLanguagesFound,
+          style: TextStyle(color: AppTheme.textMuted),
+        ),
       );
     }
 
@@ -324,7 +390,10 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
         final lang = filtered[index];
         return ListTile(
           dense: true,
-          title: Text(lang['name']!, style: const TextStyle(color: AppTheme.textSecondary)),
+          title: Text(
+            lang['name']!,
+            style: const TextStyle(color: AppTheme.textSecondary),
+          ),
           onTap: () => _handleLanguageSelect(lang['code']!),
           hoverColor: AppTheme.textWhite.withValues(alpha: 0.05),
         );
@@ -337,7 +406,9 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
       spacing: 8,
       runSpacing: 8,
       children: filters.languages.map((code) {
-        final lang = TmdbConstants.languagesList.firstWhere((l) => l['code'] == code);
+        final lang = TmdbConstants.languagesList.firstWhere(
+          (l) => l['code'] == code,
+        );
         return Chip(
           label: Text(lang['name']!, style: const TextStyle(fontSize: 12)),
           backgroundColor: AppTheme.textWhite.withValues(alpha: 0.1),
@@ -357,18 +428,18 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
       data: (providers) {
         // Show only the most common/popular ones to avoid UI clutter
         final mainProviders = providers.where((p) {
-           final name = p['provider_name']?.toString().toLowerCase() ?? '';
-           return name.contains('netflix') || 
-                  name.contains('disney') || 
-                  name.contains('prime video') ||
-                  name.contains('apple tv') ||
-                  name.contains('now') ||
-                  name.contains('rakuten');
+          final name = p['provider_name']?.toString().toLowerCase() ?? '';
+          return name.contains('netflix') ||
+              name.contains('disney') ||
+              name.contains('prime video') ||
+              name.contains('apple tv') ||
+              name.contains('now') ||
+              name.contains('rakuten');
         }).toList();
 
         if (mainProviders.isEmpty && providers.isNotEmpty) {
-           // Fallback to first few if no major ones identified by keywords
-           mainProviders.addAll(providers.take(6));
+          // Fallback to first few if no major ones identified by keywords
+          mainProviders.addAll(providers.take(6));
         }
 
         return Wrap(
@@ -377,7 +448,8 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
           children: mainProviders.map((p) {
             final id = p['provider_id'] as int;
             final isSelected = filters.watchProviders.contains(id);
-            final imageUrl = "https://image.tmdb.org/t/p/original${p['logo_path']}";
+            final imageUrl =
+                "https://image.tmdb.org/t/p/original${p['logo_path']}";
 
             return HoverScale(
               onTap: () => _toggleWatchProvider(id),
@@ -390,9 +462,13 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      color: isSelected ? AppTheme.textWhite.withValues(alpha: 0.05) : Colors.transparent,
+                      color: isSelected
+                          ? AppTheme.textWhite.withValues(alpha: 0.05)
+                          : Colors.transparent,
                       border: Border.all(
-                        color: isSelected ? AppTheme.accent : AppTheme.textWhite.withValues(alpha: 0.1),
+                        color: isSelected
+                            ? AppTheme.accent
+                            : AppTheme.textWhite.withValues(alpha: 0.1),
                         width: 2,
                       ),
                     ),
@@ -403,7 +479,8 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                         width: 48,
                         height: 48,
                         fit: BoxFit.cover,
-                        errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 24),
+                        errorWidget: (context, url, error) =>
+                            const Icon(Icons.broken_image, size: 24),
                       ),
                     ),
                   ),
@@ -413,8 +490,12 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                     width: 60,
                     style: TextStyle(
                       fontSize: 10,
-                      color: isSelected ? AppTheme.accent : AppTheme.textSecondary,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected
+                          ? AppTheme.accent
+                          : AppTheme.textSecondary,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -424,7 +505,10 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
           }).toList(),
         );
       },
-      loading: () => const SizedBox(height: 40, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
+      loading: () => const SizedBox(
+        height: 40,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
       error: (_, __) => const SizedBox.shrink(),
     );
   }

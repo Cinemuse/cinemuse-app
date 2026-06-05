@@ -106,7 +106,11 @@ class StremioAddon {
       icon: json['icon'] as String?,
       logo: json['logo'] as String?,
       background: json['background'] as String?,
-      types: (json['types'] as List?)?.map((e) => e == 'series' ? 'tv' : e.toString()).toList() ?? const [],
+      types:
+          (json['types'] as List?)
+              ?.map((e) => e == 'series' ? 'tv' : e.toString())
+              .toList() ??
+          const [],
       resources: _parseList(json['resources']),
       catalogs: _parseList(json['catalogs']),
       enabled: json['enabled'] as bool? ?? true,

@@ -105,7 +105,9 @@ class QualitySubtitle extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (state.isLive) {
-      final quality = ref.watch(settingsProvider.select((s) => s.liveTvQuality));
+      final quality = ref.watch(
+        settingsProvider.select((s) => s.liveTvQuality),
+      );
       return Text(
         'Preferred: ${quality.label}',
         style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
@@ -125,7 +127,11 @@ class QualitySubtitle extends ConsumerWidget {
 class TrackSubtitle extends ConsumerWidget {
   final CinemaPlayerState state;
   final bool isSubtitle;
-  const TrackSubtitle({super.key, required this.state, required this.isSubtitle});
+  const TrackSubtitle({
+    super.key,
+    required this.state,
+    required this.isSubtitle,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -139,20 +145,36 @@ class TrackSubtitle extends ConsumerWidget {
           : pref.subtitleLanguage.toLowerCase();
 
       if (track.id == 'no' || track.id == 'auto') {
-        if (track.id == 'no') return const Text('Off/None', style: TextStyle(color: AppTheme.textMuted));
+        if (track.id == 'no')
+          return const Text(
+            'Off/None',
+            style: TextStyle(color: AppTheme.textMuted),
+          );
 
         final subs = player.state.tracks.subtitle;
         final matched = subs.firstWhere(
-          (t) => t.id != 'auto' && t.id != 'no' && LanguageMapper.isMatch(t, prefLang),
-          orElse: () => subs.firstOrNull ?? track
+          (t) =>
+              t.id != 'auto' &&
+              t.id != 'no' &&
+              LanguageMapper.isMatch(t, prefLang),
+          orElse: () => subs.firstOrNull ?? track,
         );
 
-        final name = LanguageMapper.getDisplayLanguage(matched.title ?? matched.language ?? matched.id);
+        final name = LanguageMapper.getDisplayLanguage(
+          matched.title ?? matched.language ?? matched.id,
+        );
         return Text(name, style: const TextStyle(color: AppTheme.textMuted));
       }
 
-      final name = LanguageMapper.getDisplayLanguage(track.title ?? track.language ?? track.id);
-      return Text(name, style: const TextStyle(color: AppTheme.textMuted), maxLines: 1, overflow: TextOverflow.ellipsis);
+      final name = LanguageMapper.getDisplayLanguage(
+        track.title ?? track.language ?? track.id,
+      );
+      return Text(
+        name,
+        style: const TextStyle(color: AppTheme.textMuted),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
     } else {
       final track = state.activeAudioTrack ?? player.state.track.audio;
       final prefLang = (state.isAnime && pref.splitAnimePreferences)
@@ -160,20 +182,36 @@ class TrackSubtitle extends ConsumerWidget {
           : pref.playerLanguage.toLowerCase();
 
       if (track.id == 'no' || track.id == 'auto') {
-        if (track.id == 'no') return const Text('Off/None', style: TextStyle(color: AppTheme.textMuted));
+        if (track.id == 'no')
+          return const Text(
+            'Off/None',
+            style: TextStyle(color: AppTheme.textMuted),
+          );
 
         final audio = player.state.tracks.audio;
         final matched = audio.firstWhere(
-          (t) => t.id != 'auto' && t.id != 'no' && LanguageMapper.isMatch(t, prefLang),
-          orElse: () => audio.firstOrNull ?? track
+          (t) =>
+              t.id != 'auto' &&
+              t.id != 'no' &&
+              LanguageMapper.isMatch(t, prefLang),
+          orElse: () => audio.firstOrNull ?? track,
         );
 
-        final name = LanguageMapper.getDisplayLanguage(matched.title ?? matched.language ?? matched.id);
+        final name = LanguageMapper.getDisplayLanguage(
+          matched.title ?? matched.language ?? matched.id,
+        );
         return Text(name, style: const TextStyle(color: AppTheme.textMuted));
       }
 
-      final name = LanguageMapper.getDisplayLanguage(track.title ?? track.language ?? track.id);
-      return Text(name, style: const TextStyle(color: AppTheme.textMuted), maxLines: 1, overflow: TextOverflow.ellipsis);
+      final name = LanguageMapper.getDisplayLanguage(
+        track.title ?? track.language ?? track.id,
+      );
+      return Text(
+        name,
+        style: const TextStyle(color: AppTheme.textMuted),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
     }
   }
 }
@@ -202,15 +240,23 @@ class TrackTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final title = customTitle ?? LanguageMapper.getDisplayLanguage(track.title ?? track.language ?? track.id);
+    final title =
+        customTitle ??
+        LanguageMapper.getDisplayLanguage(
+          track.title ?? track.language ?? track.id,
+        );
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        color: isSelected ? AppTheme.accent.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.02),
+        color: isSelected
+            ? AppTheme.accent.withValues(alpha: 0.1)
+            : Colors.white.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isSelected ? AppTheme.accent.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.05),
+          color: isSelected
+              ? AppTheme.accent.withValues(alpha: 0.5)
+              : Colors.white.withValues(alpha: 0.05),
           width: 1,
         ),
       ),
@@ -219,13 +265,19 @@ class TrackTile extends ConsumerWidget {
         title: Text(
           title,
           style: TextStyle(
-            color: isSelected ? (color ?? AppTheme.textWhite) : AppTheme.textWhite.withValues(alpha: 0.7),
+            color: isSelected
+                ? (color ?? AppTheme.textWhite)
+                : AppTheme.textWhite.withValues(alpha: 0.7),
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             fontSize: 15,
           ),
         ),
         trailing: isSelected
-            ? Icon(Icons.check_circle_rounded, color: color ?? AppTheme.accent, size: 20)
+            ? Icon(
+                Icons.check_circle_rounded,
+                color: color ?? AppTheme.accent,
+                size: 20,
+              )
             : null,
         onTap: () async {
           if (isSelected) return;
@@ -238,11 +290,11 @@ class TrackTile extends ConsumerWidget {
           } catch (_) {
             // Ignore "already selected" or stale track errors from MPV
           }
-          
+
           if (onSelected != null) {
             onSelected!();
           }
-          
+
           onBack();
         },
       ),
@@ -305,7 +357,7 @@ class StreamMetadataOverview extends StatelessWidget {
   Widget build(BuildContext context) {
     final meta = stream.metadata;
     if (meta == null) {
-       return Text(
+      return Text(
         stream.title,
         style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
         maxLines: 1,
@@ -321,12 +373,19 @@ class StreamMetadataOverview extends StatelessWidget {
           runSpacing: 4,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            if (stream.isCached) const SettingsBadge(text: 'CACHED', color: Colors.greenAccent),
+            if (stream.isCached)
+              const SettingsBadge(text: 'CACHED', color: Colors.greenAccent),
             if (meta.video.resolution != VideoResolution.unknown)
-              SettingsBadge(text: meta.video.resolution.label, color: Colors.blueAccent),
-            if (meta.video.isHDR) const SettingsBadge(text: 'HDR', color: Colors.orangeAccent),
-            if (meta.video.isDV) const SettingsBadge(text: 'DV', color: Colors.orangeAccent),
-            if (meta.video.is10Bit) const SettingsBadge(text: '10BIT', color: Colors.orangeAccent),
+              SettingsBadge(
+                text: meta.video.resolution.label,
+                color: Colors.blueAccent,
+              ),
+            if (meta.video.isHDR)
+              const SettingsBadge(text: 'HDR', color: Colors.orangeAccent),
+            if (meta.video.isDV)
+              const SettingsBadge(text: 'DV', color: Colors.orangeAccent),
+            if (meta.video.is10Bit)
+              const SettingsBadge(text: '10BIT', color: Colors.orangeAccent),
           ],
         ),
         const SizedBox(height: 8),
@@ -335,11 +394,34 @@ class StreamMetadataOverview extends StatelessWidget {
           runSpacing: 4,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            SettingsLabel(text: stream.provider, color: AppTheme.accent.withValues(alpha: 0.9)),
-            if (meta.size != null) SettingsLabel(text: meta.size!, color: Colors.cyanAccent.withValues(alpha: 0.8)),
-            ...meta.flags.where((f) => f != ReleaseFlag.none).map((f) => SettingsLabel(text: f.label, color: Colors.amberAccent.withValues(alpha: 0.8))),
-            ...meta.audio.formats.map((a) => SettingsLabel(text: a.label, color: Colors.deepPurpleAccent.withValues(alpha: 0.8))),
-            if (meta.languages.isNotEmpty) SettingsLabel(text: meta.languages.join(' • '), color: Colors.white70),
+            SettingsLabel(
+              text: stream.provider,
+              color: AppTheme.accent.withValues(alpha: 0.9),
+            ),
+            if (meta.size != null)
+              SettingsLabel(
+                text: meta.size!,
+                color: Colors.cyanAccent.withValues(alpha: 0.8),
+              ),
+            ...meta.flags
+                .where((f) => f != ReleaseFlag.none)
+                .map(
+                  (f) => SettingsLabel(
+                    text: f.label,
+                    color: Colors.amberAccent.withValues(alpha: 0.8),
+                  ),
+                ),
+            ...meta.audio.formats.map(
+              (a) => SettingsLabel(
+                text: a.label,
+                color: Colors.deepPurpleAccent.withValues(alpha: 0.8),
+              ),
+            ),
+            if (meta.languages.isNotEmpty)
+              SettingsLabel(
+                text: meta.languages.join(' • '),
+                color: Colors.white70,
+              ),
           ],
         ),
       ],

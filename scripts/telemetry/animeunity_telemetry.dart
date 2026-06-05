@@ -37,11 +37,11 @@ class MockAnimeUnityMappingProvider implements AnimeUnityMappingProvider {
 
 void main() async {
   print('Starting AnimeUnity Scraper Telemetry...');
-  
+
   final dio = Dio();
   final mappingProvider = MockAnimeUnityMappingProvider();
   final scraper = AnimeUnitySource(dio, mappingProvider);
-  
+
   // Define our test cases
   final testCases = [
     StreamSearchContext(
@@ -49,41 +49,34 @@ void main() async {
       title: 'Naruto',
       type: 'tv',
       isAnime: true,
-      mapping: KitsuMapping(
-        kitsuId: '11',
-        absoluteEpisode: 1,
-      ),
+      mapping: KitsuMapping(kitsuId: '11', absoluteEpisode: 1),
     ),
     StreamSearchContext(
       tmdbId: '0',
       title: 'Jujutsu Kaisen',
       type: 'tv',
       isAnime: true,
-      mapping: KitsuMapping(
-        kitsuId: '42765',
-        absoluteEpisode: 1,
-      ),
+      mapping: KitsuMapping(kitsuId: '42765', absoluteEpisode: 1),
     ),
     StreamSearchContext(
       tmdbId: '0',
       title: 'Attack on Titan',
       type: 'tv',
       isAnime: true,
-      mapping: KitsuMapping(
-        kitsuId: '7442',
-        absoluteEpisode: 1,
-      ),
+      mapping: KitsuMapping(kitsuId: '7442', absoluteEpisode: 1),
     ),
   ];
-  
+
   final results = <String, Map<String, dynamic>>{};
   int successfulChecks = 0;
-  
+
   for (final context in testCases) {
-    print('Testing ANIME: ${context.title} (Kitsu: ${context.mapping?.kitsuId})...');
+    print(
+      'Testing ANIME: ${context.title} (Kitsu: ${context.mapping?.kitsuId})...',
+    );
     try {
       final candidates = await scraper.search(context);
-      
+
       if (candidates.isNotEmpty) {
         successfulChecks++;
         final c = candidates.first;
@@ -91,27 +84,29 @@ void main() async {
         results[context.title] = {
           'status': 'SUCCESS',
           'candidates_found': candidates.length,
-          'sample_url': urlStr.length > 50 ? '${urlStr.substring(0, 50)}...' : urlStr,
+          'sample_url': urlStr.length > 50
+              ? '${urlStr.substring(0, 50)}...'
+              : urlStr,
           'languages': c.metadata?.languages ?? [],
         };
       } else {
         results[context.title] = {
           'status': 'FAILED',
-          'error': 'No streams found. The parsing logic or embed HTML might have changed.',
+          'error':
+              'No streams found. The parsing logic or embed HTML might have changed.',
         };
       }
     } catch (e) {
-      results[context.title] = {
-        'status': 'ERROR',
-        'error': e.toString(),
-      };
+      results[context.title] = {'status': 'ERROR', 'error': e.toString()};
     }
     // Small delay to prevent rate limiting
     await Future.delayed(const Duration(seconds: 1));
   }
-  
-  final healthStatus = successfulChecks == testCases.length ? 'OK' : (successfulChecks > 0 ? 'DEGRADED' : 'FAILED');
-  
+
+  final healthStatus = successfulChecks == testCases.length
+      ? 'OK'
+      : (successfulChecks > 0 ? 'DEGRADED' : 'FAILED');
+
   // 1. Generate JSON Report
   final report = {
     'timestamp': DateTime.now().toUtc().toIso8601String(),
@@ -120,40 +115,46 @@ void main() async {
     'successful_tests': successfulChecks,
     'results': results,
   };
-  
+
   final jsonFile = File('animeunity_telemetry_report.json');
   await jsonFile.writeAsString(jsonEncode(report));
-  
+
   // 2. Generate GitHub Step Summary Markdown
   final stepSummaryPath = Platform.environment['GITHUB_STEP_SUMMARY'];
   if (stepSummaryPath != null) {
     final summaryFile = File(stepSummaryPath);
     final sink = summaryFile.openWrite(mode: FileMode.append);
-    
+
     sink.writeln('### ⛩️ AnimeUnity Scraper Telemetry');
     sink.writeln('- **Status**: $healthStatus');
     sink.writeln('- **Tests Passed**: $successfulChecks / ${testCases.length}');
-    
+
     sink.writeln('\n#### Test Results');
     sink.writeln('| Title | Status | Candidates | Languages | Notes |');
     sink.writeln('| :--- | :--- | :--- | :--- | :--- |');
-    
+
     for (final entry in results.entries) {
       final title = entry.key;
       final data = entry.value;
-      
+
       final statusIcon = data['status'] == 'SUCCESS' ? '✅' : '❌';
       final candidates = data['candidates_found'] ?? 0;
       final langs = (data['languages'] as List<dynamic>?)?.join(', ') ?? '';
-      final notes = data['status'] == 'SUCCESS' ? 'Stream parsed correctly' : (data['error'] ?? 'Unknown error');
-      
-      sink.writeln('| **$title** | $statusIcon ${data['status']} | $candidates | $langs | $notes |');
+      final notes = data['status'] == 'SUCCESS'
+          ? 'Stream parsed correctly'
+          : (data['error'] ?? 'Unknown error');
+
+      sink.writeln(
+        '| **$title** | $statusIcon ${data['status']} | $candidates | $langs | $notes |',
+      );
     }
-    
+
     if (healthStatus != 'OK') {
-      sink.writeln('\n> **Warning**: AnimeUnity might have updated their token generation logic or changed their HTML layout (VixCloud). Please review the scraper.');
+      sink.writeln(
+        '\n> **Warning**: AnimeUnity might have updated their token generation logic or changed their HTML layout (VixCloud). Please review the scraper.',
+      );
     }
-    
+
     // Append the raw JSON data in a collapsible section
     sink.writeln('\n<details>');
     sink.writeln('<summary>View Raw JSON Data</summary>\n');
@@ -161,13 +162,15 @@ void main() async {
     sink.writeln(const JsonEncoder.withIndent('  ').convert(report));
     sink.writeln('```');
     sink.writeln('</details>\n');
-    
+
     await sink.flush();
     await sink.close();
   }
-  
-  print('Telemetry completed: $successfulChecks/${testCases.length} successful.');
-  
+
+  print(
+    'Telemetry completed: $successfulChecks/${testCases.length} successful.',
+  );
+
   // Exit with error if ALL tests failed (scraper is completely broken)
   if (successfulChecks == 0) {
     exit(1);

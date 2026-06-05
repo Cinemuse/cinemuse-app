@@ -56,18 +56,20 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
 
   Future<void> _doPlayChannel(Channel channel) async {
     if (!mounted) return;
-    
+
     // Push to recents so the Recents tab stays populated
     ref.read(recentChannelIdsProvider.notifier).push(channel.uniqueId);
 
     // Delegate to the unified PlayerController
-    ref.read(playerControllerProvider(_liveTvParams).notifier).changeChannel(channel);
+    ref
+        .read(playerControllerProvider(_liveTvParams).notifier)
+        .changeChannel(channel);
   }
 
   void _openSettings(CinemaPlayerState state) {
     PlayerSettingsBottomSheet.show(
-      context, 
-      state, 
+      context,
+      state,
       _liveTvParams,
       (_) {}, // No-op overlay callback for Live TV for now
     );
@@ -124,8 +126,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     final key = event.logicalKey;
     String? digit;
 
-    if (key == LogicalKeyboardKey.digit0 ||
-        key == LogicalKeyboardKey.numpad0) {
+    if (key == LogicalKeyboardKey.digit0 || key == LogicalKeyboardKey.numpad0) {
       digit = '0';
     } else if (key == LogicalKeyboardKey.digit1 ||
         key == LogicalKeyboardKey.numpad1) {
@@ -225,7 +226,10 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
       // already selected, kick off playback in a post-frame callback so we
       // don't call setState during build.
       final stateValue = ps.valueOrNull;
-      if (selectedChannel != null && stateValue != null && stateValue.currentStream == null && !stateValue.isResolving) {
+      if (selectedChannel != null &&
+          stateValue != null &&
+          stateValue.currentStream == null &&
+          !stateValue.isResolving) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) _playChannel(selectedChannel);
         });
@@ -243,7 +247,11 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
   // -----------------------------------------------------------------------
   // Desktop Layout
   // -----------------------------------------------------------------------
-  Widget _buildDesktopLayout(Channel? selectedChannel, String numberBuffer, AsyncValue<CinemaPlayerState>? playerState) {
+  Widget _buildDesktopLayout(
+    Channel? selectedChannel,
+    String numberBuffer,
+    AsyncValue<CinemaPlayerState>? playerState,
+  ) {
     const double padding = 20;
     const double epgHeight = 200;
     const double gap = 16;
@@ -257,11 +265,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
 
         return Row(
           children: [
-            const Expanded(
-              child: RepaintBoundary(
-                child: ChannelListPanel(),
-              ),
-            ),
+            const Expanded(child: RepaintBoundary(child: ChannelListPanel())),
 
             SizedBox(
               width: rightPanelWidth.clamp(400, constraints.maxWidth * 0.7),
@@ -281,9 +285,9 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
                             onNumberInput: _handleNumberInput,
                             onConfirmNumber: _confirmNumberInput,
                             numberBuffer: numberBuffer,
-                            onSettingsPressed: playerState?.valueOrNull != null 
-                              ? () => _openSettings(playerState!.valueOrNull!)
-                              : null,
+                            onSettingsPressed: playerState?.valueOrNull != null
+                                ? () => _openSettings(playerState!.valueOrNull!)
+                                : null,
                           ),
                         ),
                       ),
@@ -306,7 +310,11 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
   // -----------------------------------------------------------------------
   // Mobile Layout
   // -----------------------------------------------------------------------
-  Widget _buildMobileLayout(Channel? selectedChannel, String numberBuffer, AsyncValue<CinemaPlayerState>? playerState) {
+  Widget _buildMobileLayout(
+    Channel? selectedChannel,
+    String numberBuffer,
+    AsyncValue<CinemaPlayerState>? playerState,
+  ) {
     return Column(
       children: [
         Padding(
@@ -320,19 +328,15 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
                 onNumberInput: _handleNumberInput,
                 onConfirmNumber: _confirmNumberInput,
                 numberBuffer: numberBuffer,
-                onSettingsPressed: playerState?.valueOrNull != null 
-                  ? () => _openSettings(playerState!.valueOrNull!)
-                  : null,
+                onSettingsPressed: playerState?.valueOrNull != null
+                    ? () => _openSettings(playerState!.valueOrNull!)
+                    : null,
               ),
             ),
           ),
         ),
         // EPG card removed for mobile to maximize space
-        const Expanded(
-          child: RepaintBoundary(
-            child: ChannelListPanel(),
-          ),
-        ),
+        const Expanded(child: RepaintBoundary(child: ChannelListPanel())),
       ],
     );
   }

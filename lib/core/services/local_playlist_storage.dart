@@ -36,7 +36,9 @@ class LocalPlaylistStorage {
   ///   returned unchanged so old playlists keep working until removed.
   /// - Otherwise it is treated as a plain filename and joined with the
   ///   current playlists directory.
-  static Future<String> resolveToAbsolutePath(String filenameOrLegacyPath) async {
+  static Future<String> resolveToAbsolutePath(
+    String filenameOrLegacyPath,
+  ) async {
     if (p.isAbsolute(filenameOrLegacyPath)) return filenameOrLegacyPath;
     final dir = await getPlaylistsDir();
     return p.join(dir.path, filenameOrLegacyPath);

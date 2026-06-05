@@ -33,9 +33,8 @@ class AppBottomSheet extends StatelessWidget {
     bool useRootNavigator = true,
   }) {
     final width = MediaQuery.of(context).size.width;
-    final effectiveConstraints = constraints ?? BoxConstraints(
-      maxWidth: width > 1200 ? 1200 : width,
-    );
+    final effectiveConstraints =
+        constraints ?? BoxConstraints(maxWidth: width > 1200 ? 1200 : width);
 
     return showModalBottomSheet<T>(
       context: context,
@@ -60,31 +59,34 @@ class AppBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget content = Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: borderRadius,
-        border: border,
-      ),
-      padding: padding,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (showHandle)
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
+    Widget content = Material(
+      type: MaterialType.transparency,
+      child: Container(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: borderRadius,
+          border: border,
+        ),
+        padding: padding,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (showHandle)
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-          Flexible(child: child),
-        ],
+            Flexible(child: child),
+          ],
+        ),
       ),
     );
 
@@ -97,10 +99,7 @@ class AppBottomSheet extends StatelessWidget {
         ),
       );
     } else {
-      content = ClipRRect(
-        borderRadius: borderRadius,
-        child: content,
-      );
+      content = ClipRRect(borderRadius: borderRadius, child: content);
     }
 
     return content;

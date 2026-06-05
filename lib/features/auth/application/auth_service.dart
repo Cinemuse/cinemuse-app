@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Auth State Provider
-final authProvider = StateNotifierProvider<AuthService, AsyncValue<User?>>((ref) {
+final authProvider = StateNotifierProvider<AuthService, AsyncValue<User?>>((
+  ref,
+) {
   return AuthService(supabase);
 });
 
@@ -29,9 +31,9 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
     _supabaseClient.auth.onAuthStateChange.listen((data) {
       final AuthChangeEvent event = data.event;
       final Session? session = data.session;
-      
+
       state = AsyncValue.data(session?.user);
-      
+
       if (event == AuthChangeEvent.signedOut) {
         state = const AsyncValue.data(null);
       }
@@ -67,11 +69,11 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
       }
     } catch (e) {
       final appEx = SupabaseErrorHandler.handleError(e);
-      state = AsyncValue.data(_supabaseClient.auth.currentUser); 
+      state = AsyncValue.data(_supabaseClient.auth.currentUser);
       throw appEx;
     }
   }
-  
+
   Future<void> debugSignIn() async {
     await signIn('aaa@aaa.aa', 'Password');
   }

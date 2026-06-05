@@ -30,16 +30,15 @@ class VixSrcSource extends BaseSource {
     }
 
     final url = '$_baseUrl$path';
-    
+
     try {
       // 1. Fetch from the API first
       final apiUrl = '$_baseUrl/api$path';
       final apiResponse = await _dio.get(
-        apiUrl, 
-        options: Options(headers: {
-          'Referer': '$_baseUrl$path', 
-          'Accept': 'application/json'
-        })
+        apiUrl,
+        options: Options(
+          headers: {'Referer': '$_baseUrl$path', 'Accept': 'application/json'},
+        ),
       );
 
       if (apiResponse.statusCode != 200 || apiResponse.data == null) {
@@ -51,7 +50,10 @@ class VixSrcSource extends BaseSource {
 
       // 2. Fetch the HTML from the embed page
       final embedUrl = '$_baseUrl$src';
-      final response = await _dio.get(embedUrl, options: Options(headers: {'Referer': '$_baseUrl$path'}));
+      final response = await _dio.get(
+        embedUrl,
+        options: Options(headers: {'Referer': '$_baseUrl$path'}),
+      );
       if (response.statusCode != 200 || response.data == null) {
         return [];
       }
@@ -60,8 +62,12 @@ class VixSrcSource extends BaseSource {
 
       // 3. Extract token, expires, and playlist URL base using Regex
       final urlMatch = RegExp(r'''url:\s*['"]([^'"]+)['"]''').firstMatch(html);
-      final tokenMatch = RegExp(r'''['"]?token['"]?:\s*['"]([^'"]+)['"]''').firstMatch(html);
-      final expiresMatch = RegExp(r'''['"]?expires['"]?:\s*['"]([^'"]+)['"]''').firstMatch(html);
+      final tokenMatch = RegExp(
+        r'''['"]?token['"]?:\s*['"]([^'"]+)['"]''',
+      ).firstMatch(html);
+      final expiresMatch = RegExp(
+        r'''['"]?expires['"]?:\s*['"]([^'"]+)['"]''',
+      ).firstMatch(html);
 
       if (tokenMatch == null || expiresMatch == null || urlMatch == null) {
         return [];
@@ -101,7 +107,8 @@ class VixSrcSource extends BaseSource {
           headers: {
             'Referer': url,
             'Origin': _baseUrl,
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           },
           metadata: StreamMetadata(
             video: const VideoMetadata(resolution: VideoResolution.r1080p),
@@ -115,5 +122,4 @@ class VixSrcSource extends BaseSource {
       return [];
     }
   }
-
 }

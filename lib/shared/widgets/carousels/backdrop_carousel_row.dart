@@ -35,24 +35,23 @@ class BackdropCarouselRow extends StatelessWidget {
       icon: icon,
       theme: theme,
       controller: controller,
-      emptyBuilder: emptyBuilder ?? (context) => SizedBox(
-        height: 100,
-        child: Center(
-          child: Text(
-            AppLocalizations.of(context)!.commonNoContent,
-            style: const TextStyle(color: Colors.white54),
+      emptyBuilder:
+          emptyBuilder ??
+          (context) => SizedBox(
+            height: 100,
+            child: Center(
+              child: Text(
+                AppLocalizations.of(context)!.commonNoContent,
+                style: const TextStyle(color: Colors.white54),
+              ),
+            ),
           ),
-        ),
-      ),
       height: height,
       itemCount: items.length,
       padding: padding,
       separatorBuilder: (c, i) => SizedBox(width: spacing),
       itemBuilder: (context, index) {
-        return SizedBox(
-          width: itemWidth,
-          child: items[index],
-        );
+        return SizedBox(width: itemWidth, child: items[index]);
       },
     );
   }

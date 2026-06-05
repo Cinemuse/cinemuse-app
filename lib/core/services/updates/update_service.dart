@@ -75,13 +75,15 @@ class UpdateState {
   }
 }
 
-final updateProvider = StateNotifierProvider<UpdateNotifier, UpdateState>((ref) {
+final updateProvider = StateNotifierProvider<UpdateNotifier, UpdateState>((
+  ref,
+) {
   return UpdateNotifier();
 });
 
 class UpdateNotifier extends StateNotifier<UpdateState> {
   UpdateNotifier() : super(UpdateState(status: UpdateStatus.initial));
-  
+
   final Dio _dio = Dio();
 
   String get _owner => dotenv.env['GITHUB_OWNER'] ?? '';
@@ -89,7 +91,9 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
 
   Future<void> checkForUpdates() async {
     if (_owner.isEmpty || _repo.isEmpty) {
-      debugPrint('UpdateService: GITHUB_OWNER or GITHUB_REPO is missing in .env');
+      debugPrint(
+        'UpdateService: GITHUB_OWNER or GITHUB_REPO is missing in .env',
+      );
       return;
     }
 
@@ -98,8 +102,12 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
       final currentVersion = packageInfo.version;
 
       final connectivity = await Connectivity().checkConnectivity();
-      if (connectivity.isNotEmpty && connectivity.first == ConnectivityResult.none) {
-        state = state.copyWith(status: UpdateStatus.upToDate, currentVersion: currentVersion);
+      if (connectivity.isNotEmpty &&
+          connectivity.first == ConnectivityResult.none) {
+        state = state.copyWith(
+          status: UpdateStatus.upToDate,
+          currentVersion: currentVersion,
+        );
         return;
       }
 
@@ -112,9 +120,11 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
 
       final latestTag = response.data['tag_name'] as String;
       final releaseNotes = response.data['body'] as String?;
-      debugPrint('UpdateService: Current version: $currentVersion+${packageInfo.buildNumber}');
+      debugPrint(
+        'UpdateService: Current version: $currentVersion+${packageInfo.buildNumber}',
+      );
       debugPrint('UpdateService: Latest tag from GitHub: $latestTag');
-      
+
       final downloadUrl = await _getDownloadUrl(response.data);
       debugPrint('UpdateService: Download URL: $downloadUrl');
 
@@ -129,19 +139,30 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
         );
       } else {
         debugPrint('UpdateService: App is up to date');
-        state = state.copyWith(status: UpdateStatus.upToDate, currentVersion: currentVersion);
-     }
+        state = state.copyWith(
+          status: UpdateStatus.upToDate,
+          currentVersion: currentVersion,
+        );
+      }
     } catch (e) {
-      if (!e.toString().contains('Failed host lookup') && !e.toString().contains('SocketException')) {
+      if (!e.toString().contains('Failed host lookup') &&
+          !e.toString().contains('SocketException')) {
         debugPrint('UpdateService: Check for updates failed: $e');
       }
-      state = state.copyWith(status: UpdateStatus.error, errorKey: 'updateSourceError');
+      state = state.copyWith(
+        status: UpdateStatus.error,
+        errorKey: 'updateSourceError',
+      );
     }
   }
 
   void cancelUpdate() {
     state.cancelToken?.cancel('User cancelled');
-    state = state.copyWith(status: UpdateStatus.available, progress: 0, clearCancelToken: true);
+    state = state.copyWith(
+      status: UpdateStatus.available,
+      progress: 0,
+      clearCancelToken: true,
+    );
   }
 
   void dismissUpdate() {
@@ -153,7 +174,7 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
     if (Platform.isAndroid) {
       // Use Abi.current() from dart:ffi to detect the architecture
       final currentAbi = Abi.current().toString();
-      
+
       // Mapping of dart:ffi Abi to common GitHub asset naming patterns
       String? abiPattern;
       if (currentAbi.contains('arm64')) {
@@ -163,26 +184,27 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
       } else if (currentAbi.contains('x64')) {
         abiPattern = 'x86_64';
       }
-      
-      debugPrint('UpdateService: Detected ABI: $currentAbi -> Pattern: $abiPattern');
+
+      debugPrint(
+        'UpdateService: Detected ABI: $currentAbi -> Pattern: $abiPattern',
+      );
 
       // 1. Try to find an APK that matches the ABI pattern
-      var apk = (abiPattern != null) ? assets.firstWhere(
-        (a) {
-          final name = (a['name'] as String).toLowerCase();
-          return name.endsWith('.apk') && name.contains(abiPattern!);
-        },
-        orElse: () => null,
-      ) : null;
+      var apk = (abiPattern != null)
+          ? assets.firstWhere((a) {
+              final name = (a['name'] as String).toLowerCase();
+              return name.endsWith('.apk') && name.contains(abiPattern!);
+            }, orElse: () => null)
+          : null;
 
       // 2. Fallback to generic release APK if no ABI match found
-      apk ??= assets.firstWhere(
-        (a) {
-          final name = (a['name'] as String).toLowerCase();
-          return name.endsWith('.apk') && (name.contains('release') || name.contains('universal') || !name.contains('-'));
-        },
-        orElse: () => null,
-      );
+      apk ??= assets.firstWhere((a) {
+        final name = (a['name'] as String).toLowerCase();
+        return name.endsWith('.apk') &&
+            (name.contains('release') ||
+                name.contains('universal') ||
+                !name.contains('-'));
+      }, orElse: () => null);
 
       // 3. Last resort: first APK found
       apk ??= assets.firstWhere(
@@ -201,10 +223,11 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
     } else if (Platform.isLinux) {
       // Look for AppImage, deb, or tar.gz
       final linuxAsset = assets.firstWhere(
-        (a) => (a['name'] as String).toLowerCase().contains('linux') || 
-               (a['name'] as String).endsWith('.appimage') ||
-               (a['name'] as String).endsWith('.deb') ||
-               (a['name'] as String).endsWith('.tar.gz'),
+        (a) =>
+            (a['name'] as String).toLowerCase().contains('linux') ||
+            (a['name'] as String).endsWith('.appimage') ||
+            (a['name'] as String).endsWith('.deb') ||
+            (a['name'] as String).endsWith('.tar.gz'),
         orElse: () => null,
       );
       return linuxAsset?['browser_download_url'];
@@ -214,7 +237,9 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
 
   bool _isNewer(String latestTag, String currentName, String currentBuild) {
     // Parse latest: v1.0.1+15 -> name: 1.0.1, build: 15
-    final tagMatch = RegExp(r'v?(\d+\.\d+\.\d+)(?:\+(\d+))?').firstMatch(latestTag);
+    final tagMatch = RegExp(
+      r'v?(\d+\.\d+\.\d+)(?:\+(\d+))?',
+    ).firstMatch(latestTag);
     if (tagMatch == null) return false;
 
     final latestName = tagMatch.group(1)!;
@@ -254,51 +279,80 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
 
   void _startAndroidUpdate() {
     state = state.copyWith(status: UpdateStatus.downloading, progress: 0);
-    
+
     try {
-      OtaUpdate().execute(state.downloadUrl!).listen(
-        (OtaEvent event) {
-          debugPrint('UpdateService: OTA Event: ${event.status} - ${event.value}');
-          switch (event.status) {
-            case OtaStatus.DOWNLOADING:
-              state = state.copyWith(progress: double.tryParse(event.value ?? '0') ?? 0);
-              break;
-            case OtaStatus.INSTALLING:
-            case OtaStatus.INSTALLATION_DONE:
-              debugPrint('UpdateService: OTA Installation starting...');
-              state = state.copyWith(status: UpdateStatus.readyToInstall);
-              break;
-            case OtaStatus.ALREADY_RUNNING_ERROR:
-              debugPrint('UpdateService: OTA Error: Already running');
-              state = state.copyWith(status: UpdateStatus.error, error: 'An update is already in progress.');
-              break;
-            case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
-              debugPrint('UpdateService: OTA Error: Permission not granted');
-              state = state.copyWith(status: UpdateStatus.error, error: 'Permission to install apps was denied.');
-              break;
-            case OtaStatus.INTERNAL_ERROR:
-              debugPrint('UpdateService: OTA Error: Internal error');
-              state = state.copyWith(status: UpdateStatus.error, error: 'Internal update error. Please try again.');
-              break;
-            case OtaStatus.DOWNLOAD_ERROR:
-              debugPrint('UpdateService: OTA Error: Download error');
-              state = state.copyWith(status: UpdateStatus.error, error: 'Failed to download the update.');
-              break;
-            case OtaStatus.CHECKSUM_ERROR:
-              debugPrint('UpdateService: OTA Error: Checksum error');
-              state = state.copyWith(status: UpdateStatus.error, error: 'Update file is corrupted.');
-              break;
-            default:
-              break;
-          }
-        },
-        onError: (e) {
-          debugPrint('UpdateService: OTA Stream Error: $e');
-          state = state.copyWith(status: UpdateStatus.error, errorKey: 'updateFailed');
-        },
-      );
+      OtaUpdate()
+          .execute(state.downloadUrl!)
+          .listen(
+            (OtaEvent event) {
+              debugPrint(
+                'UpdateService: OTA Event: ${event.status} - ${event.value}',
+              );
+              switch (event.status) {
+                case OtaStatus.DOWNLOADING:
+                  state = state.copyWith(
+                    progress: double.tryParse(event.value ?? '0') ?? 0,
+                  );
+                  break;
+                case OtaStatus.INSTALLING:
+                case OtaStatus.INSTALLATION_DONE:
+                  debugPrint('UpdateService: OTA Installation starting...');
+                  state = state.copyWith(status: UpdateStatus.readyToInstall);
+                  break;
+                case OtaStatus.ALREADY_RUNNING_ERROR:
+                  debugPrint('UpdateService: OTA Error: Already running');
+                  state = state.copyWith(
+                    status: UpdateStatus.error,
+                    error: 'An update is already in progress.',
+                  );
+                  break;
+                case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
+                  debugPrint(
+                    'UpdateService: OTA Error: Permission not granted',
+                  );
+                  state = state.copyWith(
+                    status: UpdateStatus.error,
+                    error: 'Permission to install apps was denied.',
+                  );
+                  break;
+                case OtaStatus.INTERNAL_ERROR:
+                  debugPrint('UpdateService: OTA Error: Internal error');
+                  state = state.copyWith(
+                    status: UpdateStatus.error,
+                    error: 'Internal update error. Please try again.',
+                  );
+                  break;
+                case OtaStatus.DOWNLOAD_ERROR:
+                  debugPrint('UpdateService: OTA Error: Download error');
+                  state = state.copyWith(
+                    status: UpdateStatus.error,
+                    error: 'Failed to download the update.',
+                  );
+                  break;
+                case OtaStatus.CHECKSUM_ERROR:
+                  debugPrint('UpdateService: OTA Error: Checksum error');
+                  state = state.copyWith(
+                    status: UpdateStatus.error,
+                    error: 'Update file is corrupted.',
+                  );
+                  break;
+                default:
+                  break;
+              }
+            },
+            onError: (e) {
+              debugPrint('UpdateService: OTA Stream Error: $e');
+              state = state.copyWith(
+                status: UpdateStatus.error,
+                errorKey: 'updateFailed',
+              );
+            },
+          );
     } catch (e) {
-      state = state.copyWith(status: UpdateStatus.error, errorKey: 'updateFailed');
+      state = state.copyWith(
+        status: UpdateStatus.error,
+        errorKey: 'updateFailed',
+      );
     }
   }
 
@@ -313,7 +367,7 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
       final fileName = state.downloadUrl!.split('/').last;
       zipFile = File(p.join(tempDir.path, fileName));
       final cancelToken = CancelToken();
-      
+
       state = state.copyWith(cancelToken: cancelToken);
 
       await _dio.download(
@@ -333,29 +387,36 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
       }
       debugPrint('UpdateService: Windows download failed: $e');
       String errorKey = 'updateNetworkError';
-      if (e.type == DioExceptionType.badResponse && e.response?.statusCode == 404) {
+      if (e.type == DioExceptionType.badResponse &&
+          e.response?.statusCode == 404) {
         errorKey = 'updateSourceError';
       }
       state = state.copyWith(status: UpdateStatus.error, errorKey: errorKey);
       return;
     } catch (e) {
       debugPrint('UpdateService: Windows download unexpected error: $e');
-      state = state.copyWith(status: UpdateStatus.error, errorKey: 'updateFailed');
+      state = state.copyWith(
+        status: UpdateStatus.error,
+        errorKey: 'updateFailed',
+      );
       return;
     }
 
     try {
-      state = state.copyWith(status: UpdateStatus.readyToInstall, clearCancelToken: true);
+      state = state.copyWith(
+        status: UpdateStatus.readyToInstall,
+        clearCancelToken: true,
+      );
 
       // 1. Extract the ZIP to a temporary "update" folder
       final extractPath = p.join(tempDir.path, 'cinemuse_update');
-      
+
       // Clean up any previous failed extraction
       final dir = Directory(extractPath);
       if (dir.existsSync()) {
         dir.deleteSync(recursive: true);
       }
-      
+
       final bytes = zipFile.readAsBytesSync();
       final archive = ZipDecoder().decodeBytes(bytes);
 
@@ -375,13 +436,14 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
       final currentAppDir = p.dirname(Platform.resolvedExecutable);
       final exeName = p.basename(Platform.resolvedExecutable);
       final scriptFile = File(p.join(tempDir.path, 'updater.bat'));
-      
+
       // Ensure we use backslashes for Windows BAT script
       final winExtractPath = extractPath.replaceAll('/', '\\');
       final winAppDir = currentAppDir.replaceAll('/', '\\');
       final winExePath = p.join(winAppDir, exeName).replaceAll('/', '\\');
 
-      final scriptContent = '''
+      final scriptContent =
+          '''
 @echo off
 setlocal
 :: 1. Self-Elevation Logic
@@ -424,9 +486,11 @@ del "%~f0"
       // 3. Launch the script and exit
       await Process.start(scriptFile.path, [], mode: ProcessStartMode.detached);
       exit(0);
-      
     } catch (e) {
-      state = state.copyWith(status: UpdateStatus.error, errorKey: 'updateFailed');
+      state = state.copyWith(
+        status: UpdateStatus.error,
+        errorKey: 'updateFailed',
+      );
     }
   }
 }

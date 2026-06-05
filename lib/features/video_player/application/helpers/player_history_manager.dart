@@ -33,8 +33,9 @@ class PlayerHistoryManager {
       final mediaType = params.type == 'movie' ? MediaKind.movie : MediaKind.tv;
 
       var titleIt = MediaItem.extractTitleFromTmdb(mediaDetails!, 'it');
-      final titleEn = MediaItem.extractTitleFromTmdb(mediaDetails!, 'en') ?? 
-                       ref.read(localizationsProvider).commonUnknown;
+      final titleEn =
+          MediaItem.extractTitleFromTmdb(mediaDetails!, 'en') ??
+          ref.read(localizationsProvider).commonUnknown;
       titleIt ??= titleEn;
 
       final mediaItem = MediaItem(
@@ -44,7 +45,11 @@ class PlayerHistoryManager {
         titleEn: titleEn,
         posterPath: mediaDetails!['poster_path'],
         backdropPath: mediaDetails!['backdrop_path'],
-        releaseDate: DateTime.tryParse(mediaDetails!['release_date'] ?? mediaDetails!['first_air_date'] ?? ''),
+        releaseDate: DateTime.tryParse(
+          mediaDetails!['release_date'] ??
+              mediaDetails!['first_air_date'] ??
+              '',
+        ),
         updatedAt: DateTime.now(),
       );
 
@@ -61,8 +66,10 @@ class PlayerHistoryManager {
       );
 
       // Handle completion logic using centralized constants
-      final isFinished = (duration - position < PlaybackThresholds.completionRemainingSeconds) || 
-                         (position / duration > PlaybackThresholds.completionPercentage);
+      final isFinished =
+          (duration - position <
+              PlaybackThresholds.completionRemainingSeconds) ||
+          (position / duration > PlaybackThresholds.completionPercentage);
       if (isFinished && !isCompletionLogged) {
         onCompletionLogged(true);
         if (params.type == 'tv') {

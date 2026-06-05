@@ -13,7 +13,9 @@ class LiveTvRepository {
   LiveTvRepository(this._dio);
 
   /// Fetches the channel list, filtering to only playable channels.
-  Future<List<Channel>> fetchChannels({List<LiveTvPlaylist>? customPlaylists}) async {
+  Future<List<Channel>> fetchChannels({
+    List<LiveTvPlaylist>? customPlaylists,
+  }) async {
     try {
       final Map<int, Channel> channelMap = {};
 
@@ -28,14 +30,19 @@ class LiveTvRepository {
                 content = await File(playlist.urlOrPath).readAsString();
               } else {
                 final response = await _dio.get(playlist.urlOrPath);
-                content = response.data is String ? response.data as String : json.encode(response.data);
+                content = response.data is String
+                    ? response.data as String
+                    : json.encode(response.data);
               }
-              
+
               if (playlist.type == PlaylistType.m3u) {
-                final m3uChannels = M3uParser.parse(content, startLcn: syntheticLcn);
+                final m3uChannels = M3uParser.parse(
+                  content,
+                  startLcn: syntheticLcn,
+                );
                 for (final ch in m3uChannels) {
                   // Ensure we don't overwrite existing LCNs
-                  while(channelMap.containsKey(syntheticLcn)) {
+                  while (channelMap.containsKey(syntheticLcn)) {
                     syntheticLcn++;
                   }
                   channelMap[syntheticLcn] = Channel(
@@ -51,25 +58,28 @@ class LiveTvRepository {
               } else if (playlist.type == PlaylistType.json) {
                 final dynamic jsonData = json.decode(content);
                 List<dynamic> channelsList = [];
-                
+
                 // Handle both array format and standard object format
                 if (jsonData is List) {
                   channelsList = jsonData;
-                } else if (jsonData is Map && jsonData.containsKey('channels')) {
+                } else if (jsonData is Map &&
+                    jsonData.containsKey('channels')) {
                   channelsList = jsonData['channels'] as List<dynamic>;
                 }
-                
+
                 for (final entry in channelsList) {
                   if (entry is! Map<String, dynamic>) continue;
-                  
+
                   final links = entry['links'] as List<dynamic>?;
                   if (links == null || links.isEmpty) continue;
 
                   final streamLinks = links
-                      .map((l) => StreamLink.fromJson(l as Map<String, dynamic>))
+                      .map(
+                        (l) => StreamLink.fromJson(l as Map<String, dynamic>),
+                      )
                       .toList();
-                      
-                  while(channelMap.containsKey(syntheticLcn)) {
+
+                  while (channelMap.containsKey(syntheticLcn)) {
                     syntheticLcn++;
                   }
 
@@ -78,7 +88,9 @@ class LiveTvRepository {
                     name: (entry['name'] as String?) ?? 'Unknown',
                     logo: (entry['logo'] as String?) ?? '',
                     links: streamLinks,
-                    group: (entry['group'] ?? entry['category']) as String? ?? playlist.name,
+                    group:
+                        (entry['group'] ?? entry['category']) as String? ??
+                        playlist.name,
                     provider: entry['provider'] as String?,
                     subProvider: entry['sub_provider'] as String?,
                     epgId: entry['epg_id'] as String?,
@@ -87,7 +99,7 @@ class LiveTvRepository {
                 }
               }
             } catch (e) {
-               // Skip failed playlists
+              // Skip failed playlists
             }
           }
         }
@@ -96,7 +108,7 @@ class LiveTvRepository {
       }
 
       final channels = channelMap.values.toList();
-      
+
       // Sort: LCN 1-999 first, then alphabetically for channels without LCN
       channels.sort((a, b) {
         if (a.lcn > 0 && b.lcn > 0) return a.lcn.compareTo(b.lcn);
@@ -131,7 +143,8 @@ class LiveTvRepository {
     if (sourcePrograms == null) return (current: null, next: null);
 
     final programs = sourcePrograms[channel.epgId];
-    if (programs == null || programs.isEmpty) return (current: null, next: null);
+    if (programs == null || programs.isEmpty)
+      return (current: null, next: null);
 
     final now = DateTime.now();
     EpgProgram? current;

@@ -71,7 +71,8 @@ class AnimeExternalMappings extends Table {
   IntColumn get tmdbShowId => integer().nullable()();
   IntColumn get tmdbMovieId => integer().nullable()();
   IntColumn get tvdbId => integer().nullable()();
-  TextColumn get mappingsData => text().nullable()(); // JSON string for tmdb_mappings or tvdb_mappings
+  TextColumn get mappingsData =>
+      text().nullable()(); // JSON string for tmdb_mappings or tvdb_mappings
 
   @override
   Set<Column> get primaryKey => {anilistId};
@@ -99,15 +100,17 @@ class CachedProfiles extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [
-  CachedMediaItems,
-  LocalWatchHistories,
-  CachedUserLists,
-  CachedListItems,
-  AnimeExternalMappings,
-  AnimeKitsuMappings,
-  CachedProfiles,
-])
+@DriftDatabase(
+  tables: [
+    CachedMediaItems,
+    LocalWatchHistories,
+    CachedUserLists,
+    CachedListItems,
+    AnimeExternalMappings,
+    AnimeKitsuMappings,
+    CachedProfiles,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
@@ -116,20 +119,22 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async {
-          await m.createAll();
-        },
-        beforeOpen: (details) async {
-          // Safety: If database exists and version is different, 
-          // we might want to wipe it during this dev reset phase.
-          // For now, we trust the user to clear app data if needed,
-          // but we can add a check here if requested.
-        },
-      );
+    onCreate: (m) async {
+      await m.createAll();
+    },
+    beforeOpen: (details) async {
+      // Safety: If database exists and version is different,
+      // we might want to wipe it during this dev reset phase.
+      // For now, we trust the user to clear app data if needed,
+      // but we can add a check here if requested.
+    },
+  );
 
   // --- Anime Mappings ---
 
-  Future<void> replaceAnimeExternalMappings(List<AnimeExternalMappingsCompanion> mappings) async {
+  Future<void> replaceAnimeExternalMappings(
+    List<AnimeExternalMappingsCompanion> mappings,
+  ) async {
     await transaction(() async {
       await delete(animeExternalMappings).go();
       await batch((batch) {
@@ -138,12 +143,20 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
-  Future<List<AnimeExternalMapping>> getAnimeMappingsByTmdbShow(int tmdbShowId) {
-    return (select(animeExternalMappings)..where((t) => t.tmdbShowId.equals(tmdbShowId))).get();
+  Future<List<AnimeExternalMapping>> getAnimeMappingsByTmdbShow(
+    int tmdbShowId,
+  ) {
+    return (select(
+      animeExternalMappings,
+    )..where((t) => t.tmdbShowId.equals(tmdbShowId))).get();
   }
 
-  Future<List<AnimeExternalMapping>> getAnimeMappingsByTmdbMovie(int tmdbMovieId) {
-    return (select(animeExternalMappings)..where((t) => t.tmdbMovieId.equals(tmdbMovieId))).get();
+  Future<List<AnimeExternalMapping>> getAnimeMappingsByTmdbMovie(
+    int tmdbMovieId,
+  ) {
+    return (select(
+      animeExternalMappings,
+    )..where((t) => t.tmdbMovieId.equals(tmdbMovieId))).get();
   }
 
   Future<void> upsertKitsuMapping(AnimeKitsuMappingsCompanion mapping) {
@@ -151,7 +164,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<AnimeKitsuMapping?> getKitsuMapping(int anilistId) {
-    return (select(animeKitsuMappings)..where((t) => t.anilistId.equals(anilistId))).getSingleOrNull();
+    return (select(
+      animeKitsuMappings,
+    )..where((t) => t.anilistId.equals(anilistId))).getSingleOrNull();
   }
 
   Future<int> getAnimeExternalMappingsCount() async {
@@ -177,29 +192,40 @@ class AppDatabase extends _$AppDatabase {
 
   // Get a single media item
   Future<CachedMediaItem?> getMediaItem(int tmdbId, String mediaType) {
-    return (select(cachedMediaItems)
-          ..where((t) => t.tmdbId.equals(tmdbId) & t.mediaType.equals(mediaType)))
+    return (select(cachedMediaItems)..where(
+          (t) => t.tmdbId.equals(tmdbId) & t.mediaType.equals(mediaType),
+        ))
         .getSingleOrNull();
   }
 
   // Get multiple media items in bulk for optimization
-  Future<List<CachedMediaItem>> getMediaItems(List<({int id, String type})> filters) {
+  Future<List<CachedMediaItem>> getMediaItems(
+    List<({int id, String type})> filters,
+  ) {
     if (filters.isEmpty) return Future.value([]);
-    
+
     return (select(cachedMediaItems)..where((t) {
-      Expression<bool> predicate = const Constant(false);
-      for (final filter in filters) {
-        predicate = predicate | (t.tmdbId.equals(filter.id) & t.mediaType.equals(filter.type));
-      }
-      return predicate;
-    })).get();
+          Expression<bool> predicate = const Constant(false);
+          for (final filter in filters) {
+            predicate =
+                predicate |
+                (t.tmdbId.equals(filter.id) & t.mediaType.equals(filter.type));
+          }
+          return predicate;
+        }))
+        .get();
   }
 
   // Get all watch history for a user
   Future<List<LocalWatchHistory>> getWatchHistory(String userId) {
     return (select(localWatchHistories)
           ..where((t) => t.userId.equals(userId))
-          ..orderBy([(t) => OrderingTerm(expression: t.lastWatchedAt, mode: OrderingMode.desc)]))
+          ..orderBy([
+            (t) => OrderingTerm(
+              expression: t.lastWatchedAt,
+              mode: OrderingMode.desc,
+            ),
+          ]))
         .get();
   }
 
@@ -209,19 +235,31 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // Delete a specific watch history entry (or all episodes for a tv show)
-  Future<void> deleteWatchHistoryItem(String userId, int tmdbId, String mediaType, {int? season, int? episode}) {
-    return (delete(localWatchHistories)
-          ..where((t) {
-            var predicate = t.userId.equals(userId) & t.tmdbId.equals(tmdbId) & t.mediaType.equals(mediaType);
-            if (season != null) predicate = predicate & t.season.equals(season);
-            if (episode != null) predicate = predicate & t.episode.equals(episode);
-            return predicate;
-          }))
+  Future<void> deleteWatchHistoryItem(
+    String userId,
+    int tmdbId,
+    String mediaType, {
+    int? season,
+    int? episode,
+  }) {
+    return (delete(localWatchHistories)..where((t) {
+          var predicate =
+              t.userId.equals(userId) &
+              t.tmdbId.equals(tmdbId) &
+              t.mediaType.equals(mediaType);
+          if (season != null) predicate = predicate & t.season.equals(season);
+          if (episode != null)
+            predicate = predicate & t.episode.equals(episode);
+          return predicate;
+        }))
         .go();
   }
 
   // Sync whole watch history
-  Future<void> syncWatchHistory(String userId, List<LocalWatchHistoriesCompanion> entries) async {
+  Future<void> syncWatchHistory(
+    String userId,
+    List<LocalWatchHistoriesCompanion> entries,
+  ) async {
     await batch((batch) {
       batch.deleteWhere(localWatchHistories, (t) => t.userId.equals(userId));
       batch.insertAll(localWatchHistories, entries);
@@ -232,48 +270,78 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<LocalWatchHistory>> watchWatchHistory(String userId) {
     return (select(localWatchHistories)
           ..where((t) => t.userId.equals(userId))
-          ..orderBy([(t) => OrderingTerm(expression: t.lastWatchedAt, mode: OrderingMode.desc)]))
+          ..orderBy([
+            (t) => OrderingTerm(
+              expression: t.lastWatchedAt,
+              mode: OrderingMode.desc,
+            ),
+          ]))
         .watch();
   }
 
   /// Joint stream for watch history and media cache to ensure reactivity to both tables.
   Stream<List<TypedResult>> watchWatchHistoryWithMedia(String userId) {
-    final query = select(localWatchHistories).join([
-      leftOuterJoin(
-        cachedMediaItems, 
-        cachedMediaItems.tmdbId.equalsExp(localWatchHistories.tmdbId) & 
-        cachedMediaItems.mediaType.equalsExp(localWatchHistories.mediaType)
-      ),
-    ])
-      ..where(localWatchHistories.userId.equals(userId))
-      ..orderBy([OrderingTerm(expression: localWatchHistories.lastWatchedAt, mode: OrderingMode.desc)]);
-      
+    final query =
+        select(localWatchHistories).join([
+            leftOuterJoin(
+              cachedMediaItems,
+              cachedMediaItems.tmdbId.equalsExp(localWatchHistories.tmdbId) &
+                  cachedMediaItems.mediaType.equalsExp(
+                    localWatchHistories.mediaType,
+                  ),
+            ),
+          ])
+          ..where(localWatchHistories.userId.equals(userId))
+          ..orderBy([
+            OrderingTerm(
+              expression: localWatchHistories.lastWatchedAt,
+              mode: OrderingMode.desc,
+            ),
+          ]);
+
     return query.watch();
   }
 
   // --- User Lists ---
 
-  Future<void> syncUserLists(String userId, List<CachedUserListsCompanion> lists, List<CachedListItemsCompanion> items) async {
+  Future<void> syncUserLists(
+    String userId,
+    List<CachedUserListsCompanion> lists,
+    List<CachedListItemsCompanion> items,
+  ) async {
     await transaction(() async {
       // Find all existing list IDs for this user to manually delete their items
-      final userListIds = await (selectOnly(cachedUserLists)
-            ..addColumns([cachedUserLists.id])
-            ..where(cachedUserLists.userId.equals(userId)))
-          .map((row) => row.read(cachedUserLists.id)!)
-          .get();
+      final userListIds =
+          await (selectOnly(cachedUserLists)
+                ..addColumns([cachedUserLists.id])
+                ..where(cachedUserLists.userId.equals(userId)))
+              .map((row) => row.read(cachedUserLists.id)!)
+              .get();
 
       // Delete old list items
       if (userListIds.isNotEmpty) {
-        await (delete(cachedListItems)..where((t) => t.listId.isIn(userListIds))).go();
+        await (delete(
+          cachedListItems,
+        )..where((t) => t.listId.isIn(userListIds))).go();
       }
 
       // Delete old lists
-      await (delete(cachedUserLists)..where((t) => t.userId.equals(userId))).go();
+      await (delete(
+        cachedUserLists,
+      )..where((t) => t.userId.equals(userId))).go();
 
       // Batch insert the freshly synced lists and items
       await batch((batch) {
-        batch.insertAll(cachedUserLists, lists, mode: InsertMode.insertOrReplace);
-        batch.insertAll(cachedListItems, items, mode: InsertMode.insertOrReplace);
+        batch.insertAll(
+          cachedUserLists,
+          lists,
+          mode: InsertMode.insertOrReplace,
+        );
+        batch.insertAll(
+          cachedListItems,
+          items,
+          mode: InsertMode.insertOrReplace,
+        );
       });
     });
   }
@@ -304,9 +372,17 @@ class AppDatabase extends _$AppDatabase {
     await into(cachedListItems).insertOnConflictUpdate(item);
   }
 
-  Future<void> deleteListItem(String listId, int tmdbId, String mediaType) async {
-    await (delete(cachedListItems)
-          ..where((t) => t.listId.equals(listId) & t.mediaTmdbId.equals(tmdbId) & t.mediaType.equals(mediaType)))
+  Future<void> deleteListItem(
+    String listId,
+    int tmdbId,
+    String mediaType,
+  ) async {
+    await (delete(cachedListItems)..where(
+          (t) =>
+              t.listId.equals(listId) &
+              t.mediaTmdbId.equals(tmdbId) &
+              t.mediaType.equals(mediaType),
+        ))
         .go();
   }
 
@@ -317,7 +393,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<CachedProfile?> getCachedProfile(String id) {
-    return (select(cachedProfiles)..where((t) => t.id.equals(id))).getSingleOrNull();
+    return (select(
+      cachedProfiles,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   // --- Cleanup ---

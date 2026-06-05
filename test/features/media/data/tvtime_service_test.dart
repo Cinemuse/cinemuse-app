@@ -4,6 +4,7 @@ import 'package:cinemuse_app/features/media/data/tvtime_service.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockDio extends Mock implements Dio {}
+
 class FakeRequestOptions extends Fake implements RequestOptions {}
 
 void main() {
@@ -28,7 +29,7 @@ void main() {
           statusCode: 200,
           data: {
             'status': 'success',
-            'data': {'uuid': 'test-uuid-123'}
+            'data': {'uuid': 'test-uuid-123'},
           },
         ),
       );
@@ -44,10 +45,9 @@ void main() {
         </body></html>
       ''';
 
-      when(() => mockDio.get<String>(
-            any(),
-            options: any(named: 'options'),
-          )).thenAnswer(
+      when(
+        () => mockDio.get<String>(any(), options: any(named: 'options')),
+      ).thenAnswer(
         (_) async => Response<String>(
           requestOptions: RequestOptions(path: ''),
           statusCode: 200,
@@ -68,10 +68,9 @@ void main() {
         </body></html>
       ''';
 
-      when(() => mockDio.get<String>(
-            any(),
-            options: any(named: 'options'),
-          )).thenAnswer(
+      when(
+        () => mockDio.get<String>(any(), options: any(named: 'options')),
+      ).thenAnswer(
         (_) async => Response<String>(
           requestOptions: RequestOptions(path: ''),
           statusCode: 200,
@@ -79,7 +78,11 @@ void main() {
         ),
       );
 
-      final uuid = await service.resolveEpisodeUuid(81189, season: 1, episode: 1);
+      final uuid = await service.resolveEpisodeUuid(
+        81189,
+        season: 1,
+        episode: 1,
+      );
       expect(uuid, '11111111-2222-3333-4444-555555555555');
     });
 
@@ -94,7 +97,7 @@ void main() {
             requestOptions: RequestOptions(path: ''),
             data: {
               'status': 'success',
-              'data': {'uuid': 'test-series-uuid'}
+              'data': {'uuid': 'test-series-uuid'},
             },
           );
         } else {
@@ -105,9 +108,9 @@ void main() {
                 {
                   'uuid': 'comment-uuid-1',
                   'text': 'Great show!',
-                  'user': {'name': 'User A'}
-                }
-              ]
+                  'user': {'name': 'User A'},
+                },
+              ],
             },
           );
         }

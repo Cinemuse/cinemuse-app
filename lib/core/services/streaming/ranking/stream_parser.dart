@@ -1,8 +1,8 @@
 import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 
 /// A utility class responsible for extracting technical metadata from stream titles.
-/// 
-/// It uses a declarative pattern-matching registry to standardize various 
+///
+/// It uses a declarative pattern-matching registry to standardize various
 /// naming conventions into a structured [StreamMetadata] object.
 class StreamParser {
   // --- Video Patterns ---
@@ -25,14 +25,20 @@ class StreamParser {
     ReleaseQuality.bluray: RegExp(r'bluray|bdr-?ip', caseSensitive: false),
     ReleaseQuality.webdl: RegExp(r'web-?dl|web-?rip', caseSensitive: false),
     ReleaseQuality.dvdrip: RegExp(r'dvdrip|dvdr', caseSensitive: false),
-    ReleaseQuality.telesync: RegExp(r'telesync|\bts\b|hd-?ts', caseSensitive: false),
+    ReleaseQuality.telesync: RegExp(
+      r'telesync|\bts\b|hd-?ts',
+      caseSensitive: false,
+    ),
     ReleaseQuality.cam: RegExp(r'camrip|\bcam\b|hd-?cam', caseSensitive: false),
   };
 
   static final Map<ReleaseFlag, RegExp> _flags = {
     ReleaseFlag.proper: RegExp(r'\bproper\b', caseSensitive: false),
     ReleaseFlag.repack: RegExp(r'\brepack\b', caseSensitive: false),
-    ReleaseFlag.extended: RegExp(r"extended(\.cut)?|director's\.cut", caseSensitive: false),
+    ReleaseFlag.extended: RegExp(
+      r"extended(\.cut)?|director's\.cut",
+      caseSensitive: false,
+    ),
     ReleaseFlag.multi: RegExp(r'multi', caseSensitive: false),
     ReleaseFlag.dual: RegExp(r'dual', caseSensitive: false),
   };
@@ -53,7 +59,9 @@ class StreamParser {
         resolution: _findEnum(title, _resolutions, VideoResolution.unknown),
         codec: _findEnum(title, _codecs, VideoCodec.unknown),
         isHDR: title.toLowerCase().contains('hdr'),
-        isDV: title.toLowerCase().contains(' dv ') || title.toLowerCase().contains('dovi'),
+        isDV:
+            title.toLowerCase().contains(' dv ') ||
+            title.toLowerCase().contains('dovi'),
         is10Bit: title.toLowerCase().contains('10bit'),
       ),
       audio: AudioMetadata(
@@ -94,18 +102,27 @@ class StreamParser {
 
   static List<String> _parseLanguages(String title) {
     final List<String> langs = [];
-    
-    final itaMatch = RegExp(r'\b(ita|italian)\b|🇮🇹', caseSensitive: false).hasMatch(title);
-    final engMatch = RegExp(r'\b(eng|english)\b|🇬🇧', caseSensitive: false).hasMatch(title);
+
+    final itaMatch = RegExp(
+      r'\b(ita|italian)\b|🇮🇹',
+      caseSensitive: false,
+    ).hasMatch(title);
+    final engMatch = RegExp(
+      r'\b(eng|english)\b|🇬🇧',
+      caseSensitive: false,
+    ).hasMatch(title);
 
     if (itaMatch) langs.add('ITA');
     if (engMatch) langs.add('ENG');
-    
+
     return langs;
   }
 
   static String? _parseSize(String title) {
-    final match = RegExp(r'(\d+(?:\.\d+)?)\s*(GB|MB|GiB|MiB|KB|B)(?!bit)', caseSensitive: false).firstMatch(title);
+    final match = RegExp(
+      r'(\d+(?:\.\d+)?)\s*(GB|MB|GiB|MiB|KB|B)(?!bit)',
+      caseSensitive: false,
+    ).firstMatch(title);
     if (match != null) {
       return "${match.group(1)} ${match.group(2)}".toUpperCase();
     }

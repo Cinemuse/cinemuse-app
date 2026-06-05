@@ -2,7 +2,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/collection_card.dart';
-import 'package:cinemuse_app/features/profile/presentation/widgets/create_list_modal.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/create_list_sheet.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_sheet.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/system_list_card.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
@@ -16,33 +16,32 @@ class ProfileCollections extends ConsumerWidget {
   const ProfileCollections({super.key});
 
   void _showCreateListModal(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (context) => CreateListModal(
-        onCreate: (name) async {
-          final user = ref.read(authProvider).value;
-          if (user == null) return;
+    CreateListSheet.show(
+      context,
+      onCreate: (name) async {
+        final user = ref.read(authProvider).value;
+        if (user == null) return;
 
-          await ref.read(userListsProvider.notifier).createCustomList(name);
-        },
-      ),
+        await ref.read(userListsProvider.notifier).createCustomList(name);
+      },
     );
   }
 
   void _showListDetails(BuildContext context, WidgetRef ref, UserList list) {
     final l10n = AppLocalizations.of(context)!;
-    final isSystemList = list.type == ListType.watchlist || list.type == ListType.favorites;
-    
+    final isSystemList =
+        list.type == ListType.watchlist || list.type == ListType.favorites;
+
     ListDetailsSheet.show(
       context,
       list: list,
-      onUpdate: isSystemList ? null : (name, description) async {
-        await ref.read(userListsProvider.notifier).updateList(
-          list.id,
-          name,
-          description,
-        );
-      },
+      onUpdate: isSystemList
+          ? null
+          : (name, description) async {
+              await ref
+                  .read(userListsProvider.notifier)
+                  .updateList(list.id, name, description);
+            },
       onDelete: () async {
         // Optimistic delete
         // The modal is closed by ListDetailsSheet itself to avoid context issues
@@ -54,7 +53,8 @@ class ProfileCollections extends ConsumerWidget {
           message: l10n.detailsListDeleted(list.name),
           actionLabel: l10n.commonUndo,
           showTimer: true,
-          onAction: () {}, // Action just closes the snackbar with 'action' reason
+          onAction:
+              () {}, // Action just closes the snackbar with 'action' reason
         ).closed;
 
         if (reason != SnackBarClosedReason.action) {
@@ -76,9 +76,15 @@ class ProfileCollections extends ConsumerWidget {
     return listsAsync.when(
       data: (lists) {
         // Filter lists by type
-        final watchlist = lists.where((l) => l.type == ListType.watchlist).firstOrNull;
-        final favorites = lists.where((l) => l.type == ListType.favorites).firstOrNull;
-        final customLists = lists.where((l) => l.type == ListType.custom).toList();
+        final watchlist = lists
+            .where((l) => l.type == ListType.watchlist)
+            .firstOrNull;
+        final favorites = lists
+            .where((l) => l.type == ListType.favorites)
+            .firstOrNull;
+        final customLists = lists
+            .where((l) => l.type == ListType.custom)
+            .toList();
 
         return SingleChildScrollView(
           padding: EdgeInsets.only(
@@ -94,37 +100,45 @@ class ProfileCollections extends ConsumerWidget {
               Builder(
                 builder: (context) {
                   final isMobile = MediaQuery.of(context).size.width < 600;
-                  
-                  final watchlistCard = watchlist != null ? SystemListCard(
-                    list: watchlist,
-                    onTap: () => _showListDetails(context, ref, watchlist),
-                  ) : null;
-                  
-                  final favoritesCard = favorites != null ? SystemListCard(
-                    list: favorites,
-                    onTap: () => _showListDetails(context, ref, favorites),
-                  ) : null;
-                  
+
+                  final watchlistCard = watchlist != null
+                      ? SystemListCard(
+                          list: watchlist,
+                          onTap: () =>
+                              _showListDetails(context, ref, watchlist),
+                        )
+                      : null;
+
+                  final favoritesCard = favorites != null
+                      ? SystemListCard(
+                          list: favorites,
+                          onTap: () =>
+                              _showListDetails(context, ref, favorites),
+                        )
+                      : null;
+
                   if (isMobile) {
                     return Column(
                       children: [
                         if (watchlistCard != null) watchlistCard,
-                        if (watchlistCard != null && favoritesCard != null) const SizedBox(height: 16),
+                        if (watchlistCard != null && favoritesCard != null)
+                          const SizedBox(height: 16),
                         if (favoritesCard != null) favoritesCard,
                       ],
                     );
                   }
-                  
+
                   return Row(
                     children: [
                       if (watchlistCard != null) Expanded(child: watchlistCard),
-                      if (watchlistCard != null && favoritesCard != null) const SizedBox(width: 24),
+                      if (watchlistCard != null && favoritesCard != null)
+                        const SizedBox(width: 24),
                       if (favoritesCard != null) Expanded(child: favoritesCard),
                     ],
                   );
                 },
               ),
-              
+
               const SizedBox(height: 48),
 
               // 2. Collections Section Header
@@ -137,7 +151,11 @@ class ProfileCollections extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(LucideIcons.list, color: Colors.white, size: 20),
+                          const Icon(
+                            LucideIcons.list,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             l10n.detailsCollectionsTitle,
@@ -152,13 +170,20 @@ class ProfileCollections extends ConsumerWidget {
                       const SizedBox(height: 4),
                       Text(
                         l10n.detailsCollectionsDesc,
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
                   TextButton.icon(
                     onPressed: () => _showCreateListModal(context, ref),
-                    icon: const Icon(LucideIcons.plus, size: 16, color: Color(0xFFC026D3)), // Matches the purple color in image
+                    icon: const Icon(
+                      LucideIcons.plus,
+                      size: 16,
+                      color: Color(0xFFC026D3),
+                    ), // Matches the purple color in image
                     label: Text(
                       l10n.detailsNewCollection,
                       style: const TextStyle(
@@ -167,7 +192,10 @@ class ProfileCollections extends ConsumerWidget {
                       ),
                     ),
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                     ),
                   ),
                 ],
@@ -184,12 +212,16 @@ class ProfileCollections extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: AppTheme.surface.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.05),
+                    ),
                   ),
                   child: Center(
                     child: Text(
                       l10n.detailsNoCollections,
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
                     ),
                   ),
                 )
@@ -218,9 +250,11 @@ class ProfileCollections extends ConsumerWidget {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, stack) => Center(
-        child: Text('${l10n.commonError}: $err', style: const TextStyle(color: Colors.red)),
+        child: Text(
+          '${l10n.commonError}: $err',
+          style: const TextStyle(color: Colors.red),
+        ),
       ),
     );
   }
 }
-

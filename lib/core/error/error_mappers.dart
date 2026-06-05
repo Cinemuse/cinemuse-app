@@ -44,10 +44,13 @@ class NetworkErrorMapper implements BaseErrorMapper {
         default:
           final underlying = error.error?.toString() ?? '';
           final detail = error.message != null ? ': ${error.message}' : '';
-          
+
           String? hint;
-          if (underlying.contains('HandshakeException') || underlying.contains('CertificateException') || underlying.contains('TlsException')) {
-             hint = "Your system might be missing some root certificates. Try updating Windows or check your firewall/DNS.";
+          if (underlying.contains('HandshakeException') ||
+              underlying.contains('CertificateException') ||
+              underlying.contains('TlsException')) {
+            hint =
+                "Your system might be missing some root certificates. Try updating Windows or check your firewall/DNS.";
           }
 
           return UserFriendlyError(
@@ -66,7 +69,10 @@ class StreamingErrorMapper implements BaseErrorMapper {
   UserFriendlyError? map(Object error, AppLocalizations l10n) {
     if (error is StreamingException) {
       if (error is NoProvidersEnabledException) {
-        return UserFriendlyError(message: l10n.streamingErrorNoProviders, type: AppExceptionType.streaming);
+        return UserFriendlyError(
+          message: l10n.streamingErrorNoProviders,
+          type: AppExceptionType.streaming,
+        );
       }
       if (error is CapabilityMissingException) {
         return UserFriendlyError(
@@ -75,13 +81,22 @@ class StreamingErrorMapper implements BaseErrorMapper {
         );
       }
       if (error is NoResultsFoundException) {
-        return UserFriendlyError(message: l10n.streamingErrorNoResults, type: AppExceptionType.streaming);
+        return UserFriendlyError(
+          message: l10n.streamingErrorNoResults,
+          type: AppExceptionType.streaming,
+        );
       }
       if (error is MediaDetailsResolutionException) {
-        return UserFriendlyError(message: l10n.streamingErrorMediaDetails, type: AppExceptionType.streaming);
+        return UserFriendlyError(
+          message: l10n.streamingErrorMediaDetails,
+          type: AppExceptionType.streaming,
+        );
       }
       if (error is ImdbIdResolutionException) {
-        return UserFriendlyError(message: l10n.streamingErrorImdbId, type: AppExceptionType.streaming);
+        return UserFriendlyError(
+          message: l10n.streamingErrorImdbId,
+          type: AppExceptionType.streaming,
+        );
       }
       if (error is ProviderSearchException) {
         return UserFriendlyError(
@@ -89,7 +104,10 @@ class StreamingErrorMapper implements BaseErrorMapper {
           type: AppExceptionType.streaming,
         );
       }
-      return UserFriendlyError(message: error.message, type: AppExceptionType.streaming);
+      return UserFriendlyError(
+        message: error.message,
+        type: AppExceptionType.streaming,
+      );
     }
     return null;
   }

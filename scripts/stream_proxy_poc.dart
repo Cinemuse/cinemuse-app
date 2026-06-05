@@ -7,7 +7,9 @@ import 'dart:typed_data';
 void main() async {
   final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 52566);
   print('--- Streaming Proxy POC (REMASTERED V8) ---');
-  print('Goal: Eliminate glitches by fixing Continuity Counters and Timecodes.');
+  print(
+    'Goal: Eliminate glitches by fixing Continuity Counters and Timecodes.',
+  );
   print('1. Open VLC');
   print('2. Play Network Stream: http://localhost:${server.port}/proxy');
   print('---------------------------');
@@ -30,14 +32,14 @@ void main() async {
 
 Future<void> handleProxyRequest(HttpRequest request, List<String> links) async {
   final response = request.response;
-  response.bufferOutput = false; 
+  response.bufferOutput = false;
   response.headers.contentType = ContentType('video', 'mp2t');
 
   final client = HttpClient();
   client.connectionTimeout = Duration(seconds: 10);
 
   int currentLinkIndex = 0;
-  
+
   // --- STATE PERSISTENCE ACROSS LINKS ---
   Map<int, int> lastCcMap = {}; // PID -> Last Continuity Counter (0-15)
   int? lastGlobalPTS;
@@ -49,27 +51,32 @@ Future<void> handleProxyRequest(HttpRequest request, List<String> links) async {
 
     try {
       final proxyRequest = await client.getUrl(Uri.parse(url));
-      proxyRequest.headers.set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Firefox/83.0');
-      
+      proxyRequest.headers.set(
+        'User-Agent',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Firefox/83.0',
+      );
+
       final proxyResponse = await proxyRequest.close();
 
       if (proxyResponse.statusCode == 200) {
-        print('[Proxy] Stitching Link ${currentLinkIndex + 1} with CC Remastering...');
-        
+        print(
+          '[Proxy] Stitching Link ${currentLinkIndex + 1} with CC Remastering...',
+        );
+
         BytesBuilder packetBuffer = BytesBuilder();
         int? stitchMatchPTS;
         bool isStitching = lastGlobalPTS != null;
-        
+
         // Force failover every 20 seconds to test the stitch
         final startTime = DateTime.now();
         final testLimit = Duration(seconds: 20);
 
         await for (var data in proxyResponse) {
           packetBuffer.add(data);
-          
+
           while (packetBuffer.length >= 188) {
             Uint8List bytes = packetBuffer.takeBytes();
-            
+
             // Align to 0x47
             int syncIndex = bytes.indexOf(0x47);
             if (syncIndex == -1) continue;
@@ -77,9 +84,10 @@ Future<void> handleProxyRequest(HttpRequest request, List<String> links) async {
               packetBuffer.add(bytes.sublist(syncIndex));
               break;
             }
-            
+
             Uint8List packet = bytes.sublist(syncIndex, syncIndex + 188);
-            if (syncIndex + 188 < bytes.length) packetBuffer.add(bytes.sublist(syncIndex + 188));
+            if (syncIndex + 188 < bytes.length)
+              packetBuffer.add(bytes.sublist(syncIndex + 188));
 
             // A. EXTRACT METADATA
             int pid = ((packet[1] & 0x1F) << 8) | packet[2];
@@ -91,14 +99,16 @@ Future<void> handleProxyRequest(HttpRequest request, List<String> links) async {
               if (packetPTS != null) {
                 // If this PTS is older than or equal to our last sent, skip it to avoid duplication
                 if (packetPTS <= lastGlobalPTS!) {
-                  continue; 
+                  continue;
                 } else {
-                  print('[Proxy] PTS Sync Achieved! Link ${currentLinkIndex + 1} is now ahead.');
+                  print(
+                    '[Proxy] PTS Sync Achieved! Link ${currentLinkIndex + 1} is now ahead.',
+                  );
                   isStitching = false;
                 }
               } else if (pid != 0) {
                 // Skip non-critical packets during stitch if we haven't found the time-sync yet
-                continue; 
+                continue;
               }
             }
 
@@ -120,7 +130,7 @@ Future<void> handleProxyRequest(HttpRequest request, List<String> links) async {
             // E. SEND TO PLAYER
             response.add(packet);
           }
-          
+
           if (DateTime.now().difference(startTime) > testLimit) {
             print('[Proxy] --- FORCING FAILOVER TO TEST REMASTERED STITCH ---');
             break;
@@ -146,7 +156,9 @@ int? _extractPTS(Uint8List packet) {
   int afc = (packet[3] & 0x30) >> 4;
   if (afc == 2 || afc == 3) payloadOffset += 1 + packet[4];
   if (payloadOffset >= 188 - 14) return null;
-  if (packet[payloadOffset] == 0x00 && packet[payloadOffset + 1] == 0x00 && packet[payloadOffset + 2] == 0x01) {
+  if (packet[payloadOffset] == 0x00 &&
+      packet[payloadOffset + 1] == 0x00 &&
+      packet[payloadOffset + 2] == 0x01) {
     int ptsDtsFlags = (packet[payloadOffset + 7] & 0xC0) >> 6;
     if (ptsDtsFlags >= 2) {
       int base = payloadOffset + 9;

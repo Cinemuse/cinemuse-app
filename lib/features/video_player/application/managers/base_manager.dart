@@ -7,14 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 abstract class BaseManager {
   @protected
   final Ref ref;
-  
+
   @protected
   final Player player;
 
-  BaseManager({
-    required this.ref,
-    required this.player,
-  });
+  BaseManager({required this.ref, required this.player});
 
   @mustCallSuper
   void dispose() {

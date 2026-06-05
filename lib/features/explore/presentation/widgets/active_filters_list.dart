@@ -30,7 +30,9 @@ class ActiveFiltersList extends StatelessWidget {
       children: [
         // Genres
         ...filters.genres.map((gId) {
-          final genre = TmdbConstants.genresList.firstWhere((g) => g['id'] == gId);
+          final genre = TmdbConstants.genresList.firstWhere(
+            (g) => g['id'] == gId,
+          );
           return _FilterChip(
             label: genre['name'] as String,
             onDelete: () {
@@ -42,12 +44,15 @@ class ActiveFiltersList extends StatelessWidget {
 
         // Languages
         ...filters.languages.map((code) {
-          final lang = TmdbConstants.languagesList.firstWhere((l) => l['code'] == code);
+          final lang = TmdbConstants.languagesList.firstWhere(
+            (l) => l['code'] == code,
+          );
           return _FilterChip(
             label: lang['name']!,
             icon: Icons.language,
             onDelete: () {
-              final newLangs = List<String>.from(filters.languages)..remove(code);
+              final newLangs = List<String>.from(filters.languages)
+                ..remove(code);
               onChanged(filters.copyWith(languages: newLangs));
             },
           );
@@ -56,33 +61,43 @@ class ActiveFiltersList extends StatelessWidget {
         // Year
         if (filters.year.start != 1900 || filters.year.end != 2025)
           _FilterChip(
-            label: '${filters.year.start.round()} - ${filters.year.end.round()}',
+            label:
+                '${filters.year.start.round()} - ${filters.year.end.round()}',
             icon: Icons.calendar_today,
-            onDelete: () => onChanged(filters.copyWith(year: const RangeValues(1900, 2025))),
+            onDelete: () => onChanged(
+              filters.copyWith(year: const RangeValues(1900, 2025)),
+            ),
           ),
 
         // Rating
         if (filters.rating.start != 0 || filters.rating.end != 10)
           _FilterChip(
-            label: '${filters.rating.start.round()} - ${filters.rating.end.round()}',
+            label:
+                '${filters.rating.start.round()} - ${filters.rating.end.round()}',
             icon: Icons.whatshot,
-            onDelete: () => onChanged(filters.copyWith(rating: const RangeValues(0, 10))),
+            onDelete: () =>
+                onChanged(filters.copyWith(rating: const RangeValues(0, 10))),
           ),
 
         // Vote Count
         if (filters.voteCount.start != 0 || filters.voteCount.end != 20000)
           _FilterChip(
-            label: '${filters.voteCount.start.round()} - ${filters.voteCount.end.round() >= 20000 ? l10n.filterMax : filters.voteCount.end.round()}',
+            label:
+                '${filters.voteCount.start.round()} - ${filters.voteCount.end.round() >= 20000 ? l10n.filterMax : filters.voteCount.end.round()}',
             icon: Icons.thumb_up,
-            onDelete: () => onChanged(filters.copyWith(voteCount: const RangeValues(0, 20000))),
+            onDelete: () => onChanged(
+              filters.copyWith(voteCount: const RangeValues(0, 20000)),
+            ),
           ),
 
         // Runtime
         if (filters.runtime.start != 0 || filters.runtime.end != 240)
           _FilterChip(
-            label: '${filters.runtime.start.round()}m - ${filters.runtime.end.round() >= 240 ? l10n.filterMax : '${filters.runtime.end.round()}m'}',
+            label:
+                '${filters.runtime.start.round()}m - ${filters.runtime.end.round() >= 240 ? l10n.filterMax : '${filters.runtime.end.round()}m'}',
             icon: Icons.access_time,
-            onDelete: () => onChanged(filters.copyWith(runtime: const RangeValues(0, 240))),
+            onDelete: () =>
+                onChanged(filters.copyWith(runtime: const RangeValues(0, 240))),
           ),
 
         // Clear All
@@ -101,11 +116,7 @@ class _FilterChip extends StatelessWidget {
   final IconData? icon;
   final VoidCallback onDelete;
 
-  const _FilterChip({
-    required this.label,
-    this.icon,
-    required this.onDelete,
-  });
+  const _FilterChip({required this.label, this.icon, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -125,13 +136,21 @@ class _FilterChip extends StatelessWidget {
           ],
           Text(
             label,
-            style: const TextStyle(color: AppTheme.textSecondary, fontWeight: FontWeight.w500, fontSize: 11),
+            style: const TextStyle(
+              color: AppTheme.textSecondary,
+              fontWeight: FontWeight.w500,
+              fontSize: 11,
+            ),
           ),
           const SizedBox(width: 6),
           HoverScale(
             onTap: onDelete,
             scale: 1.2,
-            child: Icon(Icons.close, size: 12, color: AppTheme.textWhite.withValues(alpha: 0.4)),
+            child: Icon(
+              Icons.close,
+              size: 12,
+              color: AppTheme.textWhite.withValues(alpha: 0.4),
+            ),
           ),
         ],
       ),
@@ -159,13 +178,23 @@ class _ClearAllButtonState extends State<_ClearAllButton> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: _isHovered ? Theme.of(context).colorScheme.error.withValues(alpha: 0.2) : Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
+          color: _isHovered
+              ? Theme.of(context).colorScheme.error.withValues(alpha: 0.2)
+              : Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Theme.of(context).colorScheme.error.withValues(alpha: _isHovered ? 0.4 : 0.2)),
+          border: Border.all(
+            color: Theme.of(
+              context,
+            ).colorScheme.error.withValues(alpha: _isHovered ? 0.4 : 0.2),
+          ),
         ),
         child: Text(
           widget.l10n.searchClearAll,
-          style: TextStyle(color: Theme.of(context).colorScheme.error, fontWeight: FontWeight.bold, fontSize: 11),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.error,
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
+          ),
         ),
       ),
     );

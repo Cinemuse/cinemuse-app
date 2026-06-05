@@ -3,10 +3,10 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
 
 enum CarouselTheme {
-  homeRow,     // Title + chevron right (no box)
-  profileRow,  // Icon + Title + chevron right inside a container with surface color
-  bentoBox,    // BentoBox with title and icon
-  plain,       // No header
+  homeRow, // Title + chevron right (no box)
+  profileRow, // Icon + Title + chevron right inside a container with surface color
+  bentoBox, // BentoBox with title and icon
+  plain, // No header
 }
 
 class GenericCarouselRow extends StatefulWidget {
@@ -20,7 +20,7 @@ class GenericCarouselRow extends StatefulWidget {
   final double? height;
   final EdgeInsets padding;
   final ScrollController? controller;
-  
+
   const GenericCarouselRow({
     super.key,
     this.title,
@@ -66,10 +66,11 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
 
   void _updateScrollButtons() {
     if (!mounted || !_controller.hasClients) return;
-    
+
     final canLeft = _controller.position.pixels > 0;
-    final canRight = _controller.position.pixels < _controller.position.maxScrollExtent;
-    
+    final canRight =
+        _controller.position.pixels < _controller.position.maxScrollExtent;
+
     if (canLeft != _canScrollLeft || canRight != _canScrollRight) {
       setState(() {
         _canScrollLeft = canLeft;
@@ -104,14 +105,16 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
     if (_controller.hasClients && _controller.position.maxScrollExtent == 0) {
       return const SizedBox.shrink();
     }
-    
+
     final isMobile = MediaQuery.of(context).size.width < 600;
     if (isMobile) {
-        return const SizedBox.shrink(); // hide on mobile natively
+      return const SizedBox.shrink(); // hide on mobile natively
     }
 
     return AnimatedOpacity(
-      opacity: (_canScrollLeft || _canScrollRight) && _isHoveringList ? 1.0 : 0.0,
+      opacity: (_canScrollLeft || _canScrollRight) && _isHoveringList
+          ? 1.0
+          : 0.0,
       duration: const Duration(milliseconds: 200),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -181,10 +184,10 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
         minThumbLength: 50,
         interactive: true,
         padding: EdgeInsets.only(
-          bottom: 2, 
+          bottom: 2,
           left: widget.padding.left,
           right: widget.padding.right,
-        ), 
+        ),
         child: list,
       ),
     );
@@ -192,7 +195,8 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.itemCount == 0 && widget.emptyBuilder == null) return const SizedBox.shrink();
+    if (widget.itemCount == 0 && widget.emptyBuilder == null)
+      return const SizedBox.shrink();
 
     Widget content;
 
@@ -250,12 +254,19 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
         break;
 
       case CarouselTheme.homeRow:
-        final horizontalPadding = widget.padding.left > 0 ? widget.padding.left : 24.0;
+        final horizontalPadding = widget.padding.left > 0
+            ? widget.padding.left
+            : 24.0;
         content = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 16),
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                8,
+                horizontalPadding,
+                16,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -263,11 +274,12 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
                       children: [
                         Text(
                           widget.title ?? '',
-                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium!
+                              .copyWith(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                       ],
                     ),

@@ -27,10 +27,7 @@ class SubtitleAppearanceView extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SubViewHeader(
-          title: l10n.playerSubtitleAppearance,
-          onBack: onBack,
-        ),
+        SubViewHeader(title: l10n.playerSubtitleAppearance, onBack: onBack),
         Flexible(
           child: SingleChildScrollView(
             child: Column(
@@ -40,28 +37,32 @@ class SubtitleAppearanceView extends ConsumerWidget {
                   context,
                   icon: Icons.timer_outlined,
                   title: l10n.playerSubtitleSync,
-                  value: '${state.subtitleDelay >= 0 ? '+' : ''}${state.subtitleDelay.toStringAsFixed(1)}s',
+                  value:
+                      '${state.subtitleDelay >= 0 ? '+' : ''}${state.subtitleDelay.toStringAsFixed(1)}s',
                   overlayType: SliderOverlayType.sync,
                 ),
                 _buildTile(
                   context,
                   icon: Icons.text_fields_rounded,
                   title: l10n.playerAppearanceFontSize,
-                  value: '${state.customSubtitleStyle?.fontSize.toInt() ?? 24} px',
+                  value:
+                      '${state.customSubtitleStyle?.fontSize.toInt() ?? 24} px',
                   overlayType: SliderOverlayType.fontSize,
                 ),
                 _buildTile(
                   context,
                   icon: Icons.vertical_align_bottom_rounded,
                   title: l10n.playerAppearanceBottomPadding,
-                  value: '${((state.customSubtitleStyle?.verticalPosition ?? 0.05) * 100).toInt()}%',
+                  value:
+                      '${((state.customSubtitleStyle?.verticalPosition ?? 0.05) * 100).toInt()}%',
                   overlayType: SliderOverlayType.position,
                 ),
                 _buildTile(
                   context,
                   icon: Icons.opacity_rounded,
                   title: l10n.playerAppearanceBackground,
-                  value: '${((state.customSubtitleStyle?.backgroundColor.a ?? 0) * 100).toInt()}%',
+                  value:
+                      '${((state.customSubtitleStyle?.backgroundColor.a ?? 0) * 100).toInt()}%',
                   overlayType: SliderOverlayType.background,
                 ),
                 _buildTile(
@@ -90,7 +91,10 @@ class SubtitleAppearanceView extends ConsumerWidget {
       icon: icon,
       title: title,
       subtitle: value != null
-          ? Text(value, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12))
+          ? Text(
+              value,
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+            )
           : null,
       onTap: () {
         onOverlayRequested(overlayType);

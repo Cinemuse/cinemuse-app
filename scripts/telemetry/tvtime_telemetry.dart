@@ -25,11 +25,7 @@ Future<void> main() async {
     print('Testing: $name...');
     try {
       final result = await testFn();
-      results['tests'].add({
-        'name': name,
-        'status': 'pass',
-        'data': result,
-      });
+      results['tests'].add({'name': name, 'status': 'pass', 'data': result});
       passed++;
       print('  ✓ Pass');
     } catch (e, st) {
@@ -81,7 +77,12 @@ Future<void> main() async {
 
   // 6. Episode Comments
   await runTest('Episode Comments', () async {
-    final comments = await service.fetchEpisodeComments(81189, season: 1, episode: 1, limit: 3);
+    final comments = await service.fetchEpisodeComments(
+      81189,
+      season: 1,
+      episode: 1,
+      limit: 3,
+    );
     if (comments.isEmpty) throw Exception('Failed to fetch episode comments');
     return {'count': comments.length, 'first_comment': comments.first.text};
   });
@@ -95,54 +96,62 @@ Future<void> main() async {
     'successful_tests': passed,
     'results': results['tests'],
   };
-  proofFile.writeAsStringSync(const JsonEncoder.withIndent('  ').convert(report));
+  proofFile.writeAsStringSync(
+    const JsonEncoder.withIndent('  ').convert(report),
+  );
 
   // Generate GitHub Step Summary Markdown
   final stepSummaryPath = Platform.environment['GITHUB_STEP_SUMMARY'];
   if (stepSummaryPath != null) {
     final summaryFile = File(stepSummaryPath);
     final sink = summaryFile.openWrite(mode: FileMode.append);
-    
-    final healthStatus = failed == 0 ? 'OK' : (passed > 0 ? 'DEGRADED' : 'FAILED');
+
+    final healthStatus = failed == 0
+        ? 'OK'
+        : (passed > 0 ? 'DEGRADED' : 'FAILED');
 
     sink.writeln('### 💬 TVTime Scraper Telemetry');
     sink.writeln('- **Status**: $healthStatus');
     sink.writeln('- **Tests Passed**: $passed / ${passed + failed}');
-    
+
     sink.writeln('\n#### Test Results');
     sink.writeln('| Test Name | Status | Details |');
     sink.writeln('| :--- | :--- | :--- |');
-    
+
     for (final test in results['tests'] as List) {
       final name = test['name'];
       final status = test['status'];
       final statusIcon = status == 'pass' ? '✅' : '❌';
-      
+
       String details = '';
       if (status == 'pass') {
         if (test['data'] != null && test['data'] is Map) {
           final data = test['data'] as Map;
           if (data.containsKey('uuid')) {
-             details = 'Resolved UUID: ${data['uuid']}';
+            details = 'Resolved UUID: ${data['uuid']}';
           } else if (data.containsKey('count')) {
-             details = 'Fetched ${data['count']} comments';
+            details = 'Fetched ${data['count']} comments';
           } else {
-             details = 'Success';
+            details = 'Success';
           }
         } else {
           details = 'Success';
         }
       } else {
-         details = test['error'] ?? 'Unknown error';
+        details = test['error'] ?? 'Unknown error';
       }
-      
-      sink.writeln('| **$name** | $statusIcon ${status.toString().toUpperCase()} | $details |');
+
+      sink.writeln(
+        '| **$name** | $statusIcon ${status.toString().toUpperCase()} | $details |',
+      );
     }
-    
+
     if (failed > 0) {
-      sink.writeln('\n> **Warning**: TVTime internal API or DOM structure may have changed. Please verify the reverse-engineered endpoints in `tvtime_service.dart`.');
+      sink.writeln(
+        '\n> **Warning**: TVTime internal API or DOM structure may have changed. Please verify the reverse-engineered endpoints in `tvtime_service.dart`.',
+      );
     }
-    
+
     // Append the raw JSON data in a collapsible section
     sink.writeln('\n<details>');
     sink.writeln('<summary>View Raw JSON Data</summary>\n');
@@ -150,7 +159,7 @@ Future<void> main() async {
     sink.writeln(const JsonEncoder.withIndent('  ').convert(report));
     sink.writeln('```');
     sink.writeln('</details>\n');
-    
+
     await sink.flush();
     await sink.close();
   }

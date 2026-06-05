@@ -35,8 +35,10 @@ class EpgProgram {
 
   /// Formatted time range, e.g. "20:00 — 20:35".
   String get timeRange {
-    final start = '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
-    final end = '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
+    final start =
+        '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
+    final end =
+        '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
     return '$start — $end';
   }
 

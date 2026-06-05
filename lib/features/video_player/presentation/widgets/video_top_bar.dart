@@ -54,7 +54,9 @@ class VideoTopBar extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (params.type == 'tv' && params.season != null && params.episode != null) ...[
+                if (params.type == 'tv' &&
+                    params.season != null &&
+                    params.episode != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     '${l10n.detailsSeasonNumber(params.season!)}, ${l10n.detailsEpisodeNumber(params.episode!)}${params.episodeTitle != null ? ' - ${params.episodeTitle}' : ''}',
@@ -72,8 +74,10 @@ class VideoTopBar extends ConsumerWidget {
           ),
           IconButton(
             icon: Icon(
-              playerState.isCasting ? Icons.cast_connected : Icons.cast, 
-              color: playerState.isCasting ? Colors.blueAccent : AppTheme.textWhite
+              playerState.isCasting ? Icons.cast_connected : Icons.cast,
+              color: playerState.isCasting
+                  ? Colors.blueAccent
+                  : AppTheme.textWhite,
             ),
             onPressed: onCastPressed,
           ),

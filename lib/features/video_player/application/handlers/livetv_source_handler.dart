@@ -30,19 +30,23 @@ class LiveTvSourceHandler {
   }
 
   Future<LiveTvInitializationResult> initialize(
-    Channel channel, 
+    Channel channel,
     UserSettings settings, {
     VoidCallback? onStall,
   }) async {
     final url = channel.url;
-    final isPremium = url.contains('.ts') || url.contains('extension=ts') || url.contains('live.php?mac=');
+    final isPremium =
+        url.contains('.ts') ||
+        url.contains('extension=ts') ||
+        url.contains('live.php?mac=');
 
     // 1. Optimize Player properties for Live TV
     _optimizeForLiveStreaming(settings, isPremium);
 
     // 2. Prepare headers
     final headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0',
+      'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0',
       'Accept': '*/*',
       if (isPremium) 'Referer': 'https://tilescale.com/',
     };
@@ -51,19 +55,23 @@ class LiveTvSourceHandler {
     _player.open(Media(url, httpHeaders: headers), play: true);
 
     // 4. Start Stall Watchdog
-    final stallDuration = isPremium ? const Duration(seconds: 7) : const Duration(seconds: 15);
+    final stallDuration = isPremium
+        ? const Duration(seconds: 7)
+        : const Duration(seconds: 15);
 
     _bufferingSub?.cancel();
     _stallTimer?.cancel();
     _bufferingSub = _player.stream.buffering.listen((isBuffering) {
       if (isBuffering) {
         _stallTimer ??= Timer(stallDuration, () {
-          debugPrint('LiveTvSourceHandler: Stream stall detected (${stallDuration.inSeconds}s buffering).');
+          debugPrint(
+            'LiveTvSourceHandler: Stream stall detected (${stallDuration.inSeconds}s buffering).',
+          );
           if (onStall != null) {
             onStall();
           } else {
             // Fallback for when no callback is provided
-            _player.open(Media('error://stall'), play: false); 
+            _player.open(Media('error://stall'), play: false);
           }
         });
       } else {
@@ -72,7 +80,7 @@ class LiveTvSourceHandler {
       }
     });
 
-    // 5. Seek to the live edge only for HLS (where DVR is common). 
+    // 5. Seek to the live edge only for HLS (where DVR is common).
     // Raw TS streams often have broken durations and seeking causes stalls.
     if (!isPremium) {
       _seekToLiveEdge();
@@ -124,21 +132,34 @@ class LiveTvSourceHandler {
 
       // 1. DVR Window & Cache size
       final bufferBytes = settings.liveTvBufferSize * 1024 * 1024;
-      final forwardBuffer = (bufferBytes * 0.1).clamp(100 * 1024 * 1024, bufferBytes).toInt();
-      final backBuffer = (bufferBytes - forwardBuffer).clamp(0, bufferBytes).toInt();
+      final forwardBuffer = (bufferBytes * 0.1)
+          .clamp(100 * 1024 * 1024, bufferBytes)
+          .toInt();
+      final backBuffer = (bufferBytes - forwardBuffer)
+          .clamp(0, bufferBytes)
+          .toInt();
 
       platform.setProperty('demuxer-max-bytes', forwardBuffer.toString());
       platform.setProperty('demuxer-max-back-bytes', backBuffer.toString());
 
       // 2. Disk Caching
-      platform.setProperty('cache-on-disk', settings.enableLiveTvDiskCache ? 'yes' : 'no');
+      platform.setProperty(
+        'cache-on-disk',
+        settings.enableLiveTvDiskCache ? 'yes' : 'no',
+      );
 
       // 3. Conditional Format & Reconnection
       if (isPremium) {
         // MPEG-TS specific optimizations
         platform.setProperty('ffmpeg-format', 'mpegts');
-        platform.setProperty('demuxer-lavf-o', 'analyze_max_duration=500000,probesize=500000,live_start_index=-3,reconnect_streamed=1,reconnect_delay_max=1');
-        platform.setProperty('force-seekable', 'no'); // Prevents stalls on raw TS
+        platform.setProperty(
+          'demuxer-lavf-o',
+          'analyze_max_duration=500000,probesize=500000,live_start_index=-3,reconnect_streamed=1,reconnect_delay_max=1',
+        );
+        platform.setProperty(
+          'force-seekable',
+          'no',
+        ); // Prevents stalls on raw TS
       } else {
         platform.setProperty('demuxer-lavf-o', 'live_start_index=-3');
         platform.setProperty('force-seekable', 'yes');
@@ -150,16 +171,18 @@ class LiveTvSourceHandler {
       platform.setProperty('tls-verify', 'no');
       platform.setProperty('prefetch-playlist', 'yes');
       platform.setProperty('cache', 'yes');
-      platform.setProperty('cache-pause', 'yes'); 
-      platform.setProperty('cache-initial', '0'); 
-      platform.setProperty('cache-pause-initial', 'no'); 
+      platform.setProperty('cache-pause', 'yes');
+      platform.setProperty('cache-initial', '0');
+      platform.setProperty('cache-pause-initial', 'no');
       platform.setProperty('demuxer-readahead-secs', isPremium ? '25' : '15');
-      platform.setProperty('cache-secs', '3600'); 
+      platform.setProperty('cache-secs', '3600');
       platform.setProperty('load-unsafe-playlists', 'yes');
-      
+
       // We set headers in the Media constructor, but keeping these as fallback
-      platform.setProperty('user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0');
-    } catch (_) {
-    }
+      platform.setProperty(
+        'user-agent',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0',
+      );
+    } catch (_) {}
   }
 }

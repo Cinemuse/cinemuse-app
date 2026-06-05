@@ -50,8 +50,12 @@ class ListsRepository {
             ),
             leftOuterJoin(
               _db.cachedMediaItems,
-              _db.cachedMediaItems.tmdbId.equalsExp(_db.cachedListItems.mediaTmdbId) &
-                  _db.cachedMediaItems.mediaType.equalsExp(_db.cachedListItems.mediaType),
+              _db.cachedMediaItems.tmdbId.equalsExp(
+                    _db.cachedListItems.mediaTmdbId,
+                  ) &
+                  _db.cachedMediaItems.mediaType.equalsExp(
+                    _db.cachedListItems.mediaType,
+                  ),
             ),
           ])
           ..where(_db.cachedUserLists.userId.equals(userId))
@@ -79,8 +83,12 @@ class ListsRepository {
               posterPath: mediaRow.posterPath,
               backdropPath: mediaRow.backdropPath,
               runtimeMinutes: mediaRow.runtimeMinutes,
-              genres: mediaRow.genres != null ? (jsonDecode(mediaRow.genres!) as List).cast<int>() : null,
-              castMembers: mediaRow.castMembers != null ? (jsonDecode(mediaRow.castMembers!) as List).cast<int>() : null,
+              genres: mediaRow.genres != null
+                  ? (jsonDecode(mediaRow.genres!) as List).cast<int>()
+                  : null,
+              castMembers: mediaRow.castMembers != null
+                  ? (jsonDecode(mediaRow.castMembers!) as List).cast<int>()
+                  : null,
               releaseDate: mediaRow.releaseDate,
               voteAverage: mediaRow.voteAverage,
               updatedAt: mediaRow.updatedAt ?? DateTime.now(),

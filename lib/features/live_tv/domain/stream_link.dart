@@ -30,7 +30,7 @@ class StreamLink {
   final String url;
   final StreamQuality quality;
   final String? codec;
-  
+
   /// Marked true if the link failed during the current session.
   bool isFailed;
 
@@ -48,7 +48,8 @@ class StreamLink {
   factory StreamLink.fromJson(Map<String, dynamic> json) {
     // Support both flat format (quality/codec at root) and nested (metadata.quality)
     final metadata = json['metadata'] as Map<String, dynamic>?;
-    final qualityStr = json['quality'] as String? ?? metadata?['quality'] as String?;
+    final qualityStr =
+        json['quality'] as String? ?? metadata?['quality'] as String?;
     final codecStr = json['codec'] as String? ?? metadata?['codec'] as String?;
 
     return StreamLink(
@@ -65,5 +66,6 @@ class StreamLink {
   };
 
   @override
-  String toString() => 'StreamLink(url: $url, quality: $quality, codec: $codec, failed: $isFailed)';
+  String toString() =>
+      'StreamLink(url: $url, quality: $quality, codec: $codec, failed: $isFailed)';
 }

@@ -14,10 +14,10 @@ class ProfileHero extends ConsumerWidget {
 
     return profileAsync.when(
       data: (profile) {
-        final initial = profile?.username?.isNotEmpty == true 
-            ? profile!.username![0].toUpperCase() 
+        final initial = profile?.username?.isNotEmpty == true
+            ? profile!.username![0].toUpperCase()
             : 'U';
-            
+
         return Row(
           children: [
             // Avatar
@@ -29,7 +29,10 @@ class ProfileHero extends ConsumerWidget {
                 gradient: const LinearGradient(
                   begin: Alignment.bottomLeft,
                   end: Alignment.topRight,
-                  colors: [AppTheme.accent, Color(0xFFE50914)], // Example gradient
+                  colors: [
+                    AppTheme.accent,
+                    Color(0xFFE50914),
+                  ], // Example gradient
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -70,11 +73,10 @@ class ProfileHero extends ConsumerWidget {
                   // Optional subtext or join date
                   if (profile != null)
                     Text(
-                      l10n.profileMemberSince(profile.createdAt.year.toString()),
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
+                      l10n.profileMemberSince(
+                        profile.createdAt.year.toString(),
                       ),
+                      style: const TextStyle(color: Colors.grey, fontSize: 14),
                     ),
                 ],
               ),
@@ -82,8 +84,14 @@ class ProfileHero extends ConsumerWidget {
           ],
         );
       },
-      loading: () => const SizedBox(height: 80, child: Center(child: CircularProgressIndicator())),
-      error: (err, stack) => Text(l10n.profileErrorLoading, style: const TextStyle(color: Colors.red)),
+      loading: () => const SizedBox(
+        height: 80,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => Text(
+        l10n.profileErrorLoading,
+        style: const TextStyle(color: Colors.red),
+      ),
     );
   }
 }

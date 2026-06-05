@@ -74,13 +74,12 @@ class SettingsCard extends StatelessWidget {
       margin: margin,
       decoration: BoxDecoration(
         color: AppTheme.surface.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16), // Increased from 12 for a smoother look
+        borderRadius: BorderRadius.circular(
+          16,
+        ), // Increased from 12 for a smoother look
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
-      child: Column(
-        crossAxisAlignment: crossAxisAlignment,
-        children: children,
-      ),
+      child: Column(crossAxisAlignment: crossAxisAlignment, children: children),
     );
   }
 }
@@ -115,13 +114,19 @@ class SettingsTile extends StatelessWidget {
             Container(
               width: 40,
               height: 40,
-              padding: leading != null ? EdgeInsets.zero : const EdgeInsets.all(8),
+              padding: leading != null
+                  ? EdgeInsets.zero
+                  : const EdgeInsets.all(8),
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: leading ?? (icon != null ? Icon(icon, size: 20, color: Colors.white70) : null),
+              child:
+                  leading ??
+                  (icon != null
+                      ? Icon(icon, size: 20, color: Colors.white70)
+                      : null),
             ),
             const SizedBox(width: 16),
           ],
@@ -144,22 +149,20 @@ class SettingsTile extends StatelessWidget {
                     description!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: AppTheme.textMuted,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
                   ),
                 ],
               ],
             ),
           ),
-          if (trailing != null) ...[
-            const SizedBox(width: 16),
-            trailing!,
-          ],
+          if (trailing != null) ...[const SizedBox(width: 16), trailing!],
           if (onTap != null && trailing == null) ...[
             const SizedBox(width: 16),
-            const Icon(Icons.chevron_right, color: AppTheme.textMuted, size: 20),
+            const Icon(
+              Icons.chevron_right,
+              color: AppTheme.textMuted,
+              size: 20,
+            ),
           ],
         ],
       ),
@@ -171,7 +174,9 @@ class SettingsTile extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(16), // Increased from 8 to match card
+            borderRadius: BorderRadius.circular(
+              16,
+            ), // Increased from 8 to match card
             child: content,
           ),
         ),
@@ -186,7 +191,6 @@ class SettingsTile extends StatelessWidget {
     );
   }
 }
-
 
 class SettingsLanguageButton extends StatelessWidget {
   final String label;
@@ -207,7 +211,9 @@ class SettingsLanguageButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.accent : Colors.white.withValues(alpha: 0.05),
+          color: isSelected
+              ? AppTheme.accent
+              : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(16), // Standardized to 16
         ),
         child: Text(
@@ -263,8 +269,15 @@ class SettingsDropdown<T> extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               isDense: true,
               alignment: Alignment.center,
-              icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textMuted),
-              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+              icon: const Icon(
+                Icons.keyboard_arrow_down,
+                color: AppTheme.textMuted,
+              ),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),

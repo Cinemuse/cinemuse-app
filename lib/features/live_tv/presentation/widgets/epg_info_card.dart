@@ -46,7 +46,9 @@ class EpgInfoCard extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.accent.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(6),
@@ -103,10 +105,7 @@ class EpgInfoCard extends StatelessWidget {
               // Divider
               if (currentProgram != null && nextProgram != null) ...[
                 const SizedBox(height: 14),
-                Divider(
-                  color: Colors.white.withValues(alpha: 0.06),
-                  height: 1,
-                ),
+                Divider(color: Colors.white.withValues(alpha: 0.06), height: 1),
                 const SizedBox(height: 14),
               ],
 
@@ -116,7 +115,9 @@ class EpgInfoCard extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(6),
@@ -175,10 +176,7 @@ class EpgInfoCard extends StatelessWidget {
           const SizedBox(width: 10),
           Text(
             l10n.liveTvNoEpg,
-            style: const TextStyle(
-              color: AppTheme.textMuted,
-              fontSize: 13,
-            ),
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
           ),
         ],
       ),
@@ -206,10 +204,7 @@ class _EpgProgressBar extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                AppTheme.accent,
-                AppTheme.accent.withValues(alpha: 0.7),
-              ],
+              colors: [AppTheme.accent, AppTheme.accent.withValues(alpha: 0.7)],
             ),
             borderRadius: BorderRadius.circular(2),
             boxShadow: [

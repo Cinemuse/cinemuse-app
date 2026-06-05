@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// SmartCache - Local caching utility for Supabase and API data
-/// 
+///
 /// Provides immediate data from cache while remote streams update.
 class SmartCache {
   final String _key;
@@ -44,17 +44,17 @@ class SmartCache {
     if (cachedData == null || !cachedData.containsKey('updatedAt')) return null;
 
     final updatedAt = cachedData['updatedAt'];
-    
+
     // Handle numeric timestamp (milliseconds)
     if (updatedAt is int) {
       return DateTime.fromMillisecondsSinceEpoch(updatedAt);
     }
-    
+
     // Handle ISO string
     if (updatedAt is String) {
       return DateTime.tryParse(updatedAt);
     }
-    
+
     return null;
   }
 

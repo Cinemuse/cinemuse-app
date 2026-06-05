@@ -46,9 +46,9 @@ class PlaybackManager extends BaseManager {
   }
 
   Future<void> startCasting(
-    CastDevice device, 
-    StreamCandidate candidate, 
-    String title, 
+    CastDevice device,
+    StreamCandidate candidate,
+    String title,
     Duration currentPosition,
     Function(ResolvedStream) onStreamResolved, {
     int? season,
@@ -57,10 +57,10 @@ class PlaybackManager extends BaseManager {
     String? detectedMimeType,
   }) async {
     await castHandler.startCasting(
-      device, 
-      candidate, 
-      title, 
-      currentPosition, 
+      device,
+      candidate,
+      title,
+      currentPosition,
       onStreamResolved,
       season: season,
       episode: episode,

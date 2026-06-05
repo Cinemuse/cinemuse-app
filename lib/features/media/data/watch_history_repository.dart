@@ -13,7 +13,7 @@ import 'package:cinemuse_app/features/media/application/series_domain_service.da
 
 final watchHistoryRepositoryProvider = Provider<WatchHistoryRepository>((ref) {
   return WatchHistoryRepository(
-    supabase, 
+    supabase,
     ref.watch(mediaRepositoryProvider),
     ref.watch(appDatabaseProvider),
     ref.watch(seriesDomainServiceProvider),
@@ -26,7 +26,12 @@ class WatchHistoryRepository {
   final AppDatabase _db;
   final SeriesDomainService _seriesService;
 
-  WatchHistoryRepository(this._client, this._mediaRepo, this._db, this._seriesService);
+  WatchHistoryRepository(
+    this._client,
+    this._mediaRepo,
+    this._db,
+    this._seriesService,
+  );
 
   // Get current "Continue Watching" list (status = watching)
   Future<List<WatchHistory>> getContinueWatching(String userId) async {
@@ -64,7 +69,13 @@ class WatchHistoryRepository {
       'season': season,
       'episode': episode,
     });
-    await _db.deleteWatchHistoryItem(userId, tmdbId, 'tv', season: season, episode: episode);
+    await _db.deleteWatchHistoryItem(
+      userId,
+      tmdbId,
+      'tv',
+      season: season,
+      episode: episode,
+    );
 
     // 2. Log the episode as watched (if not already logged)
     final alreadyWatched = await isMediaAlreadyWatched(
@@ -115,21 +126,33 @@ class WatchHistoryRepository {
 
     // 1. Check for Completed State
     // Remaining < 180s OR Progress > 95%
-    if (remainingSeconds < PlaybackThresholds.completionRemainingSeconds || progressPercentage > PlaybackThresholds.completionPercentage) {
+    if (remainingSeconds < PlaybackThresholds.completionRemainingSeconds ||
+        progressPercentage > PlaybackThresholds.completionPercentage) {
       // Remove from "Continue Watching"
-      final deleted = await _client.from('watch_history').delete().match({
-        'user_id': userId,
-        'tmdb_id': media.tmdbId,
-        'media_type': media.mediaType.name,
-        'season': season ?? 0,
-        'episode': episode ?? 0,
-      }).select().withErrorHandling();
+      final deleted = await _client
+          .from('watch_history')
+          .delete()
+          .match({
+            'user_id': userId,
+            'tmdb_id': media.tmdbId,
+            'media_type': media.mediaType.name,
+            'season': season ?? 0,
+            'episode': episode ?? 0,
+          })
+          .select()
+          .withErrorHandling();
 
       // Only proceed if we actually deleted something (prevents double logs)
       // or if we are marking a new completion without an existing history entry
       if ((deleted as List).isNotEmpty) {
         // Update local DB instantly
-        await _db.deleteWatchHistoryItem(userId, media.tmdbId, media.mediaType.name, season: season ?? 0, episode: episode ?? 0);
+        await _db.deleteWatchHistoryItem(
+          userId,
+          media.tmdbId,
+          media.mediaType.name,
+          season: season ?? 0,
+          episode: episode ?? 0,
+        );
 
         // [MODIFIED] Only log if not already watched
         final alreadyWatched = await isMediaAlreadyWatched(
@@ -153,7 +176,10 @@ class WatchHistoryRepository {
         }
 
         // Auto-advance to next episode
-        if (media.mediaType == MediaKind.tv && season != null && episode != null && seriesDetails != null) {
+        if (media.mediaType == MediaKind.tv &&
+            season != null &&
+            episode != null &&
+            seriesDetails != null) {
           await upsertNextEpisode(
             userId: userId,
             tmdbId: media.tmdbId,
@@ -168,30 +194,33 @@ class WatchHistoryRepository {
 
     // 2. Check for Peeking State
     // Watched < 120s AND Watched < 10%
-    if (progressSeconds < PlaybackThresholds.peekingSeconds && progressPercentage < PlaybackThresholds.peekingPercentage) {
+    if (progressSeconds < PlaybackThresholds.peekingSeconds &&
+        progressPercentage < PlaybackThresholds.peekingPercentage) {
       // Do nothing, don't save to history
       return;
     }
 
     // 3. Watching State (Implicitly: Progress > 120s OR Progress > 10%)
-    
+
     // [FIX] Clean up other 'watching' episodes for this show before saving new progress.
-    // To optimize performance, we only do this if the current episode is NOT already 
+    // To optimize performance, we only do this if the current episode is NOT already
     // the one marked as 'watching' in the local database.
     if (media.mediaType == MediaKind.tv) {
-      final localCurrent = await (_db.select(_db.localWatchHistories)
-        ..where((t) => 
-          t.userId.equals(userId) & 
-          t.tmdbId.equals(media.tmdbId) & 
-          t.season.equals(season ?? 0) & 
-          t.episode.equals(episode ?? 0)
-        )).getSingleOrNull();
-      
+      final localCurrent =
+          await (_db.select(_db.localWatchHistories)..where(
+                (t) =>
+                    t.userId.equals(userId) &
+                    t.tmdbId.equals(media.tmdbId) &
+                    t.season.equals(season ?? 0) &
+                    t.episode.equals(episode ?? 0),
+              ))
+              .getSingleOrNull();
+
       if (localCurrent == null || localCurrent.status != 'watching') {
         await _clearStaleWatchingEntries(
-          userId, 
-          media.tmdbId, 
-          excludeSeason: season, 
+          userId,
+          media.tmdbId,
+          excludeSeason: season,
           excludeEpisode: episode,
         );
       }
@@ -199,7 +228,7 @@ class WatchHistoryRepository {
 
     final entry = {
       'user_id': userId,
-      'tmdb_id': media.tmdbId, 
+      'tmdb_id': media.tmdbId,
       'media_type': media.mediaType.name,
       'status': 'watching',
       'progress_seconds': progressSeconds,
@@ -210,17 +239,19 @@ class WatchHistoryRepository {
     };
 
     // Update Local Cache
-    await _db.upsertWatchHistory(LocalWatchHistoriesCompanion(
-      userId: Value(userId),
-      tmdbId: Value(media.tmdbId),
-      mediaType: Value(media.mediaType.name),
-      status: Value('watching'),
-      progressSeconds: Value(progressSeconds),
-      totalDuration: Value(totalDuration),
-      season: Value(season ?? 0),
-      episode: Value(episode ?? 0),
-      lastWatchedAt: Value(DateTime.now()),
-    ));
+    await _db.upsertWatchHistory(
+      LocalWatchHistoriesCompanion(
+        userId: Value(userId),
+        tmdbId: Value(media.tmdbId),
+        mediaType: Value(media.mediaType.name),
+        status: Value('watching'),
+        progressSeconds: Value(progressSeconds),
+        totalDuration: Value(totalDuration),
+        season: Value(season ?? 0),
+        episode: Value(episode ?? 0),
+        lastWatchedAt: Value(DateTime.now()),
+      ),
+    );
 
     // Update Remote
     await _client.from('watch_history').upsert(entry).withErrorHandling();
@@ -243,7 +274,7 @@ class WatchHistoryRepository {
         .eq('episode', episode)
         .limit(1)
         .maybeSingle();
-    
+
     return response != null;
   }
 
@@ -308,10 +339,10 @@ class WatchHistoryRepository {
       final futures = list.map((local) async {
         final mediaType = MediaItem.fromString(local.mediaType);
         final mediaKind = MediaKind.values.firstWhere(
-          (e) => e.name == local.mediaType, 
-          orElse: () => MediaKind.movie
+          (e) => e.name == local.mediaType,
+          orElse: () => MediaKind.movie,
         );
-        
+
         // Try to get media metadata (now handles TMDB fallback)
         final media = await _mediaRepo.getMediaItem(local.tmdbId, mediaKind);
 
@@ -367,55 +398,60 @@ class WatchHistoryRepository {
       for (final item in latestLocal) {
         // Only include if it's completed (manually tracked)
         if (item.status == WatchStatus.completed) {
-           final key = '${item.tmdbId}-${item.mediaType.name}';
-           final existing = merged[key];
-           if (existing == null || item.lastWatchedAt.isAfter(existing.lastWatchedAt)) {
-             merged[key] = item;
-           }
+          final key = '${item.tmdbId}-${item.mediaType.name}';
+          final existing = merged[key];
+          if (existing == null ||
+              item.lastWatchedAt.isAfter(existing.lastWatchedAt)) {
+            merged[key] = item;
+          }
         }
       }
 
       final results = merged.values.toList()
         ..sort((a, b) => b.lastWatchedAt.compareTo(a.lastWatchedAt));
-      
+
       if (!controller.isClosed) {
         controller.add(results);
       }
     }
 
     // Subscribe to remote logs
-    final remoteSub = remoteLogsStream.asyncMap((logs) async {
-      // Basic grouping for the remote part
-      final uniqueRemote = <String, Map<String, dynamic>>{};
-      for (final log in logs) {
-        final key = '${log['tmdb_id']}-${log['media_type']}';
-        if (!uniqueRemote.containsKey(key)) uniqueRemote[key] = log;
-      }
+    final remoteSub = remoteLogsStream
+        .asyncMap((logs) async {
+          // Basic grouping for the remote part
+          final uniqueRemote = <String, Map<String, dynamic>>{};
+          for (final log in logs) {
+            final key = '${log['tmdb_id']}-${log['media_type']}';
+            if (!uniqueRemote.containsKey(key)) uniqueRemote[key] = log;
+          }
 
-      final futures = uniqueRemote.values.map((log) async {
-        final tmdbId = log['tmdb_id'] as int;
-        final type = (log['media_type'] as String) == 'tv' ? MediaKind.tv : MediaKind.movie;
-        final media = await _mediaRepo.getMediaItem(tmdbId, type);
-        
-        return WatchHistory(
-          userId: userId,
-          tmdbId: tmdbId,
-          mediaType: type,
-          status: WatchStatus.completed,
-          progressSeconds: 0,
-          totalDuration: 0,
-          watchCount: 0,
-          lastWatchedAt: DateTime.parse(log['logged_at'] as String),
-          season: log['season'] as int?,
-          episode: log['episode'] as int?,
-          media: media,
-        );
-      });
-      return await Future.wait(futures);
-    }).listen((data) {
-      latestRemote = data;
-      emitMerged();
-    }, onError: (e) => controller.addError(e));
+          final futures = uniqueRemote.values.map((log) async {
+            final tmdbId = log['tmdb_id'] as int;
+            final type = (log['media_type'] as String) == 'tv'
+                ? MediaKind.tv
+                : MediaKind.movie;
+            final media = await _mediaRepo.getMediaItem(tmdbId, type);
+
+            return WatchHistory(
+              userId: userId,
+              tmdbId: tmdbId,
+              mediaType: type,
+              status: WatchStatus.completed,
+              progressSeconds: 0,
+              totalDuration: 0,
+              watchCount: 0,
+              lastWatchedAt: DateTime.parse(log['logged_at'] as String),
+              season: log['season'] as int?,
+              episode: log['episode'] as int?,
+              media: media,
+            );
+          });
+          return await Future.wait(futures);
+        })
+        .listen((data) {
+          latestRemote = data;
+          emitMerged();
+        }, onError: (e) => controller.addError(e));
 
     // Subscribe to local history (instant)
     final localSub = localHistoryStream.listen((data) {
@@ -442,10 +478,10 @@ class WatchHistoryRepository {
           .withErrorHandling();
 
       final companions = (remoteData as List).map((json) {
-        final lastWatched = json['last_watched_at'] != null 
-            ? DateTime.parse(json['last_watched_at']) 
+        final lastWatched = json['last_watched_at'] != null
+            ? DateTime.parse(json['last_watched_at'])
             : DateTime.now();
-            
+
         return LocalWatchHistoriesCompanion(
           userId: Value(userId),
           tmdbId: Value(json['tmdb_id'] as int? ?? 0),
@@ -464,7 +500,7 @@ class WatchHistoryRepository {
   }
 
   Stream<List<WatchHistory>> watchAllHistory(String userId) {
-    // We now prefer watchHistory(userId) which uses Drift. 
+    // We now prefer watchHistory(userId) which uses Drift.
     // This is kept for compatibility or specific stream requirement.
     return watchHistory(userId);
   }
@@ -478,14 +514,21 @@ class WatchHistoryRepository {
         .order('logged_at', ascending: false)
         .withErrorHandling()
         .transform(_debounceTransformer(const Duration(milliseconds: 300)))
-        .map((list) => list.where((item) => 
-            item['tmdb_id'] == tmdbId && 
-            item['media_type'] == 'movie'
-        ).toList());
+        .map(
+          (list) => list
+              .where(
+                (item) =>
+                    item['tmdb_id'] == tmdbId && item['media_type'] == 'movie',
+              )
+              .toList(),
+        );
   }
 
   // Stream series logs for a specific user and tmdbId
-  Stream<List<Map<String, dynamic>>> watchSeriesLogs(String userId, int tmdbId) {
+  Stream<List<Map<String, dynamic>>> watchSeriesLogs(
+    String userId,
+    int tmdbId,
+  ) {
     return _client
         .from('watch_logs')
         .stream(primaryKey: ['id'])
@@ -493,21 +536,28 @@ class WatchHistoryRepository {
         .order('logged_at', ascending: false)
         .withErrorHandling()
         .transform(_debounceTransformer(const Duration(milliseconds: 300)))
-        .map((list) => list.where((item) => 
-            item['tmdb_id'] == tmdbId && 
-            item['media_type'] == 'tv'
-        ).toList());
+        .map(
+          (list) => list
+              .where(
+                (item) =>
+                    item['tmdb_id'] == tmdbId && item['media_type'] == 'tv',
+              )
+              .toList(),
+        );
   }
 
   // Stream watch_history (progress) for a specific series
   Stream<List<WatchHistory>> watchSeriesHistory(String userId, int tmdbId) {
-    return watchHistory(userId).map((list) => list
-        .where((e) => e.tmdbId == tmdbId)
-        .toList());
+    return watchHistory(
+      userId,
+    ).map((list) => list.where((e) => e.tmdbId == tmdbId).toList());
   }
 
   // Get all watch logs for a specific series
-  Future<List<Map<String, dynamic>>> getSeriesWatchLogs(String userId, int tmdbId) async {
+  Future<List<Map<String, dynamic>>> getSeriesWatchLogs(
+    String userId,
+    int tmdbId,
+  ) async {
     final response = await _client
         .from('watch_logs')
         .select('season, episode, logged_at')
@@ -515,7 +565,7 @@ class WatchHistoryRepository {
         .eq('tmdb_id', tmdbId)
         .eq('media_type', 'tv')
         .order('logged_at', ascending: false);
-    
+
     return List<Map<String, dynamic>>.from(response);
   }
 
@@ -534,11 +584,8 @@ class WatchHistoryRepository {
         .maybeSingle();
 
     if (response != null && response['id'] != null) {
-      await _client
-          .from('watch_logs')
-          .delete()
-          .eq('id', response['id']);
-      
+      await _client.from('watch_logs').delete().eq('id', response['id']);
+
       await _syncLogHistory(userId, tmdbId, 'movie');
     }
   }
@@ -586,17 +633,19 @@ class WatchHistoryRepository {
     await _client.from('watch_history').upsert(historyUpdate);
 
     // Update local DB instantly
-    await _db.upsertWatchHistory(LocalWatchHistoriesCompanion(
-      userId: Value(userId),
-      tmdbId: Value(tmdbId),
-      mediaType: const Value('movie'),
-      status: const Value('completed'),
-      progressSeconds: const Value(0),
-      totalDuration: const Value(0),
-      season: const Value(0),
-      episode: const Value(0),
-      lastWatchedAt: Value(loggedAt ?? DateTime.now()),
-    ));
+    await _db.upsertWatchHistory(
+      LocalWatchHistoriesCompanion(
+        userId: Value(userId),
+        tmdbId: Value(tmdbId),
+        mediaType: const Value('movie'),
+        status: const Value('completed'),
+        progressSeconds: const Value(0),
+        totalDuration: const Value(0),
+        season: const Value(0),
+        episode: const Value(0),
+        lastWatchedAt: Value(loggedAt ?? DateTime.now()),
+      ),
+    );
   }
 
   Future<void> deleteLatestEpisodeLog({
@@ -619,11 +668,8 @@ class WatchHistoryRepository {
 
     if (response != null && response['id'] != null) {
       // 2. Delete that specific log entry
-      await _client
-          .from('watch_logs')
-          .delete()
-          .eq('id', response['id']);
-      
+      await _client.from('watch_logs').delete().eq('id', response['id']);
+
       // 3. Manually sync history since trigger handles inserts but maybe not deletions
       await _syncLogHistory(userId, tmdbId, 'tv');
     }
@@ -647,7 +693,11 @@ class WatchHistoryRepository {
   }
 
   /// Helper to ensure watch_history table stays in sync after deletions
-  Future<void> _syncLogHistory(String userId, int tmdbId, String mediaType) async {
+  Future<void> _syncLogHistory(
+    String userId,
+    int tmdbId,
+    String mediaType,
+  ) async {
     // 1. Remote: Find the new "latest" log
     final latest = await _client
         .from('watch_logs')
@@ -680,23 +730,25 @@ class WatchHistoryRepository {
         'season': latest['season'],
         'episode': latest['episode'],
         'last_watched_at': dateStr,
-        'status': 'watching', 
+        'status': 'watching',
       };
 
       await _client.from('watch_history').upsert(historyUpdate);
 
       // Update local DB
-      await _db.upsertWatchHistory(LocalWatchHistoriesCompanion(
-        userId: Value(userId),
-        tmdbId: Value(tmdbId),
-        mediaType: Value(mediaType),
-        status: const Value('watching'),
-        progressSeconds: const Value(0),
-        totalDuration: const Value(0),
-        season: Value(latest['season'] as int? ?? 0),
-        episode: Value(latest['episode'] as int? ?? 0),
-        lastWatchedAt: Value(date),
-      ));
+      await _db.upsertWatchHistory(
+        LocalWatchHistoriesCompanion(
+          userId: Value(userId),
+          tmdbId: Value(tmdbId),
+          mediaType: Value(mediaType),
+          status: const Value('watching'),
+          progressSeconds: const Value(0),
+          totalDuration: const Value(0),
+          season: Value(latest['season'] as int? ?? 0),
+          episode: Value(latest['episode'] as int? ?? 0),
+          lastWatchedAt: Value(date),
+        ),
+      );
     }
   }
 
@@ -710,14 +762,18 @@ class WatchHistoryRepository {
 
     final now = (loggedAt ?? DateTime.now()).toIso8601String();
 
-    final logs = episodes.map((e) => {
-      'user_id': userId,
-      'tmdb_id': tmdbId,
-      'media_type': 'tv',
-      'season': e.season,
-      'episode': e.episode,
-      'logged_at': now,
-    }).toList();
+    final logs = episodes
+        .map(
+          (e) => {
+            'user_id': userId,
+            'tmdb_id': tmdbId,
+            'media_type': 'tv',
+            'season': e.season,
+            'episode': e.episode,
+            'logged_at': now,
+          },
+        )
+        .toList();
 
     await _client.from('watch_logs').insert(logs);
 
@@ -725,17 +781,21 @@ class WatchHistoryRepository {
     await _clearStaleWatchingEntries(userId, tmdbId);
 
     // Update history for all marked episodes to completed
-    final historyUpdates = episodes.map((e) => {
-      'user_id': userId,
-      'tmdb_id': tmdbId,
-      'media_type': 'tv',
-      'status': 'completed',
-      'progress_seconds': 0,
-      'total_duration': 0,
-      'season': e.season,
-      'episode': e.episode,
-      'last_watched_at': now,
-    }).toList();
+    final historyUpdates = episodes
+        .map(
+          (e) => {
+            'user_id': userId,
+            'tmdb_id': tmdbId,
+            'media_type': 'tv',
+            'status': 'completed',
+            'progress_seconds': 0,
+            'total_duration': 0,
+            'season': e.season,
+            'episode': e.episode,
+            'last_watched_at': now,
+          },
+        )
+        .toList();
 
     await _client.from('watch_history').upsert(historyUpdates);
 
@@ -776,14 +836,14 @@ class WatchHistoryRepository {
 
     // 2. Calculate next episode using Domain Service
     final result = _seriesService.getNextEpisode(
-      seriesDetails, 
-      currentSeason, 
+      seriesDetails,
+      currentSeason,
       currentEpisode,
     );
-    
+
     final nextEpisodeInfo = result.next;
     final isAired = result.isAired;
-    
+
     if (nextEpisodeInfo != null) {
       if (!isAired) {
         // Next episode hasn't aired yet.
@@ -801,17 +861,19 @@ class WatchHistoryRepository {
         };
 
         // Update Local
-        await _db.upsertWatchHistory(LocalWatchHistoriesCompanion(
-          userId: Value(userId),
-          tmdbId: Value(tmdbId),
-          mediaType: Value('tv'),
-          season: Value(currentSeason),
-          episode: Value(currentEpisode),
-          status: Value('completed'),
-          progressSeconds: Value(0),
-          totalDuration: Value(0),
-          lastWatchedAt: Value(DateTime.now()),
-        ));
+        await _db.upsertWatchHistory(
+          LocalWatchHistoriesCompanion(
+            userId: Value(userId),
+            tmdbId: Value(tmdbId),
+            mediaType: Value('tv'),
+            season: Value(currentSeason),
+            episode: Value(currentEpisode),
+            status: Value('completed'),
+            progressSeconds: Value(0),
+            totalDuration: Value(0),
+            lastWatchedAt: Value(DateTime.now()),
+          ),
+        );
 
         // Update Remote
         await _client.from('watch_history').upsert(caughtUpEntry);
@@ -831,17 +893,19 @@ class WatchHistoryRepository {
       };
 
       // Update Local
-      await _db.upsertWatchHistory(LocalWatchHistoriesCompanion(
-        userId: Value(userId),
-        tmdbId: Value(tmdbId),
-        mediaType: Value('tv'),
-        season: Value(nextEpisodeInfo.season),
-        episode: Value(nextEpisodeInfo.episode),
-        status: Value('watching'),
-        progressSeconds: Value(0),
-        totalDuration: Value(0),
-        lastWatchedAt: Value(DateTime.now()),
-      ));
+      await _db.upsertWatchHistory(
+        LocalWatchHistoriesCompanion(
+          userId: Value(userId),
+          tmdbId: Value(tmdbId),
+          mediaType: Value('tv'),
+          season: Value(nextEpisodeInfo.season),
+          episode: Value(nextEpisodeInfo.episode),
+          status: Value('watching'),
+          progressSeconds: Value(0),
+          totalDuration: Value(0),
+          lastWatchedAt: Value(DateTime.now()),
+        ),
+      );
 
       // Update Remote
       await _client.from('watch_history').upsert(entry);
@@ -852,36 +916,37 @@ class WatchHistoryRepository {
   /// Prevents stale Continue Watching items when advancing episodes.
   /// If excludeSeason and excludeEpisode are provided, that specific entry is spared.
   Future<void> _clearStaleWatchingEntries(
-    String userId, 
+    String userId,
     int tmdbId, {
-    int? excludeSeason, 
+    int? excludeSeason,
     int? excludeEpisode,
   }) async {
     // Remote: delete all 'watching' rows for this series
-    var query = _client.from('watch_history').delete().match({
-      'user_id': userId,
-      'tmdb_id': tmdbId,
-      'media_type': 'tv',
-    }).eq('status', 'watching');
+    var query = _client
+        .from('watch_history')
+        .delete()
+        .match({'user_id': userId, 'tmdb_id': tmdbId, 'media_type': 'tv'})
+        .eq('status', 'watching');
 
     if (excludeSeason != null && excludeEpisode != null) {
       query = query.neq('season', excludeSeason).neq('episode', excludeEpisode);
     }
-    
+
     await query;
 
     // Local: delete all entries for this series that are 'watching'
-    await ((_db.delete(_db.localWatchHistories)
-      ..where((t) =>
-        t.userId.equals(userId) &
-        t.tmdbId.equals(tmdbId) &
-        t.mediaType.equals('tv') &
-        t.status.equals('watching') &
-        (excludeSeason != null && excludeEpisode != null
-            ? t.season.equals(excludeSeason).not() | t.episode.equals(excludeEpisode).not()
-            : const Constant(true))
-      ))
-    ).go();
+    await ((_db.delete(_db.localWatchHistories)..where(
+          (t) =>
+              t.userId.equals(userId) &
+              t.tmdbId.equals(tmdbId) &
+              t.mediaType.equals('tv') &
+              t.status.equals('watching') &
+              (excludeSeason != null && excludeEpisode != null
+                  ? t.season.equals(excludeSeason).not() |
+                        t.episode.equals(excludeEpisode).not()
+                  : const Constant(true)),
+        )))
+        .go();
   }
 
   /// Ensures an episode is marked as watching with 0 progress if not already tracked.
@@ -904,17 +969,19 @@ class WatchHistoryRepository {
 
     if (existing == null) {
       // Update Local
-      await _db.upsertWatchHistory(LocalWatchHistoriesCompanion(
-        userId: Value(userId),
-        tmdbId: Value(tmdbId),
-        mediaType: Value('tv'),
-        season: Value(season),
-        episode: Value(episode),
-        status: Value('watching'),
-        progressSeconds: Value(0),
-        totalDuration: Value(0),
-        lastWatchedAt: Value(DateTime.now()),
-      ));
+      await _db.upsertWatchHistory(
+        LocalWatchHistoriesCompanion(
+          userId: Value(userId),
+          tmdbId: Value(tmdbId),
+          mediaType: Value('tv'),
+          season: Value(season),
+          episode: Value(episode),
+          status: Value('watching'),
+          progressSeconds: Value(0),
+          totalDuration: Value(0),
+          lastWatchedAt: Value(DateTime.now()),
+        ),
+      );
 
       // Update Remote
       await _client.from('watch_history').upsert({
@@ -925,7 +992,7 @@ class WatchHistoryRepository {
         'episode': episode,
         'status': 'watching',
         'progress_seconds': 0,
-        'total_duration': 0, 
+        'total_duration': 0,
         'last_watched_at': DateTime.now().toIso8601String(),
       });
     }
@@ -948,9 +1015,9 @@ class WatchHistoryRepository {
 
   Future<void> removeFromContinueWatching(String userId, int tmdbId) async {
     // Update Local
-    await (_db.delete(_db.localWatchHistories)
-          ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
-        .go();
+    await (_db.delete(
+      _db.localWatchHistories,
+    )..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId))).go();
 
     // Update Remote
     await _client
@@ -983,4 +1050,5 @@ class WatchHistoryRepository {
 
       return controller.stream;
     });
-  }}
+  }
+}

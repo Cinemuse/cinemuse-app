@@ -76,7 +76,11 @@ class ErrorToast extends StatelessWidget {
             ),
             IconButton(
               onPressed: onDismiss,
-              icon: const Icon(Icons.close_rounded, color: Colors.white54, size: 18),
+              icon: const Icon(
+                Icons.close_rounded,
+                color: Colors.white54,
+                size: 18,
+              ),
             ),
           ],
         ),

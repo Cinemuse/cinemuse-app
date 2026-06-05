@@ -65,7 +65,9 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_scrollController.hasClients) {
           final offset = index * 140.0; // Estimated item height
-          _scrollController.jumpTo(offset.clamp(0.0, _scrollController.position.maxScrollExtent));
+          _scrollController.jumpTo(
+            offset.clamp(0.0, _scrollController.position.maxScrollExtent),
+          );
         }
       });
     }
@@ -93,25 +95,31 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
       itemBuilder: (context, index) {
         final episode = widget.episodes[index];
         final epNumber = episode['episode_number'];
-        
-        final watchCount = widget.watchedEpisodesCount?['${widget.seasonNumber}-$epNumber'] ?? 0;
+
+        final watchCount =
+            widget.watchedEpisodesCount?['${widget.seasonNumber}-$epNumber'] ??
+            0;
         final bool isWatched = watchCount > 0;
-        
+
         double? resumePercentage;
         final epKey = '${widget.seasonNumber}-$epNumber';
-        if (widget.episodeProgress != null && widget.episodeProgress!.containsKey(epKey)) {
+        if (widget.episodeProgress != null &&
+            widget.episodeProgress!.containsKey(epKey)) {
           final history = widget.episodeProgress![epKey]!;
-          if (history.status == WatchStatus.watching && history.totalDuration != null && history.totalDuration! > 0) {
+          if (history.status == WatchStatus.watching &&
+              history.totalDuration != null &&
+              history.totalDuration! > 0) {
             resumePercentage = history.progressSeconds / history.totalDuration!;
           }
         }
-        
+
         if (resumePercentage == null && widget.watchedData != null) {
           final lastSeason = widget.watchedData!['season'] as int?;
           final lastEpisode = widget.watchedData!['episode'] as int?;
-          
+
           if (lastSeason == widget.seasonNumber && lastEpisode == epNumber) {
-            final progress = widget.watchedData!['progress_seconds'] as int? ?? 0;
+            final progress =
+                widget.watchedData!['progress_seconds'] as int? ?? 0;
             final total = widget.watchedData!['total_duration'] as int? ?? 0;
             if (total > 0) {
               resumePercentage = progress / total;
@@ -128,13 +136,21 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
           watchCount: watchCount,
           resumePercentage: resumePercentage,
           onEpisodeTap: widget.onEpisodeTap,
-          onShowTvTimeComments: widget.onShowTvTimeComments != null 
-              ? () => widget.onShowTvTimeComments!(widget.seasonNumber, epNumber)
+          onShowTvTimeComments: widget.onShowTvTimeComments != null
+              ? () =>
+                    widget.onShowTvTimeComments!(widget.seasonNumber, epNumber)
               : null,
-          onMarkWatched: (s, e, date) => controller.logEpisodeWatch(tmdbId: tmdbId, season: s, episode: e, loggedAt: date),
-          onTrackOptions: (s, e) => _showTrackOptions(context, controller, tmdbId, s, e),
+          onMarkWatched: (s, e, date) => controller.logEpisodeWatch(
+            tmdbId: tmdbId,
+            season: s,
+            episode: e,
+            loggedAt: date,
+          ),
+          onTrackOptions: (s, e) =>
+              _showTrackOptions(context, controller, tmdbId, s, e),
           onFindMissingPreceding: _findMissingPreceding,
-          onShowMarkPrecedingModal: (s, e, m) => _showMarkPrecedingModal(context, controller, tmdbId, s, e, m),
+          onShowMarkPrecedingModal: (s, e, m) =>
+              _showMarkPrecedingModal(context, controller, tmdbId, s, e, m),
         );
       },
     );
@@ -146,10 +162,12 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
             (delta < 0 && target.pixels <= target.minScrollExtent)) {
           final parent = widget.mainScrollController;
           if (parent != null && parent.hasClients) {
-            parent.jumpTo((parent.position.pixels + delta).clamp(
-              parent.position.minScrollExtent,
-              parent.position.maxScrollExtent,
-            ));
+            parent.jumpTo(
+              (parent.position.pixels + delta).clamp(
+                parent.position.minScrollExtent,
+                parent.position.maxScrollExtent,
+              ),
+            );
           }
         }
       }
@@ -162,7 +180,9 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
           }
         },
         onPointerPanZoomUpdate: (PointerPanZoomUpdateEvent event) {
-          handleScrollDelta(event.panDelta.dy * -1); // panDelta is typically negative for scroll down? Wait, trackpad panDelta is positive for panning down the page? Actually, we'll just test the sign. Usually we scroll by subtracting panDelta.
+          handleScrollDelta(
+            event.panDelta.dy * -1,
+          ); // panDelta is typically negative for scroll down? Wait, trackpad panDelta is positive for panning down the page? Actually, we'll just test the sign. Usually we scroll by subtracting panDelta.
         },
         child: listView,
       );
@@ -171,18 +191,21 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
     return listView;
   }
 
-  List<({int season, int episode})> _findMissingPreceding(int currentSeason, int currentEpisode) {
+  List<({int season, int episode})> _findMissingPreceding(
+    int currentSeason,
+    int currentEpisode,
+  ) {
     final List<({int season, int episode})> missing = [];
     final seasons = widget.media['seasons'] as List? ?? [];
-    
+
     for (final season in seasons) {
       final sNum = season['season_number'] as int? ?? 0;
-      if (sNum == 0) continue; 
+      if (sNum == 0) continue;
       if (sNum > currentSeason) break;
-      
+
       final epCount = season['episode_count'] as int? ?? 0;
       final maxE = (sNum == currentSeason) ? currentEpisode - 1 : epCount;
-      
+
       for (int e = 1; e <= maxE; e++) {
         final key = '$sNum-$e';
         if ((widget.watchedEpisodesCount?[key] ?? 0) == 0) {
@@ -193,7 +216,14 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
     return missing;
   }
 
-  void _showMarkPrecedingModal(BuildContext context, MediaDetailsController controller, int tmdbId, int season, int episode, List<({int season, int episode})> missing) {
+  void _showMarkPrecedingModal(
+    BuildContext context,
+    MediaDetailsController controller,
+    int tmdbId,
+    int season,
+    int episode,
+    List<({int season, int episode})> missing,
+  ) {
     final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
@@ -201,29 +231,50 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
         backgroundColor: AppTheme.secondary,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(l10n.detailsMarkPreviousTitle, style: const TextStyle(color: Colors.white)),
+        title: Text(
+          l10n.detailsMarkPreviousTitle,
+          style: const TextStyle(color: Colors.white),
+        ),
         content: Text(
-          l10n.detailsMarkPreviousDesc(episode.toString(), missing.length.toString()),
+          l10n.detailsMarkPreviousDesc(
+            episode.toString(),
+            missing.length.toString(),
+          ),
           style: const TextStyle(color: AppTheme.textMuted),
         ),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              controller.logEpisodeWatch(tmdbId: tmdbId, season: season, episode: episode);
+              controller.logEpisodeWatch(
+                tmdbId: tmdbId,
+                season: season,
+                episode: episode,
+              );
             },
-            child: Text(l10n.detailsOnlyThisOne, style: const TextStyle(color: AppTheme.textMuted)),
+            child: Text(
+              l10n.detailsOnlyThisOne,
+              style: const TextStyle(color: AppTheme.textMuted),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              final allToMark = [...missing, (season: season, episode: episode)];
-              controller.logMultipleEpisodes(tmdbId: tmdbId, episodes: allToMark);
+              final allToMark = [
+                ...missing,
+                (season: season, episode: episode),
+              ];
+              controller.logMultipleEpisodes(
+                tmdbId: tmdbId,
+                episodes: allToMark,
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.accent,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text(l10n.detailsMarkAll),
           ),
@@ -232,17 +283,35 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
     );
   }
 
-  void _showTrackOptions(BuildContext context, MediaDetailsController controller, int tmdbId, int season, int episode) {
+  void _showTrackOptions(
+    BuildContext context,
+    MediaDetailsController controller,
+    int tmdbId,
+    int season,
+    int episode,
+  ) {
     showDialog(
       context: context,
       builder: (context) => TrackOptionsModal(
         season: season,
         episode: episode,
-        onRewatch: (date) => controller.logEpisodeWatch(tmdbId: tmdbId, season: season, episode: episode, loggedAt: date),
-        onRemoveOne: () => controller.deleteLatestEpisodeLog(tmdbId: tmdbId, season: season, episode: episode),
-        onRemoveAll: () => controller.deleteAllEpisodeLogs(tmdbId: tmdbId, season: season, episode: episode),
+        onRewatch: (date) => controller.logEpisodeWatch(
+          tmdbId: tmdbId,
+          season: season,
+          episode: episode,
+          loggedAt: date,
+        ),
+        onRemoveOne: () => controller.deleteLatestEpisodeLog(
+          tmdbId: tmdbId,
+          season: season,
+          episode: episode,
+        ),
+        onRemoveAll: () => controller.deleteAllEpisodeLogs(
+          tmdbId: tmdbId,
+          season: season,
+          episode: episode,
+        ),
       ),
     );
   }
 }
-

@@ -8,11 +8,7 @@ class VolumeControl extends StatefulWidget {
   final Player player;
   final double iconSize;
 
-  const VolumeControl({
-    super.key,
-    required this.player,
-    this.iconSize = 24,
-  });
+  const VolumeControl({super.key, required this.player, this.iconSize = 24});
 
   @override
   State<VolumeControl> createState() => VolumeControlState();
@@ -68,7 +64,11 @@ class VolumeControlState extends State<VolumeControl> {
                 iconData = Icons.volume_down_rounded;
               }
               return IconButton(
-                icon: Icon(iconData, color: Colors.white, size: widget.iconSize),
+                icon: Icon(
+                  iconData,
+                  color: Colors.white,
+                  size: widget.iconSize,
+                ),
                 onPressed: toggleMute,
                 padding: const EdgeInsets.all(8),
                 constraints: const BoxConstraints(),
@@ -92,12 +92,17 @@ class VolumeControlState extends State<VolumeControl> {
                     stream: widget.player.stream.volume,
                     initialData: widget.player.state.volume,
                     builder: (context, snapshot) {
-                      final volume = snapshot.data ?? widget.player.state.volume;
+                      final volume =
+                          snapshot.data ?? widget.player.state.volume;
                       return SliderTheme(
                         data: SliderThemeData(
                           trackHeight: 2,
-                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 4),
-                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 8),
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 4,
+                          ),
+                          overlayShape: const RoundSliderOverlayShape(
+                            overlayRadius: 8,
+                          ),
                           activeTrackColor: Colors.white,
                           inactiveTrackColor: Colors.white24,
                           thumbColor: Colors.white,

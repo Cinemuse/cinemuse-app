@@ -22,10 +22,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final isMobile = MediaQuery.of(context).size.width < 768;
 
     final categories = [
-      {'id': 'identity', 'label': l10n.settingsIdentity, 'icon': Icons.security},
-      {'id': 'customization', 'label': l10n.settingsCustomization, 'icon': Icons.smartphone},
+      {
+        'id': 'identity',
+        'label': l10n.settingsIdentity,
+        'icon': Icons.security,
+      },
+      {
+        'id': 'customization',
+        'label': l10n.settingsCustomization,
+        'icon': Icons.smartphone,
+      },
       {'id': 'livetv', 'label': l10n.settingsLiveTv, 'icon': Icons.live_tv},
-      {'id': 'integrations', 'label': l10n.settingsIntegrations, 'icon': Icons.link},
+      {
+        'id': 'integrations',
+        'label': l10n.settingsIntegrations,
+        'icon': Icons.link,
+      },
       {'id': 'import', 'label': l10n.settingsImport, 'icon': Icons.download},
     ];
 
@@ -43,9 +55,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Row(
                 children: [
                   if (!isMobile) ...[
-                    AppBackButton(
-                      onTap: () => Navigator.of(context).pop(),
-                    ),
+                    AppBackButton(onTap: () => Navigator.of(context).pop()),
                     const SizedBox(width: 16),
                   ],
                   Text(
@@ -66,7 +76,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   final category = categories[index];
                   final isActive = _activeCategory == category['id'];
                   return Material(
-                    color: isActive ? Colors.white.withValues(alpha: 0.05) : Colors.transparent,
+                    color: isActive
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.transparent,
                     child: InkWell(
                       onTap: () {
                         setState(() {
@@ -75,10 +87,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         });
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
                         decoration: BoxDecoration(
                           border: isActive
-                              ? const Border(right: BorderSide(color: AppTheme.accent, width: 2))
+                              ? const Border(
+                                  right: BorderSide(
+                                    color: AppTheme.accent,
+                                    width: 2,
+                                  ),
+                                )
                               : null,
                         ),
                         child: Row(
@@ -86,19 +106,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             Icon(
                               category['icon'] as IconData,
                               size: 20,
-                              color: isActive ? Colors.white : AppTheme.textMuted,
+                              color: isActive
+                                  ? Colors.white
+                                  : AppTheme.textMuted,
                             ),
                             const SizedBox(width: 16),
                             Text(
                               category['label'] as String,
                               style: TextStyle(
-                                color: isActive ? Colors.white : AppTheme.textMuted,
+                                color: isActive
+                                    ? Colors.white
+                                    : AppTheme.textMuted,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             if (isMobile) ...[
                               const Spacer(),
-                              const Icon(Icons.chevron_right, color: AppTheme.textMuted, size: 20),
+                              const Icon(
+                                Icons.chevron_right,
+                                color: AppTheme.textMuted,
+                                size: 20,
+                              ),
                             ],
                           ],
                         ),
@@ -149,7 +177,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               leading: _showMobileContent
                   ? IconButton(
                       icon: const Icon(Icons.arrow_back),
-                      onPressed: () => setState(() => _showMobileContent = false),
+                      onPressed: () =>
+                          setState(() => _showMobileContent = false),
                     )
                   : const BackButton(),
             )
@@ -164,7 +193,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.01),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.05),
+                    ),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Row(

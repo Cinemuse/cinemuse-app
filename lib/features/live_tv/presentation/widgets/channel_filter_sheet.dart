@@ -77,42 +77,42 @@ class _FilterSheetContentState extends ConsumerState<_FilterSheetContent> {
       blurSigma: 16,
       backgroundColor: AppTheme.surface.withValues(alpha: 0.85),
       border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      borderRadius: widget.isMobile 
+      borderRadius: widget.isMobile
           ? const BorderRadius.vertical(top: Radius.circular(24))
           : BorderRadius.circular(20),
       showHandle: widget.isMobile,
       padding: const EdgeInsets.all(24).copyWith(top: widget.isMobile ? 0 : 24),
       child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.75,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildHeader(l10n),
-                const SizedBox(height: 24),
-                _buildGroupModeToggle(l10n),
-                const SizedBox(height: 20),
-                Flexible(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildGroupChips(l10n, groupsAsync),
-                        if (subProviders.isNotEmpty) ...[
-                          const SizedBox(height: 20),
-                          _buildSubProviderChips(l10n, subProviders),
-                        ],
-                      ],
-                    ),
-                  ),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildHeader(l10n),
+            const SizedBox(height: 24),
+            _buildGroupModeToggle(l10n),
+            const SizedBox(height: 20),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildGroupChips(l10n, groupsAsync),
+                    if (subProviders.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      _buildSubProviderChips(l10n, subProviders),
+                    ],
+                  ],
                 ),
-                const SizedBox(height: 24),
-                _buildActions(l10n),
-              ],
+              ),
             ),
-          ),
+            const SizedBox(height: 24),
+            _buildActions(l10n),
+          ],
+        ),
+      ),
     );
   }
 
@@ -188,7 +188,9 @@ class _FilterSheetContentState extends ConsumerState<_FilterSheetContent> {
   }
 
   Widget _buildGroupChips(
-      AppLocalizations l10n, AsyncValue<List<String>> groupsAsync) {
+    AppLocalizations l10n,
+    AsyncValue<List<String>> groupsAsync,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -217,14 +219,16 @@ class _FilterSheetContentState extends ConsumerState<_FilterSheetContent> {
                   _selectedSubProvider = null;
                 }),
               ),
-              ...groups.map((g) => _FilterChip(
-                    label: g,
-                    isSelected: _selectedGroup == g,
-                    onTap: () => setState(() {
-                      _selectedGroup = g;
-                      _selectedSubProvider = null;
-                    }),
-                  )),
+              ...groups.map(
+                (g) => _FilterChip(
+                  label: g,
+                  isSelected: _selectedGroup == g,
+                  onTap: () => setState(() {
+                    _selectedGroup = g;
+                    _selectedSubProvider = null;
+                  }),
+                ),
+              ),
             ],
           ),
           loading: () => const SizedBox(
@@ -244,7 +248,9 @@ class _FilterSheetContentState extends ConsumerState<_FilterSheetContent> {
   }
 
   Widget _buildSubProviderChips(
-      AppLocalizations l10n, List<String> subProviders) {
+    AppLocalizations l10n,
+    List<String> subProviders,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -267,11 +273,13 @@ class _FilterSheetContentState extends ConsumerState<_FilterSheetContent> {
               isSelected: _selectedSubProvider == null,
               onTap: () => setState(() => _selectedSubProvider = null),
             ),
-            ...subProviders.map((s) => _FilterChip(
-                  label: s,
-                  isSelected: _selectedSubProvider == s,
-                  onTap: () => setState(() => _selectedSubProvider = s),
-                )),
+            ...subProviders.map(
+              (s) => _FilterChip(
+                label: s,
+                isSelected: _selectedSubProvider == s,
+                onTap: () => setState(() => _selectedSubProvider = s),
+              ),
+            ),
           ],
         ),
       ],
@@ -322,23 +330,25 @@ class _FilterSheetContentState extends ConsumerState<_FilterSheetContent> {
     if (_selectedGroup == null) return [];
 
     final channelsAsync = ref.watch(channelsProvider);
-    return channelsAsync.whenOrNull(data: (channels) {
-          final inGroup = channels.where((ch) {
-            final chGroup = _groupMode == LiveTvGroupMode.category
-                ? ch.group
-                : ch.provider;
-            return chGroup == _selectedGroup;
-          });
+    return channelsAsync.whenOrNull(
+          data: (channels) {
+            final inGroup = channels.where((ch) {
+              final chGroup = _groupMode == LiveTvGroupMode.category
+                  ? ch.group
+                  : ch.provider;
+              return chGroup == _selectedGroup;
+            });
 
-          final subs = inGroup
-              .map((ch) => ch.subProvider)
-              .where((s) => s != null && s.isNotEmpty)
-              .cast<String>()
-              .toSet()
-              .toList();
-          subs.sort();
-          return subs;
-        }) ??
+            final subs = inGroup
+                .map((ch) => ch.subProvider)
+                .where((s) => s != null && s.isNotEmpty)
+                .cast<String>()
+                .toSet()
+                .toList();
+            subs.sort();
+            return subs;
+          },
+        ) ??
         [];
   }
 }

@@ -13,10 +13,12 @@ extension SupabaseFutureX<T> on Future<T> {
 
 extension SupabaseStreamX<T> on Stream<T> {
   Stream<T> withErrorHandling() {
-    return transform(StreamTransformer.fromHandlers(
-      handleError: (error, stackTrace, sink) {
-        sink.addError(SupabaseErrorHandler.handleError(error), stackTrace);
-      },
-    ));
+    return transform(
+      StreamTransformer.fromHandlers(
+        handleError: (error, stackTrace, sink) {
+          sink.addError(SupabaseErrorHandler.handleError(error), stackTrace);
+        },
+      ),
+    );
   }
 }

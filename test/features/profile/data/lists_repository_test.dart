@@ -17,7 +17,10 @@ class FakeFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
   PostgrestFilterBuilder<T> eq(String column, Object value) => this;
 
   @override
-  Future<R> then<R>(FutureOr<R> Function(T value) onValue, {Function? onError}) {
+  Future<R> then<R>(
+    FutureOr<R> Function(T value) onValue, {
+    Function? onError,
+  }) {
     return Future.value(_value).then(onValue, onError: onError);
   }
 }
@@ -27,12 +30,21 @@ class FakeQueryBuilder extends Fake implements SupabaseQueryBuilder {
   FakeQueryBuilder([this._value]);
 
   @override
-  PostgrestFilterBuilder<List<Map<String, dynamic>>> select([String columns = '*']) {
-    return FakeFilterBuilder<List<Map<String, dynamic>>>(_value as List<Map<String, dynamic>>? ?? []);
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> select([
+    String columns = '*',
+  ]) {
+    return FakeFilterBuilder<List<Map<String, dynamic>>>(
+      _value as List<Map<String, dynamic>>? ?? [],
+    );
   }
 
   @override
-  PostgrestFilterBuilder<List<Map<String, dynamic>>> upsert(Object values, {String? onConflict, bool ignoreDuplicates = false, bool defaultToNull = true}) {
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> upsert(
+    Object values, {
+    String? onConflict,
+    bool ignoreDuplicates = false,
+    bool defaultToNull = true,
+  }) {
     return FakeFilterBuilder<List<Map<String, dynamic>>>([]);
   }
 }
@@ -67,12 +79,14 @@ void main() {
               'media_tmdb_id': 555,
               'media_type': 'movie',
               'added_at': DateTime.now().toIso8601String(),
-            }
-          ]
-        }
+            },
+          ],
+        },
       ];
 
-      when(() => mockSupabase.from(any())).thenAnswer((_) => FakeQueryBuilder(remoteData) as SupabaseQueryBuilder);
+      when(
+        () => mockSupabase.from(any()),
+      ).thenAnswer((_) => FakeQueryBuilder(remoteData) as SupabaseQueryBuilder);
 
       await repository.syncUserLists(userId);
 
@@ -87,19 +101,23 @@ void main() {
 
     test('watchUserLists correctly maps and combines DB data', () async {
       final now = DateTime.now();
-      await database.upsertUserList(CachedUserListsCompanion.insert(
-        id: 'list-1',
-        userId: userId,
-        name: 'My List',
-        type: 'custom',
-        createdAt: Value(now),
-      ));
-      await database.upsertListItem(CachedListItemsCompanion.insert(
-        listId: 'list-1',
-        mediaTmdbId: 555,
-        mediaType: 'movie',
-        addedAt: Value(now),
-      ));
+      await database.upsertUserList(
+        CachedUserListsCompanion.insert(
+          id: 'list-1',
+          userId: userId,
+          name: 'My List',
+          type: 'custom',
+          createdAt: Value(now),
+        ),
+      );
+      await database.upsertListItem(
+        CachedListItemsCompanion.insert(
+          listId: 'list-1',
+          mediaTmdbId: 555,
+          mediaType: 'movie',
+          addedAt: Value(now),
+        ),
+      );
 
       final stream = repository.watchUserLists(userId);
       final result = await stream.first;

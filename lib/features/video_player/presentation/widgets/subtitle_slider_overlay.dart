@@ -35,7 +35,8 @@ class SubtitleSliderOverlay extends ConsumerWidget {
     VoidCallback? onReset;
     VoidCallback? onSave;
 
-    final currentStyle = state.customSubtitleStyle ?? localSettings.subtitleStyle;
+    final currentStyle =
+        state.customSubtitleStyle ?? localSettings.subtitleStyle;
 
     switch (type) {
       case SliderOverlayType.sync:
@@ -53,9 +54,13 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           min: 12.0,
           max: 48.0,
           labelBuilder: (v) => '${v.toInt()} px',
-          onChanged: (val) => controller.updateSubtitleStyle(currentStyle.copyWith(fontSize: val)),
+          onChanged: (val) => controller.updateSubtitleStyle(
+            currentStyle.copyWith(fontSize: val),
+          ),
         );
-        onReset = () => controller.updateSubtitleStyle(currentStyle.copyWith(fontSize: 24.0));
+        onReset = () => controller.updateSubtitleStyle(
+          currentStyle.copyWith(fontSize: 24.0),
+        );
         onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
         break;
       case SliderOverlayType.position:
@@ -66,9 +71,13 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           max: 1.0,
           divisions: 20,
           labelBuilder: (v) => '${(v * 100).toInt()}%',
-          onChanged: (val) => controller.updateSubtitleStyle(currentStyle.copyWith(verticalPosition: val)),
+          onChanged: (val) => controller.updateSubtitleStyle(
+            currentStyle.copyWith(verticalPosition: val),
+          ),
         );
-        onReset = () => controller.updateSubtitleStyle(currentStyle.copyWith(verticalPosition: 0.05));
+        onReset = () => controller.updateSubtitleStyle(
+          currentStyle.copyWith(verticalPosition: 0.05),
+        );
         onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
         break;
       case SliderOverlayType.background:
@@ -79,21 +88,29 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           max: 1.0,
           labelBuilder: (v) => '${(v * 100).toInt()}%',
           onChanged: (val) {
-            controller.updateSubtitleStyle(currentStyle.copyWith(
-              backgroundColor: Colors.black.withValues(alpha: val),
-            ));
+            controller.updateSubtitleStyle(
+              currentStyle.copyWith(
+                backgroundColor: Colors.black.withValues(alpha: val),
+              ),
+            );
           },
         );
-        onReset = () => controller.updateSubtitleStyle(currentStyle.copyWith(backgroundColor: Colors.transparent));
+        onReset = () => controller.updateSubtitleStyle(
+          currentStyle.copyWith(backgroundColor: Colors.transparent),
+        );
         onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
         break;
       case SliderOverlayType.color:
         title = l10n.playerAppearanceTextColor;
         control = _ColorControl(
           selectedColor: currentStyle.color,
-          onColorSelected: (color) => controller.updateSubtitleStyle(currentStyle.copyWith(color: color)),
+          onColorSelected: (color) => controller.updateSubtitleStyle(
+            currentStyle.copyWith(color: color),
+          ),
         );
-        onReset = () => controller.updateSubtitleStyle(currentStyle.copyWith(color: Colors.white));
+        onReset = () => controller.updateSubtitleStyle(
+          currentStyle.copyWith(color: Colors.white),
+        );
         onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
         break;
       case SliderOverlayType.none:
@@ -105,11 +122,9 @@ class SubtitleSliderOverlay extends ConsumerWidget {
         // Backdrop scrim to close
         GestureDetector(
           onTap: () => onClose(false),
-          child: Container(
-            color: Colors.black26,
-          ),
+          child: Container(color: Colors.black26),
         ),
-        
+
         // Floating Panel
         Align(
           alignment: Alignment.topRight,
@@ -146,31 +161,38 @@ class SubtitleSliderOverlay extends ConsumerWidget {
                           if (onReset != null)
                             TextButton.icon(
                               onPressed: onReset,
-                              icon: const Icon(Icons.refresh, size: 16, color: AppTheme.accent),
+                              icon: const Icon(
+                                Icons.refresh,
+                                size: 16,
+                                color: AppTheme.accent,
+                              ),
                               label: Text(
                                 l10n.playerAppearanceReset,
-                                style: const TextStyle(color: AppTheme.accent, fontSize: 12),
+                                style: const TextStyle(
+                                  color: AppTheme.accent,
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
                         ],
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Control
                       control,
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // Action Buttons
                       Row(
                         children: [
                           if (onSave != null) ...[
-                             Expanded(
-                                child: _OverlayButton(
-                                  label: l10n.commonCancel,
-                                  onPressed: () => onClose(false),
-                                ),
+                            Expanded(
+                              child: _OverlayButton(
+                                label: l10n.commonCancel,
+                                onPressed: () => onClose(false),
                               ),
+                            ),
                             const SizedBox(width: 12),
                           ],
                           Expanded(
@@ -253,10 +275,7 @@ class _SyncButtonControl extends StatelessWidget {
   final double value;
   final ValueChanged<double> onChanged;
 
-  const _SyncButtonControl({
-    required this.value,
-    required this.onChanged,
-  });
+  const _SyncButtonControl({required this.value, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -276,9 +295,15 @@ class _SyncButtonControl extends StatelessWidget {
           children: [
             _StepButton(label: '-5', onTap: () => onChanged(value - 5.0)),
             _StepButton(label: '-1', onTap: () => onChanged(value - 1.0)),
-            _StepButton(label: '-.1', onTap: () => onChanged(_round(value - 0.1))),
+            _StepButton(
+              label: '-.1',
+              onTap: () => onChanged(_round(value - 0.1)),
+            ),
             const SizedBox(width: 8),
-            _StepButton(label: '+.1', onTap: () => onChanged(_round(value + 0.1))),
+            _StepButton(
+              label: '+.1',
+              onTap: () => onChanged(_round(value + 0.1)),
+            ),
             _StepButton(label: '+1', onTap: () => onChanged(value + 1.0)),
             _StepButton(label: '+5', onTap: () => onChanged(value + 5.0)),
           ],
@@ -365,18 +390,26 @@ class _ColorControl extends StatelessWidget {
                 color: isSelected ? Colors.white : Colors.white24,
                 width: isSelected ? 3 : 1,
               ),
-              boxShadow: isSelected ? [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.4), // 100/255 approx 0.4
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                )
-              ] : null,
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(
+                          alpha: 0.4,
+                        ), // 100/255 approx 0.4
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : null,
             ),
-            child: isSelected ? Icon(
-              Icons.check,
-              color: color.computeLuminance() > 0.5 ? Colors.black : Colors.white,
-            ) : null,
+            child: isSelected
+                ? Icon(
+                    Icons.check,
+                    color: color.computeLuminance() > 0.5
+                        ? Colors.black
+                        : Colors.white,
+                  )
+                : null,
           ),
         );
       }).toList(),
@@ -404,12 +437,17 @@ class _OverlayButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: isPrimary ? AppTheme.accent : Colors.white10,
           foregroundColor: isPrimary ? Colors.black : Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           elevation: 0,
         ),
         child: Text(
           label.toUpperCase(),
-          style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.1),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.1,
+          ),
         ),
       ),
     );

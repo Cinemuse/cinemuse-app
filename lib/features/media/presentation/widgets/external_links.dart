@@ -14,8 +14,8 @@ class ExternalLinks extends StatelessWidget {
   final int tmdbId;
 
   const ExternalLinks({
-    super.key, 
-    this.externalIds, 
+    super.key,
+    this.externalIds,
     this.homepage,
     required this.title,
     required this.type,
@@ -41,7 +41,8 @@ class ExternalLinks extends StatelessWidget {
                 if (externalIds!['instagram_id'] != null)
                   _SocialLink(
                     icon: LucideIcons.instagram,
-                    url: 'https://instagram.com/${externalIds!['instagram_id']}',
+                    url:
+                        'https://instagram.com/${externalIds!['instagram_id']}',
                     label: 'Instagram',
                   ),
                 if (externalIds!['facebook_id'] != null)
@@ -72,12 +73,10 @@ class ExternalLinks extends StatelessWidget {
               if (externalIds!['wikidata_id'] != null)
                 _DatabaseLink(
                   label: 'Wikidata',
-                  url: 'https://www.wikidata.org/wiki/${externalIds!['wikidata_id']}',
+                  url:
+                      'https://www.wikidata.org/wiki/${externalIds!['wikidata_id']}',
                 ),
-              _DatabaseLink(
-                label: 'TMDB',
-                url: 'https://www.themoviedb.org/',
-              ),
+              _DatabaseLink(label: 'TMDB', url: 'https://www.themoviedb.org/'),
             ],
           ),
         ],
@@ -91,7 +90,11 @@ class _SocialLink extends StatelessWidget {
   final String url;
   final String label;
 
-  const _SocialLink({required this.icon, required this.url, required this.label});
+  const _SocialLink({
+    required this.icon,
+    required this.url,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +106,11 @@ class _SocialLink extends StatelessWidget {
           padding: const EdgeInsets.only(right: 16),
           child: HoverScale(
             scale: 1.2,
-            child: Icon(icon, color: AppTheme.textWhite.withValues(alpha: 0.6), size: 20),
+            child: Icon(
+              icon,
+              color: AppTheme.textWhite.withValues(alpha: 0.6),
+              size: 20,
+            ),
           ),
         ),
       ),
@@ -130,7 +137,9 @@ class _DatabaseLink extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppTheme.secondary.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.05)),
+              border: Border.all(
+                color: AppTheme.textWhite.withValues(alpha: 0.05),
+              ),
             ),
             child: Text(
               label,

@@ -63,7 +63,8 @@ class StreamMetadata {
   final ReleaseQuality quality;
   final List<ReleaseFlag> flags;
   final String? size; // Human readable size (e.g. "1.5 GB")
-  final Map<String, dynamic>? custom; // For provider-specific flags like YouTube's needsAudio
+  final Map<String, dynamic>?
+  custom; // For provider-specific flags like YouTube's needsAudio
 
   const StreamMetadata({
     required this.video,
@@ -75,10 +76,8 @@ class StreamMetadata {
     this.custom,
   });
 
-  factory StreamMetadata.empty() => const StreamMetadata(
-    video: VideoMetadata(),
-    audio: AudioMetadata(),
-  );
+  factory StreamMetadata.empty() =>
+      const StreamMetadata(video: VideoMetadata(), audio: AudioMetadata());
 
   StreamMetadata copyWith({
     VideoMetadata? video,
@@ -127,10 +126,7 @@ class AudioMetadata {
   final List<AudioFormat> formats;
   final int? channels; // e.g. 6 for 5.1
 
-  const AudioMetadata({
-    this.formats = const [],
-    this.channels,
-  });
+  const AudioMetadata({this.formats = const [], this.channels});
 
   bool get isAtmos => formats.contains(AudioFormat.atmos);
 }

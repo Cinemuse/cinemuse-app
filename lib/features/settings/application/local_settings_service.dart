@@ -36,15 +36,18 @@ class LocalSettingsNotifier extends StateNotifier<LocalSettings> {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     final fontSize = prefs.getDouble(_keyFontSize) ?? 24.0;
     final colorHex = prefs.getString(_keyColor) ?? '#FFFFFFFF';
     final bgColorHex = prefs.getString(_keyBgColor) ?? '#00000000';
     final position = prefs.getDouble(_keyPosition) ?? 0.05;
 
     final maxResIndex = prefs.getInt(_keyMaxResolution);
-    final maxResolution = maxResIndex != null 
-        ? VideoResolution.values.firstWhere((e) => e.index == maxResIndex, orElse: () => VideoResolution.unknown)
+    final maxResolution = maxResIndex != null
+        ? VideoResolution.values.firstWhere(
+            (e) => e.index == maxResIndex,
+            orElse: () => VideoResolution.unknown,
+          )
         : VideoResolution.unknown;
 
     state = LocalSettings(
@@ -60,11 +63,14 @@ class LocalSettingsNotifier extends StateNotifier<LocalSettings> {
 
   Future<void> updateSubtitleStyle(SubtitleStyle style) async {
     state = state.copyWith(subtitleStyle: style);
-    
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_keyFontSize, style.fontSize);
     await prefs.setString(_keyColor, SubtitleStyle.colorToHex(style.color));
-    await prefs.setString(_keyBgColor, SubtitleStyle.colorToHex(style.backgroundColor));
+    await prefs.setString(
+      _keyBgColor,
+      SubtitleStyle.colorToHex(style.backgroundColor),
+    );
     await prefs.setDouble(_keyPosition, style.verticalPosition);
   }
 
@@ -81,6 +87,7 @@ class LocalSettingsNotifier extends StateNotifier<LocalSettings> {
   }
 }
 
-final localSettingsProvider = StateNotifierProvider<LocalSettingsNotifier, LocalSettings>((ref) {
-  return LocalSettingsNotifier();
-});
+final localSettingsProvider =
+    StateNotifierProvider<LocalSettingsNotifier, LocalSettings>((ref) {
+      return LocalSettingsNotifier();
+    });

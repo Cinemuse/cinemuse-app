@@ -30,18 +30,21 @@ class ProfileRepository {
       if (response != null) {
         final profile = Profile.fromJson(response);
         // Sync to local cache
-        await _db.upsertProfile(CachedProfilesCompanion(
-          id: Value(profile.id),
-          username: Value(profile.username),
-          avatarUrl: Value(profile.avatarUrl),
-          preferences: Value(jsonEncode(profile.preferences)),
-          createdAt: Value(profile.createdAt),
-          updatedAt: Value(profile.updatedAt),
-        ));
+        await _db.upsertProfile(
+          CachedProfilesCompanion(
+            id: Value(profile.id),
+            username: Value(profile.username),
+            avatarUrl: Value(profile.avatarUrl),
+            preferences: Value(jsonEncode(profile.preferences)),
+            createdAt: Value(profile.createdAt),
+            updatedAt: Value(profile.updatedAt),
+          ),
+        );
         return profile;
       }
     } catch (e) {
-      if (!e.toString().contains('Failed host lookup') && !e.toString().contains('SocketException')) {
+      if (!e.toString().contains('Failed host lookup') &&
+          !e.toString().contains('SocketException')) {
         debugPrint('ProfileRepository: Network error fetching profile: $e');
       }
     }
@@ -53,8 +56,8 @@ class ProfileRepository {
         id: cached.id,
         username: cached.username,
         avatarUrl: cached.avatarUrl,
-        preferences: cached.preferences != null 
-            ? jsonDecode(cached.preferences!) as Map<String, dynamic> 
+        preferences: cached.preferences != null
+            ? jsonDecode(cached.preferences!) as Map<String, dynamic>
             : {},
         createdAt: cached.createdAt,
         updatedAt: cached.updatedAt,
@@ -64,34 +67,43 @@ class ProfileRepository {
     return null;
   }
 
-  Future<void> updateProfile(String userId, Map<String, dynamic> updates) async {
+  Future<void> updateProfile(
+    String userId,
+    Map<String, dynamic> updates,
+  ) async {
     // 1. Update Remote
-    await _client.from('profiles').update(updates).eq('id', userId).withErrorHandling();
+    await _client
+        .from('profiles')
+        .update(updates)
+        .eq('id', userId)
+        .withErrorHandling();
 
     // 2. Update Local Cache (Best effort)
     try {
       final cached = await _db.getCachedProfile(userId);
       if (cached != null) {
-        final Map<String, dynamic> currentPrefs = cached.preferences != null 
-            ? jsonDecode(cached.preferences!) as Map<String, dynamic> 
+        final Map<String, dynamic> currentPrefs = cached.preferences != null
+            ? jsonDecode(cached.preferences!) as Map<String, dynamic>
             : {};
-        
+
         final updatedPrefs = {...currentPrefs, ...?updates['preferences']};
-        
-        await _db.upsertProfile(CachedProfilesCompanion(
-          id: Value(userId),
-          username: Value(updates['username'] ?? cached.username),
-          avatarUrl: Value(updates['avatar_url'] ?? cached.avatarUrl),
-          preferences: Value(jsonEncode(updatedPrefs)),
-          createdAt: Value(cached.createdAt),
-          updatedAt: Value(DateTime.now()),
-        ));
+
+        await _db.upsertProfile(
+          CachedProfilesCompanion(
+            id: Value(userId),
+            username: Value(updates['username'] ?? cached.username),
+            avatarUrl: Value(updates['avatar_url'] ?? cached.avatarUrl),
+            preferences: Value(jsonEncode(updatedPrefs)),
+            createdAt: Value(cached.createdAt),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
       }
     } catch (e) {
       debugPrint('ProfileRepository: Failed to update local cache: $e');
     }
   }
-  
+
   // Note: Profile creation is handled by Database Trigger on auth.users insert
   // But we might want a manual way if sync fails or for testing
   Future<void> createProfile({

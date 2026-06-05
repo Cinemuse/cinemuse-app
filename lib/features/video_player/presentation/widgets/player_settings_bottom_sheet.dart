@@ -30,17 +30,17 @@ class PlayerSettingsBottomSheet extends ConsumerStatefulWidget {
   });
 
   static Future<void> show(
-    BuildContext context, 
-    CinemaPlayerState state, 
-    PlayerParams params, 
+    BuildContext context,
+    CinemaPlayerState state,
+    PlayerParams params,
     ValueChanged<SliderOverlayType> onOverlayRequested, {
     SettingsView initialView = SettingsView.main,
   }) {
     return AppBottomSheet.show(
       context: context,
       child: PlayerSettingsBottomSheet(
-        state: state, 
-        params: params, 
+        state: state,
+        params: params,
         onOverlayRequested: onOverlayRequested,
         initialView: initialView,
       ),
@@ -48,10 +48,12 @@ class PlayerSettingsBottomSheet extends ConsumerStatefulWidget {
   }
 
   @override
-  ConsumerState<PlayerSettingsBottomSheet> createState() => _PlayerSettingsBottomSheetState();
+  ConsumerState<PlayerSettingsBottomSheet> createState() =>
+      _PlayerSettingsBottomSheetState();
 }
 
-class _PlayerSettingsBottomSheetState extends ConsumerState<PlayerSettingsBottomSheet> {
+class _PlayerSettingsBottomSheetState
+    extends ConsumerState<PlayerSettingsBottomSheet> {
   late SettingsView _currentView;
 
   @override
@@ -70,51 +72,55 @@ class _PlayerSettingsBottomSheetState extends ConsumerState<PlayerSettingsBottom
 
   @override
   Widget build(BuildContext context) {
-    final currentState = ref.watch(playerControllerProvider(widget.params)).value ?? widget.state;
+    final currentState =
+        ref.watch(playerControllerProvider(widget.params)).value ??
+        widget.state;
     final screenHeight = MediaQuery.of(context).size.height;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     final maxSheetHeight = screenHeight * (isLandscape ? 0.9 : 0.6);
     final minSheetHeight = screenHeight * 0.15;
 
     return AppBottomSheet(
       blurSigma: 12,
       backgroundColor: AppTheme.glass.withValues(alpha: 0.8),
-      border: Border.all(color: AppTheme.border.withValues(alpha: 0.1), width: 1.5),
+      border: Border.all(
+        color: AppTheme.border.withValues(alpha: 0.1),
+        width: 1.5,
+      ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           minHeight: minSheetHeight,
           maxHeight: maxSheetHeight,
         ),
         child: AnimatedSize(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOutCubic,
-                alignment: Alignment.topCenter,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
-                    return Stack(
-                      alignment: Alignment.topCenter,
-                      children: <Widget>[
-                        ...previousChildren,
-                        if (currentChild != null) currentChild,
-                      ],
-                    );
-                  },
-                  transitionBuilder: (Widget child, Animation<double> animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: child,
-                    );
-                  },
-                  child: KeyedSubtree(
-                    key: ValueKey(_currentView),
-                    child: _buildView(_currentView, currentState),
-                  ),
-                ),
-              ),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOutCubic,
+          alignment: Alignment.topCenter,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            layoutBuilder:
+                (Widget? currentChild, List<Widget> previousChildren) {
+                  return Stack(
+                    alignment: Alignment.topCenter,
+                    children: <Widget>[
+                      ...previousChildren,
+                      if (currentChild != null) currentChild,
+                    ],
+                  );
+                },
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            child: KeyedSubtree(
+              key: ValueKey(_currentView),
+              child: _buildView(_currentView, currentState),
             ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -125,10 +131,18 @@ class _PlayerSettingsBottomSheetState extends ConsumerState<PlayerSettingsBottom
           state: currentState,
           onNavigate: (viewStr) {
             switch (viewStr) {
-              case 'quality': _navigateTo(SettingsView.quality); break;
-              case 'audio': _navigateTo(SettingsView.audio); break;
-              case 'subtitles': _navigateTo(SettingsView.subtitles); break;
-              case 'appearance': _navigateTo(SettingsView.appearance); break;
+              case 'quality':
+                _navigateTo(SettingsView.quality);
+                break;
+              case 'audio':
+                _navigateTo(SettingsView.audio);
+                break;
+              case 'subtitles':
+                _navigateTo(SettingsView.subtitles);
+                break;
+              case 'appearance':
+                _navigateTo(SettingsView.appearance);
+                break;
             }
           },
         );

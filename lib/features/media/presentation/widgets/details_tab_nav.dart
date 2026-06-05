@@ -2,14 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
-enum DetailsTab {
-  episodes,
-  cast,
-  reviews,
-  videos,
-  finances,
-  links,
-}
+enum DetailsTab { episodes, cast, reviews, videos, finances, links }
 
 class DetailsTabNav extends StatelessWidget {
   final DetailsTab activeTab;
@@ -33,13 +26,12 @@ class DetailsTabNav extends StatelessWidget {
 
     // 1:1 Order from cinemuse-web
     final tabs = [
-      if (isTV && numberOfSeasons > 0) 
+      if (isTV && numberOfSeasons > 0)
         _TabItem(DetailsTab.episodes, l10n.detailsEpisodes),
       _TabItem(DetailsTab.cast, l10n.detailsCast),
       _TabItem(DetailsTab.reviews, l10n.detailsReviews),
       _TabItem(DetailsTab.videos, l10n.detailsVideos),
-      if (hasFinances) 
-        _TabItem(DetailsTab.finances, l10n.detailsFinances),
+      if (hasFinances) _TabItem(DetailsTab.finances, l10n.detailsFinances),
       _TabItem(DetailsTab.links, l10n.detailsLinks),
     ];
 
@@ -58,9 +50,7 @@ class DetailsTabNav extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 0),
-          child: Row(
-            children: tabs.map((tab) => _buildTab(tab)).toList(),
-          ),
+          child: Row(children: tabs.map((tab) => _buildTab(tab)).toList()),
         ),
       ),
     );

@@ -15,7 +15,9 @@ class HeroSection extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     final backdrop = media!['backdrop_path'];
-    final imageUrl = backdrop != null ? "https://image.tmdb.org/t/p/original$backdrop" : null;
+    final imageUrl = backdrop != null
+        ? "https://image.tmdb.org/t/p/original$backdrop"
+        : null;
     final title = media!['title'] ?? media!['name'] ?? 'Unknown';
     final overview = media!['overview'] ?? '';
 
@@ -31,14 +33,15 @@ class HeroSection extends StatelessWidget {
               imageUrl,
               fit: BoxFit.cover,
               alignment: Alignment.topCenter,
-              errorBuilder: (context, error, stackTrace) => Container(color: AppTheme.surface),
+              errorBuilder: (context, error, stackTrace) =>
+                  Container(color: AppTheme.surface),
             )
           else
             Container(color: AppTheme.surface),
 
           // Gradient Overlay (Left + Bottom)
           // We combine them or layer them.
-          
+
           // Left to Right (Primary -> Transparent)
           Container(
             decoration: const BoxDecoration(
@@ -77,16 +80,14 @@ class HeroSection extends StatelessWidget {
             bottom: -1,
             left: 0,
             right: 0,
-            child: Container(
-              height: 2,
-              color: AppTheme.primary,
-            ),
+            child: Container(height: 2, color: AppTheme.primary),
           ),
 
           // Content Layer
           Positioned(
             left: AppTheme.getResponsiveHorizontalPadding(context),
-            bottom: 80, // Slightly higher to accommodate negative margin of content below
+            bottom:
+                80, // Slightly higher to accommodate negative margin of content below
             right: AppTheme.getResponsiveHorizontalPadding(context),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,13 +95,18 @@ class HeroSection extends StatelessWidget {
               children: [
                 // "FEATURED" Tag
                 Container(
-                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.accent.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: AppTheme.accent.withValues(alpha: 0.5)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: AppTheme.accent.withValues(alpha: 0.5),
                     ),
-                   child: Text(
+                  ),
+                  child: Text(
                     l10n.commonFeatured,
                     style: const TextStyle(
                       color: AppTheme.accent,
@@ -145,23 +151,32 @@ class HeroSection extends StatelessWidget {
                     children: [
                       ElevatedButton.icon(
                         onPressed: () {
-                           Navigator.of(context, rootNavigator: true).push(
-                              MaterialPageRoute(
-                                builder: (_) => VideoPlayerScreen(
-                                  queryId: media!['id'].toString(), 
-                                  type: media!['media_type'] ?? 'movie',
-                                ),
+                          Navigator.of(context, rootNavigator: true).push(
+                            MaterialPageRoute(
+                              builder: (_) => VideoPlayerScreen(
+                                queryId: media!['id'].toString(),
+                                type: media!['media_type'] ?? 'movie',
                               ),
-                            );
+                            ),
+                          );
                         },
                         icon: const Icon(Icons.play_arrow_rounded, size: 28),
                         label: Text(l10n.detailsPlayNow),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.accent,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-                          textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 20,
+                          ),
+                          textStyle: Theme.of(context).textTheme.bodyMedium!
+                              .copyWith(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           elevation: 10,
                           shadowColor: AppTheme.accent.withValues(alpha: 0.5),
                         ),
@@ -169,23 +184,35 @@ class HeroSection extends StatelessWidget {
                       const SizedBox(width: 16),
                       OutlinedButton.icon(
                         onPressed: () {
-                           Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => MediaDetailsScreen(
-                                  mediaId: media!['id'].toString(), 
-                                  mediaType: media!['media_type'] ?? 'movie',
-                                ),
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => MediaDetailsScreen(
+                                mediaId: media!['id'].toString(),
+                                mediaType: media!['media_type'] ?? 'movie',
                               ),
-                            );
+                            ),
+                          );
                         },
                         icon: const Icon(Icons.info_outline_rounded, size: 28),
                         label: Text(l10n.homeMoreInfo),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
-                          side: BorderSide(color: Colors.white.withValues(alpha: 0.2), width: 2),
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-                          textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            width: 2,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 20,
+                          ),
+                          textStyle: Theme.of(context).textTheme.bodyMedium!
+                              .copyWith(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           backgroundColor: Colors.white.withValues(alpha: 0.1),
                         ),
                       ),

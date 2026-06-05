@@ -66,8 +66,8 @@ class CustomPlaylistsNotifier extends StateNotifier<List<LiveTvPlaylist>> {
 
 final customPlaylistsProvider =
     StateNotifierProvider<CustomPlaylistsNotifier, List<LiveTvPlaylist>>((ref) {
-  return CustomPlaylistsNotifier();
-});
+      return CustomPlaylistsNotifier();
+    });
 
 // ---------------------------------------------------------------------------
 // Data Providers
@@ -86,8 +86,9 @@ final channelsProvider = FutureProvider<List<Channel>>((ref) async {
   final resolvedPlaylists = await Future.wait(
     enabledPlaylists.map((playlist) async {
       if (!playlist.isLocal) return playlist;
-      final absolutePath =
-          await LocalPlaylistStorage.resolveToAbsolutePath(playlist.urlOrPath);
+      final absolutePath = await LocalPlaylistStorage.resolveToAbsolutePath(
+        playlist.urlOrPath,
+      );
       return playlist.copyWith(urlOrPath: absolutePath);
     }),
   );
@@ -98,9 +99,9 @@ final channelsProvider = FutureProvider<List<Channel>>((ref) async {
 /// Full EPG data keyed by source → channel id → programs.
 final epgDataProvider =
     FutureProvider<Map<String, Map<String, List<EpgProgram>>>>((ref) async {
-  final repo = ref.watch(liveTvRepositoryProvider);
-  return repo.fetchEpg();
-});
+      final repo = ref.watch(liveTvRepositoryProvider);
+      return repo.fetchEpg();
+    });
 
 // ---------------------------------------------------------------------------
 // UI State — Tabs & Filters
@@ -136,8 +137,9 @@ class ChannelFilter {
   }) {
     return ChannelFilter(
       groupMode: groupMode ?? this.groupMode,
-      selectedGroup:
-          selectedGroup != null ? selectedGroup() : this.selectedGroup,
+      selectedGroup: selectedGroup != null
+          ? selectedGroup()
+          : this.selectedGroup,
       selectedSubProvider: selectedSubProvider != null
           ? selectedSubProvider()
           : this.selectedSubProvider,
@@ -146,8 +148,9 @@ class ChannelFilter {
 }
 
 /// The current filter state (set via the filter sheet).
-final channelFilterProvider =
-    StateProvider<ChannelFilter>((ref) => const ChannelFilter());
+final channelFilterProvider = StateProvider<ChannelFilter>(
+  (ref) => const ChannelFilter(),
+);
 
 /// The currently selected / playing channel.
 final selectedChannelProvider = StateProvider<Channel?>((ref) => null);
@@ -189,8 +192,8 @@ class FavoriteChannelsNotifier extends StateNotifier<Set<String>> {
 
 final favoriteChannelIdsProvider =
     StateNotifierProvider<FavoriteChannelsNotifier, Set<String>>((ref) {
-  return FavoriteChannelsNotifier();
-});
+      return FavoriteChannelsNotifier();
+    });
 
 // ---------------------------------------------------------------------------
 // Recently Watched
@@ -219,8 +222,8 @@ class RecentChannelsNotifier extends StateNotifier<List<String>> {
 
 final recentChannelIdsProvider =
     StateNotifierProvider<RecentChannelsNotifier, List<String>>((ref) {
-  return RecentChannelsNotifier();
-});
+      return RecentChannelsNotifier();
+    });
 
 // ---------------------------------------------------------------------------
 // Derived: Groups & Sub-Providers (for filter sheet)
@@ -229,13 +232,11 @@ final recentChannelIdsProvider =
 /// All available groups (Categories or Providers) for the filter sheet.
 final groupsProvider = Provider<AsyncValue<List<String>>>((ref) {
   final channelsAsync = ref.watch(channelsProvider);
-  final mode =
-      ref.watch(channelFilterProvider.select((f) => f.groupMode));
+  final mode = ref.watch(channelFilterProvider.select((f) => f.groupMode));
 
   return channelsAsync.whenData((channels) {
     final groups = channels
-        .map((ch) =>
-            mode == LiveTvGroupMode.category ? ch.group : ch.provider)
+        .map((ch) => mode == LiveTvGroupMode.category ? ch.group : ch.provider)
         .where((g) => g != null && g.isNotEmpty)
         .cast<String>()
         .toSet()
@@ -255,25 +256,27 @@ final subProvidersForGroupProvider = Provider<List<String>>((ref) {
   final channelsAsync = ref.watch(channelsProvider);
   final filter = ref.watch(channelFilterProvider);
 
-  return channelsAsync.whenOrNull(data: (channels) {
-        if (filter.selectedGroup == null) return <String>[];
+  return channelsAsync.whenOrNull(
+        data: (channels) {
+          if (filter.selectedGroup == null) return <String>[];
 
-        final inGroup = channels.where((ch) {
-          final chGroup = filter.groupMode == LiveTvGroupMode.category
-              ? ch.group
-              : ch.provider;
-          return chGroup == filter.selectedGroup;
-        });
+          final inGroup = channels.where((ch) {
+            final chGroup = filter.groupMode == LiveTvGroupMode.category
+                ? ch.group
+                : ch.provider;
+            return chGroup == filter.selectedGroup;
+          });
 
-        final subs = inGroup
-            .map((ch) => ch.subProvider)
-            .where((s) => s != null && s.isNotEmpty)
-            .cast<String>()
-            .toSet()
-            .toList();
-        subs.sort();
-        return subs;
-      }) ??
+          final subs = inGroup
+              .map((ch) => ch.subProvider)
+              .where((s) => s != null && s.isNotEmpty)
+              .cast<String>()
+              .toSet()
+              .toList();
+          subs.sort();
+          return subs;
+        },
+      ) ??
       [];
 });
 
@@ -290,8 +293,9 @@ class ChannelSection {
 
 /// Channels grouped into sections for sticky-header display.
 /// When a filter is active, returns a single section (no headers needed).
-final sectionedChannelsProvider =
-    Provider<AsyncValue<List<ChannelSection>>>((ref) {
+final sectionedChannelsProvider = Provider<AsyncValue<List<ChannelSection>>>((
+  ref,
+) {
   final tab = ref.watch(liveTvTabProvider);
   final query = ref.watch(channelSearchQueryProvider).trim().toLowerCase();
   final filter = ref.watch(channelFilterProvider);
@@ -334,8 +338,7 @@ final sectionedChannelsProvider =
 });
 
 /// Flat filtered channels (convenience for scroll-to-selected logic).
-final filteredChannelsProvider =
-    Provider<AsyncValue<List<Channel>>>((ref) {
+final filteredChannelsProvider = Provider<AsyncValue<List<Channel>>>((ref) {
   final sectioned = ref.watch(sectionedChannelsProvider);
   return sectioned.whenData((sections) {
     return sections.expand((s) => s.channels).toList();
@@ -347,7 +350,9 @@ final filteredChannelsProvider =
 // ---------------------------------------------------------------------------
 
 List<Channel> _resolveRecents(
-    List<Channel> allChannels, List<String> recentIds) {
+  List<Channel> allChannels,
+  List<String> recentIds,
+) {
   final channelMap = {for (final ch in allChannels) ch.uniqueId: ch};
   return recentIds
       .map((id) => channelMap[id])
@@ -356,8 +361,7 @@ List<Channel> _resolveRecents(
       .toList();
 }
 
-List<Channel> _applyGroupFilter(
-    List<Channel> channels, ChannelFilter filter) {
+List<Channel> _applyGroupFilter(List<Channel> channels, ChannelFilter filter) {
   if (!filter.isActive) return channels;
 
   var result = channels.where((ch) {
@@ -406,18 +410,27 @@ List<ChannelSection> _buildSections(List<Channel> channels) {
 // ---------------------------------------------------------------------------
 
 /// Current program for a given channel.
-final currentProgramProvider =
-    Provider.family<EpgProgram?, Channel>((ref, channel) {
-  final programs = ref.watch(epgDataProvider.select((asyncEpg) {
-    return asyncEpg.whenOrNull(data: (epgData) {
-      if (channel.epgSource == null || channel.epgId == null) return <EpgProgram>[];
-      return epgData[channel.epgSource]?[channel.epgId] ?? <EpgProgram>[];
-    }) ?? <EpgProgram>[];
-  }));
+final currentProgramProvider = Provider.family<EpgProgram?, Channel>((
+  ref,
+  channel,
+) {
+  final programs = ref.watch(
+    epgDataProvider.select((asyncEpg) {
+      return asyncEpg.whenOrNull(
+            data: (epgData) {
+              if (channel.epgSource == null || channel.epgId == null)
+                return <EpgProgram>[];
+              return epgData[channel.epgSource]?[channel.epgId] ??
+                  <EpgProgram>[];
+            },
+          ) ??
+          <EpgProgram>[];
+    }),
+  );
 
   if (programs.isEmpty) return null;
   final now = DateTime.now();
-  
+
   for (int i = 0; i < programs.length; i++) {
     final p = programs[i];
     if (now.isAfter(p.startTime) && now.isBefore(p.endTime)) {
@@ -428,18 +441,27 @@ final currentProgramProvider =
 });
 
 /// Next program for a given channel.
-final nextProgramProvider =
-    Provider.family<EpgProgram?, Channel>((ref, channel) {
-  final programs = ref.watch(epgDataProvider.select((asyncEpg) {
-    return asyncEpg.whenOrNull(data: (epgData) {
-      if (channel.epgSource == null || channel.epgId == null) return <EpgProgram>[];
-      return epgData[channel.epgSource]?[channel.epgId] ?? <EpgProgram>[];
-    }) ?? <EpgProgram>[];
-  }));
+final nextProgramProvider = Provider.family<EpgProgram?, Channel>((
+  ref,
+  channel,
+) {
+  final programs = ref.watch(
+    epgDataProvider.select((asyncEpg) {
+      return asyncEpg.whenOrNull(
+            data: (epgData) {
+              if (channel.epgSource == null || channel.epgId == null)
+                return <EpgProgram>[];
+              return epgData[channel.epgSource]?[channel.epgId] ??
+                  <EpgProgram>[];
+            },
+          ) ??
+          <EpgProgram>[];
+    }),
+  );
 
   if (programs.isEmpty) return null;
   final now = DateTime.now();
-  
+
   for (int i = 0; i < programs.length; i++) {
     final p = programs[i];
     if (now.isAfter(p.startTime) && now.isBefore(p.endTime)) {

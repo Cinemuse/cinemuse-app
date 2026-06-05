@@ -28,7 +28,9 @@ class InitializationManager extends BaseManager {
     required this.tmdbService,
   });
 
-  Future<YouTubeInitializationResult> initializeYouTube(PlayerParams params) async {
+  Future<YouTubeInitializationResult> initializeYouTube(
+    PlayerParams params,
+  ) async {
     final handler = YouTubeSourceHandler(youtubeHandler, player);
     return await handler.initialize(params);
   }
@@ -41,7 +43,7 @@ class InitializationManager extends BaseManager {
   }) async {
     final handler = VodSourceHandler(rdHandler, resolver, tmdbService, player);
     return await handler.initialize(
-      params, 
+      params,
       onStatusUpdate: onStatusUpdate,
       onMediaDetailsFetched: onMediaDetailsFetched,
       skipTrigger: skipTrigger,

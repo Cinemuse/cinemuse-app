@@ -10,9 +10,10 @@ import 'package:media_kit/media_kit.dart';
 
 /// Shared provider for external subtitle search results.
 /// Populated by [TrackManager], consumed by the UI.
-final externalSubtitlesProvider = StateProvider.family<AsyncValue<List<ExternalSubtitle>>, PlayerParams>(
-  (ref, params) => const AsyncValue.loading(),
-);
+final externalSubtitlesProvider =
+    StateProvider.family<AsyncValue<List<ExternalSubtitle>>, PlayerParams>(
+      (ref, params) => const AsyncValue.loading(),
+    );
 
 /// Manages automatic track (audio & subtitle) selection based on user preferences.
 ///
@@ -21,9 +22,15 @@ final externalSubtitlesProvider = StateProvider.family<AsyncValue<List<ExternalS
 /// Also handles background fetching of external subtitles and auto-applying the best match.
 class TrackManager extends BaseManager {
   final PlayerParams params;
-  
-  TrackManager({required super.ref, required super.player, required this.params}) {
-    _tracksSubscription = player.stream.tracks.listen((_) => _onTracksChanged());
+
+  TrackManager({
+    required super.ref,
+    required super.player,
+    required this.params,
+  }) {
+    _tracksSubscription = player.stream.tracks.listen(
+      (_) => _onTracksChanged(),
+    );
   }
 
   StreamSubscription? _tracksSubscription;
@@ -75,7 +82,8 @@ class TrackManager extends BaseManager {
     _isAutoSelecting = true;
     _hasFetchedExternal = false;
 
-    if (_preferredAudioLang(ref.read(settingsProvider), isAnime).isEmpty) return;
+    if (_preferredAudioLang(ref.read(settingsProvider), isAnime).isEmpty)
+      return;
 
     _startAutoSelectTimeout();
     unawaited(_fetchAndCacheExternalSubtitles());
@@ -90,27 +98,41 @@ class TrackManager extends BaseManager {
   // ---------------------------------------------------------------------------
 
   String _preferredAudioLang(UserSettings s, bool isAnime) =>
-      (s.splitAnimePreferences && isAnime) ? s.animeAudioLanguage.toLowerCase() : s.playerLanguage.toLowerCase();
+      (s.splitAnimePreferences && isAnime)
+      ? s.animeAudioLanguage.toLowerCase()
+      : s.playerLanguage.toLowerCase();
 
   String _preferredSubLang(UserSettings s, bool isAnime) =>
-      (s.splitAnimePreferences && isAnime) ? s.animeSubtitleLanguage.toLowerCase() : s.subtitleLanguage.toLowerCase();
+      (s.splitAnimePreferences && isAnime)
+      ? s.animeSubtitleLanguage.toLowerCase()
+      : s.subtitleLanguage.toLowerCase();
 
   bool _preferredShowSubs(UserSettings s, bool isAnime) =>
-      (s.splitAnimePreferences && isAnime) ? s.animeShowSubtitles : s.showSubtitles;
+      (s.splitAnimePreferences && isAnime)
+      ? s.animeShowSubtitles
+      : s.showSubtitles;
 
   // ---------------------------------------------------------------------------
   // Track selection
   // ---------------------------------------------------------------------------
 
-  bool _hasRealTracks() => player.state.tracks.audio.any((t) => t.id != 'auto' && t.id != 'no');
+  bool _hasRealTracks() =>
+      player.state.tracks.audio.any((t) => t.id != 'auto' && t.id != 'no');
 
   void _startAutoSelectTimeout() {
     _autoSelectTimeout?.cancel();
-    _autoSelectTimeout = Timer(const Duration(seconds: 20), () => _isAutoSelecting = false);
+    _autoSelectTimeout = Timer(
+      const Duration(seconds: 20),
+      () => _isAutoSelecting = false,
+    );
   }
 
   void _onTracksChanged() {
-    if (!_isAutoSelecting || _isAnime == null || _isPerformingSelection || !_hasRealTracks()) return;
+    if (!_isAutoSelecting ||
+        _isAnime == null ||
+        _isPerformingSelection ||
+        !_hasRealTracks())
+      return;
     _performSelection();
   }
 
@@ -157,7 +179,9 @@ class TrackManager extends BaseManager {
 
     // Fallback: select first real track if still on 'auto'
     if (current.id == 'auto') {
-      final firstReal = tracks.where((t) => t.id != 'auto' && t.id != 'no').firstOrNull;
+      final firstReal = tracks
+          .where((t) => t.id != 'auto' && t.id != 'no')
+          .firstOrNull;
       if (firstReal != null) await player.setAudioTrack(firstReal);
     }
   }
@@ -177,7 +201,9 @@ class TrackManager extends BaseManager {
 
     // Fallback: select first real track if still on 'auto'
     if (current.id == 'auto') {
-      final firstReal = tracks.where((t) => t.id != 'auto' && t.id != 'no').firstOrNull;
+      final firstReal = tracks
+          .where((t) => t.id != 'auto' && t.id != 'no')
+          .firstOrNull;
       if (firstReal != null) {
         await player.setSubtitleTrack(firstReal);
       }
@@ -189,7 +215,9 @@ class TrackManager extends BaseManager {
   /// Disables subtitles by selecting the 'no' track.
   Future<void> _disableSubtitles() async {
     if (player.state.track.subtitle.id == 'no') return;
-    final noTrack = player.state.tracks.subtitle.where((t) => t.id == 'no').firstOrNull;
+    final noTrack = player.state.tracks.subtitle
+        .where((t) => t.id == 'no')
+        .firstOrNull;
     if (noTrack != null) await player.setSubtitleTrack(noTrack);
   }
 
@@ -244,15 +272,19 @@ class TrackManager extends BaseManager {
     final bestMatch = _findBestExternalMatch(results, subLang) ?? results.first;
 
     try {
-      final downloadUrl = await ref.read(subtitleServiceProvider).getDownloadUrl(bestMatch);
+      final downloadUrl = await ref
+          .read(subtitleServiceProvider)
+          .getDownloadUrl(bestMatch);
       if (downloadUrl == null || downloadUrl.isEmpty) return;
       if (_isSubtitleAlreadyLoaded(downloadUrl)) return;
 
-      await player.setSubtitleTrack(SubtitleTrack.uri(
-        downloadUrl,
-        title: bestMatch.title,
-        language: bestMatch.language,
-      ));
+      await player.setSubtitleTrack(
+        SubtitleTrack.uri(
+          downloadUrl,
+          title: bestMatch.title,
+          language: bestMatch.language,
+        ),
+      );
     } catch (_) {}
   }
 
@@ -267,7 +299,10 @@ class TrackManager extends BaseManager {
   }
 
   /// Finds the best external subtitle matching the preferred language.
-  ExternalSubtitle? _findBestExternalMatch(List<ExternalSubtitle> subs, String lang) {
+  ExternalSubtitle? _findBestExternalMatch(
+    List<ExternalSubtitle> subs,
+    String lang,
+  ) {
     final codes = LanguageMapper.getCodes(lang);
     return subs.cast<ExternalSubtitle?>().firstWhere(
       (s) => codes.any((code) => s!.language.toLowerCase() == code),

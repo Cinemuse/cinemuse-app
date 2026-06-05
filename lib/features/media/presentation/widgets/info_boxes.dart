@@ -14,10 +14,13 @@ class CreativeVisionBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     final crew = (details?['credits']?['crew'] as List?) ?? [];
     final directors = crew.where((c) => c['job'] == 'Director').toList();
-    final writers = crew.where((c) => c['department'] == 'Writing').take(3).toList();
+    final writers = crew
+        .where((c) => c['department'] == 'Writing')
+        .take(3)
+        .toList();
     final creators = (details?['created_by'] as List?) ?? [];
 
     final allDirectors = [...creators, ...directors];
@@ -28,7 +31,8 @@ class CreativeVisionBox extends StatelessWidget {
     }
     final finalDirectors = uniqueDirectors.values.toList();
 
-    if (finalDirectors.isEmpty && writers.isEmpty) return const SizedBox.shrink();
+    if (finalDirectors.isEmpty && writers.isEmpty)
+      return const SizedBox.shrink();
 
     return BentoBox(
       title: l10n.detailsCreativeVision,
@@ -37,11 +41,17 @@ class CreativeVisionBox extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (finalDirectors.isNotEmpty) ...[
-            _Label(isSeries ? l10n.detailsCreatorsAndDirectors : l10n.detailsDirector),
+            _Label(
+              isSeries
+                  ? l10n.detailsCreatorsAndDirectors
+                  : l10n.detailsDirector,
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
-              children: finalDirectors.map((d) => _PersonLink(name: d['name'])).toList(),
+              children: finalDirectors
+                  .map((d) => _PersonLink(name: d['name']))
+                  .toList(),
             ),
             const SizedBox(height: 16),
           ],
@@ -50,7 +60,9 @@ class CreativeVisionBox extends StatelessWidget {
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
-              children: writers.map((w) => _PersonLink(name: w['name'], isMuted: true)).toList(),
+              children: writers
+                  .map((w) => _PersonLink(name: w['name'], isMuted: true))
+                  .toList(),
             ),
           ],
         ],
@@ -96,11 +108,20 @@ class VerdictBox extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.forum_outlined, size: 14, color: AppTheme.accent),
+                      Icon(
+                        Icons.forum_outlined,
+                        size: 14,
+                        color: AppTheme.accent,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         l10n.detailsTvTimeComments.toUpperCase(),
-                        style: const TextStyle(color: AppTheme.accent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                        style: const TextStyle(
+                          color: AppTheme.accent,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ],
                   ),
@@ -119,11 +140,20 @@ class VerdictBox extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.star_outline, size: 14, color: AppTheme.accent),
+                      Icon(
+                        Icons.star_outline,
+                        size: 14,
+                        color: AppTheme.accent,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         l10n.detailsRate,
-                        style: const TextStyle(color: AppTheme.accent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                        style: const TextStyle(
+                          color: AppTheme.accent,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ],
                   ),
@@ -136,22 +166,45 @@ class VerdictBox extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (userReview != null)
-             const Text('Your review goes here (placeholder)', style: TextStyle(color: AppTheme.textWhite))
+            const Text(
+              'Your review goes here (placeholder)',
+              style: TextStyle(color: AppTheme.textWhite),
+            )
           else if (featuredReview != null) ...[
             Row(
               children: [
                 CircleAvatar(
                   radius: 16,
                   backgroundColor: AppTheme.accent,
-                  child: Text(featuredReview['author']?[0]?.toUpperCase() ?? '?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    featuredReview['author']?[0]?.toUpperCase() ?? '?',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(featuredReview['author'] ?? l10n.commonAnonymous, style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
-                      Text(l10n.detailsFeaturedCritic, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                      Text(
+                        featuredReview['author'] ?? l10n.commonAnonymous,
+                        style: const TextStyle(
+                          color: AppTheme.textWhite,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        l10n.detailsFeaturedCritic,
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 11,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -161,10 +214,10 @@ class VerdictBox extends StatelessWidget {
             Text(
               '"${featuredReview['content']}"',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.textWhite.withValues(alpha: 0.8),
-                    fontSize: 13,
-                    fontStyle: FontStyle.italic,
-                  ),
+                color: AppTheme.textWhite.withValues(alpha: 0.8),
+                fontSize: 13,
+                fontStyle: FontStyle.italic,
+              ),
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
@@ -172,10 +225,17 @@ class VerdictBox extends StatelessWidget {
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Text(l10n.detailsNoReviews, style: const TextStyle(color: AppTheme.textMuted, fontSize: 13, fontStyle: FontStyle.italic)),
+                child: Text(
+                  l10n.detailsNoReviews,
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
               ),
             ),
-          
+
           if (reviews.length > 1)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
@@ -188,15 +248,28 @@ class VerdictBox extends StatelessWidget {
                       onPressed: onShowReviewsModal,
                       style: TextButton.styleFrom(
                         foregroundColor: AppTheme.accent,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         minimumSize: Size.zero, // Remove default min size
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Shrink tap target
+                        tapTargetSize: MaterialTapTargetSize
+                            .shrinkWrap, // Shrink tap target
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(color: AppTheme.textWhite.withValues(alpha: 0.1)),
+                          side: BorderSide(
+                            color: AppTheme.textWhite.withValues(alpha: 0.1),
+                          ),
                         ),
                       ),
-                      child: Text(l10n.detailsReviewsAll.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                      child: Text(
+                        l10n.detailsReviewsAll.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -230,14 +303,18 @@ class FinancesBox extends StatelessWidget {
         children: [
           _FinanceItem(
             label: l10n.detailsBudget.toUpperCase(),
-            value: budget > 0 ? '\$${(budget / 1000000).toStringAsFixed(1)}M' : l10n.commonUnknown,
+            value: budget > 0
+                ? '\$${(budget / 1000000).toStringAsFixed(1)}M'
+                : l10n.commonUnknown,
             progress: 0.5,
             color: AppTheme.textMuted,
           ),
           const SizedBox(height: 20),
           _FinanceItem(
             label: l10n.detailsRevenue.toUpperCase(),
-            value: revenue > 0 ? '\$${(revenue / 1000000).toStringAsFixed(1)}M' : l10n.commonUnknown,
+            value: revenue > 0
+                ? '\$${(revenue / 1000000).toStringAsFixed(1)}M'
+                : l10n.commonUnknown,
             progress: revenuePercentage.clamp(0.0, 1.0),
             color: Colors.green,
           ),
@@ -273,7 +350,11 @@ class ProductionDNA extends StatelessWidget {
           return MouseRegion(
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
-              onTap: () => onCompanyClick({'type': 'company', 'id': pc['id'], 'name': pc['name']}),
+              onTap: () => onCompanyClick({
+                'type': 'company',
+                'id': pc['id'],
+                'name': pc['name'],
+              }),
               child: logoPath != null
                   ? Image.network(
                       'https://image.tmdb.org/t/p/w200$logoPath',
@@ -304,7 +385,12 @@ class _Label extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text.toUpperCase(),
-      style: const TextStyle(color: AppTheme.textMuted, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+      style: const TextStyle(
+        color: AppTheme.textMuted,
+        fontSize: 10,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 1.2,
+      ),
     );
   }
 }
@@ -325,13 +411,21 @@ class _PersonLink extends StatelessWidget {
         },
         child: Container(
           decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: isMuted ? Colors.transparent : AppTheme.textWhite.withValues(alpha: 0.2))),
+            border: Border(
+              bottom: BorderSide(
+                color: isMuted
+                    ? Colors.transparent
+                    : AppTheme.textWhite.withValues(alpha: 0.2),
+              ),
+            ),
           ),
           child: Text(
             name,
             style: DesktopTypography.bodySecondary.copyWith(
               color: isMuted ? AppTheme.textMuted : AppTheme.textWhite,
-              decoration: isMuted ? TextDecoration.none : TextDecoration.underline,
+              decoration: isMuted
+                  ? TextDecoration.none
+                  : TextDecoration.underline,
               decorationColor: AppTheme.textWhite.withValues(alpha: 0.2),
             ),
           ),
@@ -359,16 +453,26 @@ class _FinanceItem extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: DesktopTypography.captionMeta.copyWith(fontWeight: FontWeight.bold)),
+        Text(
+          label,
+          style: DesktopTypography.captionMeta.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         const SizedBox(height: 6),
-        Text(value, style: AppTheme.monoStyle(color: AppTheme.textWhite, fontSize: 20)),
+        Text(
+          value,
+          style: AppTheme.monoStyle(color: AppTheme.textWhite, fontSize: 20),
+        ),
         const SizedBox(height: 8),
         ClipRRect(
           borderRadius: BorderRadius.circular(2),
           child: LinearProgressIndicator(
             value: progress,
             backgroundColor: AppTheme.textWhite.withValues(alpha: 0.05),
-            valueColor: AlwaysStoppedAnimation<Color>(color.withValues(alpha: 0.8)),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              color.withValues(alpha: 0.8),
+            ),
             minHeight: 4,
           ),
         ),

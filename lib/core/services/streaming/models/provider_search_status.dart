@@ -1,8 +1,4 @@
-enum ProviderStatus {
-  searching,
-  finished,
-  failed,
-}
+enum ProviderStatus { searching, finished, failed }
 
 class ProviderSearchStatus {
   final String providerName;

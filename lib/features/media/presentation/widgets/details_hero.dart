@@ -19,7 +19,8 @@ class DetailsHero extends ConsumerWidget {
   final double contentPadding;
   final bool isFavorite;
   final bool isInWatchlist;
-  final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})? seriesWatchStatus;
+  final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})?
+  seriesWatchStatus;
   final VoidCallback onListTap;
   final VoidCallback? onTrackTap;
   final int? movieWatchCount;
@@ -44,29 +45,39 @@ class DetailsHero extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final type = media['type'] ?? (details['title'] != null ? 'movie' : 'series');
+    final type =
+        media['type'] ?? (details['title'] != null ? 'movie' : 'series');
     final titleIt = MediaItem.extractTitleFromTmdb(details, 'it');
-    final titleEn = MediaItem.extractTitleFromTmdb(details, 'en') ?? media['title'] ?? '';
+    final titleEn =
+        MediaItem.extractTitleFromTmdb(details, 'en') ?? media['title'] ?? '';
     final String title = titleEn;
     final tagline = details['tagline'];
     final backdropPath = details['backdrop_path'] ?? media['backdrop_path'];
     final voteAverage = details['vote_average'] as num?;
-    final releaseDateStr = (details['release_date'] ?? details['first_air_date'] ?? media['release_date'] ?? '').toString();
+    final releaseDateStr =
+        (details['release_date'] ??
+                details['first_air_date'] ??
+                media['release_date'] ??
+                '')
+            .toString();
     final DateTime? releaseDate = DateTime.tryParse(releaseDateStr);
     String formattedDate = '';
     if (releaseDate != null) {
       try {
-        formattedDate = DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(releaseDate);
+        formattedDate = DateFormat.yMMMd(
+          Localizations.localeOf(context).languageCode,
+        ).format(releaseDate);
       } catch (e) {
         // Fallback to default locale if current locale fails
         formattedDate = DateFormat.yMMMd().format(releaseDate);
       }
     }
     final genres = (details['genres'] as List?) ?? [];
-    
+
     final runtime = type == 'movie'
         ? details['runtime']
-        : (details['episode_run_time'] as List?)?.firstOrNull ?? details['runtime'];
+        : (details['episode_run_time'] as List?)?.firstOrNull ??
+              details['runtime'];
 
     final mediaItem = MediaItem(
       tmdbId: int.parse(media['id'].toString()),
@@ -76,7 +87,9 @@ class DetailsHero extends ConsumerWidget {
       posterPath: details['poster_path'],
       backdropPath: details['backdrop_path'],
       voteAverage: voteAverage?.toDouble(),
-      releaseDate: DateTime.tryParse(details['release_date'] ?? details['first_air_date'] ?? ''),
+      releaseDate: DateTime.tryParse(
+        details['release_date'] ?? details['first_air_date'] ?? '',
+      ),
       updatedAt: DateTime.now(),
     );
 
@@ -92,7 +105,7 @@ class DetailsHero extends ConsumerWidget {
               'https://image.tmdb.org/t/p/original$backdropPath',
               fit: BoxFit.cover,
             ),
-          
+
           // Gradients
           Container(
             decoration: BoxDecoration(
@@ -109,15 +122,12 @@ class DetailsHero extends ConsumerWidget {
               ),
             ),
           ),
-          
+
           Positioned(
             bottom: -1,
             left: 0,
             right: 0,
-            child: Container(
-              height: 2,
-              color: AppTheme.primary,
-            ),
+            child: Container(height: 2, color: AppTheme.primary),
           ),
           Container(
             decoration: BoxDecoration(
@@ -135,7 +145,9 @@ class DetailsHero extends ConsumerWidget {
           ),
 
           Positioned(
-            top: MediaQuery.of(context).padding.top > 0 ? MediaQuery.of(context).padding.top + 16 : 24,
+            top: MediaQuery.of(context).padding.top > 0
+                ? MediaQuery.of(context).padding.top + 16
+                : 24,
             left: contentPadding,
             child: AppBackButton(
               onTap: () => Navigator.of(context).pop(),
@@ -154,17 +166,11 @@ class DetailsHero extends ConsumerWidget {
                 if (tagline != null && tagline.toString().isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Text(
-                      '"$tagline"',
-                      style: AppTheme.taglineStyle,
-                    ),
+                    child: Text('"$tagline"', style: AppTheme.taglineStyle),
                   ),
 
                 // Title
-                Text(
-                  title,
-                  style: DesktopTypography.heroTitle,
-                ),
+                Text(title, style: DesktopTypography.heroTitle),
                 const SizedBox(height: 16),
 
                 // Metadata Row
@@ -173,10 +179,7 @@ class DetailsHero extends ConsumerWidget {
                   spacing: 12,
                   runSpacing: 8,
                   children: [
-                    Text(
-                      formattedDate,
-                      style: DesktopTypography.captionMeta,
-                    ),
+                    Text(formattedDate, style: DesktopTypography.captionMeta),
                     if (runtime != null) ...[
                       const _DotSeparator(),
                       Text(
@@ -214,18 +217,26 @@ class DetailsHero extends ConsumerWidget {
                     spacing: 12,
                     children: [
                       Text(
-                      '${details['number_of_seasons'] ?? 0} ${l10n.detailsSeasonLabel}${details['number_of_seasons'] != 1 ? 's' : ''}',
-                      style: TextStyle(color: AppTheme.textWhite.withValues(alpha: 0.6), fontSize: 13),
-                    ),
-                    const _DotSeparator(),
-                    Text(
-                      '${details['number_of_episodes'] ?? 0} ${l10n.detailsEpisodes}',
-                      style: TextStyle(color: AppTheme.textWhite.withValues(alpha: 0.6), fontSize: 13),
-                    ),
+                        '${details['number_of_seasons'] ?? 0} ${l10n.detailsSeasonLabel}${details['number_of_seasons'] != 1 ? 's' : ''}',
+                        style: TextStyle(
+                          color: AppTheme.textWhite.withValues(alpha: 0.6),
+                          fontSize: 13,
+                        ),
+                      ),
+                      const _DotSeparator(),
+                      Text(
+                        '${details['number_of_episodes'] ?? 0} ${l10n.detailsEpisodes}',
+                        style: TextStyle(
+                          color: AppTheme.textWhite.withValues(alpha: 0.6),
+                          fontSize: 13,
+                        ),
+                      ),
                       if (details['status'] != null) ...[
                         const _DotSeparator(),
                         Text(
-                          details['status'] == 'Returning Series' ? 'Ongoing' : details['status'],
+                          details['status'] == 'Returning Series'
+                              ? 'Ongoing'
+                              : details['status'],
                           style: TextStyle(
                             color: _getStatusColor(details['status']),
                             fontSize: 13,
@@ -247,11 +258,18 @@ class DetailsHero extends ConsumerWidget {
                       return MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
-                          onTap: () => onDeepSearch({'type': 'genre', 'id': g['id'], 'name': g['name']}),
+                          onTap: () => onDeepSearch({
+                            'type': 'genre',
+                            'id': g['id'],
+                            'name': g['name'],
+                          }),
                           child: HoverScale(
                             scale: 1.1,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(12),
@@ -259,7 +277,9 @@ class DetailsHero extends ConsumerWidget {
                               child: Text(
                                 g['name'],
                                 style: TextStyle(
-                                  color: AppTheme.textWhite.withValues(alpha: 0.6),
+                                  color: AppTheme.textWhite.withValues(
+                                    alpha: 0.6,
+                                  ),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -294,8 +314,8 @@ class DetailsHero extends ConsumerWidget {
                 ),
 
                 // Series Progress Bar (extracted)
-                if (type == 'series' || type == 'tv') 
-                   SeriesProgressBar(details: details),
+                if (type == 'series' || type == 'tv')
+                  SeriesProgressBar(details: details),
               ],
             ),
           ),
@@ -317,22 +337,29 @@ class DetailsHero extends ConsumerWidget {
     }
   }
 
-  String _getPlayButtonLabel(AppLocalizations l10n, String type, Map<String, dynamic>? resumeData) {
+  String _getPlayButtonLabel(
+    AppLocalizations l10n,
+    String type,
+    Map<String, dynamic>? resumeData,
+  ) {
     if (resumeData != null) {
       if (resumeData['type'] == 'tv') {
         // AppLocalizations generates arguments alphabetically: (episode, season)
         final progress = resumeData['progress'] as int? ?? 0;
-        final label = progress > 0 
-           ? l10n.detailsResumeEpisode(resumeData['episode'], resumeData['season'])
-           : "${l10n.detailsPlay} S${resumeData['season']} E${resumeData['episode']}";
+        final label = progress > 0
+            ? l10n.detailsResumeEpisode(
+                resumeData['episode'],
+                resumeData['season'],
+              )
+            : "${l10n.detailsPlay} S${resumeData['season']} E${resumeData['episode']}";
         return label;
       }
       return l10n.detailsResume;
     }
-    
+
     // If no resume data, check if it's a series to show "Play S1 E1" (or localized Play)
     if (type == 'series' || type == 'tv') {
-       return "${l10n.detailsPlay} S1 E1";
+      return "${l10n.detailsPlay} S1 E1";
     }
 
     return l10n.detailsPlayNow;
@@ -346,7 +373,10 @@ class _DotSeparator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       '•',
-      style: TextStyle(color: AppTheme.textWhite.withValues(alpha: 0.2), fontSize: 16),
+      style: TextStyle(
+        color: AppTheme.textWhite.withValues(alpha: 0.2),
+        fontSize: 16,
+      ),
     );
   }
 }

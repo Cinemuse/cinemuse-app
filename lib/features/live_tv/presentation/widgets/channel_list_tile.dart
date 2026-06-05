@@ -143,10 +143,7 @@ class ChannelListTile extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               currentProgram!.name,
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontSize: 11,
-              ),
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -187,10 +184,7 @@ class ChannelListTile extends StatelessWidget {
         color: Colors.red,
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(
-            color: Colors.red.withValues(alpha: 0.5),
-            blurRadius: 6,
-          ),
+          BoxShadow(color: Colors.red.withValues(alpha: 0.5), blurRadius: 6),
         ],
       ),
     );

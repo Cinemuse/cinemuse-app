@@ -16,7 +16,8 @@ class ResponsiveActionButtons extends ConsumerStatefulWidget {
   final bool isInWatchlist;
   final VoidCallback onListTap;
   final VoidCallback? onTrackTap;
-  final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})? seriesWatchStatus;
+  final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})?
+  seriesWatchStatus;
   final int? movieWatchCount;
   final double mobileBreakpoint;
 
@@ -48,10 +49,12 @@ class ResponsiveActionButtons extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ResponsiveActionButtons> createState() => _ResponsiveActionButtonsState();
+  ConsumerState<ResponsiveActionButtons> createState() =>
+      _ResponsiveActionButtonsState();
 }
 
-class _ResponsiveActionButtonsState extends ConsumerState<ResponsiveActionButtons> {
+class _ResponsiveActionButtonsState
+    extends ConsumerState<ResponsiveActionButtons> {
   bool _hasCachedStream = false;
 
   @override
@@ -98,7 +101,8 @@ class _ResponsiveActionButtonsState extends ConsumerState<ResponsiveActionButton
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < widget.mobileBreakpoint;
+    final isMobile =
+        MediaQuery.of(context).size.width < widget.mobileBreakpoint;
 
     if (isMobile) {
       return Column(
@@ -237,7 +241,11 @@ class _SplitPlayButton extends StatelessWidget {
       color: AppTheme.accent,
       borderRadius: BorderRadius.circular(12),
       boxShadow: [
-        BoxShadow(color: AppTheme.accent.withValues(alpha: 0.4), blurRadius: 25, offset: const Offset(0, 8)),
+        BoxShadow(
+          color: AppTheme.accent.withValues(alpha: 0.4),
+          blurRadius: 25,
+          offset: const Offset(0, 8),
+        ),
       ],
     );
 
@@ -252,12 +260,20 @@ class _SplitPlayButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
             children: [
-              const Icon(Icons.play_arrow_outlined, color: AppTheme.textWhite, size: 24),
+              const Icon(
+                Icons.play_arrow_outlined,
+                color: AppTheme.textWhite,
+                size: 24,
+              ),
               const SizedBox(width: 12),
               Flexible(
                 child: Text(
                   label,
-                  style: const TextStyle(color: AppTheme.textWhite, fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: AppTheme.textWhite,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -293,13 +309,17 @@ class _SplitPlayButton extends StatelessWidget {
               Icon(
                 item.icon,
                 size: 18,
-                color: item.isDestructive ? AppTheme.favorites : AppTheme.textWhite.withValues(alpha: 0.8),
+                color: item.isDestructive
+                    ? AppTheme.favorites
+                    : AppTheme.textWhite.withValues(alpha: 0.8),
               ),
               const SizedBox(width: 12),
               Text(
                 item.label,
                 style: TextStyle(
-                  color: item.isDestructive ? AppTheme.favorites : AppTheme.textWhite,
+                  color: item.isDestructive
+                      ? AppTheme.favorites
+                      : AppTheme.textWhite,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -312,7 +332,11 @@ class _SplitPlayButton extends StatelessWidget {
         cursor: SystemMouseCursors.click,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-          child: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textWhite, size: 22),
+          child: const Icon(
+            Icons.keyboard_arrow_down,
+            color: AppTheme.textWhite,
+            size: 22,
+          ),
         ),
       ),
     );
@@ -366,19 +390,31 @@ class _PlayButton extends StatelessWidget {
               color: AppTheme.accent,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
-                BoxShadow(color: AppTheme.accent.withValues(alpha: 0.4), blurRadius: 25, offset: const Offset(0, 8)),
+                BoxShadow(
+                  color: AppTheme.accent.withValues(alpha: 0.4),
+                  blurRadius: 25,
+                  offset: const Offset(0, 8),
+                ),
               ],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
               children: [
-                const Icon(Icons.play_arrow_outlined, color: AppTheme.textWhite, size: 24),
+                const Icon(
+                  Icons.play_arrow_outlined,
+                  color: AppTheme.textWhite,
+                  size: 24,
+                ),
                 const SizedBox(width: 12),
                 Flexible(
                   child: Text(
                     label,
-                    style: const TextStyle(color: AppTheme.textWhite, fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: AppTheme.textWhite,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -397,7 +433,8 @@ class _PlayButton extends StatelessWidget {
 
 class _TrackButton extends StatelessWidget {
   final VoidCallback onTrackTap;
-  final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})? seriesWatchStatus;
+  final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})?
+  seriesWatchStatus;
   final int? movieWatchCount;
 
   const _TrackButton({
@@ -410,9 +447,11 @@ class _TrackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isMovie = movieWatchCount != null;
-    final isFullyWatched = seriesWatchStatus?.isFullyWatched ?? (isMovie && movieWatchCount! > 0);
+    final isFullyWatched =
+        seriesWatchStatus?.isFullyWatched ?? (isMovie && movieWatchCount! > 0);
     final isPartiallyWatched = seriesWatchStatus?.isPartiallyWatched ?? false;
-    final minWatchCount = seriesWatchStatus?.minWatchCount ?? (movieWatchCount ?? 0);
+    final minWatchCount =
+        seriesWatchStatus?.minWatchCount ?? (movieWatchCount ?? 0);
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -440,7 +479,9 @@ class _TrackButton extends StatelessWidget {
                 Icon(
                   isFullyWatched
                       ? Icons.check_circle
-                      : (isPartiallyWatched ? Icons.check_circle_outline : Icons.add_task),
+                      : (isPartiallyWatched
+                            ? Icons.check_circle_outline
+                            : Icons.add_task),
                   color: isFullyWatched ? Colors.green : AppTheme.textWhite,
                   size: 24,
                 ),
@@ -449,9 +490,15 @@ class _TrackButton extends StatelessWidget {
                   child: Text(
                     isFullyWatched
                         ? (isMovie
-                            ? (minWatchCount > 1 ? l10n.detailsWatchedCount(minWatchCount) : l10n.detailsWatched)
-                            : (minWatchCount > 1 ? l10n.detailsUpToDateCount(minWatchCount) : l10n.detailsUpToDate))
-                        : (isPartiallyWatched ? l10n.detailsFinishSeries : l10n.detailsTrack),
+                              ? (minWatchCount > 1
+                                    ? l10n.detailsWatchedCount(minWatchCount)
+                                    : l10n.detailsWatched)
+                              : (minWatchCount > 1
+                                    ? l10n.detailsUpToDateCount(minWatchCount)
+                                    : l10n.detailsUpToDate))
+                        : (isPartiallyWatched
+                              ? l10n.detailsFinishSeries
+                              : l10n.detailsTrack),
                     style: TextStyle(
                       color: isFullyWatched ? Colors.green : AppTheme.textWhite,
                       fontSize: 16,

@@ -32,7 +32,8 @@ class IdentitySettings extends ConsumerWidget {
               description: l10n.settingsDisplayNameDesc,
               value: userSettings.displayName,
               placeholder: l10n.settingsEnterName,
-              onSave: (val) => settingsNotifier.updateSettings({'displayName': val}),
+              onSave: (val) =>
+                  settingsNotifier.updateSettings({'displayName': val}),
             ),
           ],
         ),
@@ -65,13 +66,20 @@ class CustomizationSettings extends ConsumerWidget {
                   label: l10n.settingsAppLanguage,
                   description: l10n.settingsAppLanguageDesc,
                   icon: Icons.language,
-                   trailing: buildSmallDropdown<String>(
+                  trailing: buildSmallDropdown<String>(
                     value: userSettings.appLanguage,
                     items: [
-                      DropdownMenuItem(value: 'en', child: Text(l10n.settingsEnglish)),
-                      DropdownMenuItem(value: 'it', child: Text(l10n.settingsItalian)),
+                      DropdownMenuItem(
+                        value: 'en',
+                        child: Text(l10n.settingsEnglish),
+                      ),
+                      DropdownMenuItem(
+                        value: 'it',
+                        child: Text(l10n.settingsItalian),
+                      ),
                     ],
-                    onChanged: (lang) => settingsNotifier.updateSettings({'appLanguage': lang}),
+                    onChanged: (lang) =>
+                        settingsNotifier.updateSettings({'appLanguage': lang}),
                   ),
                 ),
               ],
@@ -87,10 +95,18 @@ class CustomizationSettings extends ConsumerWidget {
                   trailing: buildSmallDropdown<String>(
                     value: userSettings.playerLanguage,
                     items: [
-                      DropdownMenuItem(value: 'en', child: Text(l10n.settingsEnglish)),
-                      DropdownMenuItem(value: 'it', child: Text(l10n.settingsItalian)),
+                      DropdownMenuItem(
+                        value: 'en',
+                        child: Text(l10n.settingsEnglish),
+                      ),
+                      DropdownMenuItem(
+                        value: 'it',
+                        child: Text(l10n.settingsItalian),
+                      ),
                     ],
-                    onChanged: (lang) => settingsNotifier.updateSettings({'playerLanguage': lang}),
+                    onChanged: (lang) => settingsNotifier.updateSettings({
+                      'playerLanguage': lang,
+                    }),
                   ),
                 ),
                 SettingsTile(
@@ -99,7 +115,8 @@ class CustomizationSettings extends ConsumerWidget {
                   icon: Icons.subtitles,
                   trailing: SettingToggle(
                     value: userSettings.showSubtitles,
-                    onChanged: (val) => settingsNotifier.updateSettings({'showSubtitles': val}),
+                    onChanged: (val) =>
+                        settingsNotifier.updateSettings({'showSubtitles': val}),
                   ),
                 ),
                 if (userSettings.showSubtitles)
@@ -110,10 +127,18 @@ class CustomizationSettings extends ConsumerWidget {
                     trailing: buildSmallDropdown<String>(
                       value: userSettings.subtitleLanguage,
                       items: [
-                        DropdownMenuItem(value: 'en', child: Text(l10n.settingsEnglish)),
-                        DropdownMenuItem(value: 'it', child: Text(l10n.settingsItalian)),
+                        DropdownMenuItem(
+                          value: 'en',
+                          child: Text(l10n.settingsEnglish),
+                        ),
+                        DropdownMenuItem(
+                          value: 'it',
+                          child: Text(l10n.settingsItalian),
+                        ),
                       ],
-                      onChanged: (lang) => settingsNotifier.updateSettings({'subtitleLanguage': lang}),
+                      onChanged: (lang) => settingsNotifier.updateSettings({
+                        'subtitleLanguage': lang,
+                      }),
                     ),
                   ),
                 SettingsTile(
@@ -123,7 +148,9 @@ class CustomizationSettings extends ConsumerWidget {
                   showDivider: userSettings.splitAnimePreferences,
                   trailing: SettingToggle(
                     value: userSettings.splitAnimePreferences,
-                    onChanged: (val) => settingsNotifier.updateSettings({'splitAnimePreferences': val}),
+                    onChanged: (val) => settingsNotifier.updateSettings({
+                      'splitAnimePreferences': val,
+                    }),
                   ),
                 ),
                 SettingsTile(
@@ -136,12 +163,24 @@ class CustomizationSettings extends ConsumerWidget {
                     items: VideoResolution.values.map((res) {
                       String text;
                       switch (res) {
-                        case VideoResolution.r2160p: text = '4K'; break;
-                        case VideoResolution.r1440p: text = '1440p'; break;
-                        case VideoResolution.r1080p: text = '1080p'; break;
-                        case VideoResolution.r720p: text = '720p'; break;
-                        case VideoResolution.r480p: text = '480p'; break;
-                        case VideoResolution.unknown: text = 'Any'; break;
+                        case VideoResolution.r2160p:
+                          text = '4K';
+                          break;
+                        case VideoResolution.r1440p:
+                          text = '1440p';
+                          break;
+                        case VideoResolution.r1080p:
+                          text = '1080p';
+                          break;
+                        case VideoResolution.r720p:
+                          text = '720p';
+                          break;
+                        case VideoResolution.r480p:
+                          text = '480p';
+                          break;
+                        case VideoResolution.unknown:
+                          text = 'Any';
+                          break;
                       }
                       return DropdownMenuItem(value: res, child: Text(text));
                     }).toList(),
@@ -168,11 +207,22 @@ class CustomizationSettings extends ConsumerWidget {
                         trailing: buildSmallDropdown<String>(
                           value: userSettings.animeAudioLanguage,
                           items: [
-                            DropdownMenuItem(value: 'ja', child: Text(l10n.settingsOriginal)),
-                            DropdownMenuItem(value: 'en', child: Text(l10n.settingsEnglish)),
-                            DropdownMenuItem(value: 'it', child: Text(l10n.settingsItalian)),
+                            DropdownMenuItem(
+                              value: 'ja',
+                              child: Text(l10n.settingsOriginal),
+                            ),
+                            DropdownMenuItem(
+                              value: 'en',
+                              child: Text(l10n.settingsEnglish),
+                            ),
+                            DropdownMenuItem(
+                              value: 'it',
+                              child: Text(l10n.settingsItalian),
+                            ),
                           ],
-                          onChanged: (lang) => settingsNotifier.updateSettings({'animeAudioLanguage': lang}),
+                          onChanged: (lang) => settingsNotifier.updateSettings({
+                            'animeAudioLanguage': lang,
+                          }),
                         ),
                       ),
                       SettingsTile(
@@ -181,7 +231,9 @@ class CustomizationSettings extends ConsumerWidget {
                         icon: Icons.subtitles,
                         trailing: SettingToggle(
                           value: userSettings.animeShowSubtitles,
-                          onChanged: (val) => settingsNotifier.updateSettings({'animeShowSubtitles': val}),
+                          onChanged: (val) => settingsNotifier.updateSettings({
+                            'animeShowSubtitles': val,
+                          }),
                         ),
                       ),
                       if (userSettings.animeShowSubtitles)
@@ -193,10 +245,19 @@ class CustomizationSettings extends ConsumerWidget {
                           trailing: buildSmallDropdown<String>(
                             value: userSettings.animeSubtitleLanguage,
                             items: [
-                              DropdownMenuItem(value: 'en', child: Text(l10n.settingsEnglish)),
-                              DropdownMenuItem(value: 'it', child: Text(l10n.settingsItalian)),
+                              DropdownMenuItem(
+                                value: 'en',
+                                child: Text(l10n.settingsEnglish),
+                              ),
+                              DropdownMenuItem(
+                                value: 'it',
+                                child: Text(l10n.settingsItalian),
+                              ),
                             ],
-                            onChanged: (lang) => settingsNotifier.updateSettings({'animeSubtitleLanguage': lang}),
+                            onChanged: (lang) =>
+                                settingsNotifier.updateSettings({
+                                  'animeSubtitleLanguage': lang,
+                                }),
                           ),
                         ),
                     ],
@@ -210,6 +271,7 @@ class CustomizationSettings extends ConsumerWidget {
       ],
     );
   }
+
   // Removed _buildMediaGroup as it's replaced by SettingsDropdown
 }
 
@@ -236,10 +298,14 @@ Widget buildSmallDropdown<T>({
         isDense: true, // Crucial to remove internal padding
         alignment: Alignment.center,
         underline: const SizedBox.shrink(),
-        icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textMuted, size: 18),
+        icon: const Icon(
+          Icons.keyboard_arrow_down,
+          color: AppTheme.textMuted,
+          size: 18,
+        ),
         style: const TextStyle(
-          color: Colors.white, 
-          fontSize: 14, 
+          color: Colors.white,
+          fontSize: 14,
           fontWeight: FontWeight.w600, // Make text a bit bolder
         ),
       ),
@@ -276,7 +342,9 @@ class LiveTvSettings extends ConsumerWidget {
                       DropdownMenuItem(value: 1024, child: Text('1 GB')),
                       DropdownMenuItem(value: 2048, child: Text('2 GB')),
                     ],
-                    onChanged: (val) => settingsNotifier.updateSettings({'liveTvBufferSize': val}),
+                    onChanged: (val) => settingsNotifier.updateSettings({
+                      'liveTvBufferSize': val,
+                    }),
                   ),
                 ),
                 SettingsTile(
@@ -286,7 +354,9 @@ class LiveTvSettings extends ConsumerWidget {
                   showDivider: false,
                   trailing: SettingToggle(
                     value: userSettings.enableLiveTvDiskCache,
-                    onChanged: (val) => settingsNotifier.updateSettings({'enableLiveTvDiskCache': val}),
+                    onChanged: (val) => settingsNotifier.updateSettings({
+                      'enableLiveTvDiskCache': val,
+                    }),
                   ),
                 ),
               ],
@@ -299,9 +369,7 @@ class LiveTvSettings extends ConsumerWidget {
           children: [
             SettingsCard(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              children: const [
-                PlaylistListSection(),
-              ],
+              children: const [PlaylistListSection()],
             ),
           ],
         ),
@@ -319,13 +387,10 @@ class IntegrationsSettings extends ConsumerWidget {
     return SettingsSection(
       title: l10n.settingsIntegrations,
       description: l10n.settingsIntegrationsDesc,
-      children: const [
-        AddonSettings(),
-      ],
+      children: const [AddonSettings()],
     );
   }
 }
-
 
 class ImportSettings extends StatelessWidget {
   const ImportSettings({super.key});
@@ -342,7 +407,11 @@ class ImportSettings extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(width: double.infinity),
-            Icon(Icons.cloud_upload_outlined, size: 48, color: AppTheme.textMuted),
+            Icon(
+              Icons.cloud_upload_outlined,
+              size: 48,
+              color: AppTheme.textMuted,
+            ),
             SizedBox(height: 16),
             Text(
               "No services available for import",

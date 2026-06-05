@@ -11,7 +11,6 @@ class YoutubeHandler {
 
   YoutubeService get service => _ytService;
 
-
   void cleanup() {
     if (_localAudioPath != null) {
       final file = File(_localAudioPath!);
@@ -25,11 +24,12 @@ class YoutubeHandler {
   Future<String?> downloadAudioToTempFile() async {
     try {
       final tempDir = await getTemporaryDirectory();
-      final path = '${tempDir.path}/yt_audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      
+      final path =
+          '${tempDir.path}/yt_audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
       // Ensure any previous temp file is cleaned up before starting a new download
       cleanup();
-      
+
       final resultPath = await _ytService.downloadAudioToFile(path);
       _localAudioPath = resultPath;
       return resultPath;
@@ -40,7 +40,8 @@ class YoutubeHandler {
   }
 
   Map<String, String> get youtubeHeaders => {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+    'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
     'Referer': 'https://www.youtube.com/',
   };
 

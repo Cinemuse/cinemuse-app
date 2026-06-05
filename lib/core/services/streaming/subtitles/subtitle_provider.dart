@@ -8,7 +8,7 @@ abstract class SubtitleProvider {
   bool get isReady;
 
   /// Search for subtitles matching the given criteria.
-  /// 
+  ///
   /// At least one of [imdbId] or [tmdbId] is usually required,
   /// but some providers might support text [query].
   Future<List<ExternalSubtitle>> search({
@@ -21,7 +21,7 @@ abstract class SubtitleProvider {
   });
 
   /// Get the direct download URL for a specific subtitle.
-  /// 
+  ///
   /// If the [subtitle] already has a [url], this might just return it.
   /// Otherwise, it performs the necessary API call to get the download link.
   Future<String?> getDownloadUrl(ExternalSubtitle subtitle);

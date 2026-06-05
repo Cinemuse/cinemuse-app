@@ -17,9 +17,11 @@ class PlayerParams {
   final String? episodeTitle;
   final int? startPosition;
 
-  const PlayerParams(this.queryId, this.type, {
-    this.season, 
-    this.episode, 
+  const PlayerParams(
+    this.queryId,
+    this.type, {
+    this.season,
+    this.episode,
     this.episodeTitle,
     this.startPosition,
   });
@@ -55,7 +57,8 @@ class PlayerParams {
           startPosition == other.startPosition;
 
   @override
-  int get hashCode => Object.hash(queryId, type, season, episode, episodeTitle, startPosition);
+  int get hashCode =>
+      Object.hash(queryId, type, season, episode, episodeTitle, startPosition);
 }
 
 class CinemaPlayerState {
@@ -131,25 +134,41 @@ class CinemaPlayerState {
     return CinemaPlayerState(
       controller: controller ?? this.controller,
       availableStreams: availableStreams ?? this.availableStreams,
-      currentStream: currentStream == _sentinel ? this.currentStream : (currentStream as ResolvedStream?),
+      currentStream: currentStream == _sentinel
+          ? this.currentStream
+          : (currentStream as ResolvedStream?),
       title: title ?? this.title,
-      nextEpisode: nextEpisode == _sentinel ? this.nextEpisode : (nextEpisode as NextEpisodeInfo?),
+      nextEpisode: nextEpisode == _sentinel
+          ? this.nextEpisode
+          : (nextEpisode as NextEpisodeInfo?),
       isCasting: isCasting ?? this.isCasting,
       isResolving: isResolving ?? this.isResolving,
       error: error == _sentinel ? this.error : (error as String?),
-      selectedCastDevice: selectedCastDevice == _sentinel ? this.selectedCastDevice : (selectedCastDevice as CastDevice?),
+      selectedCastDevice: selectedCastDevice == _sentinel
+          ? this.selectedCastDevice
+          : (selectedCastDevice as CastDevice?),
       remotePosition: remotePosition ?? this.remotePosition,
       remoteDuration: remoteDuration ?? this.remoteDuration,
       remotePlaying: remotePlaying ?? this.remotePlaying,
       providerStatuses: providerStatuses ?? this.providerStatuses,
-      detectedMimeType: detectedMimeType == _sentinel ? this.detectedMimeType : (detectedMimeType as String?),
+      detectedMimeType: detectedMimeType == _sentinel
+          ? this.detectedMimeType
+          : (detectedMimeType as String?),
       isAnime: isAnime ?? this.isAnime,
-      activeAudioTrack: activeAudioTrack == _sentinel ? this.activeAudioTrack : (activeAudioTrack as AudioTrack?),
-      activeSubtitleTrack: activeSubtitleTrack == _sentinel ? this.activeSubtitleTrack : (activeSubtitleTrack as SubtitleTrack?),
-      customSubtitleStyle: customSubtitleStyle == _sentinel ? this.customSubtitleStyle : (customSubtitleStyle as SubtitleStyle?),
+      activeAudioTrack: activeAudioTrack == _sentinel
+          ? this.activeAudioTrack
+          : (activeAudioTrack as AudioTrack?),
+      activeSubtitleTrack: activeSubtitleTrack == _sentinel
+          ? this.activeSubtitleTrack
+          : (activeSubtitleTrack as SubtitleTrack?),
+      customSubtitleStyle: customSubtitleStyle == _sentinel
+          ? this.customSubtitleStyle
+          : (customSubtitleStyle as SubtitleStyle?),
       subtitleDelay: subtitleDelay ?? this.subtitleDelay,
       isLive: isLive ?? this.isLive,
-      currentChannel: currentChannel == _sentinel ? this.currentChannel : (currentChannel as Channel?),
+      currentChannel: currentChannel == _sentinel
+          ? this.currentChannel
+          : (currentChannel as Channel?),
     );
   }
 }

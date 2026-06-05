@@ -19,7 +19,7 @@ class OfflinePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -59,7 +59,7 @@ class OfflinePlaceholder extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-          
+
           Text(
             title ?? l10n.offlineScreenTitle,
             textAlign: TextAlign.center,
@@ -70,7 +70,7 @@ class OfflinePlaceholder extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           Text(
             message ?? l10n.offlineScreenMessage,
             textAlign: TextAlign.center,
@@ -81,7 +81,7 @@ class OfflinePlaceholder extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 48),
-          
+
           if (onRetry != null)
             ElevatedButton.icon(
               onPressed: onRetry,
@@ -90,7 +90,10 @@ class OfflinePlaceholder extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white.withValues(alpha: 0.08),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),

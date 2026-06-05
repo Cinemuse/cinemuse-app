@@ -12,12 +12,16 @@ import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 
 class MockTmdbService extends Mock implements TmdbService {}
 
-class FakeTransformBuilder<T> extends Fake implements PostgrestTransformBuilder<T> {
+class FakeTransformBuilder<T> extends Fake
+    implements PostgrestTransformBuilder<T> {
   final T _value;
   FakeTransformBuilder(this._value);
 
   @override
-  Future<R> then<R>(FutureOr<R> Function(T value) onValue, {Function? onError}) {
+  Future<R> then<R>(
+    FutureOr<R> Function(T value) onValue, {
+    Function? onError,
+  }) {
     return Future.value(_value).then(onValue, onError: onError);
   }
 }
@@ -41,7 +45,10 @@ class FakeFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
   }
 
   @override
-  Future<R> then<R>(FutureOr<R> Function(T value) onValue, {Function? onError}) {
+  Future<R> then<R>(
+    FutureOr<R> Function(T value) onValue, {
+    Function? onError,
+  }) {
     return Future.value(_value).then(onValue, onError: onError);
   }
 }
@@ -51,12 +58,21 @@ class FakeQueryBuilder extends Fake implements SupabaseQueryBuilder {
   FakeQueryBuilder([this._value]);
 
   @override
-  PostgrestFilterBuilder<List<Map<String, dynamic>>> select([String columns = '*']) {
-    return FakeFilterBuilder<List<Map<String, dynamic>>>(_value as List<Map<String, dynamic>>? ?? []);
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> select([
+    String columns = '*',
+  ]) {
+    return FakeFilterBuilder<List<Map<String, dynamic>>>(
+      _value as List<Map<String, dynamic>>? ?? [],
+    );
   }
 
   @override
-  PostgrestFilterBuilder<List<Map<String, dynamic>>> upsert(Object values, {String? onConflict, bool ignoreDuplicates = false, bool defaultToNull = true}) {
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> upsert(
+    Object values, {
+    String? onConflict,
+    bool ignoreDuplicates = false,
+    bool defaultToNull = true,
+  }) {
     return FakeFilterBuilder<List<Map<String, dynamic>>>([]);
   }
 }
@@ -87,12 +103,14 @@ void main() {
 
     test('getMediaItem returns item from local cache if present', () async {
       final now = DateTime.now();
-      await database.upsertMediaItem(CachedMediaItemsCompanion.insert(
-        tmdbId: tmdbId,
-        mediaType: 'movie',
-        titleEn: Value('Cached Movie'),
-        updatedAt: now,
-      ));
+      await database.upsertMediaItem(
+        CachedMediaItemsCompanion.insert(
+          tmdbId: tmdbId,
+          mediaType: 'movie',
+          titleEn: Value('Cached Movie'),
+          updatedAt: now,
+        ),
+      );
 
       final result = await repository.getMediaItem(tmdbId, mediaType);
 

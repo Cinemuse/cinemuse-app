@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Mocks
 class MockSupabaseClient extends Mock implements SupabaseClient {}
+
 class MockGoTrueClient extends Mock implements GoTrueClient {}
 
 void main() {
@@ -38,11 +39,11 @@ void main() {
 
     // Stub the auth property of the client
     when(() => mockSupabaseClient.auth).thenReturn(mockGoTrueClient);
-    
+
     // Stub onAuthStateChange
-    when(() => mockGoTrueClient.onAuthStateChange).thenAnswer(
-      (_) => authStateController.stream,
-    );
+    when(
+      () => mockGoTrueClient.onAuthStateChange,
+    ).thenAnswer((_) => authStateController.stream);
   });
 
   tearDown(() {
@@ -83,22 +84,25 @@ void main() {
       expect(authService.state, AsyncValue<User?>.data(testUser));
     });
 
-    test('updates state to null when onAuthStateChange emits signedOut', () async {
-      when(() => mockGoTrueClient.currentSession).thenReturn(testSession);
+    test(
+      'updates state to null when onAuthStateChange emits signedOut',
+      () async {
+        when(() => mockGoTrueClient.currentSession).thenReturn(testSession);
 
-      authService = AuthService(mockSupabaseClient);
+        authService = AuthService(mockSupabaseClient);
 
-      // Verify initial state
-      expect(authService.state, AsyncValue<User?>.data(testUser));
+        // Verify initial state
+        expect(authService.state, AsyncValue<User?>.data(testUser));
 
-      // Emit signed out state
-      authStateController.add(AuthState(AuthChangeEvent.signedOut, null));
+        // Emit signed out state
+        authStateController.add(AuthState(AuthChangeEvent.signedOut, null));
 
-      // Wait for stream to process
-      await Future.delayed(Duration.zero);
+        // Wait for stream to process
+        await Future.delayed(Duration.zero);
 
-      expect(authService.state, const AsyncValue<User?>.data(null));
-    });
+        expect(authService.state, const AsyncValue<User?>.data(null));
+      },
+    );
   });
 
   group('AuthService signIn', () {
@@ -119,7 +123,7 @@ void main() {
 
       // We explicitly DO NOT await here right away to check the loading state
       final future = authService.signIn('test@test.com', 'password');
-      
+
       // Before future completes, state should be loading
       expect(authService.state, const AsyncValue<User?>.loading());
 
@@ -135,7 +139,7 @@ void main() {
 
     test('handles sign in failure', () async {
       final authException = AuthException('Invalid credentials');
-      
+
       when(
         () => mockGoTrueClient.signInWithPassword(
           email: 'test@test.com',
@@ -187,7 +191,7 @@ void main() {
 
     test('handles sign up failure', () async {
       final authException = AuthException('User already exists');
-      
+
       when(
         () => mockGoTrueClient.signUp(
           email: 'test@test.com',
@@ -214,7 +218,7 @@ void main() {
       when(() => mockGoTrueClient.signOut()).thenAnswer((_) async {});
 
       final future = authService.signOut();
-      
+
       expect(authService.state, const AsyncValue<User?>.loading());
 
       await future;

@@ -1,7 +1,8 @@
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
 class AgendaEvent {
-  final String id; // Unique ID: movie_{tmdbId} or series_{tmdbId}_s{season}e{episode}
+  final String
+  id; // Unique ID: movie_{tmdbId} or series_{tmdbId}_s{season}e{episode}
   final int tmdbId;
   final String title;
   final String? episodeName;
@@ -33,7 +34,7 @@ class AgendaEvent {
 
   factory AgendaEvent.fromMovie(Map<String, dynamic> json) {
     final releaseDateStr = json['release_date'] ?? json['primary_release_date'];
-    
+
     DateTime parsedDate;
     bool isTbd = false;
     String? customDate;

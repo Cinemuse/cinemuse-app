@@ -12,10 +12,7 @@ import 'package:intl/intl.dart';
 class SportEventCard extends ConsumerStatefulWidget {
   final SportTvEvent event;
 
-  const SportEventCard({
-    super.key,
-    required this.event,
-  });
+  const SportEventCard({super.key, required this.event});
 
   @override
   ConsumerState<SportEventCard> createState() => _SportEventCardState();
@@ -44,19 +41,28 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
     }
   }
 
-  void _showContextActions(BuildContext context, {BuildContext? anchorContext}) {
+  void _showContextActions(
+    BuildContext context, {
+    BuildContext? anchorContext,
+  }) {
     if (widget.event.channels.isEmpty) return;
-    
-    final options = widget.event.channels.map((channel) => AppMenuOption(
-      icon: Icons.tv,
-      label: 'Watch on $channel',
-      onTap: () => _navigateToLiveTvSearch(channel),
-    )).toList();
+
+    final options = widget.event.channels
+        .map(
+          (channel) => AppMenuOption(
+            icon: Icons.tv,
+            label: 'Watch on $channel',
+            onTap: () => _navigateToLiveTvSearch(channel),
+          ),
+        )
+        .toList();
 
     AppMenu.show(
       context: context,
       options: options,
-      title: widget.event.sportName.isNotEmpty ? widget.event.sportName : 'Channels',
+      title: widget.event.sportName.isNotEmpty
+          ? widget.event.sportName
+          : 'Channels',
       anchorContext: anchorContext ?? _menuKey.currentContext,
     );
   }
@@ -80,7 +86,10 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
     } else if (normalised == tomorrow) {
       dayStr = l10n.agendaTomorrow;
     } else {
-      dayStr = DateFormat('E d MMM', Localizations.localeOf(context).toString()).format(eventTime);
+      dayStr = DateFormat(
+        'E d MMM',
+        Localizations.localeOf(context).toString(),
+      ).format(eventTime);
     }
 
     return '$dayStr • $timeStr';
@@ -97,7 +106,6 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
     } else {
       imageAsset = 'assets/sports/$key.jpg';
     }
-
 
     return Focus(
       onFocusChange: (value) => setState(() => _isHovered = value),
@@ -159,30 +167,45 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                                   fit: BoxFit.cover,
                                   color: Colors.black.withValues(alpha: 0.3),
                                   colorBlendMode: BlendMode.darken,
-                                  errorBuilder: (context, error, stackTrace) => _buildPlaceholder(context),
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      _buildPlaceholder(context),
                                 ),
                               ),
-                              
-                              
+
                               // Time Badge
                               Positioned(
                                 top: 8,
                                 left: 8,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.black.withValues(alpha: 0.6),
                                     borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                    ),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.schedule, color: AppTheme.accent, size: 10),
+                                      const Icon(
+                                        Icons.schedule,
+                                        color: AppTheme.accent,
+                                        size: 10,
+                                      ),
                                       const SizedBox(width: 4),
                                       Text(
                                         _getDateTimeString(context),
-                                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -198,33 +221,48 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                                   child: Wrap(
                                     spacing: 4,
                                     runSpacing: 4,
-                                    children: widget.event.channels.map((channel) => Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.surface.withValues(alpha: 0.8),
-                                        borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(color: AppTheme.accent.withValues(alpha: 0.5)),
-                                      ),
-                                      child: Text(
-                                        channel,
-                                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                          color: Colors.white,
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    )).toList(),
+                                    children: widget.event.channels
+                                        .map(
+                                          (channel) => Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppTheme.surface
+                                                  .withValues(alpha: 0.8),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                              border: Border.all(
+                                                color: AppTheme.accent
+                                                    .withValues(alpha: 0.5),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              channel,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium!
+                                                  .copyWith(
+                                                    color: Colors.white,
+                                                    fontSize: 9,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
                                   ),
                                 ),
-                              
+
                               // Border Overlay
                               AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                    color: _isHovered 
-                                        ? AppTheme.accent.withValues(alpha: 0.5) 
+                                    color: _isHovered
+                                        ? AppTheme.accent.withValues(alpha: 0.5)
                                         : Colors.white.withValues(alpha: 0.1),
                                     width: _isHovered ? 2 : 1,
                                   ),
@@ -237,7 +275,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                       const SizedBox(height: 8),
                       // Title (Sport Name & Description)
                       Text(
-                        widget.event.sportName.isNotEmpty 
+                        widget.event.sportName.isNotEmpty
                             ? '${widget.event.sportName}${widget.event.description.isNotEmpty ? ' - ${widget.event.description}' : ''}'
                             : widget.event.description,
                         maxLines: 2,
@@ -298,18 +336,30 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
   String _getLocalizedSportName(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     if (l10n == null) return widget.event.sportName;
-    
+
     switch (widget.event.sportTranslationKey) {
-      case 'sport_football': return l10n.sportFootball;
-      case 'sport_basketball': return l10n.sportBasketball;
-      case 'sport_motorcycling': return l10n.sportMotorcycling;
-      case 'sport_volleyball': return l10n.sportVolleyball;
-      case 'sport_athletics': return l10n.sportAthletics;
-      case 'sport_tennis': return l10n.sportTennis;
-      case 'sport_cycling': return l10n.sportCycling;
-      case 'sport_rugby': return l10n.sportRugby;
-      case 'sport_f1': return l10n.sportF1;
-      default: return widget.event.sportName.isNotEmpty ? widget.event.sportName : l10n.sportGeneric;
+      case 'sport_football':
+        return l10n.sportFootball;
+      case 'sport_basketball':
+        return l10n.sportBasketball;
+      case 'sport_motorcycling':
+        return l10n.sportMotorcycling;
+      case 'sport_volleyball':
+        return l10n.sportVolleyball;
+      case 'sport_athletics':
+        return l10n.sportAthletics;
+      case 'sport_tennis':
+        return l10n.sportTennis;
+      case 'sport_cycling':
+        return l10n.sportCycling;
+      case 'sport_rugby':
+        return l10n.sportRugby;
+      case 'sport_f1':
+        return l10n.sportF1;
+      default:
+        return widget.event.sportName.isNotEmpty
+            ? widget.event.sportName
+            : l10n.sportGeneric;
     }
   }
 
@@ -320,7 +370,11 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.sports_soccer, color: Colors.white.withValues(alpha: 0.2), size: 40),
+            Icon(
+              Icons.sports_soccer,
+              color: Colors.white.withValues(alpha: 0.2),
+              size: 40,
+            ),
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),

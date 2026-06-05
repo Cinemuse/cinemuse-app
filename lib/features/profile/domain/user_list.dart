@@ -1,11 +1,6 @@
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
-enum ListType {
-  watchlist,
-  favorites,
-  custom,
-  tierlist,
-}
+enum ListType { watchlist, favorites, custom, tierlist }
 
 class UserList {
   final String id;
@@ -16,7 +11,7 @@ class UserList {
   final int sortOrder;
   final Map<String, dynamic> settings;
   final DateTime createdAt;
-  
+
   // For easy display
   final List<UserListItem> items;
 
@@ -53,9 +48,11 @@ class UserList {
       sortOrder: json['sort_order'] as int? ?? 0,
       settings: json['settings'] as Map<String, dynamic>? ?? {},
       createdAt: DateTime.parse(json['created_at'] as String),
-      items: (json['list_items'] as List<dynamic>?)
-          ?.map((e) => UserListItem.fromJson(e))
-          .toList() ?? [],
+      items:
+          (json['list_items'] as List<dynamic>?)
+              ?.map((e) => UserListItem.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 }
@@ -67,7 +64,7 @@ class UserListItem {
   final int sortOrder;
   final Map<String, dynamic> meta;
   final DateTime addedAt;
-  
+
   // Joined media details (from meta or another join)
   final MediaItem? media;
 

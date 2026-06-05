@@ -16,54 +16,56 @@ class AppBottomNavbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     // Check for safe area (especially bottom padding for modern phones)
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surface,
-            border: Border(
-              top: BorderSide(
-                color: Colors.white.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
+        border: Border(
+          top: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 0.5,
           ),
-          padding: EdgeInsets.only(
-            bottom: bottomPadding > 0 ? bottomPadding : 12,
-            top: 12,
+        ),
+      ),
+      padding: EdgeInsets.only(
+        bottom: bottomPadding > 0 ? bottomPadding : 12,
+        top: 12,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _BottomNavItem(
+            icon: currentIndex == 0 ? Icons.home : Icons.home_outlined,
+            label: l10n.navHome,
+            isSelected: currentIndex == 0,
+            onTap: () => onTap(0),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _BottomNavItem(
-                icon: currentIndex == 0 ? Icons.home : Icons.home_outlined,
-                label: l10n.navHome,
-                isSelected: currentIndex == 0,
-                onTap: () => onTap(0),
-              ),
-              _BottomNavItem(
-                icon: currentIndex == 1 ? Icons.explore : Icons.explore_outlined,
-                label: l10n.navExplore,
-                isSelected: currentIndex == 1,
-                onTap: () => onTap(1),
-              ),
-              _BottomNavItem(
-                icon: currentIndex == 2 ? Icons.live_tv : Icons.live_tv_outlined,
-                label: "Live TV",
-                isSelected: currentIndex == 2,
-                onTap: () => onTap(2),
-              ),
-              _BottomNavItem(
-                icon: currentIndex == 3 ? Icons.video_library : Icons.video_library_outlined,
-                label: l10n.navLibrary,
-                isSelected: currentIndex == 3,
-                onTap: () => onTap(3),
-              ),
-            ],
+          _BottomNavItem(
+            icon: currentIndex == 1 ? Icons.explore : Icons.explore_outlined,
+            label: l10n.navExplore,
+            isSelected: currentIndex == 1,
+            onTap: () => onTap(1),
           ),
-        );
+          _BottomNavItem(
+            icon: currentIndex == 2 ? Icons.live_tv : Icons.live_tv_outlined,
+            label: "Live TV",
+            isSelected: currentIndex == 2,
+            onTap: () => onTap(2),
+          ),
+          _BottomNavItem(
+            icon: currentIndex == 3
+                ? Icons.video_library
+                : Icons.video_library_outlined,
+            label: l10n.navLibrary,
+            isSelected: currentIndex == 3,
+            onTap: () => onTap(3),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -97,7 +99,9 @@ class _BottomNavItem extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.accent.withValues(alpha: 0.1) : Colors.transparent,
+                  color: isSelected
+                      ? AppTheme.accent.withValues(alpha: 0.1)
+                      : Colors.transparent,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(

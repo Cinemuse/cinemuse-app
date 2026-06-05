@@ -21,7 +21,8 @@ class ContinueWatchingRow extends ConsumerStatefulWidget {
   const ContinueWatchingRow({super.key});
 
   @override
-  ConsumerState<ContinueWatchingRow> createState() => _ContinueWatchingRowState();
+  ConsumerState<ContinueWatchingRow> createState() =>
+      _ContinueWatchingRowState();
 }
 
 class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
@@ -37,7 +38,7 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
     final l10n = AppLocalizations.of(context)!;
     final appLanguage = ref.read(settingsProvider).appLanguage;
     final title = item.media?.getLocalizedTitle(appLanguage) ?? 'Item';
-    
+
     // Read the providers needed for finalization now
     final authState = ref.read(authProvider);
     final repository = ref.read(watchHistoryRepositoryProvider);
@@ -52,7 +53,7 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
     );
 
     final reason = await controller.closed;
-    
+
     if (reason == SnackBarClosedReason.action) {
       if (mounted) {
         setState(() {
@@ -64,11 +65,15 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
     }
   }
 
-  Future<void> _finalizeRemoval(int tmdbId, String? userId, WatchHistoryRepository repository) async {
+  Future<void> _finalizeRemoval(
+    int tmdbId,
+    String? userId,
+    WatchHistoryRepository repository,
+  ) async {
     if (userId != null) {
       try {
         await repository.removeFromContinueWatching(userId, tmdbId);
-        
+
         // Wait a bit for the provider to update before clearing the hidden state
         // This ensures the item doesn't "reappear" if the database update is slightly delayed
         await Future.delayed(const Duration(milliseconds: 500));
@@ -80,11 +85,11 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
         }
       }
     } else {
-       if (mounted) {
-          setState(() {
-            _hiddenItems.remove(tmdbId);
-          });
-       }
+      if (mounted) {
+        setState(() {
+          _hiddenItems.remove(tmdbId);
+        });
+      }
     }
   }
 
@@ -94,23 +99,20 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
     final l10n = AppLocalizations.of(context)!;
 
     // If we have some data, but everything is currently being "flushed" or "pended",
-    // we want to maintain the column structure but potentially return SizedBox.shrink() 
+    // we want to maintain the column structure but potentially return SizedBox.shrink()
     // if the list becomes empty.
 
     // We want to avoid the "blink" when the provider refreshes.
     // We use .when only for initial load/error if no data is present.
     if (historyAsync.hasError && !historyAsync.hasValue) {
-       final mapped = ref.read(errorMapperProvider).map(historyAsync.error!);
-       return Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppTheme.getResponsiveHorizontalPadding(context),
-            vertical: 16,
-          ),
-          child: ErrorCard(
-            message: mapped.message,
-            type: mapped.type,
-          ),
-        );
+      final mapped = ref.read(errorMapperProvider).map(historyAsync.error!);
+      return Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppTheme.getResponsiveHorizontalPadding(context),
+          vertical: 16,
+        ),
+        child: ErrorCard(message: mapped.message, type: mapped.type),
+      );
     }
 
     if (historyAsync.isLoading && !historyAsync.hasValue) {
@@ -118,16 +120,20 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
     }
 
     final items = historyAsync.value ?? [];
-    final watchlistItems = ref.watch(userListsProvider).valueOrNull
-        ?.where((l) => l.type == ListType.watchlist)
-        .firstOrNull
-        ?.items ?? [];
-    
+    final watchlistItems =
+        ref
+            .watch(userListsProvider)
+            .valueOrNull
+            ?.where((l) => l.type == ListType.watchlist)
+            .firstOrNull
+            ?.items ??
+        [];
+
     // Filter out locally hidden items
     final effectiveItems = items.where((i) {
       return !_hiddenItems.contains(i.tmdbId);
     }).toList();
-    
+
     if (effectiveItems.isEmpty) return const SizedBox.shrink();
 
     return GenericCarouselRow(
@@ -135,7 +141,7 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
       title: l10n.homeContinueWatching,
       height: 216,
       padding: EdgeInsets.symmetric(
-        horizontal: AppTheme.getResponsiveHorizontalPadding(context)
+        horizontal: AppTheme.getResponsiveHorizontalPadding(context),
       ),
       itemCount: effectiveItems.length,
       separatorBuilder: (c, i) => const SizedBox(width: 16),
@@ -151,19 +157,23 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
   }
 }
 
-
 class ContinueWatchingSkeleton extends StatelessWidget {
   const ContinueWatchingSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
     final horizontalPadding = AppTheme.getResponsiveHorizontalPadding(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(horizontalPadding, 24, horizontalPadding, 16),
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            24,
+            horizontalPadding,
+            16,
+          ),
           child: const SkeletonBox(width: 180, height: 25),
         ),
         GenericCarouselRow(
@@ -175,7 +185,7 @@ class ContinueWatchingSkeleton extends StatelessWidget {
           itemBuilder: (_, __) => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 280, height: 280 * (9/16)),
+              SkeletonBox(width: 280, height: 280 * (9 / 16)),
               const SizedBox(height: 10),
               const SkeletonBox(width: 150, height: 16),
             ],
@@ -185,7 +195,3 @@ class ContinueWatchingSkeleton extends StatelessWidget {
     );
   }
 }
-
-
-
-

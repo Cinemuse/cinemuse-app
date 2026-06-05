@@ -35,7 +35,8 @@ class MediaListRow extends ConsumerWidget {
       final mapItem = item as Map<String, dynamic>;
       return MediaItem(
         tmdbId: mapItem['id'] as int,
-        mediaType: (mapItem['media_type'] == 'tv' ||
+        mediaType:
+            (mapItem['media_type'] == 'tv' ||
                 mapItem['first_air_date'] != null ||
                 mapItem['name'] != null)
             ? MediaKind.tv
@@ -44,7 +45,8 @@ class MediaListRow extends ConsumerWidget {
         posterPath: mapItem['poster_path'],
         backdropPath: mapItem['backdrop_path'],
         releaseDate: DateTime.tryParse(
-            mapItem['release_date'] ?? mapItem['first_air_date'] ?? ''),
+          mapItem['release_date'] ?? mapItem['first_air_date'] ?? '',
+        ),
         voteAverage: (mapItem['vote_average'] as num?)?.toDouble(),
         updatedAt: DateTime.now(),
       );
@@ -61,20 +63,24 @@ class MediaListRow extends ConsumerWidget {
         tmdbId: item.tmdbId,
         mediaType: item.mediaType,
         onTap: () {
-          Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => MediaDetailsScreen(
-              mediaId: item.tmdbId.toString(),
-              mediaType: item.mediaType.name,
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => MediaDetailsScreen(
+                mediaId: item.tmdbId.toString(),
+                mediaType: item.mediaType.name,
+              ),
             ),
-          ));
+          );
         },
         onPlay: () {
-          Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
-            builder: (_) => VideoPlayerScreen(
-              queryId: item.tmdbId.toString(),
-              type: item.mediaType.name,
+          Navigator.of(context, rootNavigator: true).push(
+            MaterialPageRoute(
+              builder: (_) => VideoPlayerScreen(
+                queryId: item.tmdbId.toString(),
+                type: item.mediaType.name,
+              ),
             ),
-          ));
+          );
         },
       );
     }).toList();
@@ -86,9 +92,13 @@ class MediaListRow extends ConsumerWidget {
       items: cards,
       height: 356,
       itemWidth: 200,
-      padding: padding ?? (theme == CarouselTheme.bentoBox 
-          ? EdgeInsets.zero 
-          : EdgeInsets.symmetric(horizontal: AppTheme.getResponsiveHorizontalPadding(context))),
+      padding:
+          padding ??
+          (theme == CarouselTheme.bentoBox
+              ? EdgeInsets.zero
+              : EdgeInsets.symmetric(
+                  horizontal: AppTheme.getResponsiveHorizontalPadding(context),
+                )),
     );
   }
 }

@@ -10,10 +10,10 @@ class PlayableResource {
   final String title;
   final String? subtitle;
   final String? posterUrl;
-  
+
   // VOD specific
   final PlayerParams? vodParams;
-  
+
   // Live TV specific
   final Channel? liveChannel;
 
@@ -27,10 +27,16 @@ class PlayableResource {
     this.liveChannel,
   });
 
-  factory PlayableResource.fromVod(PlayerParams params, String title, {String? posterUrl}) {
+  factory PlayableResource.fromVod(
+    PlayerParams params,
+    String title, {
+    String? posterUrl,
+  }) {
     return PlayableResource(
       id: params.queryId,
-      kind: params.type == 'youtube' ? PlayerSourceKind.youtube : PlayerSourceKind.vod,
+      kind: params.type == 'youtube'
+          ? PlayerSourceKind.youtube
+          : PlayerSourceKind.vod,
       title: title,
       posterUrl: posterUrl,
       vodParams: params,

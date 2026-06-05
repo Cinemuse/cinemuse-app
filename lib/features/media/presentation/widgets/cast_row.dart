@@ -8,18 +8,12 @@ class CastRow extends StatelessWidget {
   final Map<String, dynamic>? credits;
   final String className; // Placeholder to match web prop structure if needed
 
-  const CastRow({
-    super.key,
-    this.credits,
-    this.className = '',
-  });
+  const CastRow({super.key, this.credits, this.className = ''});
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final cast = (credits?['cast'] as List?)
-        ?.take(15)
-        .toList() ?? [];
+    final cast = (credits?['cast'] as List?)?.take(15).toList() ?? [];
 
     if (cast.isEmpty) return const SizedBox.shrink();
 
@@ -59,4 +53,3 @@ class CastRow extends StatelessWidget {
     );
   }
 }
-

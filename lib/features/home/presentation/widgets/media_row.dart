@@ -18,10 +18,10 @@ class MediaRow extends ConsumerWidget {
   final bool skipFirst;
 
   const MediaRow({
-    super.key, 
-    required this.title, 
-    required this.asyncData, 
-    this.skipFirst = false
+    super.key,
+    required this.title,
+    required this.asyncData,
+    this.skipFirst = false,
   });
 
   @override
@@ -34,7 +34,8 @@ class MediaRow extends ConsumerWidget {
           _buildTitle(context),
           Padding(
             padding: EdgeInsets.symmetric(
-                horizontal: AppTheme.getResponsiveHorizontalPadding(context)),
+              horizontal: AppTheme.getResponsiveHorizontalPadding(context),
+            ),
             child: ErrorCard(
               message: mapped.message,
               hint: mapped.hint,
@@ -82,7 +83,8 @@ class MediaRow extends ConsumerWidget {
     final mediaItems = list.map((item) {
       return MediaItem(
         tmdbId: item['id'] as int,
-        mediaType: (item['media_type'] == 'tv' ||
+        mediaType:
+            (item['media_type'] == 'tv' ||
                 item['first_air_date'] != null ||
                 item['name'] != null)
             ? MediaKind.tv
@@ -91,7 +93,8 @@ class MediaRow extends ConsumerWidget {
         posterPath: item['poster_path'],
         backdropPath: item['backdrop_path'],
         releaseDate: DateTime.tryParse(
-            item['release_date'] ?? item['first_air_date'] ?? ''),
+          item['release_date'] ?? item['first_air_date'] ?? '',
+        ),
         voteAverage: (item['vote_average'] as num?)?.toDouble(),
         updatedAt: item['updated_at'] != null
             ? DateTime.parse(item['updated_at'])
@@ -110,20 +113,24 @@ class MediaRow extends ConsumerWidget {
         tmdbId: item.tmdbId,
         mediaType: item.mediaType,
         onTap: () {
-          Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => MediaDetailsScreen(
-              mediaId: item.tmdbId.toString(),
-              mediaType: item.mediaType.name,
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => MediaDetailsScreen(
+                mediaId: item.tmdbId.toString(),
+                mediaType: item.mediaType.name,
+              ),
             ),
-          ));
+          );
         },
         onPlay: () {
-          Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
-            builder: (_) => VideoPlayerScreen(
-              queryId: item.tmdbId.toString(),
-              type: item.mediaType.name,
+          Navigator.of(context, rootNavigator: true).push(
+            MaterialPageRoute(
+              builder: (_) => VideoPlayerScreen(
+                queryId: item.tmdbId.toString(),
+                type: item.mediaType.name,
+              ),
             ),
-          ));
+          );
         },
       );
     }).toList();
@@ -135,21 +142,26 @@ class MediaRow extends ConsumerWidget {
       height: 356,
       itemWidth: 200,
       padding: EdgeInsets.symmetric(
-          horizontal: AppTheme.getResponsiveHorizontalPadding(context)),
+        horizontal: AppTheme.getResponsiveHorizontalPadding(context),
+      ),
     );
   }
 
   Widget _buildTitle(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(
-          horizontal: AppTheme.getResponsiveHorizontalPadding(context)),
+        horizontal: AppTheme.getResponsiveHorizontalPadding(context),
+      ),
       child: Row(
         children: [
-          Text(title,
-              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold)),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(width: 8),
           const Icon(Icons.chevron_right, color: AppTheme.textMuted),
         ],

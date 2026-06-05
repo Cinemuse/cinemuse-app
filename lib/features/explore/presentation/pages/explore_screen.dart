@@ -38,7 +38,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       ref.read(exploreResultsProvider.notifier).fetchNextPage();
     }
   }
@@ -61,7 +62,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 
     final screenWidth = MediaQuery.of(context).size.width;
     const double maxContentWidth = 1600.0;
-    final horizontalPadding = screenWidth > maxContentWidth 
+    final horizontalPadding = screenWidth > maxContentWidth
         ? (screenWidth - maxContentWidth) / 2 + 24
         : AppTheme.getResponsiveHorizontalPadding(context);
 
@@ -75,102 +76,128 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             child: RepaintBoundary(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  horizontalPadding, 
-                  20, 
-                  horizontalPadding, 
-                  24
+                  horizontalPadding,
+                  20,
+                  horizontalPadding,
+                  24,
                 ),
                 child: Column(
                   children: [
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isNarrow = constraints.maxWidth < 700;
-                      
-                      return SizedBox(
-                        width: double.infinity,
-                        child: isNarrow 
-                          ? Column(
-                              children: [
-                                MediaTypeSelector(
-                                  selectedType: mediaType,
-                                  onTypeChanged: (type) {
-                                    ref.read(exploreMediaTypeProvider.notifier).state = type;
-                                    ref.read(exploreResultsProvider.notifier).reset();
-                                  },
-                                ),
-                                  if (mediaType != MediaType.person) ...[
-                                    const SizedBox(height: 16),
-                                    _FilterToggleButton(
-                                      onTap: () {
-                                        AppBottomSheet.show(
-                                          context: context,
-                                          child: const AppBottomSheet(
-                                            child: SingleChildScrollView(
-                                              child: Padding(
-                                                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                                                child: ExploreFilterPanel(),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isNarrow = constraints.maxWidth < 700;
+
+                        return SizedBox(
+                          width: double.infinity,
+                          child: isNarrow
+                              ? Column(
+                                  children: [
+                                    MediaTypeSelector(
+                                      selectedType: mediaType,
+                                      onTypeChanged: (type) {
+                                        ref
+                                                .read(
+                                                  exploreMediaTypeProvider
+                                                      .notifier,
+                                                )
+                                                .state =
+                                            type;
+                                        ref
+                                            .read(
+                                              exploreResultsProvider.notifier,
+                                            )
+                                            .reset();
+                                      },
+                                    ),
+                                    if (mediaType != MediaType.person) ...[
+                                      const SizedBox(height: 16),
+                                      _FilterToggleButton(
+                                        onTap: () {
+                                          AppBottomSheet.show(
+                                            context: context,
+                                            child: const AppBottomSheet(
+                                              child: SingleChildScrollView(
+                                                child: Padding(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 24.0,
+                                                  ),
+                                                  child: ExploreFilterPanel(),
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        );
-                                      },
-                                      label: l10n.searchFilterAction,
-                                    ),
+                                          );
+                                        },
+                                        label: l10n.searchFilterAction,
+                                      ),
+                                    ],
                                   ],
-                              ],
-                            )
-                          : Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                MediaTypeSelector(
-                                  selectedType: mediaType,
-                                  onTypeChanged: (type) {
-                                    ref.read(exploreMediaTypeProvider.notifier).state = type;
-                                    ref.read(exploreResultsProvider.notifier).reset();
-                                  },
-                                ),
-                                if (mediaType != MediaType.person)
-                                  Positioned(
-                                    right: 0,
-                                    child: _FilterToggleButton(
-                                      onTap: () {
-                                        AppBottomSheet.show(
-                                          context: context,
-                                          child: const AppBottomSheet(
-                                            child: SingleChildScrollView(
-                                              child: Padding(
-                                                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                                                child: ExploreFilterPanel(),
-                                              ),
-                                            ),
-                                          ),
-                                        );
+                                )
+                              : Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    MediaTypeSelector(
+                                      selectedType: mediaType,
+                                      onTypeChanged: (type) {
+                                        ref
+                                                .read(
+                                                  exploreMediaTypeProvider
+                                                      .notifier,
+                                                )
+                                                .state =
+                                            type;
+                                        ref
+                                            .read(
+                                              exploreResultsProvider.notifier,
+                                            )
+                                            .reset();
                                       },
-                                      label: l10n.searchFilterAction,
                                     ),
-                                  ),
-                              ],
-                            ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  ActiveFiltersList(
-                    filters: filters,
-                    onChanged: (newFilters) {
-                      ref.read(exploreFiltersProvider.notifier).state = newFilters;
-                      ref.read(exploreResultsProvider.notifier).reset();
-                    },
-                    onClear: () {
-                      ref.invalidate(exploreFiltersProvider);
-                      ref.read(exploreResultsProvider.notifier).reset();
-                    },
-                  ),
-                ],
+                                    if (mediaType != MediaType.person)
+                                      Positioned(
+                                        right: 0,
+                                        child: _FilterToggleButton(
+                                          onTap: () {
+                                            AppBottomSheet.show(
+                                              context: context,
+                                              child: const AppBottomSheet(
+                                                child: SingleChildScrollView(
+                                                  child: Padding(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                          horizontal: 24.0,
+                                                        ),
+                                                    child: ExploreFilterPanel(),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          label: l10n.searchFilterAction,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    ActiveFiltersList(
+                      filters: filters,
+                      onChanged: (newFilters) {
+                        ref.read(exploreFiltersProvider.notifier).state =
+                            newFilters;
+                        ref.read(exploreResultsProvider.notifier).reset();
+                      },
+                      onClear: () {
+                        ref.invalidate(exploreFiltersProvider);
+                        ref.read(exploreResultsProvider.notifier).reset();
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
 
           // Results Grid
           resultsAsync.when(
@@ -180,13 +207,25 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   hasScrollBody: false,
                   child: Center(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                      ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(l10n.searchNoResultsTitle, style: const TextStyle(color: AppTheme.textWhite, fontSize: 20, fontWeight: FontWeight.bold)),
+                          Text(
+                            l10n.searchNoResultsTitle,
+                            style: const TextStyle(
+                              color: AppTheme.textWhite,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 8),
-                          Text(l10n.searchTryAdjusting, style: const TextStyle(color: AppTheme.textMuted)),
+                          Text(
+                            l10n.searchTryAdjusting,
+                            style: const TextStyle(color: AppTheme.textMuted),
+                          ),
                         ],
                       ),
                     ),
@@ -196,23 +235,28 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 
               return SliverPadding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding, 
-                  vertical: 0
+                  horizontal: horizontalPadding,
+                  vertical: 0,
                 ),
                 sliver: SliverLayoutBuilder(
                   builder: (context, constraints) {
                     const double itemWidth = 200;
                     const double spacing = 12;
-                    
+
                     // crossAxisExtent is the width available for the grid
-                    final crossAxisCount = ((constraints.crossAxisExtent + spacing) / (itemWidth + spacing)).floor().clamp(2, 12);
-                    
+                    final crossAxisCount =
+                        ((constraints.crossAxisExtent + spacing) /
+                                (itemWidth + spacing))
+                            .floor()
+                            .clamp(2, 12);
+
                     // "Full Row" logic: only show full rows
-                    final displayCount = (results.length ~/ crossAxisCount) * crossAxisCount;
+                    final displayCount =
+                        (results.length ~/ crossAxisCount) * crossAxisCount;
 
                     if (displayCount == 0 && results.isNotEmpty) {
-                       // If we can't even fill one row, show what we have so it's not empty
-                       return SliverGrid(
+                      // If we can't even fill one row, show what we have so it's not empty
+                      return SliverGrid(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
                           mainAxisSpacing: 16,
@@ -220,7 +264,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                           childAspectRatio: 0.68,
                         ),
                         delegate: SliverChildBuilderDelegate(
-                          (context, index) => _buildMediaCard(context, results[index], mediaType),
+                          (context, index) => _buildMediaCard(
+                            context,
+                            results[index],
+                            mediaType,
+                          ),
                           childCount: results.length,
                         ),
                       );
@@ -234,7 +282,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                         childAspectRatio: 0.68,
                       ),
                       delegate: SliverChildBuilderDelegate(
-                        (context, index) => _buildMediaCard(context, results[index], mediaType),
+                        (context, index) =>
+                            _buildMediaCard(context, results[index], mediaType),
                         childCount: displayCount,
                       ),
                     );
@@ -247,7 +296,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               child: Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  child: const CircularProgressIndicator(color: AppTheme.accent),
+                  child: const CircularProgressIndicator(
+                    color: AppTheme.accent,
+                  ),
                 ),
               ),
             ),
@@ -256,36 +307,58 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               child: Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  child: Text('${l10n.commonError}: $err', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  child: Text(
+                    '${l10n.commonError}: $err',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
 
           // Loading more indicator
-          if (resultsAsync.isLoading && resultsAsync.hasValue && resultsAsync.value!.isNotEmpty)
+          if (resultsAsync.isLoading &&
+              resultsAsync.hasValue &&
+              resultsAsync.value!.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(horizontalPadding, 24, horizontalPadding, 24),
-                child: const Center(child: CircularProgressIndicator(color: AppTheme.accent)),
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  24,
+                  horizontalPadding,
+                  24,
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(color: AppTheme.accent),
+                ),
               ),
             ),
-            
+
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
     );
   }
 
-
-  Widget _buildMediaCard(BuildContext context, Map<String, dynamic> media, MediaType mediaTypeEnum) {
-    final title = media['title'] ?? media['name'] ?? AppLocalizations.of(context)!.commonUnknown;
+  Widget _buildMediaCard(
+    BuildContext context,
+    Map<String, dynamic> media,
+    MediaType mediaTypeEnum,
+  ) {
+    final title =
+        media['title'] ??
+        media['name'] ??
+        AppLocalizations.of(context)!.commonUnknown;
     final posterPath = media['poster_path'] ?? media['profile_path'];
     final releaseDate = media['release_date'] ?? media['first_air_date'];
     final rating = (media['vote_average'] as num?)?.toDouble();
     final tmdbId = media['id'] as int;
     final mediaTypeString = mediaTypeEnum == MediaType.movie ? 'movie' : 'tv';
-    final kind = mediaTypeEnum == MediaType.movie ? MediaKind.movie : MediaKind.tv;
+    final kind = mediaTypeEnum == MediaType.movie
+        ? MediaKind.movie
+        : MediaKind.tv;
 
     return MediaCard(
       title: title,
@@ -296,12 +369,14 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
       mediaType: kind,
       onTap: () {
         if (mediaTypeEnum != MediaType.person) {
-          Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => MediaDetailsScreen(
-              mediaId: media['id'].toString(),
-              mediaType: mediaTypeString,
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => MediaDetailsScreen(
+                mediaId: media['id'].toString(),
+                mediaType: mediaTypeString,
+              ),
             ),
-          ));
+          );
         }
       },
     );
@@ -312,10 +387,7 @@ class _FilterToggleButton extends StatelessWidget {
   final VoidCallback onTap;
   final String label;
 
-  const _FilterToggleButton({
-    required this.onTap,
-    required this.label,
-  });
+  const _FilterToggleButton({required this.onTap, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -328,9 +400,7 @@ class _FilterToggleButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppTheme.secondary,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppTheme.border,
-          ),
+          border: Border.all(color: AppTheme.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

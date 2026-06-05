@@ -1,24 +1,42 @@
+import 'package:cinemuse_app/core/constants/app_constants.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 
-class CreateListModal extends StatefulWidget {
+class CreateListSheet extends StatefulWidget {
   final Function(String name) onCreate;
 
-  const CreateListModal({super.key, required this.onCreate});
+  const CreateListSheet({super.key, required this.onCreate});
+
+  static Future<void> show(
+    BuildContext context, {
+    required Function(String name) onCreate,
+  }) {
+    return AppBottomSheet.show(
+      context: context,
+      constraints: const BoxConstraints(maxWidth: 500),
+      child: CreateListSheet(onCreate: onCreate),
+    );
+  }
 
   @override
-  State<CreateListModal> createState() => _CreateListModalState();
+  State<CreateListSheet> createState() => _CreateListSheetState();
 }
 
-class _CreateListModalState extends State<CreateListModal> {
+class _CreateListSheetState extends State<CreateListSheet> {
   final _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   bool _canCreate = false;
 
   @override
   void initState() {
     super.initState();
     _controller.addListener(_updateCanCreate);
+    // Add slight delay to ensure bottom sheet is fully built before requesting focus
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) _focusNode.requestFocus();
+    });
   }
 
   void _updateCanCreate() {
@@ -31,17 +49,28 @@ class _CreateListModalState extends State<CreateListModal> {
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  void _handleCreate() {
+    if (_canCreate) {
+      widget.onCreate(_controller.text.trim());
+      Navigator.of(context).pop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Dialog(
-      backgroundColor: AppTheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Colors.white10)),
+    return AppBottomSheet(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.only(
+          left: 24.0,
+          right: 24.0,
+          top: 8.0,
+          bottom: MediaQuery.viewInsetsOf(context).bottom + 24.0,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,8 +86,8 @@ class _CreateListModalState extends State<CreateListModal> {
             const SizedBox(height: 24),
             TextField(
               controller: _controller,
-              autofocus: true,
-              maxLength: 32,
+              focusNode: _focusNode,
+              maxLength: AppConstants.maxListNameLength,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: l10n.detailsCollectionNameHint,
@@ -75,12 +104,7 @@ class _CreateListModalState extends State<CreateListModal> {
                 ),
                 counterStyle: const TextStyle(color: Colors.white38),
               ),
-              onSubmitted: (val) {
-                if (val.trim().isNotEmpty) {
-                  widget.onCreate(val.trim());
-                  Navigator.of(context).pop();
-                }
-              },
+              onSubmitted: (_) => _handleCreate(),
             ),
             const SizedBox(height: 24),
             Row(
@@ -88,25 +112,34 @@ class _CreateListModalState extends State<CreateListModal> {
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: Text(l10n.commonCancel, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      l10n.commonCancel,
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _canCreate 
-                      ? () {
-                          widget.onCreate(_controller.text.trim());
-                          Navigator.of(context).pop();
-                        }
-                      : null,
+                    onPressed: _canCreate ? _handleCreate : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.accent,
                       foregroundColor: Colors.white,
-                      disabledBackgroundColor: AppTheme.accent.withValues(alpha: 0.3),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      disabledBackgroundColor: AppTheme.accent.withValues(
+                        alpha: 0.3,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: Text(l10n.commonCreate),
+                    child: Text(
+                      l10n.commonCreate,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],

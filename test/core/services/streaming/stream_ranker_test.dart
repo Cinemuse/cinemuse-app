@@ -7,14 +7,16 @@ import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart
 void main() {
   group('StreamRanker scoring', () {
     test('Should prioritize Italian streams', () {
-      final itaStream = StreamCandidate(kind: StreamSourceKind.vod,
+      final itaStream = StreamCandidate(
+        kind: StreamSourceKind.vod,
         title: 'Movie Title ITA ENG 1080p',
         infoHash: 'hash1',
         magnet: 'mag1',
         seeds: 10,
         provider: 'P1',
       );
-      final engStream = StreamCandidate(kind: StreamSourceKind.vod,
+      final engStream = StreamCandidate(
+        kind: StreamSourceKind.vod,
         title: 'Movie Title ENG 1080p',
         infoHash: 'hash2',
         magnet: 'mag2',
@@ -25,18 +27,24 @@ void main() {
       final itaScore = StreamRanker.score(itaStream);
       final engScore = StreamRanker.score(engStream);
 
-      expect(itaScore > engScore, isTrue, reason: 'Italian should have higher score than English');
+      expect(
+        itaScore > engScore,
+        isTrue,
+        reason: 'Italian should have higher score than English',
+      );
     });
 
     test('Should massively boost Multi (ITA+ENG)', () {
-      final multiStream = StreamCandidate(kind: StreamSourceKind.vod,
+      final multiStream = StreamCandidate(
+        kind: StreamSourceKind.vod,
         title: 'Movie.Title.MULTI.ITA.ENG.1080p',
         infoHash: 'hash1',
         magnet: 'mag1',
         seeds: 10,
         provider: 'P1',
       );
-      final itaOnlyStream = StreamCandidate(kind: StreamSourceKind.vod,
+      final itaOnlyStream = StreamCandidate(
+        kind: StreamSourceKind.vod,
         title: 'Movie.Title.ITA.1080p',
         infoHash: 'hash2',
         magnet: 'mag2',
@@ -47,18 +55,24 @@ void main() {
       final multiScore = StreamRanker.score(multiStream);
       final itaScore = StreamRanker.score(itaOnlyStream);
 
-      expect(multiScore > itaScore, isTrue, reason: 'Multi should have higher score than single language');
+      expect(
+        multiScore > itaScore,
+        isTrue,
+        reason: 'Multi should have higher score than single language',
+      );
     });
 
     test('Should prioritize 4K/2160p over 1080p', () {
-      final k4Stream = StreamCandidate(kind: StreamSourceKind.vod,
+      final k4Stream = StreamCandidate(
+        kind: StreamSourceKind.vod,
         title: 'Movie 4K HEVC',
         infoHash: 'hash1',
         magnet: 'mag1',
         seeds: 10,
         provider: 'P1',
       );
-      final hdStream = StreamCandidate(kind: StreamSourceKind.vod,
+      final hdStream = StreamCandidate(
+        kind: StreamSourceKind.vod,
         title: 'Movie 1080p HEVC',
         infoHash: 'hash2',
         magnet: 'mag2',
@@ -66,18 +80,22 @@ void main() {
         provider: 'P1',
       );
 
-      expect(StreamRanker.score(k4Stream) > StreamRanker.score(hdStream), isTrue);
+      expect(
+        StreamRanker.score(k4Stream) > StreamRanker.score(hdStream),
+        isTrue,
+      );
     });
 
     test('Should penalize Russian releases without Italian', () {
-      final rusStream = StreamCandidate(kind: StreamSourceKind.vod,
+      final rusStream = StreamCandidate(
+        kind: StreamSourceKind.vod,
         title: 'Movie.RUSSIAN.lostfilm',
         infoHash: 'hash1',
         magnet: 'mag1',
         seeds: 10,
         provider: 'P1',
       );
-      
+
       expect(StreamRanker.score(rusStream) < 0, isTrue);
     });
   });
@@ -108,7 +126,8 @@ void main() {
 
   group('StreamRanker ranking', () {
     test('Should sort by cache status first, then score', () {
-      final uncachedHigh = StreamCandidate(kind: StreamSourceKind.vod,
+      final uncachedHigh = StreamCandidate(
+        kind: StreamSourceKind.vod,
         title: 'Movie ITA 4K Uncached',
         infoHash: 'h1',
         magnet: 'm1',
@@ -116,7 +135,8 @@ void main() {
         provider: 'P1',
         cachedOn: {}, // Not cached
       );
-      final cachedLow = StreamCandidate(kind: StreamSourceKind.vod,
+      final cachedLow = StreamCandidate(
+        kind: StreamSourceKind.vod,
         title: 'Movie ENG 720p Cached',
         infoHash: 'h2',
         magnet: 'm2',
@@ -127,8 +147,11 @@ void main() {
 
       final result = StreamRanker.rank([uncachedHigh, cachedLow]);
 
-      expect(result.first.infoHash, equals('h2'), reason: 'Cached stream should be first');
+      expect(
+        result.first.infoHash,
+        equals('h2'),
+        reason: 'Cached stream should be first',
+      );
     });
   });
 }
-

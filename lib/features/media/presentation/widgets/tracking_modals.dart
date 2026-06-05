@@ -5,7 +5,8 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 /// Modal for managing whole series tracking (Mark Remaining, Mark All, Remove All).
 class SeriesTrackModal extends StatefulWidget {
   final String title;
-  final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount}) status;
+  final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})
+  status;
   final Function(DateTime? date) onMarkRemaining;
   final Function(DateTime? date) onMarkAll;
   final VoidCallback onRemoveAll;
@@ -28,8 +29,9 @@ class _SeriesTrackModalState extends State<SeriesTrackModal> {
 
   @override
   Widget build(BuildContext context) {
-    final isNew = !widget.status.isFullyWatched && !widget.status.isPartiallyWatched;
-    
+    final isNew =
+        !widget.status.isFullyWatched && !widget.status.isPartiallyWatched;
+
     return AlertDialog(
       backgroundColor: AppTheme.secondary,
       surfaceTintColor: Colors.transparent,
@@ -37,9 +39,19 @@ class _SeriesTrackModalState extends State<SeriesTrackModal> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Row(
         children: [
-          const Icon(Icons.playlist_add_check, color: AppTheme.accent, size: 24),
+          const Icon(
+            Icons.playlist_add_check,
+            color: AppTheme.accent,
+            size: 24,
+          ),
           const SizedBox(width: 12),
-          Expanded(child: Text(widget.title, style: const TextStyle(color: Colors.white, fontSize: 18), overflow: TextOverflow.ellipsis)),
+          Expanded(
+            child: Text(
+              widget.title,
+              style: const TextStyle(color: Colors.white, fontSize: 18),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
       content: Column(
@@ -47,23 +59,32 @@ class _SeriesTrackModalState extends State<SeriesTrackModal> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            isNew 
-                ? 'Mark the entire series as watched?' 
+            isNew
+                ? 'Mark the entire series as watched?'
                 : 'Manage your history for this series.',
             style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
           ),
           const SizedBox(height: 24),
-          
+
           _ModalButton(
-            icon: !widget.status.isFullyWatched ? Icons.done_all : Icons.replay_circle_filled,
-            label: widget.status.isPartiallyWatched && !widget.status.isFullyWatched
+            icon: !widget.status.isFullyWatched
+                ? Icons.done_all
+                : Icons.replay_circle_filled,
+            label:
+                widget.status.isPartiallyWatched &&
+                    !widget.status.isFullyWatched
                 ? AppLocalizations.of(context)!.detailsMarkRemaining
-                : (!widget.status.isFullyWatched ? AppLocalizations.of(context)!.detailsMarkAll : AppLocalizations.of(context)!.detailsRewatchSeries),
-            subtitle: _selectedDate == null ? 'Today' : 'Watched on ${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
+                : (!widget.status.isFullyWatched
+                      ? AppLocalizations.of(context)!.detailsMarkAll
+                      : AppLocalizations.of(context)!.detailsRewatchSeries),
+            subtitle: _selectedDate == null
+                ? 'Today'
+                : 'Watched on ${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
             color: AppTheme.accent,
             onTap: () {
               Navigator.pop(context);
-              if (widget.status.isPartiallyWatched && !widget.status.isFullyWatched) {
+              if (widget.status.isPartiallyWatched &&
+                  !widget.status.isFullyWatched) {
                 widget.onMarkRemaining(_selectedDate);
               } else {
                 widget.onMarkAll(_selectedDate);
@@ -74,7 +95,7 @@ class _SeriesTrackModalState extends State<SeriesTrackModal> {
               if (date != null) setState(() => _selectedDate = date);
             },
           ),
-          
+
           if (!isNew) ...[
             const SizedBox(height: 12),
             _ModalButton(
@@ -129,7 +150,10 @@ class _TrackOptionsModalState extends State<TrackOptionsModal> {
         children: [
           const Icon(Icons.history, color: AppTheme.accent, size: 24),
           const SizedBox(width: 12),
-          Text('Episode ${widget.episode}', style: const TextStyle(color: Colors.white, fontSize: 20)),
+          Text(
+            'Episode ${widget.episode}',
+            style: const TextStyle(color: Colors.white, fontSize: 20),
+          ),
         ],
       ),
       content: Column(
@@ -141,11 +165,13 @@ class _TrackOptionsModalState extends State<TrackOptionsModal> {
             style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
           ),
           const SizedBox(height: 24),
-          
+
           _ModalButton(
             icon: Icons.replay,
             label: 'Mark a Rewatch',
-            subtitle: _selectedDate == null ? 'Today' : 'Watched on ${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
+            subtitle: _selectedDate == null
+                ? 'Today'
+                : 'Watched on ${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
             color: AppTheme.accent,
             onTap: () {
               Navigator.pop(context);
@@ -156,9 +182,9 @@ class _TrackOptionsModalState extends State<TrackOptionsModal> {
               if (date != null) setState(() => _selectedDate = date);
             },
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           _ModalButton(
             icon: Icons.remove_circle_outline,
             label: 'Remove One Watch',
@@ -169,9 +195,9 @@ class _TrackOptionsModalState extends State<TrackOptionsModal> {
               widget.onRemoveOne();
             },
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           _ModalButton(
             icon: Icons.delete_outline,
             label: 'Remove All History',
@@ -234,11 +260,18 @@ class _ModalButton extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                   Text(
                     subtitle,
-                    style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 11),
+                    style: TextStyle(
+                      color: color.withValues(alpha: 0.7),
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
@@ -314,7 +347,13 @@ class _MovieTrackModalState extends State<MovieTrackModal> {
         children: [
           const Icon(Icons.history, color: AppTheme.accent, size: 24),
           const SizedBox(width: 12),
-          Expanded(child: Text(widget.title, style: const TextStyle(color: Colors.white, fontSize: 18), overflow: TextOverflow.ellipsis)),
+          Expanded(
+            child: Text(
+              widget.title,
+              style: const TextStyle(color: Colors.white, fontSize: 18),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
       content: Column(
@@ -326,11 +365,13 @@ class _MovieTrackModalState extends State<MovieTrackModal> {
             style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
           ),
           const SizedBox(height: 24),
-          
+
           _ModalButton(
             icon: Icons.replay,
             label: widget.watchCount > 0 ? 'Mark a Rewatch' : 'Mark as Watched',
-            subtitle: _selectedDate == null ? 'Today' : 'Watched on ${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
+            subtitle: _selectedDate == null
+                ? 'Today'
+                : 'Watched on ${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
             color: AppTheme.accent,
             onTap: () {
               Navigator.pop(context);
@@ -341,10 +382,10 @@ class _MovieTrackModalState extends State<MovieTrackModal> {
               if (date != null) setState(() => _selectedDate = date);
             },
           ),
-          
+
           if (widget.watchCount > 0) ...[
             const SizedBox(height: 12),
-            
+
             _ModalButton(
               icon: Icons.remove_circle_outline,
               label: 'Remove One Watch',
@@ -355,9 +396,9 @@ class _MovieTrackModalState extends State<MovieTrackModal> {
                 widget.onRemoveOne();
               },
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             _ModalButton(
               icon: Icons.delete_outline,
               label: 'Remove All History',

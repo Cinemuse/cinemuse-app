@@ -1,13 +1,14 @@
 class ExternalSubtitle {
   final String id;
-  final String language;     // Language code, e.g., 'en', 'it'
+  final String language; // Language code, e.g., 'en', 'it'
   final String languageName; // Display name, e.g., 'English', 'Italian'
-  final String format;       // e.g., 'srt', 'vtt'
-  final String? url;         // Direct download URL if available immediately
-  final String providerName; // The service that provided this, e.g., 'OpenSubtitles'
-  final String title;        // The filename or release name this subtitle is meant for
-  final double? rating;      // Optional rating from the provider
-  final int? downloadCount;  // Optional download count from the provider
+  final String format; // e.g., 'srt', 'vtt'
+  final String? url; // Direct download URL if available immediately
+  final String
+  providerName; // The service that provided this, e.g., 'OpenSubtitles'
+  final String title; // The filename or release name this subtitle is meant for
+  final double? rating; // Optional rating from the provider
+  final int? downloadCount; // Optional download count from the provider
 
   const ExternalSubtitle({
     required this.id,

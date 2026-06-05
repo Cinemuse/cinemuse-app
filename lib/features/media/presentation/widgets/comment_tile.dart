@@ -6,10 +6,7 @@ import 'package:timeago/timeago.dart' as timeago;
 
 class CommentTile extends StatefulWidget {
   final TvTimeComment comment;
-  const CommentTile({
-    super.key,
-    required this.comment,
-  });
+  const CommentTile({super.key, required this.comment});
 
   @override
   State<CommentTile> createState() => _CommentTileState();
@@ -36,10 +33,7 @@ class _CommentTileState extends State<CommentTile> {
         children: [
           _buildHeader(user, comment.createdAt),
           const SizedBox(height: 12),
-          if (isSpoiler)
-            _buildSpoilerOverlay()
-          else
-            _buildContent(comment),
+          if (isSpoiler) _buildSpoilerOverlay() else _buildContent(comment),
           if (!isSpoiler) ...[
             const SizedBox(height: 12),
             _buildFooter(comment),
@@ -60,8 +54,13 @@ class _CommentTileState extends State<CommentTile> {
               : null,
           child: user?.avatarUrl == null
               ? Text(
-                  user?.name.isNotEmpty == true ? user!.name[0].toUpperCase() : '?',
-                  style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold),
+                  user?.name.isNotEmpty == true
+                      ? user!.name[0].toUpperCase()
+                      : '?',
+                  style: const TextStyle(
+                    color: AppTheme.accent,
+                    fontWeight: FontWeight.bold,
+                  ),
                 )
               : null,
         ),
@@ -139,6 +138,7 @@ class _CommentTileState extends State<CommentTile> {
       errorWidget: (context, url, error) => const SizedBox.shrink(),
     );
   }
+
   Widget _buildSpoilerOverlay() {
     return GestureDetector(
       onTap: () => setState(() => _isSpoilerRevealed = true),
@@ -153,11 +153,18 @@ class _CommentTileState extends State<CommentTile> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 32),
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.redAccent,
+              size: 32,
+            ),
             const SizedBox(height: 8),
             const Text(
               'Spoiler Warning',
-              style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -181,11 +188,18 @@ class _CommentTileState extends State<CommentTile> {
         ),
         const Spacer(),
         if (comment.reportCount > 0) ...[
-          Icon(Icons.flag_outlined, size: 16, color: Colors.redAccent.withValues(alpha: 0.5)),
+          Icon(
+            Icons.flag_outlined,
+            size: 16,
+            color: Colors.redAccent.withValues(alpha: 0.5),
+          ),
           const SizedBox(width: 4),
           Text(
             '${comment.reportCount}',
-            style: TextStyle(color: Colors.redAccent.withValues(alpha: 0.5), fontSize: 12),
+            style: TextStyle(
+              color: Colors.redAccent.withValues(alpha: 0.5),
+              fontSize: 12,
+            ),
           ),
         ],
       ],

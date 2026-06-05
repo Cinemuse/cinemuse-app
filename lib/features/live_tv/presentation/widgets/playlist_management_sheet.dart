@@ -112,7 +112,8 @@ class PlaylistListSection extends ConsumerWidget {
           children: [
             Expanded(
               child: FilledButton.icon(
-                onPressed: () => _showAddRemotePlaylistDialog(context, ref, l10n),
+                onPressed: () =>
+                    _showAddRemotePlaylistDialog(context, ref, l10n),
                 icon: const Icon(LucideIcons.link, size: 16),
                 label: Text(l10n.liveTvAddUrl),
               ),
@@ -147,12 +148,17 @@ class PlaylistListSection extends ConsumerWidget {
   }
 
   void _showAddRemotePlaylistDialog(
-      BuildContext context, WidgetRef ref, AppLocalizations l10n) {
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+  ) {
     showDialog(
       context: context,
       builder: (context) => _AddRemotePlaylistDialog(
         onAdd: (name, url, type) {
-          ref.read(customPlaylistsProvider.notifier).addPlaylist(
+          ref
+              .read(customPlaylistsProvider.notifier)
+              .addPlaylist(
                 LiveTvPlaylist(
                   name: name,
                   urlOrPath: url,
@@ -165,7 +171,10 @@ class PlaylistListSection extends ConsumerWidget {
     );
   }
 
-  Future<void> _pickAndAddLocalPlaylist(BuildContext context, WidgetRef ref) async {
+  Future<void> _pickAndAddLocalPlaylist(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['m3u', 'm3u8', 'json'],
@@ -175,11 +184,15 @@ class PlaylistListSection extends ConsumerWidget {
 
     final sourceFile = File(result.files.single.path!);
     final extension = sourceFile.path.toLowerCase();
-    final type = extension.contains('json') ? PlaylistType.json : PlaylistType.m3u;
+    final type = extension.contains('json')
+        ? PlaylistType.json
+        : PlaylistType.m3u;
 
     final destFile = await LocalPlaylistStorage.copyPlaylistFile(sourceFile);
 
-    ref.read(customPlaylistsProvider.notifier).addPlaylist(
+    ref
+        .read(customPlaylistsProvider.notifier)
+        .addPlaylist(
           LiveTvPlaylist(
             name: result.files.single.name,
             urlOrPath: destFile.uri.pathSegments.last, // basename only
@@ -348,8 +361,9 @@ class _OpenFolderButton extends StatelessWidget {
 
   Future<void> _openFolder(BuildContext context) async {
     try {
-      final absolutePath =
-          await LocalPlaylistStorage.resolveToAbsolutePath(playlist.urlOrPath);
+      final absolutePath = await LocalPlaylistStorage.resolveToAbsolutePath(
+        playlist.urlOrPath,
+      );
       await Process.run('explorer', ['/select,', absolutePath]);
     } catch (_) {
       // Silently fail — file may have been deleted
@@ -451,10 +465,12 @@ class _AddRemotePlaylistDialogState extends State<_AddRemotePlaylistDialog> {
               initialValue: _type,
               decoration: InputDecoration(labelText: l10n.liveTvPlaylistFormat),
               items: PlaylistType.values
-                  .map((e) => DropdownMenuItem(
-                        value: e,
-                        child: Text(e.name.toUpperCase()),
-                      ))
+                  .map(
+                    (e) => DropdownMenuItem(
+                      value: e,
+                      child: Text(e.name.toUpperCase()),
+                    ),
+                  )
                   .toList(),
               onChanged: (val) {
                 if (val != null) setState(() => _type = val);
@@ -472,7 +488,10 @@ class _AddRemotePlaylistDialogState extends State<_AddRemotePlaylistDialog> {
           onPressed: _canSubmit
               ? () {
                   widget.onAdd(
-                      _nameController.text, _urlController.text, _type);
+                    _nameController.text,
+                    _urlController.text,
+                    _type,
+                  );
                   Navigator.pop(context);
                 }
               : null,

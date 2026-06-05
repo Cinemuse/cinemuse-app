@@ -20,7 +20,9 @@ class PlayPauseOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+    final isMobile =
+        defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
 
     return Center(
       child: StreamBuilder<bool>(
@@ -28,7 +30,7 @@ class PlayPauseOverlay extends StatelessWidget {
         initialData: player.state.playing,
         builder: (context, snapshot) {
           final isPlaying = snapshot.data ?? player.state.playing;
-          
+
           if (isMobile) {
             return IgnorePointer(
               ignoring: !visible,
@@ -36,7 +38,10 @@ class PlayPauseOverlay extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.replay_10_rounded, color: Colors.white),
+                    icon: const Icon(
+                      Icons.replay_10_rounded,
+                      color: Colors.white,
+                    ),
                     iconSize: 48,
                     onPressed: () => onSkip(false),
                   ),
@@ -49,7 +54,9 @@ class PlayPauseOverlay extends StatelessWidget {
                     ),
                     child: IconButton(
                       icon: Icon(
-                        isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                        isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
                         color: Colors.white,
                       ),
                       iconSize: 48,
@@ -58,7 +65,10 @@ class PlayPauseOverlay extends StatelessWidget {
                   ),
                   const SizedBox(width: 32),
                   IconButton(
-                    icon: const Icon(Icons.forward_10_rounded, color: Colors.white),
+                    icon: const Icon(
+                      Icons.forward_10_rounded,
+                      color: Colors.white,
+                    ),
                     iconSize: 48,
                     onPressed: () => onSkip(true),
                   ),
@@ -77,7 +87,11 @@ class PlayPauseOverlay extends StatelessWidget {
                   color: Colors.black45,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.play_arrow, color: Colors.white, size: 48),
+                child: const Icon(
+                  Icons.play_arrow,
+                  color: Colors.white,
+                  size: 48,
+                ),
               ),
             );
           }

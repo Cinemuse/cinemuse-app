@@ -37,7 +37,9 @@ class SocialActionsGroup extends ConsumerWidget {
             _SocialIcon(
               icon: isFavorite ? Icons.favorite : Icons.favorite_border,
               color: isFavorite ? AppTheme.favorites : AppTheme.textWhite,
-              onTap: () => ref.read(mediaDetailsControllerProvider.notifier).toggleFavorite(mediaItem),
+              onTap: () => ref
+                  .read(mediaDetailsControllerProvider.notifier)
+                  .toggleFavorite(mediaItem),
             ),
           ),
           const _VerticalDivider(),
@@ -45,7 +47,9 @@ class SocialActionsGroup extends ConsumerWidget {
             _SocialIcon(
               icon: isInWatchlist ? Icons.bookmark : Icons.bookmark_border,
               color: isInWatchlist ? AppTheme.watchlist : AppTheme.textWhite,
-              onTap: () => ref.read(mediaDetailsControllerProvider.notifier).toggleWatchlist(mediaItem),
+              onTap: () => ref
+                  .read(mediaDetailsControllerProvider.notifier)
+                  .toggleWatchlist(mediaItem),
             ),
           ),
           const _VerticalDivider(),
@@ -53,7 +57,6 @@ class SocialActionsGroup extends ConsumerWidget {
             _SocialIcon(
               icon: Icons.format_list_bulleted,
               onTap: onListTap,
-              showArrow: true,
             ),
           ),
         ],
@@ -83,7 +86,8 @@ class _SocialIcon extends StatefulWidget {
   State<_SocialIcon> createState() => _SocialIconState();
 }
 
-class _SocialIconState extends State<_SocialIcon> with SingleTickerProviderStateMixin {
+class _SocialIconState extends State<_SocialIcon>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   bool? _isOptimisticActive;
@@ -95,10 +99,12 @@ class _SocialIconState extends State<_SocialIcon> with SingleTickerProviderState
       vsync: this,
       duration: const Duration(milliseconds: 100),
     );
-    _scaleAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
-    ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _scaleAnimation = TweenSequence<double>(
+      [
+        TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
+        TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
+      ],
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
   }
 
   @override
@@ -115,29 +121,45 @@ class _SocialIconState extends State<_SocialIcon> with SingleTickerProviderState
     super.dispose();
   }
 
-  bool get isActive => _isOptimisticActive ?? (widget.color != null && widget.color != AppTheme.textWhite);
+  bool get isActive =>
+      _isOptimisticActive ??
+      (widget.color != null && widget.color != AppTheme.textWhite);
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     // Use 600px breakpoint to match mobile layout switching
-    final horizontalPadding = screenWidth < 600 ? 12.0 : (widget.showArrow ? 12.0 : 18.0);
+    final horizontalPadding = screenWidth < 600
+        ? 12.0
+        : (widget.showArrow ? 12.0 : 18.0);
 
     IconData effectiveIcon = widget.icon;
     if (_isOptimisticActive != null) {
-      if (widget.icon == Icons.favorite || widget.icon == Icons.favorite_border) {
-        effectiveIcon = _isOptimisticActive! ? Icons.favorite : Icons.favorite_border;
-      } else if (widget.icon == Icons.bookmark || widget.icon == Icons.bookmark_border) {
-        effectiveIcon = _isOptimisticActive! ? Icons.bookmark : Icons.bookmark_border;
+      if (widget.icon == Icons.favorite ||
+          widget.icon == Icons.favorite_border) {
+        effectiveIcon = _isOptimisticActive!
+            ? Icons.favorite
+            : Icons.favorite_border;
+      } else if (widget.icon == Icons.bookmark ||
+          widget.icon == Icons.bookmark_border) {
+        effectiveIcon = _isOptimisticActive!
+            ? Icons.bookmark
+            : Icons.bookmark_border;
       }
     }
 
     Color effectiveColor = widget.color ?? AppTheme.textWhite;
     if (_isOptimisticActive != null) {
-      if (widget.icon == Icons.favorite || widget.icon == Icons.favorite_border) {
-        effectiveColor = _isOptimisticActive! ? AppTheme.favorites : AppTheme.textWhite;
-      } else if (widget.icon == Icons.bookmark || widget.icon == Icons.bookmark_border) {
-        effectiveColor = _isOptimisticActive! ? AppTheme.watchlist : AppTheme.textWhite;
+      if (widget.icon == Icons.favorite ||
+          widget.icon == Icons.favorite_border) {
+        effectiveColor = _isOptimisticActive!
+            ? AppTheme.favorites
+            : AppTheme.textWhite;
+      } else if (widget.icon == Icons.bookmark ||
+          widget.icon == Icons.bookmark_border) {
+        effectiveColor = _isOptimisticActive!
+            ? AppTheme.watchlist
+            : AppTheme.textWhite;
       }
     }
 
@@ -158,7 +180,10 @@ class _SocialIconState extends State<_SocialIcon> with SingleTickerProviderState
           },
           child: Container(
             alignment: Alignment.center,
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 15),
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: 15,
+            ),
             // FittedBox scales down contents if they still exceed the container width
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -170,7 +195,8 @@ class _SocialIconState extends State<_SocialIcon> with SingleTickerProviderState
                     scale: _scaleAnimation,
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 150),
-                      transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+                      transitionBuilder: (child, anim) =>
+                          FadeTransition(opacity: anim, child: child),
                       child: Icon(
                         effectiveIcon,
                         key: ValueKey(effectiveIcon),
@@ -181,7 +207,11 @@ class _SocialIconState extends State<_SocialIcon> with SingleTickerProviderState
                   ),
                   if (widget.showArrow) ...[
                     const SizedBox(width: 4),
-                    Icon(Icons.keyboard_arrow_down, color: effectiveColor.withValues(alpha: 0.5), size: 14),
+                    Icon(
+                      Icons.keyboard_arrow_down,
+                      color: effectiveColor.withValues(alpha: 0.5),
+                      size: 14,
+                    ),
                   ],
                 ],
               ),

@@ -43,10 +43,7 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
       await ref.read(settingsProvider.notifier).installAddon(url);
       _urlController.clear();
       if (mounted) {
-        AppSnackBar.show(
-          context,
-          message: l10n.settingsAddonSuccess,
-        );
+        AppSnackBar.show(context, message: l10n.settingsAddonSuccess);
       }
     } catch (e) {
       setState(() => _error = e.toString().replaceAll('Exception: ', ''));
@@ -76,16 +73,18 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   icon: LucideIcons.hardDrive,
                   trailing: SettingToggle(
                     value: settings.enableRealDebrid,
-                    onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
-                      'enableRealDebrid': val,
-                    }),
+                    onChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSettings({'enableRealDebrid': val}),
                   ),
                 ),
                 if (settings.enableRealDebrid)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: TextField(
-                      controller: TextEditingController(text: settings.realDebridKey),
+                      controller: TextEditingController(
+                        text: settings.realDebridKey,
+                      ),
                       style: const TextStyle(color: Colors.white),
                       obscureText: !_showApiKey,
                       decoration: InputDecoration(
@@ -95,29 +94,37 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                         fillColor: Colors.black.withValues(alpha: 0.3),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                          borderSide: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.05),
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                          borderSide: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.05),
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: AppTheme.accent),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _showApiKey ? LucideIcons.eye : LucideIcons.eyeOff,
                             color: AppTheme.textMuted,
                             size: 20,
                           ),
-                          onPressed: () => setState(() => _showApiKey = !_showApiKey),
+                          onPressed: () =>
+                              setState(() => _showApiKey = !_showApiKey),
                         ),
                       ),
-                      onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
-                        'realDebridKey': val,
-                      }),
+                      onChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateSettings({'realDebridKey': val}),
                     ),
                   ),
               ],
@@ -140,7 +147,9 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: TextField(
-                    controller: TextEditingController(text: settings.openSubtitlesKey),
+                    controller: TextEditingController(
+                      text: settings.openSubtitlesKey,
+                    ),
                     style: const TextStyle(color: Colors.white),
                     obscureText: !_showApiKey,
                     decoration: InputDecoration(
@@ -150,39 +159,52 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                       fillColor: Colors.black.withValues(alpha: 0.3),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                        borderSide: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.05),
+                        ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                        borderSide: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.05),
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: AppTheme.accent),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _showApiKey ? LucideIcons.eye : LucideIcons.eyeOff,
                           color: AppTheme.textMuted,
                           size: 20,
                         ),
-                        onPressed: () => setState(() => _showApiKey = !_showApiKey),
+                        onPressed: () =>
+                            setState(() => _showApiKey = !_showApiKey),
                       ),
                     ),
-                    onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
-                      'openSubtitlesKey': val,
-                    }),
+                    onChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSettings({'openSubtitlesKey': val}),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: SettingToggle(
                     label: l10n.settingsOpenSubtitlesAutoDownloadTitle,
                     description: l10n.settingsOpenSubtitlesAutoDownloadDesc,
                     value: settings.autoDownloadMissingSubtitles,
                     onChanged: (val) {
-                      ref.read(settingsProvider.notifier).updateSettings({'autoDownloadMissingSubtitles': val});
+                      ref.read(settingsProvider.notifier).updateSettings({
+                        'autoDownloadMissingSubtitles': val,
+                      });
                     },
                   ),
                 ),
@@ -199,33 +221,37 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
               children: [
                 Builder(
                   builder: (context) {
-                    final isDebridActive = settings.enableRealDebrid && settings.realDebridKey.trim().isNotEmpty;
-                    
+                    final isDebridActive =
+                        settings.enableRealDebrid &&
+                        settings.realDebridKey.trim().isNotEmpty;
+
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SettingsTile(
                           label: l10n.settingsEnableAnimeTosho,
-                          description: "Native high-quality anime source (Torrent)",
+                          description:
+                              "Native high-quality anime source (Torrent)",
                           icon: LucideIcons.zap,
                           trailing: SettingToggle(
                             value: settings.enableAnimeTosho && isDebridActive,
-                            onChanged: isDebridActive 
-                              ? (val) => ref.read(settingsProvider.notifier).updateSettings({
-                                  'enableAnimeTosho': val,
-                                })
-                              : (val) {}, // No-op if disabled
+                            onChanged: isDebridActive
+                                ? (val) => ref
+                                      .read(settingsProvider.notifier)
+                                      .updateSettings({'enableAnimeTosho': val})
+                                : (val) {}, // No-op if disabled
                           ),
                         ),
                         SettingsTile(
                           label: l10n.settingsEnableVixSrc,
-                          description: "Native direct streaming source (No Debrid required)",
+                          description:
+                              "Native direct streaming source (No Debrid required)",
                           icon: LucideIcons.playCircle,
                           trailing: SettingToggle(
                             value: settings.enableVixSrc,
-                            onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
-                              'enableVixSrc': val,
-                            }),
+                            onChanged: (val) => ref
+                                .read(settingsProvider.notifier)
+                                .updateSettings({'enableVixSrc': val}),
                           ),
                         ),
                         SettingsTile(
@@ -235,17 +261,24 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                           showDivider: !isDebridActive,
                           trailing: SettingToggle(
                             value: settings.enableAnimeUnity,
-                            onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
-                              'enableAnimeUnity': val,
-                            }),
+                            onChanged: (val) => ref
+                                .read(settingsProvider.notifier)
+                                .updateSettings({'enableAnimeUnity': val}),
                           ),
                         ),
                         if (!isDebridActive)
                           Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 8,
+                            ),
                             child: Row(
                               children: [
-                                const Icon(Icons.warning_amber_rounded, size: 16, color: Colors.orangeAccent),
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  size: 16,
+                                  color: Colors.orangeAccent,
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
@@ -282,9 +315,9 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   showDivider: true,
                   trailing: SettingToggle(
                     value: settings.smartSearchFilter,
-                    onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
-                      'smartSearchFilter': val,
-                    }),
+                    onChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSettings({'smartSearchFilter': val}),
                   ),
                 ),
                 SettingsTile(
@@ -294,9 +327,9 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   showDivider: false,
                   trailing: SettingToggle(
                     value: settings.enableAutoSkipProviders,
-                    onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings({
-                      'enableAutoSkipProviders': val,
-                    }),
+                    onChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSettings({'enableAutoSkipProviders': val}),
                   ),
                 ),
               ],
@@ -324,23 +357,34 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                               style: const TextStyle(color: Colors.white),
                               decoration: InputDecoration(
                                 hintText: "https://.../manifest.json",
-                                hintStyle: const TextStyle(color: Colors.white24),
+                                hintStyle: const TextStyle(
+                                  color: Colors.white24,
+                                ),
                                 errorText: _error,
                                 filled: true,
                                 fillColor: Colors.black.withValues(alpha: 0.3),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                                  borderSide: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.05),
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                                  borderSide: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.05),
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: AppTheme.accent),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.accent,
+                                  ),
                                 ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
                               ),
                               onSubmitted: (_) => _installAddon(),
                             ),
@@ -357,13 +401,18 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                padding: const EdgeInsets.symmetric(horizontal: 24),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                ),
                               ),
                               child: _isLoading
                                   ? const SizedBox(
                                       width: 20,
                                       height: 20,
-                                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
                                     )
                                   : Text(l10n.settingsInstall),
                             ),
@@ -373,12 +422,19 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          const Icon(Icons.info_outline, size: 14, color: AppTheme.textMuted),
+                          const Icon(
+                            Icons.info_outline,
+                            size: 14,
+                            color: AppTheme.textMuted,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               l10n.settingsAddonHint,
-                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                              style: const TextStyle(
+                                color: AppTheme.textMuted,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ],
@@ -407,21 +463,38 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                         ? Image.network(
                             addon.logo!,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.box, size: 20, color: Colors.white70),
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(
+                                  LucideIcons.box,
+                                  size: 20,
+                                  color: Colors.white70,
+                                ),
                           )
-                        : const Icon(LucideIcons.box, size: 20, color: Colors.white70),
+                        : const Icon(
+                            LucideIcons.box,
+                            size: 20,
+                            color: Colors.white70,
+                          ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         SettingToggle(
                           value: addon.enabled,
-                          onChanged: (val) => ref.read(settingsProvider.notifier).toggleAddon(addon.id, val),
+                          onChanged: (val) => ref
+                              .read(settingsProvider.notifier)
+                              .toggleAddon(addon.id, val),
                         ),
                         const SizedBox(width: 4),
                         IconButton(
-                          icon: const Icon(LucideIcons.copy, color: AppTheme.textMuted, size: 18),
+                          icon: const Icon(
+                            LucideIcons.copy,
+                            color: AppTheme.textMuted,
+                            size: 18,
+                          ),
                           onPressed: () {
-                            Clipboard.setData(ClipboardData(text: addon.baseUrl));
+                            Clipboard.setData(
+                              ClipboardData(text: addon.baseUrl),
+                            );
                             AppSnackBar.show(
                               context,
                               message: l10n.settingsCopiedToClipboard,
@@ -432,8 +505,14 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                         ),
                         const SizedBox(width: 4),
                         IconButton(
-                          icon: const Icon(LucideIcons.trash2, color: Colors.redAccent, size: 18),
-                          onPressed: () => ref.read(settingsProvider.notifier).removeAddon(addon.id),
+                          icon: const Icon(
+                            LucideIcons.trash2,
+                            color: Colors.redAccent,
+                            size: 18,
+                          ),
+                          onPressed: () => ref
+                              .read(settingsProvider.notifier)
+                              .removeAddon(addon.id),
                           tooltip: l10n.settingsRemove,
                         ),
                         const SizedBox(width: 4),
@@ -453,7 +532,11 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   padding: const EdgeInsets.symmetric(vertical: 48),
                   child: Column(
                     children: [
-                      Icon(LucideIcons.box, size: 64, color: Colors.white.withValues(alpha: 0.05)),
+                      Icon(
+                        LucideIcons.box,
+                        size: 64,
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         l10n.settingsNoAddons,

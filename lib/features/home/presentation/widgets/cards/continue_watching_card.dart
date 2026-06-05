@@ -25,22 +25,25 @@ class ContinueWatchingCard extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ContinueWatchingCard> createState() => _ContinueWatchingCardState();
+  ConsumerState<ContinueWatchingCard> createState() =>
+      _ContinueWatchingCardState();
 }
 
 class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
   @override
   Widget build(BuildContext context) {
     final localMedia = widget.historyItem.media;
-    
+
     if (localMedia != null) {
       return _buildCard(context, ref, localMedia);
     }
 
-    final mediaAsync = ref.watch(mediaItemProvider((
-      id: widget.historyItem.tmdbId, 
-      type: widget.historyItem.mediaType
-    )));
+    final mediaAsync = ref.watch(
+      mediaItemProvider((
+        id: widget.historyItem.tmdbId,
+        type: widget.historyItem.mediaType,
+      )),
+    );
 
     return mediaAsync.when(
       data: (media) => _buildCard(context, ref, media),
@@ -61,14 +64,19 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
   }
 
   Widget _buildCard(BuildContext context, WidgetRef ref, MediaItem? media) {
-    final isWatchlisted = widget.watchlistItems.any((i) => 
-      i.tmdbId == widget.historyItem.tmdbId && i.mediaType == widget.historyItem.mediaType
+    final isWatchlisted = widget.watchlistItems.any(
+      (i) =>
+          i.tmdbId == widget.historyItem.tmdbId &&
+          i.mediaType == widget.historyItem.mediaType,
     );
     final appLanguage = ref.watch(settingsProvider).appLanguage;
     final title = media?.getLocalizedTitle(appLanguage) ?? '...';
-    
-    final percentage = (widget.historyItem.totalDuration != null && widget.historyItem.totalDuration! > 0)
-        ? (widget.historyItem.progressSeconds / widget.historyItem.totalDuration!)
+
+    final percentage =
+        (widget.historyItem.totalDuration != null &&
+            widget.historyItem.totalDuration! > 0)
+        ? (widget.historyItem.progressSeconds /
+              widget.historyItem.totalDuration!)
         : 0.0;
 
     final resolver = ref.read(unifiedStreamResolverProvider);
@@ -85,39 +93,51 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
       backdropPath: media?.backdropPath,
       posterPath: media?.posterPath,
       progress: percentage,
-      infoText: widget.historyItem.mediaType == MediaKind.tv 
-                ? "S${widget.historyItem.season} E${widget.historyItem.episode}" 
-                : "Movie",
+      infoText: widget.historyItem.mediaType == MediaKind.tv
+          ? "S${widget.historyItem.season} E${widget.historyItem.episode}"
+          : "Movie",
       isWatchlisted: isWatchlisted,
       onTap: () {
-        Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
-          builder: (_) => VideoPlayerScreen(
-            queryId: widget.historyItem.tmdbId.toString(),
-            type: widget.historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
-            season: widget.historyItem.season,
-            episode: widget.historyItem.episode,
-            startPosition: widget.historyItem.progressSeconds,
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute(
+            builder: (_) => VideoPlayerScreen(
+              queryId: widget.historyItem.tmdbId.toString(),
+              type: widget.historyItem.mediaType == MediaKind.tv
+                  ? 'tv'
+                  : 'movie',
+              season: widget.historyItem.season,
+              episode: widget.historyItem.episode,
+              startPosition: widget.historyItem.progressSeconds,
+            ),
           ),
-        ));
+        );
       },
       onRestart: () {
-        Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
-          builder: (_) => VideoPlayerScreen(
-            queryId: widget.historyItem.tmdbId.toString(),
-            type: widget.historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
-            season: widget.historyItem.season,
-            episode: widget.historyItem.episode,
-            startPosition: 0,
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute(
+            builder: (_) => VideoPlayerScreen(
+              queryId: widget.historyItem.tmdbId.toString(),
+              type: widget.historyItem.mediaType == MediaKind.tv
+                  ? 'tv'
+                  : 'movie',
+              season: widget.historyItem.season,
+              episode: widget.historyItem.episode,
+              startPosition: 0,
+            ),
           ),
-        ));
+        );
       },
       onDetails: () {
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => MediaDetailsScreen(
-            mediaId: widget.historyItem.tmdbId.toString(), 
-            mediaType: widget.historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MediaDetailsScreen(
+              mediaId: widget.historyItem.tmdbId.toString(),
+              mediaType: widget.historyItem.mediaType == MediaKind.tv
+                  ? 'tv'
+                  : 'movie',
+            ),
           ),
-        ));
+        );
       },
       onWatchlistToggle: () {
         if (media != null) {
@@ -125,15 +145,17 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
         }
       },
       onRemove: widget.onRemove,
-      onClearCache: hasCache ? () {
-        resolver.clearCachedStream(
-          widget.historyItem.tmdbId.toString(),
-          widget.historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
-          season: widget.historyItem.season,
-          episode: widget.historyItem.episode,
-        );
-        setState(() {});
-      } : null,
+      onClearCache: hasCache
+          ? () {
+              resolver.clearCachedStream(
+                widget.historyItem.tmdbId.toString(),
+                widget.historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+                season: widget.historyItem.season,
+                episode: widget.historyItem.episode,
+              );
+              setState(() {});
+            }
+          : null,
     );
   }
 }

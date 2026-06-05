@@ -6,6 +6,7 @@ import 'package:cinemuse_app/core/services/streaming/models/stream_search_contex
 import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 
 class MockDio extends Mock implements Dio {}
+
 class MockResponse extends Mock implements Response {}
 
 void main() {
@@ -62,20 +63,26 @@ void main() {
       when(() => mockPlaylistResponse.statusCode).thenReturn(200);
       when(() => mockPlaylistResponse.data).thenReturn(playlistHeader);
 
-      when(() => mockDio.get(
-        'https://vixsrc.to/api/movie/123',
-        options: any(named: 'options'),
-      )).thenAnswer((_) async => mockApiResponse);
+      when(
+        () => mockDio.get(
+          'https://vixsrc.to/api/movie/123',
+          options: any(named: 'options'),
+        ),
+      ).thenAnswer((_) async => mockApiResponse);
 
-      when(() => mockDio.get(
-        'https://vixsrc.to/embed/123',
-        options: any(named: 'options'),
-      )).thenAnswer((_) async => mockHtmlResponse);
+      when(
+        () => mockDio.get(
+          'https://vixsrc.to/embed/123',
+          options: any(named: 'options'),
+        ),
+      ).thenAnswer((_) async => mockHtmlResponse);
 
-      when(() => mockDio.get(
-        any(that: contains('vixsrc.to/playlist')),
-        options: any(named: 'options'),
-      )).thenAnswer((_) async => mockPlaylistResponse);
+      when(
+        () => mockDio.get(
+          any(that: contains('vixsrc.to/playlist')),
+          options: any(named: 'options'),
+        ),
+      ).thenAnswer((_) async => mockPlaylistResponse);
 
       final results = await source.search(context);
 
@@ -102,17 +109,23 @@ void main() {
 
       final mockHtmlResponse = MockResponse();
       when(() => mockHtmlResponse.statusCode).thenReturn(200);
-      when(() => mockHtmlResponse.data).thenReturn('<html>No tokens here</html>');
+      when(
+        () => mockHtmlResponse.data,
+      ).thenReturn('<html>No tokens here</html>');
 
-      when(() => mockDio.get(
-        'https://vixsrc.to/api/movie/123',
-        options: any(named: 'options'),
-      )).thenAnswer((_) async => mockApiResponse);
+      when(
+        () => mockDio.get(
+          'https://vixsrc.to/api/movie/123',
+          options: any(named: 'options'),
+        ),
+      ).thenAnswer((_) async => mockApiResponse);
 
-      when(() => mockDio.get(
-        'https://vixsrc.to/embed/123',
-        options: any(named: 'options'),
-      )).thenAnswer((_) async => mockHtmlResponse);
+      when(
+        () => mockDio.get(
+          'https://vixsrc.to/embed/123',
+          options: any(named: 'options'),
+        ),
+      ).thenAnswer((_) async => mockHtmlResponse);
 
       final results = await source.search(context);
       expect(results, isEmpty);
@@ -153,22 +166,30 @@ void main() {
 
       final mockPlaylistResponse = MockResponse();
       when(() => mockPlaylistResponse.statusCode).thenReturn(200);
-      when(() => mockPlaylistResponse.data).thenReturn('#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080\n1080p.m3u8');
+      when(() => mockPlaylistResponse.data).thenReturn(
+        '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080\n1080p.m3u8',
+      );
 
-      when(() => mockDio.get(
-        'https://vixsrc.to/api/tv/456/1/1',
-        options: any(named: 'options'),
-      )).thenAnswer((_) async => mockApiResponse);
+      when(
+        () => mockDio.get(
+          'https://vixsrc.to/api/tv/456/1/1',
+          options: any(named: 'options'),
+        ),
+      ).thenAnswer((_) async => mockApiResponse);
 
-      when(() => mockDio.get(
-        'https://vixsrc.to/embed/456',
-        options: any(named: 'options'),
-      )).thenAnswer((_) async => mockHtmlResponse);
+      when(
+        () => mockDio.get(
+          'https://vixsrc.to/embed/456',
+          options: any(named: 'options'),
+        ),
+      ).thenAnswer((_) async => mockHtmlResponse);
 
-      when(() => mockDio.get(
-        any(that: contains('vixsrc.to/playlist')),
-        options: any(named: 'options'),
-      )).thenAnswer((_) async => mockPlaylistResponse);
+      when(
+        () => mockDio.get(
+          any(that: contains('vixsrc.to/playlist')),
+          options: any(named: 'options'),
+        ),
+      ).thenAnswer((_) async => mockPlaylistResponse);
 
       final results = await source.search(context);
 

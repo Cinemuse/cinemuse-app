@@ -8,11 +8,7 @@ class CollectionCard extends StatelessWidget {
   final UserList list;
   final VoidCallback onTap;
 
-  const CollectionCard({
-    super.key,
-    required this.list,
-    required this.onTap,
-  });
+  const CollectionCard({super.key, required this.list, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +23,15 @@ class CollectionCard extends StatelessWidget {
     Color badgeBg = Colors.white10;
     IconData icon = LucideIcons.list;
     List<Color> backgroundGradient = [AppTheme.surface, AppTheme.surface];
-    List<Color> headerGradient = [Colors.black.withValues(alpha: 0.05), Colors.black.withValues(alpha: 0.05)];
+    List<Color> headerGradient = [
+      Colors.black.withValues(alpha: 0.05),
+      Colors.black.withValues(alpha: 0.05),
+    ];
 
     if (isWatchlist) {
-      borderColor = const Color(0xFFCA8A04).withValues(alpha: 0.4); // yellow-600/40
+      borderColor = const Color(
+        0xFFCA8A04,
+      ).withValues(alpha: 0.4); // yellow-600/40
       borderWidth = 2.0;
       iconColor = const Color(0xFFEAB308); // yellow-500
       badgeColor = const Color(0xFFEAB308); // yellow-500
@@ -45,7 +46,9 @@ class CollectionCard extends StatelessWidget {
         const Color(0xFFEA580C).withValues(alpha: 0.2), // orange-600/20
       ];
     } else if (isFavorites) {
-      borderColor = const Color(0xFFDC2626).withValues(alpha: 0.4); // red-600/40
+      borderColor = const Color(
+        0xFFDC2626,
+      ).withValues(alpha: 0.4); // red-600/40
       borderWidth = 2.0;
       iconColor = const Color(0xFFEF4444); // red-500
       badgeColor = const Color(0xFFEF4444); // red-500
@@ -95,23 +98,29 @@ class CollectionCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                   if (list.items.isNotEmpty)
+                  if (list.items.isNotEmpty)
                     Row(
                       children: list.items.take(3).map((item) {
                         // Use poster_path from joined media or fallback to meta
-                        final posterPath = item.media?.posterPath ?? (item.meta['poster_path'] as String?);
+                        final posterPath =
+                            item.media?.posterPath ??
+                            (item.meta['poster_path'] as String?);
                         return Expanded(
                           child: Container(
                             decoration: const BoxDecoration(
-                              border: Border(right: BorderSide(color: Colors.black12)),
+                              border: Border(
+                                right: BorderSide(color: Colors.black12),
+                              ),
                             ),
                             child: posterPath != null
                                 ? CachedNetworkImage(
-                                    imageUrl: 'https://image.tmdb.org/t/p/w200$posterPath',
+                                    imageUrl:
+                                        'https://image.tmdb.org/t/p/w200$posterPath',
                                     fit: BoxFit.cover,
                                     width: double.infinity,
                                     height: double.infinity,
-                                    errorWidget: (_, __, ___) => Container(color: Colors.grey[900]),
+                                    errorWidget: (_, __, ___) =>
+                                        Container(color: Colors.grey[900]),
                                   )
                                 : Container(color: Colors.grey[900]),
                           ),
@@ -120,11 +129,15 @@ class CollectionCard extends StatelessWidget {
                     )
                   else
                     Center(
-                      child: Icon(icon, size: 32, color: iconColor.withValues(alpha: 0.5)),
+                      child: Icon(
+                        icon,
+                        size: 32,
+                        color: iconColor.withValues(alpha: 0.5),
+                      ),
                     ),
-                  
+
                   // Bottom Fade Gradient (matches web)
-                   Positioned.fill(
+                  Positioned.fill(
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -146,7 +159,9 @@ class CollectionCard extends StatelessWidget {
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.all(16), // Increased padding to match web feel
+                padding: const EdgeInsets.all(
+                  16,
+                ), // Increased padding to match web feel
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -175,10 +190,13 @@ class CollectionCard extends StatelessWidget {
                             ],
                           ),
                         ),
-                        
+
                         // Count Badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: badgeBg,
                             borderRadius: BorderRadius.circular(6),
@@ -197,7 +215,10 @@ class CollectionCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     Expanded(
                       child: Text(
-                        list.description ?? (list.items.isEmpty ? 'No items yet' : 'Click to view all items'),
+                        list.description ??
+                            (list.items.isEmpty
+                                ? 'No items yet'
+                                : 'Click to view all items'),
                         style: const TextStyle(
                           color: Colors.white54,
                           fontSize: 12,
@@ -217,4 +238,3 @@ class CollectionCard extends StatelessWidget {
     );
   }
 }
-

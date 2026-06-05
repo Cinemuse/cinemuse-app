@@ -10,8 +10,8 @@ class RdHandler {
 
   Future<ResolvedStream?> resolveAndMerge(
     StreamCandidate candidate, {
-    int? season, 
-    int? episode, 
+    int? season,
+    int? episode,
     int? absoluteEpisode,
     int? fileId,
   }) async {
@@ -22,7 +22,7 @@ class RdHandler {
         episode: episode,
         fileId: fileId,
       );
-      
+
       if (streamData != null) {
         return streamData;
       }

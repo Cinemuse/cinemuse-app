@@ -19,7 +19,7 @@ class MediaCard extends ConsumerStatefulWidget {
   final VoidCallback? onWatchlistToggle;
   final VoidCallback? onTap;
   final VoidCallback? onRemoveFromList;
-  
+
   // New props for centralized logic
   final int? tmdbId;
   final MediaKind? mediaType;
@@ -49,17 +49,28 @@ class _MediaCardState extends ConsumerState<MediaCard> {
   bool _isHovered = false;
   final GlobalKey _menuKey = GlobalKey();
 
-  void _showContextActions(BuildContext context, {BuildContext? anchorContext}) {
+  void _showContextActions(
+    BuildContext context, {
+    BuildContext? anchorContext,
+  }) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     // Determine if already watchlisted to show toggle correctly
     bool isWatchlisted = false;
     if (widget.tmdbId != null && widget.mediaType != null) {
-      isWatchlisted = ref.read(userListsProvider).valueOrNull
-          ?.where((l) => l.type == ListType.watchlist)
-          .firstOrNull
-          ?.items
-          .any((i) => i.tmdbId == widget.tmdbId && i.mediaType == widget.mediaType) ?? false;
+      isWatchlisted =
+          ref
+              .read(userListsProvider)
+              .valueOrNull
+              ?.where((l) => l.type == ListType.watchlist)
+              .firstOrNull
+              ?.items
+              .any(
+                (i) =>
+                    i.tmdbId == widget.tmdbId &&
+                    i.mediaType == widget.mediaType,
+              ) ??
+          false;
     } else if (widget.onWatchlistToggle != null) {
       isWatchlisted = widget.isWatchlisted;
     }
@@ -76,25 +87,34 @@ class _MediaCardState extends ConsumerState<MediaCard> {
         label: l10n.homeMoreInfo,
         onTap: widget.onTap ?? () {},
       ),
-      if ((widget.tmdbId != null && widget.mediaType != null) || widget.onWatchlistToggle != null)
+      if ((widget.tmdbId != null && widget.mediaType != null) ||
+          widget.onWatchlistToggle != null)
         AppMenuOption(
-          icon: isWatchlisted ? Icons.bookmark_remove : Icons.bookmark_add_outlined,
-          label: isWatchlisted ? l10n.menuRemoveFromWatchlist : l10n.menuAddToWatchlist,
+          icon: isWatchlisted
+              ? Icons.bookmark_remove
+              : Icons.bookmark_add_outlined,
+          label: isWatchlisted
+              ? l10n.menuRemoveFromWatchlist
+              : l10n.menuAddToWatchlist,
           onTap: () {
             if (widget.onWatchlistToggle != null) {
               widget.onWatchlistToggle!.call();
             } else {
-              ref.read(userListsProvider.notifier).toggleWatchlist(
-                MediaItem(
-                  tmdbId: widget.tmdbId!,
-                  mediaType: widget.mediaType!,
-                  titleEn: widget.title,
-                  posterPath: widget.posterPath,
-                  releaseDate: widget.releaseDate != null ? DateTime.tryParse(widget.releaseDate!) : null,
-                  voteAverage: widget.rating,
-                  updatedAt: DateTime.now(),
-                ),
-              );
+              ref
+                  .read(userListsProvider.notifier)
+                  .toggleWatchlist(
+                    MediaItem(
+                      tmdbId: widget.tmdbId!,
+                      mediaType: widget.mediaType!,
+                      titleEn: widget.title,
+                      posterPath: widget.posterPath,
+                      releaseDate: widget.releaseDate != null
+                          ? DateTime.tryParse(widget.releaseDate!)
+                          : null,
+                      voteAverage: widget.rating,
+                      updatedAt: DateTime.now(),
+                    ),
+                  );
             }
           },
         ),
@@ -117,8 +137,8 @@ class _MediaCardState extends ConsumerState<MediaCard> {
   @override
   Widget build(BuildContext context) {
     final year = widget.releaseDate?.split('-').first ?? '';
-    final imageUrl = widget.posterPath != null 
-        ? "https://image.tmdb.org/t/p/w500${widget.posterPath}" 
+    final imageUrl = widget.posterPath != null
+        ? "https://image.tmdb.org/t/p/w500${widget.posterPath}"
         : null;
 
     return Focus(
@@ -143,10 +163,10 @@ class _MediaCardState extends ConsumerState<MediaCard> {
           onLongPress: () => _showContextActions(context),
           onSecondaryTapDown: (_) => _showContextActions(context),
           child: AnimatedScale(
-              scale: _isHovered ? 1.05 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOutCubic,
-              child: Column(
+            scale: _isHovered ? 1.05 : 1.0,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Poster Image
@@ -183,15 +203,28 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                                     placeholder: (context, url) => Container(
                                       color: AppTheme.surface,
                                       child: const Center(
-                                        child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accent),
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppTheme.accent,
+                                        ),
                                       ),
                                     ),
-                                    errorWidget: (context, url, error) => const Center(
-                                      child: Icon(Icons.broken_image, color: Colors.white24),
-                                    ),
+                                    errorWidget: (context, url, error) =>
+                                        const Center(
+                                          child: Icon(
+                                            Icons.broken_image,
+                                            color: Colors.white24,
+                                          ),
+                                        ),
                                   )
                                 else
-                                  const Center(child: Icon(Icons.movie, color: Colors.white24, size: 48)),
+                                  const Center(
+                                    child: Icon(
+                                      Icons.movie,
+                                      color: Colors.white24,
+                                      size: 48,
+                                    ),
+                                  ),
 
                                 // Gradient Overlay
                                 AnimatedOpacity(
@@ -202,7 +235,10 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                                       gradient: LinearGradient(
                                         begin: Alignment.bottomCenter,
                                         end: Alignment.center,
-                                        colors: [Colors.black87, Colors.transparent],
+                                        colors: [
+                                          Colors.black87,
+                                          Colors.transparent,
+                                        ],
                                       ),
                                     ),
                                   ),
@@ -210,60 +246,63 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                               ],
                             ),
                           ),
-                          
+
                           // Border Overlay (On Top)
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: _isHovered 
-                                    ? AppTheme.accent.withValues(alpha: 0.5) 
+                                color: _isHovered
+                                    ? AppTheme.accent.withValues(alpha: 0.5)
                                     : Colors.white.withValues(alpha: 0.1),
                                 width: _isHovered ? 2 : 1,
                               ),
                             ),
                           ),
-                        
-                        // Context Menu Button (More Options)
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Consumer(
-                            builder: (context, ref, child) {
-                              final isMobile = MediaQuery.of(context).size.width < 600;
-                              return AnimatedOpacity(
-                                opacity: (_isHovered || isMobile) ? 1.0 : 0.0,
-                                duration: const Duration(milliseconds: 200),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () => _showContextActions(context),
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: Container(
-                                      key: _menuKey,
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withValues(alpha: 0.4),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.more_vert,
-                                        color: Colors.white,
-                                        size: 20,
+
+                          // Context Menu Button (More Options)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Consumer(
+                              builder: (context, ref, child) {
+                                final isMobile =
+                                    MediaQuery.of(context).size.width < 600;
+                                return AnimatedOpacity(
+                                  opacity: (_isHovered || isMobile) ? 1.0 : 0.0,
+                                  duration: const Duration(milliseconds: 200),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => _showContextActions(context),
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: Container(
+                                        key: _menuKey,
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.4,
+                                          ),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.more_vert,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
                 const SizedBox(height: 8),
                 // Title
                 PremiumHoverText(
@@ -284,19 +323,30 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                     if (widget.rating != null && widget.rating! > 0)
                       Text(
                         "", // Placeholder logic if needed, otherwise removed rating display
-                        style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                        ),
                       ),
                     if (widget.rating != null && widget.rating! > 0)
                       Text(
                         widget.rating!.toStringAsFixed(1),
-                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                        ),
                       ),
-                    if (widget.rating != null && widget.rating! > 0 && year.isNotEmpty)
+                    if (widget.rating != null &&
+                        widget.rating! > 0 &&
+                        year.isNotEmpty)
                       const SizedBox(width: 8),
-                    if (year.isNotEmpty) 
+                    if (year.isNotEmpty)
                       Text(
                         year,
-                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                        ),
                       ),
                   ],
                 ),

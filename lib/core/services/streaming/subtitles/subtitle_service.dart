@@ -35,7 +35,9 @@ class SubtitleService {
     required String language,
   }) async {
     final activeProviders = _providers.where((p) => p.isReady).toList();
-    debugPrint('[SubtitleService] search called — imdb=$imdbId, tmdb=$tmdbId, lang=$language, providers=${activeProviders.length}');
+    debugPrint(
+      '[SubtitleService] search called — imdb=$imdbId, tmdb=$tmdbId, lang=$language, providers=${activeProviders.length}',
+    );
     if (activeProviders.isEmpty) {
       debugPrint('[SubtitleService] No active providers, returning empty');
       return [];
@@ -44,14 +46,16 @@ class SubtitleService {
     final List<ExternalSubtitle> allResults = [];
 
     // Run searches in parallel
-    final futures = activeProviders.map((provider) => provider.search(
-          imdbId: imdbId,
-          tmdbId: tmdbId,
-          season: season,
-          episode: episode,
-          query: query,
-          language: language,
-        ));
+    final futures = activeProviders.map(
+      (provider) => provider.search(
+        imdbId: imdbId,
+        tmdbId: tmdbId,
+        season: season,
+        episode: episode,
+        query: query,
+        language: language,
+      ),
+    );
 
     final resultsList = await Future.wait(futures);
 

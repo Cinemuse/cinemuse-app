@@ -1,4 +1,3 @@
-
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
@@ -43,9 +42,12 @@ class _BackdropCardState extends State<BackdropCard> {
   bool _isHovered = false;
   final GlobalKey _menuKey = GlobalKey();
 
-  void _showContextActions(BuildContext context, {BuildContext? anchorContext}) {
+  void _showContextActions(
+    BuildContext context, {
+    BuildContext? anchorContext,
+  }) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     final options = [
       if (widget.onTap != null)
         AppMenuOption(
@@ -67,8 +69,12 @@ class _BackdropCardState extends State<BackdropCard> {
         ),
       if (widget.onWatchlistToggle != null)
         AppMenuOption(
-          icon: widget.isWatchlisted ? Icons.bookmark_remove : Icons.bookmark_add_outlined,
-          label: widget.isWatchlisted ? l10n.menuRemoveFromWatchlist : l10n.menuAddToWatchlist,
+          icon: widget.isWatchlisted
+              ? Icons.bookmark_remove
+              : Icons.bookmark_add_outlined,
+          label: widget.isWatchlisted
+              ? l10n.menuRemoveFromWatchlist
+              : l10n.menuAddToWatchlist,
           onTap: widget.onWatchlistToggle!,
         ),
       if (widget.onClearCache != null)
@@ -98,8 +104,8 @@ class _BackdropCardState extends State<BackdropCard> {
   Widget build(BuildContext context) {
     final String? effectiveImagePath = widget.backdropPath ?? widget.posterPath;
 
-    final imageUrl = effectiveImagePath != null 
-        ? "https://image.tmdb.org/t/p/w500$effectiveImagePath" 
+    final imageUrl = effectiveImagePath != null
+        ? "https://image.tmdb.org/t/p/w500$effectiveImagePath"
         : null;
 
     return Focus(
@@ -162,41 +168,60 @@ class _BackdropCardState extends State<BackdropCard> {
                                     ? Image.network(
                                         imageUrl,
                                         fit: BoxFit.cover,
-                                        color: Colors.black.withValues(alpha: 0.2),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.2,
+                                        ),
                                         colorBlendMode: BlendMode.darken,
-                                        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                _buildPlaceholder(),
                                       )
                                     : _buildPlaceholder(),
                               ),
-                              
+
                               // Play Icon
                               Center(
                                 child: AnimatedScale(
                                   scale: _isHovered ? 1.1 : 1.0,
                                   duration: const Duration(milliseconds: 200),
                                   child: Icon(
-                                    Icons.play_circle_outline, 
-                                    color: _isHovered ? AppTheme.accent : Colors.white.withValues(alpha: 0.8), 
+                                    Icons.play_circle_outline,
+                                    color: _isHovered
+                                        ? AppTheme.accent
+                                        : Colors.white.withValues(alpha: 0.8),
                                     size: 48,
                                   ),
                                 ),
                               ),
-                              
+
                               // Info Badge
                               if (widget.infoText != null)
                                 Positioned(
                                   top: 8,
                                   left: 8,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: Colors.black.withValues(alpha: 0.6),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.6,
+                                      ),
                                       borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                      ),
                                     ),
                                     child: Text(
                                       widget.infoText!,
-                                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -204,25 +229,30 @@ class _BackdropCardState extends State<BackdropCard> {
                               // Progress Bar
                               if (widget.progress != null)
                                 Positioned(
-                                  bottom: 0, 
-                                  left: 0, 
+                                  bottom: 0,
+                                  left: 0,
                                   right: 0,
                                   child: LinearProgressIndicator(
                                     value: widget.progress,
-                                    backgroundColor: Colors.white.withValues(alpha: 0.2),
-                                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.redAccent),
+                                    backgroundColor: Colors.white.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                          Colors.redAccent,
+                                        ),
                                     minHeight: 4,
                                   ),
                                 ),
-                              
+
                               // Border Overlay
                               AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                    color: _isHovered 
-                                        ? AppTheme.accent.withValues(alpha: 0.5) 
+                                    color: _isHovered
+                                        ? AppTheme.accent.withValues(alpha: 0.5)
                                         : Colors.white.withValues(alpha: 0.1),
                                     width: _isHovered ? 2 : 1,
                                   ),
@@ -250,39 +280,39 @@ class _BackdropCardState extends State<BackdropCard> {
               ),
 
               // 2. Context Menu Button (More Options)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Builder(
-                    builder: (context) {
-                      final isMobile = MediaQuery.of(context).size.width < 600;
-                      return AnimatedOpacity(
-                        opacity: (_isHovered || isMobile) ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 200),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => _showContextActions(context),
-                            borderRadius: BorderRadius.circular(20),
-                            child: Container(
-                              key: _menuKey,
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.7),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.more_vert,
-                                color: Colors.white,
-                                size: 16,
-                              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Builder(
+                  builder: (context) {
+                    final isMobile = MediaQuery.of(context).size.width < 600;
+                    return AnimatedOpacity(
+                      opacity: (_isHovered || isMobile) ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => _showContextActions(context),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            key: _menuKey,
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.7),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.more_vert,
+                              color: Colors.white,
+                              size: 16,
                             ),
                           ),
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
                 ),
+              ),
             ],
           ),
         ),
@@ -297,7 +327,11 @@ class _BackdropCardState extends State<BackdropCard> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.movie_outlined, color: Colors.white.withValues(alpha: 0.2), size: 40),
+            Icon(
+              Icons.movie_outlined,
+              color: Colors.white.withValues(alpha: 0.2),
+              size: 40,
+            ),
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),

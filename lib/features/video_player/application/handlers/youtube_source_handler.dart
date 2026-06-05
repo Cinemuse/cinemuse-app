@@ -26,12 +26,12 @@ class YouTubeSourceHandler {
 
   Future<YouTubeInitializationResult> initialize(PlayerParams params) async {
     final streams = await _fetchAvailableStreams(params.queryId);
-    
+
     final initialStream = _selectInitialStream(streams);
     final localAudioPath = await _prepareAudioIfNecessary(initialStream);
 
     await _openPlayer(initialStream, localAudioPath);
-    
+
     final candidates = _createStreamCandidates(streams);
     final initialCandidate = _findInitialCandidate(candidates, initialStream);
 
@@ -47,7 +47,9 @@ class YouTubeSourceHandler {
     );
   }
 
-  Future<List<Map<String, dynamic>>> _fetchAvailableStreams(String queryId) async {
+  Future<List<Map<String, dynamic>>> _fetchAvailableStreams(
+    String queryId,
+  ) async {
     final streams = await _handler.service.getStreamQualities(queryId);
     if (streams.isEmpty) {
       throw Exception("Could not resolve YouTube streams");
@@ -55,10 +57,12 @@ class YouTubeSourceHandler {
     return streams;
   }
 
-  Map<String, dynamic> _selectInitialStream(List<Map<String, dynamic>> streams) {
+  Map<String, dynamic> _selectInitialStream(
+    List<Map<String, dynamic>> streams,
+  ) {
     return streams.firstWhere(
-      (s) => (s['res'] as int) <= 1080, 
-      orElse: () => streams.first
+      (s) => (s['res'] as int) <= 1080,
+      orElse: () => streams.first,
     );
   }
 
@@ -69,12 +73,15 @@ class YouTubeSourceHandler {
     return null;
   }
 
-  Future<void> _openPlayer(Map<String, dynamic> stream, String? localAudioPath) async {
+  Future<void> _openPlayer(
+    Map<String, dynamic> stream,
+    String? localAudioPath,
+  ) async {
     await _player.open(
       Media(stream['url'], httpHeaders: _handler.youtubeHeaders),
       play: false,
     );
-    
+
     if (localAudioPath != null) {
       await _player.setAudioTrack(AudioTrack.uri(localAudioPath));
     }
@@ -82,20 +89,28 @@ class YouTubeSourceHandler {
     await _player.play();
   }
 
-  List<StreamCandidate> _createStreamCandidates(List<Map<String, dynamic>> streams) {
-    return streams.map((s) => StreamCandidate(
-      kind: StreamSourceKind.youtube,
-      title: s['title']?.toString() ?? 'YouTube Stream',
-      url: s['url']?.toString(),
-      provider: 'YouTube',
-      metadata: _buildYouTubeMetadata(s),
-      headers: _handler.youtubeHeaders,
-    )).toList();
+  List<StreamCandidate> _createStreamCandidates(
+    List<Map<String, dynamic>> streams,
+  ) {
+    return streams
+        .map(
+          (s) => StreamCandidate(
+            kind: StreamSourceKind.youtube,
+            title: s['title']?.toString() ?? 'YouTube Stream',
+            url: s['url']?.toString(),
+            provider: 'YouTube',
+            metadata: _buildYouTubeMetadata(s),
+            headers: _handler.youtubeHeaders,
+          ),
+        )
+        .toList();
   }
 
   StreamMetadata _buildYouTubeMetadata(Map<String, dynamic> s) {
     return StreamMetadata(
-      video: VideoMetadata(resolution: _parseResolution(s['res']) ?? VideoResolution.unknown),
+      video: VideoMetadata(
+        resolution: _parseResolution(s['res']) ?? VideoResolution.unknown,
+      ),
       audio: const AudioMetadata(),
       custom: {
         'needsAudio': s['needsAudio'],
@@ -111,12 +126,16 @@ class YouTubeSourceHandler {
       if (res >= 1080) return VideoResolution.r1080p;
       if (res >= 720) return VideoResolution.r720p;
       if (res >= 480) return VideoResolution.r480p;
-      if (res >= 360) return VideoResolution.unknown; // Use unknown for 360p or ignore
+      if (res >= 360)
+        return VideoResolution.unknown; // Use unknown for 360p or ignore
     }
     return null;
   }
 
-  StreamCandidate _findInitialCandidate(List<StreamCandidate> candidates, Map<String, dynamic> initialStream) {
+  StreamCandidate _findInitialCandidate(
+    List<StreamCandidate> candidates,
+    Map<String, dynamic> initialStream,
+  ) {
     return candidates.firstWhere(
       (c) => c.url == initialStream['url'],
       orElse: () => candidates.first,

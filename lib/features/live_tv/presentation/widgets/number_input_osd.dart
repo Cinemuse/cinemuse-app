@@ -21,10 +21,7 @@ class NumberInputOsd extends StatelessWidget {
         builder: (context, value, child) {
           return Opacity(
             opacity: value,
-            child: Transform.scale(
-              scale: 0.9 + (0.1 * value),
-              child: child,
-            ),
+            child: Transform.scale(scale: 0.9 + (0.1 * value), child: child),
           );
         },
         child: Container(
@@ -32,9 +29,7 @@ class NumberInputOsd extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppTheme.surface.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppTheme.accent.withValues(alpha: 0.3),
-            ),
+            border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.4),

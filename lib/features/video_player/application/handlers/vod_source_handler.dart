@@ -29,7 +29,12 @@ class VodSourceHandler {
   final TmdbService _tmdbService;
   final Player _player;
 
-  VodSourceHandler(this._rdHandler, this._resolver, this._tmdbService, this._player);
+  VodSourceHandler(
+    this._rdHandler,
+    this._resolver,
+    this._tmdbService,
+    this._player,
+  );
 
   Future<VodInitializationResult> initialize(
     PlayerParams params, {
@@ -37,12 +42,25 @@ class VodSourceHandler {
     required Function(Map<String, dynamic>?) onMediaDetailsFetched,
     Future<void>? skipTrigger,
   }) async {
-    final mediaDetails = await _fetchMediaDetails(params, onMediaDetailsFetched);
+    final mediaDetails = await _fetchMediaDetails(
+      params,
+      onMediaDetailsFetched,
+    );
 
-    final searchResult = await _searchAvailableStreams(params, onStatusUpdate, skipTrigger: skipTrigger);
-    final resolution = await _resolveBestStream(params, searchResult.candidates);
-    
-    await _player.open(Media(resolution.stream.url, httpHeaders: resolution.stream.headers), play: true);
+    final searchResult = await _searchAvailableStreams(
+      params,
+      onStatusUpdate,
+      skipTrigger: skipTrigger,
+    );
+    final resolution = await _resolveBestStream(
+      params,
+      searchResult.candidates,
+    );
+
+    await _player.open(
+      Media(resolution.stream.url, httpHeaders: resolution.stream.headers),
+      play: true,
+    );
 
     return VodInitializationResult(
       candidates: searchResult.candidates,
@@ -53,10 +71,13 @@ class VodSourceHandler {
   }
 
   Future<Map<String, dynamic>?> _fetchMediaDetails(
-    PlayerParams params, 
-    Function(Map<String, dynamic>?) onFetched
+    PlayerParams params,
+    Function(Map<String, dynamic>?) onFetched,
   ) async {
-    final details = await _tmdbService.getMediaDetails(params.queryId, params.type);
+    final details = await _tmdbService.getMediaDetails(
+      params.queryId,
+      params.type,
+    );
     onFetched(details);
     return details;
   }
@@ -67,9 +88,9 @@ class VodSourceHandler {
     Future<void>? skipTrigger,
   }) async {
     final result = await _resolver.searchStreams(
-      params.queryId, 
-      params.type, 
-      season: params.season, 
+      params.queryId,
+      params.type,
+      season: params.season,
       episode: params.episode,
       onStatusUpdate: onStatusUpdate,
       skipTrigger: skipTrigger,
@@ -81,9 +102,10 @@ class VodSourceHandler {
     return result;
   }
 
-  Future<({ResolvedStream stream, StreamCandidate candidate})> _resolveBestStream(
+  Future<({ResolvedStream stream, StreamCandidate candidate})>
+  _resolveBestStream(
     PlayerParams params,
-    List<StreamCandidate> candidates
+    List<StreamCandidate> candidates,
   ) async {
     for (var candidate in candidates) {
       try {
@@ -101,6 +123,8 @@ class VodSourceHandler {
       }
     }
 
-    throw Exception("All streams failed to resolve. Please try a different provider or quality.");
+    throw Exception(
+      "All streams failed to resolve. Please try a different provider or quality.",
+    );
   }
 }

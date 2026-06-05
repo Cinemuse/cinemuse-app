@@ -4,56 +4,71 @@ import 'package:cinemuse_app/core/services/streaming/ranking/stream_parser.dart'
 
 /// A utility class responsible for scoring and ranking [StreamCandidate]s.
 ///
-/// It uses [StreamParser] to standardize titles and calculates a quality score 
+/// It uses [StreamParser] to standardize titles and calculates a quality score
 /// based on provider-agnostic criteria (resolution, codecs, language, etc.).
 class StreamRanker {
   /// Sorts a list of candidates based on cache status and calculated score.
   ///
   /// Streams cached on debrid services are prioritized first, followed by descending scores.
-  static List<StreamCandidate> rank(List<StreamCandidate> candidates, {String preferredLanguage = 'en'}) {
+  static List<StreamCandidate> rank(
+    List<StreamCandidate> candidates, {
+    String preferredLanguage = 'en',
+  }) {
     return candidates.map((c) {
       final s = score(c, preferredLanguage: preferredLanguage);
-      return c.copyWith(
-        score: s,
-      );
-    }).toList()
-      ..sort((a, b) {
-        // First by cache status
-        if (a.isCached != b.isCached) {
-          return a.isCached ? -1 : 1;
-        }
-        // Then by score
-        return b.score.compareTo(a.score);
-      });
+      return c.copyWith(score: s);
+    }).toList()..sort((a, b) {
+      // First by cache status
+      if (a.isCached != b.isCached) {
+        return a.isCached ? -1 : 1;
+      }
+      // Then by score
+      return b.score.compareTo(a.score);
+    });
   }
 
   /// Calculates a numerical score for a [StreamCandidate] based on its metadata.
   ///
   /// The final score is the sum of domain-specific scoring functions.
-  static int score(StreamCandidate candidate, {String preferredLanguage = 'en'}) {
+  static int score(
+    StreamCandidate candidate, {
+    String preferredLanguage = 'en',
+  }) {
     final metadata = candidate.metadata ?? StreamParser.parse(candidate.title);
-    
+
     int s = 0;
-    s += _scoreLanguage(metadata, candidate.title, preferredLanguage: preferredLanguage);
+    s += _scoreLanguage(
+      metadata,
+      candidate.title,
+      preferredLanguage: preferredLanguage,
+    );
     s += _scoreVideo(metadata.video, candidate.title);
     s += _scoreQuality(metadata.quality);
     s += _scoreReleaseFlags(metadata.flags);
     s += _scoreHealth(candidate.seeds);
-    
+
     return s;
   }
 
-  static int _scoreLanguage(StreamMetadata metadata, String title, {String preferredLanguage = 'en'}) {
+  static int _scoreLanguage(
+    StreamMetadata metadata,
+    String title, {
+    String preferredLanguage = 'en',
+  }) {
     int s = 0;
     final isItalian = metadata.languages.contains('ITA');
     final isEnglish = metadata.languages.contains('ENG');
-    final isMulti = title.toLowerCase().contains('multi') || (isItalian && isEnglish);
+    final isMulti =
+        title.toLowerCase().contains('multi') || (isItalian && isEnglish);
 
     // Direct match for preferred language
     final isOriginalJa = preferredLanguage == 'ja';
-    
-    if (metadata.languages.contains(preferredLanguage.toUpperCase()) || 
-        (isOriginalJa && (metadata.languages.contains('JAP') || metadata.languages.contains('JAPANESE') || metadata.languages.contains('JP')))) {
+
+    if (metadata.languages.contains(preferredLanguage.toUpperCase()) ||
+        (isOriginalJa &&
+            (metadata.languages.contains('JAP') ||
+                metadata.languages.contains('JAPANESE') ||
+                metadata.languages.contains('JP')))) {
       return 1000;
     }
 
@@ -79,13 +94,24 @@ class StreamRanker {
     if (isMulti) s += 150;
 
     final t = title.toLowerCase();
-    if (t.contains(' rus') || t.contains('.ru.') || t.contains('russian') || t.contains('lostfilm') || t.contains('hdrezka') || t.contains('syncmer')) s -= 500;
+    if (t.contains(' rus') ||
+        t.contains('.ru.') ||
+        t.contains('russian') ||
+        t.contains('lostfilm') ||
+        t.contains('hdrezka') ||
+        t.contains('syncmer'))
+      s -= 500;
     if (t.contains(' ukr') || t.contains('ukrainian')) s -= 500;
     if (t.contains(' fra') || t.contains('french')) s -= 200;
     if (t.contains(' ger') || t.contains('german')) s -= 200;
     if (t.contains(' spa') || t.contains('spanish')) s -= 200;
 
-    if (!isItalian && (t.contains('lostfilm') || t.contains('hdrezka') || t.contains('syncmer') || t.contains('newcomers'))) s -= 800;
+    if (!isItalian &&
+        (t.contains('lostfilm') ||
+            t.contains('hdrezka') ||
+            t.contains('syncmer') ||
+            t.contains('newcomers')))
+      s -= 800;
     return s;
   }
 

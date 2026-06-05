@@ -39,9 +39,7 @@ class LivePlayerSection extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppTheme.primary,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.08),
-          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         child: playerState == null
             ? _buildPlaceholder(l10n)
@@ -54,7 +52,7 @@ class LivePlayerSection extends StatelessWidget {
                   }
 
                   if (state.error != null) {
-                     return _buildErrorState(l10n, state.error!);
+                    return _buildErrorState(l10n, state.error!);
                   }
 
                   return mkv.Video(
@@ -131,14 +129,11 @@ class LivePlayerSection extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Text(
-                error.contains('Failed to open') 
-                  ? 'This channel may be geo-restricted or temporarily offline.'
-                  : error,
+                error.contains('Failed to open')
+                    ? 'This channel may be geo-restricted or temporarily offline.'
+                    : error,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppTheme.textMuted,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
               ),
             ),
           ],

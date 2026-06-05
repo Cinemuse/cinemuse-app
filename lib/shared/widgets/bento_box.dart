@@ -39,7 +39,8 @@ class BentoBox extends StatelessWidget {
               )
             : null,
       ),
-      clipBehavior: Clip.antiAlias, // Ensure children respect the rounded corners
+      clipBehavior:
+          Clip.antiAlias, // Ensure children respect the rounded corners
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -47,19 +48,15 @@ class BentoBox extends StatelessWidget {
           if (title.isNotEmpty || icon != null || action != null)
             Padding(
               padding: EdgeInsets.fromLTRB(
-                isMobile ? 16 : 24, 
-                isMobile ? 16 : 24, 
-                isMobile ? 16 : 24, 
+                isMobile ? 16 : 24,
+                isMobile ? 16 : 24,
+                isMobile ? 16 : 24,
                 isMobile ? 12 : 16,
               ),
               child: Row(
                 children: [
                   if (icon != null) ...[
-                    Icon(
-                      icon,
-                      size: 20,
-                      color: AppTheme.accent,
-                    ),
+                    Icon(icon, size: 20, color: AppTheme.accent),
                     const SizedBox(width: 12),
                   ],
                   if (title.isNotEmpty)
@@ -76,17 +73,19 @@ class BentoBox extends StatelessWidget {
           // We use flexible child handling: if height is set, we pad and potentially scroll/clip.
           // If no height, we just padding and wrap.
           Padding(
-            padding: padding ?? EdgeInsets.fromLTRB(
-              isMobile ? 16 : 24, 
-              0, 
-              isMobile ? 16 : 24, 
-              isMobile ? 16 : 24,
-            ),
-            child: height != null 
+            padding:
+                padding ??
+                EdgeInsets.fromLTRB(
+                  isMobile ? 16 : 24,
+                  0,
+                  isMobile ? 16 : 24,
+                  isMobile ? 16 : 24,
+                ),
+            child: height != null
                 ? SizedBox(
-                    height: height! - (title.isNotEmpty ? 62 : 0), 
-                    child: child
-                  ) 
+                    height: height! - (title.isNotEmpty ? 62 : 0),
+                    child: child,
+                  )
                 : child,
           ),
         ],

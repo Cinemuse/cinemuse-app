@@ -13,7 +13,8 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
   @override
   void build() {}
 
-  WatchHistoryRepository get _repository => ref.read(watchHistoryRepositoryProvider);
+  WatchHistoryRepository get _repository =>
+      ref.read(watchHistoryRepositoryProvider);
   UserListsNotifier get _listsNotifier => ref.read(userListsProvider.notifier);
 
   /// Toggles favorite status for a media item.
@@ -37,8 +38,9 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     if (userId == null) return;
 
     // Optimistic Update: Add log immediately
-    ref.read(seriesWatchLogsProvider(tmdbId).notifier)
-       .addOptimisticUpdate(season, episode, true);
+    ref
+        .read(seriesWatchLogsProvider(tmdbId).notifier)
+        .addOptimisticUpdate(season, episode, true);
 
     try {
       await _repository.logEpisodeWatch(
@@ -49,20 +51,23 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
         episode: episode,
         loggedAt: loggedAt,
       );
-      
+
       // Auto-advance to next episode in "Continue Watching"
-      // We need series details to know max episodes. 
+      // We need series details to know max episodes.
       // We can fetch it or pass it. Fetching is safer but adds a call.
       // Since this is a background action after UI update, fetching is fine.
       final tmdbService = ref.read(tmdbServiceProvider);
       final mediaRepo = ref.read(mediaRepositoryProvider);
-      
-      final details = await tmdbService.getMediaDetails(tmdbId.toString(), 'tv');
+
+      final details = await tmdbService.getMediaDetails(
+        tmdbId.toString(),
+        'tv',
+      );
       if (details != null) {
         // Opportunistically update cache
         final item = MediaItem.fromTmdbDetails(details, MediaKind.tv);
         await mediaRepo.saveMediaItem(item);
-        
+
         await _repository.upsertNextEpisode(
           userId: userId,
           tmdbId: tmdbId,
@@ -76,7 +81,9 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       _invalidateLogs(tmdbId);
     } catch (e) {
       // Error: Revert optimistic update
-      ref.read(seriesWatchLogsProvider(tmdbId).notifier).clearOptimisticUpdates();
+      ref
+          .read(seriesWatchLogsProvider(tmdbId).notifier)
+          .clearOptimisticUpdates();
       rethrow;
     }
   }
@@ -91,9 +98,9 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     if (userId == null) return;
 
     // Optimistic Update: Remove log immediately
-    ref.read(seriesWatchLogsProvider(tmdbId).notifier)
-       .addOptimisticUpdate(season, episode, false);
-
+    ref
+        .read(seriesWatchLogsProvider(tmdbId).notifier)
+        .addOptimisticUpdate(season, episode, false);
 
     try {
       await _repository.deleteLatestEpisodeLog(
@@ -104,7 +111,9 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       );
       _invalidateLogs(tmdbId);
     } catch (e) {
-      ref.read(seriesWatchLogsProvider(tmdbId).notifier).clearOptimisticUpdates();
+      ref
+          .read(seriesWatchLogsProvider(tmdbId).notifier)
+          .clearOptimisticUpdates();
       rethrow;
     }
   }
@@ -119,8 +128,9 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     if (userId == null) return;
 
     // Optimistic Update: Remove log immediately
-    ref.read(seriesWatchLogsProvider(tmdbId).notifier)
-       .addOptimisticUpdate(season, episode, false);
+    ref
+        .read(seriesWatchLogsProvider(tmdbId).notifier)
+        .addOptimisticUpdate(season, episode, false);
 
     try {
       await _repository.deleteAllEpisodeLogs(
@@ -131,7 +141,9 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       );
       _invalidateLogs(tmdbId);
     } catch (e) {
-      ref.read(seriesWatchLogsProvider(tmdbId).notifier).clearOptimisticUpdates();
+      ref
+          .read(seriesWatchLogsProvider(tmdbId).notifier)
+          .clearOptimisticUpdates();
       rethrow;
     }
   }
@@ -163,15 +175,19 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       // 1. Find the latest season/episode in the batch
       final latest = episodes.reduce((curr, next) {
         if (next.season > curr.season) return next;
-        if (next.season == curr.season && next.episode > curr.episode) return next;
+        if (next.season == curr.season && next.episode > curr.episode)
+          return next;
         return curr;
       });
 
       // 2. Queue the next one
       final tmdbService = ref.read(tmdbServiceProvider);
       final mediaRepo = ref.read(mediaRepositoryProvider);
-      
-      final details = await tmdbService.getMediaDetails(tmdbId.toString(), 'tv');
+
+      final details = await tmdbService.getMediaDetails(
+        tmdbId.toString(),
+        'tv',
+      );
       if (details != null) {
         // Opportunistically update cache
         final item = MediaItem.fromTmdbDetails(details, MediaKind.tv);
@@ -194,37 +210,32 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
   }
 
   /// Deletes all logs for a series.
-  Future<void> deleteAllSeriesLogs({
-    required int tmdbId,
-  }) async {
+  Future<void> deleteAllSeriesLogs({required int tmdbId}) async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) return;
 
     // Optimistic Update: Retrieve current logs to determine what to "remove" locally
-    // Or just clear everything. Since we don't have easy access to "all episodes", 
+    // Or just clear everything. Since we don't have easy access to "all episodes",
     // we might need a "clearAll" optimistic action or just let it be.
     // For now, let's rely on the fast server response or clear local cache if possible.
-    // However, since we are moving to optimistic, let's just clear the optimistic state 
+    // However, since we are moving to optimistic, let's just clear the optimistic state
     // and rely on invalidation, but to be truly optimistic we'd need to know what to remove.
     // Simpler approach for "Remove All": Just clear the provider stream locally?
-    // Let's stick to standard behavior for "Remove All" as it's a destructive action 
-    // and user might expect a spinner or it's fast enough. 
+    // Let's stick to standard behavior for "Remove All" as it's a destructive action
+    // and user might expect a spinner or it's fast enough.
     // Actually, we can just clear optimistic updates and let the invalidation handle it.
-    
+
     // BUT, to be consistent, let's try to clear.
     // Since we don't have the list of all episodes to pass to 'addOptimisticUpdate(..., false)',
     // we'll rely on the server for this one bulk action, OR we can implement a 'clearAll' in notifier.
     // Let's implement 'clearAll' in notifier if needed, but for now let's just do standard call.
-    // Wait, the user asked for instant feedback. 
+    // Wait, the user asked for instant feedback.
     // Let's add a `clearAllOptimistic` to the notifier.
     // ref.read(seriesWatchLogsProvider(tmdbId).notifier).optimisticClearAll(); // TODO: Implement if needed.
-    
+
     // For now, let's keep it simple and just await. The debounce removal will help speed it up anyway.
-    
-    await _repository.deleteAllSeriesLogs(
-      userId: userId,
-      tmdbId: tmdbId,
-    );
+
+    await _repository.deleteAllSeriesLogs(userId: userId, tmdbId: tmdbId);
 
     _invalidateLogs(tmdbId);
   }
@@ -243,29 +254,28 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
   }) async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) return;
-    
+
     await _repository.ensureEpisodeWatching(
       userId: userId,
       tmdbId: tmdbId,
       season: season,
       episode: episode,
     );
-    
+
     // Invalidate to refresh UI
     _invalidateLogs(tmdbId);
   }
 
-  Future<void> logMovieWatch({
-    required int tmdbId,
-    DateTime? loggedAt,
-  }) async {
+  Future<void> logMovieWatch({required int tmdbId, DateTime? loggedAt}) async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) return;
 
     final now = loggedAt ?? DateTime.now();
     final loggedAtStr = now.toIso8601String();
 
-    ref.read(movieWatchLogsProvider(tmdbId).notifier).addOptimisticLog(loggedAtStr);
+    ref
+        .read(movieWatchLogsProvider(tmdbId).notifier)
+        .addOptimisticLog(loggedAtStr);
 
     try {
       await _repository.logMovieWatch(
@@ -275,46 +285,42 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       );
       // No need to invalidate, the stream and optimistic logic handle it
     } catch (e) {
-      ref.read(movieWatchLogsProvider(tmdbId).notifier).clearOptimisticUpdates();
+      ref
+          .read(movieWatchLogsProvider(tmdbId).notifier)
+          .clearOptimisticUpdates();
       rethrow;
     }
   }
 
-  Future<void> deleteLatestMovieLog({
-    required int tmdbId,
-  }) async {
+  Future<void> deleteLatestMovieLog({required int tmdbId}) async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) return;
 
     ref.read(movieWatchLogsProvider(tmdbId).notifier).removeOptimisticLog();
 
     try {
-      await _repository.deleteLatestMovieLog(
-        userId: userId,
-        tmdbId: tmdbId,
-      );
+      await _repository.deleteLatestMovieLog(userId: userId, tmdbId: tmdbId);
     } catch (e) {
-      ref.read(movieWatchLogsProvider(tmdbId).notifier).clearOptimisticUpdates();
+      ref
+          .read(movieWatchLogsProvider(tmdbId).notifier)
+          .clearOptimisticUpdates();
       rethrow;
     }
   }
 
-  Future<void> deleteAllMovieLogs({
-    required int tmdbId,
-  }) async {
+  Future<void> deleteAllMovieLogs({required int tmdbId}) async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) return;
 
     ref.read(movieWatchLogsProvider(tmdbId).notifier).clearOptimisticOffset();
 
     try {
-      await _repository.deleteAllMovieLogs(
-        userId: userId,
-        tmdbId: tmdbId,
-      );
+      await _repository.deleteAllMovieLogs(userId: userId, tmdbId: tmdbId);
       _invalidateMovieLogs(tmdbId);
     } catch (e) {
-      ref.read(movieWatchLogsProvider(tmdbId).notifier).clearOptimisticUpdates();
+      ref
+          .read(movieWatchLogsProvider(tmdbId).notifier)
+          .clearOptimisticUpdates();
       rethrow;
     }
   }
@@ -325,6 +331,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
   }
 }
 
-final mediaDetailsControllerProvider = AutoDisposeNotifierProvider<MediaDetailsController, void>(() {
-  return MediaDetailsController();
-});
+final mediaDetailsControllerProvider =
+    AutoDisposeNotifierProvider<MediaDetailsController, void>(() {
+      return MediaDetailsController();
+    });

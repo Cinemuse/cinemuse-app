@@ -21,7 +21,9 @@ class StremioAddonService {
     }
 
     try {
-      final manifestUrl = UrlUtils.unencodeStremioUrl("$baseUrl/manifest.json${queryParams != null ? '?$queryParams' : ''}");
+      final manifestUrl = UrlUtils.unencodeStremioUrl(
+        "$baseUrl/manifest.json${queryParams != null ? '?$queryParams' : ''}",
+      );
       final response = await _dio.get(
         manifestUrl,
         options: Options(

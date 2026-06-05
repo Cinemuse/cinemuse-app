@@ -9,12 +9,13 @@ abstract class StreamingException extends AppException {
 }
 
 class NoProvidersEnabledException extends StreamingException {
-  NoProvidersEnabledException() : super(message: "No streaming providers are enabled");
+  NoProvidersEnabledException()
+    : super(message: "No streaming providers are enabled");
 }
 
 class CapabilityMissingException extends StreamingException {
   final String category;
-  CapabilityMissingException(this.category) 
+  CapabilityMissingException(this.category)
     : super(
         message: "No enabled provider supports $category",
         metadata: {'category': category},
@@ -22,20 +23,25 @@ class CapabilityMissingException extends StreamingException {
 }
 
 class MediaDetailsResolutionException extends StreamingException {
-  MediaDetailsResolutionException() : super(message: "Could not resolve media details for search");
+  MediaDetailsResolutionException()
+    : super(message: "Could not resolve media details for search");
 }
 
 class ImdbIdResolutionException extends StreamingException {
-  ImdbIdResolutionException() : super(message: "Media is missing an IMDB ID, which is required by most providers");
+  ImdbIdResolutionException()
+    : super(
+        message:
+            "Media is missing an IMDB ID, which is required by most providers",
+      );
 }
 
 class NoResultsFoundException extends StreamingException {
-  NoResultsFoundException() : super(message: "No results found across providers");
+  NoResultsFoundException()
+    : super(message: "No results found across providers");
 }
 
-
 class StreamResolutionFailedException extends StreamingException {
-  StreamResolutionFailedException(String details) 
+  StreamResolutionFailedException(String details)
     : super(message: "Stream resolution failed: $details");
 }
 

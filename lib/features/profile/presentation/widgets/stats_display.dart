@@ -29,16 +29,21 @@ class StatsDisplay extends ConsumerWidget {
         final isDesktop = constraints.maxWidth > 900;
 
         if (!isDesktop) {
-            return _MobileStatsDisplay(
-              stats: stats,
-              formatDuration: formatDuration,
-            );
+          return _MobileStatsDisplay(
+            stats: stats,
+            formatDuration: formatDuration,
+          );
         }
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: TimeBreakdownCard(stats: stats, formatDuration: formatDuration)),
+            Expanded(
+              child: TimeBreakdownCard(
+                stats: stats,
+                formatDuration: formatDuration,
+              ),
+            ),
             const SizedBox(width: 24),
             Expanded(child: MoviesStatsCard(stats: stats)),
             const SizedBox(width: 24),
@@ -55,7 +60,11 @@ class TimeBreakdownCard extends StatelessWidget {
   final ProfileStats stats;
   final String Function(int) formatDuration;
 
-  const TimeBreakdownCard({super.key, required this.stats, required this.formatDuration});
+  const TimeBreakdownCard({
+    super.key,
+    required this.stats,
+    required this.formatDuration,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +96,15 @@ class TimeBreakdownCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(l10n.statsAllTime.toUpperCase(), style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    Text(
+                      l10n.statsAllTime.toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(width: 24),
@@ -100,9 +117,15 @@ class TimeBreakdownCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                        _SubStatItem(value: formatDuration(stats.movieMinutes), label: l10n.statsMovies.toUpperCase()),
-                        const SizedBox(height: 8),
-                        _SubStatItem(value: formatDuration(stats.seriesMinutes), label: l10n.statsSeries.toUpperCase()),
+                      _SubStatItem(
+                        value: formatDuration(stats.movieMinutes),
+                        label: l10n.statsMovies.toUpperCase(),
+                      ),
+                      const SizedBox(height: 8),
+                      _SubStatItem(
+                        value: formatDuration(stats.seriesMinutes),
+                        label: l10n.statsSeries.toUpperCase(),
+                      ),
                     ],
                   ),
                 ),
@@ -114,20 +137,20 @@ class TimeBreakdownCard extends StatelessWidget {
           // Footer
           Row(
             children: [
-               _FooterStat(
-                   value: formatDuration(stats.last7Days.totalMinutes), 
-                   label: l10n.statsLast7Days.toUpperCase(),
-               ),
-               _FooterStat(
-                   value: formatDuration(stats.last30Days.totalMinutes), 
-                   label: l10n.statsLast30Days.toUpperCase(),
-                   showBorder: true,
-               ),
-               _FooterStat(
-                   value: formatDuration(stats.last365Days.totalMinutes), 
-                   label: l10n.statsLastYear.toUpperCase(),
-                   showBorder: true,
-               ),
+              _FooterStat(
+                value: formatDuration(stats.last7Days.totalMinutes),
+                label: l10n.statsLast7Days.toUpperCase(),
+              ),
+              _FooterStat(
+                value: formatDuration(stats.last30Days.totalMinutes),
+                label: l10n.statsLast30Days.toUpperCase(),
+                showBorder: true,
+              ),
+              _FooterStat(
+                value: formatDuration(stats.last365Days.totalMinutes),
+                label: l10n.statsLastYear.toUpperCase(),
+                showBorder: true,
+              ),
             ],
           ),
         ],
@@ -152,22 +175,30 @@ class MoviesStatsCard extends StatelessWidget {
       iconColor: AppTheme.accent,
       child: Column(
         children: [
-            Padding(
+          Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Column(
-                children: [
-                    Text(
-                      stats.totalMovies.toString(),
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        fontSize: 48,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        height: 1.0,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(l10n.statsMovies.toUpperCase(), style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                ],
+              children: [
+                Text(
+                  stats.totalMovies.toString(),
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    fontSize: 48,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    height: 1.0,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.statsMovies.toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ],
             ),
           ),
           const Divider(height: 1, color: Colors.white10),
@@ -175,20 +206,20 @@ class MoviesStatsCard extends StatelessWidget {
           // Footer
           Row(
             children: [
-               _FooterStat(
-                   value: stats.last7Days.movieCount.toString(), 
-                   label: l10n.statsLast7Days.toUpperCase(),
-               ),
-               _FooterStat(
-                   value: stats.last30Days.movieCount.toString(), 
-                   label: l10n.statsLast30Days.toUpperCase(),
-                   showBorder: true,
-               ),
-               _FooterStat(
-                   value: stats.last365Days.movieCount.toString(), 
-                   label: l10n.statsLastYear.toUpperCase(),
-                   showBorder: true,
-               ),
+              _FooterStat(
+                value: stats.last7Days.movieCount.toString(),
+                label: l10n.statsLast7Days.toUpperCase(),
+              ),
+              _FooterStat(
+                value: stats.last30Days.movieCount.toString(),
+                label: l10n.statsLast30Days.toUpperCase(),
+                showBorder: true,
+              ),
+              _FooterStat(
+                value: stats.last365Days.movieCount.toString(),
+                label: l10n.statsLastYear.toUpperCase(),
+                showBorder: true,
+              ),
             ],
           ),
         ],
@@ -233,7 +264,15 @@ class SeriesStatsCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(l10n.statsEpisodes.toUpperCase(), style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    Text(
+                      l10n.statsEpisodes.toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(width: 24),
@@ -246,9 +285,15 @@ class SeriesStatsCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                        _SubStatItem(value: stats.totalSeries.toString(), label: l10n.statsSeries.toUpperCase()),
-                        const SizedBox(height: 8),
-                        _SubStatItem(value: stats.totalSeasons.toString(), label: l10n.statsSeasons.toUpperCase()),
+                      _SubStatItem(
+                        value: stats.totalSeries.toString(),
+                        label: l10n.statsSeries.toUpperCase(),
+                      ),
+                      const SizedBox(height: 8),
+                      _SubStatItem(
+                        value: stats.totalSeasons.toString(),
+                        label: l10n.statsSeasons.toUpperCase(),
+                      ),
                     ],
                   ),
                 ),
@@ -260,20 +305,20 @@ class SeriesStatsCard extends StatelessWidget {
           // Footer
           Row(
             children: [
-               _FooterStat(
-                   value: stats.last7Days.episodeCount.toString(), 
-                   label: l10n.statsLast7Days.toUpperCase(),
-               ),
-               _FooterStat(
-                   value: stats.last30Days.episodeCount.toString(), 
-                   label: l10n.statsLast30Days.toUpperCase(),
-                   showBorder: true,
-               ),
-               _FooterStat(
-                   value: stats.last365Days.episodeCount.toString(), 
-                   label: l10n.statsLastYear.toUpperCase(),
-                   showBorder: true,
-               ),
+              _FooterStat(
+                value: stats.last7Days.episodeCount.toString(),
+                label: l10n.statsLast7Days.toUpperCase(),
+              ),
+              _FooterStat(
+                value: stats.last30Days.episodeCount.toString(),
+                label: l10n.statsLast30Days.toUpperCase(),
+                showBorder: true,
+              ),
+              _FooterStat(
+                value: stats.last365Days.episodeCount.toString(),
+                label: l10n.statsLastYear.toUpperCase(),
+                showBorder: true,
+              ),
             ],
           ),
         ],
@@ -285,115 +330,159 @@ class SeriesStatsCard extends StatelessWidget {
 // --- Shared Components ---
 
 class BaseCard extends StatelessWidget {
-    final IconData icon;
-    final String title;
-    final Color iconColor;
-    final Widget child;
+  final IconData icon;
+  final String title;
+  final Color iconColor;
+  final Widget child;
 
-    const BaseCard({super.key, required this.icon, required this.title, required this.iconColor, required this.child});
+  const BaseCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.iconColor,
+    required this.child,
+  });
 
-    @override
-    Widget build(BuildContext context) {
-        return Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white10),
-                boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4)),
-                ]
-            ),
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                    Row(
-                        children: [
-                            Icon(icon, color: iconColor, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                                title, 
-                                style: const TextStyle(
-                                    color: Colors.grey, 
-                                    fontWeight: FontWeight.bold, 
-                                    fontSize: 12, 
-                                    letterSpacing: 1.0
-                                )
-                            ),
-                        ],
-                    ),
-                    const SizedBox(height: 8), // Spacer before content
-                    child,
-                ],
-            ),
-        );
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: iconColor, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8), // Spacer before content
+          child,
+        ],
+      ),
+    );
+  }
 }
 
 class _SubStatItem extends StatelessWidget {
-    final String value;
-    final String label;
-    const _SubStatItem({required this.value, required this.label});
+  final String value;
+  final String label;
+  const _SubStatItem({required this.value, required this.label});
 
-    @override
-    Widget build(BuildContext context) {
-        return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-                Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, height: 1.0)),
-                Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold)),
-            ],
-        );
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            height: 1.0,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _FooterStat extends StatelessWidget {
-    final String value;
-    final String label;
-    final bool showBorder;
+  final String value;
+  final String label;
+  final bool showBorder;
 
-    const _FooterStat({required this.value, required this.label, this.showBorder = false});
+  const _FooterStat({
+    required this.value,
+    required this.label,
+    this.showBorder = false,
+  });
 
-    @override
-    Widget build(BuildContext context) {
-        return Expanded(
-            child: Container(
-                decoration: showBorder ? const BoxDecoration(
-                    border: Border(left: BorderSide(color: Colors.white10)),
-                ) : null,
-                child: Column(
-                    children: [
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                              value, 
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                            label, 
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.grey, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5)
-                        ),
-                    ],
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        decoration: showBorder
+            ? const BoxDecoration(
+                border: Border(left: BorderSide(color: Colors.white10)),
+              )
+            : null,
+        child: Column(
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
                 ),
+              ),
             ),
-        );
-    }
+            const SizedBox(height: 4),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _MobileStatsDisplay extends StatefulWidget {
   final ProfileStats stats;
   final String Function(int) formatDuration;
-  
-  const _MobileStatsDisplay({required this.stats, required this.formatDuration});
+
+  const _MobileStatsDisplay({
+    required this.stats,
+    required this.formatDuration,
+  });
 
   @override
   State<_MobileStatsDisplay> createState() => _MobileStatsDisplayState();
 }
 
-class _MobileStatsDisplayState extends State<_MobileStatsDisplay> with SingleTickerProviderStateMixin {
+class _MobileStatsDisplayState extends State<_MobileStatsDisplay>
+    with SingleTickerProviderStateMixin {
   int? _expandedIndex;
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -401,8 +490,14 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay> with SingleTic
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
-    _animation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _animation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   void _toggleExpanded(int index) {
@@ -460,7 +555,7 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay> with SingleTic
                 currentWidget = GestureDetector(
                   onTap: () => _toggleExpanded(0),
                   child: TimeBreakdownCard(
-                    stats: widget.stats, 
+                    stats: widget.stats,
                     formatDuration: widget.formatDuration,
                   ),
                 );
@@ -468,17 +563,13 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay> with SingleTic
               case 1:
                 currentWidget = GestureDetector(
                   onTap: () => _toggleExpanded(1),
-                  child: MoviesStatsCard(
-                    stats: widget.stats,
-                  ),
+                  child: MoviesStatsCard(stats: widget.stats),
                 );
                 break;
               case 2:
                 currentWidget = GestureDetector(
                   onTap: () => _toggleExpanded(2),
-                  child: SeriesStatsCard(
-                    stats: widget.stats,
-                  ),
+                  child: SeriesStatsCard(stats: widget.stats),
                 );
                 break;
               default:
@@ -503,16 +594,46 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay> with SingleTic
   Widget _buildCollapsedRow(AppLocalizations l10n) {
     return Row(
       children: [
-        Expanded(child: _buildSmallCard(0, LucideIcons.clock, l10n.statsTime.toUpperCase(), Colors.blue, widget.formatDuration(widget.stats.totalMinutesWatched))),
+        Expanded(
+          child: _buildSmallCard(
+            0,
+            LucideIcons.clock,
+            l10n.statsTime.toUpperCase(),
+            Colors.blue,
+            widget.formatDuration(widget.stats.totalMinutesWatched),
+          ),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: _buildSmallCard(1, LucideIcons.film, l10n.statsMovies.toUpperCase(), AppTheme.accent, widget.stats.totalMovies.toString())),
+        Expanded(
+          child: _buildSmallCard(
+            1,
+            LucideIcons.film,
+            l10n.statsMovies.toUpperCase(),
+            AppTheme.accent,
+            widget.stats.totalMovies.toString(),
+          ),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: _buildSmallCard(2, LucideIcons.tv, l10n.statsSeries.toUpperCase(), Colors.green, widget.stats.totalEpisodes.toString())),
+        Expanded(
+          child: _buildSmallCard(
+            2,
+            LucideIcons.tv,
+            l10n.statsSeries.toUpperCase(),
+            Colors.green,
+            widget.stats.totalEpisodes.toString(),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildSmallCard(int index, IconData icon, String title, Color color, String value) {
+  Widget _buildSmallCard(
+    int index,
+    IconData icon,
+    String title,
+    Color color,
+    String value,
+  ) {
     return GestureDetector(
       onTap: () => _toggleExpanded(index),
       child: Container(
@@ -523,8 +644,12 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay> with SingleTic
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white10),
           boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4)),
-          ]
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -535,13 +660,22 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay> with SingleTic
               fit: BoxFit.scaleDown,
               child: Text(
                 value,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
             const SizedBox(height: 4),
             Text(
               title,
-              style: const TextStyle(color: Colors.grey, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

@@ -32,10 +32,7 @@ class ResponsiveDetailsLayout extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          flex: 2,
-          child: mainContent,
-        ),
+        Expanded(flex: 2, child: mainContent),
         SizedBox(width: spacing),
         ConstrainedBox(
           constraints: const BoxConstraints(minWidth: 320, maxWidth: 420),

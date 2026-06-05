@@ -36,9 +36,12 @@ class SupabaseErrorHandler {
 
   static String _getAuthMessage(AuthException error) {
     final msg = error.message.toLowerCase();
-    if (msg.contains('invalid login credentials')) return 'Invalid email or password.';
-    if (msg.contains('email not confirmed')) return 'Please confirm your email address.';
-    if (msg.contains('user already exists')) return 'An account with this email already exists.';
+    if (msg.contains('invalid login credentials'))
+      return 'Invalid email or password.';
+    if (msg.contains('email not confirmed'))
+      return 'Please confirm your email address.';
+    if (msg.contains('user already exists'))
+      return 'An account with this email already exists.';
     return error.message;
   }
 }

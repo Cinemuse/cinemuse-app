@@ -18,32 +18,39 @@ final sportScheduleProvider = FutureProvider<List<SportTvEvent>>((ref) async {
   return events;
 });
 
-final trendingProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final trendingProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
   final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getTrending();
 });
 
-final popularMoviesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final popularMoviesProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
   final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getPopularMovies();
 });
 
-final popularSeriesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final popularSeriesProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
   final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getPopularSeries();
 });
 
 final continueWatchingProvider = StreamProvider<List<WatchHistory>>((ref) {
   final historyMapAsync = ref.watch(watchHistoryStoreProvider);
-  
+
   return historyMapAsync.when(
     data: (historyMap) {
       // 1. Group by tmdbId and find the latest entry for each
       final latestByTmdbId = <int, WatchHistory>{};
-      
+
       for (final item in historyMap.values) {
         final existing = latestByTmdbId[item.tmdbId];
-        if (existing == null || item.lastWatchedAt.isAfter(existing.lastWatchedAt)) {
+        if (existing == null ||
+            item.lastWatchedAt.isAfter(existing.lastWatchedAt)) {
           latestByTmdbId[item.tmdbId] = item;
         }
       }
@@ -52,7 +59,7 @@ final continueWatchingProvider = StreamProvider<List<WatchHistory>>((ref) {
       final list = latestByTmdbId.values
           .where((item) => item.status == WatchStatus.watching)
           .toList();
-      
+
       // 3. Sort by last watched (descending)
       list.sort((a, b) => b.lastWatchedAt.compareTo(a.lastWatchedAt));
       return Stream.value(list);

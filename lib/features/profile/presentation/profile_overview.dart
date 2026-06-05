@@ -22,9 +22,13 @@ class ProfileOverview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(recentlyWatchedStreamProvider);
     final history = historyAsync.valueOrNull ?? [];
-    
-    final groupedMovies = history.where((h) => h.mediaType == MediaKind.movie).toList();
-    final groupedSeries = history.where((h) => h.mediaType == MediaKind.tv).toList();
+
+    final groupedMovies = history
+        .where((h) => h.mediaType == MediaKind.movie)
+        .toList();
+    final groupedSeries = history
+        .where((h) => h.mediaType == MediaKind.tv)
+        .toList();
     final statsAsync = ref.watch(profileStatsProvider);
     final stats = statsAsync.valueOrNull ?? ProfileStats.empty();
     final l10n = AppLocalizations.of(context)!;
@@ -47,20 +51,24 @@ class ProfileOverview extends ConsumerWidget {
           tmdbId: item.tmdbId,
           mediaType: item.mediaType,
           onTap: () {
-            Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => MediaDetailsScreen(
-                mediaId: item.tmdbId.toString(),
-                mediaType: item.mediaType.name,
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => MediaDetailsScreen(
+                  mediaId: item.tmdbId.toString(),
+                  mediaType: item.mediaType.name,
+                ),
               ),
-            ));
+            );
           },
           onPlay: () {
-            Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
-              builder: (_) => VideoPlayerScreen(
-                queryId: item.tmdbId.toString(),
-                type: item.mediaType.name,
+            Navigator.of(context, rootNavigator: true).push(
+              MaterialPageRoute(
+                builder: (_) => VideoPlayerScreen(
+                  queryId: item.tmdbId.toString(),
+                  type: item.mediaType.name,
+                ),
               ),
-            ));
+            );
           },
         );
       }).toList();
@@ -72,7 +80,10 @@ class ProfileOverview extends ConsumerWidget {
         items: cards,
         emptyBuilder: (context) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 24),
-          child: Text(l10n.profileNoRecentItems, style: const TextStyle(color: Colors.grey)),
+          child: Text(
+            l10n.profileNoRecentItems,
+            style: const TextStyle(color: Colors.grey),
+          ),
         ),
       );
     }
@@ -80,7 +91,9 @@ class ProfileOverview extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth > 900;
-        final horizontalPadding = AppTheme.getResponsiveHorizontalPadding(context);
+        final horizontalPadding = AppTheme.getResponsiveHorizontalPadding(
+          context,
+        );
 
         return SingleChildScrollView(
           padding: EdgeInsets.only(
@@ -104,32 +117,44 @@ class ProfileOverview extends ConsumerWidget {
                             children: [
                               Row(
                                 children: [
-                                  Expanded(child: TimeBreakdownCard(stats: stats, formatDuration: formatDuration)),
+                                  Expanded(
+                                    child: TimeBreakdownCard(
+                                      stats: stats,
+                                      formatDuration: formatDuration,
+                                    ),
+                                  ),
                                   const SizedBox(width: 24),
-                                  Expanded(child: MoviesStatsCard(stats: stats)),
+                                  Expanded(
+                                    child: MoviesStatsCard(stats: stats),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 24),
                               buildRecentRow(
-                                l10n.profileRecentMovies.toUpperCase(), 
-                                LucideIcons.film, 
-                                groupedMovies.take(10).map((h) => h.media).whereType<MediaItem>().toList()
+                                l10n.profileRecentMovies.toUpperCase(),
+                                LucideIcons.film,
+                                groupedMovies
+                                    .take(10)
+                                    .map((h) => h.media)
+                                    .whereType<MediaItem>()
+                                    .toList(),
                               ),
                               const SizedBox(height: 24),
                               buildRecentRow(
-                                l10n.profileRecentSeries.toUpperCase(), 
-                                LucideIcons.tv, 
-                                groupedSeries.take(10).map((h) => h.media).whereType<MediaItem>().toList()
+                                l10n.profileRecentSeries.toUpperCase(),
+                                LucideIcons.tv,
+                                groupedSeries
+                                    .take(10)
+                                    .map((h) => h.media)
+                                    .whereType<MediaItem>()
+                                    .toList(),
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(width: 24),
                         // Right Column Width Placeholder (does not contribute to height)
-                        const Expanded(
-                          flex: 1,
-                          child: SizedBox.shrink(),
-                        ),
+                        const Expanded(flex: 1, child: SizedBox.shrink()),
                       ],
                     ),
                     // Content Row: Forced to match the height of the driver row
@@ -145,7 +170,9 @@ class ProfileOverview extends ConsumerWidget {
                               children: [
                                 SeriesStatsCard(stats: stats),
                                 const SizedBox(height: 24),
-                                const Expanded(child: AgendaWidget(isExpanded: true)),
+                                const Expanded(
+                                  child: AgendaWidget(isExpanded: true),
+                                ),
                               ],
                             ),
                           ),
@@ -163,20 +190,28 @@ class ProfileOverview extends ConsumerWidget {
 
                     // Recent Movies Container
                     buildRecentRow(
-                      l10n.profileRecentMovies.toUpperCase(), 
-                      LucideIcons.film, 
-                      groupedMovies.take(10).map((h) => h.media).whereType<MediaItem>().toList()
+                      l10n.profileRecentMovies.toUpperCase(),
+                      LucideIcons.film,
+                      groupedMovies
+                          .take(10)
+                          .map((h) => h.media)
+                          .whereType<MediaItem>()
+                          .toList(),
                     ),
 
                     const SizedBox(height: 24),
 
                     // Recent Series Container
                     buildRecentRow(
-                      l10n.profileRecentSeries.toUpperCase(), 
-                      LucideIcons.tv, 
-                      groupedSeries.take(10).map((h) => h.media).whereType<MediaItem>().toList()
+                      l10n.profileRecentSeries.toUpperCase(),
+                      LucideIcons.tv,
+                      groupedSeries
+                          .take(10)
+                          .map((h) => h.media)
+                          .whereType<MediaItem>()
+                          .toList(),
                     ),
-                    
+
                     const SizedBox(height: 32),
 
                     // Agenda

@@ -21,7 +21,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -29,7 +28,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final popularMoviesAsync = ref.watch(popularMoviesProvider);
     final popularSeriesAsync = ref.watch(popularSeriesProvider);
     final connectivity = ref.watch(connectivityProvider);
-    
+
     final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
 
     return Scaffold(
@@ -42,15 +41,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               // 1. Hero Section (Trending #1)
               RepaintBoundary(
                 child: trendingAsync.when(
-                  data: (data) => HeroSection(media: data.isNotEmpty ? data[0] : null),
+                  data: (data) =>
+                      HeroSection(media: data.isNotEmpty ? data[0] : null),
                   loading: () => SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.75, 
-                    child: const Center(child: CircularProgressIndicator())
+                    height: MediaQuery.of(context).size.height * 0.75,
+                    child: const Center(child: CircularProgressIndicator()),
                   ),
                   error: (err, stack) {
                     final mapped = ref.read(errorMapperProvider).map(err);
                     return SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.6, 
+                      height: MediaQuery.of(context).size.height * 0.6,
                       child: Center(
                         child: Padding(
                           padding: const EdgeInsets.all(32.0),
@@ -73,10 +73,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 onRetry: () => ref.invalidate(connectivityProvider),
               ),
             ],
-            
+
             // 2. Content
             Transform.translate(
-              offset: Offset(0, isOffline ? 0 : -60), // No overlap offset if offline
+              offset: Offset(
+                0,
+                isOffline ? 0 : -60,
+              ), // No overlap offset if offline
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -87,7 +90,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: const ContinueWatchingRow(),
                     ),
                   ),
-                  
+
                   // Sports Schedule
                   RepaintBoundary(
                     child: FocusTraversalGroup(
@@ -95,14 +98,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: const SportScheduleRow(),
                     ),
                   ),
-                  
+
                   if (!isOffline) ...[
                     const SizedBox(height: 20),
                     // Trending List
                     RepaintBoundary(
                       child: FocusTraversalGroup(
                         policy: OrderedTraversalPolicy(),
-                        child: MediaRow(title: l10n.homeTrendingNow, asyncData: trendingAsync, skipFirst: true),
+                        child: MediaRow(
+                          title: l10n.homeTrendingNow,
+                          asyncData: trendingAsync,
+                          skipFirst: true,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 30),
@@ -111,7 +118,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     RepaintBoundary(
                       child: FocusTraversalGroup(
                         policy: OrderedTraversalPolicy(),
-                        child: MediaRow(title: l10n.homePopularMovies, asyncData: popularMoviesAsync),
+                        child: MediaRow(
+                          title: l10n.homePopularMovies,
+                          asyncData: popularMoviesAsync,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 30),
@@ -120,11 +130,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     RepaintBoundary(
                       child: FocusTraversalGroup(
                         policy: OrderedTraversalPolicy(),
-                        child: MediaRow(title: l10n.homePopularSeries, asyncData: popularSeriesAsync),
+                        child: MediaRow(
+                          title: l10n.homePopularSeries,
+                          asyncData: popularSeriesAsync,
+                        ),
                       ),
                     ),
                   ],
-                  
+
                   const SizedBox(height: 24),
                 ],
               ),

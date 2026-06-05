@@ -58,9 +58,9 @@ class Channel {
       !isDisabled &&
       !isRadio &&
       !isAdult &&
-      (type == 'hls' || 
-       (type == 'dash' && !Platform.isWindows) || 
-       links.isNotEmpty) &&
+      (type == 'hls' ||
+          (type == 'dash' && !Platform.isWindows) ||
+          links.isNotEmpty) &&
       !(urlOverride?.startsWith('zappr://') ?? false);
 
   /// Backward compatibility: returns the primary URL (Override or first link)
@@ -68,7 +68,9 @@ class Channel {
     if (urlOverride != null && urlOverride!.isNotEmpty) return urlOverride!;
     if (links.isNotEmpty) {
       // Return first non-failed link, or just the first link
-      return links.firstWhere((l) => !l.isFailed, orElse: () => links.first).url;
+      return links
+          .firstWhere((l) => !l.isFailed, orElse: () => links.first)
+          .url;
     }
     return '';
   }
@@ -78,9 +80,11 @@ class Channel {
     if (uhd) return StreamQuality.uhd;
     if (hd) return StreamQuality.hd;
     if (links.isEmpty) return StreamQuality.sd;
-    
+
     // Pick the highest quality among links
-    return links.map((l) => l.quality).reduce((a, b) => a.index > b.index ? a : b);
+    return links
+        .map((l) => l.quality)
+        .reduce((a, b) => a.index > b.index ? a : b);
   }
 
   /// Links grouped by quality tier.
@@ -140,7 +144,7 @@ class Channel {
 
     bool isMpvIncompatible(String url) => url.contains('akamaized.net');
     final candidates = [geoblockUrl, mainUrl, fallbackUrl];
-    
+
     String resolvedUrl = candidates.firstWhere(
       (u) => u.startsWith('http') && !isMpvIncompatible(u),
       orElse: () => '',

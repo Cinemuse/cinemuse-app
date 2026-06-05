@@ -58,7 +58,10 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
         gradient: LinearGradient(
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
-          colors: [AppTheme.primary.withValues(alpha: 0.87), Colors.transparent],
+          colors: [
+            AppTheme.primary.withValues(alpha: 0.87),
+            Colors.transparent,
+          ],
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -69,7 +72,8 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
           StreamBuilder<Duration>(
             stream: player.stream.position,
             builder: (context, snapshot) {
-              final position = widget.virtualPosition ?? snapshot.data ?? Duration.zero;
+              final position =
+                  widget.virtualPosition ?? snapshot.data ?? Duration.zero;
               final duration = player.state.duration;
               return Row(
                 children: [
@@ -81,8 +85,11 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
                             setState(() {
                               _hoverX = event.localPosition.dx;
                               _isHoveringSeekbar = true;
-                              final percent = (_hoverX! / constraints.maxWidth).clamp(0.0, 1.0);
-                              _hoverDuration = Duration(seconds: (duration.inSeconds * percent).toInt());
+                              final percent = (_hoverX! / constraints.maxWidth)
+                                  .clamp(0.0, 1.0);
+                              _hoverDuration = Duration(
+                                seconds: (duration.inSeconds * percent).toInt(),
+                              );
                             });
                           },
                           onExit: (_) {
@@ -98,14 +105,22 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
                               SliderTheme(
                                 data: SliderThemeData(
                                   trackHeight: 2,
-                                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+                                  thumbShape: const RoundSliderThumbShape(
+                                    enabledThumbRadius: 6,
+                                  ),
+                                  overlayShape: const RoundSliderOverlayShape(
+                                    overlayRadius: 12,
+                                  ),
                                   activeTrackColor: AppTheme.textWhite,
-                                  inactiveTrackColor: AppTheme.textWhite.withValues(alpha: 0.24),
+                                  inactiveTrackColor: AppTheme.textWhite
+                                      .withValues(alpha: 0.24),
                                   thumbColor: AppTheme.textWhite,
                                 ),
                                 child: Slider(
-                                  value: position.inSeconds.toDouble().clamp(0, duration.inSeconds.toDouble()),
+                                  value: position.inSeconds.toDouble().clamp(
+                                    0,
+                                    duration.inSeconds.toDouble(),
+                                  ),
                                   min: 0,
                                   max: duration.inSeconds.toDouble(),
                                   onChangeStart: widget.onChangeStart,
@@ -113,20 +128,40 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
                                   onChanged: widget.onChanged,
                                 ),
                               ),
-                              if (_isHoveringSeekbar && _hoverX != null && _hoverDuration != null)
+                              if (_isHoveringSeekbar &&
+                                  _hoverX != null &&
+                                  _hoverDuration != null)
                                 Positioned(
-                                  left: (_hoverX! - 35).clamp(0, constraints.maxWidth - 70),
+                                  left: (_hoverX! - 35).clamp(
+                                    0,
+                                    constraints.maxWidth - 70,
+                                  ),
                                   top: -35,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.primary.withValues(alpha: 0.8),
+                                      color: AppTheme.primary.withValues(
+                                        alpha: 0.8,
+                                      ),
                                       borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.24), width: 0.5),
+                                      border: Border.all(
+                                        color: AppTheme.textWhite.withValues(
+                                          alpha: 0.24,
+                                        ),
+                                        width: 0.5,
+                                      ),
                                     ),
                                     child: Text(
                                       _formatDuration(_hoverDuration!),
-                                      style: const TextStyle(color: AppTheme.textWhite, fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                                      style: const TextStyle(
+                                        color: AppTheme.textWhite,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'monospace',
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -139,7 +174,11 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
                   const SizedBox(width: 12),
                   Text(
                     '${_formatDuration(position)} / ${_formatDuration(duration)}',
-                    style: TextStyle(color: AppTheme.textWhite.withValues(alpha: 0.7), fontSize: 13, fontFamily: 'monospace'),
+                    style: TextStyle(
+                      color: AppTheme.textWhite.withValues(alpha: 0.7),
+                      fontSize: 13,
+                      fontFamily: 'monospace',
+                    ),
                   ),
                   const SizedBox(width: 8),
                 ],

@@ -1,7 +1,7 @@
 class PlaybackThresholds {
   /// Minimum time in seconds to track progress (Peeking state).
   static const int peekingSeconds = 120;
-  
+
   /// Minimum percentage of duration to track progress (Peeking state).
   static const double peekingPercentage = 0.10;
 

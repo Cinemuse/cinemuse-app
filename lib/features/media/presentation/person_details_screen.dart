@@ -12,10 +12,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-final personDetailsProvider = FutureProvider.family<Map<String, dynamic>?, int>((ref, id) async {
-  final tmdbService = ref.watch(tmdbServiceProvider);
-  return tmdbService.getPersonDetails(id);
-});
+final personDetailsProvider = FutureProvider.family<Map<String, dynamic>?, int>(
+  (ref, id) async {
+    final tmdbService = ref.watch(tmdbServiceProvider);
+    return tmdbService.getPersonDetails(id);
+  },
+);
 
 class PersonDetailsScreen extends ConsumerStatefulWidget {
   final int personId;
@@ -23,7 +25,8 @@ class PersonDetailsScreen extends ConsumerStatefulWidget {
   const PersonDetailsScreen({super.key, required this.personId});
 
   @override
-  ConsumerState<PersonDetailsScreen> createState() => _PersonDetailsScreenState();
+  ConsumerState<PersonDetailsScreen> createState() =>
+      _PersonDetailsScreenState();
 }
 
 class _PersonDetailsScreenState extends ConsumerState<PersonDetailsScreen> {
@@ -39,28 +42,28 @@ class _PersonDetailsScreenState extends ConsumerState<PersonDetailsScreen> {
     final responsivePadding = AppTheme.getResponsiveHorizontalPadding(context);
 
     final bodyContent = detailsAsync.when(
-        data: (details) {
-          if (details == null) return Center(child: Text(l10n.commonError));
+      data: (details) {
+        if (details == null) return Center(child: Text(l10n.commonError));
 
-          final watchHistory = watchHistoryAsync.value ?? {};
-          return _PersonDetailsContent(
-            details: details,
-            watchHistory: watchHistory,
-            responsivePadding: responsivePadding,
-            visibleCredits: _visibleCredits,
-            showHidden: _showHidden,
-            onShowMore: () => setState(() => _visibleCredits += 50),
-            onToggleHidden: () => setState(() => _showHidden = !_showHidden),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.accent)),
-        error: (err, _) => Center(child: Text(l10n.detailsErrorLoading(err.toString()))),
-      );
-
-    return Scaffold(
-      backgroundColor: AppTheme.primary,
-      body: bodyContent,
+        final watchHistory = watchHistoryAsync.value ?? {};
+        return _PersonDetailsContent(
+          details: details,
+          watchHistory: watchHistory,
+          responsivePadding: responsivePadding,
+          visibleCredits: _visibleCredits,
+          showHidden: _showHidden,
+          onShowMore: () => setState(() => _visibleCredits += 50),
+          onToggleHidden: () => setState(() => _showHidden = !_showHidden),
+        );
+      },
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: AppTheme.accent),
+      ),
+      error: (err, _) =>
+          Center(child: Text(l10n.detailsErrorLoading(err.toString()))),
     );
+
+    return Scaffold(backgroundColor: AppTheme.primary, body: bodyContent);
   }
 }
 
@@ -95,7 +98,7 @@ class _PersonDetailsContent extends ConsumerWidget {
     // Process Credits
     final cast = details['combined_credits']?['cast'] as List<dynamic>? ?? [];
     final crew = details['combined_credits']?['crew'] as List<dynamic>? ?? [];
-    
+
     // Seen Stats Calculation
     int watchedCount = 0;
     int totalReleased = 0;
@@ -103,12 +106,12 @@ class _PersonDetailsContent extends ConsumerWidget {
 
     final allCredits = [...cast, ...crew];
     final uniqueCreditsMap = <int, Map<String, dynamic>>{};
-    
+
     for (final item in allCredits) {
       final id = item['id'] as int;
       if (!uniqueCreditsMap.containsKey(id)) {
         uniqueCreditsMap[id] = item;
-        
+
         final dateStr = item['release_date'] ?? item['first_air_date'];
         if (dateStr != null && dateStr.isNotEmpty) {
           final releaseDate = DateTime.tryParse(dateStr);
@@ -122,7 +125,9 @@ class _PersonDetailsContent extends ConsumerWidget {
       }
     }
 
-    final watchedPercent = totalReleased > 0 ? (watchedCount / totalReleased * 100).round() : 0;
+    final watchedPercent = totalReleased > 0
+        ? (watchedCount / totalReleased * 100).round()
+        : 0;
 
     // Known For
     final knownFor = List<Map<String, dynamic>>.from(cast)
@@ -131,7 +136,7 @@ class _PersonDetailsContent extends ConsumerWidget {
 
     // Filmography Processing
     var filmography = uniqueCreditsMap.values.toList();
-    
+
     // Sort Date DESC
     filmography.sort((a, b) {
       final dateA = a['release_date'] ?? a['first_air_date'] ?? '0000-00-00';
@@ -141,15 +146,31 @@ class _PersonDetailsContent extends ConsumerWidget {
 
     if (!showHidden) {
       const excludedGenres = {99, 10763, 10764, 10767};
-      const excludedKeywords = ['academy awards', 'golden globe', 'oscar', 'grammy', 'emmy', 'mtv movie awards', 'bafta', 'award'];
-      
+      const excludedKeywords = [
+        'academy awards',
+        'golden globe',
+        'oscar',
+        'grammy',
+        'emmy',
+        'mtv movie awards',
+        'bafta',
+        'award',
+      ];
+
       filmography = filmography.where((item) {
-        final genreIds = (item['genre_ids'] as List<dynamic>?)?.cast<int>() ?? [];
-        final hasExcludedGenre = genreIds.any((id) => excludedGenres.contains(id));
-        
-        final title = (item['title'] ?? item['name'] ?? '').toString().toLowerCase();
-        final hasExcludedKeyword = excludedKeywords.any((kw) => title.contains(kw));
-        
+        final genreIds =
+            (item['genre_ids'] as List<dynamic>?)?.cast<int>() ?? [];
+        final hasExcludedGenre = genreIds.any(
+          (id) => excludedGenres.contains(id),
+        );
+
+        final title = (item['title'] ?? item['name'] ?? '')
+            .toString()
+            .toLowerCase();
+        final hasExcludedKeyword = excludedKeywords.any(
+          (kw) => title.contains(kw),
+        );
+
         return !hasExcludedGenre && !hasExcludedKeyword;
       }).toList();
     }
@@ -157,14 +178,15 @@ class _PersonDetailsContent extends ConsumerWidget {
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: EdgeInsets.symmetric(horizontal: responsivePadding, vertical: 32),
+          padding: EdgeInsets.symmetric(
+            horizontal: responsivePadding,
+            vertical: 32,
+          ),
           sliver: SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppBackButton(
-                  onTap: () => Navigator.of(context).pop(),
-                ),
+                AppBackButton(onTap: () => Navigator.of(context).pop()),
                 const SizedBox(height: 32),
                 // Top Section: Info + Image
                 Wrap(
@@ -180,7 +202,8 @@ class _PersonDetailsContent extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(16),
                           child: profilePath != null
                               ? CachedNetworkImage(
-                                  imageUrl: 'https://image.tmdb.org/t/p/w500$profilePath',
+                                  imageUrl:
+                                      'https://image.tmdb.org/t/p/w500$profilePath',
                                   fit: BoxFit.cover,
                                 )
                               : Image.asset(
@@ -198,31 +221,59 @@ class _PersonDetailsContent extends ConsumerWidget {
                         children: [
                           Text(
                             name,
-                            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                              fontSize: 48,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              height: 1.1,
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium!
+                                .copyWith(
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  height: 1.1,
+                                ),
                           ),
                           const SizedBox(height: 16),
                           if (birthday != null)
-                            _InfoRow(icon: LucideIcons.calendar, text: birthday),
+                            _InfoRow(
+                              icon: LucideIcons.calendar,
+                              text: birthday,
+                            ),
                           if (placeOfBirth != null)
-                            _InfoRow(icon: LucideIcons.mapPin, text: placeOfBirth),
+                            _InfoRow(
+                              icon: LucideIcons.mapPin,
+                              text: placeOfBirth,
+                            ),
                           const SizedBox(height: 24),
-                          
+
                           // Seen Progress
                           if (totalReleased > 0) ...[
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(l10n.personSeen.toUpperCase(), style: const TextStyle(color: AppTheme.textMuted, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                                Text(
+                                  l10n.personSeen.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: AppTheme.textMuted,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
                                 RichText(
                                   text: TextSpan(
                                     children: [
-                                      TextSpan(text: '$watchedPercent%', style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold, fontSize: 18)),
-                                      TextSpan(text: ' ($watchedCount/$totalReleased)', style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                                      TextSpan(
+                                        text: '$watchedPercent%',
+                                        style: const TextStyle(
+                                          color: AppTheme.accent,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: ' ($watchedCount/$totalReleased)',
+                                        style: const TextStyle(
+                                          color: AppTheme.textMuted,
+                                          fontSize: 12,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -231,7 +282,10 @@ class _PersonDetailsContent extends ConsumerWidget {
                             const SizedBox(height: 8),
                             Container(
                               height: 6,
-                              decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(3)),
+                              decoration: BoxDecoration(
+                                color: Colors.white10,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
                               child: FractionallySizedBox(
                                 alignment: Alignment.centerLeft,
                                 widthFactor: watchedPercent / 100,
@@ -240,7 +294,12 @@ class _PersonDetailsContent extends ConsumerWidget {
                                     color: AppTheme.accent,
                                     borderRadius: BorderRadius.circular(3),
                                     boxShadow: [
-                                      BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 10),
+                                      BoxShadow(
+                                        color: AppTheme.accent.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                        blurRadius: 10,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -266,12 +325,12 @@ class _PersonDetailsContent extends ConsumerWidget {
 
                 // Biography
                 if (biography != null && biography.isNotEmpty) ...[
-                  Text(l10n.personBiography, style: DesktopTypography.sectionHeader),
-                  const SizedBox(height: 16),
                   Text(
-                    biography,
-                    style: DesktopTypography.bodyPrimary,
+                    l10n.personBiography,
+                    style: DesktopTypography.sectionHeader,
                   ),
+                  const SizedBox(height: 16),
+                  Text(biography, style: DesktopTypography.bodyPrimary),
                   const SizedBox(height: 64),
                 ],
 
@@ -279,9 +338,16 @@ class _PersonDetailsContent extends ConsumerWidget {
                 if (topKnownFor.isNotEmpty) ...[
                   Row(
                     children: [
-                      const Icon(LucideIcons.film, color: AppTheme.accent, size: 24),
+                      const Icon(
+                        LucideIcons.film,
+                        color: AppTheme.accent,
+                        size: 24,
+                      ),
                       const SizedBox(width: 12),
-                      Text(l10n.personKnownFor, style: DesktopTypography.sectionHeader),
+                      Text(
+                        l10n.personKnownFor,
+                        style: DesktopTypography.sectionHeader,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -298,7 +364,8 @@ class _PersonDetailsContent extends ConsumerWidget {
                           child: MediaCard(
                             title: item['title'] ?? item['name'] ?? 'Unknown',
                             posterPath: item['poster_path'],
-                            releaseDate: item['release_date'] ?? item['first_air_date'],
+                            releaseDate:
+                                item['release_date'] ?? item['first_air_date'],
                             rating: (item['vote_average'] as num?)?.toDouble(),
                             onTap: () => _navigateToMedia(context, item),
                           ),
@@ -315,18 +382,41 @@ class _PersonDetailsContent extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(LucideIcons.layoutGrid, color: AppTheme.accent, size: 24),
+                        const Icon(
+                          LucideIcons.layoutGrid,
+                          color: AppTheme.accent,
+                          size: 24,
+                        ),
                         const SizedBox(width: 12),
-                        Text(l10n.personFilmography, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                        Text(
+                          l10n.personFilmography,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                       ],
                     ),
                     TextButton.icon(
                       onPressed: onToggleHidden,
-                      icon: Icon(showHidden ? LucideIcons.eyeOff : LucideIcons.eye, size: 16),
-                      label: Text(showHidden ? l10n.personShowLess : l10n.personShowHidden),
+                      icon: Icon(
+                        showHidden ? LucideIcons.eyeOff : LucideIcons.eye,
+                        size: 16,
+                      ),
+                      label: Text(
+                        showHidden
+                            ? l10n.personShowLess
+                            : l10n.personShowHidden,
+                      ),
                       style: TextButton.styleFrom(
-                        foregroundColor: showHidden ? AppTheme.accent : AppTheme.textMuted,
-                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        foregroundColor: showHidden
+                            ? AppTheme.accent
+                            : AppTheme.textMuted,
+                        textStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                         enabledMouseCursor: SystemMouseCursors.click,
                       ),
                     ),
@@ -344,8 +434,15 @@ class _PersonDetailsContent extends ConsumerWidget {
                     child: Column(
                       children: [
                         Text(
-                          l10n.personShowingCredits(filmography.length, visibleCredits),
-                          style: const TextStyle(color: AppTheme.textMuted, fontSize: 13, fontStyle: FontStyle.italic),
+                          l10n.personShowingCredits(
+                            filmography.length,
+                            visibleCredits,
+                          ),
+                          style: const TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 13,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         MouseRegion(
@@ -355,16 +452,29 @@ class _PersonDetailsContent extends ConsumerWidget {
                             onTap: onShowMore,
                             child: HoverScale(
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 15,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.textWhite.withValues(alpha: 0.08),
+                                  color: AppTheme.textWhite.withValues(
+                                    alpha: 0.08,
+                                  ),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.05)),
+                                  border: Border.all(
+                                    color: AppTheme.textWhite.withValues(
+                                      alpha: 0.05,
+                                    ),
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(LucideIcons.plus, color: AppTheme.textWhite, size: 18),
+                                    const Icon(
+                                      LucideIcons.plus,
+                                      color: AppTheme.textWhite,
+                                      size: 18,
+                                    ),
                                     const SizedBox(width: 12),
                                     Text(
                                       l10n.personShowMore.toUpperCase(),
@@ -398,10 +508,8 @@ class _PersonDetailsContent extends ConsumerWidget {
     final type = item['media_type'] ?? (item['title'] != null ? 'movie' : 'tv');
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => MediaDetailsScreen(
-          mediaId: item['id'].toString(),
-          mediaType: type,
-        ),
+        builder: (_) =>
+            MediaDetailsScreen(mediaId: item['id'].toString(), mediaType: type),
       ),
     );
   }
@@ -422,7 +530,10 @@ class _InfoRow extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: AppTheme.textMuted),
           const SizedBox(width: 12),
-          Text(text, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
+          Text(
+            text,
+            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+          ),
         ],
       ),
     );
@@ -446,7 +557,10 @@ class _FilmographyList extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final item = credits[index];
-        final year = (item['release_date'] ?? item['first_air_date'] ?? '').toString().split('-').first;
+        final year = (item['release_date'] ?? item['first_air_date'] ?? '')
+            .toString()
+            .split('-')
+            .first;
         final title = item['title'] ?? item['name'] ?? 'Unknown';
         final posterPath = item['poster_path'];
         final isTv = item['media_type'] == 'tv';
@@ -470,7 +584,11 @@ class _FilmographyList extends StatelessWidget {
                   width: 50,
                   child: Text(
                     year.isEmpty ? '-' : year,
-                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 14, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 // Poster Small
@@ -482,12 +600,20 @@ class _FilmographyList extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                     image: posterPath != null
                         ? DecorationImage(
-                            image: NetworkImage('https://image.tmdb.org/t/p/w92$posterPath'),
+                            image: NetworkImage(
+                              'https://image.tmdb.org/t/p/w92$posterPath',
+                            ),
                             fit: BoxFit.cover,
                           )
                         : null,
                   ),
-                  child: posterPath == null ? const Icon(LucideIcons.film, size: 16, color: Colors.white10) : null,
+                  child: posterPath == null
+                      ? const Icon(
+                          LucideIcons.film,
+                          size: 16,
+                          color: Colors.white10,
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 16),
                 // Info
@@ -500,22 +626,40 @@ class _FilmographyList extends StatelessWidget {
                           Expanded(
                             child: Text(
                               title,
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: isTv ? Colors.blue.withValues(alpha: 0.1) : AppTheme.accent.withValues(alpha: 0.1),
+                              color: isTv
+                                  ? Colors.blue.withValues(alpha: 0.1)
+                                  : AppTheme.accent.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: (isTv ? Colors.blue : AppTheme.accent).withValues(alpha: 0.2)),
+                              border: Border.all(
+                                color: (isTv ? Colors.blue : AppTheme.accent)
+                                    .withValues(alpha: 0.2),
+                              ),
                             ),
                             child: Text(
-                              isTv ? l10n.personSeries.toUpperCase() : l10n.personMovie.toUpperCase(),
-                              style: TextStyle(color: isTv ? Colors.blue : AppTheme.accent, fontSize: 9, fontWeight: FontWeight.bold),
+                              isTv
+                                  ? l10n.personSeries.toUpperCase()
+                                  : l10n.personMovie.toUpperCase(),
+                              style: TextStyle(
+                                color: isTv ? Colors.blue : AppTheme.accent,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
@@ -523,7 +667,10 @@ class _FilmographyList extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         role,
-                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 13,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -534,19 +681,33 @@ class _FilmographyList extends StatelessWidget {
                 // Rating
                 if (rating > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.green.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+                      border: Border.all(
+                        color: Colors.green.withValues(alpha: 0.2),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(LucideIcons.star, size: 10, color: Colors.amber, fill: 1.0),
+                        const Icon(
+                          LucideIcons.star,
+                          size: 10,
+                          color: Colors.amber,
+                          fill: 1.0,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           rating.toStringAsFixed(1),
-                          style: const TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.green,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),

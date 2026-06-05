@@ -39,29 +39,46 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
 
   @override
   Widget build(BuildContext context) {
-    final currentState = ref.watch(playerControllerProvider(widget.params)).value ?? widget.state;
+    final currentState =
+        ref.watch(playerControllerProvider(widget.params)).value ??
+        widget.state;
     final player = currentState.controller.player;
     final l10n = AppLocalizations.of(context)!;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
-    final tracks = widget.isSubtitle ? player.state.tracks.subtitle : player.state.tracks.audio;
+    final tracks = widget.isSubtitle
+        ? player.state.tracks.subtitle
+        : player.state.tracks.audio;
     final selectedTrack = widget.isSubtitle
         ? (currentState.activeSubtitleTrack ?? player.state.track.subtitle)
         : (currentState.activeAudioTrack ?? player.state.track.audio);
 
     final pref = ref.watch(settingsProvider);
     final prefLang = (currentState.isAnime && pref.splitAnimePreferences)
-        ? (widget.isSubtitle ? pref.animeSubtitleLanguage : pref.animeAudioLanguage).toLowerCase()
-        : (widget.isSubtitle ? pref.subtitleLanguage : pref.playerLanguage).toLowerCase();
+        ? (widget.isSubtitle
+                  ? pref.animeSubtitleLanguage
+                  : pref.animeAudioLanguage)
+              .toLowerCase()
+        : (widget.isSubtitle ? pref.subtitleLanguage : pref.playerLanguage)
+              .toLowerCase();
 
-    final regularTracks = tracks.where((t) => t.id != 'no' && t.id != 'auto').toList();
-    final noTrack = tracks.where((t) => t.id == 'no').firstOrNull ?? (widget.isSubtitle ? SubtitleTrack.no() : AudioTrack.no());
-    final externalSubsAsync = widget.isSubtitle ? ref.watch(externalSubtitlesProvider(widget.params)) : null;
+    final regularTracks = tracks
+        .where((t) => t.id != 'no' && t.id != 'auto')
+        .toList();
+    final noTrack =
+        tracks.where((t) => t.id == 'no').firstOrNull ??
+        (widget.isSubtitle ? SubtitleTrack.no() : AudioTrack.no());
+    final externalSubsAsync = widget.isSubtitle
+        ? ref.watch(externalSubtitlesProvider(widget.params))
+        : null;
 
     return Column(
       children: [
         SubViewHeader(
-          title: widget.isSubtitle ? l10n.playerSelectSubtitle : l10n.playerSelectAudio,
+          title: widget.isSubtitle
+              ? l10n.playerSelectSubtitle
+              : l10n.playerSelectAudio,
           onBack: widget.onBack,
           compact: isLandscape,
         ),
@@ -76,12 +93,28 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
                 SizedBox(height: isLandscape ? 4 : 12),
                 _buildDisableTrackTile(player, noTrack, selectedTrack),
                 if (regularTracks.isNotEmpty || widget.isSubtitle)
-                  const Divider(color: Colors.white10, height: 32, indent: 8, endIndent: 8),
+                  const Divider(
+                    color: Colors.white10,
+                    height: 32,
+                    indent: 8,
+                    endIndent: 8,
+                  ),
                 if (regularTracks.isNotEmpty)
-                  _buildInternalTracks(player, regularTracks, selectedTrack, prefLang),
-                if (widget.isSubtitle && ref.read(subtitleServiceProvider).hasActiveProviders) ...[
+                  _buildInternalTracks(
+                    player,
+                    regularTracks,
+                    selectedTrack,
+                    prefLang,
+                  ),
+                if (widget.isSubtitle &&
+                    ref.read(subtitleServiceProvider).hasActiveProviders) ...[
                   if (regularTracks.isNotEmpty)
-                    const Divider(color: Colors.white10, height: 32, indent: 8, endIndent: 8),
+                    const Divider(
+                      color: Colors.white10,
+                      height: 32,
+                      indent: 8,
+                      endIndent: 8,
+                    ),
                   _buildExternalTracks(player, externalSubsAsync!, isLandscape),
                 ],
                 const SizedBox(height: 24),
@@ -98,7 +131,11 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
   // ---------------------------------------------------------------------------
 
   /// Builds the "Off / Disable" or "No Audio / Mute" tile.
-  Widget _buildDisableTrackTile(Player player, dynamic noTrack, dynamic selectedTrack) {
+  Widget _buildDisableTrackTile(
+    Player player,
+    dynamic noTrack,
+    dynamic selectedTrack,
+  ) {
     return TrackTile(
       player: player,
       track: noTrack,
@@ -112,7 +149,12 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
   }
 
   /// Builds the "INTERNAL TRACKS" section header and track list.
-  Widget _buildInternalTracks(Player player, List<dynamic> tracks, dynamic selectedTrack, String prefLang) {
+  Widget _buildInternalTracks(
+    Player player,
+    List<dynamic> tracks,
+    dynamic selectedTrack,
+    String prefLang,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -124,8 +166,11 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
               mainAxisSize: MainAxisSize.min,
               children: tracks.map((track) {
                 bool isSelected = selectedTrack.id == track.id;
-                
-                if (!isSelected && selectedTrack.id == 'auto' && !foundAutoMatch && LanguageMapper.isMatch(track, prefLang)) {
+
+                if (!isSelected &&
+                    selectedTrack.id == 'auto' &&
+                    !foundAutoMatch &&
+                    LanguageMapper.isMatch(track, prefLang)) {
                   isSelected = true;
                   foundAutoMatch = true;
                 }
@@ -147,7 +192,11 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
   }
 
   /// Builds the "EXTERNAL TRACKS" section with grouped, expandable language folders.
-  Widget _buildExternalTracks(Player player, AsyncValue<List<ExternalSubtitle>> externalSubsAsync, bool isLandscape) {
+  Widget _buildExternalTracks(
+    Player player,
+    AsyncValue<List<ExternalSubtitle>> externalSubsAsync,
+    bool isLandscape,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -160,7 +209,12 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
           ),
           error: (e, st) => Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Center(child: Text("Error: $e", style: const TextStyle(color: Colors.redAccent))),
+            child: Center(
+              child: Text(
+                "Error: $e",
+                style: const TextStyle(color: Colors.redAccent),
+              ),
+            ),
           ),
         ),
       ],
@@ -168,11 +222,20 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
   }
 
   /// Builds the grouped language folders for external subtitles.
-  Widget _buildExternalSubtitleList(Player player, List<ExternalSubtitle> subs, bool isLandscape) {
+  Widget _buildExternalSubtitleList(
+    Player player,
+    List<ExternalSubtitle> subs,
+    bool isLandscape,
+  ) {
     if (subs.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(16.0),
-        child: Center(child: Text("No external subtitles found.", style: TextStyle(color: AppTheme.textMuted, fontSize: 13))),
+        child: Center(
+          child: Text(
+            "No external subtitles found.",
+            style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+          ),
+        ),
       );
     }
 
@@ -182,12 +245,16 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
     }
 
     return Column(
-      children: grouped.entries.map((entry) => _buildLanguageFolder(
-        player: player,
-        language: entry.key,
-        subtitles: entry.value,
-        isLandscape: isLandscape,
-      )).toList(),
+      children: grouped.entries
+          .map(
+            (entry) => _buildLanguageFolder(
+              player: player,
+              language: entry.key,
+              subtitles: entry.value,
+              isLandscape: isLandscape,
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -206,13 +273,21 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => setState(() => _expandedLanguages[language] = !isExpanded),
+            onTap: () =>
+                setState(() => _expandedLanguages[language] = !isExpanded),
             borderRadius: BorderRadius.circular(12),
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: isLandscape ? 8 : 12),
+              padding: EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: isLandscape ? 8 : 12,
+              ),
               child: Row(
                 children: [
-                  const Icon(Icons.folder_open_rounded, color: AppTheme.accent, size: 20),
+                  const Icon(
+                    Icons.folder_open_rounded,
+                    color: AppTheme.accent,
+                    size: 20,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -220,17 +295,27 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
                       children: [
                         Text(
                           language.toUpperCase(),
-                          style: const TextStyle(color: AppTheme.textWhite, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                          style: const TextStyle(
+                            color: AppTheme.textWhite,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
                         ),
                         Text(
                           "${subtitles.length} subtitles",
-                          style: TextStyle(color: AppTheme.textMuted.withValues(alpha: 0.8), fontSize: 11),
+                          style: TextStyle(
+                            color: AppTheme.textMuted.withValues(alpha: 0.8),
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   Icon(
-                    isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                    isExpanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
                     color: AppTheme.textMuted,
                   ),
                 ],
@@ -240,12 +325,14 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
         ),
         if (isExpanded) ...[
           const SizedBox(height: 4),
-          ...subtitles.map((sub) => _ExternalSubtitleTile(
-            subtitle: sub,
-            player: player,
-            onBack: widget.onBack,
-            params: widget.params,
-          )),
+          ...subtitles.map(
+            (sub) => _ExternalSubtitleTile(
+              subtitle: sub,
+              player: player,
+              onBack: widget.onBack,
+              params: widget.params,
+            ),
+          ),
           const SizedBox(height: 8),
         ],
       ],
@@ -258,11 +345,20 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
 
   Widget _sectionHeader(String label) => Padding(
     padding: const EdgeInsets.only(left: 8, bottom: 8),
-    child: Text(label, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)),
+    child: Text(
+      label,
+      style: const TextStyle(
+        color: AppTheme.textMuted,
+        fontSize: 11,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 1,
+      ),
+    ),
   );
 
-  void _notifyManualSelection() =>
-      ref.read(playerControllerProvider(widget.params).notifier).setManualTrackSelection();
+  void _notifyManualSelection() => ref
+      .read(playerControllerProvider(widget.params).notifier)
+      .setManualTrackSelection();
 }
 
 // =============================================================================
@@ -283,7 +379,8 @@ class _ExternalSubtitleTile extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_ExternalSubtitleTile> createState() => _ExternalSubtitleTileState();
+  ConsumerState<_ExternalSubtitleTile> createState() =>
+      _ExternalSubtitleTileState();
 }
 
 class _ExternalSubtitleTileState extends ConsumerState<_ExternalSubtitleTile> {
@@ -297,13 +394,22 @@ class _ExternalSubtitleTileState extends ConsumerState<_ExternalSubtitleTile> {
       final service = ref.read(subtitleServiceProvider);
       final url = await service.getDownloadUrl(widget.subtitle);
       if (url != null && url.isNotEmpty) {
-        final track = SubtitleTrack.uri(url, title: widget.subtitle.title, language: widget.subtitle.language);
+        final track = SubtitleTrack.uri(
+          url,
+          title: widget.subtitle.title,
+          language: widget.subtitle.language,
+        );
         await widget.player.setSubtitleTrack(track);
-        ref.read(playerControllerProvider(widget.params).notifier).setManualTrackSelection();
+        ref
+            .read(playerControllerProvider(widget.params).notifier)
+            .setManualTrackSelection();
         widget.onBack();
       } else {
         if (mounted) {
-          AppSnackBar.show(context, message: 'Failed to load external subtitle.');
+          AppSnackBar.show(
+            context,
+            message: 'Failed to load external subtitle.',
+          );
         }
       }
     } catch (e) {
@@ -330,7 +436,10 @@ class _ExternalSubtitleTileState extends ConsumerState<_ExternalSubtitleTile> {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.08),
+                width: 1,
+              ),
             ),
             child: Row(
               children: [
@@ -340,7 +449,11 @@ class _ExternalSubtitleTileState extends ConsumerState<_ExternalSubtitleTile> {
                     children: [
                       Text(
                         sub.title,
-                        style: TextStyle(color: AppTheme.textWhite.withValues(alpha: 0.9), fontSize: 13, fontWeight: FontWeight.w400),
+                        style: TextStyle(
+                          color: AppTheme.textWhite.withValues(alpha: 0.9),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -349,9 +462,15 @@ class _ExternalSubtitleTileState extends ConsumerState<_ExternalSubtitleTile> {
                         spacing: 6,
                         runSpacing: 4,
                         children: [
-                          SettingsBadge(text: sub.providerName, color: AppTheme.accent),
+                          SettingsBadge(
+                            text: sub.providerName,
+                            color: AppTheme.accent,
+                          ),
                           if (sub.downloadCount != null)
-                             SettingsBadge(text: "\u2193 ${sub.downloadCount}", color: Colors.blueAccent),
+                            SettingsBadge(
+                              text: "\u2193 ${sub.downloadCount}",
+                              color: Colors.blueAccent,
+                            ),
                         ],
                       ),
                     ],
@@ -359,9 +478,17 @@ class _ExternalSubtitleTileState extends ConsumerState<_ExternalSubtitleTile> {
                 ),
                 const SizedBox(width: 12),
                 if (_isApplying)
-                  const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 else
-                  const Icon(LucideIcons.download, color: AppTheme.textMuted, size: 20),
+                  const Icon(
+                    LucideIcons.download,
+                    color: AppTheme.textMuted,
+                    size: 20,
+                  ),
               ],
             ),
           ),
@@ -370,6 +497,7 @@ class _ExternalSubtitleTileState extends ConsumerState<_ExternalSubtitleTile> {
     );
   }
 }
+
 // =============================================================================
 // Track Tile
 // =============================================================================

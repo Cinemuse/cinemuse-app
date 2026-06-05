@@ -6,19 +6,21 @@ class SystemListCard extends StatelessWidget {
   final UserList list;
   final VoidCallback onTap;
 
-  const SystemListCard({
-    super.key,
-    required this.list,
-    required this.onTap,
-  });
+  const SystemListCard({super.key, required this.list, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final isWatchlist = list.type == ListType.watchlist;
-    
-    final Color baseColor = isWatchlist ? AppTheme.watchlist : AppTheme.favorites;
-    final Color iconBoxColor = isWatchlist ? AppTheme.watchlist.withValues(alpha: 0.2) : AppTheme.favorites.withValues(alpha: 0.2);
-    final Color iconColor = isWatchlist ? AppTheme.watchlist : AppTheme.favorites;
+
+    final Color baseColor = isWatchlist
+        ? AppTheme.watchlist
+        : AppTheme.favorites;
+    final Color iconBoxColor = isWatchlist
+        ? AppTheme.watchlist.withValues(alpha: 0.2)
+        : AppTheme.favorites.withValues(alpha: 0.2);
+    final Color iconColor = isWatchlist
+        ? AppTheme.watchlist
+        : AppTheme.favorites;
     final IconData icon = isWatchlist ? Icons.bookmark : Icons.favorite;
     final String title = isWatchlist ? "Watch Later" : "Favorites";
     final String subtitle = isWatchlist ? "Your queue" : "Your curated picks";

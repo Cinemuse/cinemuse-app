@@ -84,7 +84,9 @@ class _TypeButton extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.02),
+          color: isSelected
+              ? Colors.white
+              : Colors.white.withValues(alpha: 0.02),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(

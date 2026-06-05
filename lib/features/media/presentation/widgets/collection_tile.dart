@@ -11,10 +11,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 class CollectionTile extends ConsumerStatefulWidget {
   final Map<String, dynamic> collection;
 
-  const CollectionTile({
-    super.key,
-    required this.collection,
-  });
+  const CollectionTile({super.key, required this.collection});
 
   @override
   ConsumerState<CollectionTile> createState() => _CollectionTileState();
@@ -33,7 +30,9 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
     });
 
     final collectionId = widget.collection['id'] as int;
-    final collectionData = await ref.read(collectionDetailsProvider(collectionId).future);
+    final collectionData = await ref.read(
+      collectionDetailsProvider(collectionId).future,
+    );
 
     if (!context.mounted) return;
 
@@ -43,7 +42,7 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
 
     if (collectionData != null) {
       final parts = collectionData['parts'] as List<dynamic>? ?? [];
-      
+
       final listItems = parts.map((part) {
         final itemMap = part as Map<String, dynamic>;
         final mediaItem = MediaItem(
@@ -69,7 +68,10 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
 
       final userList = UserList(
         id: 'collection_$collectionId',
-        name: collectionData['name'] ?? widget.collection['name'] ?? l10n.collectionTitleFallback,
+        name:
+            collectionData['name'] ??
+            widget.collection['name'] ??
+            l10n.collectionTitleFallback,
         description: collectionData['overview'],
         type: ListType.custom,
         items: listItems,
@@ -77,14 +79,11 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
         userId: 'system',
       );
 
-      ListDetailsSheet.show(
-        context,
-        list: userList,
-      );
+      ListDetailsSheet.show(context, list: userList);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.detailsFailedLoadCollection)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.detailsFailedLoadCollection)));
     }
   }
 
@@ -103,7 +102,9 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
           color: AppTheme.surface,
           image: backdropPath != null
               ? DecorationImage(
-                  image: NetworkImage('https://image.tmdb.org/t/p/w500$backdropPath'),
+                  image: NetworkImage(
+                    'https://image.tmdb.org/t/p/w500$backdropPath',
+                  ),
                   fit: BoxFit.cover,
                   colorFilter: ColorFilter.mode(
                     Colors.black.withValues(alpha: 0.6),
@@ -125,7 +126,11 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
                       color: AppTheme.accent.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(LucideIcons.film, color: AppTheme.accent, size: 24),
+                    child: const Icon(
+                      LucideIcons.film,
+                      color: AppTheme.accent,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(

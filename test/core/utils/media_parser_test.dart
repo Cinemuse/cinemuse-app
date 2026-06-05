@@ -22,7 +22,9 @@ void main() {
     });
 
     test('Parses complicated anime title with both S/E and Abs', () {
-      final result = MediaParser.parse('Naruto Shippuden S10E05 - 201 [Bluray]');
+      final result = MediaParser.parse(
+        'Naruto Shippuden S10E05 - 201 [Bluray]',
+      );
       expect(result.season, 10);
       expect(result.episode, 5);
       expect(result.absoluteEpisode, 201);

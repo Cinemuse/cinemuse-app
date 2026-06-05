@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 /// BatchManager
-/// 
+///
 /// A singleton utility to debounce high-frequency write operations.
 /// Used to delay Firestore writes for actions like reordering lists or items,
 /// reducing read/write costs by only committing the final state.
-/// 
+///
 /// Mirrors the web app's batchManager.js
 class BatchManager {
   static final BatchManager _instance = BatchManager._internal();
@@ -18,7 +18,7 @@ class BatchManager {
 
   /// Schedule a task to be executed after a delay.
   /// If a task with the same key is already scheduled, it is cancelled.
-  /// 
+  ///
   /// @param key - Unique identifier for the task (e.g., "reorder_list_123")
   /// @param callback - The function to execute (can be async)
   /// @param delay - Delay in milliseconds
@@ -59,8 +59,10 @@ class BatchManager {
   /// Flush all pending operations immediately
   /// Useful when app is about to close
   Future<void> flushAll() async {
-    final callbacks = Map<String, Future<void> Function()>.from(_pendingCallbacks);
-    
+    final callbacks = Map<String, Future<void> Function()>.from(
+      _pendingCallbacks,
+    );
+
     // Cancel all timers first
     for (final timer in _timers.values) {
       timer.cancel();

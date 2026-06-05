@@ -31,197 +31,230 @@ class _AppNavbarState extends State<AppNavbar> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isDesktop = Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+    final isDesktop =
+        Platform.isWindows || Platform.isLinux || Platform.isMacOS;
 
     // Visual styling for the background
     final navbarDecoration = BoxDecoration(
       color: AppTheme.surface,
-      border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+      border: Border(
+        bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+      ),
     );
 
     // Common padding for both layers to ensure alignment
     final padding = EdgeInsets.symmetric(
-      horizontal: AppTheme.getResponsiveHorizontalPadding(context), 
-      vertical: 16
+      horizontal: AppTheme.getResponsiveHorizontalPadding(context),
+      vertical: 16,
     );
 
     // Dynamic top padding for mobile notches
-    final topPadding = isDesktop ? 16.0 : (MediaQuery.of(context).padding.top + 12.0);
+    final topPadding = isDesktop
+        ? 16.0
+        : (MediaQuery.of(context).padding.top + 12.0);
     final mobilePadding = padding.copyWith(top: topPadding);
 
     return ClipRRect(
-      child: isDesktop 
-        ? Stack(
-            children: [
-              // 1. Draggable Background Layer (Visuals + Drag)
-              Positioned.fill(
-                child: DragToMoveArea(
-                  child: Container(decoration: navbarDecoration),
+      child: isDesktop
+          ? Stack(
+              children: [
+                // 1. Draggable Background Layer (Visuals + Drag)
+                Positioned.fill(
+                  child: DragToMoveArea(
+                    child: Container(decoration: navbarDecoration),
+                  ),
                 ),
-              ),
-              
-              // 2. Interaction Layer (Logo, Pill, Buttons)
-              Container(
-                padding: padding,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Logo (Left)
-                    MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: GestureDetector(
-                        onTap: () => widget.onTap(0),
-                        child: Image.asset(
-                          'assets/wordmark.png',
-                          height: 32,
-                          fit: BoxFit.contain,
+
+                // 2. Interaction Layer (Logo, Pill, Buttons)
+                Container(
+                  padding: padding,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Logo (Left)
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: () => widget.onTap(0),
+                          child: Image.asset(
+                            'assets/wordmark.png',
+                            height: 32,
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
-                    ),
 
-                    // ... (rest of desktop layout remains the same)
-                    // Unified Central Pill
-                    if (isDesktop && MediaQuery.of(context).size.width >= 600)
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _NavItem(
-                              label: l10n.navHome,
-                              isSelected: widget.currentIndex == 0,
-                              onTap: () => widget.onTap(0),
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(20),
-                                bottomLeft: Radius.circular(20),
-                                topRight: Radius.circular(20),
-                                bottomRight: Radius.circular(20),
-                              ),
+                      // ... (rest of desktop layout remains the same)
+                      // Unified Central Pill
+                      if (isDesktop && MediaQuery.of(context).size.width >= 600)
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.1),
                             ),
-                            const SizedBox(width: 4),
-                            _NavItem(
-                              label: l10n.navExplore,
-                              isSelected: widget.currentIndex == 1,
-                              onTap: () => widget.onTap(1),
-                            ),
-                            const SizedBox(width: 4),
-                            _NavItem(
-                              label: "Live TV",
-                              isSelected: widget.currentIndex == 2,
-                              onTap: () => widget.onTap(2),
-                            ),
-                            const SizedBox(width: 4),
-                            _NavItem(
-                              label: l10n.navLibrary,
-                              isSelected: widget.currentIndex == 3,
-                              onTap: () => widget.onTap(3),
-                            ),
-                            const _NavDivider(),
-                            _IconAction(
-                              icon: Icons.search,
-                              onTap: () => widget.onSearchTap?.call(),
-                            ),
-                            const SizedBox(width: 4),
-                            // Profile Icon / Settings Trigger
-                            Theme(
-                              data: Theme.of(context).copyWith(
-                                popupMenuTheme: PopupMenuThemeData(
-                                  color: AppTheme.surface,
-                                  textStyle: const TextStyle(color: Colors.white),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                                  ),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 4,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _NavItem(
+                                label: l10n.navHome,
+                                isSelected: widget.currentIndex == 0,
+                                onTap: () => widget.onTap(0),
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(20),
+                                  bottomLeft: Radius.circular(20),
+                                  topRight: Radius.circular(20),
+                                  bottomRight: Radius.circular(20),
                                 ),
                               ),
-                              child: PopupMenuButton<int>(
-                                key: _settingsMenuKey,
-                                tooltip: l10n.settingsTitle,
-                                offset: const Offset(0, 48),
-                                constraints: const BoxConstraints(minWidth: 160),
-                                onSelected: (value) {
-                                  if (value == -1) {
-                                    widget.onSettingsTap?.call();
-                                  } else if (value == -2) {
-                                    widget.onLogoutTap?.call();
-                                  }
-                                },
-                                itemBuilder: (context) => [
-                                  PopupMenuItem(
-                                    value: -1,
-                                    height: 40,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(Icons.settings_outlined, size: 18, color: Colors.white70),
-                                        const SizedBox(width: 8),
-                                        Text(l10n.settingsTitle),
-                                      ],
+                              const SizedBox(width: 4),
+                              _NavItem(
+                                label: l10n.navExplore,
+                                isSelected: widget.currentIndex == 1,
+                                onTap: () => widget.onTap(1),
+                              ),
+                              const SizedBox(width: 4),
+                              _NavItem(
+                                label: "Live TV",
+                                isSelected: widget.currentIndex == 2,
+                                onTap: () => widget.onTap(2),
+                              ),
+                              const SizedBox(width: 4),
+                              _NavItem(
+                                label: l10n.navLibrary,
+                                isSelected: widget.currentIndex == 3,
+                                onTap: () => widget.onTap(3),
+                              ),
+                              const _NavDivider(),
+                              _IconAction(
+                                icon: Icons.search,
+                                onTap: () => widget.onSearchTap?.call(),
+                              ),
+                              const SizedBox(width: 4),
+                              // Profile Icon / Settings Trigger
+                              Theme(
+                                data: Theme.of(context).copyWith(
+                                  popupMenuTheme: PopupMenuThemeData(
+                                    color: AppTheme.surface,
+                                    textStyle: const TextStyle(
+                                      color: Colors.white,
                                     ),
-                                  ),
-                                  PopupMenuItem(
-                                    value: -2,
-                                    height: 40,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(Icons.logout_rounded, size: 18, color: Colors.redAccent),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          l10n.settingsLogout,
-                                          style: const TextStyle(color: Colors.redAccent),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      side: BorderSide(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.1,
                                         ),
-                                      ],
+                                      ),
                                     ),
                                   ),
-                                ],
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () => _settingsMenuKey.currentState?.showButtonMenu(),
-                                    mouseCursor: SystemMouseCursors.click,
-                                    borderRadius: BorderRadius.circular(20),
-                                    hoverColor: Colors.white.withValues(alpha: 0.1),
-                                    child: const Padding(
-                                      padding: EdgeInsets.all(8),
-                                      child: Icon(
-                                        Icons.person_rounded, 
-                                        color: Colors.white, 
-                                        size: 20
+                                ),
+                                child: PopupMenuButton<int>(
+                                  key: _settingsMenuKey,
+                                  tooltip: l10n.settingsTitle,
+                                  offset: const Offset(0, 48),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 160,
+                                  ),
+                                  onSelected: (value) {
+                                    if (value == -1) {
+                                      widget.onSettingsTap?.call();
+                                    } else if (value == -2) {
+                                      widget.onLogoutTap?.call();
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
+                                    PopupMenuItem(
+                                      value: -1,
+                                      height: 40,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            Icons.settings_outlined,
+                                            size: 18,
+                                            color: Colors.white70,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(l10n.settingsTitle),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: -2,
+                                      height: 40,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            Icons.logout_rounded,
+                                            size: 18,
+                                            color: Colors.redAccent,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            l10n.settingsLogout,
+                                            style: const TextStyle(
+                                              color: Colors.redAccent,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => _settingsMenuKey.currentState
+                                          ?.showButtonMenu(),
+                                      mouseCursor: SystemMouseCursors.click,
+                                      borderRadius: BorderRadius.circular(20),
+                                      hoverColor: Colors.white.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(8),
+                                        child: Icon(
+                                          Icons.person_rounded,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                          ],
+                              const SizedBox(width: 12),
+                            ],
+                          ),
                         ),
-                      ),
 
-                    // Hidden placeholder on the right
-                    if (isDesktop) const SizedBox(width: 120),
-                  ],
+                      // Hidden placeholder on the right
+                      if (isDesktop) const SizedBox(width: 120),
+                    ],
+                  ),
                 ),
-              ),
 
-              if (Platform.isWindows)
-                const Positioned(
-                  top: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: _WindowButtons(),
-                ),
-            ],
-          )
-        : Container(
-            decoration: navbarDecoration,
-            padding: mobilePadding,
+                if (Platform.isWindows)
+                  const Positioned(
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: _WindowButtons(),
+                  ),
+              ],
+            )
+          : Container(
+              decoration: navbarDecoration,
+              padding: mobilePadding,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -255,7 +288,9 @@ class _AppNavbarState extends State<AppNavbar> {
                             textStyle: const TextStyle(color: Colors.white),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                              side: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.1),
+                              ),
                             ),
                           ),
                         ),
@@ -282,7 +317,11 @@ class _AppNavbarState extends State<AppNavbar> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.settings_outlined, size: 20, color: Colors.white70),
+                                  const Icon(
+                                    Icons.settings_outlined,
+                                    size: 20,
+                                    color: Colors.white70,
+                                  ),
                                   const SizedBox(width: 12),
                                   Text(l10n.settingsTitle),
                                 ],
@@ -294,11 +333,17 @@ class _AppNavbarState extends State<AppNavbar> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.logout_rounded, size: 20, color: Colors.redAccent),
+                                  const Icon(
+                                    Icons.logout_rounded,
+                                    size: 20,
+                                    color: Colors.redAccent,
+                                  ),
                                   const SizedBox(width: 12),
                                   Text(
                                     l10n.settingsLogout,
-                                    style: const TextStyle(color: Colors.redAccent),
+                                    style: const TextStyle(
+                                      color: Colors.redAccent,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -311,7 +356,7 @@ class _AppNavbarState extends State<AppNavbar> {
                 ],
               ),
             ),
-          );
+    );
   }
 }
 
@@ -353,27 +398,22 @@ class _WindowButton extends StatelessWidget {
   final _WindowButtonType type;
   final VoidCallback onTap;
 
-  const _WindowButton({
-    required this.type,
-    required this.onTap,
-  });
+  const _WindowButton({required this.type, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final bool isClose = type == _WindowButtonType.close;
-    
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        hoverColor: isClose 
+        hoverColor: isClose
             ? const Color(0xFFE81123) // Standard Windows close red
             : Colors.white.withValues(alpha: 0.1),
         child: SizedBox(
           width: 46, // Standard Windows title bar button width
-          child: Center(
-            child: _buildIcon(),
-          ),
+          child: Center(child: _buildIcon()),
         ),
       ),
     );
@@ -382,11 +422,7 @@ class _WindowButton extends StatelessWidget {
   Widget _buildIcon() {
     switch (type) {
       case _WindowButtonType.minimize:
-        return Container(
-          width: 10,
-          height: 1,
-          color: Colors.white,
-        );
+        return Container(width: 10, height: 1, color: Colors.white);
       case _WindowButtonType.maximize:
         return Container(
           width: 10,
@@ -399,9 +435,7 @@ class _WindowButton extends StatelessWidget {
         return SizedBox(
           width: 10,
           height: 10,
-          child: CustomPaint(
-            painter: _CloseIconPainter(),
-          ),
+          child: CustomPaint(painter: _CloseIconPainter()),
         );
     }
   }
@@ -439,7 +473,7 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveRadius = borderRadius ?? BorderRadius.circular(20);
-    
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -453,10 +487,14 @@ class _NavItem extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.accent.withValues(alpha: 0.2) : Colors.transparent,
+            color: isSelected
+                ? AppTheme.accent.withValues(alpha: 0.2)
+                : Colors.transparent,
             borderRadius: effectiveRadius,
             border: Border.all(
-              color: isSelected ? AppTheme.accent.withValues(alpha: 0.5) : Colors.transparent,
+              color: isSelected
+                  ? AppTheme.accent.withValues(alpha: 0.5)
+                  : Colors.transparent,
             ),
           ),
           child: Text(
@@ -478,11 +516,7 @@ class _IconAction extends StatelessWidget {
   final VoidCallback onTap;
   final double size;
 
-  const _IconAction({
-    required this.icon, 
-    required this.onTap,
-    this.size = 20,
-  });
+  const _IconAction({required this.icon, required this.onTap, this.size = 20});
 
   @override
   Widget build(BuildContext context) {

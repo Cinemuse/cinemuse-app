@@ -55,9 +55,7 @@ void main() {
         'lcn': 2,
         'type': 'hls',
         'url': 'http://main.stream.com/stream.m3u8',
-        'geoblock': {
-          'url': 'http://geo.stream.com/stream.m3u8',
-        },
+        'geoblock': {'url': 'http://geo.stream.com/stream.m3u8'},
       };
 
       final channel = Channel.fromJson(json);
@@ -70,9 +68,7 @@ void main() {
       final json = {
         'lcn': 3,
         'type': 'hls',
-        'fallback': {
-          'url': 'http://fallback.stream.com/stream.m3u8',
-        },
+        'fallback': {'url': 'http://fallback.stream.com/stream.m3u8'},
       };
 
       final channel = Channel.fromJson(json);
@@ -95,20 +91,21 @@ void main() {
       expect(channel.url, 'http://better-host.com/stream.m3u8');
     });
 
-    test('accepts akamaized.net as last resort if no other HTTP url exists', () {
-      final json = {
-        'lcn': 5,
-        'type': 'hls',
-        'url': 'http://only-choice.akamaized.net/stream.m3u8',
-        'fallback': {
-          'url': 'zappr://not-http',
-        }
-      };
+    test(
+      'accepts akamaized.net as last resort if no other HTTP url exists',
+      () {
+        final json = {
+          'lcn': 5,
+          'type': 'hls',
+          'url': 'http://only-choice.akamaized.net/stream.m3u8',
+          'fallback': {'url': 'zappr://not-http'},
+        };
 
-      final channel = Channel.fromJson(json);
+        final channel = Channel.fromJson(json);
 
-      expect(channel.url, 'http://only-choice.akamaized.net/stream.m3u8');
-    });
+        expect(channel.url, 'http://only-choice.akamaized.net/stream.m3u8');
+      },
+    );
   });
 
   group('Channel.isPlayable', () {
@@ -201,7 +198,7 @@ void main() {
       );
 
       final url = channel.logoUrl;
-      
+
       expect(url, contains('.png'));
       expect(url, isNot(contains('.svg')));
       expect(url, isNot(contains('è')));
@@ -284,10 +281,7 @@ void main() {
     test('parses nested format (quality inside metadata)', () {
       final json = {
         'url': 'http://stream.com/live.ts',
-        'metadata': {
-          'quality': 'HD',
-          'codec': 'H.264',
-        },
+        'metadata': {'quality': 'HD', 'codec': 'H.264'},
       };
 
       final link = StreamLink.fromJson(json);
@@ -302,10 +296,7 @@ void main() {
         'url': 'http://stream.com/live.ts',
         'quality': '4K',
         'codec': '',
-        'metadata': {
-          'quality': 'SD',
-          'codec': 'H.264',
-        },
+        'metadata': {'quality': 'SD', 'codec': 'H.264'},
       };
 
       final link = StreamLink.fromJson(json);
@@ -316,9 +307,7 @@ void main() {
     });
 
     test('defaults to SD when no quality provided', () {
-      final json = {
-        'url': 'http://stream.com/live.ts',
-      };
+      final json = {'url': 'http://stream.com/live.ts'};
 
       final link = StreamLink.fromJson(json);
 

@@ -89,7 +89,9 @@ class _SettingInputState extends State<SettingInput> {
         });
         AppSnackBar.show(
           context,
-          message: AppLocalizations.of(context)!.settingsErrorSaving(e.toString()),
+          message: AppLocalizations.of(
+            context,
+          )!.settingsErrorSaving(e.toString()),
         );
       }
     }
@@ -133,17 +135,24 @@ class _SettingInputState extends State<SettingInput> {
                   : null,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.1),
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.1),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: const BorderSide(color: AppTheme.accent),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
             ),
           ),
         ),
@@ -153,27 +162,36 @@ class _SettingInputState extends State<SettingInput> {
           child: ElevatedButton.icon(
             onPressed: (_isDirty && !_isSaving) ? _handleSave : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _isDirty && !_isSaving ? Colors.white : Colors.white.withValues(alpha: 0.05),
-              foregroundColor: _isDirty && !_isSaving ? Colors.black : Colors.grey,
+              backgroundColor: _isDirty && !_isSaving
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.05),
+              foregroundColor: _isDirty && !_isSaving
+                  ? Colors.black
+                  : Colors.grey,
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               elevation: 0,
             ),
             icon: _isSaving
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.black,
+                    ),
                   )
                 : _showSuccess
-                    ? const Icon(Icons.check, size: 18, color: Colors.green)
-                    : const Icon(Icons.save, size: 18),
+                ? const Icon(Icons.check, size: 18, color: Colors.green)
+                : const Icon(Icons.save, size: 18),
             label: Text(
               _isSaving
                   ? ''
                   : _showSuccess
-                      ? l10n.settingsSaved
-                      : l10n.settingsSave,
+                  ? l10n.settingsSaved
+                  : l10n.settingsSave,
             ),
           ),
         ),
@@ -199,10 +217,7 @@ class _SettingInputState extends State<SettingInput> {
             const SizedBox(height: 4),
             Text(
               widget.description!,
-              style: TextStyle(
-                color: AppTheme.textMuted,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
             ),
           ],
           const SizedBox(height: 12),

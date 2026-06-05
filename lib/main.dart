@@ -27,65 +27,76 @@ import 'package:window_manager/window_manager.dart';
 
 void main() {
   io.HttpOverrides.global = AppHttpOverrides();
-  debugPrint('Networking: Global HttpOverrides registered for SSL/TLS bypass coverage.');
-  
-  Chain.capture(() async {
-    setupSqlite();
-    WidgetsFlutterBinding.ensureInitialized();
-    MediaKit.ensureInitialized();
-    // Parallelize independent initializations
-    await Future.wait([
-      initializeDateFormatting(),
-      dotenv.load(fileName: ".env"),
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values),
-      if (io.Platform.isWindows || io.Platform.isLinux) windowManager.ensureInitialized(),
-    ]);
+  debugPrint(
+    'Networking: Global HttpOverrides registered for SSL/TLS bypass coverage.',
+  );
 
-    // System configurations
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      systemNavigationBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ));
+  Chain.capture(
+    () async {
+      setupSqlite();
+      WidgetsFlutterBinding.ensureInitialized();
+      MediaKit.ensureInitialized();
+      // Parallelize independent initializations
+      await Future.wait([
+        initializeDateFormatting(),
+        dotenv.load(fileName: ".env"),
+        SystemChrome.setEnabledSystemUIMode(
+          SystemUiMode.manual,
+          overlays: SystemUiOverlay.values,
+        ),
+        if (io.Platform.isWindows || io.Platform.isLinux)
+          windowManager.ensureInitialized(),
+      ]);
 
-    // Depends on dotenv being loaded
-    await Supabase.initialize(
-      url: SupabaseConfig.url,
-      anonKey: SupabaseConfig.anonKey,
-    );
-
-    if (io.Platform.isWindows || io.Platform.isLinux) {
-      const windowOptions = WindowOptions(
-        size: Size(1280, 720),
-        minimumSize: Size(800, 600),
-        center: true,
-        backgroundColor: Colors.transparent,
-        skipTaskbar: false,
-        titleBarStyle: TitleBarStyle.hidden,
-        title: 'Cinemuse',
+      // System configurations
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarIconBrightness: Brightness.light,
+        ),
       );
 
-      await windowManager.waitUntilReadyToShow(windowOptions, () async {
-        await windowManager.show();
-        await windowManager.focus();
-      });
-    }
-    
-    // Custom error handling for Flutter errors to use terse stack traces
-    FlutterError.onError = (details) {
-      FlutterError.presentError(details);
-      if (details.stack != null) {
-        debugPrint(Chain.forTrace(details.stack!).terse.toString());
-      }
-    };
+      // Depends on dotenv being loaded
+      await Supabase.initialize(
+        url: SupabaseConfig.url,
+        anonKey: SupabaseConfig.anonKey,
+      );
 
-    runApp(const ProviderScope(child: CinemuseApp()));
-  }, onError: (error, stackChain) {
-    // This will print the error and the clean stack trace
-    debugPrint(error.toString());
-    debugPrint(stackChain.terse.toString());
-  });
+      if (io.Platform.isWindows || io.Platform.isLinux) {
+        const windowOptions = WindowOptions(
+          size: Size(1280, 720),
+          minimumSize: Size(800, 600),
+          center: true,
+          backgroundColor: Colors.transparent,
+          skipTaskbar: false,
+          titleBarStyle: TitleBarStyle.hidden,
+          title: 'Cinemuse',
+        );
+
+        await windowManager.waitUntilReadyToShow(windowOptions, () async {
+          await windowManager.show();
+          await windowManager.focus();
+        });
+      }
+
+      // Custom error handling for Flutter errors to use terse stack traces
+      FlutterError.onError = (details) {
+        FlutterError.presentError(details);
+        if (details.stack != null) {
+          debugPrint(Chain.forTrace(details.stack!).terse.toString());
+        }
+      };
+
+      runApp(const ProviderScope(child: CinemuseApp()));
+    },
+    onError: (error, stackChain) {
+      // This will print the error and the clean stack trace
+      debugPrint(error.toString());
+      debugPrint(stackChain.terse.toString());
+    },
+  );
 }
 
 // BackIntent moved to lib/core/presentation/intents.dart
@@ -93,7 +104,8 @@ void main() {
 class CinemuseApp extends ConsumerWidget {
   const CinemuseApp({super.key});
 
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -103,14 +115,17 @@ class CinemuseApp extends ConsumerWidget {
     return Shortcuts(
       shortcuts: <ShortcutActivator, Intent>{
         const SingleActivator(LogicalKeyboardKey.escape): const BackIntent(),
-        const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): const BackIntent(),
+        const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true):
+            const BackIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
           BackIntent: CallbackAction<BackIntent>(
             onInvoke: (intent) {
               // 1. Try popping the shell navigator (nested) first
-              final shellNavigator = ref.read(shellNavigatorKeyProvider).currentState;
+              final shellNavigator = ref
+                  .read(shellNavigatorKeyProvider)
+                  .currentState;
               if (shellNavigator != null && shellNavigator.canPop()) {
                 shellNavigator.pop();
                 return null;
@@ -140,17 +155,19 @@ class CinemuseApp extends ConsumerWidget {
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) {
             final connectivity = ref.watch(connectivityProvider);
-            
+
             return connectivity.when(
               data: (result) {
                 return ExcludeSemantics(child: child ?? const SizedBox());
               },
               loading: () => ExcludeSemantics(child: child ?? const SizedBox()),
-              error: (_, __) => ExcludeSemantics(child: child ?? const SizedBox()),
+              error: (_, __) =>
+                  ExcludeSemantics(child: child ?? const SizedBox()),
             );
           },
           home: authState.when(
-            data: (user) => user != null ? const AppShell() : const AuthScreen(),
+            data: (user) =>
+                user != null ? const AppShell() : const AuthScreen(),
             loading: () => const Scaffold(
               backgroundColor: AppTheme.primary,
               body: Center(child: CircularProgressIndicator()),

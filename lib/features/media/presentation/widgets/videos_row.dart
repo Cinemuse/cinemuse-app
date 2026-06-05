@@ -8,17 +8,15 @@ class VideosRow extends StatelessWidget {
   final Map<String, dynamic>? videos;
   final String className;
 
-  const VideosRow({
-    super.key,
-    this.videos,
-    this.className = '',
-  });
+  const VideosRow({super.key, this.videos, this.className = ''});
 
   @override
   Widget build(BuildContext context) {
-    final trailers = (videos?['results'] as List?)
-        ?.where((v) => v['type'] == 'Trailer')
-        .toList() ?? [];
+    final trailers =
+        (videos?['results'] as List?)
+            ?.where((v) => v['type'] == 'Trailer')
+            .toList() ??
+        [];
 
     if (trailers.isEmpty) return const SizedBox.shrink();
 
@@ -30,7 +28,8 @@ class VideosRow extends StatelessWidget {
       theme: CarouselTheme.bentoBox,
       itemCount: trailers.length,
       height: 250, // Adjusted to fit 16:9 thumbnail + text + scrollbar
-      padding: EdgeInsets.zero, // BentoBox already provides padding, avoid double padding
+      padding: EdgeInsets
+          .zero, // BentoBox already provides padding, avoid double padding
       itemBuilder: (context, index) {
         final trailer = trailers[index];
         final key = trailer['key'];
@@ -60,4 +59,3 @@ class VideosRow extends StatelessWidget {
     );
   }
 }
-

@@ -63,7 +63,11 @@ class _SportScheduleRowState extends ConsumerState<SportScheduleRow> {
 
     for (final event in events) {
       final day = event.dateTime != null
-          ? DateTime(event.dateTime!.year, event.dateTime!.month, event.dateTime!.day)
+          ? DateTime(
+              event.dateTime!.year,
+              event.dateTime!.month,
+              event.dateTime!.day,
+            )
           : null;
 
       if (day != null && (lastDay == null || !_isSameDay(day, lastDay))) {
@@ -93,7 +97,11 @@ class _SportScheduleRowState extends ConsumerState<SportScheduleRow> {
   }
 
   /// Calculates the pixel offset for a given flat-list index.
-  double _offsetForIndex(int index, List<_ScheduleItem> items, double horizontalPadding) {
+  double _offsetForIndex(
+    int index,
+    List<_ScheduleItem> items,
+    double horizontalPadding,
+  ) {
     double offset = 0.0;
     for (int i = 0; i < index; i++) {
       final item = items[i];
@@ -135,7 +143,10 @@ class _SportScheduleRowState extends ConsumerState<SportScheduleRow> {
     if (scheduleAsync.hasError && !scheduleAsync.hasValue) {
       final mapped = ref.read(errorMapperProvider).map(scheduleAsync.error!);
       return Padding(
-        padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 16),
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: 16,
+        ),
         child: ErrorCard(
           message: mapped.message,
           type: mapped.type,
@@ -163,11 +174,17 @@ class _SportScheduleRowState extends ConsumerState<SportScheduleRow> {
       height: 236,
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       itemCount: items.length,
-      itemBuilder: (context, index) => _buildItem(context, items[index], index, items),
+      itemBuilder: (context, index) =>
+          _buildItem(context, items[index], index, items),
     );
   }
 
-  Widget _buildItem(BuildContext context, _ScheduleItem item, int index, List<_ScheduleItem> items) {
+  Widget _buildItem(
+    BuildContext context,
+    _ScheduleItem item,
+    int index,
+    List<_ScheduleItem> items,
+  ) {
     final isLast = index == items.length - 1;
 
     if (item is _DayHeaderItem) {
@@ -210,7 +227,10 @@ class _DayHeader extends StatelessWidget {
 
     if (normalised == today) return l10n.agendaToday;
     if (normalised == tomorrow) return l10n.agendaTomorrow;
-    return DateFormat('E d\nMMM', Localizations.localeOf(context).toString()).format(day);
+    return DateFormat(
+      'E d\nMMM',
+      Localizations.localeOf(context).toString(),
+    ).format(day);
   }
 
   @override
@@ -219,10 +239,7 @@ class _DayHeader extends StatelessWidget {
     final isToday = _isToday();
 
     return Padding(
-      padding: EdgeInsets.only(
-        left: isFirst ? 0 : 8,
-        right: trailingSpacing,
-      ),
+      padding: EdgeInsets.only(left: isFirst ? 0 : 8, right: trailingSpacing),
       child: SizedBox(
         width: 72,
         child: Column(
@@ -309,7 +326,12 @@ class SportScheduleSkeleton extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(horizontalPadding, 24, horizontalPadding, 16),
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            24,
+            horizontalPadding,
+            16,
+          ),
           child: const SkeletonBox(width: 180, height: 25),
         ),
         GenericCarouselRow(

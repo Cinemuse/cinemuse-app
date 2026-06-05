@@ -266,16 +266,14 @@ class $CachedMediaItemsTable extends CachedMediaItems
   CachedMediaItem map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return CachedMediaItem(
-      tmdbId:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}tmdb_id'],
-          )!,
-      mediaType:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}media_type'],
-          )!,
+      tmdbId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tmdb_id'],
+      )!,
+      mediaType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_type'],
+      )!,
       titleIt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}title_it'],
@@ -312,11 +310,10 @@ class $CachedMediaItemsTable extends CachedMediaItems
         DriftSqlType.double,
         data['${effectivePrefix}vote_average'],
       ),
-      updatedAt:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.dateTime,
-            data['${effectivePrefix}updated_at'],
-          )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
     );
   }
 
@@ -393,40 +390,33 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
     return CachedMediaItemsCompanion(
       tmdbId: Value(tmdbId),
       mediaType: Value(mediaType),
-      titleIt:
-          titleIt == null && nullToAbsent
-              ? const Value.absent()
-              : Value(titleIt),
-      titleEn:
-          titleEn == null && nullToAbsent
-              ? const Value.absent()
-              : Value(titleEn),
-      posterPath:
-          posterPath == null && nullToAbsent
-              ? const Value.absent()
-              : Value(posterPath),
-      backdropPath:
-          backdropPath == null && nullToAbsent
-              ? const Value.absent()
-              : Value(backdropPath),
-      runtimeMinutes:
-          runtimeMinutes == null && nullToAbsent
-              ? const Value.absent()
-              : Value(runtimeMinutes),
-      genres:
-          genres == null && nullToAbsent ? const Value.absent() : Value(genres),
-      castMembers:
-          castMembers == null && nullToAbsent
-              ? const Value.absent()
-              : Value(castMembers),
-      releaseDate:
-          releaseDate == null && nullToAbsent
-              ? const Value.absent()
-              : Value(releaseDate),
-      voteAverage:
-          voteAverage == null && nullToAbsent
-              ? const Value.absent()
-              : Value(voteAverage),
+      titleIt: titleIt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(titleIt),
+      titleEn: titleEn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(titleEn),
+      posterPath: posterPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(posterPath),
+      backdropPath: backdropPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(backdropPath),
+      runtimeMinutes: runtimeMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(runtimeMinutes),
+      genres: genres == null && nullToAbsent
+          ? const Value.absent()
+          : Value(genres),
+      castMembers: castMembers == null && nullToAbsent
+          ? const Value.absent()
+          : Value(castMembers),
+      releaseDate: releaseDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(releaseDate),
+      voteAverage: voteAverage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(voteAverage),
       updatedAt: Value(updatedAt),
     );
   }
@@ -490,8 +480,9 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
     titleEn: titleEn.present ? titleEn.value : this.titleEn,
     posterPath: posterPath.present ? posterPath.value : this.posterPath,
     backdropPath: backdropPath.present ? backdropPath.value : this.backdropPath,
-    runtimeMinutes:
-        runtimeMinutes.present ? runtimeMinutes.value : this.runtimeMinutes,
+    runtimeMinutes: runtimeMinutes.present
+        ? runtimeMinutes.value
+        : this.runtimeMinutes,
     genres: genres.present ? genres.value : this.genres,
     castMembers: castMembers.present ? castMembers.value : this.castMembers,
     releaseDate: releaseDate.present ? releaseDate.value : this.releaseDate,
@@ -504,23 +495,25 @@ class CachedMediaItem extends DataClass implements Insertable<CachedMediaItem> {
       mediaType: data.mediaType.present ? data.mediaType.value : this.mediaType,
       titleIt: data.titleIt.present ? data.titleIt.value : this.titleIt,
       titleEn: data.titleEn.present ? data.titleEn.value : this.titleEn,
-      posterPath:
-          data.posterPath.present ? data.posterPath.value : this.posterPath,
-      backdropPath:
-          data.backdropPath.present
-              ? data.backdropPath.value
-              : this.backdropPath,
-      runtimeMinutes:
-          data.runtimeMinutes.present
-              ? data.runtimeMinutes.value
-              : this.runtimeMinutes,
+      posterPath: data.posterPath.present
+          ? data.posterPath.value
+          : this.posterPath,
+      backdropPath: data.backdropPath.present
+          ? data.backdropPath.value
+          : this.backdropPath,
+      runtimeMinutes: data.runtimeMinutes.present
+          ? data.runtimeMinutes.value
+          : this.runtimeMinutes,
       genres: data.genres.present ? data.genres.value : this.genres,
-      castMembers:
-          data.castMembers.present ? data.castMembers.value : this.castMembers,
-      releaseDate:
-          data.releaseDate.present ? data.releaseDate.value : this.releaseDate,
-      voteAverage:
-          data.voteAverage.present ? data.voteAverage.value : this.voteAverage,
+      castMembers: data.castMembers.present
+          ? data.castMembers.value
+          : this.castMembers,
+      releaseDate: data.releaseDate.present
+          ? data.releaseDate.value
+          : this.releaseDate,
+      voteAverage: data.voteAverage.present
+          ? data.voteAverage.value
+          : this.voteAverage,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -967,51 +960,42 @@ class $LocalWatchHistoriesTable extends LocalWatchHistories
   LocalWatchHistory map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return LocalWatchHistory(
-      userId:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}user_id'],
-          )!,
-      tmdbId:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}tmdb_id'],
-          )!,
-      mediaType:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}media_type'],
-          )!,
-      season:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}season'],
-          )!,
-      episode:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}episode'],
-          )!,
-      status:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}status'],
-          )!,
-      progressSeconds:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}progress_seconds'],
-          )!,
-      totalDuration:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}total_duration'],
-          )!,
-      lastWatchedAt:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.dateTime,
-            data['${effectivePrefix}last_watched_at'],
-          )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tmdbId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tmdb_id'],
+      )!,
+      mediaType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_type'],
+      )!,
+      season: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}season'],
+      )!,
+      episode: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}episode'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      progressSeconds: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}progress_seconds'],
+      )!,
+      totalDuration: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_duration'],
+      )!,
+      lastWatchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_watched_at'],
+      )!,
     );
   }
 
@@ -1134,18 +1118,15 @@ class LocalWatchHistory extends DataClass
       season: data.season.present ? data.season.value : this.season,
       episode: data.episode.present ? data.episode.value : this.episode,
       status: data.status.present ? data.status.value : this.status,
-      progressSeconds:
-          data.progressSeconds.present
-              ? data.progressSeconds.value
-              : this.progressSeconds,
-      totalDuration:
-          data.totalDuration.present
-              ? data.totalDuration.value
-              : this.totalDuration,
-      lastWatchedAt:
-          data.lastWatchedAt.present
-              ? data.lastWatchedAt.value
-              : this.lastWatchedAt,
+      progressSeconds: data.progressSeconds.present
+          ? data.progressSeconds.value
+          : this.progressSeconds,
+      totalDuration: data.totalDuration.present
+          ? data.totalDuration.value
+          : this.totalDuration,
+      lastWatchedAt: data.lastWatchedAt.present
+          ? data.lastWatchedAt.value
+          : this.lastWatchedAt,
     );
   }
 
@@ -1495,40 +1476,34 @@ class $CachedUserListsTable extends CachedUserLists
   CachedUserList map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return CachedUserList(
-      id:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}id'],
-          )!,
-      userId:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}user_id'],
-          )!,
-      name:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}name'],
-          )!,
-      type:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}type'],
-          )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
       description: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}description'],
       ),
-      sortOrder:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}sort_order'],
-          )!,
-      createdAt:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.dateTime,
-            data['${effectivePrefix}created_at'],
-          )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
     );
   }
 
@@ -1576,10 +1551,9 @@ class CachedUserList extends DataClass implements Insertable<CachedUserList> {
       userId: Value(userId),
       name: Value(name),
       type: Value(type),
-      description:
-          description == null && nullToAbsent
-              ? const Value.absent()
-              : Value(description),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
       sortOrder: Value(sortOrder),
       createdAt: Value(createdAt),
     );
@@ -1637,8 +1611,9 @@ class CachedUserList extends DataClass implements Insertable<CachedUserList> {
       userId: data.userId.present ? data.userId.value : this.userId,
       name: data.name.present ? data.name.value : this.name,
       type: data.type.present ? data.type.value : this.type,
-      description:
-          data.description.present ? data.description.value : this.description,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -1941,35 +1916,30 @@ class $CachedListItemsTable extends CachedListItems
   CachedListItem map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return CachedListItem(
-      listId:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}list_id'],
-          )!,
-      mediaTmdbId:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}media_tmdb_id'],
-          )!,
-      mediaType:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}media_type'],
-          )!,
+      listId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}list_id'],
+      )!,
+      mediaTmdbId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}media_tmdb_id'],
+      )!,
+      mediaType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_type'],
+      )!,
       meta: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}meta'],
       ),
-      sortOrder:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}sort_order'],
-          )!,
-      addedAt:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.dateTime,
-            data['${effectivePrefix}added_at'],
-          )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      addedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}added_at'],
+      )!,
     );
   }
 
@@ -2064,8 +2034,9 @@ class CachedListItem extends DataClass implements Insertable<CachedListItem> {
   CachedListItem copyWithCompanion(CachedListItemsCompanion data) {
     return CachedListItem(
       listId: data.listId.present ? data.listId.value : this.listId,
-      mediaTmdbId:
-          data.mediaTmdbId.present ? data.mediaTmdbId.value : this.mediaTmdbId,
+      mediaTmdbId: data.mediaTmdbId.present
+          ? data.mediaTmdbId.value
+          : this.mediaTmdbId,
       mediaType: data.mediaType.present ? data.mediaType.value : this.mediaType,
       meta: data.meta.present ? data.meta.value : this.meta,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
@@ -2356,11 +2327,10 @@ class $AnimeExternalMappingsTable extends AnimeExternalMappings
   AnimeExternalMapping map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return AnimeExternalMapping(
-      anilistId:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}anilist_id'],
-          )!,
+      anilistId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}anilist_id'],
+      )!,
       anidbId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}anidb_id'],
@@ -2431,24 +2401,21 @@ class AnimeExternalMapping extends DataClass
   AnimeExternalMappingsCompanion toCompanion(bool nullToAbsent) {
     return AnimeExternalMappingsCompanion(
       anilistId: Value(anilistId),
-      anidbId:
-          anidbId == null && nullToAbsent
-              ? const Value.absent()
-              : Value(anidbId),
-      tmdbShowId:
-          tmdbShowId == null && nullToAbsent
-              ? const Value.absent()
-              : Value(tmdbShowId),
-      tmdbMovieId:
-          tmdbMovieId == null && nullToAbsent
-              ? const Value.absent()
-              : Value(tmdbMovieId),
-      tvdbId:
-          tvdbId == null && nullToAbsent ? const Value.absent() : Value(tvdbId),
-      mappingsData:
-          mappingsData == null && nullToAbsent
-              ? const Value.absent()
-              : Value(mappingsData),
+      anidbId: anidbId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(anidbId),
+      tmdbShowId: tmdbShowId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tmdbShowId),
+      tmdbMovieId: tmdbMovieId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tmdbMovieId),
+      tvdbId: tvdbId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tvdbId),
+      mappingsData: mappingsData == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mappingsData),
     );
   }
 
@@ -2498,15 +2465,16 @@ class AnimeExternalMapping extends DataClass
     return AnimeExternalMapping(
       anilistId: data.anilistId.present ? data.anilistId.value : this.anilistId,
       anidbId: data.anidbId.present ? data.anidbId.value : this.anidbId,
-      tmdbShowId:
-          data.tmdbShowId.present ? data.tmdbShowId.value : this.tmdbShowId,
-      tmdbMovieId:
-          data.tmdbMovieId.present ? data.tmdbMovieId.value : this.tmdbMovieId,
+      tmdbShowId: data.tmdbShowId.present
+          ? data.tmdbShowId.value
+          : this.tmdbShowId,
+      tmdbMovieId: data.tmdbMovieId.present
+          ? data.tmdbMovieId.value
+          : this.tmdbMovieId,
       tvdbId: data.tvdbId.present ? data.tvdbId.value : this.tvdbId,
-      mappingsData:
-          data.mappingsData.present
-              ? data.mappingsData.value
-              : this.mappingsData,
+      mappingsData: data.mappingsData.present
+          ? data.mappingsData.value
+          : this.mappingsData,
     );
   }
 
@@ -2750,25 +2718,22 @@ class $AnimeKitsuMappingsTable extends AnimeKitsuMappings
   AnimeKitsuMapping map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return AnimeKitsuMapping(
-      anilistId:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}anilist_id'],
-          )!,
-      kitsuId:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}kitsu_id'],
-          )!,
+      anilistId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}anilist_id'],
+      )!,
+      kitsuId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kitsu_id'],
+      )!,
       episodeCount: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}episode_count'],
       ),
-      updatedAt:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.dateTime,
-            data['${effectivePrefix}updated_at'],
-          )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
     );
   }
 
@@ -2806,10 +2771,9 @@ class AnimeKitsuMapping extends DataClass
     return AnimeKitsuMappingsCompanion(
       anilistId: Value(anilistId),
       kitsuId: Value(kitsuId),
-      episodeCount:
-          episodeCount == null && nullToAbsent
-              ? const Value.absent()
-              : Value(episodeCount),
+      episodeCount: episodeCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(episodeCount),
       updatedAt: Value(updatedAt),
     );
   }
@@ -2852,10 +2816,9 @@ class AnimeKitsuMapping extends DataClass
     return AnimeKitsuMapping(
       anilistId: data.anilistId.present ? data.anilistId.value : this.anilistId,
       kitsuId: data.kitsuId.present ? data.kitsuId.value : this.kitsuId,
-      episodeCount:
-          data.episodeCount.present
-              ? data.episodeCount.value
-              : this.episodeCount,
+      episodeCount: data.episodeCount.present
+          ? data.episodeCount.value
+          : this.episodeCount,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -3098,11 +3061,10 @@ class $CachedProfilesTable extends CachedProfiles
   CachedProfile map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return CachedProfile(
-      id:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}id'],
-          )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
       username: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}username'],
@@ -3115,16 +3077,14 @@ class $CachedProfilesTable extends CachedProfiles
         DriftSqlType.string,
         data['${effectivePrefix}preferences'],
       ),
-      createdAt:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.dateTime,
-            data['${effectivePrefix}created_at'],
-          )!,
-      updatedAt:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.dateTime,
-            data['${effectivePrefix}updated_at'],
-          )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
     );
   }
 
@@ -3170,18 +3130,15 @@ class CachedProfile extends DataClass implements Insertable<CachedProfile> {
   CachedProfilesCompanion toCompanion(bool nullToAbsent) {
     return CachedProfilesCompanion(
       id: Value(id),
-      username:
-          username == null && nullToAbsent
-              ? const Value.absent()
-              : Value(username),
-      avatarUrl:
-          avatarUrl == null && nullToAbsent
-              ? const Value.absent()
-              : Value(avatarUrl),
-      preferences:
-          preferences == null && nullToAbsent
-              ? const Value.absent()
-              : Value(preferences),
+      username: username == null && nullToAbsent
+          ? const Value.absent()
+          : Value(username),
+      avatarUrl: avatarUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avatarUrl),
+      preferences: preferences == null && nullToAbsent
+          ? const Value.absent()
+          : Value(preferences),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -3234,8 +3191,9 @@ class CachedProfile extends DataClass implements Insertable<CachedProfile> {
       id: data.id.present ? data.id.value : this.id,
       username: data.username.present ? data.username.value : this.username,
       avatarUrl: data.avatarUrl.present ? data.avatarUrl.value : this.avatarUrl,
-      preferences:
-          data.preferences.present ? data.preferences.value : this.preferences,
+      preferences: data.preferences.present
+          ? data.preferences.value
+          : this.preferences,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -3671,19 +3629,12 @@ class $$CachedMediaItemsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer:
-              () =>
-                  $$CachedMediaItemsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer:
-              () => $$CachedMediaItemsTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer:
-              () => $$CachedMediaItemsTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
+          createFilteringComposer: () =>
+              $$CachedMediaItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedMediaItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedMediaItemsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> tmdbId = const Value.absent(),
@@ -3744,16 +3695,9 @@ class $$CachedMediaItemsTableTableManager
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );
@@ -3985,18 +3929,15 @@ class $$LocalWatchHistoriesTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer:
-              () => $$LocalWatchHistoriesTableFilterComposer(
+          createFilteringComposer: () =>
+              $$LocalWatchHistoriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocalWatchHistoriesTableOrderingComposer(
                 $db: db,
                 $table: table,
               ),
-          createOrderingComposer:
-              () => $$LocalWatchHistoriesTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer:
-              () => $$LocalWatchHistoriesTableAnnotationComposer(
+          createComputedFieldComposer: () =>
+              $$LocalWatchHistoriesTableAnnotationComposer(
                 $db: db,
                 $table: table,
               ),
@@ -4048,16 +3989,9 @@ class $$LocalWatchHistoriesTableTableManager
                 lastWatchedAt: lastWatchedAt,
                 rowid: rowid,
               ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );
@@ -4259,19 +4193,12 @@ class $$CachedUserListsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer:
-              () =>
-                  $$CachedUserListsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer:
-              () => $$CachedUserListsTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer:
-              () => $$CachedUserListsTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
+          createFilteringComposer: () =>
+              $$CachedUserListsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedUserListsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedUserListsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
@@ -4312,16 +4239,9 @@ class $$CachedUserListsTableTableManager
                 createdAt: createdAt,
                 rowid: rowid,
               ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );
@@ -4504,19 +4424,12 @@ class $$CachedListItemsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer:
-              () =>
-                  $$CachedListItemsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer:
-              () => $$CachedListItemsTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer:
-              () => $$CachedListItemsTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
+          createFilteringComposer: () =>
+              $$CachedListItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedListItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedListItemsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> listId = const Value.absent(),
@@ -4553,16 +4466,9 @@ class $$CachedListItemsTableTableManager
                 addedAt: addedAt,
                 rowid: rowid,
               ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );
@@ -4747,18 +4653,18 @@ class $$AnimeExternalMappingsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer:
-              () => $$AnimeExternalMappingsTableFilterComposer(
+          createFilteringComposer: () =>
+              $$AnimeExternalMappingsTableFilterComposer(
                 $db: db,
                 $table: table,
               ),
-          createOrderingComposer:
-              () => $$AnimeExternalMappingsTableOrderingComposer(
+          createOrderingComposer: () =>
+              $$AnimeExternalMappingsTableOrderingComposer(
                 $db: db,
                 $table: table,
               ),
-          createComputedFieldComposer:
-              () => $$AnimeExternalMappingsTableAnnotationComposer(
+          createComputedFieldComposer: () =>
+              $$AnimeExternalMappingsTableAnnotationComposer(
                 $db: db,
                 $table: table,
               ),
@@ -4794,16 +4700,9 @@ class $$AnimeExternalMappingsTableTableManager
                 tvdbId: tvdbId,
                 mappingsData: mappingsData,
               ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );
@@ -4958,18 +4857,12 @@ class $$AnimeKitsuMappingsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer:
-              () => $$AnimeKitsuMappingsTableFilterComposer(
-                $db: db,
-                $table: table,
-              ),
-          createOrderingComposer:
-              () => $$AnimeKitsuMappingsTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer:
-              () => $$AnimeKitsuMappingsTableAnnotationComposer(
+          createFilteringComposer: () =>
+              $$AnimeKitsuMappingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AnimeKitsuMappingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AnimeKitsuMappingsTableAnnotationComposer(
                 $db: db,
                 $table: table,
               ),
@@ -4997,16 +4890,9 @@ class $$AnimeKitsuMappingsTableTableManager
                 episodeCount: episodeCount,
                 updatedAt: updatedAt,
               ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );
@@ -5189,16 +5075,12 @@ class $$CachedProfilesTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer:
-              () => $$CachedProfilesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer:
-              () =>
-                  $$CachedProfilesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer:
-              () => $$CachedProfilesTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
+          createFilteringComposer: () =>
+              $$CachedProfilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedProfilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedProfilesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
@@ -5235,16 +5117,9 @@ class $$CachedProfilesTableTableManager
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );
@@ -5298,8 +5173,9 @@ String _$appDatabaseHash() => r'105bd8a8ef41e172ff5db2d8e451479a0697fd42';
 final appDatabaseProvider = Provider<AppDatabase>.internal(
   appDatabase,
   name: r'appDatabaseProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$appDatabaseHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$appDatabaseHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );

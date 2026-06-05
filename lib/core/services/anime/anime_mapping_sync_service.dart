@@ -18,7 +18,8 @@ class AnimeMappingSyncService {
   final Dio _dio;
   final AppDatabase _db;
   static const String _lastSyncKey = 'last_anime_mapping_sync';
-  static const String _mappingUrl = 'https://raw.githubusercontent.com/eliasbenb/PlexAniBridge-Mappings/refs/heads/v2/mappings.json';
+  static const String _mappingUrl =
+      'https://raw.githubusercontent.com/eliasbenb/PlexAniBridge-Mappings/refs/heads/v2/mappings.json';
 
   AnimeMappingSyncService(this._dio, this._db);
 
@@ -26,35 +27,44 @@ class AnimeMappingSyncService {
   Future<void> checkAndSync() async {
     final prefs = await SharedPreferences.getInstance();
     final lastSyncStr = prefs.getString(_lastSyncKey);
-    final lastSync = lastSyncStr != null ? DateTime.tryParse(lastSyncStr) : null;
-    
+    final lastSync = lastSyncStr != null
+        ? DateTime.tryParse(lastSyncStr)
+        : null;
+
     final count = await _db.getAnimeExternalMappingsCount();
     final isEmpty = count == 0;
 
-    if (isEmpty || lastSync == null || DateTime.now().difference(lastSync).inHours > 24) {
+    if (isEmpty ||
+        lastSync == null ||
+        DateTime.now().difference(lastSync).inHours > 24) {
       if (isEmpty) {
-        debugPrint('AnimeMappingSyncService: Mapping table is empty, forcing sync...');
+        debugPrint(
+          'AnimeMappingSyncService: Mapping table is empty, forcing sync...',
+        );
       } else {
         debugPrint('AnimeMappingSyncService: Starting daily sync...');
       }
-      
+
       await _sync();
       await prefs.setString(_lastSyncKey, DateTime.now().toIso8601String());
       debugPrint('AnimeMappingSyncService: Sync completed.');
     } else {
-      debugPrint('AnimeMappingSyncService: Mapping is up to date (last sync: $lastSync, count: $count).');
+      debugPrint(
+        'AnimeMappingSyncService: Mapping is up to date (last sync: $lastSync, count: $count).',
+      );
     }
   }
 
   Future<void> _sync() async {
     try {
       final response = await _dio.get(_mappingUrl);
-      if (response.statusCode != 200) throw Exception('Failed to download mappings');
+      if (response.statusCode != 200)
+        throw Exception('Failed to download mappings');
 
-      final Map<String, dynamic> data = response.data is String 
-          ? jsonDecode(response.data) 
+      final Map<String, dynamic> data = response.data is String
+          ? jsonDecode(response.data)
           : response.data;
-      
+
       final List<AnimeExternalMappingsCompanion> companions = [];
 
       data.forEach((anilistIdStr, value) {
@@ -62,26 +72,28 @@ class AnimeMappingSyncService {
         if (anilistId == null) return;
 
         final map = value as Map<String, dynamic>;
-        
+
         // Extract IDs
         final anidbId = _extractInt(map['anidb_id']);
         final tmdbShowId = _extractInt(map['tmdb_show_id']);
         final tmdbMovieId = _extractInt(map['tmdb_movie_id']);
         final tvdbId = _extractInt(map['tvdb_id']);
-        
+
         // Extract mappings (pick tmdb first, fallback to tvdb)
         final mappings = map['tmdb_mappings'] ?? map['tvdb_mappings'];
         final mappingsJson = mappings != null ? jsonEncode(mappings) : null;
 
         if (tmdbShowId != null || tmdbMovieId != null || tvdbId != null) {
-          companions.add(AnimeExternalMappingsCompanion(
-            anilistId: Value(anilistId),
-            anidbId: Value(anidbId),
-            tmdbShowId: Value(tmdbShowId),
-            tmdbMovieId: Value(tmdbMovieId),
-            tvdbId: Value(tvdbId),
-            mappingsData: Value(mappingsJson),
-          ));
+          companions.add(
+            AnimeExternalMappingsCompanion(
+              anilistId: Value(anilistId),
+              anidbId: Value(anidbId),
+              tmdbShowId: Value(tmdbShowId),
+              tmdbMovieId: Value(tmdbMovieId),
+              tvdbId: Value(tvdbId),
+              mappingsData: Value(mappingsJson),
+            ),
+          );
         }
       });
 

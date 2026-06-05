@@ -18,7 +18,8 @@ final kitsuMappingServiceProvider = Provider((ref) {
 });
 
 class KitsuMappingService implements AnimeUnityMappingProvider {
-  static const _stremioMappingBaseUrl = 'https://animemapping.stremio.dpdns.org/kitsu';
+  static const _stremioMappingBaseUrl =
+      'https://animemapping.stremio.dpdns.org/kitsu';
 
   final Dio _dio;
   final AppDatabase _db;
@@ -33,8 +34,6 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
     int? season,
     int? episode,
   }) async {
-
-    
     // 1. Get External Mapping Candidates from Local DB
     List<AnimeExternalMapping> candidates;
     if (type == 'movie') {
@@ -44,11 +43,8 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
     }
 
     if (candidates.isEmpty) {
-
       return null;
     }
-
-
 
     // 2. Prioritize Specific Range Mappings
     if (type == 'tv' && season != null && episode != null) {
@@ -59,14 +55,20 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
         if (tmdbMap.containsKey(seasonKey)) {
           final String range = tmdbMap[seasonKey];
           if (range.isNotEmpty) {
-             final result = _tryMatchRange(range, episode);
-             if (result != null) {
-               final kitsuId = await _getKitsuId(mapping.anilistId);
-               if (kitsuId != null) {
-                 debugPrint('[KitsuMapping] TMDB $tmdbId S$season E$episode -> Kitsu $kitsuId (absEp=$result)');
-                 return KitsuMapping(kitsuId: kitsuId, absoluteEpisode: result, anidbId: mapping.anidbId);
-               }
-             }
+            final result = _tryMatchRange(range, episode);
+            if (result != null) {
+              final kitsuId = await _getKitsuId(mapping.anilistId);
+              if (kitsuId != null) {
+                debugPrint(
+                  '[KitsuMapping] TMDB $tmdbId S$season E$episode -> Kitsu $kitsuId (absEp=$result)',
+                );
+                return KitsuMapping(
+                  kitsuId: kitsuId,
+                  absoluteEpisode: result,
+                  anidbId: mapping.anidbId,
+                );
+              }
+            }
           }
         }
       }
@@ -75,41 +77,51 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
     // 3. Handle Folded/Sequential Seasons (The "Overflow" Logic)
     if (type == 'tv' && season != null && episode != null) {
       // Sort candidates by their seasonal index (s1, s2, s3...)
-      candidates.sort((a, b) => _getSeasonIndex(a).compareTo(_getSeasonIndex(b)));
+      candidates.sort(
+        (a, b) => _getSeasonIndex(a).compareTo(_getSeasonIndex(b)),
+      );
 
       int remainingEpisode = episode;
 
-
       for (int i = 0; i < candidates.length; i++) {
         final mapping = candidates[i];
-        final Map<String, dynamic> tmdbMap = mapping.mappingsData != null ? jsonDecode(mapping.mappingsData!) : {};
-        
+        final Map<String, dynamic> tmdbMap = mapping.mappingsData != null
+            ? jsonDecode(mapping.mappingsData!)
+            : {};
+
         // Find the "primary" season key for this mapping (usually only one)
-        final String mappingSeasonKey = tmdbMap.keys.firstWhere((k) => k.startsWith('s'), orElse: () => '');
-        
+        final String mappingSeasonKey = tmdbMap.keys.firstWhere(
+          (k) => k.startsWith('s'),
+          orElse: () => '',
+        );
+
         if (mappingSeasonKey.startsWith('s')) {
-          final mappingSeasonNum = int.tryParse(mappingSeasonKey.substring(1)) ?? 0;
-          
+          final mappingSeasonNum =
+              int.tryParse(mappingSeasonKey.substring(1)) ?? 0;
+
           // If this candidate maps to a season < our target season, skip it (it's in the past)
           if (mappingSeasonNum < season) {
-
             continue;
           }
 
           // Resolve Kitsu metadata (ID and Episode Count)
           final kitsuData = await _getKitsuData(mapping.anilistId);
           if (kitsuData == null) {
-             continue;
+            continue;
           }
 
           final count = kitsuData.episodeCount ?? 999;
 
-
           if (remainingEpisode <= count) {
-            debugPrint('[KitsuMapping] TMDB $tmdbId S$season E$episode -> Kitsu ${kitsuData.kitsuId} (absEp=$remainingEpisode)');
-            return KitsuMapping(kitsuId: kitsuData.kitsuId, absoluteEpisode: remainingEpisode, anidbId: mapping.anidbId);
+            debugPrint(
+              '[KitsuMapping] TMDB $tmdbId S$season E$episode -> Kitsu ${kitsuData.kitsuId} (absEp=$remainingEpisode)',
+            );
+            return KitsuMapping(
+              kitsuId: kitsuData.kitsuId,
+              absoluteEpisode: remainingEpisode,
+              anidbId: mapping.anidbId,
+            );
           } else {
-
             remainingEpisode -= count;
           }
         }
@@ -122,8 +134,14 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
     final kitsuId = await _getKitsuId(targetAnilistId);
     if (kitsuId != null) {
       final validEpisode = (episode != null && episode > 0) ? episode : null;
-      debugPrint('[KitsuMapping] TMDB $tmdbId (fallback) -> Kitsu $kitsuId (absEp=$validEpisode)');
-      return KitsuMapping(kitsuId: kitsuId, absoluteEpisode: validEpisode, anidbId: candidates.first.anidbId);
+      debugPrint(
+        '[KitsuMapping] TMDB $tmdbId (fallback) -> Kitsu $kitsuId (absEp=$validEpisode)',
+      );
+      return KitsuMapping(
+        kitsuId: kitsuId,
+        absoluteEpisode: validEpisode,
+        anidbId: candidates.first.anidbId,
+      );
     }
 
     return null;
@@ -133,7 +151,10 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
     if (mapping.mappingsData == null) return 0;
     try {
       final Map<String, dynamic> map = jsonDecode(mapping.mappingsData!);
-      final key = map.keys.firstWhere((k) => k.startsWith('s'), orElse: () => 's0');
+      final key = map.keys.firstWhere(
+        (k) => k.startsWith('s'),
+        orElse: () => 's0',
+      );
       return int.tryParse(key.substring(1)) ?? 0;
     } catch (_) {
       return 0;
@@ -150,7 +171,8 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
           if (episode >= start) return episode - start + 1;
         } else {
           final end = int.tryParse(parts[1]);
-          if (end != null && episode >= start && episode <= end) return episode - start + 1;
+          if (end != null && episode >= start && episode <= end)
+            return episode - start + 1;
         }
       } else {
         final epVal = int.tryParse(cleanRange);
@@ -165,36 +187,44 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
     return data?.kitsuId;
   }
 
-  Future<({int? episodeCount, String kitsuId})?> _getKitsuData(int anilistId) async {
+  Future<({int? episodeCount, String kitsuId})?> _getKitsuData(
+    int anilistId,
+  ) async {
     final cached = await _db.getKitsuMapping(anilistId);
     if (cached != null) {
       return (episodeCount: cached.episodeCount, kitsuId: cached.kitsuId);
     }
 
-    final url = 'https://kitsu.io/api/edge/mappings?filter[external_id]=$anilistId&filter[external_site]=anilist/anime&include=item';
+    final url =
+        'https://kitsu.io/api/edge/mappings?filter[external_id]=$anilistId&filter[external_site]=anilist/anime&include=item';
     try {
       final res = await _dio.get(url);
-      if (res.statusCode == 200 && res.data['data'] != null && (res.data['data'] as List).isNotEmpty) {
+      if (res.statusCode == 200 &&
+          res.data['data'] != null &&
+          (res.data['data'] as List).isNotEmpty) {
         final data = res.data['data'][0];
-        final String? kitsuId = data['relationships']?['item']?['data']?['id']?.toString();
-        
+        final String? kitsuId = data['relationships']?['item']?['data']?['id']
+            ?.toString();
+
         int? epCount;
         final included = res.data['included'] as List?;
         if (included != null && included.isNotEmpty) {
           for (var item in included) {
             if (item['type'] == 'anime') {
-               epCount = item['attributes']?['episodeCount'];
-               break;
+              epCount = item['attributes']?['episodeCount'];
+              break;
             }
           }
         }
 
         if (kitsuId != null) {
-          await _db.upsertKitsuMapping(AnimeKitsuMappingsCompanion(
-            anilistId: Value(anilistId),
-            kitsuId: Value(kitsuId),
-            episodeCount: Value(epCount),
-          ));
+          await _db.upsertKitsuMapping(
+            AnimeKitsuMappingsCompanion(
+              anilistId: Value(anilistId),
+              kitsuId: Value(kitsuId),
+              episodeCount: Value(epCount),
+            ),
+          );
           return (episodeCount: epCount, kitsuId: kitsuId);
         }
       }
@@ -216,10 +246,14 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
 
       final entries = _parseAnimeUnityPaths(res.data);
       _animeUnityCache[kitsuId] = entries;
-      debugPrint('[KitsuMapping] Kitsu $kitsuId -> ${entries.length} AnimeUnity entries');
+      debugPrint(
+        '[KitsuMapping] Kitsu $kitsuId -> ${entries.length} AnimeUnity entries',
+      );
       return entries;
     } catch (e) {
-      debugPrint('[KitsuMapping] AnimeUnity mapping failed for Kitsu $kitsuId: $e');
+      debugPrint(
+        '[KitsuMapping] AnimeUnity mapping failed for Kitsu $kitsuId: $e',
+      );
       return [];
     }
   }

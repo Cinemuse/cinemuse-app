@@ -88,13 +88,18 @@ class UserSettings {
       enableRealDebrid: prefs['enableRealDebrid'] ?? false,
       realDebridKey: prefs['realDebridKey'] ?? '',
       openSubtitlesKey: prefs['openSubtitlesKey'] ?? '',
-      autoDownloadMissingSubtitles: prefs['autoDownloadMissingSubtitles'] ?? false,
-      installedAddons: (prefs['installedAddons'] as Iterable?)?.map((e) {
-        if (e is String) {
-          return StremioAddon.fromJson(jsonDecode(e) as Map<String, dynamic>);
-        }
-        return StremioAddon.fromJson(e as Map<String, dynamic>);
-      }).toList() ?? const [],
+      autoDownloadMissingSubtitles:
+          prefs['autoDownloadMissingSubtitles'] ?? false,
+      installedAddons:
+          (prefs['installedAddons'] as Iterable?)?.map((e) {
+            if (e is String) {
+              return StremioAddon.fromJson(
+                jsonDecode(e) as Map<String, dynamic>,
+              );
+            }
+            return StremioAddon.fromJson(e as Map<String, dynamic>);
+          }).toList() ??
+          const [],
       liveTvBufferSize: prefs['liveTvBufferSize'] ?? 512,
       enableLiveTvDiskCache: prefs['enableLiveTvDiskCache'] ?? false,
       liveTvQuality: StreamQuality.values.firstWhere(
@@ -137,25 +142,30 @@ class UserSettings {
       playerLanguage: playerLanguage ?? this.playerLanguage,
       showSubtitles: showSubtitles ?? this.showSubtitles,
       subtitleLanguage: subtitleLanguage ?? this.subtitleLanguage,
-      splitAnimePreferences: splitAnimePreferences ?? this.splitAnimePreferences,
+      splitAnimePreferences:
+          splitAnimePreferences ?? this.splitAnimePreferences,
       animeAudioLanguage: animeAudioLanguage ?? this.animeAudioLanguage,
       animeShowSubtitles: animeShowSubtitles ?? this.animeShowSubtitles,
-      animeSubtitleLanguage: animeSubtitleLanguage ?? this.animeSubtitleLanguage,
+      animeSubtitleLanguage:
+          animeSubtitleLanguage ?? this.animeSubtitleLanguage,
       playerPrimaryColor: playerPrimaryColor ?? this.playerPrimaryColor,
       playerSecondaryColor: playerSecondaryColor ?? this.playerSecondaryColor,
       showDebugPanel: showDebugPanel ?? this.showDebugPanel,
       smartSearchFilter: smartSearchFilter ?? this.smartSearchFilter,
-      enableAutoSkipProviders: enableAutoSkipProviders ?? this.enableAutoSkipProviders,
+      enableAutoSkipProviders:
+          enableAutoSkipProviders ?? this.enableAutoSkipProviders,
       enableAnimeTosho: enableAnimeTosho ?? this.enableAnimeTosho,
       enableVixSrc: enableVixSrc ?? this.enableVixSrc,
       enableAnimeUnity: enableAnimeUnity ?? this.enableAnimeUnity,
       enableRealDebrid: enableRealDebrid ?? this.enableRealDebrid,
       realDebridKey: realDebridKey ?? this.realDebridKey,
       openSubtitlesKey: openSubtitlesKey ?? this.openSubtitlesKey,
-      autoDownloadMissingSubtitles: autoDownloadMissingSubtitles ?? this.autoDownloadMissingSubtitles,
+      autoDownloadMissingSubtitles:
+          autoDownloadMissingSubtitles ?? this.autoDownloadMissingSubtitles,
       installedAddons: installedAddons ?? this.installedAddons,
       liveTvBufferSize: liveTvBufferSize ?? this.liveTvBufferSize,
-      enableLiveTvDiskCache: enableLiveTvDiskCache ?? this.enableLiveTvDiskCache,
+      enableLiveTvDiskCache:
+          enableLiveTvDiskCache ?? this.enableLiveTvDiskCache,
       liveTvQuality: liveTvQuality ?? this.liveTvQuality,
     );
   }
@@ -194,7 +204,8 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
   final ProfileRepository _profileRepository;
   final Ref _ref;
 
-  SettingsNotifier(this._profileRepository, this._ref) : super(const UserSettings()) {
+  SettingsNotifier(this._profileRepository, this._ref)
+    : super(const UserSettings()) {
     initSettings();
   }
 
@@ -211,7 +222,9 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
         }
       }
     } catch (e) {
-      debugPrint('SettingsService: Failed to initialize settings (offline?). Using defaults.');
+      debugPrint(
+        'SettingsService: Failed to initialize settings (offline?). Using defaults.',
+      );
     }
   }
 
@@ -226,25 +239,36 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       playerLanguage: updates['playerLanguage'] ?? state.playerLanguage,
       showSubtitles: updates['showSubtitles'] ?? state.showSubtitles,
       subtitleLanguage: updates['subtitleLanguage'] ?? state.subtitleLanguage,
-      splitAnimePreferences: updates['splitAnimePreferences'] ?? state.splitAnimePreferences,
-      animeAudioLanguage: updates['animeAudioLanguage'] ?? state.animeAudioLanguage,
-      animeShowSubtitles: updates['animeShowSubtitles'] ?? state.animeShowSubtitles,
-      animeSubtitleLanguage: updates['animeSubtitleLanguage'] ?? state.animeSubtitleLanguage,
-      playerPrimaryColor: updates['playerPrimaryColor'] ?? state.playerPrimaryColor,
-      playerSecondaryColor: updates['playerSecondaryColor'] ?? state.playerSecondaryColor,
+      splitAnimePreferences:
+          updates['splitAnimePreferences'] ?? state.splitAnimePreferences,
+      animeAudioLanguage:
+          updates['animeAudioLanguage'] ?? state.animeAudioLanguage,
+      animeShowSubtitles:
+          updates['animeShowSubtitles'] ?? state.animeShowSubtitles,
+      animeSubtitleLanguage:
+          updates['animeSubtitleLanguage'] ?? state.animeSubtitleLanguage,
+      playerPrimaryColor:
+          updates['playerPrimaryColor'] ?? state.playerPrimaryColor,
+      playerSecondaryColor:
+          updates['playerSecondaryColor'] ?? state.playerSecondaryColor,
       showDebugPanel: updates['showDebugPanel'] ?? state.showDebugPanel,
-      smartSearchFilter: updates['smartSearchFilter'] ?? state.smartSearchFilter,
-      enableAutoSkipProviders: updates['enableAutoSkipProviders'] ?? state.enableAutoSkipProviders,
+      smartSearchFilter:
+          updates['smartSearchFilter'] ?? state.smartSearchFilter,
+      enableAutoSkipProviders:
+          updates['enableAutoSkipProviders'] ?? state.enableAutoSkipProviders,
       enableAnimeTosho: updates['enableAnimeTosho'] ?? state.enableAnimeTosho,
       enableVixSrc: updates['enableVixSrc'] ?? state.enableVixSrc,
       enableAnimeUnity: updates['enableAnimeUnity'] ?? state.enableAnimeUnity,
       enableRealDebrid: updates['enableRealDebrid'] ?? state.enableRealDebrid,
       realDebridKey: updates['realDebridKey'] ?? state.realDebridKey,
       openSubtitlesKey: updates['openSubtitlesKey'] ?? state.openSubtitlesKey,
-      autoDownloadMissingSubtitles: updates['autoDownloadMissingSubtitles'] ?? state.autoDownloadMissingSubtitles,
+      autoDownloadMissingSubtitles:
+          updates['autoDownloadMissingSubtitles'] ??
+          state.autoDownloadMissingSubtitles,
       installedAddons: updates['installedAddons'] ?? state.installedAddons,
       liveTvBufferSize: updates['liveTvBufferSize'] ?? state.liveTvBufferSize,
-      enableLiveTvDiskCache: updates['enableLiveTvDiskCache'] ?? state.enableLiveTvDiskCache,
+      enableLiveTvDiskCache:
+          updates['enableLiveTvDiskCache'] ?? state.enableLiveTvDiskCache,
       liveTvQuality: updates['liveTvQuality'] ?? state.liveTvQuality,
     );
 
@@ -258,7 +282,7 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
     if (updates.containsKey('displayName')) {
       dbUpdates['username'] = updates['displayName'];
     }
-    
+
     // Always sync the rest to preferences
     dbUpdates['preferences'] = state.toPreferencesJson();
 
@@ -268,19 +292,19 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
   Future<void> installAddon(String url) async {
     final addonService = _ref.read(stremioAddonServiceProvider);
     final addon = await addonService.fetchManifest(url);
-    
+
     // Check if already installed
     final currentAddons = [...state.installedAddons];
     currentAddons.removeWhere((a) => a.id == addon.id);
     currentAddons.add(addon);
-    
+
     await updateSettings({'installedAddons': currentAddons});
   }
 
   Future<void> removeAddon(String id) async {
     final currentAddons = [...state.installedAddons];
     currentAddons.removeWhere((a) => a.id == id);
-    
+
     await updateSettings({'installedAddons': currentAddons});
   }
 
@@ -289,12 +313,14 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       if (a.id == id) return a.copyWith(enabled: enabled);
       return a;
     }).toList();
-    
+
     await updateSettings({'installedAddons': currentAddons});
   }
 }
 
-final settingsProvider = StateNotifierProvider<SettingsNotifier, UserSettings>((ref) {
+final settingsProvider = StateNotifierProvider<SettingsNotifier, UserSettings>((
+  ref,
+) {
   final profileRepo = ref.watch(profileRepositoryProvider);
   final notifier = SettingsNotifier(profileRepo, ref);
 

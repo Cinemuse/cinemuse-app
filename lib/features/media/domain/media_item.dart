@@ -1,8 +1,4 @@
-enum MediaKind {
-  movie,
-  episode,
-  tv,
-}
+enum MediaKind { movie, episode, tv }
 
 class MediaItem {
   final int tmdbId;
@@ -41,7 +37,7 @@ class MediaItem {
       title = titleIt;
     }
     title ??= titleEn;
-    
+
     if (title == null || title.trim().isEmpty) return null;
     return title;
   }
@@ -59,33 +55,47 @@ class MediaItem {
 
   /// Extracts a localized title from TMDB data (details or search result).
   /// Handles the 'translations' object, primary title/name, and empty strings.
-  static String? extractTitleFromTmdb(Map<String, dynamic> data, String languageCode) {
+  static String? extractTitleFromTmdb(
+    Map<String, dynamic> data,
+    String languageCode,
+  ) {
     final translations = data['translations']?['translations'] as List?;
     if (translations != null) {
       for (final t in translations) {
         final translatedData = t['data'] as Map<String, dynamic>;
-        // TMDB typically uses iso_639_1 for translations data but 
+        // TMDB typically uses iso_639_1 for translations data but
         // sometimes iso_3166_1 for the keys. We check both to be safe.
         final iso639 = t['iso_639_1']?.toString().toLowerCase();
         final iso3166 = t['iso_3166_1']?.toString().toLowerCase();
-        
-        if (iso639 == languageCode.toLowerCase() || iso3166 == languageCode.toLowerCase()) {
-          final title = _nullIfEmpty(translatedData['title'] ?? translatedData['name']);
+
+        if (iso639 == languageCode.toLowerCase() ||
+            iso3166 == languageCode.toLowerCase()) {
+          final title = _nullIfEmpty(
+            translatedData['title'] ?? translatedData['name'],
+          );
           if (title != null) return title;
         }
       }
     }
 
     // Fallback to primary title/name if translation is missing or language matches English
-    return _nullIfEmpty(data['title'] ?? data['name'] ?? data['original_title'] ?? data['original_name']);
+    return _nullIfEmpty(
+      data['title'] ??
+          data['name'] ??
+          data['original_title'] ??
+          data['original_name'],
+    );
   }
 
   /// Creates a MediaItem from full TMDB details (Map representation).
   /// This centralizes extraction for all fields (titles, paths, genres, cast, etc.).
-  factory MediaItem.fromTmdbDetails(Map<String, dynamic> details, MediaKind type) {
+  factory MediaItem.fromTmdbDetails(
+    Map<String, dynamic> details,
+    MediaKind type,
+  ) {
     final titleIt = extractTitleFromTmdb(details, 'it');
     final titleEn = extractTitleFromTmdb(details, 'en');
-    
+
     // Extract cast (top 10)
     final cast = (details['credits']?['cast'] as List?)
         ?.take(10)
@@ -93,14 +103,16 @@ class MediaItem {
         .toList();
 
     // Extract genres
-    final genres = details['genres'] is List 
+    final genres = details['genres'] is List
         ? (details['genres'] as List).map((e) => e['id'] as int).toList()
         : null;
 
     // Resolve runtime (handle both formats)
-    final runtime = details['runtime'] ?? 
-        (details['episode_run_time'] is List && (details['episode_run_time'] as List).isNotEmpty 
-            ? details['episode_run_time'][0] 
+    final runtime =
+        details['runtime'] ??
+        (details['episode_run_time'] is List &&
+                (details['episode_run_time'] as List).isNotEmpty
+            ? details['episode_run_time'][0]
             : null);
 
     return MediaItem(
@@ -113,7 +125,9 @@ class MediaItem {
       runtimeMinutes: runtime,
       genres: genres,
       castMembers: cast,
-      releaseDate: DateTime.tryParse(details['release_date'] ?? details['first_air_date'] ?? ''),
+      releaseDate: DateTime.tryParse(
+        details['release_date'] ?? details['first_air_date'] ?? '',
+      ),
       voteAverage: (details['vote_average'] as num?)?.toDouble(),
       updatedAt: DateTime.now(),
     );
@@ -122,22 +136,28 @@ class MediaItem {
   factory MediaItem.fromJson(Map<String, dynamic> json) {
     return MediaItem(
       tmdbId: json['tmdb_id'] as int,
-      mediaType: MediaItem.fromString(json['media_type']?.toString() ?? 'movie'),
+      mediaType: MediaItem.fromString(
+        json['media_type']?.toString() ?? 'movie',
+      ),
       titleIt: _nullIfEmpty(json['title_it'] as String?),
       titleEn: _nullIfEmpty(json['title_en'] as String?),
       posterPath: _nullIfEmpty(json['poster_path'] as String?),
       backdropPath: _nullIfEmpty(json['backdrop_path'] as String?),
       runtimeMinutes: json['runtime_minutes'] as int?,
-      genres: json['genres'] is List 
+      genres: json['genres'] is List
           ? (json['genres'] as List<dynamic>).map((e) => e as int).toList()
           : null,
-      castMembers: json['cast_members'] is List 
-          ? (json['cast_members'] as List<dynamic>).map((e) => e as int).toList()
+      castMembers: json['cast_members'] is List
+          ? (json['cast_members'] as List<dynamic>)
+                .map((e) => e as int)
+                .toList()
           : null,
-      releaseDate: json['release_date'] != null ? DateTime.tryParse(json['release_date'] as String) : null,
+      releaseDate: json['release_date'] != null
+          ? DateTime.tryParse(json['release_date'] as String)
+          : null,
       voteAverage: (json['vote_average'] as num?)?.toDouble(),
-      updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at'] as String) 
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
           : DateTime.now(),
     );
   }

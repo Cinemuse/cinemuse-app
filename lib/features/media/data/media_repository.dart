@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
-import 'package:cinemuse_app/core/data/database.dart'; 
+import 'package:cinemuse_app/core/data/database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -35,7 +35,7 @@ class MediaRepository {
 
   Future<MediaItem?> getMediaItem(int tmdbId, MediaKind type) async {
     final key = '${type.name}-$tmdbId';
-    
+
     // 1. Check memory cache
     if (_memoryCache.containsKey(key)) {
       return _memoryCache[key];
@@ -53,7 +53,10 @@ class MediaRepository {
 
     // 3. Fallback to TMDB
     try {
-      final details = await _tmdbService.getMediaDetails(tmdbId.toString(), type.name);
+      final details = await _tmdbService.getMediaDetails(
+        tmdbId.toString(),
+        type.name,
+      );
       if (details != null) {
         final item = MediaItem.fromTmdbDetails(details, type);
         // Save to cache (memory and local)
@@ -65,13 +68,17 @@ class MediaRepository {
     return null;
   }
 
-  Future<List<MediaItem>> getMediaItems(List<({int id, MediaKind type})> requests) async {
+  Future<List<MediaItem>> getMediaItems(
+    List<({int id, MediaKind type})> requests,
+  ) async {
     if (requests.isEmpty) return [];
 
     try {
-      final filters = requests.map((r) => (id: r.id, type: r.type.name)).toList();
+      final filters = requests
+          .map((r) => (id: r.id, type: r.type.name))
+          .toList();
       final localResults = await _db.getMediaItems(filters);
-      
+
       return localResults
           .map<MediaItem>((data) => mapToMediaItem(data))
           .toList();
@@ -83,26 +90,30 @@ class MediaRepository {
   /// Ensures a media item exists in the local cache and remote database.
   Future<void> saveMediaItem(MediaItem item) async {
     final key = '${item.mediaType.name}-${item.tmdbId}';
-    
+
     // Update memory
     _memoryCache[key] = item;
 
     // Save to Local Cache (Drift)
     try {
-      await _db.upsertMediaItem(CachedMediaItemsCompanion(
-        tmdbId: Value(item.tmdbId),
-        mediaType: Value(item.mediaType.name),
-        titleIt: Value(item.titleIt),
-        titleEn: Value(item.titleEn),
-        posterPath: Value(item.posterPath),
-        backdropPath: Value(item.backdropPath),
-        runtimeMinutes: Value(item.runtimeMinutes),
-        genres: Value(item.genres != null ? jsonEncode(item.genres) : null),
-        castMembers: Value(item.castMembers != null ? jsonEncode(item.castMembers) : null),
-        releaseDate: Value(item.releaseDate),
-        voteAverage: Value(item.voteAverage),
-        updatedAt: Value(item.updatedAt),
-      ));
+      await _db.upsertMediaItem(
+        CachedMediaItemsCompanion(
+          tmdbId: Value(item.tmdbId),
+          mediaType: Value(item.mediaType.name),
+          titleIt: Value(item.titleIt),
+          titleEn: Value(item.titleEn),
+          posterPath: Value(item.posterPath),
+          backdropPath: Value(item.backdropPath),
+          runtimeMinutes: Value(item.runtimeMinutes),
+          genres: Value(item.genres != null ? jsonEncode(item.genres) : null),
+          castMembers: Value(
+            item.castMembers != null ? jsonEncode(item.castMembers) : null,
+          ),
+          releaseDate: Value(item.releaseDate),
+          voteAverage: Value(item.voteAverage),
+          updatedAt: Value(item.updatedAt),
+        ),
+      );
     } catch (_) {}
 
     // Save to Remote Cache (Supabase)
@@ -135,18 +146,28 @@ class MediaRepository {
   MediaItem mapToMediaItem(CachedMediaItem data) {
     return MediaItem(
       tmdbId: data.tmdbId,
-      mediaType: MediaKind.values.firstWhere((e) => e.name == data.mediaType, orElse: () => MediaKind.movie),
-      titleIt: data.titleIt == null || data.titleIt!.trim().isEmpty ? null : data.titleIt,
-      titleEn: data.titleEn == null || data.titleEn!.trim().isEmpty ? null : data.titleEn,
+      mediaType: MediaKind.values.firstWhere(
+        (e) => e.name == data.mediaType,
+        orElse: () => MediaKind.movie,
+      ),
+      titleIt: data.titleIt == null || data.titleIt!.trim().isEmpty
+          ? null
+          : data.titleIt,
+      titleEn: data.titleEn == null || data.titleEn!.trim().isEmpty
+          ? null
+          : data.titleEn,
       posterPath: data.posterPath,
       backdropPath: data.backdropPath,
       runtimeMinutes: data.runtimeMinutes,
-      genres: data.genres != null ? (jsonDecode(data.genres!) as List).cast<int>() : null,
-      castMembers: data.castMembers != null ? (jsonDecode(data.castMembers!) as List).cast<int>() : null,
+      genres: data.genres != null
+          ? (jsonDecode(data.genres!) as List).cast<int>()
+          : null,
+      castMembers: data.castMembers != null
+          ? (jsonDecode(data.castMembers!) as List).cast<int>()
+          : null,
       releaseDate: data.releaseDate,
       voteAverage: data.voteAverage,
       updatedAt: data.updatedAt,
     );
   }
-
 }
