@@ -13,6 +13,7 @@ class MediaItem {
   final DateTime? releaseDate;
   final double? voteAverage;
   final DateTime updatedAt;
+  final String? overview;
 
   MediaItem({
     required this.tmdbId,
@@ -27,6 +28,7 @@ class MediaItem {
     this.releaseDate,
     this.voteAverage,
     required this.updatedAt,
+    this.overview,
   });
 
   /// Returns the localized title based on current language preference,
@@ -130,6 +132,39 @@ class MediaItem {
       ),
       voteAverage: (details['vote_average'] as num?)?.toDouble(),
       updatedAt: DateTime.now(),
+      overview: details['overview'] as String?,
+    );
+  }
+
+  factory MediaItem.fromTmdbMap(Map<String, dynamic> map) {
+    final mediaTypeString = map['media_type'] as String?;
+    final MediaKind type;
+    if (mediaTypeString != null) {
+      type = MediaItem.fromString(mediaTypeString);
+    } else {
+      type = (map['first_air_date'] != null || map['name'] != null)
+          ? MediaKind.tv
+          : MediaKind.movie;
+    }
+
+    final titleIt = extractTitleFromTmdb(map, 'it');
+    final titleEn = extractTitleFromTmdb(map, 'en');
+
+    return MediaItem(
+      tmdbId: int.parse(map['id'].toString()),
+      mediaType: type,
+      titleIt: titleIt,
+      titleEn: titleEn,
+      posterPath: map['poster_path'] as String?,
+      backdropPath: map['backdrop_path'] as String?,
+      releaseDate: DateTime.tryParse(
+        (map['release_date'] ?? map['first_air_date'] ?? '').toString(),
+      ),
+      voteAverage: (map['vote_average'] as num?)?.toDouble(),
+      updatedAt: map['updated_at'] != null
+          ? DateTime.parse(map['updated_at'].toString())
+          : DateTime(2000),
+      overview: map['overview'] as String?,
     );
   }
 
@@ -159,6 +194,7 @@ class MediaItem {
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'] as String)
           : DateTime.now(),
+      overview: json['overview'] as String?,
     );
   }
 
@@ -176,6 +212,7 @@ class MediaItem {
       'release_date': releaseDate?.toIso8601String().split('T').first,
       'vote_average': voteAverage,
       'updated_at': updatedAt.toIso8601String(),
+      'overview': overview,
     };
   }
 

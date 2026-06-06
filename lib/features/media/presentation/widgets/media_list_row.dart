@@ -11,7 +11,7 @@ import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart'
 
 class MediaListRow extends ConsumerWidget {
   final String title;
-  final List<dynamic> items;
+  final List<MediaItem> items;
   final EdgeInsets? padding;
   final IconData? icon;
   final CarouselTheme theme;
@@ -31,26 +31,7 @@ class MediaListRow extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final mediaItems = items.map((item) {
-      final mapItem = item as Map<String, dynamic>;
-      return MediaItem(
-        tmdbId: mapItem['id'] as int,
-        mediaType:
-            (mapItem['media_type'] == 'tv' ||
-                mapItem['first_air_date'] != null ||
-                mapItem['name'] != null)
-            ? MediaKind.tv
-            : MediaKind.movie,
-        titleEn: mapItem['title'] ?? mapItem['name'] ?? 'Unknown',
-        posterPath: mapItem['poster_path'],
-        backdropPath: mapItem['backdrop_path'],
-        releaseDate: DateTime.tryParse(
-          mapItem['release_date'] ?? mapItem['first_air_date'] ?? '',
-        ),
-        voteAverage: (mapItem['vote_average'] as num?)?.toDouble(),
-        updatedAt: DateTime.now(),
-      );
-    }).toList();
+    final mediaItems = items;
 
     final appLanguage = ref.watch(settingsProvider).appLanguage;
 

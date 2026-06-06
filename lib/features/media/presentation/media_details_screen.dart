@@ -123,7 +123,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         final collection = details['belongs_to_collection'];
         final recommendations =
             details['recommendations']?['results'] as List? ?? [];
-        final moreLikeThisList = [...recommendations];
+        final moreLikeThisList = recommendations
+            .map((item) => MediaItem.fromTmdbMap(Map<String, dynamic>.from(item as Map)))
+            .toList();
 
         // Auto-select season based on history
         ref.listen(mediaWatchHistoryProvider(widget.mediaId), (previous, next) {

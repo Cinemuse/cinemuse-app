@@ -14,7 +14,7 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class MediaRow extends ConsumerWidget {
   final String title;
-  final AsyncValue<List<Map<String, dynamic>>> asyncData;
+  final AsyncValue<List<MediaItem>> asyncData;
   final bool skipFirst;
   final VoidCallback? onHeaderTap;
   final int? limit;
@@ -87,27 +87,7 @@ class MediaRow extends ConsumerWidget {
       );
     }
 
-    final mediaItems = list.map((item) {
-      return MediaItem(
-        tmdbId: item['id'] as int,
-        mediaType:
-            (item['media_type'] == 'tv' ||
-                item['first_air_date'] != null ||
-                item['name'] != null)
-            ? MediaKind.tv
-            : MediaKind.movie,
-        titleEn: item['title'] ?? item['name'] ?? 'Unknown',
-        posterPath: item['poster_path'],
-        backdropPath: item['backdrop_path'],
-        releaseDate: DateTime.tryParse(
-          item['release_date'] ?? item['first_air_date'] ?? '',
-        ),
-        voteAverage: (item['vote_average'] as num?)?.toDouble(),
-        updatedAt: item['updated_at'] != null
-            ? DateTime.parse(item['updated_at'])
-            : DateTime(2000), // Stable dummy
-      );
-    }).toList();
+    final mediaItems = list;
 
     final appLanguage = ref.watch(settingsProvider).appLanguage;
 

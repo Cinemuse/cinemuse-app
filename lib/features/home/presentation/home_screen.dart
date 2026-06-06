@@ -159,22 +159,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         children: [
                           const SizedBox(height: 20),
                           ...pinnedLists.map((list) {
-                            final mappedItems = list.items.map((item) {
-                              return {
-                                'id': item.tmdbId,
-                                'media_type': item.mediaType.name,
-                                'title': item.media?.titleEn ?? item.meta['title'] ?? 'Unknown',
-                                'name': item.media?.titleEn ?? item.meta['title'] ?? 'Unknown',
-                                'poster_path': item.media?.posterPath ?? item.meta['poster_path'],
-                                'backdrop_path': item.media?.backdropPath ?? item.meta['backdrop_path'],
-                                'release_date': item.media?.releaseDate?.toIso8601String() ?? 
-                                                (item.meta['year'] != null ? '${item.meta['year']}-01-01' : null),
-                                'first_air_date': item.media?.releaseDate?.toIso8601String() ?? 
-                                                  (item.meta['year'] != null ? '${item.meta['year']}-01-01' : null),
-                                'vote_average': item.media?.voteAverage ?? item.meta['rating'],
-                                'updated_at': item.media?.updatedAt.toIso8601String(),
-                              };
-                            }).toList();
+                            final mediaItems = list.items.map((item) => item.toMediaItem()).toList();
 
                             final String title;
                             if (list.type == ListType.watchlist) {
@@ -192,7 +177,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   policy: OrderedTraversalPolicy(),
                                   child: MediaRow(
                                     title: title,
-                                    asyncData: AsyncValue.data(mappedItems),
+                                    asyncData: AsyncValue.data(mediaItems),
                                     onHeaderTap: () => _showListDetails(context, list),
                                   ),
                                 ),

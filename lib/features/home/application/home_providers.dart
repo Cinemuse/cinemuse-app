@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:cinemuse_app/features/home/application/sport_schedule_scraper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,21 +19,21 @@ final sportScheduleProvider = FutureProvider<List<SportTvEvent>>((ref) async {
   return events;
 });
 
-final trendingProvider = FutureProvider<List<Map<String, dynamic>>>((
+final trendingProvider = FutureProvider<List<MediaItem>>((
   ref,
 ) async {
   final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getTrending();
 });
 
-final popularMoviesProvider = FutureProvider<List<Map<String, dynamic>>>((
+final popularMoviesProvider = FutureProvider<List<MediaItem>>((
   ref,
 ) async {
   final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getPopularMovies();
 });
 
-final popularSeriesProvider = FutureProvider<List<Map<String, dynamic>>>((
+final popularSeriesProvider = FutureProvider<List<MediaItem>>((
   ref,
 ) async {
   final tmdbService = ref.watch(tmdbServiceProvider);

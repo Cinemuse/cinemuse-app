@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:cinemuse_app/core/application/locale_service.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -99,30 +100,38 @@ class TmdbService {
   }
 
   // Trending & Popular
-  Future<List<Map<String, dynamic>>> getTrending() async {
+  Future<List<MediaItem>> getTrending() async {
     final res = await _dio.get(
       '$_baseUrl/trending/all/week',
       queryParameters: {'api_key': _apiKey, 'language': _language},
     );
-    return List<Map<String, dynamic>>.from(res.data['results']);
+    final results = List<Map<String, dynamic>>.from(res.data['results']);
+    return results
+        .where((item) => item['media_type'] != 'person')
+        .map((item) => MediaItem.fromTmdbMap(item))
+        .toList();
   }
 
-  Future<List<Map<String, dynamic>>> getPopularMovies() async {
+  Future<List<MediaItem>> getPopularMovies() async {
     final res = await _dio.get(
       '$_baseUrl/movie/popular',
       queryParameters: {'api_key': _apiKey, 'language': _language},
     );
     final results = List<Map<String, dynamic>>.from(res.data['results']);
-    return results.map((item) => {...item, 'media_type': 'movie'}).toList();
+    return results
+        .map((item) => MediaItem.fromTmdbMap({...item, 'media_type': 'movie'}))
+        .toList();
   }
 
-  Future<List<Map<String, dynamic>>> getPopularSeries() async {
+  Future<List<MediaItem>> getPopularSeries() async {
     final res = await _dio.get(
       '$_baseUrl/tv/popular',
       queryParameters: {'api_key': _apiKey, 'language': _language},
     );
     final results = List<Map<String, dynamic>>.from(res.data['results']);
-    return results.map((item) => {...item, 'media_type': 'tv'}).toList();
+    return results
+        .map((item) => MediaItem.fromTmdbMap({...item, 'media_type': 'tv'}))
+        .toList();
   }
 
   Future<List<Map<String, dynamic>>> searchMulti(
@@ -141,7 +150,6 @@ class TmdbService {
           'page': page,
         },
       );
-      // Filter out 'person' results for now
       final results = List<Map<String, dynamic>>.from(res.data['results']);
       return results;
     } catch (e) {

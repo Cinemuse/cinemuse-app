@@ -3,9 +3,10 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
 class HeroSection extends StatelessWidget {
-  final Map<String, dynamic>? media;
+  final MediaItem? media;
 
   const HeroSection({super.key, this.media});
 
@@ -14,12 +15,13 @@ class HeroSection extends StatelessWidget {
     if (media == null) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context)!;
 
-    final backdrop = media!['backdrop_path'];
+    final backdrop = media!.backdropPath;
     final imageUrl = backdrop != null
         ? "https://image.tmdb.org/t/p/original$backdrop"
         : null;
-    final title = media!['title'] ?? media!['name'] ?? 'Unknown';
-    final overview = media!['overview'] ?? '';
+    final locale = Localizations.localeOf(context);
+    final title = media!.getLocalizedTitle(locale.languageCode) ?? 'Unknown';
+    final overview = media!.overview ?? '';
 
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.75, // 75% of screen height
@@ -154,8 +156,8 @@ class HeroSection extends StatelessWidget {
                           Navigator.of(context, rootNavigator: true).push(
                             MaterialPageRoute(
                               builder: (_) => VideoPlayerScreen(
-                                queryId: media!['id'].toString(),
-                                type: media!['media_type'] ?? 'movie',
+                                queryId: media!.tmdbId.toString(),
+                                type: media!.mediaType.name,
                               ),
                             ),
                           );
@@ -187,8 +189,8 @@ class HeroSection extends StatelessWidget {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => MediaDetailsScreen(
-                                mediaId: media!['id'].toString(),
-                                mediaType: media!['media_type'] ?? 'movie',
+                                mediaId: media!.tmdbId.toString(),
+                                mediaType: media!.mediaType.name,
                               ),
                             ),
                           );

@@ -90,4 +90,31 @@ class UserListItem {
       media: mediaJson != null ? MediaItem.fromJson(mediaJson) : null,
     );
   }
+
+  MediaItem toMediaItem() {
+    if (media != null) return media!;
+
+    // Parse rating/vote_average
+    final ratingNum = meta['rating'] as num?;
+    final rating = ratingNum?.toDouble();
+
+    // Parse release date/year
+    DateTime? parsedReleaseDate;
+    final year = meta['year'];
+    if (year != null) {
+      parsedReleaseDate = DateTime.tryParse('$year-01-01');
+    }
+
+    return MediaItem(
+      tmdbId: tmdbId,
+      mediaType: mediaType,
+      titleEn: meta['title']?.toString() ?? 'Unknown',
+      titleIt: meta['title']?.toString(), // Fallback
+      posterPath: meta['poster_path']?.toString(),
+      backdropPath: meta['backdrop_path']?.toString(),
+      releaseDate: parsedReleaseDate,
+      voteAverage: rating,
+      updatedAt: addedAt,
+    );
+  }
 }

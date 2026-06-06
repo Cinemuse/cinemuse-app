@@ -8,6 +8,7 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/shared/widgets/error_view_state.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -381,34 +382,37 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
         }
 
         final item = state.results[index];
-        final title = item['title'] ?? item['name'] ?? 'Unknown';
         final isPerson = item['media_type'] == 'person';
-        final posterPath = isPerson
-            ? item['profile_path']
-            : item['poster_path'];
-        final releaseDate = isPerson
-            ? item['known_for_department']
-            : (item['release_date'] ?? item['first_air_date']);
-        final rating = isPerson
-            ? null
-            : (item['vote_average'] as num?)?.toDouble();
-        final tmdbId = item['id'] as int;
-        final mediaType =
-            (item['media_type'] == 'tv' ||
-                item['first_air_date'] != null ||
-                item['name'] != null)
-            ? MediaKind.tv
-            : MediaKind.movie;
 
-        return MediaCard(
-          title: title,
-          posterPath: posterPath,
-          releaseDate: releaseDate,
-          rating: rating,
-          tmdbId: tmdbId,
-          mediaType: isPerson ? null : mediaType,
-          onTap: () => _onMediaTap(item),
-        );
+        if (isPerson) {
+          final title = item['name'] ?? 'Unknown';
+          final posterPath = item['profile_path'] as String?;
+          final releaseDate = item['known_for_department'] as String?;
+          final tmdbId = item['id'] as int;
+
+          return MediaCard(
+            title: title,
+            posterPath: posterPath,
+            releaseDate: releaseDate,
+            rating: null,
+            tmdbId: tmdbId,
+            mediaType: null,
+            onTap: () => _onMediaTap(item),
+          );
+        } else {
+          final mediaItem = MediaItem.fromTmdbMap(item);
+          final appLanguage = ref.watch(settingsProvider).appLanguage;
+
+          return MediaCard(
+            title: mediaItem.getLocalizedTitle(appLanguage) ?? 'Unknown',
+            posterPath: mediaItem.posterPath,
+            releaseDate: mediaItem.releaseDate?.year.toString(),
+            rating: mediaItem.voteAverage,
+            tmdbId: mediaItem.tmdbId,
+            mediaType: mediaItem.mediaType,
+            onTap: () => _onMediaTap(item),
+          );
+        }
       },
     );
   }
