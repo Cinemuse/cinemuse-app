@@ -145,6 +145,35 @@
   "detailsShowLess": "Show less",
   "detailsTooltipWatched": "Watched",
   "detailsTooltipMarkWatched": "Mark as Watched (Long press for date)",
+  "detailsGallery": "Gallery",
+  "detailsGallerySubtitle": "Backdrops, posters, and logos",
+  "detailsBackdropsCount": "{count, plural, =1{1 Backdrop} other{{count} Backdrops}}",
+  "@detailsBackdropsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsPostersCount": "{count, plural, =1{1 Poster} other{{count} Posters}}",
+  "@detailsPostersCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsLogosCount": "{count, plural, =1{1 Logo} other{{count} Logos}}",
+  "@detailsLogosCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsNoImages": "No images available",
+  "detailsBackdrops": "Backdrops",
+  "detailsPosters": "Posters",
+  "detailsLogos": "Logos",
+  "detailsGalleryPrevious": "Previous Image",
+  "detailsGalleryNext": "Next Image",
+  "detailsGalleryDownload": "Download Image",
+  "detailsGalleryDownloadSuccess": "Image saved successfully",
+  "detailsGalleryDownloadFailed": "Failed to download image",
   
   "personBiography": "Biography",
   "personKnownFor": "Known For",

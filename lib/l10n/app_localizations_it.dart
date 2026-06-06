@@ -473,6 +473,73 @@ class AppLocalizationsIt extends AppLocalizations {
       'Segna come Visto (Pressione prolungata per la data)';
 
   @override
+  String get detailsGallery => 'Galleria';
+
+  @override
+  String get detailsGallerySubtitle => 'Sfondi, poster e loghi';
+
+  @override
+  String detailsBackdropsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Sfondi',
+      one: '1 Sfondo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String detailsPostersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Poster',
+      one: '1 Poster',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String detailsLogosCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Loghi',
+      one: '1 Logo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get detailsNoImages => 'Nessuna immagine disponibile';
+
+  @override
+  String get detailsBackdrops => 'Sfondi';
+
+  @override
+  String get detailsPosters => 'Poster';
+
+  @override
+  String get detailsLogos => 'Loghi';
+
+  @override
+  String get detailsGalleryPrevious => 'Immagine precedente';
+
+  @override
+  String get detailsGalleryNext => 'Immagine successiva';
+
+  @override
+  String get detailsGalleryDownload => 'Scarica immagine';
+
+  @override
+  String get detailsGalleryDownloadSuccess => 'Immagine salvata con successo';
+
+  @override
+  String get detailsGalleryDownloadFailed =>
+      'Impossibile scaricare l\'immagine';
+
+  @override
   String get personBiography => 'Biografia';
 
   @override

@@ -50,7 +50,8 @@ class TmdbService {
           'api_key': _apiKey,
           'language': _language,
           'append_to_response':
-              'credits,videos,similar,recommendations,external_ids,translations,reviews',
+              'credits,videos,similar,recommendations,external_ids,translations,reviews,images',
+          'include_image_language': 'en,it,null',
         },
       );
       return res.data;

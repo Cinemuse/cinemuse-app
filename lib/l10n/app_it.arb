@@ -145,6 +145,35 @@
   "detailsShowLess": "Mostra meno",
   "detailsTooltipWatched": "Visto",
   "detailsTooltipMarkWatched": "Segna come Visto (Pressione prolungata per la data)",
+  "detailsGallery": "Galleria",
+  "detailsGallerySubtitle": "Sfondi, poster e loghi",
+  "detailsBackdropsCount": "{count, plural, =1{1 Sfondo} other{{count} Sfondi}}",
+  "@detailsBackdropsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsPostersCount": "{count, plural, =1{1 Poster} other{{count} Poster}}",
+  "@detailsPostersCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsLogosCount": "{count, plural, =1{1 Logo} other{{count} Loghi}}",
+  "@detailsLogosCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsNoImages": "Nessuna immagine disponibile",
+  "detailsBackdrops": "Sfondi",
+  "detailsPosters": "Poster",
+  "detailsLogos": "Loghi",
+  "detailsGalleryPrevious": "Immagine precedente",
+  "detailsGalleryNext": "Immagine successiva",
+  "detailsGalleryDownload": "Scarica immagine",
+  "detailsGalleryDownloadSuccess": "Immagine salvata con successo",
+  "detailsGalleryDownloadFailed": "Impossibile scaricare l'immagine",
   
   "personBiography": "Biografia",
   "personKnownFor": "Conosciuto per",

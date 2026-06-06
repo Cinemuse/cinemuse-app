@@ -28,6 +28,7 @@ import 'package:cinemuse_app/shared/widgets/offline_placeholder.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/collection_tile.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/media_list_row.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/gallery_box.dart';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -335,6 +336,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                         if (_activeTab == DetailsTab.cast) ...[
                           CreativeVisionBox(details: details, isSeries: isTV),
                           const SizedBox(height: 24),
+                          GalleryBox(details: details),
+                          const SizedBox(height: 24),
                           CastRow(credits: details['credits']),
                           const SizedBox(height: 24),
                           ProductionDNA(
@@ -439,7 +442,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                           children: [
                             CreativeVisionBox(details: details, isSeries: isTV),
                             const SizedBox(height: 24),
-
+                            GalleryBox(details: details),
+                            const SizedBox(height: 24),
                             VerdictBox(
                               reviews: details['reviews']?['results'] ?? [],
                               onShowUserReviewModal: () {},

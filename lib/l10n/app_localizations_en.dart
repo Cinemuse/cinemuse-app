@@ -473,6 +473,72 @@ class AppLocalizationsEn extends AppLocalizations {
       'Mark as Watched (Long press for date)';
 
   @override
+  String get detailsGallery => 'Gallery';
+
+  @override
+  String get detailsGallerySubtitle => 'Backdrops, posters, and logos';
+
+  @override
+  String detailsBackdropsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Backdrops',
+      one: '1 Backdrop',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String detailsPostersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Posters',
+      one: '1 Poster',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String detailsLogosCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Logos',
+      one: '1 Logo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get detailsNoImages => 'No images available';
+
+  @override
+  String get detailsBackdrops => 'Backdrops';
+
+  @override
+  String get detailsPosters => 'Posters';
+
+  @override
+  String get detailsLogos => 'Logos';
+
+  @override
+  String get detailsGalleryPrevious => 'Previous Image';
+
+  @override
+  String get detailsGalleryNext => 'Next Image';
+
+  @override
+  String get detailsGalleryDownload => 'Download Image';
+
+  @override
+  String get detailsGalleryDownloadSuccess => 'Image saved successfully';
+
+  @override
+  String get detailsGalleryDownloadFailed => 'Failed to download image';
+
+  @override
   String get personBiography => 'Biography';
 
   @override

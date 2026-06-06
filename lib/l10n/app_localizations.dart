@@ -962,6 +962,90 @@ abstract class AppLocalizations {
   /// **'Mark as Watched (Long press for date)'**
   String get detailsTooltipMarkWatched;
 
+  /// No description provided for @detailsGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get detailsGallery;
+
+  /// No description provided for @detailsGallerySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backdrops, posters, and logos'**
+  String get detailsGallerySubtitle;
+
+  /// No description provided for @detailsBackdropsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 Backdrop} other{{count} Backdrops}}'**
+  String detailsBackdropsCount(int count);
+
+  /// No description provided for @detailsPostersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 Poster} other{{count} Posters}}'**
+  String detailsPostersCount(int count);
+
+  /// No description provided for @detailsLogosCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 Logo} other{{count} Logos}}'**
+  String detailsLogosCount(int count);
+
+  /// No description provided for @detailsNoImages.
+  ///
+  /// In en, this message translates to:
+  /// **'No images available'**
+  String get detailsNoImages;
+
+  /// No description provided for @detailsBackdrops.
+  ///
+  /// In en, this message translates to:
+  /// **'Backdrops'**
+  String get detailsBackdrops;
+
+  /// No description provided for @detailsPosters.
+  ///
+  /// In en, this message translates to:
+  /// **'Posters'**
+  String get detailsPosters;
+
+  /// No description provided for @detailsLogos.
+  ///
+  /// In en, this message translates to:
+  /// **'Logos'**
+  String get detailsLogos;
+
+  /// No description provided for @detailsGalleryPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Image'**
+  String get detailsGalleryPrevious;
+
+  /// No description provided for @detailsGalleryNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Image'**
+  String get detailsGalleryNext;
+
+  /// No description provided for @detailsGalleryDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Image'**
+  String get detailsGalleryDownload;
+
+  /// No description provided for @detailsGalleryDownloadSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Image saved successfully'**
+  String get detailsGalleryDownloadSuccess;
+
+  /// No description provided for @detailsGalleryDownloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to download image'**
+  String get detailsGalleryDownloadFailed;
+
   /// No description provided for @personBiography.
   ///
   /// In en, this message translates to:
