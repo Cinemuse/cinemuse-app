@@ -170,6 +170,12 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get commonDelete;
 
+  /// No description provided for @commonClearAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All'**
+  String get commonClearAll;
+
   /// No description provided for @commonUndo.
   ///
   /// In en, this message translates to:
@@ -229,6 +235,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search movies, series, people...'**
   String get searchPlaceholder;
+
+  /// No description provided for @searchRecentSearches.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Searches'**
+  String get searchRecentSearches;
 
   /// No description provided for @searchNoResults.
   ///

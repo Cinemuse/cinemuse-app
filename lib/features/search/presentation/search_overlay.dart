@@ -57,6 +57,8 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
       _searchController.text = currentQuery;
     }
 
+    _searchController.addListener(_onTextChanged);
+
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
 
@@ -74,8 +76,13 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
     });
   }
 
+  void _onTextChanged() {
+    setState(() {});
+  }
+
   @override
   void dispose() {
+    _searchController.removeListener(_onTextChanged);
     _searchController.dispose();
     _scrollController.dispose();
     _animationController.dispose();
@@ -97,6 +104,11 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
   }
 
   void _onMediaTap(Map<String, dynamic> media) {
+    final query = _searchController.text.trim();
+    if (query.isNotEmpty) {
+      ref.read(searchProvider.notifier).addToHistory(query);
+    }
+
     final type = media['media_type'] ?? media['type'] ?? 'movie';
     final id = media['id'].toString();
 
@@ -188,18 +200,35 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
                             ),
                             child: Row(
                               children: [
-                                const Icon(
-                                  LucideIcons.search,
-                                  color: AppTheme.textMuted,
-                                  size: 24,
+                                IconButton(
+                                  mouseCursor: SystemMouseCursors.click,
+                                  icon: const Icon(
+                                    LucideIcons.arrowLeft,
+                                    color: AppTheme.textMuted,
+                                    size: 24,
+                                  ),
+                                  onPressed: _handleClose,
+                                  tooltip: l10n.commonCancel,
                                 ),
-                                const SizedBox(width: 20),
+                                const SizedBox(width: 8),
                                 Expanded(
                                   child: TextField(
                                     controller: _searchController,
                                     enabled: !isOffline,
                                     focusNode: _focusNode,
                                     cursorColor: Colors.white,
+                                    textInputAction: TextInputAction.search,
+                                    onSubmitted: (val) {
+                                      final query = val.trim();
+                                      if (query.isNotEmpty) {
+                                        ref
+                                            .read(searchProvider.notifier)
+                                            .addToHistory(query);
+                                        ref
+                                            .read(searchProvider.notifier)
+                                            .search(query);
+                                      }
+                                    },
                                     style: TextStyle(
                                       fontSize: 20,
                                       color: isOffline
@@ -230,6 +259,22 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
                                     },
                                   ),
                                 ),
+                                if (_searchController.text.isNotEmpty)
+                                  IconButton(
+                                    mouseCursor: SystemMouseCursors.click,
+                                    icon: const Icon(
+                                      LucideIcons.x,
+                                      color: AppTheme.textMuted,
+                                      size: 18,
+                                    ),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      ref
+                                          .read(searchProvider.notifier)
+                                          .onQueryChanged('');
+                                    },
+                                    tooltip: l10n.commonClearAll,
+                                  ),
                                 if (searchState.status == SearchStatus.loading)
                                   const SizedBox(
                                     width: 20,
@@ -239,23 +284,6 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
                                       color: AppTheme.accent,
                                     ),
                                   ),
-
-                                const SizedBox(width: 12),
-                                Container(
-                                  width: 1,
-                                  height: 24,
-                                  color: Colors.white.withValues(alpha: 0.1),
-                                ),
-                                const SizedBox(width: 12),
-
-                                IconButton(
-                                  icon: const Icon(
-                                    LucideIcons.x,
-                                    color: AppTheme.textMuted,
-                                  ),
-                                  onPressed: _handleClose,
-                                  tooltip: l10n.commonCancel,
-                                ),
                               ],
                             ),
                           ),
@@ -315,29 +343,8 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
       );
     }
 
-    if (state.query.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(LucideIcons.film, size: 24, color: Colors.white24),
-                SizedBox(width: 16),
-                Icon(LucideIcons.tv, size: 24, color: Colors.white24),
-                SizedBox(width: 16),
-                Icon(LucideIcons.user, size: 24, color: Colors.white24),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "Start typing to search...",
-              style: TextStyle(color: AppTheme.textMuted),
-            ),
-          ],
-        ),
-      );
+    if (_searchController.text.trim().isEmpty) {
+      return _buildSearchHistory(state, l10n);
     }
 
     if (state.status == SearchStatus.error) {
@@ -415,5 +422,142 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
         }
       },
     );
+  }
+
+  Widget _buildSearchHistory(SearchState state, AppLocalizations l10n) {
+    final history = state.searchHistory;
+    if (history.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(LucideIcons.film, size: 24, color: Colors.white24),
+                SizedBox(width: 16),
+                Icon(LucideIcons.tv, size: 24, color: Colors.white24),
+                SizedBox(width: 16),
+                Icon(LucideIcons.user, size: 24, color: Colors.white24),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.searchEmptyStateTitle,
+              style: const TextStyle(color: AppTheme.textMuted),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 20, right: 12, top: 16, bottom: 0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                l10n.searchRecentSearches.toUpperCase(),
+                style: const TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.accent,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  enabledMouseCursor: SystemMouseCursors.click,
+                ),
+                child: Text(
+                  l10n.commonClearAll,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+                onPressed: () {
+                  ref.read(searchProvider.notifier).clearHistory();
+                },
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+            itemCount: history.length,
+            itemBuilder: (context, index) {
+              final query = history[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    hoverColor: Colors.white.withValues(alpha: 0.05),
+                    splashColor: Colors.white.withValues(alpha: 0.1),
+                    highlightColor: Colors.white.withValues(alpha: 0.05),
+                    mouseCursor: SystemMouseCursors.click,
+                    onTap: () => _onHistoryItemTap(query),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          LucideIcons.clock,
+                          size: 16,
+                          color: AppTheme.textMuted,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            query,
+                            style: const TextStyle(
+                              color: AppTheme.textWhite,
+                              fontSize: 15,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        IconButton(
+                          mouseCursor: SystemMouseCursors.click,
+                          icon: const Icon(
+                            LucideIcons.x,
+                            size: 18,
+                            color: AppTheme.textMuted,
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                          onPressed: () {
+                            ref
+                                .read(searchProvider.notifier)
+                                .removeFromHistory(query);
+                          },
+                          tooltip: l10n.commonDelete,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _onHistoryItemTap(String query) {
+    _searchController.text = query;
+    _searchController.selection = TextSelection.fromPosition(
+      TextPosition(offset: query.length),
+    );
+    ref.read(searchProvider.notifier).search(query);
+    _focusNode.requestFocus();
   }
 }

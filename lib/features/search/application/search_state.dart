@@ -10,6 +10,7 @@ class SearchState {
   final int page;
   final bool hasMore;
   final String? errorMessage;
+  final List<String> searchHistory;
 
   const SearchState({
     this.query = '',
@@ -18,6 +19,7 @@ class SearchState {
     this.page = 1,
     this.hasMore = true,
     this.errorMessage,
+    this.searchHistory = const [],
   });
 
   SearchState copyWith({
@@ -27,6 +29,7 @@ class SearchState {
     int? page,
     bool? hasMore,
     String? errorMessage,
+    List<String>? searchHistory,
   }) {
     return SearchState(
       query: query ?? this.query,
@@ -35,6 +38,7 @@ class SearchState {
       page: page ?? this.page,
       hasMore: hasMore ?? this.hasMore,
       errorMessage: errorMessage ?? this.errorMessage,
+      searchHistory: searchHistory ?? this.searchHistory,
     );
   }
 
@@ -48,7 +52,8 @@ class SearchState {
         other.status == status &&
         other.page == page &&
         other.hasMore == hasMore &&
-        other.errorMessage == errorMessage;
+        other.errorMessage == errorMessage &&
+        listEquals(other.searchHistory, searchHistory);
   }
 
   @override
@@ -58,6 +63,7 @@ class SearchState {
         status.hashCode ^
         page.hashCode ^
         hasMore.hashCode ^
-        errorMessage.hashCode;
+        errorMessage.hashCode ^
+        searchHistory.hashCode;
   }
 }

@@ -45,6 +45,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get commonDelete => 'Elimina';
 
   @override
+  String get commonClearAll => 'Cancella tutto';
+
+  @override
   String get commonUndo => 'Annulla';
 
   @override
@@ -74,6 +77,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get searchPlaceholder => 'Cerca film, serie, persone...';
+
+  @override
+  String get searchRecentSearches => 'Ricerche Recenti';
 
   @override
   String searchNoResults(Object query) {

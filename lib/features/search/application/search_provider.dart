@@ -4,6 +4,7 @@ import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/error/error_service.dart';
 import 'package:cinemuse_app/features/search/application/search_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final searchProvider = StateNotifierProvider<SearchNotifier, SearchState>((
   ref,
@@ -17,8 +18,66 @@ class SearchNotifier extends StateNotifier<SearchState> {
   TmdbService get _tmdbService => _ref.read(tmdbServiceProvider);
   Timer? _debounce;
   bool _isLoadingMore = false;
+  static const String _historyKey = 'global_search_history';
 
-  SearchNotifier(this._ref) : super(const SearchState());
+  SearchNotifier(this._ref) : super(const SearchState()) {
+    _loadSearchHistory();
+  }
+
+  Future<void> _loadSearchHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final history = prefs.getStringList(_historyKey) ?? [];
+      state = state.copyWith(searchHistory: history);
+    } catch (e) {
+      // Fail silently
+    }
+  }
+
+  Future<void> addToHistory(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return;
+
+    final currentHistory = List<String>.from(state.searchHistory);
+    currentHistory.remove(trimmed);
+    currentHistory.insert(0, trimmed);
+
+    if (currentHistory.length > 20) {
+      currentHistory.removeLast();
+    }
+
+    state = state.copyWith(searchHistory: currentHistory);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_historyKey, currentHistory);
+    } catch (e) {
+      // Fail silently
+    }
+  }
+
+  Future<void> removeFromHistory(String query) async {
+    final currentHistory = List<String>.from(state.searchHistory);
+    if (currentHistory.remove(query)) {
+      state = state.copyWith(searchHistory: currentHistory);
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setStringList(_historyKey, currentHistory);
+      } catch (e) {
+        // Fail silently
+      }
+    }
+  }
+
+  Future<void> clearHistory() async {
+    state = state.copyWith(searchHistory: const []);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_historyKey);
+    } catch (e) {
+      // Fail silently
+    }
+  }
 
   @override
   void dispose() {
@@ -35,7 +94,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
 
   Future<void> search(String query) async {
     if (query.trim().isEmpty) {
-      state = const SearchState();
+      state = SearchState(searchHistory: state.searchHistory);
       return;
     }
 
@@ -76,8 +135,9 @@ class SearchNotifier extends StateNotifier<SearchState> {
   }
 
   Future<void> loadMore() async {
-    if (_isLoadingMore || !state.hasMore || state.status != SearchStatus.loaded)
+    if (_isLoadingMore || !state.hasMore || state.status != SearchStatus.loaded) {
       return;
+    }
 
     _isLoadingMore = true;
     final nextPage = state.page + 1;
@@ -113,6 +173,6 @@ class SearchNotifier extends StateNotifier<SearchState> {
   }
 
   void clear() {
-    state = const SearchState();
+    state = SearchState(searchHistory: state.searchHistory);
   }
 }
