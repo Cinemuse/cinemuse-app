@@ -12,6 +12,7 @@ class PosterCarouselRow extends StatelessWidget {
   final double itemWidth;
   final EdgeInsets padding;
   final ScrollController? controller;
+  final VoidCallback? onHeaderTap;
 
   const PosterCarouselRow({
     super.key,
@@ -24,6 +25,7 @@ class PosterCarouselRow extends StatelessWidget {
     this.itemWidth = 200,
     this.padding = const EdgeInsets.symmetric(horizontal: 24),
     this.controller,
+    this.onHeaderTap,
   });
 
   @override
@@ -33,6 +35,7 @@ class PosterCarouselRow extends StatelessWidget {
       icon: icon,
       theme: theme,
       controller: controller,
+      onHeaderTap: onHeaderTap,
       emptyBuilder:
           emptyBuilder ??
           (context) => SizedBox(

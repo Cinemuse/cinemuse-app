@@ -1470,4 +1470,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get collectionSubtitle => 'Movie Collection';
+
+  @override
+  String get listPinToHome => 'Pin to Home';
+
+  @override
+  String get listUnpinFromHome => 'Unpin from Home';
+
+  @override
+  String get listPinnedSuccess => 'Pinned to Home';
+
+  @override
+  String get listUnpinnedSuccess => 'Unpinned from Home';
 }

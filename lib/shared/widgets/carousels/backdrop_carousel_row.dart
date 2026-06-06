@@ -13,6 +13,7 @@ class BackdropCarouselRow extends StatelessWidget {
   final EdgeInsets padding;
   final ScrollController? controller;
   final double spacing;
+  final VoidCallback? onHeaderTap;
 
   const BackdropCarouselRow({
     super.key,
@@ -26,6 +27,7 @@ class BackdropCarouselRow extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 24),
     this.controller,
     this.spacing = 16.0,
+    this.onHeaderTap,
   });
 
   @override
@@ -35,6 +37,7 @@ class BackdropCarouselRow extends StatelessWidget {
       icon: icon,
       theme: theme,
       controller: controller,
+      onHeaderTap: onHeaderTap,
       emptyBuilder:
           emptyBuilder ??
           (context) => SizedBox(

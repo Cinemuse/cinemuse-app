@@ -12,6 +12,10 @@ import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/shared/widgets/offline_banner.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
+import 'package:cinemuse_app/features/profile/domain/user_list.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_sheet.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -21,6 +25,47 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  void _showListDetails(BuildContext context, UserList list) {
+    final l10n = AppLocalizations.of(context)!;
+    final isSystemList =
+        list.type == ListType.watchlist || list.type == ListType.favorites;
+
+    ListDetailsSheet.show(
+      context,
+      list: list,
+      onUpdate: isSystemList
+          ? null
+          : (name, description) async {
+              await ref
+                  .read(userListsProvider.notifier)
+                  .updateList(list.id, name, description);
+            },
+      onDelete: () async {
+        // Optimistic delete
+        // The modal is closed by ListDetailsSheet itself to avoid context issues
+        final notifier = ref.read(userListsProvider.notifier);
+        notifier.optimisticRemove(list.id);
+
+        final reason = await AppSnackBar.show(
+          context,
+          message: l10n.detailsListDeleted(list.name),
+          actionLabel: l10n.commonUndo,
+          showTimer: true,
+          onAction:
+              () {}, // Action just closes the snackbar with 'action' reason
+        ).closed;
+
+        if (reason != SnackBarClosedReason.action) {
+          final repo = ref.read(listsRepositoryProvider);
+          await repo.deleteList(list.id);
+        } else {
+          // User undid the deletion, restore the UI state
+          ref.invalidate(userListsProvider);
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -28,6 +73,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final popularMoviesAsync = ref.watch(popularMoviesProvider);
     final popularSeriesAsync = ref.watch(popularSeriesProvider);
     final connectivity = ref.watch(connectivityProvider);
+    final userListsAsync = ref.watch(userListsProvider);
+    final pinnedListIds = ref.watch(pinnedListIdsProvider);
 
     final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
 
@@ -97,6 +144,66 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       policy: OrderedTraversalPolicy(),
                       child: const SportScheduleRow(),
                     ),
+                  ),
+
+                  // Pinned Lists
+                  userListsAsync.when(
+                    data: (lists) {
+                      final pinnedLists = lists
+                          .where((list) => pinnedListIds.contains(list.id))
+                          .toList();
+                      if (pinnedLists.isEmpty) return const SizedBox.shrink();
+
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 20),
+                          ...pinnedLists.map((list) {
+                            final mappedItems = list.items.map((item) {
+                              return {
+                                'id': item.tmdbId,
+                                'media_type': item.mediaType.name,
+                                'title': item.media?.titleEn ?? item.meta['title'] ?? 'Unknown',
+                                'name': item.media?.titleEn ?? item.meta['title'] ?? 'Unknown',
+                                'poster_path': item.media?.posterPath ?? item.meta['poster_path'],
+                                'backdrop_path': item.media?.backdropPath ?? item.meta['backdrop_path'],
+                                'release_date': item.media?.releaseDate?.toIso8601String() ?? 
+                                                (item.meta['year'] != null ? '${item.meta['year']}-01-01' : null),
+                                'first_air_date': item.media?.releaseDate?.toIso8601String() ?? 
+                                                  (item.meta['year'] != null ? '${item.meta['year']}-01-01' : null),
+                                'vote_average': item.media?.voteAverage ?? item.meta['rating'],
+                                'updated_at': item.media?.updatedAt.toIso8601String(),
+                              };
+                            }).toList();
+
+                            final String title;
+                            if (list.type == ListType.watchlist) {
+                              title = l10n.listWatchLater;
+                            } else if (list.type == ListType.favorites) {
+                              title = l10n.listFavorites;
+                            } else {
+                              title = list.name;
+                            }
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 30),
+                              child: RepaintBoundary(
+                                child: FocusTraversalGroup(
+                                  policy: OrderedTraversalPolicy(),
+                                  child: MediaRow(
+                                    title: title,
+                                    asyncData: AsyncValue.data(mappedItems),
+                                    onHeaderTap: () => _showListDetails(context, list),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      );
+                    },
+                    loading: () => const SizedBox.shrink(),
+                    error: (err, stack) => const SizedBox.shrink(),
                   ),
 
                   if (!isOffline) ...[

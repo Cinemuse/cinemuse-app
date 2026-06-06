@@ -504,5 +504,10 @@
   "listEmptyTitle": "This list is empty",
   "listEmptyMessage": "Add media from the details page",
   "collectionTitleFallback": "Collection",
-  "collectionSubtitle": "Movie Collection"
+  "collectionSubtitle": "Movie Collection",
+  "listPinToHome": "Pin to Home",
+  "listUnpinFromHome": "Unpin from Home",
+  "listPinnedSuccess": "Pinned to Home",
+  "listUnpinnedSuccess": "Unpinned from Home"
 }
+

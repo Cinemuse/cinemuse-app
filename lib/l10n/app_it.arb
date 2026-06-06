@@ -504,5 +504,10 @@
   "listEmptyTitle": "Questa lista è vuota",
   "listEmptyMessage": "Aggiungi contenuti dalla pagina dei dettagli",
   "collectionTitleFallback": "Collezione",
-  "collectionSubtitle": "Collezione di film"
+  "collectionSubtitle": "Collezione di film",
+  "listPinToHome": "Fissa nella Home",
+  "listUnpinFromHome": "Rimuovi dalla Home",
+  "listPinnedSuccess": "Aggiunto alla Home",
+  "listUnpinnedSuccess": "Rimosso dalla Home"
 }
+

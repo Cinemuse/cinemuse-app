@@ -7,6 +7,8 @@ import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 final listsRepositoryProvider = Provider<ListsRepository>((ref) {
   return ListsRepository(supabase, ref.watch(appDatabaseProvider));
@@ -186,3 +188,40 @@ final userListsProvider =
     StreamNotifierProvider<UserListsNotifier, List<UserList>>(() {
       return UserListsNotifier();
     });
+
+class PinnedListIdsNotifier extends StateNotifier<Set<String>> {
+  PinnedListIdsNotifier() : super(const {}) {
+    _load();
+  }
+
+  static const _keyPinnedLists = 'pinned_list_ids';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList(_keyPinnedLists) ?? [];
+    state = list.toSet();
+  }
+
+  Future<void> togglePin(String listId) async {
+    final updated = Set<String>.from(state);
+    if (updated.contains(listId)) {
+      updated.remove(listId);
+    } else {
+      updated.add(listId);
+    }
+    state = updated;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_keyPinnedLists, updated.toList());
+  }
+
+  bool isPinned(String listId) {
+    return state.contains(listId);
+  }
+}
+
+final pinnedListIdsProvider =
+    StateNotifierProvider<PinnedListIdsNotifier, Set<String>>((ref) {
+  return PinnedListIdsNotifier();
+});
+

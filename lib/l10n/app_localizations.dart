@@ -2803,6 +2803,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Movie Collection'**
   String get collectionSubtitle;
+
+  /// No description provided for @listPinToHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin to Home'**
+  String get listPinToHome;
+
+  /// No description provided for @listUnpinFromHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin from Home'**
+  String get listUnpinFromHome;
+
+  /// No description provided for @listPinnedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned to Home'**
+  String get listPinnedSuccess;
+
+  /// No description provided for @listUnpinnedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpinned from Home'**
+  String get listUnpinnedSuccess;
 }
 
 class _AppLocalizationsDelegate

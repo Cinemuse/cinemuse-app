@@ -1485,4 +1485,16 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get collectionSubtitle => 'Collezione di film';
+
+  @override
+  String get listPinToHome => 'Fissa nella Home';
+
+  @override
+  String get listUnpinFromHome => 'Rimuovi dalla Home';
+
+  @override
+  String get listPinnedSuccess => 'Aggiunto alla Home';
+
+  @override
+  String get listUnpinnedSuccess => 'Rimosso dalla Home';
 }

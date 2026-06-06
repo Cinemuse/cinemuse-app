@@ -313,17 +313,46 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                     ),
                     const SizedBox(width: 12),
                     // Actions
-                    if (!isSystemList && widget.onUpdate != null) ...[
-                      if (_isEditing)
-                        IconButton(
-                          onPressed: _saveChanges,
-                          icon: const Icon(
-                            LucideIcons.check,
-                            color: AppTheme.accent,
-                            size: 28,
-                          ),
-                        )
-                      else
+                    if (_isEditing)
+                      IconButton(
+                        onPressed: _saveChanges,
+                        icon: const Icon(
+                          LucideIcons.check,
+                          color: AppTheme.accent,
+                          size: 28,
+                        ),
+                      )
+                    else ...[
+                      IconButton(
+                        tooltip: ref.watch(pinnedListIdsProvider).contains(currentList.id)
+                            ? l10n.listUnpinFromHome
+                            : l10n.listPinToHome,
+                        onPressed: () {
+                          final pinnedIds = ref.read(pinnedListIdsProvider);
+                          final isPinned = pinnedIds.contains(currentList.id);
+                          ref.read(pinnedListIdsProvider.notifier).togglePin(currentList.id);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isPinned
+                                    ? l10n.listUnpinnedSuccess
+                                    : l10n.listPinnedSuccess,
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: AppTheme.surface,
+                            ),
+                          );
+                        },
+                        icon: Icon(
+                          LucideIcons.pin,
+                          color: ref.watch(pinnedListIdsProvider).contains(currentList.id)
+                              ? AppTheme.accent
+                              : Colors.white54,
+                          size: 22,
+                        ),
+                      ),
+                      if (!isSystemList && widget.onUpdate != null)
                         PopupMenuButton<String>(
                           icon: const Icon(
                             LucideIcons.moreVertical,

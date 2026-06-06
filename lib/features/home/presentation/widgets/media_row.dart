@@ -16,12 +16,16 @@ class MediaRow extends ConsumerWidget {
   final String title;
   final AsyncValue<List<Map<String, dynamic>>> asyncData;
   final bool skipFirst;
+  final VoidCallback? onHeaderTap;
+  final int? limit;
 
   const MediaRow({
     super.key,
     required this.title,
     required this.asyncData,
     this.skipFirst = false,
+    this.onHeaderTap,
+    this.limit = 20,
   });
 
   @override
@@ -60,7 +64,10 @@ class MediaRow extends ConsumerWidget {
     }
 
     final data = asyncData.value ?? [];
-    final list = skipFirst && data.isNotEmpty ? data.skip(1).toList() : data;
+    var list = skipFirst && data.isNotEmpty ? data.skip(1).toList() : data;
+    if (limit != null && list.length > limit!) {
+      list = list.take(limit!).toList();
+    }
 
     if (list.isEmpty) {
       return Column(
@@ -144,6 +151,7 @@ class MediaRow extends ConsumerWidget {
       padding: EdgeInsets.symmetric(
         horizontal: AppTheme.getResponsiveHorizontalPadding(context),
       ),
+      onHeaderTap: onHeaderTap,
     );
   }
 
@@ -152,19 +160,31 @@ class MediaRow extends ConsumerWidget {
       padding: EdgeInsets.symmetric(
         horizontal: AppTheme.getResponsiveHorizontalPadding(context),
       ),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onHeaderTap,
+        child: MouseRegion(
+          cursor: onHeaderTap != null
+              ? SystemMouseCursors.click
+              : SystemMouseCursors.basic,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (onHeaderTap != null) ...[
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right, color: AppTheme.textMuted),
+              ],
+            ],
           ),
-          const SizedBox(width: 8),
-          const Icon(Icons.chevron_right, color: AppTheme.textMuted),
-        ],
+        ),
       ),
     );
   }

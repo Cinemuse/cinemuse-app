@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MockSupabaseClient extends Mock implements SupabaseClient {}
@@ -50,6 +51,8 @@ class FakeQueryBuilder extends Fake implements SupabaseQueryBuilder {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late ListsRepository repository;
   late MockSupabaseClient mockSupabase;
   late AppDatabase database;
@@ -58,6 +61,15 @@ void main() {
     mockSupabase = MockSupabaseClient();
     database = AppDatabase(NativeDatabase.memory());
     repository = ListsRepository(mockSupabase, database);
+
+    const channel = MethodChannel('dev.fluttercommunity.plus/connectivity');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
+      if (methodCall.method == 'check') {
+        return ['wifi'];
+      }
+      return null;
+    });
   });
 
   tearDown(() async {

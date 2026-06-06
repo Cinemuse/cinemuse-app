@@ -20,6 +20,7 @@ class GenericCarouselRow extends StatefulWidget {
   final double? height;
   final EdgeInsets padding;
   final ScrollController? controller;
+  final VoidCallback? onHeaderTap;
 
   const GenericCarouselRow({
     super.key,
@@ -33,6 +34,7 @@ class GenericCarouselRow extends StatefulWidget {
     this.height,
     this.padding = EdgeInsets.zero,
     this.controller,
+    this.onHeaderTap,
   });
 
   @override
@@ -195,8 +197,9 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.itemCount == 0 && widget.emptyBuilder == null)
+    if (widget.itemCount == 0 && widget.emptyBuilder == null) {
       return const SizedBox.shrink();
+    }
 
     Widget content;
 
@@ -272,14 +275,36 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
                   Expanded(
                     child: Row(
                       children: [
-                        Text(
-                          widget.title ?? '',
-                          style: Theme.of(context).textTheme.bodyMedium!
-                              .copyWith(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: widget.onHeaderTap,
+                          child: MouseRegion(
+                            cursor: widget.onHeaderTap != null
+                                ? SystemMouseCursors.click
+                                : SystemMouseCursors.basic,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  widget.title ?? '',
+                                  style: Theme.of(context).textTheme.bodyMedium!
+                                      .copyWith(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                                if (widget.onHeaderTap != null) ...[
+                                  const SizedBox(width: 8),
+                                  const Icon(
+                                    Icons.chevron_right,
+                                    color: AppTheme.textMuted,
+                                    size: 24,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
