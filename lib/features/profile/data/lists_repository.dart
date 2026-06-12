@@ -30,7 +30,7 @@ class ListsRepository {
 
     final response = await _client
         .from('lists')
-        .select('*, list_items(*, media:media_cache(*))')
+        .select('*, list_items(*)')
         .eq('user_id', userId)
         .order('sort_order', ascending: true)
         .withErrorHandling();
@@ -139,7 +139,7 @@ class ListsRepository {
 
       final response = await _client
           .from('lists')
-          .select('*, list_items(*, media:media_cache(*))')
+          .select('*, list_items(*)')
           .eq('user_id', userId)
           .withErrorHandling();
 
