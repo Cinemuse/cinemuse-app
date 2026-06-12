@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episode_card.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/tracking_modals.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/watch_logs_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -152,6 +153,13 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
           onFindMissingPreceding: _findMissingPreceding,
           onShowMarkPrecedingModal: (s, e, m) =>
               _showMarkPrecedingModal(context, controller, tmdbId, s, e, m),
+          onViewHistory: () => WatchLogsSheet.show(
+            context,
+            tmdbId,
+            'Episode $epNumber',
+            season: widget.seasonNumber,
+            episode: epNumber,
+          ),
         );
       },
     );
@@ -331,6 +339,13 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
       ),
       onRemoveAll: () => controller.deleteAllEpisodeLogs(
         tmdbId: tmdbId,
+        season: season,
+        episode: episode,
+      ),
+      onViewHistory: () => WatchLogsSheet.show(
+        context,
+        tmdbId,
+        'Episode $episode',
         season: season,
         episode: episode,
       ),

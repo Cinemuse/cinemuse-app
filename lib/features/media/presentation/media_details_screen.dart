@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/tracking_modals.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/watch_logs_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -651,6 +652,11 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           controller.logMovieWatch(tmdbId: tmdbId, loggedAt: date),
       onRemoveOne: () => controller.deleteLatestMovieLog(tmdbId: tmdbId),
       onRemoveAll: () => controller.deleteAllMovieLogs(tmdbId: tmdbId),
+      onViewHistory: () => WatchLogsSheet.show(
+        context,
+        tmdbId,
+        title,
+      ),
     );
   }
 

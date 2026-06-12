@@ -224,6 +224,7 @@ class TrackOptionsModal extends StatelessWidget {
   final Function(DateTime? date) onRewatch;
   final VoidCallback onRemoveOne;
   final VoidCallback onRemoveAll;
+  final VoidCallback? onViewHistory;
 
   const TrackOptionsModal({
     super.key,
@@ -233,6 +234,7 @@ class TrackOptionsModal extends StatelessWidget {
     required this.onRewatch,
     required this.onRemoveOne,
     required this.onRemoveAll,
+    this.onViewHistory,
   });
 
   static Future<void> show({
@@ -243,6 +245,7 @@ class TrackOptionsModal extends StatelessWidget {
     required Function(DateTime? date) onRewatch,
     required VoidCallback onRemoveOne,
     required VoidCallback onRemoveAll,
+    VoidCallback? onViewHistory,
   }) {
     return AppBottomSheet.show(
       context: context,
@@ -254,6 +257,7 @@ class TrackOptionsModal extends StatelessWidget {
         onRewatch: onRewatch,
         onRemoveOne: onRemoveOne,
         onRemoveAll: onRemoveAll,
+        onViewHistory: onViewHistory,
       ),
     );
   }
@@ -298,6 +302,19 @@ class TrackOptionsModal extends StatelessWidget {
                 },
                 onSecondaryTap: onPickDate,
               ),
+              if (watchCount > 0 && onViewHistory != null) ...[
+                const SizedBox(height: 12),
+                _ModalButton(
+                  icon: Icons.list_alt,
+                  label: 'View Watch History',
+                  subtitle: 'See all dates you watched this',
+                  color: Colors.blueAccent,
+                  onTap: () {
+                    Navigator.pop(context);
+                    onViewHistory!();
+                  },
+                ),
+              ],
               if (watchCount > 0) ...[
                 const SizedBox(height: 12),
                 _ModalButton(
@@ -339,6 +356,7 @@ class MovieTrackModal extends StatelessWidget {
   final Function(DateTime? date) onRewatch;
   final VoidCallback onRemoveOne;
   final VoidCallback onRemoveAll;
+  final VoidCallback? onViewHistory;
 
   const MovieTrackModal({
     super.key,
@@ -347,6 +365,7 @@ class MovieTrackModal extends StatelessWidget {
     required this.onRewatch,
     required this.onRemoveOne,
     required this.onRemoveAll,
+    this.onViewHistory,
   });
 
   static Future<void> show({
@@ -356,6 +375,7 @@ class MovieTrackModal extends StatelessWidget {
     required Function(DateTime? date) onRewatch,
     required VoidCallback onRemoveOne,
     required VoidCallback onRemoveAll,
+    VoidCallback? onViewHistory,
   }) {
     return AppBottomSheet.show(
       context: context,
@@ -366,6 +386,7 @@ class MovieTrackModal extends StatelessWidget {
         onRewatch: onRewatch,
         onRemoveOne: onRemoveOne,
         onRemoveAll: onRemoveAll,
+        onViewHistory: onViewHistory,
       ),
     );
   }
@@ -413,6 +434,19 @@ class MovieTrackModal extends StatelessWidget {
                 },
                 onSecondaryTap: onPickDate,
               ),
+              if (watchCount > 0 && onViewHistory != null) ...[
+                const SizedBox(height: 12),
+                _ModalButton(
+                  icon: Icons.list_alt,
+                  label: 'View Watch History',
+                  subtitle: 'See all dates you watched this',
+                  color: Colors.blueAccent,
+                  onTap: () {
+                    Navigator.pop(context);
+                    onViewHistory!();
+                  },
+                ),
+              ],
               if (watchCount > 0) ...[
                 const SizedBox(height: 12),
                 _ModalButton(

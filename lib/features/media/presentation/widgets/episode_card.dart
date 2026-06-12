@@ -25,6 +25,7 @@ class EpisodeCard extends ConsumerStatefulWidget {
   final Function(int, int, List<({int season, int episode})>)
   onShowMarkPrecedingModal;
   final VoidCallback? onShowTvTimeComments;
+  final VoidCallback? onViewHistory;
 
   const EpisodeCard({
     super.key,
@@ -41,6 +42,7 @@ class EpisodeCard extends ConsumerStatefulWidget {
     required this.onFindMissingPreceding,
     required this.onShowMarkPrecedingModal,
     this.onShowTvTimeComments,
+    this.onViewHistory,
   });
 
   @override
@@ -119,13 +121,19 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
           label: l10n.menuRemoveCachedProvider,
           onTap: _clearCache,
         ),
-      if (widget.isWatched)
+      if (widget.isWatched) ...[
         AppMenuOption(
           icon: Icons.check_circle,
           label: l10n.detailsTooltipWatched,
           onTap: () => widget.onTrackOptions(widget.seasonNumber, _epNumber),
-        )
-      else ...[
+        ),
+        if (widget.onViewHistory != null)
+          AppMenuOption(
+            icon: Icons.history,
+            label: 'View Watch History',
+            onTap: widget.onViewHistory!,
+          ),
+      ] else ...[
         AppMenuOption(
           icon: Icons.remove_red_eye_outlined,
           label: l10n.menuMarkWatchedNow,
