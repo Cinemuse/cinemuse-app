@@ -13,6 +13,7 @@ import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
+import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
 
 class ListDetailsSheet extends ConsumerStatefulWidget {
   final UserList list;
@@ -583,7 +584,8 @@ class _ListMediaCard extends ConsumerWidget {
             }
           : null,
       onTap: () {
-        Navigator.of(context).push(
+        Navigator.of(context).pop();
+        ref.read(shellNavigatorKeyProvider).currentState?.push(
           MaterialPageRoute(
             builder: (_) => MediaDetailsScreen(
               mediaId: item.tmdbId.toString(),
