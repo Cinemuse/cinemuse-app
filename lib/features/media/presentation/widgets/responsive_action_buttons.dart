@@ -20,6 +20,7 @@ class ResponsiveActionButtons extends ConsumerStatefulWidget {
   seriesWatchStatus;
   final int? movieWatchCount;
   final double mobileBreakpoint;
+  final VoidCallback? onDropClick;
 
   // Cache-check fields
   final bool hasResumeProgress;
@@ -41,6 +42,7 @@ class ResponsiveActionButtons extends ConsumerStatefulWidget {
     this.seriesWatchStatus,
     this.movieWatchCount,
     this.mobileBreakpoint = 600.0,
+    this.onDropClick,
     this.hasResumeProgress = false,
     this.mediaId = '',
     this.mediaType = 'movie',
@@ -97,7 +99,7 @@ class _ResponsiveActionButtonsState
   }
 
   /// Whether the dropdown has any options to show
-  bool get _hasDropdownOptions => widget.hasResumeProgress || _hasCachedStream;
+  bool get _hasDropdownOptions => widget.hasResumeProgress || _hasCachedStream || widget.onDropClick != null;
 
   @override
   Widget build(BuildContext context) {
@@ -192,6 +194,13 @@ class _ResponsiveActionButtonsState
           icon: Icons.cached,
           label: l10n.menuRemoveCachedProvider,
           onTap: () => _clearCache(context),
+          isDestructive: false,
+        ),
+      if (widget.onDropClick != null)
+        _DropdownItem(
+          icon: Icons.stop_circle_outlined,
+          label: l10n.menuStopWatching,
+          onTap: widget.onDropClick!,
           isDestructive: false,
         ),
     ];

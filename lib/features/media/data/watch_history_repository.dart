@@ -46,6 +46,19 @@ class WatchHistoryRepository {
     return (response as List).map((e) => WatchHistory.fromJson(e)).toList();
   }
 
+  // Get dropped items
+  Future<List<WatchHistory>> getDroppedItems(String userId) async {
+    final response = await _client
+        .from('watch_history')
+        .select()
+        .eq('user_id', userId)
+        .eq('status', 'dropped')
+        .order('last_watched_at', ascending: false)
+        .withErrorHandling();
+
+    return (response as List).map((e) => WatchHistory.fromJson(e)).toList();
+  }
+
   /// Ensures a media item exists in the local cache.
   Future<void> saveMediaItem(MediaItem media) async {
     await _mediaRepo.saveMediaItem(media);
@@ -1023,6 +1036,34 @@ class WatchHistoryRepository {
     await _client
         .from('watch_history')
         .delete()
+        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId);
+  }
+
+  Future<void> dropFromContinueWatching(String userId, int tmdbId) async {
+    // Update Local
+    await (_db.update(_db.localWatchHistories)
+          ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
+        .write(const LocalWatchHistoriesCompanion(status: Value('dropped')));
+
+    // Update Remote
+    await _client
+        .from('watch_history')
+        .update({'status': 'dropped'})
+        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId);
+  }
+
+  Future<void> restoreToContinueWatching(String userId, int tmdbId) async {
+    // Update Local
+    await (_db.update(_db.localWatchHistories)
+          ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
+        .write(const LocalWatchHistoriesCompanion(status: Value('watching')));
+
+    // Update Remote
+    await _client
+        .from('watch_history')
+        .update({'status': 'watching'})
         .eq('user_id', userId)
         .eq('tmdb_id', tmdbId);
   }

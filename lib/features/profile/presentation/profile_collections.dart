@@ -72,6 +72,7 @@ class ProfileCollections extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final listsAsync = ref.watch(userListsProvider);
+    final droppedListAsync = ref.watch(droppedListProvider);
 
     return listsAsync.when(
       data: (lists) {
@@ -117,6 +118,15 @@ class ProfileCollections extends ConsumerWidget {
                         )
                       : null;
 
+                  final droppedList = droppedListAsync.valueOrNull;
+                  final droppedCard = droppedList != null
+                      ? SystemListCard(
+                          list: droppedList,
+                          onTap: () =>
+                              _showListDetails(context, ref, droppedList),
+                        )
+                      : null;
+
                   if (isMobile) {
                     return Column(
                       children: [
@@ -124,16 +134,22 @@ class ProfileCollections extends ConsumerWidget {
                         if (watchlistCard != null && favoritesCard != null)
                           const SizedBox(height: 16),
                         if (favoritesCard != null) favoritesCard,
+                        if ((watchlistCard != null || favoritesCard != null) && droppedCard != null)
+                          const SizedBox(height: 16),
+                        if (droppedCard != null) droppedCard,
                       ],
                     );
                   }
 
                   return Row(
                     children: [
-                      if (watchlistCard != null) Expanded(child: watchlistCard),
+                      if (watchlistCard != null) Expanded(flex: 4, child: watchlistCard),
                       if (watchlistCard != null && favoritesCard != null)
                         const SizedBox(width: 24),
-                      if (favoritesCard != null) Expanded(child: favoritesCard),
+                      if (favoritesCard != null) Expanded(flex: 4, child: favoritesCard),
+                      if ((watchlistCard != null || favoritesCard != null) && droppedCard != null)
+                        const SizedBox(width: 24),
+                      if (droppedCard != null) Expanded(flex: 3, child: droppedCard),
                     ],
                   );
                 },

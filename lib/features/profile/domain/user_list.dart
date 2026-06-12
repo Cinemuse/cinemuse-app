@@ -1,6 +1,6 @@
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
-enum ListType { watchlist, favorites, custom, tierlist }
+enum ListType { watchlist, favorites, custom, tierlist, dropped }
 
 class UserList {
   final String id;
@@ -37,6 +37,8 @@ class UserList {
       type = ListType.favorites;
     } else if (typeStr == 'tierlist') {
       type = ListType.tierlist;
+    } else if (typeStr == 'dropped') {
+      type = ListType.dropped;
     }
 
     return UserList(

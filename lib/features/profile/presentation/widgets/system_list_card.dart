@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class SystemListCard extends StatelessWidget {
   final UserList list;
@@ -10,20 +11,47 @@ class SystemListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     final isWatchlist = list.type == ListType.watchlist;
+    final isFavorites = list.type == ListType.favorites;
+    final isDropped = list.type == ListType.dropped;
 
     final Color baseColor = isWatchlist
         ? AppTheme.watchlist
-        : AppTheme.favorites;
+        : isFavorites
+            ? AppTheme.favorites
+            : Colors.grey.shade700;
+            
     final Color iconBoxColor = isWatchlist
         ? AppTheme.watchlist.withValues(alpha: 0.2)
-        : AppTheme.favorites.withValues(alpha: 0.2);
+        : isFavorites
+            ? AppTheme.favorites.withValues(alpha: 0.2)
+            : Colors.grey.shade700.withValues(alpha: 0.2);
+            
     final Color iconColor = isWatchlist
         ? AppTheme.watchlist
-        : AppTheme.favorites;
-    final IconData icon = isWatchlist ? Icons.bookmark : Icons.favorite;
-    final String title = isWatchlist ? "Watch Later" : "Favorites";
-    final String subtitle = isWatchlist ? "Your queue" : "Your curated picks";
+        : isFavorites
+            ? AppTheme.favorites
+            : Colors.grey.shade400;
+            
+    final IconData icon = isWatchlist 
+        ? Icons.bookmark 
+        : isFavorites 
+            ? Icons.favorite 
+            : Icons.do_not_disturb_alt;
+            
+    final String title = isWatchlist 
+        ? l10n.listWatchLater 
+        : isFavorites 
+            ? l10n.listFavorites 
+            : l10n.listDropped;
+            
+    final String subtitle = isWatchlist 
+        ? l10n.listYourQueue 
+        : isFavorites 
+            ? l10n.listCuratedPicks 
+            : l10n.listDroppedSubtitle;
 
     return GestureDetector(
       onTap: onTap,

@@ -11,6 +11,7 @@ class BackdropCard extends StatefulWidget {
   final double? progress; // 0.0 to 1.0
   final String? infoText; // e.g. "S1 E5" or "1h 20m left"
   final VoidCallback? onTap;
+  final VoidCallback? onDrop;
   final VoidCallback? onRemove;
   final VoidCallback? onDetails;
   final VoidCallback? onRestart;
@@ -26,6 +27,7 @@ class BackdropCard extends StatefulWidget {
     this.progress,
     this.infoText,
     this.onTap,
+    this.onDrop,
     this.onRemove,
     this.onDetails,
     this.onRestart,
@@ -82,6 +84,12 @@ class _BackdropCardState extends State<BackdropCard> {
           icon: Icons.cached,
           label: l10n.menuRemoveCachedProvider,
           onTap: widget.onClearCache!,
+        ),
+      if (widget.onDrop != null)
+        AppMenuOption(
+          icon: Icons.stop_circle_outlined,
+          label: l10n.menuStopWatching,
+          onTap: widget.onDrop!,
         ),
       if (widget.onRemove != null)
         AppMenuOption(

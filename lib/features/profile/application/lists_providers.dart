@@ -189,6 +189,41 @@ final userListsProvider =
       return UserListsNotifier();
     });
 
+final droppedListProvider = FutureProvider<UserList?>((ref) async {
+  final user = ref.watch(authProvider).value;
+  if (user == null) return null;
+
+  final repo = ref.watch(watchHistoryRepositoryProvider);
+  final droppedItems = await repo.getDroppedItems(user.id);
+
+  final items = droppedItems.map((history) {
+    final media = history.media;
+    return UserListItem(
+      listId: 'dropped',
+      mediaType: history.mediaType,
+      tmdbId: history.tmdbId,
+      addedAt: history.lastWatchedAt ?? DateTime.now(),
+      media: media,
+      meta: media != null ? {
+        'title': media.getLocalizedTitle('en') ?? media.getLocalizedTitle('it') ?? 'Unknown',
+        'poster_path': media.posterPath,
+        'backdrop_path': media.backdropPath,
+        'rating': media.voteAverage,
+        'year': media.releaseDate?.year,
+      } : {},
+    );
+  }).toList();
+
+  return UserList(
+    id: 'dropped',
+    userId: user.id,
+    name: 'Dropped',
+    type: ListType.dropped,
+    createdAt: DateTime.now(),
+    items: items,
+  );
+});
+
 class PinnedListIdsNotifier extends StateNotifier<Set<String>> {
   PinnedListIdsNotifier() : super(const {}) {
     _load();

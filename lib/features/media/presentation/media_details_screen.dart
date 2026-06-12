@@ -29,6 +29,9 @@ import 'package:cinemuse_app/features/media/presentation/widgets/collection_tile
 import 'package:cinemuse_app/features/media/presentation/widgets/media_list_row.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/gallery_box.dart';
+import 'package:cinemuse_app/features/auth/application/auth_service.dart';
+import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
+import 'package:cinemuse_app/features/home/application/home_providers.dart';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -223,6 +226,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             (details['budget'] as int? ?? 0) > 0 ||
             (details['revenue'] as int? ?? 0) > 0;
 
+        final droppedList = ref.watch(droppedListProvider).valueOrNull;
+        final isDropped = droppedList?.items.any((i) => i.tmdbId == tmdbId) ?? false;
+
         // Set default tab if not set
         _activeTab ??= isTV ? DetailsTab.episodes : DetailsTab.cast;
 
@@ -249,6 +255,18 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                 details: details,
                 isFavorite: isFavorite,
                 isInWatchlist: isInWatchlist,
+                isDropped: isDropped,
+                onDropClick: (watchHistory != null && !isDropped && !watchHistory.isCompleted)
+                    ? () async {
+                        final user = ref.read(authProvider).value;
+                        if (user != null) {
+                          await ref.read(watchHistoryRepositoryProvider)
+                              .dropFromContinueWatching(user.id, tmdbId);
+                          ref.invalidate(droppedListProvider);
+                          ref.invalidate(continueWatchingProvider);
+                        }
+                      }
+                    : null,
                 resumeData: (watchHistory != null && !watchHistory.isCompleted)
                     ? {
                         // map 'tv' mediaType to 'tv' string to ensure DetailsHero picks it up
@@ -533,6 +551,22 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     if (type == 'tv') {
       season = watchHistory?.season ?? 1;
       episode = watchHistory?.episode ?? 1;
+    }
+
+    // Implicit restore if dropped
+    final tmdbId = int.tryParse(widget.mediaId);
+    if (tmdbId != null) {
+      final droppedList = ref.read(droppedListProvider).valueOrNull;
+      final isDropped = droppedList?.items.any((i) => i.tmdbId == tmdbId) ?? false;
+      if (isDropped) {
+        final user = ref.read(authProvider).value;
+        if (user != null) {
+          ref.read(watchHistoryRepositoryProvider).restoreToContinueWatching(user.id, tmdbId).then((_) {
+            ref.invalidate(droppedListProvider);
+            ref.invalidate(continueWatchingProvider);
+          });
+        }
+      }
     }
 
     Navigator.of(context, rootNavigator: true).push(

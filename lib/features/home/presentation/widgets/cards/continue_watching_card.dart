@@ -17,12 +17,14 @@ class ContinueWatchingCard extends ConsumerStatefulWidget {
   final WatchHistory historyItem;
   final List<UserListItem> watchlistItems;
   final VoidCallback onRemove;
+  final VoidCallback? onDrop;
 
   const ContinueWatchingCard({
     super.key,
     required this.historyItem,
     required this.watchlistItems,
     required this.onRemove,
+    this.onDrop,
   });
 
   @override
@@ -188,6 +190,7 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
           ref.read(userListsProvider.notifier).toggleWatchlist(media);
         }
       },
+      onDrop: widget.onDrop,
       onRemove: widget.onRemove,
       onClearCache: hasCache
           ? () {

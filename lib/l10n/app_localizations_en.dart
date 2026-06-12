@@ -1229,6 +1229,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuPlay => 'Play';
 
   @override
+  String get menuStopWatching => 'Stop Watching';
+
+  @override
   String get menuRemoveFromContinueWatching => 'Remove from Continue Watching';
 
   @override
@@ -1510,6 +1513,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get listCuratedPicks => 'Your curated picks';
+
+  @override
+  String get listDropped => 'Dropped';
+
+  @override
+  String get listDroppedSubtitle => 'Titles you interrupted.';
+
+  @override
+  String get menuRestoreContinueWatching => 'Restore to Continue Watching';
 
   @override
   String get listUntitled => 'Untitled List';

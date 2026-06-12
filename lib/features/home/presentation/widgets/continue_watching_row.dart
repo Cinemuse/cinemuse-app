@@ -96,6 +96,38 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
     }
   }
 
+  void _onDrop(WatchHistory item) async {
+    final tmdbId = item.tmdbId;
+    setState(() {
+      _hiddenItems.add(tmdbId);
+    });
+
+    final authState = ref.read(authProvider);
+    final repository = ref.read(watchHistoryRepositoryProvider);
+    final userId = authState.value?.id;
+
+    if (userId != null) {
+      try {
+        await repository.dropFromContinueWatching(userId, tmdbId);
+        ref.invalidate(droppedListProvider);
+        ref.invalidate(continueWatchingProvider);
+        await Future.delayed(const Duration(milliseconds: 500));
+      } finally {
+        if (mounted) {
+          setState(() {
+            _hiddenItems.remove(tmdbId);
+          });
+        }
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _hiddenItems.remove(tmdbId);
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final historyAsync = ref.watch(continueWatchingProvider);
@@ -153,6 +185,7 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
         return ContinueWatchingCard(
           historyItem: historyItem,
           watchlistItems: watchlistItems,
+          onDrop: () => _onDrop(historyItem),
           onRemove: () => _onRemove(historyItem),
         );
       },

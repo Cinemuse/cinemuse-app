@@ -2336,6 +2336,12 @@ abstract class AppLocalizations {
   /// **'Play'**
   String get menuPlay;
 
+  /// No description provided for @menuStopWatching.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Watching'**
+  String get menuStopWatching;
+
   /// No description provided for @menuRemoveFromContinueWatching.
   ///
   /// In en, this message translates to:
@@ -2851,6 +2857,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your curated picks'**
   String get listCuratedPicks;
+
+  /// No description provided for @listDropped.
+  ///
+  /// In en, this message translates to:
+  /// **'Dropped'**
+  String get listDropped;
+
+  /// No description provided for @listDroppedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Titles you interrupted.'**
+  String get listDroppedSubtitle;
+
+  /// No description provided for @menuRestoreContinueWatching.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore to Continue Watching'**
+  String get menuRestoreContinueWatching;
 
   /// No description provided for @listUntitled.
   ///

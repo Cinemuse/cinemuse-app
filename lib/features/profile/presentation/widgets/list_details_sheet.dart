@@ -10,6 +10,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
+import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
+import 'package:cinemuse_app/features/auth/application/auth_service.dart';
+import 'package:cinemuse_app/features/home/application/home_providers.dart';
 
 class ListDetailsSheet extends ConsumerStatefulWidget {
   final UserList list;
@@ -249,14 +252,19 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    // Watch the lists provider to reflect item removals immediately
-    final userListsState = ref.watch(userListsProvider);
-    final currentList =
-        userListsState.valueOrNull?.firstWhere(
-          (l) => l.id == widget.list.id,
-          orElse: () => widget.list,
-        ) ??
-        widget.list;
+    // Watch the corresponding provider to reflect item removals immediately
+    UserList currentList;
+    if (widget.list.id == 'dropped') {
+      final droppedListState = ref.watch(droppedListProvider);
+      currentList = droppedListState.valueOrNull ?? widget.list;
+    } else {
+      final userListsState = ref.watch(userListsProvider);
+      currentList = userListsState.valueOrNull?.firstWhere(
+            (l) => l.id == widget.list.id,
+            orElse: () => widget.list,
+          ) ??
+          widget.list;
+    }
 
     // Determine icon and color based on list type
     final isSystemList =
@@ -556,12 +564,24 @@ class _ListMediaCard extends ConsumerWidget {
       rating: rating,
       releaseDate: year,
       tmdbId: item.tmdbId,
-      mediaType: item.mediaType,
-      onRemoveFromList: () {
-        ref
-            .read(userListsProvider.notifier)
-            .removeItemFromList(listId, item.tmdbId, item.mediaType);
-      },
+      onRemoveFromList: listId == 'dropped' 
+          ? null 
+          : () {
+              ref
+                  .read(userListsProvider.notifier)
+                  .removeItemFromList(listId, item.tmdbId, item.mediaType);
+            },
+      onRestore: listId == 'dropped'
+          ? () async {
+              final user = ref.read(authProvider).value;
+              if (user != null) {
+                await ref.read(watchHistoryRepositoryProvider).restoreToContinueWatching(user.id, item.tmdbId);
+                // Also invalidate the dropped items provider to refresh UI
+                ref.invalidate(droppedListProvider);
+                ref.invalidate(continueWatchingProvider);
+              }
+            }
+          : null,
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(

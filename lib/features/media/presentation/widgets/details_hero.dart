@@ -19,10 +19,12 @@ class DetailsHero extends ConsumerWidget {
   final double contentPadding;
   final bool isFavorite;
   final bool isInWatchlist;
+  final bool isDropped;
   final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})?
   seriesWatchStatus;
   final VoidCallback onListTap;
   final VoidCallback? onTrackTap;
+  final VoidCallback? onDropClick;
   final int? movieWatchCount;
 
   const DetailsHero({
@@ -36,9 +38,11 @@ class DetailsHero extends ConsumerWidget {
     this.contentPadding = 24.0,
     this.isFavorite = false,
     this.isInWatchlist = false,
+    this.isDropped = false,
     this.seriesWatchStatus,
     required this.onListTap,
     this.onTrackTap,
+    this.onDropClick,
     this.movieWatchCount,
   });
 
@@ -304,6 +308,7 @@ class DetailsHero extends ConsumerWidget {
                   isInWatchlist: isInWatchlist,
                   onListTap: onListTap,
                   onTrackTap: onTrackTap,
+                  onDropClick: onDropClick,
                   seriesWatchStatus: seriesWatchStatus,
                   movieWatchCount: movieWatchCount,
                   hasResumeProgress: (resumeData?['progress'] as int? ?? 0) > 0,

@@ -1241,6 +1241,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get menuPlay => 'Riproduci';
 
   @override
+  String get menuStopWatching => 'Interrompi Visione';
+
+  @override
   String get menuRemoveFromContinueWatching => 'Rimuovi da Continua a Guardare';
 
   @override
@@ -1526,6 +1529,15 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get listCuratedPicks => 'I tuoi elementi selezionati';
+
+  @override
+  String get listDropped => 'Interrotti';
+
+  @override
+  String get listDroppedSubtitle => 'Titoli che hai interrotto.';
+
+  @override
+  String get menuRestoreContinueWatching => 'Ripristina in Continua a Guardare';
 
   @override
   String get listUntitled => 'Lista senza nome';

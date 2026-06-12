@@ -19,6 +19,7 @@ class MediaCard extends ConsumerStatefulWidget {
   final VoidCallback? onWatchlistToggle;
   final VoidCallback? onTap;
   final VoidCallback? onRemoveFromList;
+  final VoidCallback? onRestore;
 
   // New props for centralized logic
   final int? tmdbId;
@@ -35,6 +36,7 @@ class MediaCard extends ConsumerStatefulWidget {
     this.onTap,
     this.onPlay,
     this.onRemoveFromList,
+    this.onRestore,
     this.tmdbId,
     this.mediaType,
   });
@@ -123,6 +125,12 @@ class _MediaCardState extends ConsumerState<MediaCard> {
           icon: Icons.remove_circle_outline,
           label: l10n.menuRemoveFromList,
           onTap: widget.onRemoveFromList!,
+        ),
+      if (widget.onRestore != null)
+        AppMenuOption(
+          icon: Icons.restore,
+          label: l10n.menuRestoreContinueWatching,
+          onTap: widget.onRestore!,
         ),
     ];
 
