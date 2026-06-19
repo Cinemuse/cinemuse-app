@@ -484,13 +484,30 @@ class WatchHistoryRepository {
   /// Should be called on app startup or periodically.
   Future<void> syncWatchHistory(String userId) async {
     try {
-      final remoteData = await _client
-          .from('watch_history')
-          .select()
-          .eq('user_id', userId)
-          .withErrorHandling();
+      final allRemoteData = <dynamic>[];
+      int offset = 0;
+      const limit = 1000;
+      bool hasMore = true;
 
-      final companions = (remoteData as List).map((json) {
+      while (hasMore) {
+        final remoteData = await _client
+            .from('watch_history')
+            .select()
+            .eq('user_id', userId)
+            .range(offset, offset + limit - 1)
+            .withErrorHandling();
+
+        final dataList = remoteData as List<dynamic>;
+        allRemoteData.addAll(dataList);
+
+        if (dataList.length < limit) {
+          hasMore = false;
+        } else {
+          offset += limit;
+        }
+      }
+
+      final companions = allRemoteData.map((json) {
         final lastWatched = json['last_watched_at'] != null
             ? DateTime.parse(json['last_watched_at'])
             : DateTime.now();
@@ -523,7 +540,7 @@ class WatchHistoryRepository {
     return _client
         .from('watch_logs')
         .stream(primaryKey: ['id'])
-        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId)
         .order('logged_at', ascending: false)
         .withErrorHandling()
         .transform(_debounceTransformer(const Duration(milliseconds: 300)))
@@ -531,7 +548,7 @@ class WatchHistoryRepository {
           (list) => list
               .where(
                 (item) =>
-                    item['tmdb_id'] == tmdbId && item['media_type'] == 'movie',
+                    item['user_id'] == userId && item['media_type'] == 'movie',
               )
               .toList(),
         );
@@ -545,7 +562,7 @@ class WatchHistoryRepository {
     return _client
         .from('watch_logs')
         .stream(primaryKey: ['id'])
-        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId)
         .order('logged_at', ascending: false)
         .withErrorHandling()
         .transform(_debounceTransformer(const Duration(milliseconds: 300)))
@@ -553,7 +570,7 @@ class WatchHistoryRepository {
           (list) => list
               .where(
                 (item) =>
-                    item['tmdb_id'] == tmdbId && item['media_type'] == 'tv',
+                    item['user_id'] == userId && item['media_type'] == 'tv',
               )
               .toList(),
         );

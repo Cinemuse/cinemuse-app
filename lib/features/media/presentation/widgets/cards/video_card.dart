@@ -62,14 +62,16 @@ class VideoCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              Text(
-                name,
-                maxLines: 2,
-                textAlign: TextAlign.left,
-                overflow: TextOverflow.ellipsis,
-                style: DesktopTypography.bodySecondary.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textWhite,
+              Flexible(
+                child: Text(
+                  name,
+                  maxLines: 2,
+                  textAlign: TextAlign.left,
+                  overflow: TextOverflow.ellipsis,
+                  style: DesktopTypography.bodySecondary.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textWhite,
+                  ),
                 ),
               ),
             ],
