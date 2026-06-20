@@ -51,45 +51,49 @@ class AppMenu {
           bottom: MediaQuery.of(context).padding.bottom + 16,
           top: 8,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (title != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16, left: 24, right: 24),
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+        child: Builder(
+          builder: (localContext) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (title != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16, left: 24, right: 24),
+                    child: Text(
+                      title,
+                      style: Theme.of(localContext).textTheme.bodyMedium!.copyWith(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ...options.map(
+                  (option) => ListTile(
+                    leading: Icon(
+                      option.icon,
+                      color: option.isDestructive
+                          ? AppTheme.favorites
+                          : Colors.white70,
+                    ),
+                    title: Text(
+                      option.label,
+                      style: Theme.of(localContext).textTheme.bodyMedium!.copyWith(
+                        color: option.isDestructive
+                            ? AppTheme.favorites
+                            : Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(localContext);
+                      option.onTap();
+                    },
                   ),
                 ),
-              ),
-            ...options.map(
-              (option) => ListTile(
-                leading: Icon(
-                  option.icon,
-                  color: option.isDestructive
-                      ? AppTheme.favorites
-                      : Colors.white70,
-                ),
-                title: Text(
-                  option.label,
-                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    color: option.isDestructive
-                        ? AppTheme.favorites
-                        : Colors.white,
-                    fontSize: 16,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  option.onTap();
-                },
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
