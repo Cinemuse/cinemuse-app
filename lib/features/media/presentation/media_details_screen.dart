@@ -234,6 +234,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         _activeTab ??= isTV ? DetailsTab.episodes : DetailsTab.cast;
 
         return CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           controller: _mainScrollController,
           slivers: [
             if (isOffline)
@@ -537,7 +538,26 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       },
     );
 
-    return Scaffold(backgroundColor: AppTheme.primary, body: bodyContent);
+    return Scaffold(
+      backgroundColor: AppTheme.primary,
+      body: RefreshIndicator(
+        color: AppTheme.accent,
+        backgroundColor: AppTheme.secondary,
+        onRefresh: () async {
+          final user = ref.read(authProvider).value;
+          if (user != null) {
+            await Future.wait([
+              ref.read(watchHistoryRepositoryProvider).syncWatchHistory(user.id),
+              ref.read(listsRepositoryProvider).syncUserLists(user.id),
+            ]).catchError((_) => []);
+          }
+
+          ref.invalidate(mediaDetailsProvider((id: widget.mediaId, type: typeForTmdb)));
+          ref.invalidate(mediaWatchHistoryProvider(widget.mediaId));
+        },
+        child: bodyContent,
+      ),
+    );
   }
 
   void _handlePlay(

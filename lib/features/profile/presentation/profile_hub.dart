@@ -8,6 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/shared/widgets/offline_banner.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
+import 'package:cinemuse_app/features/auth/application/auth_service.dart';
+import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 
 class ProfileHub extends ConsumerStatefulWidget {
   const ProfileHub({super.key});
@@ -40,8 +43,23 @@ class _ProfileHubState extends ConsumerState<ProfileHub>
 
     return Scaffold(
       backgroundColor: AppTheme.primary,
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
+      body: RefreshIndicator(
+        color: AppTheme.accent,
+        backgroundColor: AppTheme.secondary,
+        onRefresh: () async {
+          final user = ref.read(authProvider).value;
+          if (user != null) {
+            await Future.wait([
+              ref.read(watchHistoryRepositoryProvider).syncWatchHistory(user.id),
+              ref.read(listsRepositoryProvider).syncUserLists(user.id),
+            ]).catchError((_) => []);
+          }
+
+          ref.invalidate(userListsProvider);
+        },
+        child: NestedScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverToBoxAdapter(
               child: Column(
@@ -111,6 +129,7 @@ class _ProfileHubState extends ConsumerState<ProfileHub>
             ),
           ],
         ),
+      ),
       ),
     );
   }

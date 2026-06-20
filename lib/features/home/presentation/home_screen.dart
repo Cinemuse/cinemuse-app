@@ -14,6 +14,8 @@ import 'package:cinemuse_app/shared/widgets/offline_banner.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
+import 'package:cinemuse_app/features/auth/application/auth_service.dart';
+import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_sheet.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 
@@ -80,9 +82,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.primary,
-      body: SingleChildScrollView(
-        padding: EdgeInsets.zero,
-        child: Column(
+      body: RefreshIndicator(
+        color: AppTheme.accent,
+        backgroundColor: AppTheme.secondary,
+        onRefresh: () async {
+          final user = ref.read(authProvider).value;
+          if (user != null) {
+            await Future.wait([
+              ref.read(watchHistoryRepositoryProvider).syncWatchHistory(user.id),
+              ref.read(listsRepositoryProvider).syncUserLists(user.id),
+            ]).catchError((_) => []);
+          }
+
+          ref.invalidate(trendingProvider);
+          ref.invalidate(popularMoviesProvider);
+          ref.invalidate(popularSeriesProvider);
+          ref.invalidate(userListsProvider);
+          // Small delay to allow animations to complete smoothly
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          child: Column(
           children: [
             if (!isOffline) ...[
               // 1. Hero Section (Trending #1)
@@ -236,6 +258,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
