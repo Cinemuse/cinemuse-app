@@ -73,7 +73,7 @@ class _SocialIcon extends StatefulWidget {
   final IconData icon;
   final Color? color;
   final VoidCallback onTap;
-  final bool showArrow;
+  final bool showArrow = false;
 
   const _SocialIcon({
     required this.icon,

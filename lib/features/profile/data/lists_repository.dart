@@ -91,7 +91,7 @@ class ListsRepository {
                   : null,
               releaseDate: mediaRow.releaseDate,
               voteAverage: mediaRow.voteAverage,
-              updatedAt: mediaRow.updatedAt ?? DateTime.now(),
+              updatedAt: mediaRow.updatedAt,
             );
           }
 

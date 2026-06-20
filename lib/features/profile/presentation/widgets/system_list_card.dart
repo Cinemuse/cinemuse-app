@@ -15,7 +15,7 @@ class SystemListCard extends StatelessWidget {
     
     final isWatchlist = list.type == ListType.watchlist;
     final isFavorites = list.type == ListType.favorites;
-    final isDropped = list.type == ListType.dropped;
+
 
     final Color baseColor = isWatchlist
         ? AppTheme.watchlist

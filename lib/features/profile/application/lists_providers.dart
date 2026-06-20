@@ -202,7 +202,7 @@ final droppedListProvider = FutureProvider<UserList?>((ref) async {
       listId: 'dropped',
       mediaType: history.mediaType,
       tmdbId: history.tmdbId,
-      addedAt: history.lastWatchedAt ?? DateTime.now(),
+      addedAt: history.lastWatchedAt,
       media: media,
       meta: media != null ? {
         'title': media.getLocalizedTitle('en') ?? media.getLocalizedTitle('it') ?? 'Unknown',
