@@ -230,11 +230,9 @@ class WatchHistoryRepository {
               .getSingleOrNull();
 
       if (localCurrent == null || localCurrent.status != 'watching') {
-        await _clearStaleWatchingEntries(
+        await _clearStaleEntries(
           userId,
           media.tmdbId,
-          excludeSeason: season,
-          excludeEpisode: episode,
         );
       }
     }
@@ -807,8 +805,8 @@ class WatchHistoryRepository {
 
     await _client.from('watch_logs').insert(logs);
 
-    // Clean stale 'watching' entries before upserting completed ones
-    await _clearStaleWatchingEntries(userId, tmdbId);
+    // Clean stale entries before upserting completed ones
+    await _clearStaleEntries(userId, tmdbId);
 
     // Update history for all marked episodes to completed
     final historyUpdates = episodes
@@ -861,8 +859,8 @@ class WatchHistoryRepository {
     required int currentEpisode,
     required Map<String, dynamic> seriesDetails,
   }) async {
-    // 1. Clean all stale 'watching' entries for this series to prevent ghost items
-    await _clearStaleWatchingEntries(userId, tmdbId);
+    // 1. Clean all stale entries for this series to prevent ghost items
+    await _clearStaleEntries(userId, tmdbId);
 
     // 2. Calculate next episode using Domain Service
     final result = _seriesService.getNextEpisode(
@@ -942,40 +940,24 @@ class WatchHistoryRepository {
     }
   }
 
-  /// Removes all 'watching' entries for a given series from both local and remote.
-  /// Prevents stale Continue Watching items when advancing episodes.
-  /// If excludeSeason and excludeEpisode are provided, that specific entry is spared.
-  Future<void> _clearStaleWatchingEntries(
+  /// Removes all history entries for a given series from both local and remote.
+  /// Prevents stale Continue Watching or Dropped items when advancing episodes.
+  Future<void> _clearStaleEntries(
     String userId,
-    int tmdbId, {
-    int? excludeSeason,
-    int? excludeEpisode,
-  }) async {
-    // Remote: delete all 'watching' rows for this series
-    var query = _client
+    int tmdbId,
+  ) async {
+    // Remote: delete all rows for this series
+    await _client
         .from('watch_history')
         .delete()
-        .match({'user_id': userId, 'tmdb_id': tmdbId, 'media_type': 'tv'})
-        .eq('status', 'watching');
+        .match({'user_id': userId, 'tmdb_id': tmdbId, 'media_type': 'tv'});
 
-    if (excludeSeason != null && excludeEpisode != null) {
-      query = query.neq('season', excludeSeason).neq('episode', excludeEpisode);
-    }
-
-    await query;
-
-    // Local: delete all entries for this series that are 'watching'
-    await ((_db.delete(_db.localWatchHistories)..where(
-          (t) =>
+    // Local: delete all entries for this series
+    await (_db.delete(_db.localWatchHistories)
+          ..where((t) =>
               t.userId.equals(userId) &
               t.tmdbId.equals(tmdbId) &
-              t.mediaType.equals('tv') &
-              t.status.equals('watching') &
-              (excludeSeason != null && excludeEpisode != null
-                  ? t.season.equals(excludeSeason).not() |
-                        t.episode.equals(excludeEpisode).not()
-                  : const Constant(true)),
-        )))
+              t.mediaType.equals('tv')))
         .go();
   }
 
