@@ -12,6 +12,7 @@ import 'package:cinemuse_app/shared/widgets/backdrop_card.dart';
 import 'package:cinemuse_app/shared/widgets/skeleton_box.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_sheet.dart';
 
 class ContinueWatchingCard extends ConsumerStatefulWidget {
   final WatchHistory historyItem;
@@ -190,6 +191,9 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
           ref.read(userListsProvider.notifier).toggleWatchlist(media);
         }
       },
+      onAddToList: media != null ? () {
+        AddToListSheet.show(context, media);
+      } : null,
       onDrop: widget.onDrop,
       onRemove: widget.onRemove,
       onClearCache: hasCache

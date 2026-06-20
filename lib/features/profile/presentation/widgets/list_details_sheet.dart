@@ -14,6 +14,8 @@ import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
 import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
+import 'package:cinemuse_app/features/search/presentation/search_overlay.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
 class ListDetailsSheet extends ConsumerStatefulWidget {
   final UserList list;
@@ -361,6 +363,39 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                           size: 22,
                         ),
                       ),
+                      if (currentList.type != ListType.dropped)
+                        IconButton(
+                          tooltip: l10n.searchPlaceholder,
+                          onPressed: () {
+                            SearchOverlay.show(
+                              context,
+                              onItemSelected: (media) {
+                                final mediaItem = MediaItem.fromTmdbMap(media);
+                                if (currentList.type == ListType.custom) {
+                                  ref.read(userListsProvider.notifier).addItemToCustomList(
+                                    currentList.id,
+                                    mediaItem,
+                                  );
+                                } else if (currentList.type == ListType.watchlist) {
+                                  // Ensure it's added
+                                  if (!ref.read(userListsProvider.notifier).isInWatchlist(mediaItem.tmdbId, mediaItem.mediaType)) {
+                                    ref.read(userListsProvider.notifier).toggleWatchlist(mediaItem);
+                                  }
+                                } else if (currentList.type == ListType.favorites) {
+                                  // Ensure it's added
+                                  if (!ref.read(userListsProvider.notifier).isFavorite(mediaItem.tmdbId, mediaItem.mediaType)) {
+                                    ref.read(userListsProvider.notifier).toggleFavorite(mediaItem);
+                                  }
+                                }
+                              },
+                            );
+                          },
+                          icon: const Icon(
+                            LucideIcons.plus,
+                            color: Colors.white54,
+                            size: 22,
+                          ),
+                        ),
                       if (!isSystemList && widget.onUpdate != null)
                         PopupMenuButton<String>(
                           icon: const Icon(

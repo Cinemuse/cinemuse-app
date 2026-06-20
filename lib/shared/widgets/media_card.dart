@@ -10,6 +10,9 @@ import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
+import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_sheet.dart';
+import 'package:cinemuse_app/shared/widgets/bento_box.dart'; // Just in case, actually just add_to_list_sheet
+
 class MediaCard extends ConsumerStatefulWidget {
   final String title;
   final String? posterPath;
@@ -118,6 +121,27 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                     ),
                   );
             }
+          },
+        ),
+      if (widget.tmdbId != null && widget.mediaType != null)
+        AppMenuOption(
+          icon: Icons.playlist_add,
+          label: l10n.detailsAddToList,
+          onTap: () {
+            AddToListSheet.show(
+              context,
+              MediaItem(
+                tmdbId: widget.tmdbId!,
+                mediaType: widget.mediaType!,
+                titleEn: widget.title,
+                posterPath: widget.posterPath,
+                releaseDate: widget.releaseDate != null
+                    ? DateTime.tryParse(widget.releaseDate!)
+                    : null,
+                voteAverage: widget.rating,
+                updatedAt: DateTime.now(),
+              ),
+            );
           },
         ),
       if (widget.onRemoveFromList != null)

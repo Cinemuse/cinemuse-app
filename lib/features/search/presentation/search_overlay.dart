@@ -18,9 +18,15 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 class SearchOverlay extends ConsumerStatefulWidget {
   final NavigatorState? navigator;
-  const SearchOverlay({super.key, this.navigator});
+  final Function(Map<String, dynamic>)? onItemSelected;
 
-  static Future<void> show(BuildContext context, {NavigatorState? navigator}) {
+  const SearchOverlay({super.key, this.navigator, this.onItemSelected});
+
+  static Future<void> show(
+    BuildContext context, {
+    NavigatorState? navigator,
+    Function(Map<String, dynamic>)? onItemSelected,
+  }) {
     return showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -28,7 +34,7 @@ class SearchOverlay extends ConsumerStatefulWidget {
       barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 200),
       pageBuilder: (context, animation, secondaryAnimation) =>
-          SearchOverlay(navigator: navigator),
+          SearchOverlay(navigator: navigator, onItemSelected: onItemSelected),
       transitionBuilder: (context, animation, secondaryAnimation, child) {
         return FadeTransition(opacity: animation, child: child);
       },
@@ -113,6 +119,11 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
     final id = media['id'].toString();
 
     Navigator.of(context).pop();
+
+    if (widget.onItemSelected != null) {
+      widget.onItemSelected!(media);
+      return;
+    }
 
     final nav = widget.navigator ?? Navigator.of(context);
 
