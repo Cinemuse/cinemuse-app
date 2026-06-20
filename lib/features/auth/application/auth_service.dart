@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/error/supabase_error_handler.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -75,6 +76,7 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
   }
 
   Future<void> debugSignIn() async {
+    if (!kDebugMode) return;
     await signIn('aaa@aaa.aa', 'Password');
   }
 
