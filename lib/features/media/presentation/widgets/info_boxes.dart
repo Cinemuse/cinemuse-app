@@ -31,8 +31,9 @@ class CreativeVisionBox extends StatelessWidget {
     }
     final finalDirectors = uniqueDirectors.values.toList();
 
-    if (finalDirectors.isEmpty && writers.isEmpty)
+    if (finalDirectors.isEmpty && writers.isEmpty) {
       return const SizedBox.shrink();
+    }
 
     return BentoBox(
       title: l10n.detailsCreativeVision,

@@ -57,12 +57,14 @@ class MimeResolver {
     if (format == null) return null;
     final f = format.toLowerCase();
 
-    if (f.contains('hls') || f.contains('mpegurl'))
+    if (f.contains('hls') || f.contains('mpegurl')) {
       return 'application/x-mpegURL';
+    }
     if (f.contains('dash')) return 'application/dash+xml';
     if (f.contains('matroska')) return 'video/x-matroska';
-    if (f.contains('mp4') || f.contains('mov') || f.contains('m4v'))
+    if (f.contains('mp4') || f.contains('mov') || f.contains('m4v')) {
       return 'video/mp4';
+    }
     if (f.contains('webm')) return 'video/webm';
     if (f.contains('avi')) return 'video/x-msvideo';
 

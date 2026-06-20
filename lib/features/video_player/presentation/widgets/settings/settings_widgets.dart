@@ -145,11 +145,12 @@ class TrackSubtitle extends ConsumerWidget {
           : pref.subtitleLanguage.toLowerCase();
 
       if (track.id == 'no' || track.id == 'auto') {
-        if (track.id == 'no')
+        if (track.id == 'no') {
           return const Text(
             'Off/None',
             style: TextStyle(color: AppTheme.textMuted),
           );
+        }
 
         final subs = player.state.tracks.subtitle;
         final matched = subs.firstWhere(
@@ -182,11 +183,12 @@ class TrackSubtitle extends ConsumerWidget {
           : pref.playerLanguage.toLowerCase();
 
       if (track.id == 'no' || track.id == 'auto') {
-        if (track.id == 'no')
+        if (track.id == 'no') {
           return const Text(
             'Off/None',
             style: TextStyle(color: AppTheme.textMuted),
           );
+        }
 
         final audio = player.state.tracks.audio;
         final matched = audio.firstWhere(

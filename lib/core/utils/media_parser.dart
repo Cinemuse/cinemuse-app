@@ -90,8 +90,9 @@ class MediaParser {
       if (parsed.episode == null && parsed.absoluteEpisode == null) return true;
       if (targetEpisode != null && parsed.episode == targetEpisode) return true;
       if (targetAbsoluteEpisode != null &&
-          parsed.absoluteEpisode == targetAbsoluteEpisode)
+          parsed.absoluteEpisode == targetAbsoluteEpisode) {
         return true;
+      }
 
       // If it has an episode but it's different, it might be the start of the batch (e.g. 01-26)
       // Check for range patterns
@@ -104,12 +105,14 @@ class MediaParser {
         if (start != null && end != null) {
           if (targetAbsoluteEpisode != null &&
               targetAbsoluteEpisode >= start &&
-              targetAbsoluteEpisode <= end)
+              targetAbsoluteEpisode <= end) {
             return true;
+          }
           if (targetEpisode != null &&
               targetEpisode >= start &&
-              targetEpisode <= end)
+              targetEpisode <= end) {
             return true;
+          }
         }
       }
 

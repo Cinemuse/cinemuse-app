@@ -248,8 +248,9 @@ class AppDatabase extends _$AppDatabase {
               t.tmdbId.equals(tmdbId) &
               t.mediaType.equals(mediaType);
           if (season != null) predicate = predicate & t.season.equals(season);
-          if (episode != null)
+          if (episode != null) {
             predicate = predicate & t.episode.equals(episode);
+          }
           return predicate;
         }))
         .go();

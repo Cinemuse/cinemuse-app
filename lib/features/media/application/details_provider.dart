@@ -242,12 +242,13 @@ final seriesWatchStatusProvider =
       ({int tmdbId, int totalEpisodes})
     >((ref, args) {
       final counts = ref.watch(watchedEpisodesMapProvider(args.tmdbId));
-      if (counts.isEmpty)
+      if (counts.isEmpty) {
         return (
           isFullyWatched: false,
           isPartiallyWatched: false,
           minWatchCount: 0,
         );
+      }
 
       int watchedInSeries = 0;
       int minCount = -1;

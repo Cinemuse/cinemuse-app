@@ -594,8 +594,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     Map<String, dynamic>? details,
     String languageCode,
   ) {
-    if (details == null)
+    if (details == null) {
       return resolvedParams.episodeTitle ?? resolvedParams.queryId;
+    }
     return MediaItem.extractTitleFromTmdb(details, languageCode) ??
         resolvedParams.episodeTitle ??
         resolvedParams.queryId;
@@ -896,8 +897,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   Future<void> changeFile(int fileId) async {
     if (state.value == null ||
         _player == null ||
-        state.value!.currentStream == null)
+        state.value!.currentStream == null) {
       return;
+    }
 
     state = AsyncValue.data(
       state.value!.copyWith(isResolving: true, error: null),
@@ -1049,8 +1051,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
     // Also mark the current candidate's source URL as exhausted
     final currentCandidateUrl = currentState.currentStream?.candidate.url;
-    if (currentCandidateUrl != null)
+    if (currentCandidateUrl != null) {
       _exhaustedCandidateUrls.add(currentCandidateUrl);
+    }
 
     // Find the first stream not yet tried — safe null return if none exist
     final nextCandidate = currentState.availableStreams
@@ -1076,8 +1079,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     final currentState = state.valueOrNull;
     if (currentState == null ||
         currentState.currentStream == null ||
-        _player == null)
+        _player == null) {
       return;
+    }
 
     final lastPosition = _player!.state.position;
     final candidate = currentState.currentStream!.candidate;

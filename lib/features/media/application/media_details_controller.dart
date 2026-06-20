@@ -172,8 +172,9 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       // 1. Find the latest season/episode in the batch
       final latest = episodes.reduce((curr, next) {
         if (next.season > curr.season) return next;
-        if (next.season == curr.season && next.episode > curr.episode)
+        if (next.season == curr.season && next.episode > curr.episode) {
           return next;
+        }
         return curr;
       });
 

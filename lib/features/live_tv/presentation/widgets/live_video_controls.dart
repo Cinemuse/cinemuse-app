@@ -689,8 +689,9 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
                               _clearVirtualPositionTimer = Timer(
                                 const Duration(milliseconds: 1000),
                                 () {
-                                  if (mounted)
+                                  if (mounted) {
                                     setState(() => _virtualPosition = null);
+                                  }
                                 },
                               );
                             },

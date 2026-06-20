@@ -363,8 +363,9 @@ final currentProgramProvider = Provider.family<EpgProgram?, Channel>((
     epgDataProvider.select((asyncEpg) {
       return asyncEpg.whenOrNull(
             data: (epgData) {
-              if (channel.epgSource == null || channel.epgId == null)
+              if (channel.epgSource == null || channel.epgId == null) {
                 return <EpgProgram>[];
+              }
               return epgData[channel.epgSource]?[channel.epgId] ??
                   <EpgProgram>[];
             },
@@ -394,8 +395,9 @@ final nextProgramProvider = Provider.family<EpgProgram?, Channel>((
     epgDataProvider.select((asyncEpg) {
       return asyncEpg.whenOrNull(
             data: (epgData) {
-              if (channel.epgSource == null || channel.epgId == null)
+              if (channel.epgSource == null || channel.epgId == null) {
                 return <EpgProgram>[];
+              }
               return epgData[channel.epgSource]?[channel.epgId] ??
                   <EpgProgram>[];
             },

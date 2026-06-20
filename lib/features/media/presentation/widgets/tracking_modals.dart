@@ -9,7 +9,7 @@ class _ModalContentWithPicker extends StatefulWidget {
       BuildContext context, DateTime? selectedDate, VoidCallback onPickDate)
       builder;
 
-  const _ModalContentWithPicker({super.key, required this.builder});
+  const _ModalContentWithPicker({required this.builder});
 
   @override
   State<_ModalContentWithPicker> createState() =>

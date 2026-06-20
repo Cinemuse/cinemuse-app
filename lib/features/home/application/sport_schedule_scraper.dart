@@ -18,12 +18,14 @@ class SportTvEvent {
   String get sportTranslationKey {
     final clean = sportName.toLowerCase().trim();
     if (clean.contains('calcio')) return 'sport_football';
-    if (clean.contains('basket') || clean.contains('pallacanestro'))
+    if (clean.contains('basket') || clean.contains('pallacanestro')) {
       return 'sport_basketball';
+    }
     if (clean.contains('motociclismo') ||
         clean.contains('motogp') ||
-        clean.contains('moto gp'))
+        clean.contains('moto gp')) {
       return 'sport_motorcycling';
+    }
     if (clean.contains('pallavolo')) return 'sport_volleyball';
     if (clean.contains('atletica')) return 'sport_athletics';
     if (clean.contains('tennis')) return 'sport_tennis';
@@ -31,8 +33,9 @@ class SportTvEvent {
     if (clean.contains('rugby')) return 'sport_rugby';
     if (clean.contains('formula 1') ||
         clean.contains('f1') ||
-        clean.contains('automobilismo'))
+        clean.contains('automobilismo')) {
       return 'sport_f1';
+    }
     return 'sport_generic';
   }
 

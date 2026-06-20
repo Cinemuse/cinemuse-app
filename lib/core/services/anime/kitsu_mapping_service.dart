@@ -171,8 +171,9 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
           if (episode >= start) return episode - start + 1;
         } else {
           final end = int.tryParse(parts[1]);
-          if (end != null && episode >= start && episode <= end)
+          if (end != null && episode >= start && episode <= end) {
             return episode - start + 1;
+          }
         }
       } else {
         final epVal = int.tryParse(cleanRange);

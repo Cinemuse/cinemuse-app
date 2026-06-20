@@ -99,8 +99,9 @@ class StreamRanker {
         t.contains('russian') ||
         t.contains('lostfilm') ||
         t.contains('hdrezka') ||
-        t.contains('syncmer'))
+        t.contains('syncmer')) {
       s -= 500;
+    }
     if (t.contains(' ukr') || t.contains('ukrainian')) s -= 500;
     if (t.contains(' fra') || t.contains('french')) s -= 200;
     if (t.contains(' ger') || t.contains('german')) s -= 200;
@@ -110,8 +111,9 @@ class StreamRanker {
         (t.contains('lostfilm') ||
             t.contains('hdrezka') ||
             t.contains('syncmer') ||
-            t.contains('newcomers')))
+            t.contains('newcomers'))) {
       s -= 800;
+    }
     return s;
   }
 

@@ -58,8 +58,9 @@ class AnimeMappingSyncService {
   Future<void> _sync() async {
     try {
       final response = await _dio.get(_mappingUrl);
-      if (response.statusCode != 200)
+      if (response.statusCode != 200) {
         throw Exception('Failed to download mappings');
+      }
 
       final Map<String, dynamic> data = response.data is String
           ? jsonDecode(response.data)

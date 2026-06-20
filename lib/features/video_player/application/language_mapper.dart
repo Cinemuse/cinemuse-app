@@ -26,8 +26,9 @@ class LanguageMapper {
     final l = lang.toLowerCase();
     if (l == 'it' || l.contains('ita')) return ['ita', 'it', 'italiano'];
     if (l == 'en' || l.contains('eng')) return ['eng', 'en', 'english'];
-    if (l == 'ja' || l.contains('jpn') || l.contains('japan'))
+    if (l == 'ja' || l.contains('jpn') || l.contains('japan')) {
       return ['jpn', 'ja', 'japanese'];
+    }
     if (l.contains('fra')) return ['fra', 'fr', 'français', 'fre'];
     if (l.contains('deu')) return ['deu', 'de', 'deutsch', 'ger'];
     if (l.contains('spa')) return ['spa', 'es', 'español'];

@@ -79,7 +79,6 @@ class _SocialIcon extends StatefulWidget {
     required this.icon,
     this.color,
     required this.onTap,
-    this.showArrow = false,
   });
 
   @override

@@ -126,8 +126,9 @@ class YouTubeSourceHandler {
       if (res >= 1080) return VideoResolution.r1080p;
       if (res >= 720) return VideoResolution.r720p;
       if (res >= 480) return VideoResolution.r480p;
-      if (res >= 360)
+      if (res >= 360) {
         return VideoResolution.unknown; // Use unknown for 360p or ignore
+      }
     }
     return null;
   }

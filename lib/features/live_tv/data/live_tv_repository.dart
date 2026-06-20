@@ -143,8 +143,9 @@ class LiveTvRepository {
     if (sourcePrograms == null) return (current: null, next: null);
 
     final programs = sourcePrograms[channel.epgId];
-    if (programs == null || programs.isEmpty)
+    if (programs == null || programs.isEmpty) {
       return (current: null, next: null);
+    }
 
     final now = DateTime.now();
     EpgProgram? current;

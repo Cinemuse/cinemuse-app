@@ -11,7 +11,7 @@ import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
 import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_sheet.dart';
-import 'package:cinemuse_app/shared/widgets/bento_box.dart'; // Just in case, actually just add_to_list_sheet
+// Just in case, actually just add_to_list_sheet
 
 class MediaCard extends ConsumerStatefulWidget {
   final String title;

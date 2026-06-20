@@ -82,8 +82,9 @@ class TrackManager extends BaseManager {
     _isAutoSelecting = true;
     _hasFetchedExternal = false;
 
-    if (_preferredAudioLang(ref.read(settingsProvider), isAnime).isEmpty)
+    if (_preferredAudioLang(ref.read(settingsProvider), isAnime).isEmpty) {
       return;
+    }
 
     _startAutoSelectTimeout();
     unawaited(_fetchAndCacheExternalSubtitles());
@@ -131,8 +132,9 @@ class TrackManager extends BaseManager {
     if (!_isAutoSelecting ||
         _isAnime == null ||
         _isPerformingSelection ||
-        !_hasRealTracks())
+        !_hasRealTracks()) {
       return;
+    }
     _performSelection();
   }
 
