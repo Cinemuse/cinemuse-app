@@ -9,6 +9,8 @@ class PlayPauseOverlay extends StatelessWidget {
   final bool visible;
   final VoidCallback onTogglePlayPause;
   final Function(bool) onSkip;
+  final int seekAmount;
+  final bool showSeekIndicator;
 
   const PlayPauseOverlay({
     super.key,
@@ -16,6 +18,8 @@ class PlayPauseOverlay extends StatelessWidget {
     required this.visible,
     required this.onTogglePlayPause,
     required this.onSkip,
+    this.seekAmount = 0,
+    this.showSeekIndicator = false,
   });
 
   @override
@@ -37,15 +41,13 @@ class PlayPauseOverlay extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.replay_10_rounded,
-                      color: Colors.white,
-                    ),
-                    iconSize: 48,
-                    onPressed: () => onSkip(false),
+                  _SeekButton(
+                    isForward: false,
+                    isActive: showSeekIndicator && seekAmount < 0,
+                    seekAmount: seekAmount,
+                    onSkip: () => onSkip(false),
                   ),
-                  const SizedBox(width: 32),
+                  const SizedBox(width: 24),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: const BoxDecoration(
@@ -63,14 +65,12 @@ class PlayPauseOverlay extends StatelessWidget {
                       onPressed: onTogglePlayPause,
                     ),
                   ),
-                  const SizedBox(width: 32),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.forward_10_rounded,
-                      color: Colors.white,
-                    ),
-                    iconSize: 48,
-                    onPressed: () => onSkip(true),
+                  const SizedBox(width: 24),
+                  _SeekButton(
+                    isForward: true,
+                    isActive: showSeekIndicator && seekAmount > 0,
+                    seekAmount: seekAmount,
+                    onSkip: () => onSkip(true),
                   ),
                 ],
               ),
@@ -97,6 +97,77 @@ class PlayPauseOverlay extends StatelessWidget {
           }
           return const SizedBox.shrink();
         },
+      ),
+    );
+  }
+}
+
+class _SeekButton extends StatelessWidget {
+  final bool isForward;
+  final bool isActive;
+  final int seekAmount;
+  final VoidCallback onSkip;
+
+  const _SeekButton({
+    required this.isForward,
+    required this.isActive,
+    required this.seekAmount,
+    required this.onSkip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(40),
+        onTap: onSkip,
+        child: Container(
+          width: 80,
+          height: 80,
+          alignment: Alignment.center,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 150),
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.8, end: 1.0).animate(animation),
+                child: child,
+              ),
+            ),
+            child: isActive
+                ? Column(
+                    key: const ValueKey('active'),
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        isForward
+                            ? Icons.fast_forward_rounded
+                            : Icons.fast_rewind_rounded,
+                        color: Colors.white,
+                        size: 36,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isForward ? '+${seekAmount}s' : '${seekAmount}s',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  )
+                : Icon(
+                    isForward
+                        ? Icons.forward_10_rounded
+                        : Icons.replay_10_rounded,
+                    key: const ValueKey('inactive'),
+                    color: Colors.white,
+                    size: 48,
+                  ),
+          ),
+        ),
       ),
     );
   }

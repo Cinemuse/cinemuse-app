@@ -9,7 +9,6 @@ import 'package:cinemuse_app/core/presentation/widgets/volume_control.dart';
 import 'package:cinemuse_app/core/presentation/widgets/fullscreen_button.dart';
 import 'package:cinemuse_app/core/presentation/widgets/buffering_indicator.dart';
 import 'package:cinemuse_app/core/presentation/widgets/play_pause_overlay.dart';
-import 'package:cinemuse_app/core/presentation/widgets/seek_feedback_overlay.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/number_input_osd.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
@@ -393,11 +392,8 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
                         visible: _visible,
                         onTogglePlayPause: _togglePlayPause,
                         onSkip: _performSkip,
-                      ),
-
-                      SeekFeedbackOverlay(
-                        amount: _seekAmount,
-                        visible: _showSeekIndicator,
+                        seekAmount: _seekAmount,
+                        showSeekIndicator: _showSeekIndicator,
                       ),
 
                       // Bottom bar

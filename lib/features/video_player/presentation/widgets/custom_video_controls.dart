@@ -16,7 +16,6 @@ import 'package:cinemuse_app/features/video_player/presentation/widgets/cast_dev
 import 'package:cinemuse_app/core/constants/playback_constants.dart';
 import 'package:cinemuse_app/core/presentation/widgets/buffering_indicator.dart';
 import 'package:cinemuse_app/core/presentation/widgets/play_pause_overlay.dart';
-import 'package:cinemuse_app/core/presentation/widgets/seek_feedback_overlay.dart';
 
 enum DragType { none, volume, brightness }
 
@@ -518,11 +517,8 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                       visible: _visible,
                       onTogglePlayPause: _togglePlayPause,
                       onSkip: _performRealSkip,
-                    ),
-
-                    SeekFeedbackOverlay(
-                      amount: _seekAmount,
-                      visible: _showSeekIndicator,
+                      seekAmount: _seekAmount,
+                      showSeekIndicator: _showSeekIndicator,
                     ),
 
                     // Drag Indicator Overlay
@@ -614,8 +610,9 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                           _clearVirtualPositionTimer = Timer(
                             const Duration(milliseconds: 500),
                             () {
-                              if (mounted)
+                              if (mounted) {
                                 setState(() => _virtualPosition = null);
+                              }
                             },
                           );
                         },
