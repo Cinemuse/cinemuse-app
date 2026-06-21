@@ -55,14 +55,14 @@ class CachedUserLists extends Table {
 
 class CachedListItems extends Table {
   TextColumn get listId => text()();
-  IntColumn get mediaTmdbId => integer()();
+  IntColumn get tmdbId => integer()();
   TextColumn get mediaType => text()();
   TextColumn get meta => text().nullable()(); // JSON string
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   DateTimeColumn get addedAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
-  Set<Column> get primaryKey => {listId, mediaTmdbId, mediaType};
+  Set<Column> get primaryKey => {listId, tmdbId, mediaType};
 }
 
 class AnimeExternalMappings extends Table {
@@ -115,7 +115,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -123,11 +123,16 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
     },
     onUpgrade: (m, from, to) async {
-      if (from == 1 && to == 2) {
+      if (from == 1 && to >= 2) {
         // We changed the primary key for localWatchHistories.
         // Easiest migration since it's a cache is to drop and recreate the table.
         await m.deleteTable(localWatchHistories.actualTableName);
         await m.createTable(localWatchHistories);
+      }
+      if (from < 3) {
+        // Renamed media_tmdb_id to tmdb_id in CachedListItems.
+        await m.deleteTable(cachedListItems.actualTableName);
+        await m.createTable(cachedListItems);
       }
     },
     beforeOpen: (details) async {
@@ -389,7 +394,7 @@ class AppDatabase extends _$AppDatabase {
     await (delete(cachedListItems)..where(
           (t) =>
               t.listId.equals(listId) &
-              t.mediaTmdbId.equals(tmdbId) &
+              t.tmdbId.equals(tmdbId) &
               t.mediaType.equals(mediaType),
         ))
         .go();

@@ -749,7 +749,7 @@ class WatchHistoryRepository {
     required Map<String, dynamic> seriesDetails,
     DateTime? loggedAt,
   }) async {
-    final nowTime = loggedAt ?? DateTime.now();
+    final nowTime = loggedAt ?? DateTime.now().toUtc();
     final nowStr = nowTime.toIso8601String();
 
     // Prevent retroactively logged episodes from downgrading current progress

@@ -1805,12 +1805,10 @@ class $CachedListItemsTable extends CachedListItems
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _mediaTmdbIdMeta = const VerificationMeta(
-    'mediaTmdbId',
-  );
+  static const VerificationMeta _tmdbIdMeta = const VerificationMeta('tmdbId');
   @override
-  late final GeneratedColumn<int> mediaTmdbId = GeneratedColumn<int>(
-    'media_tmdb_id',
+  late final GeneratedColumn<int> tmdbId = GeneratedColumn<int>(
+    'tmdb_id',
     aliasedName,
     false,
     type: DriftSqlType.int,
@@ -1863,7 +1861,7 @@ class $CachedListItemsTable extends CachedListItems
   @override
   List<GeneratedColumn> get $columns => [
     listId,
-    mediaTmdbId,
+    tmdbId,
     mediaType,
     meta,
     sortOrder,
@@ -1889,16 +1887,13 @@ class $CachedListItemsTable extends CachedListItems
     } else if (isInserting) {
       context.missing(_listIdMeta);
     }
-    if (data.containsKey('media_tmdb_id')) {
+    if (data.containsKey('tmdb_id')) {
       context.handle(
-        _mediaTmdbIdMeta,
-        mediaTmdbId.isAcceptableOrUnknown(
-          data['media_tmdb_id']!,
-          _mediaTmdbIdMeta,
-        ),
+        _tmdbIdMeta,
+        tmdbId.isAcceptableOrUnknown(data['tmdb_id']!, _tmdbIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_mediaTmdbIdMeta);
+      context.missing(_tmdbIdMeta);
     }
     if (data.containsKey('media_type')) {
       context.handle(
@@ -1930,7 +1925,7 @@ class $CachedListItemsTable extends CachedListItems
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {listId, mediaTmdbId, mediaType};
+  Set<GeneratedColumn> get $primaryKey => {listId, tmdbId, mediaType};
   @override
   CachedListItem map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -1940,10 +1935,10 @@ class $CachedListItemsTable extends CachedListItems
             DriftSqlType.string,
             data['${effectivePrefix}list_id'],
           )!,
-      mediaTmdbId:
+      tmdbId:
           attachedDatabase.typeMapping.read(
             DriftSqlType.int,
-            data['${effectivePrefix}media_tmdb_id'],
+            data['${effectivePrefix}tmdb_id'],
           )!,
       mediaType:
           attachedDatabase.typeMapping.read(
@@ -1975,14 +1970,14 @@ class $CachedListItemsTable extends CachedListItems
 
 class CachedListItem extends DataClass implements Insertable<CachedListItem> {
   final String listId;
-  final int mediaTmdbId;
+  final int tmdbId;
   final String mediaType;
   final String? meta;
   final int sortOrder;
   final DateTime addedAt;
   const CachedListItem({
     required this.listId,
-    required this.mediaTmdbId,
+    required this.tmdbId,
     required this.mediaType,
     this.meta,
     required this.sortOrder,
@@ -1992,7 +1987,7 @@ class CachedListItem extends DataClass implements Insertable<CachedListItem> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['list_id'] = Variable<String>(listId);
-    map['media_tmdb_id'] = Variable<int>(mediaTmdbId);
+    map['tmdb_id'] = Variable<int>(tmdbId);
     map['media_type'] = Variable<String>(mediaType);
     if (!nullToAbsent || meta != null) {
       map['meta'] = Variable<String>(meta);
@@ -2005,7 +2000,7 @@ class CachedListItem extends DataClass implements Insertable<CachedListItem> {
   CachedListItemsCompanion toCompanion(bool nullToAbsent) {
     return CachedListItemsCompanion(
       listId: Value(listId),
-      mediaTmdbId: Value(mediaTmdbId),
+      tmdbId: Value(tmdbId),
       mediaType: Value(mediaType),
       meta: meta == null && nullToAbsent ? const Value.absent() : Value(meta),
       sortOrder: Value(sortOrder),
@@ -2020,7 +2015,7 @@ class CachedListItem extends DataClass implements Insertable<CachedListItem> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return CachedListItem(
       listId: serializer.fromJson<String>(json['listId']),
-      mediaTmdbId: serializer.fromJson<int>(json['mediaTmdbId']),
+      tmdbId: serializer.fromJson<int>(json['tmdbId']),
       mediaType: serializer.fromJson<String>(json['mediaType']),
       meta: serializer.fromJson<String?>(json['meta']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
@@ -2032,7 +2027,7 @@ class CachedListItem extends DataClass implements Insertable<CachedListItem> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'listId': serializer.toJson<String>(listId),
-      'mediaTmdbId': serializer.toJson<int>(mediaTmdbId),
+      'tmdbId': serializer.toJson<int>(tmdbId),
       'mediaType': serializer.toJson<String>(mediaType),
       'meta': serializer.toJson<String?>(meta),
       'sortOrder': serializer.toJson<int>(sortOrder),
@@ -2042,14 +2037,14 @@ class CachedListItem extends DataClass implements Insertable<CachedListItem> {
 
   CachedListItem copyWith({
     String? listId,
-    int? mediaTmdbId,
+    int? tmdbId,
     String? mediaType,
     Value<String?> meta = const Value.absent(),
     int? sortOrder,
     DateTime? addedAt,
   }) => CachedListItem(
     listId: listId ?? this.listId,
-    mediaTmdbId: mediaTmdbId ?? this.mediaTmdbId,
+    tmdbId: tmdbId ?? this.tmdbId,
     mediaType: mediaType ?? this.mediaType,
     meta: meta.present ? meta.value : this.meta,
     sortOrder: sortOrder ?? this.sortOrder,
@@ -2058,8 +2053,7 @@ class CachedListItem extends DataClass implements Insertable<CachedListItem> {
   CachedListItem copyWithCompanion(CachedListItemsCompanion data) {
     return CachedListItem(
       listId: data.listId.present ? data.listId.value : this.listId,
-      mediaTmdbId:
-          data.mediaTmdbId.present ? data.mediaTmdbId.value : this.mediaTmdbId,
+      tmdbId: data.tmdbId.present ? data.tmdbId.value : this.tmdbId,
       mediaType: data.mediaType.present ? data.mediaType.value : this.mediaType,
       meta: data.meta.present ? data.meta.value : this.meta,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
@@ -2071,7 +2065,7 @@ class CachedListItem extends DataClass implements Insertable<CachedListItem> {
   String toString() {
     return (StringBuffer('CachedListItem(')
           ..write('listId: $listId, ')
-          ..write('mediaTmdbId: $mediaTmdbId, ')
+          ..write('tmdbId: $tmdbId, ')
           ..write('mediaType: $mediaType, ')
           ..write('meta: $meta, ')
           ..write('sortOrder: $sortOrder, ')
@@ -2082,13 +2076,13 @@ class CachedListItem extends DataClass implements Insertable<CachedListItem> {
 
   @override
   int get hashCode =>
-      Object.hash(listId, mediaTmdbId, mediaType, meta, sortOrder, addedAt);
+      Object.hash(listId, tmdbId, mediaType, meta, sortOrder, addedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CachedListItem &&
           other.listId == this.listId &&
-          other.mediaTmdbId == this.mediaTmdbId &&
+          other.tmdbId == this.tmdbId &&
           other.mediaType == this.mediaType &&
           other.meta == this.meta &&
           other.sortOrder == this.sortOrder &&
@@ -2097,7 +2091,7 @@ class CachedListItem extends DataClass implements Insertable<CachedListItem> {
 
 class CachedListItemsCompanion extends UpdateCompanion<CachedListItem> {
   final Value<String> listId;
-  final Value<int> mediaTmdbId;
+  final Value<int> tmdbId;
   final Value<String> mediaType;
   final Value<String?> meta;
   final Value<int> sortOrder;
@@ -2105,7 +2099,7 @@ class CachedListItemsCompanion extends UpdateCompanion<CachedListItem> {
   final Value<int> rowid;
   const CachedListItemsCompanion({
     this.listId = const Value.absent(),
-    this.mediaTmdbId = const Value.absent(),
+    this.tmdbId = const Value.absent(),
     this.mediaType = const Value.absent(),
     this.meta = const Value.absent(),
     this.sortOrder = const Value.absent(),
@@ -2114,18 +2108,18 @@ class CachedListItemsCompanion extends UpdateCompanion<CachedListItem> {
   });
   CachedListItemsCompanion.insert({
     required String listId,
-    required int mediaTmdbId,
+    required int tmdbId,
     required String mediaType,
     this.meta = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.addedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : listId = Value(listId),
-       mediaTmdbId = Value(mediaTmdbId),
+       tmdbId = Value(tmdbId),
        mediaType = Value(mediaType);
   static Insertable<CachedListItem> custom({
     Expression<String>? listId,
-    Expression<int>? mediaTmdbId,
+    Expression<int>? tmdbId,
     Expression<String>? mediaType,
     Expression<String>? meta,
     Expression<int>? sortOrder,
@@ -2134,7 +2128,7 @@ class CachedListItemsCompanion extends UpdateCompanion<CachedListItem> {
   }) {
     return RawValuesInsertable({
       if (listId != null) 'list_id': listId,
-      if (mediaTmdbId != null) 'media_tmdb_id': mediaTmdbId,
+      if (tmdbId != null) 'tmdb_id': tmdbId,
       if (mediaType != null) 'media_type': mediaType,
       if (meta != null) 'meta': meta,
       if (sortOrder != null) 'sort_order': sortOrder,
@@ -2145,7 +2139,7 @@ class CachedListItemsCompanion extends UpdateCompanion<CachedListItem> {
 
   CachedListItemsCompanion copyWith({
     Value<String>? listId,
-    Value<int>? mediaTmdbId,
+    Value<int>? tmdbId,
     Value<String>? mediaType,
     Value<String?>? meta,
     Value<int>? sortOrder,
@@ -2154,7 +2148,7 @@ class CachedListItemsCompanion extends UpdateCompanion<CachedListItem> {
   }) {
     return CachedListItemsCompanion(
       listId: listId ?? this.listId,
-      mediaTmdbId: mediaTmdbId ?? this.mediaTmdbId,
+      tmdbId: tmdbId ?? this.tmdbId,
       mediaType: mediaType ?? this.mediaType,
       meta: meta ?? this.meta,
       sortOrder: sortOrder ?? this.sortOrder,
@@ -2169,8 +2163,8 @@ class CachedListItemsCompanion extends UpdateCompanion<CachedListItem> {
     if (listId.present) {
       map['list_id'] = Variable<String>(listId.value);
     }
-    if (mediaTmdbId.present) {
-      map['media_tmdb_id'] = Variable<int>(mediaTmdbId.value);
+    if (tmdbId.present) {
+      map['tmdb_id'] = Variable<int>(tmdbId.value);
     }
     if (mediaType.present) {
       map['media_type'] = Variable<String>(mediaType.value);
@@ -2194,7 +2188,7 @@ class CachedListItemsCompanion extends UpdateCompanion<CachedListItem> {
   String toString() {
     return (StringBuffer('CachedListItemsCompanion(')
           ..write('listId: $listId, ')
-          ..write('mediaTmdbId: $mediaTmdbId, ')
+          ..write('tmdbId: $tmdbId, ')
           ..write('mediaType: $mediaType, ')
           ..write('meta: $meta, ')
           ..write('sortOrder: $sortOrder, ')
@@ -4341,7 +4335,7 @@ typedef $$CachedUserListsTableProcessedTableManager =
 typedef $$CachedListItemsTableCreateCompanionBuilder =
     CachedListItemsCompanion Function({
       required String listId,
-      required int mediaTmdbId,
+      required int tmdbId,
       required String mediaType,
       Value<String?> meta,
       Value<int> sortOrder,
@@ -4351,7 +4345,7 @@ typedef $$CachedListItemsTableCreateCompanionBuilder =
 typedef $$CachedListItemsTableUpdateCompanionBuilder =
     CachedListItemsCompanion Function({
       Value<String> listId,
-      Value<int> mediaTmdbId,
+      Value<int> tmdbId,
       Value<String> mediaType,
       Value<String?> meta,
       Value<int> sortOrder,
@@ -4373,8 +4367,8 @@ class $$CachedListItemsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get mediaTmdbId => $composableBuilder(
-    column: $table.mediaTmdbId,
+  ColumnFilters<int> get tmdbId => $composableBuilder(
+    column: $table.tmdbId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4413,8 +4407,8 @@ class $$CachedListItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get mediaTmdbId => $composableBuilder(
-    column: $table.mediaTmdbId,
+  ColumnOrderings<int> get tmdbId => $composableBuilder(
+    column: $table.tmdbId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4451,10 +4445,8 @@ class $$CachedListItemsTableAnnotationComposer
   GeneratedColumn<String> get listId =>
       $composableBuilder(column: $table.listId, builder: (column) => column);
 
-  GeneratedColumn<int> get mediaTmdbId => $composableBuilder(
-    column: $table.mediaTmdbId,
-    builder: (column) => column,
-  );
+  GeneratedColumn<int> get tmdbId =>
+      $composableBuilder(column: $table.tmdbId, builder: (column) => column);
 
   GeneratedColumn<String> get mediaType =>
       $composableBuilder(column: $table.mediaType, builder: (column) => column);
@@ -4514,7 +4506,7 @@ class $$CachedListItemsTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> listId = const Value.absent(),
-                Value<int> mediaTmdbId = const Value.absent(),
+                Value<int> tmdbId = const Value.absent(),
                 Value<String> mediaType = const Value.absent(),
                 Value<String?> meta = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
@@ -4522,7 +4514,7 @@ class $$CachedListItemsTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => CachedListItemsCompanion(
                 listId: listId,
-                mediaTmdbId: mediaTmdbId,
+                tmdbId: tmdbId,
                 mediaType: mediaType,
                 meta: meta,
                 sortOrder: sortOrder,
@@ -4532,7 +4524,7 @@ class $$CachedListItemsTableTableManager
           createCompanionCallback:
               ({
                 required String listId,
-                required int mediaTmdbId,
+                required int tmdbId,
                 required String mediaType,
                 Value<String?> meta = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
@@ -4540,7 +4532,7 @@ class $$CachedListItemsTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => CachedListItemsCompanion.insert(
                 listId: listId,
-                mediaTmdbId: mediaTmdbId,
+                tmdbId: tmdbId,
                 mediaType: mediaType,
                 meta: meta,
                 sortOrder: sortOrder,

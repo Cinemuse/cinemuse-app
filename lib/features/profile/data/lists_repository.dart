@@ -51,7 +51,7 @@ class ListsRepository {
             leftOuterJoin(
               _db.cachedMediaItems,
               _db.cachedMediaItems.tmdbId.equalsExp(
-                    _db.cachedListItems.mediaTmdbId,
+                    _db.cachedListItems.tmdbId,
                   ) &
                   _db.cachedMediaItems.mediaType.equalsExp(
                     _db.cachedListItems.mediaType,
@@ -100,7 +100,7 @@ class ListsRepository {
               .add(
                 UserListItem(
                   listId: item.listId,
-                  tmdbId: item.mediaTmdbId,
+                  tmdbId: item.tmdbId,
                   mediaType: MediaItem.fromString(item.mediaType),
                   sortOrder: item.sortOrder,
                   meta: item.meta != null
@@ -184,7 +184,7 @@ class ListsRepository {
           items.add(
             CachedListItemsCompanion(
               listId: Value(listId),
-              mediaTmdbId: Value(itemJson['media_tmdb_id'] as int),
+              tmdbId: Value(itemJson['tmdb_id'] as int),
               mediaType: Value(itemJson['media_type'] as String),
               meta: Value(metaData != null ? jsonEncode(metaData) : null),
               sortOrder: Value(itemJson['sort_order'] as int? ?? 0),
@@ -287,7 +287,7 @@ class ListsRepository {
     await _db.upsertListItem(
       CachedListItemsCompanion(
         listId: Value(listId),
-        mediaTmdbId: Value(tmdbId),
+        tmdbId: Value(tmdbId),
         mediaType: Value(normalizedType),
         meta: Value(jsonEncode(meta)),
         sortOrder: Value(sortOrder ?? 0),
@@ -298,10 +298,10 @@ class ListsRepository {
     // Update Remote
     await _client.from('list_items').upsert({
       'list_id': listId,
-      'media_tmdb_id': tmdbId,
+      'tmdb_id': tmdbId,
       'media_type': normalizedType,
       'sort_order': sortOrder ?? 0,
-    }, onConflict: 'list_id,media_tmdb_id,media_type').withErrorHandling();
+    }, onConflict: 'list_id,tmdb_id,media_type').withErrorHandling();
   }
 
   /// Remove an item from a list.
@@ -322,7 +322,7 @@ class ListsRepository {
         .from('list_items')
         .delete()
         .eq('list_id', listId)
-        .eq('media_tmdb_id', tmdbId)
+        .eq('tmdb_id', tmdbId)
         .eq('media_type', normalizedType)
         .withErrorHandling();
   }

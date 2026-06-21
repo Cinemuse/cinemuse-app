@@ -1,5 +1,5 @@
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
-import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
+
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
@@ -11,7 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final agendaRepositoryProvider = Provider<AgendaRepository>((ref) {
   return AgendaRepository(
     supabase,
-    ref.watch(tmdbServiceProvider),
     ref.watch(watchHistoryRepositoryProvider),
   );
 });

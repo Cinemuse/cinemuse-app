@@ -85,7 +85,7 @@ class UserListItem {
     return UserListItem(
       listId: json['list_id'] as String,
       mediaType: MediaItem.fromString(json['media_type'] as String? ?? 'movie'),
-      tmdbId: json['media_tmdb_id'] as int,
+      tmdbId: json['tmdb_id'] as int,
       sortOrder: json['sort_order'] as int? ?? 0,
       meta: json['meta'] as Map<String, dynamic>? ?? {},
       addedAt: DateTime.parse(json['added_at'] as String),
