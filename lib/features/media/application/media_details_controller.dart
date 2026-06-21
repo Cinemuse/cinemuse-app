@@ -74,6 +74,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
           currentSeason: season,
           currentEpisode: episode,
           seriesDetails: details,
+          loggedAt: loggedAt,
         );
       }
 
@@ -197,6 +198,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
           currentSeason: latest.season,
           currentEpisode: latest.episode,
           seriesDetails: details,
+          loggedAt: loggedAt,
         );
       }
     } catch (e) {

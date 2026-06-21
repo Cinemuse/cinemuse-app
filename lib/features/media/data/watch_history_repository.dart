@@ -526,6 +526,15 @@ class WatchHistoryRepository {
       'logged_at': (loggedAt ?? DateTime.now()).toIso8601String(),
     }).withErrorHandling();
 
+    final nowTime = loggedAt ?? DateTime.now();
+    final existing = await (_db.select(_db.localWatchHistories)
+          ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
+        .getSingleOrNull();
+
+    if (existing != null && existing.lastWatchedAt.isAfter(nowTime)) {
+      return;
+    }
+
     // After logging, update the history to 'completed'
     final historyUpdate = {
       'user_id': userId,
@@ -685,6 +694,15 @@ class WatchHistoryRepository {
 
     await _client.from('watch_logs').insert(logs);
 
+    final nowTime = loggedAt ?? DateTime.now();
+    final existing = await (_db.select(_db.localWatchHistories)
+          ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
+        .getSingleOrNull();
+
+    if (existing != null && existing.lastWatchedAt.isAfter(nowTime)) {
+      return;
+    }
+
     // Update history for the latest marked episode to completed
     final latestEpisode = episodes.last;
     final historyUpdate = {
@@ -702,7 +720,6 @@ class WatchHistoryRepository {
     await _client.from('watch_history').upsert(historyUpdate);
 
     // Update local DB
-    final nowTime = loggedAt ?? DateTime.now();
     await _db.batch((batch) {
       batch.insert(
         _db.localWatchHistories,
@@ -730,10 +747,19 @@ class WatchHistoryRepository {
     required int currentSeason,
     required int currentEpisode,
     required Map<String, dynamic> seriesDetails,
+    DateTime? loggedAt,
   }) async {
+    final nowTime = loggedAt ?? DateTime.now();
+    final nowStr = nowTime.toIso8601String();
 
+    // Prevent retroactively logged episodes from downgrading current progress
+    final existing = await (_db.select(_db.localWatchHistories)
+          ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
+        .getSingleOrNull();
 
-    // 2. Calculate next episode using Domain Service
+    if (existing != null && existing.lastWatchedAt.isAfter(nowTime)) {
+      return;
+    }    // 2. Calculate next episode using Domain Service
     final result = _seriesService.getNextEpisode(
       seriesDetails,
       currentSeason,
@@ -756,7 +782,7 @@ class WatchHistoryRepository {
           'status': 'completed',
           'progress_seconds': 0,
           'total_duration': 0,
-          'last_watched_at': DateTime.now().toIso8601String(),
+          'last_watched_at': nowStr,
         };
 
         // Update Local
@@ -770,7 +796,7 @@ class WatchHistoryRepository {
             status: Value('completed'),
             progressSeconds: Value(0),
             totalDuration: Value(0),
-            lastWatchedAt: Value(DateTime.now()),
+            lastWatchedAt: Value(nowTime),
           ),
         );
 
@@ -788,7 +814,7 @@ class WatchHistoryRepository {
         'status': 'watching',
         'progress_seconds': 0,
         'total_duration': 0,
-        'last_watched_at': DateTime.now().toIso8601String(),
+        'last_watched_at': nowStr,
       };
 
       // Update Local
@@ -802,7 +828,7 @@ class WatchHistoryRepository {
           status: Value('watching'),
           progressSeconds: Value(0),
           totalDuration: Value(0),
-          lastWatchedAt: Value(DateTime.now()),
+          lastWatchedAt: Value(nowTime),
         ),
       );
 
