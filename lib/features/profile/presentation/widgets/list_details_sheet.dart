@@ -52,6 +52,7 @@ class ListDetailsSheet extends ConsumerStatefulWidget {
 
 class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
   bool _isEditing = false;
+  bool _isDescExpanded = false;
 
   bool _isSystemList(UserList list) =>
       list.type == ListType.watchlist || list.type == ListType.favorites;
@@ -233,14 +234,64 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Text(
-                _displaySubtitle(list),
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic,
-                  height: 1.5,
-                ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final textSpan = TextSpan(
+                    text: _displaySubtitle(list),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 14,
+                      fontStyle: FontStyle.italic,
+                      height: 1.5,
+                    ),
+                  );
+                  final textPainter = TextPainter(
+                    text: textSpan,
+                    maxLines: 3,
+                    textDirection: TextDirection.ltr,
+                  )..layout(maxWidth: constraints.maxWidth);
+
+                  final isOverflowing = textPainter.didExceedMaxLines;
+
+                  return AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    alignment: Alignment.topCenter,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _displaySubtitle(list),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 14,
+                            fontStyle: FontStyle.italic,
+                            height: 1.5,
+                          ),
+                          maxLines: _isDescExpanded ? null : 3,
+                          overflow: _isDescExpanded
+                              ? TextOverflow.visible
+                              : TextOverflow.ellipsis,
+                        ),
+                        if (isOverflowing)
+                          GestureDetector(
+                            onTap: () => setState(() => _isDescExpanded = !_isDescExpanded),
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                _isDescExpanded ? l10n.detailsShowLess : l10n.detailsReadMore,
+                                style: const TextStyle(
+                                  color: AppTheme.accent,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ],
