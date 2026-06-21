@@ -356,8 +356,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                         if (_activeTab == DetailsTab.cast) ...[
                           CreativeVisionBox(details: details, isSeries: isTV),
                           const SizedBox(height: 24),
-                          GalleryBox(details: details),
-                          const SizedBox(height: 24),
                           CastRow(credits: details['credits']),
                           const SizedBox(height: 24),
                           ProductionDNA(
@@ -399,8 +397,11 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                             },
                           ),
 
-                        if (_activeTab == DetailsTab.videos)
+                        if (_activeTab == DetailsTab.media) ...[
                           VideosRow(videos: details['videos']),
+                          const SizedBox(height: 24),
+                          GalleryBox(details: details),
+                        ],
 
                         if (_activeTab == DetailsTab.finances)
                           FinancesBox(
@@ -417,13 +418,22 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                             tmdbId: details['id'],
                           ),
 
-                        if (collection != null) ...[
-                          const SizedBox(height: 24),
-                          BentoBox(
-                            title: l10n.detailsCollection,
-                            icon: LucideIcons.film,
-                            child: CollectionTile(collection: collection),
-                          ),
+                        if (_activeTab == DetailsTab.more) ...[
+                          if (collection != null) ...[
+                            BentoBox(
+                              title: l10n.detailsCollection,
+                              icon: LucideIcons.film,
+                              child: CollectionTile(collection: collection),
+                            ),
+                            if (moreLikeThisList.isNotEmpty) const SizedBox(height: 24),
+                          ],
+                          if (moreLikeThisList.isNotEmpty)
+                            MediaListRow(
+                              title: l10n.detailsMoreLikeThis,
+                              icon: LucideIcons.sparkles,
+                              items: moreLikeThisList,
+                              theme: CarouselTheme.bentoBox,
+                            ),
                         ],
                       ] else ...[
                         // Desktop Content
@@ -443,9 +453,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                         VideosRow(videos: details['videos']),
                       ],
 
-                      // Both Desktop and Mobile
-                      if (moreLikeThisList.isNotEmpty) ...[
-                        SizedBox(height: isMobile ? 24 : 32),
+                      // Desktop only (Mobile handled in DetailsTab.more)
+                      if (!isMobile && moreLikeThisList.isNotEmpty) ...[
+                        const SizedBox(height: 32),
                         MediaListRow(
                           title: l10n.detailsMoreLikeThis,
                           icon: LucideIcons.sparkles,

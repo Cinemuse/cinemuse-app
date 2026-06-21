@@ -926,17 +926,23 @@ abstract class AppLocalizations {
   /// **'External Links'**
   String get detailsExternalLinks;
 
-  /// No description provided for @detailsVideos.
+  /// No description provided for @detailsMedia.
   ///
   /// In en, this message translates to:
-  /// **'Videos'**
-  String get detailsVideos;
+  /// **'Media'**
+  String get detailsMedia;
 
   /// No description provided for @detailsLinks.
   ///
   /// In en, this message translates to:
   /// **'Links'**
   String get detailsLinks;
+
+  /// No description provided for @detailsMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get detailsMore;
 
   /// No description provided for @seasonLabel.
   ///

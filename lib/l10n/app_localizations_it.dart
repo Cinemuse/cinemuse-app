@@ -450,10 +450,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsExternalLinks => 'Link esterni';
 
   @override
-  String get detailsVideos => 'Video';
+  String get detailsMedia => 'Media';
 
   @override
   String get detailsLinks => 'Link';
+
+  @override
+  String get detailsMore => 'Altro';
 
   @override
   String seasonLabel(Object number) {
