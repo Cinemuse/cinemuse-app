@@ -216,6 +216,9 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                           },
                           onNextEpisode: state.nextEpisode != null
                               ? () async {
+                                  // Explicitly pause the player to prevent overlapping audio during transition
+                                  await state.controller.player.pause();
+                                  
                                   // Ensure the current episode is marked as completed if threshold is met
                                   // and cleanup any stale watching entries before navigating
                                   await ref
