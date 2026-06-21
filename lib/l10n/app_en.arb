@@ -399,6 +399,7 @@
   "menuMarkWatchedCustomDate": "Mark as watched (custom date)",
   "menuPlay": "Play",
   "menuStopWatching": "Stop Watching",
+  "menuCancelRewatch": "Cancel Rewatch",
   "menuRemoveFromContinueWatching": "Remove from Continue Watching",
   "menuRemoveCachedProvider": "Remove Cached Stream",
   "menuManageWatchHistory": "Manage Watch History",

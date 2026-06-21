@@ -14,7 +14,7 @@ class BackdropCard extends StatefulWidget {
   final String? infoText; // e.g. "S1 E5" or "1h 20m left"
   final VoidCallback? onTap;
   final VoidCallback? onDrop;
-  final VoidCallback? onRemove;
+  final VoidCallback? onCancelRewatch;
   final VoidCallback? onDetails;
   final VoidCallback? onRestart;
   final VoidCallback? onWatchlistToggle;
@@ -31,7 +31,7 @@ class BackdropCard extends StatefulWidget {
     this.infoText,
     this.onTap,
     this.onDrop,
-    this.onRemove,
+    this.onCancelRewatch,
     this.onDetails,
     this.onRestart,
     this.onWatchlistToggle,
@@ -101,12 +101,11 @@ class _BackdropCardState extends State<BackdropCard> {
           label: l10n.menuStopWatching,
           onTap: widget.onDrop!,
         ),
-      if (widget.onRemove != null)
+      if (widget.onCancelRewatch != null)
         AppMenuOption(
-          icon: Icons.delete_outline,
-          label: l10n.menuRemoveFromContinueWatching,
-          onTap: widget.onRemove!,
-          isDestructive: true,
+          icon: Icons.cancel_presentation,
+          label: l10n.menuCancelRewatch,
+          onTap: widget.onCancelRewatch!,
         ),
     ];
 

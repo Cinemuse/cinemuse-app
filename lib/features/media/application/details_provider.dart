@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 
 // Family provider to fetch basic details for a specific media item (with local caching)
 final mediaItemProvider =
@@ -449,4 +450,41 @@ final movieWatchLogsProvider =
 final movieWatchCountProvider = Provider.family<int, int>((ref, tmdbId) {
   final logsAsync = ref.watch(movieWatchLogsProvider(tmdbId));
   return logsAsync.maybeWhen(data: (logs) => logs.length, orElse: () => 0);
+});
+
+// Helper provider to determine if a user is actively rewatching
+final isRewatchingProvider = FutureProvider.family<bool, WatchHistory>((ref, history) async {
+  if (history.mediaType == MediaKind.movie) {
+    // If it's a movie and there are logs, it's a rewatch
+    final count = ref.watch(movieWatchCountProvider(history.tmdbId));
+    return count > 0;
+  }
+
+  // For TV, we need to check if highest logged episode is > current tracking pointer
+  final authState = ref.read(authProvider).valueOrNull;
+  if (authState == null) return false;
+
+  try {
+    final maxLog = await supabase
+        .from('watch_logs')
+        .select('season, episode')
+        .eq('user_id', authState.id)
+        .eq('tmdb_id', history.tmdbId)
+        .eq('media_type', 'tv')
+        .order('season', ascending: false)
+        .order('episode', ascending: false)
+        .limit(1)
+        .maybeSingle();
+
+    if (maxLog == null) return false;
+
+    final maxS = maxLog['season'] as int? ?? 0;
+    final maxE = maxLog['episode'] as int? ?? 0;
+    final curS = history.season ?? 0;
+    final curE = history.episode ?? 0;
+
+    return maxS > curS || (maxS == curS && maxE > curE);
+  } catch (_) {
+    return false;
+  }
 });

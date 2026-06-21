@@ -17,14 +17,14 @@ import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_s
 class ContinueWatchingCard extends ConsumerStatefulWidget {
   final WatchHistory historyItem;
   final List<UserListItem> watchlistItems;
-  final VoidCallback onRemove;
+  final VoidCallback onCancelRewatch;
   final VoidCallback? onDrop;
 
   const ContinueWatchingCard({
     super.key,
     required this.historyItem,
     required this.watchlistItems,
-    required this.onRemove,
+    required this.onCancelRewatch,
     this.onDrop,
   });
 
@@ -113,6 +113,7 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
     );
     final appLanguage = ref.watch(settingsProvider).appLanguage;
     final l10n = AppLocalizations.of(context)!;
+    final isRewatching = ref.watch(isRewatchingProvider(widget.historyItem)).valueOrNull ?? false;
     
     String title = media?.getLocalizedTitle(appLanguage) ?? '';
     if (title.isEmpty || title == '...') {
@@ -194,8 +195,8 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
       onAddToList: media != null ? () {
         AddToListSheet.show(context, media);
       } : null,
-      onDrop: widget.onDrop,
-      onRemove: widget.onRemove,
+      onDrop: isRewatching ? null : widget.onDrop,
+      onCancelRewatch: isRewatching ? widget.onCancelRewatch : null,
       onClearCache: hasCache
           ? () {
               resolver.clearCachedStream(

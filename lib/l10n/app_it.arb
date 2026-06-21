@@ -399,6 +399,7 @@
   "menuMarkWatchedCustomDate": "Segna come visto (data personalizzata)",
   "menuPlay": "Riproduci",
   "menuStopWatching": "Interrompi Visione",
+  "menuCancelRewatch": "Annulla Rewatch",
   "menuRemoveFromContinueWatching": "Rimuovi da Continua a Guardare",
   "menuRemoveCachedProvider": "Rimuovi Stream in Cache",
   "menuManageWatchHistory": "Modifica visione",

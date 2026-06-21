@@ -1247,6 +1247,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get menuStopWatching => 'Interrompi Visione';
 
   @override
+  String get menuCancelRewatch => 'Annulla Rewatch';
+
+  @override
   String get menuRemoveFromContinueWatching => 'Rimuovi da Continua a Guardare';
 
   @override

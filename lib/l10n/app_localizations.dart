@@ -2348,6 +2348,12 @@ abstract class AppLocalizations {
   /// **'Stop Watching'**
   String get menuStopWatching;
 
+  /// No description provided for @menuCancelRewatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Rewatch'**
+  String get menuCancelRewatch;
+
   /// No description provided for @menuRemoveFromContinueWatching.
   ///
   /// In en, this message translates to:

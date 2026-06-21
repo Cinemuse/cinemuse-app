@@ -11,12 +11,15 @@ import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/core/constants/playback_constants.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 
+import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
+
 final watchHistoryRepositoryProvider = Provider<WatchHistoryRepository>((ref) {
   return WatchHistoryRepository(
     supabase,
     ref.watch(mediaRepositoryProvider),
     ref.watch(appDatabaseProvider),
     ref.watch(seriesDomainServiceProvider),
+    ref.watch(tmdbServiceProvider),
   );
 });
 
@@ -25,12 +28,14 @@ class WatchHistoryRepository {
   final MediaRepository _mediaRepo;
   final AppDatabase _db;
   final SeriesDomainService _seriesService;
+  final TmdbService _tmdbService;
 
   WatchHistoryRepository(
     this._client,
     this._mediaRepo,
     this._db,
     this._seriesService,
+    this._tmdbService,
   );
 
   // Get current "Continue Watching" list (status = watching)
@@ -903,18 +908,63 @@ class WatchHistoryRepository {
     await _syncLogHistory(userId, tmdbId, 'tv');
   }
 
-  Future<void> removeFromContinueWatching(String userId, int tmdbId) async {
-    // Update Local
-    await (_db.delete(
-      _db.localWatchHistories,
-    )..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId))).go();
-
-    // Update Remote
-    await _client
-        .from('watch_history')
-        .delete()
+  Future<void> cancelRewatch(String userId, int tmdbId, String mediaType) async {
+    // 1. Find the absolute highest progress in watch_logs
+    final maxLog = await _client
+        .from('watch_logs')
+        .select('season, episode')
         .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId);
+        .eq('tmdb_id', tmdbId)
+        .eq('media_type', mediaType)
+        .order('season', ascending: false)
+        .order('episode', ascending: false)
+        .limit(1)
+        .maybeSingle();
+
+    int maxSeason = 0;
+    int maxEpisode = 0;
+
+    if (maxLog != null) {
+      maxSeason = maxLog['season'] as int? ?? 0;
+      maxEpisode = maxLog['episode'] as int? ?? 0;
+    }
+
+    if (mediaType == 'tv' && maxLog != null) {
+      try {
+        final details = await _tmdbService.getMediaDetails(tmdbId.toString(), 'tv');
+        if (details != null) {
+          await upsertNextEpisode(
+            userId: userId,
+            tmdbId: tmdbId,
+            currentSeason: maxSeason,
+            currentEpisode: maxEpisode,
+            seriesDetails: details,
+          );
+          return;
+        }
+      } catch (_) {
+        // Fallback to manual update if fetch fails
+      }
+    }
+
+    // Default Fallback (Movies or if TV fetch fails)
+    // 2. Update Local
+    await (_db.update(_db.localWatchHistories)
+          ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
+        .write(LocalWatchHistoriesCompanion(
+      status: const Value('completed'),
+      season: Value(maxSeason),
+      episode: Value(maxEpisode),
+      progressSeconds: const Value(0),
+    ));
+
+    // 3. Update Remote
+    await _client.from('watch_history').update({
+      'status': 'completed',
+      'season': maxSeason,
+      'episode': maxEpisode,
+      'progress_seconds': 0,
+    }).eq('user_id', userId).eq('tmdb_id', tmdbId);
   }
 
   Future<void> dropFromContinueWatching(String userId, int tmdbId) async {

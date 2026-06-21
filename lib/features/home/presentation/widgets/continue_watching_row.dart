@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
@@ -12,7 +11,6 @@ import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/shared/widgets/skeleton_box.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/cards/continue_watching_card.dart';
@@ -29,56 +27,21 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
   // Set of tmdbId that are hidden because they are pending removal or being removed.
   final Set<int> _hiddenItems = {};
 
-  void _onRemove(WatchHistory item) async {
+  void _onCancelRewatch(WatchHistory item) async {
     final tmdbId = item.tmdbId;
     setState(() {
       _hiddenItems.add(tmdbId);
     });
 
-    final l10n = AppLocalizations.of(context)!;
-    final appLanguage = ref.read(settingsProvider).appLanguage;
-    String title = item.media?.getLocalizedTitle(appLanguage) ?? '';
-    if (title.isEmpty || title == '...') {
-      title = l10n.commonUnknown;
-    }
-
-    // Read the providers needed for finalization now
     final authState = ref.read(authProvider);
     final repository = ref.read(watchHistoryRepositoryProvider);
+    final userId = authState.value?.id;
 
-    final controller = AppSnackBar.show(
-      context,
-      message: l10n.homeRemovedFromContinueWatching(title),
-      actionLabel: l10n.commonUndo.toUpperCase(),
-      duration: const Duration(seconds: 5),
-      showTimer: true,
-      onAction: () {},
-    );
-
-    final reason = await controller.closed;
-
-    if (reason == SnackBarClosedReason.action) {
-      if (mounted) {
-        setState(() {
-          _hiddenItems.remove(tmdbId);
-        });
-      }
-    } else {
-      _finalizeRemoval(tmdbId, authState.value?.id, repository);
-    }
-  }
-
-  Future<void> _finalizeRemoval(
-    int tmdbId,
-    String? userId,
-    WatchHistoryRepository repository,
-  ) async {
     if (userId != null) {
       try {
-        await repository.removeFromContinueWatching(userId, tmdbId);
+        await repository.cancelRewatch(userId, tmdbId, item.mediaType.name);
 
         // Wait a bit for the provider to update before clearing the hidden state
-        // This ensures the item doesn't "reappear" if the database update is slightly delayed
         await Future.delayed(const Duration(milliseconds: 500));
       } finally {
         if (mounted) {
@@ -186,7 +149,7 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
           historyItem: historyItem,
           watchlistItems: watchlistItems,
           onDrop: () => _onDrop(historyItem),
-          onRemove: () => _onRemove(historyItem),
+          onCancelRewatch: () => _onCancelRewatch(historyItem),
         );
       },
     );
