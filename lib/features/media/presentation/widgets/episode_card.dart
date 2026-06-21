@@ -124,8 +124,8 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
         ),
       if (widget.isWatched) ...[
         AppMenuOption(
-          icon: Icons.check_circle,
-          label: l10n.detailsTooltipWatched,
+          icon: Icons.edit,
+          label: l10n.menuManageWatchHistory,
           onTap: () => widget.onTrackOptions(widget.seasonNumber, _epNumber),
         ),
         if (widget.onViewHistory != null)

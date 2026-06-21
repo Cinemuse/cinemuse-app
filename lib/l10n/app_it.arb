@@ -400,6 +400,7 @@
   "menuStopWatching": "Interrompi Visione",
   "menuRemoveFromContinueWatching": "Rimuovi da Continua a Guardare",
   "menuRemoveCachedProvider": "Rimuovi Stream in Cache",
+  "menuManageWatchHistory": "Modifica visione",
   "liveTvTabAll": "Tutti",
   "liveTvTabFavorites": "Preferiti",
   "liveTvTabRecents": "Recenti",

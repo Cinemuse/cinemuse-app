@@ -400,6 +400,7 @@
   "menuStopWatching": "Stop Watching",
   "menuRemoveFromContinueWatching": "Remove from Continue Watching",
   "menuRemoveCachedProvider": "Remove Cached Stream",
+  "menuManageWatchHistory": "Manage Watch History",
   "liveTvTabAll": "All",
   "liveTvTabFavorites": "Favorites",
   "liveTvTabRecents": "Recents",

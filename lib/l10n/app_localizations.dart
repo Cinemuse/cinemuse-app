@@ -2354,6 +2354,12 @@ abstract class AppLocalizations {
   /// **'Remove Cached Stream'**
   String get menuRemoveCachedProvider;
 
+  /// No description provided for @menuManageWatchHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Watch History'**
+  String get menuManageWatchHistory;
+
   /// No description provided for @liveTvTabAll.
   ///
   /// In en, this message translates to:

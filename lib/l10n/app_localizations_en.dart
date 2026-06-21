@@ -1238,6 +1238,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuRemoveCachedProvider => 'Remove Cached Stream';
 
   @override
+  String get menuManageWatchHistory => 'Manage Watch History';
+
+  @override
   String get liveTvTabAll => 'All';
 
   @override
