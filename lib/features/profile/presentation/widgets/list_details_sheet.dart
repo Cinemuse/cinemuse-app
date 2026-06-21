@@ -287,7 +287,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
 
     return AppBottomSheet(
       backgroundColor: AppTheme.surface.withValues(alpha: 0.9),
-      blurSigma: 16.0,
+      blurSigma: 8.0,
       padding: const EdgeInsets.only(top: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -503,6 +503,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                     ),
                   )
                 : GridView.builder(
+                    addAutomaticKeepAlives: true,
                     padding: EdgeInsets.fromLTRB(
                       24,
                       24,

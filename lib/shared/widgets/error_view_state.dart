@@ -59,8 +59,7 @@ class ErrorViewState extends StatelessWidget {
                 boxShadow: [
                   BoxShadow(
                     color: color.withValues(alpha: 0.05),
-                    blurRadius: 40,
-                    spreadRadius: 10,
+                    blurRadius: 16,
                   ),
                 ],
               ),

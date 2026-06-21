@@ -44,13 +44,7 @@ class OfflinePlaceholder extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.05),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.white.withValues(alpha: 0.02),
-                  blurRadius: 40,
-                  spreadRadius: 10,
-                ),
-              ],
+              boxShadow: AppTheme.shadowSubtleGlow,
             ),
             child: Icon(
               icon,

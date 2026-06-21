@@ -143,18 +143,11 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                       // Backdrop Image
                       AspectRatio(
                         aspectRatio: 16 / 9,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
+                        child: Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
                             color: AppTheme.surface,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.5),
-                                blurRadius: _isHovered ? 16 : 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                            boxShadow: AppTheme.shadowCard,
                           ),
                           child: Stack(
                             fit: StackFit.expand,

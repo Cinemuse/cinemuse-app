@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/profile/application/agenda_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/agenda_event.dart';
@@ -339,7 +340,7 @@ class _AgendaEventItem extends StatelessWidget {
                 color: Colors.white10,
                 child: event.posterPath != null
                     ? Image.network(
-                        'https://image.tmdb.org/t/p/w200${event.posterPath}',
+                        TmdbImageHelper.posterUrl(context, event.posterPath)!,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const Icon(
                           LucideIcons.film,

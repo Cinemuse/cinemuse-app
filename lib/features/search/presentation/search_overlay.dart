@@ -156,7 +156,7 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
       children: [
         Positioned.fill(
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
             child: Container(color: Colors.transparent),
           ),
         ),
@@ -192,8 +192,7 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.5),
-                            blurRadius: 20,
-                            spreadRadius: 5,
+                            blurRadius: 10,
                           ),
                         ],
                       ),

@@ -2,7 +2,9 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 
 class BackdropCard extends StatefulWidget {
   final String title;
@@ -120,9 +122,7 @@ class _BackdropCardState extends State<BackdropCard> {
   Widget build(BuildContext context) {
     final String? effectiveImagePath = widget.backdropPath ?? widget.posterPath;
 
-    final imageUrl = effectiveImagePath != null
-        ? "https://image.tmdb.org/t/p/w500$effectiveImagePath"
-        : null;
+    final imageUrl = TmdbImageHelper.backdropCardUrl(context, effectiveImagePath);
 
     return Focus(
       onFocusChange: (value) => setState(() => _isHovered = value),
@@ -161,18 +161,11 @@ class _BackdropCardState extends State<BackdropCard> {
                       // Backdrop Image
                       AspectRatio(
                         aspectRatio: 16 / 9,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
+                        child: Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
                             color: AppTheme.surface,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.5),
-                                blurRadius: _isHovered ? 16 : 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                            boxShadow: AppTheme.shadowCard,
                           ),
                           child: Stack(
                             fit: StackFit.expand,
@@ -181,16 +174,16 @@ class _BackdropCardState extends State<BackdropCard> {
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: imageUrl != null
-                                    ? Image.network(
-                                        imageUrl,
+                                    ? CachedNetworkImage(
+                                        imageUrl: imageUrl,
                                         fit: BoxFit.cover,
+                                        memCacheWidth: 280, // Target width
                                         color: Colors.black.withValues(
                                           alpha: 0.2,
                                         ),
                                         colorBlendMode: BlendMode.darken,
-                                        errorBuilder:
-                                            (context, error, stackTrace) =>
-                                                _buildPlaceholder(),
+                                        errorWidget: (context, url, error) =>
+                                            _buildPlaceholder(),
                                       )
                                     : _buildPlaceholder(),
                               ),

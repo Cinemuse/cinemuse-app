@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -115,7 +116,7 @@ class CollectionCard extends StatelessWidget {
                             child: posterPath != null
                                 ? CachedNetworkImage(
                                     imageUrl:
-                                        'https://image.tmdb.org/t/p/w200$posterPath',
+                                        TmdbImageHelper.posterUrl(context, posterPath)!,
                                     fit: BoxFit.cover,
                                     width: double.infinity,
                                     height: double.infinity,

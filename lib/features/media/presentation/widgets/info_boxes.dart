@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
@@ -358,7 +359,7 @@ class ProductionDNA extends StatelessWidget {
               }),
               child: logoPath != null
                   ? Image.network(
-                      'https://image.tmdb.org/t/p/w200$logoPath',
+                      TmdbImageHelper.logoUrl(logoPath)!,
                       height: 24,
                       color: Colors.white.withValues(alpha: 0.5),
                       colorBlendMode: BlendMode.srcIn,

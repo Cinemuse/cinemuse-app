@@ -249,13 +249,7 @@ class _SplitPlayButton extends StatelessWidget {
     final buttonDecoration = BoxDecoration(
       color: AppTheme.accent,
       borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(
-          color: AppTheme.accent.withValues(alpha: 0.4),
-          blurRadius: 25,
-          offset: const Offset(0, 8),
-        ),
-      ],
+      boxShadow: AppTheme.shadowAccentGlow,
     );
 
     final mainButton = MouseRegion(
@@ -398,13 +392,7 @@ class _PlayButton extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppTheme.accent,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.accent.withValues(alpha: 0.4),
-                  blurRadius: 25,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+              boxShadow: AppTheme.shadowAccentGlow,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,

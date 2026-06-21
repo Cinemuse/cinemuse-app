@@ -8,6 +8,7 @@ import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
+import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 
 class DetailsHero extends ConsumerWidget {
   final Map<String, dynamic> media;
@@ -104,11 +105,11 @@ class DetailsHero extends ConsumerWidget {
         fit: StackFit.expand,
         children: [
           // Backdrop Image
-          if (backdropPath != null)
-            Image.network(
-              'https://image.tmdb.org/t/p/original$backdropPath',
-              fit: BoxFit.cover,
-            ),
+            if (backdropPath != null && TmdbImageHelper.backdropUrl(context, backdropPath) != null)
+              Image.network(
+                TmdbImageHelper.backdropUrl(context, backdropPath)!,
+                fit: BoxFit.cover,
+              ),
 
           // Gradients
           Container(

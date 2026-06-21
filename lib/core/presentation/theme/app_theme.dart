@@ -35,6 +35,32 @@ class AppTheme {
     BoxShadow(color: accentGlow, blurRadius: 10, spreadRadius: 0),
   ];
 
+  /// Standard card drop shadow. Used by MediaCard, BackdropCard.
+  static const List<BoxShadow> shadowCard = [
+    BoxShadow(
+      color: Color(0x80000000), // black 50%
+      blurRadius: 8,
+      offset: Offset(0, 4),
+    ),
+  ];
+
+  /// Accent glow under CTA buttons (Play, Resume).
+  static const List<BoxShadow> shadowAccentGlow = [
+    BoxShadow(
+      color: Color(0x66d946ef), // accent 40%
+      blurRadius: 12,
+      offset: Offset(0, 6),
+    ),
+  ];
+
+  /// Subtle decorative glow for icons/badges.
+  static const List<BoxShadow> shadowSubtleGlow = [
+    BoxShadow(
+      color: Color(0x05FFFFFF), // white 2%
+      blurRadius: 16,
+    ),
+  ];
+
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,

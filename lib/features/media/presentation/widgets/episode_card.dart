@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
@@ -320,7 +321,7 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                 image: stillPath != null
                     ? DecorationImage(
                         image: NetworkImage(
-                          'https://image.tmdb.org/t/p/w300$stillPath',
+                          TmdbImageHelper.stillUrl(context, stillPath)!,
                         ),
                         fit: BoxFit.cover,
                       )

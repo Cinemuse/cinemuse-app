@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/shared/widgets/premium_hover_text.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
@@ -169,9 +170,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
   @override
   Widget build(BuildContext context) {
     final year = widget.releaseDate?.split('-').first ?? '';
-    final imageUrl = widget.posterPath != null
-        ? "https://image.tmdb.org/t/p/w500${widget.posterPath}"
-        : null;
+    final imageUrl = TmdbImageHelper.posterUrl(context, widget.posterPath);
 
     return Focus(
       onFocusChange: (value) => setState(() => _isHovered = value),
@@ -205,18 +204,11 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                 Expanded(
                   child: AspectRatio(
                     aspectRatio: 0.7,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
+                    child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
                         color: AppTheme.surface,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.5),
-                            blurRadius: _isHovered ? 16 : 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        boxShadow: AppTheme.shadowCard,
                       ),
                       child: Stack(
                         fit: StackFit.expand,

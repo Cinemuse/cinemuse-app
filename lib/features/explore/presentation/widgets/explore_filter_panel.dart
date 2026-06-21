@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import '../../../../core/presentation/theme/app_theme.dart';
 import '../../../../core/constants/tmdb_constants.dart';
+import '../../../../core/constants/tmdb_image_helper.dart';
 import 'explore_filters.dart';
 import 'filter_range_slider.dart';
 
@@ -448,8 +449,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
           children: mainProviders.map((p) {
             final id = p['provider_id'] as int;
             final isSelected = filters.watchProviders.contains(id);
-            final imageUrl =
-                "https://image.tmdb.org/t/p/original${p['logo_path']}";
+            final imageUrl = TmdbImageHelper.logoUrl(p['logo_path']) ?? '';
 
             return HoverScale(
               onTap: () => _toggleWatchProvider(id),

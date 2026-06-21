@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_sheet.dart';
@@ -103,7 +104,7 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
           image: backdropPath != null
               ? DecorationImage(
                   image: NetworkImage(
-                    'https://image.tmdb.org/t/p/w500$backdropPath',
+                    TmdbImageHelper.backdropCardUrl(context, backdropPath)!,
                   ),
                   fit: BoxFit.cover,
                   colorFilter: ColorFilter.mode(

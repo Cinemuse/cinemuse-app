@@ -4,6 +4,7 @@ import 'package:cinemuse_app/features/media/presentation/media_details_screen.da
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 
 class HeroSection extends StatelessWidget {
   final MediaItem? media;
@@ -16,9 +17,7 @@ class HeroSection extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     final backdrop = media!.backdropPath;
-    final imageUrl = backdrop != null
-        ? "https://image.tmdb.org/t/p/original$backdrop"
-        : null;
+    final imageUrl = TmdbImageHelper.backdropUrl(context, backdrop);
     final locale = Localizations.localeOf(context);
     final title = media!.getLocalizedTitle(locale.languageCode) ?? 'Unknown';
     final overview = media!.overview ?? '';
