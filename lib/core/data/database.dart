@@ -37,7 +37,7 @@ class LocalWatchHistories extends Table {
   DateTimeColumn get lastWatchedAt => dateTime()();
 
   @override
-  Set<Column> get primaryKey => {userId, tmdbId, mediaType, season, episode};
+  Set<Column> get primaryKey => {userId, tmdbId, mediaType};
 }
 
 class CachedUserLists extends Table {
@@ -115,12 +115,20 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
+    },
+    onUpgrade: (m, from, to) async {
+      if (from == 1 && to == 2) {
+        // We changed the primary key for localWatchHistories.
+        // Easiest migration since it's a cache is to drop and recreate the table.
+        await m.deleteTable(localWatchHistories.actualTableName);
+        await m.createTable(localWatchHistories);
+      }
     },
     beforeOpen: (details) async {
       // Safety: If database exists and version is different,
