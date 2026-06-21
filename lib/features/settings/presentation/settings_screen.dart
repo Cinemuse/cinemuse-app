@@ -51,13 +51,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: EdgeInsets.only(
+                left: 24.0,
+                right: 24.0,
+                top: isMobile ? 16.0 : 24.0,
+                bottom: 16.0,
+              ),
               child: Row(
                 children: [
-                  if (!isMobile) ...[
-                    AppBackButton(onTap: () => Navigator.of(context).pop()),
-                    const SizedBox(width: 16),
-                  ],
+                  AppBackButton(onTap: () => Navigator.of(context).pop()),
+                  const SizedBox(width: 16),
                   Text(
                     l10n.settingsTitle,
                     style: const TextStyle(
@@ -71,12 +74,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             Expanded(
               child: ListView.builder(
+                padding: EdgeInsets.zero,
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
                   final category = categories[index];
                   final isActive = _activeCategory == category['id'];
+                  final showHighlight = isActive && !isMobile;
                   return Material(
-                    color: isActive
+                    color: showHighlight
                         ? Colors.white.withValues(alpha: 0.05)
                         : Colors.transparent,
                     child: InkWell(
@@ -92,7 +97,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           vertical: 16,
                         ),
                         decoration: BoxDecoration(
-                          border: isActive
+                          border: showHighlight
                               ? const Border(
                                   right: BorderSide(
                                     color: AppTheme.accent,
@@ -106,7 +111,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             Icon(
                               category['icon'] as IconData,
                               size: 20,
-                              color: isActive
+                              color: showHighlight
                                   ? Colors.white
                                   : AppTheme.textMuted,
                             ),
@@ -114,7 +119,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             Text(
                               category['label'] as String,
                               style: TextStyle(
-                                color: isActive
+                                color: showHighlight
                                     ? Colors.white
                                     : AppTheme.textMuted,
                                 fontWeight: FontWeight.w500,
@@ -163,31 +168,61 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       }
     }
 
-    final contentWidget = ListView(
-      padding: const EdgeInsets.all(32),
-      children: [buildContent()],
+    final contentWidget = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (isMobile)
+          Padding(
+            padding: const EdgeInsets.only(
+              left: 24.0,
+              right: 24.0,
+              top: 16.0,
+              bottom: 16.0,
+            ),
+            child: Row(
+              children: [
+                AppBackButton(
+                  onTap: () => setState(() => _showMobileContent = false),
+                ),
+                const SizedBox(width: 16),
+                Text(
+                  categories.firstWhere(
+                      (c) => c['id'] == _activeCategory)['label'] as String,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.only(
+              left: isMobile ? 16 : 32,
+              right: isMobile ? 16 : 32,
+              bottom: isMobile ? 16 : 32,
+              top: isMobile ? 0 : 32,
+            ),
+            children: [buildContent()],
+          ),
+        ),
+      ],
     );
 
     return Scaffold(
       backgroundColor: AppTheme.primary,
-      appBar: isMobile
-          ? AppBar(
-              backgroundColor: AppTheme.surface,
-              title: Text(l10n.settingsTitle),
-              leading: _showMobileContent
-                  ? IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () =>
-                          setState(() => _showMobileContent = false),
-                    )
-                  : const BackButton(),
-            )
-          : null,
       body: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 1200),
           child: isMobile
-              ? (_showMobileContent ? contentWidget : buildSidebar())
+              ? (_showMobileContent
+                  ? Container(
+                      color: AppTheme.surface.withValues(alpha: 0.8),
+                      child: contentWidget,
+                    )
+                  : buildSidebar())
               : Container(
                   margin: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
