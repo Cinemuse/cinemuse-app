@@ -18,6 +18,8 @@ import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_sheet.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
+import 'package:cinemuse_app/features/media/application/details_provider.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -213,6 +215,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     error: (err, stack) => const SizedBox.shrink(),
                   ),
 
+                  // Pinned Collections
+                  ...pinnedListIds
+                      .where((id) => id.startsWith('collection_'))
+                      .map((id) => _PinnedCollectionRow(collectionId: id)),
+
                   if (!isOffline) ...[
                     const SizedBox(height: 20),
                     // Trending List
@@ -260,6 +267,75 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ),
       ),
+    );
+  }
+}
+
+class _PinnedCollectionRow extends ConsumerWidget {
+  final String collectionId;
+  const _PinnedCollectionRow({required this.collectionId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final id = int.tryParse(collectionId.replaceFirst('collection_', '')) ?? 0;
+    if (id == 0) return const SizedBox.shrink();
+
+    final asyncData = ref.watch(collectionDetailsProvider(id));
+
+    return asyncData.when(
+      data: (data) {
+        if (data == null) return const SizedBox.shrink();
+        final l10n = AppLocalizations.of(context)!;
+        final parts = data['parts'] as List<dynamic>? ?? [];
+        final mediaItems = parts.map((part) {
+          final itemMap = part as Map<String, dynamic>;
+          return MediaItem(
+            tmdbId: itemMap['id'] as int,
+            mediaType: MediaKind.movie,
+            titleEn: itemMap['title'] ?? itemMap['name'] ?? l10n.commonUnknown,
+            posterPath: itemMap['poster_path'],
+            backdropPath: itemMap['backdrop_path'],
+            releaseDate: DateTime.tryParse(itemMap['release_date'] ?? ''),
+            voteAverage: (itemMap['vote_average'] as num?)?.toDouble(),
+            updatedAt: DateTime.now(),
+          );
+        }).toList();
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 30),
+          child: RepaintBoundary(
+            child: FocusTraversalGroup(
+              policy: OrderedTraversalPolicy(),
+              child: MediaRow(
+                title: data['name'] ?? l10n.collectionTitleFallback,
+                asyncData: AsyncValue.data(mediaItems),
+                onHeaderTap: () {
+                  final listItems = mediaItems.map((mediaItem) => UserListItem(
+                    listId: collectionId,
+                    addedAt: DateTime.now(),
+                    tmdbId: mediaItem.tmdbId,
+                    mediaType: mediaItem.mediaType,
+                    media: mediaItem,
+                    meta: {},
+                  )).toList();
+                  final userList = UserList(
+                    id: collectionId,
+                    name: data['name'] ?? l10n.collectionTitleFallback,
+                    description: data['overview'],
+                    type: ListType.custom,
+                    items: listItems,
+                    createdAt: DateTime.now(),
+                    userId: 'system',
+                  );
+                  ListDetailsSheet.show(context, list: userList);
+                },
+              ),
+            ),
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 }

@@ -324,6 +324,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
     final isSystemList =
         currentList.type == ListType.watchlist ||
         currentList.type == ListType.favorites;
+    final isReadOnly = currentList.userId == 'system';
     final icon = currentList.type == ListType.watchlist
         ? LucideIcons.bookmark
         : (currentList.type == ListType.favorites
@@ -414,7 +415,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                           size: 22,
                         ),
                       ),
-                      if (currentList.type != ListType.dropped)
+                      if (currentList.type != ListType.dropped && !isReadOnly)
                         IconButton(
                           tooltip: l10n.searchPlaceholder,
                           onPressed: () {
@@ -652,7 +653,7 @@ class _ListMediaCard extends ConsumerWidget {
       rating: rating,
       releaseDate: year,
       tmdbId: item.tmdbId,
-      onRemoveFromList: listId == 'dropped' 
+      onRemoveFromList: (listId == 'dropped' || listId.startsWith('collection_'))
           ? null 
           : () {
               ref
