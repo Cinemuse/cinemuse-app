@@ -15,8 +15,8 @@ import 'package:cinemuse_app/features/media/presentation/widgets/external_links.
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
-import 'package:cinemuse_app/features/media/application/comments_provider.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/comments_bottom_sheet.dart';
+import 'package:cinemuse_app/features/media/domain/comments_repository.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_sheet.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
@@ -370,20 +370,31 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                             reviews: details['reviews']?['results'] ?? [],
                             onShowUserReviewModal: () {},
                             onShowReviewsModal: () {},
-                            onShowTvTimeComments: () {
-                              final int? tvdbId =
-                                  details['external_ids']?['tvdb_id'];
+                            onShowComments: () {
+                              final int tmdbId = details['id'] is int
+                                  ? details['id']
+                                  : int.tryParse(
+                                          details['id']?.toString() ?? '',
+                                        ) ??
+                                      0;
                               final String? imdbId =
                                   details['external_ids']?['imdb_id'];
-                              if (isTV && tvdbId != null) {
+                              if (tmdbId > 0) {
                                 showCommentsBottomSheet(
                                   context,
-                                  SeriesCommentsRequest(tvdbId),
-                                );
-                              } else if (!isTV && imdbId != null) {
-                                showCommentsBottomSheet(
-                                  context,
-                                  MovieCommentsRequest(imdbId),
+                                  MediaReviewsRequest(
+                                    tmdbId: tmdbId,
+                                    mediaType: isTV
+                                        ? MediaKind.tv
+                                        : MediaKind.movie,
+                                    imdbId: imdbId,
+                                    title: _resolveEnglishOrOriginalTitle(details),
+                                    year: DateTime.tryParse(
+                                      details['release_date']?.toString() ??
+                                          details['first_air_date']?.toString() ??
+                                          '',
+                                    )?.year,
+                                  ),
                                 );
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -478,20 +489,31 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                               reviews: details['reviews']?['results'] ?? [],
                               onShowUserReviewModal: () {},
                               onShowReviewsModal: () {},
-                              onShowTvTimeComments: () {
-                                final int? tvdbId =
-                                    details['external_ids']?['tvdb_id'];
+                              onShowComments: () {
+                                final int tmdbId = details['id'] is int
+                                    ? details['id']
+                                    : int.tryParse(
+                                            details['id']?.toString() ?? '',
+                                          ) ??
+                                        0;
                                 final String? imdbId =
                                     details['external_ids']?['imdb_id'];
-                                if (isTV && tvdbId != null) {
+                                if (tmdbId > 0) {
                                   showCommentsBottomSheet(
                                     context,
-                                    SeriesCommentsRequest(tvdbId),
-                                  );
-                                } else if (!isTV && imdbId != null) {
-                                  showCommentsBottomSheet(
-                                    context,
-                                    MovieCommentsRequest(imdbId),
+                                    MediaReviewsRequest(
+                                      tmdbId: tmdbId,
+                                      mediaType: isTV
+                                          ? MediaKind.tv
+                                          : MediaKind.movie,
+                                      imdbId: imdbId,
+                                      title: _resolveEnglishOrOriginalTitle(details),
+                                      year: DateTime.tryParse(
+                                        details['release_date']?.toString() ??
+                                            details['first_air_date']?.toString() ??
+                                            '',
+                                      )?.year,
+                                    ),
                                   );
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -759,6 +781,13 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     }
     return total;
   }
+
+  String? _resolveEnglishOrOriginalTitle(Map<String, dynamic> details) {
+    return MediaItem.extractTitleFromTmdb(details, 'en') ??
+        details['original_title']?.toString() ??
+        details['title']?.toString() ??
+        details['name']?.toString();
+  }
 }
 
 class _SeriesEpisodesSection extends ConsumerWidget {
@@ -862,12 +891,20 @@ class _SeriesEpisodesSection extends ConsumerWidget {
               watchedEpisodesCount: watchedEpisodesMap,
               initialScrollIndex: initialIndex,
               mainScrollController: mainScrollController,
-              onShowTvTimeComments: (season, episode) {
-                final int? tvdbId = details['external_ids']?['tvdb_id'];
-                if (tvdbId != null) {
+              onShowComments: (season, episode) {
+                final int tmdbId = details['id'] is int
+                    ? details['id']
+                    : int.tryParse(details['id']?.toString() ?? '') ??
+                        int.tryParse(mediaId) ??
+                        0;
+                if (tmdbId > 0) {
                   showCommentsBottomSheet(
                     context,
-                    EpisodeCommentsRequest(tvdbId, season, episode),
+                    EpisodeCommentsRequest(
+                      tmdbShowId: tmdbId,
+                      seasonNumber: season,
+                      episodeNumber: episode,
+                    ),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(

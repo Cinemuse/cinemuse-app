@@ -2576,6 +2576,78 @@ abstract class AppLocalizations {
   /// **'Could not load comments.'**
   String get tvTimeCommentsError;
 
+  /// No description provided for @commentsSpoilerWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Spoiler Warning'**
+  String get commentsSpoilerWarning;
+
+  /// No description provided for @commentsTapToReveal.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to reveal'**
+  String get commentsTapToReveal;
+
+  /// No description provided for @commentsSortMostLiked.
+  ///
+  /// In en, this message translates to:
+  /// **'Most Liked'**
+  String get commentsSortMostLiked;
+
+  /// No description provided for @commentsSortRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get commentsSortRecent;
+
+  /// No description provided for @commentsSortRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Highest Rating'**
+  String get commentsSortRating;
+
+  /// No description provided for @commentsFilterAnyLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Any Language'**
+  String get commentsFilterAnyLanguage;
+
+  /// No description provided for @commentsFilterEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get commentsFilterEnglish;
+
+  /// No description provided for @commentsFilterItalian.
+  ///
+  /// In en, this message translates to:
+  /// **'Italian'**
+  String get commentsFilterItalian;
+
+  /// No description provided for @commentsFilterEnIt.
+  ///
+  /// In en, this message translates to:
+  /// **'English + Italian'**
+  String get commentsFilterEnIt;
+
+  /// No description provided for @commentsFilterAllSources.
+  ///
+  /// In en, this message translates to:
+  /// **'All Sources'**
+  String get commentsFilterAllSources;
+
+  /// No description provided for @commentsSourceSerializd.
+  ///
+  /// In en, this message translates to:
+  /// **'Serializd'**
+  String get commentsSourceSerializd;
+
+  /// No description provided for @commentsSourceLetterboxd.
+  ///
+  /// In en, this message translates to:
+  /// **'Letterboxd'**
+  String get commentsSourceLetterboxd;
+
   /// No description provided for @settingsSearchPreferences.
   ///
   /// In en, this message translates to:
@@ -2699,7 +2771,7 @@ abstract class AppLocalizations {
   /// No description provided for @detailsTvTimeComments.
   ///
   /// In en, this message translates to:
-  /// **'TvTime Comments'**
+  /// **'Comments'**
   String get detailsTvTimeComments;
 
   /// No description provided for @detailsTrack.
@@ -2789,13 +2861,13 @@ abstract class AppLocalizations {
   /// No description provided for @detailsTvTimeCommentsNotAvailable.
   ///
   /// In en, this message translates to:
-  /// **'TVTime Comments not available for this media'**
+  /// **'Comments not available for this media'**
   String get detailsTvTimeCommentsNotAvailable;
 
   /// No description provided for @detailsTvTimeCommentsNotAvailableSeries.
   ///
   /// In en, this message translates to:
-  /// **'TVTime Comments not available for this series'**
+  /// **'Comments not available for this series'**
   String get detailsTvTimeCommentsNotAvailableSeries;
 
   /// No description provided for @detailsFailedLoadCollection.

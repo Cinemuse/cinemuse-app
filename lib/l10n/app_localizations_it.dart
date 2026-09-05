@@ -1372,6 +1372,42 @@ class AppLocalizationsIt extends AppLocalizations {
   String get tvTimeCommentsError => 'Impossibile caricare i commenti.';
 
   @override
+  String get commentsSpoilerWarning => 'Avviso spoiler';
+
+  @override
+  String get commentsTapToReveal => 'Tocca per mostrare';
+
+  @override
+  String get commentsSortMostLiked => 'Più popolari';
+
+  @override
+  String get commentsSortRecent => 'Recenti';
+
+  @override
+  String get commentsSortRating => 'Voto più alto';
+
+  @override
+  String get commentsFilterAnyLanguage => 'Qualsiasi lingua';
+
+  @override
+  String get commentsFilterEnglish => 'Inglese';
+
+  @override
+  String get commentsFilterItalian => 'Italiano';
+
+  @override
+  String get commentsFilterEnIt => 'Inglese + Italiano';
+
+  @override
+  String get commentsFilterAllSources => 'Tutte le fonti';
+
+  @override
+  String get commentsSourceSerializd => 'Serializd';
+
+  @override
+  String get commentsSourceLetterboxd => 'Letterboxd';
+
+  @override
   String get settingsSearchPreferences => 'Preferenze di Ricerca';
 
   @override
@@ -1434,7 +1470,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsWriters => 'Sceneggiatori';
 
   @override
-  String get detailsTvTimeComments => 'Commenti TvTime';
+  String get detailsTvTimeComments => 'Commenti';
 
   @override
   String get detailsTrack => 'Segna';
@@ -1484,11 +1520,11 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get detailsTvTimeCommentsNotAvailable =>
-      'Commenti TVTime non disponibili per questo contenuto';
+      'Commenti non disponibili per questo contenuto';
 
   @override
   String get detailsTvTimeCommentsNotAvailableSeries =>
-      'Commenti TVTime non disponibili per questa serie';
+      'Commenti non disponibili per questa serie';
 
   @override
   String get detailsFailedLoadCollection =>

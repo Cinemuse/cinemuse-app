@@ -25,7 +25,7 @@ class EpisodeCard extends ConsumerStatefulWidget {
   onFindMissingPreceding;
   final Function(int, int, List<({int season, int episode})>)
   onShowMarkPrecedingModal;
-  final VoidCallback? onShowTvTimeComments;
+  final VoidCallback? onShowComments;
   final VoidCallback? onViewHistory;
 
   const EpisodeCard({
@@ -42,7 +42,7 @@ class EpisodeCard extends ConsumerStatefulWidget {
     required this.onTrackOptions,
     required this.onFindMissingPreceding,
     required this.onShowMarkPrecedingModal,
-    this.onShowTvTimeComments,
+    this.onShowComments,
     this.onViewHistory,
   });
 
@@ -183,11 +183,11 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
           },
         ),
       ],
-      if (widget.onShowTvTimeComments != null)
+      if (widget.onShowComments != null)
         AppMenuOption(
           icon: Icons.forum_outlined,
-          label: 'TVTime Comments',
-          onTap: widget.onShowTvTimeComments!,
+          label: l10n.detailsTvTimeComments,
+          onTap: widget.onShowComments!,
         ),
     ];
 
@@ -596,14 +596,14 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
               ),
             ),
           ),
-          // TV Time Comments Button
-          if (widget.onShowTvTimeComments != null)
+          // Comments Button
+          if (widget.onShowComments != null)
             Tooltip(
-              message: 'TVTime Comments',
+              message: l10n.detailsTvTimeComments,
               child: MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
-                  onTap: widget.onShowTvTimeComments,
+                  onTap: widget.onShowComments,
                   child: HoverScale(
                     child: Container(
                       padding: const EdgeInsets.all(8),

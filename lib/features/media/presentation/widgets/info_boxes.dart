@@ -78,7 +78,7 @@ class VerdictBox extends StatelessWidget {
   final List<dynamic> reviews;
   final VoidCallback onShowUserReviewModal;
   final VoidCallback onShowReviewsModal;
-  final VoidCallback? onShowTvTimeComments;
+  final VoidCallback? onShowComments;
 
   const VerdictBox({
     super.key,
@@ -86,7 +86,7 @@ class VerdictBox extends StatelessWidget {
     required this.reviews,
     required this.onShowUserReviewModal,
     required this.onShowReviewsModal,
-    this.onShowTvTimeComments,
+    this.onShowComments,
   });
 
   @override
@@ -100,12 +100,12 @@ class VerdictBox extends StatelessWidget {
       action: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (onShowTvTimeComments != null)
+          if (onShowComments != null)
             MouseRegion(
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: onShowTvTimeComments,
+                onTap: onShowComments,
                 child: HoverScale(
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -130,7 +130,7 @@ class VerdictBox extends StatelessWidget {
                 ),
               ),
             ),
-          if (onShowTvTimeComments != null && userReview == null)
+          if (onShowComments != null && userReview == null)
             const SizedBox(width: 12),
           if (userReview == null)
             MouseRegion(

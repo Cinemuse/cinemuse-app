@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:dio/dio.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
@@ -34,7 +36,8 @@ class LiveTvSourceHandler {
     UserSettings settings, {
     VoidCallback? onStall,
   }) async {
-    final url = channel.url;
+    final rawUrl = channel.url;
+    final url = await _resolveIfDynamicRelinker(rawUrl);
     final isPremium =
         url.contains('.ts') ||
         url.contains('extension=ts') ||
@@ -184,5 +187,76 @@ class LiveTvSourceHandler {
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0',
       );
     } catch (_) {}
+  }
+
+  Future<String> _resolveIfDynamicRelinker(String url) async {
+    if (url.contains('mediapolis.rai.it/relinker')) {
+      return await _resolveRaiRelinker(url);
+    }
+    if (url.contains('apid.sky.it/vdp/v1/getLivestream')) {
+      return await _resolveSkyRelinker(url);
+    }
+    return url;
+  }
+
+  Future<String> _resolveRaiRelinker(String url) async {
+    try {
+      final dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 4),
+          receiveTimeout: const Duration(seconds: 4),
+          headers: {
+            'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Referer': 'https://www.raiplay.it/',
+            'Origin': 'https://www.raiplay.it',
+          },
+        ),
+      );
+      final response = await dio.get(url);
+      if (response.statusCode != 200 || response.data == null) return url;
+
+      final data = response.data is Map
+          ? response.data as Map
+          : jsonDecode(response.data.toString()) as Map;
+      final videoList = data['video'];
+      if (videoList is List && videoList.isNotEmpty) {
+        final stream = videoList[0].toString();
+        if (!stream.contains('video_no_available')) {
+          return stream;
+        }
+      }
+    } catch (e) {
+      debugPrint('LiveTvSourceHandler: Error resolving Rai relinker: $e');
+    }
+    return url;
+  }
+
+  Future<String> _resolveSkyRelinker(String url) async {
+    try {
+      final dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 4),
+          receiveTimeout: const Duration(seconds: 4),
+          headers: {
+            'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          },
+        ),
+      );
+      final response = await dio.get(url);
+      if (response.statusCode != 200 || response.data == null) return url;
+
+      final data = response.data is Map
+          ? response.data as Map
+          : jsonDecode(response.data.toString()) as Map;
+      final streamingUrl = data['streaming_url'];
+      if (streamingUrl != null && streamingUrl.toString().isNotEmpty) {
+        return streamingUrl.toString();
+      }
+    } catch (e) {
+      debugPrint('LiveTvSourceHandler: Error resolving Sky relinker: $e');
+    }
+    return url;
   }
 }

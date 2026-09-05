@@ -1359,6 +1359,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tvTimeCommentsError => 'Could not load comments.';
 
   @override
+  String get commentsSpoilerWarning => 'Spoiler Warning';
+
+  @override
+  String get commentsTapToReveal => 'Tap to reveal';
+
+  @override
+  String get commentsSortMostLiked => 'Most Liked';
+
+  @override
+  String get commentsSortRecent => 'Recent';
+
+  @override
+  String get commentsSortRating => 'Highest Rating';
+
+  @override
+  String get commentsFilterAnyLanguage => 'Any Language';
+
+  @override
+  String get commentsFilterEnglish => 'English';
+
+  @override
+  String get commentsFilterItalian => 'Italian';
+
+  @override
+  String get commentsFilterEnIt => 'English + Italian';
+
+  @override
+  String get commentsFilterAllSources => 'All Sources';
+
+  @override
+  String get commentsSourceSerializd => 'Serializd';
+
+  @override
+  String get commentsSourceLetterboxd => 'Letterboxd';
+
+  @override
   String get settingsSearchPreferences => 'Search Preferences';
 
   @override
@@ -1420,7 +1456,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailsWriters => 'Writers';
 
   @override
-  String get detailsTvTimeComments => 'TvTime Comments';
+  String get detailsTvTimeComments => 'Comments';
 
   @override
   String get detailsTrack => 'Track';
@@ -1470,11 +1506,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get detailsTvTimeCommentsNotAvailable =>
-      'TVTime Comments not available for this media';
+      'Comments not available for this media';
 
   @override
   String get detailsTvTimeCommentsNotAvailableSeries =>
-      'TVTime Comments not available for this series';
+      'Comments not available for this series';
 
   @override
   String get detailsFailedLoadCollection => 'Failed to load collection details';

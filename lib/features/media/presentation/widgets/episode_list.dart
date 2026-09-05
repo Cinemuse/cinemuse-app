@@ -19,7 +19,7 @@ class EpisodeList extends ConsumerStatefulWidget {
   final Map<String, WatchHistory>? episodeProgress;
   final Function(int season, int episode, String name)? onEpisodeTap;
   final int? initialScrollIndex;
-  final void Function(int season, int episode)? onShowTvTimeComments;
+  final void Function(int season, int episode)? onShowComments;
   final ScrollController? mainScrollController;
 
   const EpisodeList({
@@ -32,7 +32,7 @@ class EpisodeList extends ConsumerStatefulWidget {
     this.episodeProgress,
     this.onEpisodeTap,
     this.initialScrollIndex,
-    this.onShowTvTimeComments,
+    this.onShowComments,
     this.mainScrollController,
   });
 
@@ -138,9 +138,9 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
           watchCount: watchCount,
           resumePercentage: resumePercentage,
           onEpisodeTap: widget.onEpisodeTap,
-          onShowTvTimeComments: widget.onShowTvTimeComments != null
+          onShowComments: widget.onShowComments != null
               ? () =>
-                    widget.onShowTvTimeComments!(widget.seasonNumber, epNumber)
+                    widget.onShowComments!(widget.seasonNumber, epNumber)
               : null,
           onMarkWatched: (s, e, date) => controller.logEpisodeWatch(
             tmdbId: tmdbId,

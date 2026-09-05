@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:cinemuse_app/features/media/domain/tvtime_comment.dart';
-import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/features/media/domain/comment.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class CommentTile extends StatefulWidget {
-  final TvTimeComment comment;
+  final Comment comment;
   const CommentTile({super.key, required this.comment});
 
   @override
@@ -18,7 +19,6 @@ class _CommentTileState extends State<CommentTile> {
   @override
   Widget build(BuildContext context) {
     final comment = widget.comment;
-    final user = comment.user;
     final isSpoiler = comment.isSpoiler && !_isSpoilerRevealed;
 
     return Container(
@@ -31,9 +31,9 @@ class _CommentTileState extends State<CommentTile> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(user, comment.createdAt),
+          _buildHeader(comment),
           const SizedBox(height: 12),
-          if (isSpoiler) _buildSpoilerOverlay() else _buildContent(comment),
+          if (isSpoiler) _buildSpoilerOverlay(context) else _buildContent(comment),
           if (!isSpoiler) ...[
             const SizedBox(height: 12),
             _buildFooter(comment),
@@ -43,20 +43,20 @@ class _CommentTileState extends State<CommentTile> {
     );
   }
 
-  Widget _buildHeader(TvTimeUser? user, DateTime? createdAt) {
+  Widget _buildHeader(Comment comment) {
+    final author = comment.author;
+
     return Row(
       children: [
         CircleAvatar(
           radius: 16,
           backgroundColor: AppTheme.accent.withValues(alpha: 0.2),
-          backgroundImage: user?.avatarUrl != null
-              ? CachedNetworkImageProvider(user!.avatarUrl!)
+          backgroundImage: author.avatarUrl != null
+              ? CachedNetworkImageProvider(author.avatarUrl!)
               : null,
-          child: user?.avatarUrl == null
+          child: author.avatarUrl == null
               ? Text(
-                  user?.name.isNotEmpty == true
-                      ? user!.name[0].toUpperCase()
-                      : '?',
+                  author.username.isNotEmpty ? author.username[0].toUpperCase() : '?',
                   style: const TextStyle(
                     color: AppTheme.accent,
                     fontWeight: FontWeight.bold,
@@ -70,7 +70,7 @@ class _CommentTileState extends State<CommentTile> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                user?.name ?? 'Anonymous',
+                author.username,
                 style: const TextStyle(
                   color: AppTheme.textWhite,
                   fontWeight: FontWeight.bold,
@@ -79,9 +79,9 @@ class _CommentTileState extends State<CommentTile> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (createdAt != null)
+              if (comment.createdAt != null)
                 Text(
-                  timeago.format(createdAt),
+                  timeago.format(comment.createdAt!),
                   style: const TextStyle(
                     color: AppTheme.textMuted,
                     fontSize: 12,
@@ -90,14 +90,54 @@ class _CommentTileState extends State<CommentTile> {
             ],
           ),
         ),
+        if (comment.rating != null) _buildRatingBadge(comment.rating!),
       ],
     );
   }
 
-  Widget _buildContent(TvTimeComment comment) {
+  Widget _buildRatingBadge(double rating) {
+    final formattedRating = rating % 1 == 0 ? rating.toInt().toString() : rating.toStringAsFixed(1);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.accent.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star_rounded, color: AppTheme.accent, size: 14),
+          const SizedBox(width: 4),
+          Text(
+            formattedRating,
+            style: DesktopTypography.bodySecondary.copyWith(
+              color: AppTheme.accent,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent(Comment comment) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (comment.title != null && comment.title!.isNotEmpty) ...[
+          Text(
+            comment.title!,
+            style: const TextStyle(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 6),
+        ],
         if (comment.text.isNotEmpty)
           Text(
             comment.text,
@@ -107,39 +147,13 @@ class _CommentTileState extends State<CommentTile> {
               height: 1.4,
             ),
           ),
-        if (comment.imageUrl != null) ...[
-          if (comment.text.isNotEmpty) const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: comment.imageWidth != null && comment.imageHeight != null
-                ? AspectRatio(
-                    aspectRatio: comment.imageWidth! / comment.imageHeight!,
-                    child: _buildCachedNetworkImage(comment.imageUrl!),
-                  )
-                : _buildCachedNetworkImage(comment.imageUrl!),
-          ),
-        ],
       ],
     );
   }
 
-  Widget _buildCachedNetworkImage(String url) {
-    return CachedNetworkImage(
-      imageUrl: url,
-      fit: BoxFit.cover,
-      placeholder: (context, url) => Container(
-        color: AppTheme.textWhite.withValues(alpha: 0.05),
-        height: 200,
-        width: double.infinity,
-        child: const Center(
-          child: CircularProgressIndicator(color: AppTheme.accent),
-        ),
-      ),
-      errorWidget: (context, url, error) => const SizedBox.shrink(),
-    );
-  }
+  Widget _buildSpoilerOverlay(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
 
-  Widget _buildSpoilerOverlay() {
     return GestureDetector(
       onTap: () => setState(() => _isSpoilerRevealed = true),
       child: Container(
@@ -159,17 +173,17 @@ class _CommentTileState extends State<CommentTile> {
               size: 32,
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Spoiler Warning',
-              style: TextStyle(
+            Text(
+              l10n.commentsSpoilerWarning,
+              style: const TextStyle(
                 color: Colors.redAccent,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Tap to reveal',
-              style: TextStyle(color: AppTheme.textWhite, fontSize: 12),
+              l10n.commentsTapToReveal,
+              style: const TextStyle(color: AppTheme.textWhite, fontSize: 12),
             ),
           ],
         ),
@@ -177,7 +191,9 @@ class _CommentTileState extends State<CommentTile> {
     );
   }
 
-  Widget _buildFooter(TvTimeComment comment) {
+  Widget _buildFooter(Comment comment) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Row(
       children: [
         const Icon(Icons.favorite_border, size: 16, color: AppTheme.textMuted),
@@ -186,23 +202,64 @@ class _CommentTileState extends State<CommentTile> {
           '${comment.likeCount}',
           style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
         ),
-        const Spacer(),
-        if (comment.reportCount > 0) ...[
-          Icon(
-            Icons.flag_outlined,
-            size: 16,
-            color: Colors.redAccent.withValues(alpha: 0.5),
-          ),
+        if (comment.replyCount > 0) ...[
+          const SizedBox(width: 16),
+          const Icon(Icons.chat_bubble_outline_rounded, size: 14, color: AppTheme.textMuted),
           const SizedBox(width: 4),
           Text(
-            '${comment.reportCount}',
-            style: TextStyle(
-              color: Colors.redAccent.withValues(alpha: 0.5),
-              fontSize: 12,
-            ),
+            l10n.tvTimeReplies(comment.replyCount),
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
           ),
         ],
+        const Spacer(),
+        _buildSourceTag(comment.source),
       ],
+    );
+  }
+
+  Widget _buildSourceTag(CommentSource source) {
+    String label;
+    Color color;
+
+    switch (source) {
+      case CommentSource.serializd:
+        label = 'Serializd';
+        color = const Color(0xFF40BCF4);
+        break;
+      case CommentSource.letterboxd:
+        label = 'Letterboxd';
+        color = const Color(0xFF00E054);
+        break;
+      case CommentSource.tmdb:
+        label = 'TMDB';
+        color = const Color(0xFF01B4E4);
+        break;
+      case CommentSource.imdb:
+        label = 'IMDb';
+        color = const Color(0xFFF5C518);
+        break;
+      case CommentSource.cinemuse:
+        label = 'Cinemuse';
+        color = AppTheme.accent;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.8,
+        ),
+      ),
     );
   }
 }

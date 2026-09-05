@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:cinemuse_app/features/media/application/comments_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/features/media/application/comments_provider.dart';
+import 'package:cinemuse_app/features/media/domain/comment.dart';
+import 'package:cinemuse_app/features/media/domain/comments_repository.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/comment_tile.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 
 class CommentsBottomSheet extends ConsumerStatefulWidget {
@@ -34,19 +37,34 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      final state = ref.read(tvTimeCommentsProvider(widget.request));
-      if (!state.isLoading && _displayCount < state.comments.length) {
-        setState(() {
-          _displayCount += 20;
-        });
+        _scrollController.position.maxScrollExtent - 300) {
+      final state = ref.read(commentsProvider(widget.request));
+      if (!state.isLoading && !state.isLoadingMore) {
+        if (_displayCount < state.comments.length) {
+          setState(() {
+            _displayCount += 20;
+          });
+        } else if (state.hasMore) {
+          ref.read(commentsProvider(widget.request).notifier).loadNextPage();
+        }
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(tvTimeCommentsProvider(widget.request));
+    final l10n = AppLocalizations.of(context)!;
+    final state = ref.watch(commentsProvider(widget.request));
+
+    ref.listen<CommentsState>(commentsProvider(widget.request), (prev, next) {
+      if (next.comments.length > (prev?.comments.length ?? 0)) {
+        if (_displayCount >= (prev?.comments.length ?? 0)) {
+          setState(() {
+            _displayCount = next.comments.length;
+          });
+        }
+      }
+    });
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -71,11 +89,21 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
             children: [
               const SizedBox(height: 8), // Extra space after handle
               if (isMobile) ...[
-                Text('TVTime Comments', style: DesktopTypography.sectionHeader),
+                Text(l10n.detailsTvTimeComments, style: DesktopTypography.sectionHeader),
                 if (!state.isLoading && state.hasAnyComments) ...[
                   const SizedBox(height: 16),
                   Row(
                     children: [
+                      if (state.availableSources.length > 1) ...[
+                        Expanded(
+                          child: _buildSourceFilterMenu(
+                            context,
+                            state,
+                            isMobile,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                       Expanded(
                         child: _buildLanguageFilterMenu(
                           context,
@@ -93,13 +121,17 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'TVTime Comments',
+                      l10n.detailsTvTimeComments,
                       style: DesktopTypography.sectionHeader,
                     ),
                     if (!state.isLoading && state.hasAnyComments)
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          if (state.availableSources.length > 1) ...[
+                            _buildSourceFilterMenu(context, state, isMobile),
+                            const SizedBox(width: 12),
+                          ],
                           _buildLanguageFilterMenu(context, state, isMobile),
                           const SizedBox(width: 12),
                           _buildSortMenu(context, state, isMobile),
@@ -109,7 +141,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                 ),
               ],
               const SizedBox(height: 24),
-              Expanded(child: _buildContent(state, crossAxisCount)),
+              Expanded(child: _buildContent(context, state, crossAxisCount)),
             ],
           ),
         );
@@ -117,7 +149,13 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     );
   }
 
-  Widget _buildContent(TvTimeCommentsState state, int crossAxisCount) {
+  Widget _buildContent(
+    BuildContext context,
+    CommentsState state,
+    int crossAxisCount,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (state.isLoading) {
       return const Center(
         child: CircularProgressIndicator(color: AppTheme.accent),
@@ -126,21 +164,23 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     if (state.error != null) {
       return Center(
         child: Text(
-          'Error loading comments: ${state.error}',
+          '${l10n.tvTimeCommentsError} (${state.error})',
           style: const TextStyle(color: Colors.redAccent),
         ),
       );
     }
     if (state.comments.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'No comments found.',
-          style: TextStyle(color: AppTheme.textMuted),
+          l10n.tvTimeNoComments,
+          style: const TextStyle(color: AppTheme.textMuted),
         ),
       );
     }
 
     final itemsToShow = state.comments.take(_displayCount).toList();
+    final bool showBottomLoader =
+        state.isLoadingMore || (_displayCount < state.comments.length);
 
     if (crossAxisCount > 1) {
       return MasonryGridView.count(
@@ -148,9 +188,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
         crossAxisCount: crossAxisCount,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        itemCount:
-            itemsToShow.length +
-            (_displayCount < state.comments.length ? 1 : 0),
+        itemCount: itemsToShow.length + (showBottomLoader ? 1 : 0),
         itemBuilder: (context, index) {
           if (index >= itemsToShow.length) {
             return const Padding(
@@ -167,8 +205,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
 
     return ListView.separated(
       controller: _scrollController,
-      itemCount:
-          itemsToShow.length + (_displayCount < state.comments.length ? 1 : 0),
+      itemCount: itemsToShow.length + (showBottomLoader ? 1 : 0),
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         if (index >= itemsToShow.length) {
@@ -184,24 +221,81 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     );
   }
 
-  Widget _buildLanguageFilterMenu(
+  Widget _buildSourceFilterMenu(
     BuildContext context,
-    TvTimeCommentsState state,
+    CommentsState state,
     bool isMobile,
   ) {
-    String label = 'Any Language';
+    final l10n = AppLocalizations.of(context)!;
+    String label;
+    switch (state.sourceFilter) {
+      case CommentSourceFilter.all:
+        label = l10n.commentsFilterAllSources;
+        break;
+      case CommentSourceFilter.serializd:
+        label = l10n.commentsSourceSerializd;
+        break;
+      case CommentSourceFilter.letterboxd:
+        label = l10n.commentsSourceLetterboxd;
+        break;
+    }
+
+    return PopupMenuButton<CommentSourceFilter>(
+      color: AppTheme.surface,
+      surfaceTintColor: Colors.transparent,
+      position: PopupMenuPosition.under,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onSelected: (val) {
+        ref
+            .read(commentsProvider(widget.request).notifier)
+            .setSourceFilter(val);
+        _scrollController.jumpTo(0);
+        setState(() {
+          _displayCount = 20;
+        });
+      },
+      itemBuilder: (context) => [
+        _buildPopupMenuItem(
+          CommentSourceFilter.all,
+          l10n.commentsFilterAllSources,
+          state.sourceFilter,
+        ),
+        if (state.availableSources.contains(CommentSource.serializd))
+          _buildPopupMenuItem(
+            CommentSourceFilter.serializd,
+            l10n.commentsSourceSerializd,
+            state.sourceFilter,
+          ),
+        if (state.availableSources.contains(CommentSource.letterboxd))
+          _buildPopupMenuItem(
+            CommentSourceFilter.letterboxd,
+            l10n.commentsSourceLetterboxd,
+            state.sourceFilter,
+          ),
+      ],
+      child: _buildFilterChip(label, Icons.layers_outlined, isMobile),
+    );
+  }
+
+  Widget _buildLanguageFilterMenu(
+    BuildContext context,
+    CommentsState state,
+    bool isMobile,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    String label = l10n.commentsFilterAnyLanguage;
     switch (state.languageFilter) {
       case CommentLanguageFilter.english:
-        label = 'English';
+        label = l10n.commentsFilterEnglish;
         break;
       case CommentLanguageFilter.italian:
-        label = 'Italian';
+        label = l10n.commentsFilterItalian;
         break;
       case CommentLanguageFilter.englishAndItalian:
-        label = 'EN + IT';
+        label = l10n.commentsFilterEnIt;
         break;
       case CommentLanguageFilter.unfiltered:
-        label = 'Any Language';
+        label = l10n.commentsFilterAnyLanguage;
         break;
     }
 
@@ -212,7 +306,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onSelected: (val) {
         ref
-            .read(tvTimeCommentsProvider(widget.request).notifier)
+            .read(commentsProvider(widget.request).notifier)
             .setLanguageFilter(val);
         _scrollController.jumpTo(0);
         setState(() {
@@ -222,22 +316,22 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       itemBuilder: (context) => [
         _buildPopupMenuItem(
           CommentLanguageFilter.unfiltered,
-          'Any Language',
+          l10n.commentsFilterAnyLanguage,
           state.languageFilter,
         ),
         _buildPopupMenuItem(
           CommentLanguageFilter.english,
-          'English',
+          l10n.commentsFilterEnglish,
           state.languageFilter,
         ),
         _buildPopupMenuItem(
           CommentLanguageFilter.italian,
-          'Italian',
+          l10n.commentsFilterItalian,
           state.languageFilter,
         ),
         _buildPopupMenuItem(
           CommentLanguageFilter.englishAndItalian,
-          'English + Italian',
+          l10n.commentsFilterEnIt,
           state.languageFilter,
         ),
       ],
@@ -247,12 +341,22 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
 
   Widget _buildSortMenu(
     BuildContext context,
-    TvTimeCommentsState state,
+    CommentsState state,
     bool isMobile,
   ) {
-    String label = state.sortType == CommentSortType.mostLiked
-        ? 'Most Liked'
-        : 'Recent';
+    final l10n = AppLocalizations.of(context)!;
+    String label;
+    switch (state.sortType) {
+      case CommentSortType.mostLiked:
+        label = l10n.commentsSortMostLiked;
+        break;
+      case CommentSortType.recent:
+        label = l10n.commentsSortRecent;
+        break;
+      case CommentSortType.highestRating:
+        label = l10n.commentsSortRating;
+        break;
+    }
 
     return PopupMenuButton<CommentSortType>(
       color: AppTheme.surface,
@@ -261,7 +365,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onSelected: (val) {
         ref
-            .read(tvTimeCommentsProvider(widget.request).notifier)
+            .read(commentsProvider(widget.request).notifier)
             .setSortType(val);
         _scrollController.jumpTo(0);
         setState(() {
@@ -271,10 +375,19 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       itemBuilder: (context) => [
         _buildPopupMenuItem(
           CommentSortType.mostLiked,
-          'Most Liked',
+          l10n.commentsSortMostLiked,
           state.sortType,
         ),
-        _buildPopupMenuItem(CommentSortType.recent, 'Recent', state.sortType),
+        _buildPopupMenuItem(
+          CommentSortType.recent,
+          l10n.commentsSortRecent,
+          state.sortType,
+        ),
+        _buildPopupMenuItem(
+          CommentSortType.highestRating,
+          l10n.commentsSortRating,
+          state.sortType,
+        ),
       ],
       child: _buildFilterChip(label, Icons.sort, isMobile),
     );
