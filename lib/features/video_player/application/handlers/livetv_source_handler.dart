@@ -41,7 +41,8 @@ class LiveTvSourceHandler {
     final isPremium =
         url.contains('.ts') ||
         url.contains('extension=ts') ||
-        url.contains('live.php?mac=');
+        url.contains('live.php?mac=') ||
+        url.contains('phantemlis.top');
 
     // 1. Optimize Player properties for Live TV
     _optimizeForLiveStreaming(settings, isPremium);
@@ -49,9 +50,12 @@ class LiveTvSourceHandler {
     // 2. Prepare headers
     final headers = {
       'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0',
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
       'Accept': '*/*',
-      if (isPremium) 'Referer': 'https://tilescale.com/',
+      if (url.contains('phantemlis.top')) 'Referer': 'https://hamis.romponalis.st/',
+      if (url.contains('phantemlis.top')) 'Origin': 'https://hamis.romponalis.st',
+      if (isPremium && !url.contains('phantemlis.top'))
+        'Referer': 'https://tilescale.com/',
     };
 
     // 3. Open the stream with explicit headers
@@ -195,6 +199,62 @@ class LiveTvSourceHandler {
     }
     if (url.contains('apid.sky.it/vdp/v1/getLivestream')) {
       return await _resolveSkyRelinker(url);
+    }
+    if (url.contains('dlhd_') || url.contains('live-tv-resolver/stream')) {
+      return await _resolveDaddyLiveRelinker(url);
+    }
+    return url;
+  }
+
+  Future<String> _resolveDaddyLiveRelinker(String url) async {
+    try {
+      final match = RegExp(r'dlhd_(\d+)').firstMatch(url);
+      if (match == null) return url;
+      final channelId = match.group(1);
+
+      final dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 5),
+          headers: {
+            'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          },
+        ),
+      );
+
+      // Step 1: dlhd.st
+      final r1 = await dio.get('https://dlhd.st/watch.php?id=$channelId');
+      final m1 = RegExp(r'iframe src=["\x27]([^"\x27]+)', caseSensitive: false)
+          .firstMatch(r1.data.toString());
+      if (m1 == null) return url;
+      final ifr1 = m1.group(1)!;
+
+      // Step 2: dlive.sx
+      final r2 = await dio.get(
+        ifr1,
+        options: Options(headers: {'Referer': 'https://dlhd.st/'}),
+      );
+      final m2 = RegExp(r'iframe src=["\x27]([^"\x27]+)', caseSensitive: false)
+          .firstMatch(r2.data.toString());
+      if (m2 == null) return url;
+      final ifr2 = m2.group(1)!;
+
+      // Step 3: daddy2.php
+      final origin1 = Uri.parse(ifr1).origin;
+      final r3 = await dio.get(
+        ifr2,
+        options: Options(headers: {'Referer': ifr1, 'Origin': origin1}),
+      );
+      final m3 = RegExp(r'source\s*:\s*window\.atob\(["\x27]([^"\x27]+)')
+          .firstMatch(r3.data.toString());
+      if (m3 == null) return url;
+
+      final b64 = m3.group(1)!;
+      final streamUrl = utf8.decode(base64.decode(b64));
+      return streamUrl;
+    } catch (e) {
+      debugPrint('LiveTvSourceHandler: Error resolving DaddyLive: $e');
     }
     return url;
   }
