@@ -88,7 +88,7 @@ void main() {
           'created_at': DateTime.now().toIso8601String(),
           'list_items': [
             {
-              'media_tmdb_id': 555,
+              'tmdb_id': 555,
               'media_type': 'movie',
               'added_at': DateTime.now().toIso8601String(),
             },
@@ -108,7 +108,7 @@ void main() {
 
       final items = await database.watchListItems('list-1').first;
       expect(items.length, 1);
-      expect(items.first.mediaTmdbId, 555);
+      expect(items.first.tmdbId, 555);
     });
 
     test('watchUserLists correctly maps and combines DB data', () async {
@@ -125,7 +125,7 @@ void main() {
       await database.upsertListItem(
         CachedListItemsCompanion.insert(
           listId: 'list-1',
-          mediaTmdbId: 555,
+          tmdbId: 555,
           mediaType: 'movie',
           addedAt: Value(now),
         ),
