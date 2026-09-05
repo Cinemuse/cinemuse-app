@@ -51,7 +51,9 @@ class VodSourceHandler {
       params,
       onStatusUpdate,
       skipTrigger: skipTrigger,
+      preloadedDetails: mediaDetails,
     );
+
     final resolution = await _resolveBestStream(
       params,
       searchResult.candidates,
@@ -86,6 +88,7 @@ class VodSourceHandler {
     PlayerParams params,
     Function(List<ProviderSearchStatus>) onStatusUpdate, {
     Future<void>? skipTrigger,
+    Map<String, dynamic>? preloadedDetails,
   }) async {
     final result = await _resolver.searchStreams(
       params.queryId,
@@ -94,6 +97,7 @@ class VodSourceHandler {
       episode: params.episode,
       onStatusUpdate: onStatusUpdate,
       skipTrigger: skipTrigger,
+      preloadedDetails: preloadedDetails,
     );
 
     if (result.candidates.isEmpty) {

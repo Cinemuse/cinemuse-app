@@ -33,6 +33,9 @@ class StreamSearchContext {
   /// Whether this search is specifically for an Anime title.
   final bool isAnime;
 
+  /// Preferred language codes for filtering audio/subtitles (e.g. ['it', 'en']).
+  final List<String> preferredLanguages;
+
   StreamSearchContext({
     required this.tmdbId,
     required this.type,
@@ -44,6 +47,7 @@ class StreamSearchContext {
     this.seasonName,
     this.mapping,
     this.isAnime = false,
+    this.preferredLanguages = const ['it', 'en'],
   });
 
   /// Returns a Stremio-compatible ID format.

@@ -66,6 +66,35 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
     final regularTracks = tracks
         .where((t) => t.id != 'no' && t.id != 'auto')
         .toList();
+
+    // Include on-demand stream subtitles (e.g. from VixSrc) among internal tracks
+    final allInternalTracks = <dynamic>[...regularTracks];
+    if (widget.isSubtitle) {
+      final onDemandList = currentState.currentStream?.candidate.metadata
+          ?.custom?['onDemandSubtitles'] as List<dynamic>?;
+      if (onDemandList != null) {
+        for (final item in onDemandList) {
+          if (item is Map) {
+            final uri = item['uri'] as String?;
+            final name = item['name'] as String?;
+            final lang = item['language'] as String?;
+            if (uri != null && uri.isNotEmpty) {
+              final isAlreadyProbed = regularTracks.any(
+                (t) =>
+                    (t.title != null && t.title == name) ||
+                    (t.language != null && t.language == lang),
+              );
+              if (!isAlreadyProbed) {
+                allInternalTracks.add(
+                  SubtitleTrack.uri(uri, title: name, language: lang),
+                );
+              }
+            }
+          }
+        }
+      }
+    }
+
     final noTrack =
         tracks.where((t) => t.id == 'no').firstOrNull ??
         (widget.isSubtitle ? SubtitleTrack.no() : AudioTrack.no());
@@ -92,23 +121,23 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
               children: [
                 SizedBox(height: isLandscape ? 4 : 12),
                 _buildDisableTrackTile(player, noTrack, selectedTrack),
-                if (regularTracks.isNotEmpty || widget.isSubtitle)
+                if (allInternalTracks.isNotEmpty || widget.isSubtitle)
                   const Divider(
                     color: Colors.white10,
                     height: 32,
                     indent: 8,
                     endIndent: 8,
                   ),
-                if (regularTracks.isNotEmpty)
+                if (allInternalTracks.isNotEmpty)
                   _buildInternalTracks(
                     player,
-                    regularTracks,
+                    allInternalTracks,
                     selectedTrack,
                     prefLang,
                   ),
                 if (widget.isSubtitle &&
                     ref.read(subtitleServiceProvider).hasActiveProviders) ...[
-                  if (regularTracks.isNotEmpty)
+                  if (allInternalTracks.isNotEmpty)
                     const Divider(
                       color: Colors.white10,
                       height: 32,
@@ -165,7 +194,10 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: tracks.map((track) {
-                bool isSelected = selectedTrack.id == track.id;
+                bool isSelected = selectedTrack.id == track.id ||
+                    (selectedTrack.title != null &&
+                        track.title != null &&
+                        selectedTrack.title == track.title);
 
                 if (!isSelected &&
                     selectedTrack.id == 'auto' &&

@@ -20,7 +20,43 @@ class TmdbService {
 
   String get _apiKey => dotenv.env['TMDB_API_KEY'] ?? '';
 
+  static const int _maxCachedEntries = 50;
+  static const Duration _cacheTtl = Duration(minutes: 15);
+  final Map<String, _CachedMediaDetails> _detailsCache = {};
+  final Map<String, Future<Map<String, dynamic>?>> _inflightRequests = {};
+
+  /// Clears in-memory details cache.
+  void clearCache() {
+    _detailsCache.clear();
+    _inflightRequests.clear();
+  }
+
   Future<Map<String, dynamic>?> getMediaDetails(String id, String type) async {
+    final cacheKey = '$type:$id:$_language';
+
+    final cached = _detailsCache[cacheKey];
+    if (cached != null) {
+      if (DateTime.now().difference(cached.timestamp) < _cacheTtl) {
+        return cached.data;
+      }
+      _detailsCache.remove(cacheKey);
+    }
+
+    final inflight = _inflightRequests[cacheKey];
+    if (inflight != null) {
+      return inflight;
+    }
+
+    final future = _fetchMediaDetailsFromNetwork(id, type, cacheKey);
+    _inflightRequests[cacheKey] = future;
+    return future;
+  }
+
+  Future<Map<String, dynamic>?> _fetchMediaDetailsFromNetwork(
+    String id,
+    String type,
+    String cacheKey,
+  ) async {
     try {
       // Normalize type (tmdb uses 'tv' for series)
       final normalizedType = (type == 'series' || type == 'tv')
@@ -54,9 +90,20 @@ class TmdbService {
           'include_image_language': 'en,it,null',
         },
       );
-      return res.data;
+
+      final data = res.data;
+      if (data != null && data is Map<String, dynamic>) {
+        if (_detailsCache.length >= _maxCachedEntries) {
+          _detailsCache.remove(_detailsCache.keys.first);
+        }
+        _detailsCache[cacheKey] = _CachedMediaDetails(data, DateTime.now());
+        return data;
+      }
+      return null;
     } catch (e) {
       return null;
+    } finally {
+      _inflightRequests.remove(cacheKey);
     }
   }
 
@@ -268,4 +315,11 @@ class TmdbService {
       return [];
     }
   }
+}
+
+class _CachedMediaDetails {
+  final Map<String, dynamic> data;
+  final DateTime timestamp;
+
+  _CachedMediaDetails(this.data, this.timestamp);
 }

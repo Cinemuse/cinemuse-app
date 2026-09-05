@@ -223,24 +223,41 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       mpv.setProperty('vd-lavc-dr', 'yes');
       mpv.setProperty('vd-lavc-threads', '0'); // Auto-pick optimal thread count
 
+      final isMobile = io.Platform.isAndroid || io.Platform.isIOS;
+
       // ── Video Sync & Smoothness ───────────────────────────────────────────
       // display-resample: syncs to the monitor's refresh rate, eliminates judder.
-      // We disable this on Linux/WSL as it can cause crashes with virtualised GPU drivers.
-      if (!io.Platform.isLinux) {
+      // We disable this on Linux/WSL and mobile platforms as it can cause crashes
+      // or heavy frame pacing/decoding latency on mobile SoCs.
+      if (!io.Platform.isLinux && !isMobile) {
         mpv.setProperty('video-sync', 'display-resample');
 
         // Interpolation to smooth out frame pacing (reduces judder on 24fps content).
         mpv.setProperty('interpolation', 'yes');
         mpv.setProperty('tscale', 'oversample');
+      } else if (isMobile) {
+        // Fast, battery-efficient audio sync for mobile
+        mpv.setProperty('video-sync', 'audio');
       }
 
       // ── Network & Caching ─────────────────────────────────────────────────
-      // Aggressive cache settings for reliable streaming on variable bitrates.
+      // Optimized cache settings: fast startup and immediate playback
+      // without blocking on huge initial pre-read buffers.
       mpv.setProperty('cache', 'yes');
-      mpv.setProperty('cache-secs', '120');
-      mpv.setProperty('demuxer-max-bytes', '300MiB');
-      mpv.setProperty('demuxer-readahead-secs', '120');
-      mpv.setProperty('demuxer-max-back-bytes', '50MiB');
+      mpv.setProperty('cache-pause-initial', 'no');
+      mpv.setProperty('cache-pause-wait', '1');
+
+      if (isMobile) {
+        mpv.setProperty('cache-secs', '20');
+        mpv.setProperty('demuxer-max-bytes', '32MiB');
+        mpv.setProperty('demuxer-readahead-secs', '10');
+        mpv.setProperty('demuxer-max-back-bytes', '10MiB');
+      } else {
+        mpv.setProperty('cache-secs', '60');
+        mpv.setProperty('demuxer-max-bytes', '128MiB');
+        mpv.setProperty('demuxer-readahead-secs', '20');
+        mpv.setProperty('demuxer-max-back-bytes', '30MiB');
+      }
 
       // ── Reconnection ──────────────────────────────────────────────────────
       // Robust reconnection for handling timeouts after long pauses.
@@ -605,10 +622,6 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   Future<void> _performPostInitialization(
     VodInitializationResult vodResult,
   ) async {
-    await _ensureMediaCached();
-    await _handleInitialSeek();
-    final nextEpisode = await _calculateNextEpisode();
-
     if (mounted) {
       state = AsyncValue.data(
         CinemaPlayerState(
@@ -619,7 +632,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
             _mediaDetails,
             ref.read(settingsProvider).appLanguage,
           ),
-          nextEpisode: nextEpisode,
+          nextEpisode: null,
           providerStatuses: state.valueOrNull?.providerStatuses ?? const [],
           isAnime: vodResult.isAnime,
           activeAudioTrack: _player!.state.track.audio,
@@ -638,6 +651,22 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       _trackManager?.ensurePreferredTrack(isAnime: vodResult.isAnime) ??
           Future.value(),
     );
+
+    unawaited(_ensureMediaCached());
+    _handleInitialSeek();
+    _loadNextEpisodeAsync();
+  }
+
+  Future<void> _loadNextEpisodeAsync() async {
+    try {
+      final nextEpisode = await _calculateNextEpisode();
+      if (mounted && nextEpisode != null) {
+        final current = state.valueOrNull;
+        if (current != null) {
+          state = AsyncValue.data(current.copyWith(nextEpisode: nextEpisode));
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _ensureMediaCached() async {
@@ -661,11 +690,21 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     await repo.saveMediaItem(mainMediaItem);
   }
 
-  Future<void> _handleInitialSeek() async {
-    if (resolvedParams.startPosition != null &&
-        resolvedParams.startPosition! > 0) {
-      await _player!.stream.duration.firstWhere((d) => d.inSeconds > 0);
-      await _player!.seek(Duration(seconds: resolvedParams.startPosition!));
+  void _handleInitialSeek() {
+    final startPos = resolvedParams.startPosition;
+    if (startPos != null && startPos > 0) {
+      _player!.stream.duration
+          .firstWhere((d) => d.inSeconds > 0)
+          .timeout(
+            const Duration(seconds: 4),
+            onTimeout: () => Duration.zero,
+          )
+          .then((_) {
+            _player!.seek(Duration(seconds: startPos));
+          })
+          .catchError((_) {
+            _player!.seek(Duration(seconds: startPos));
+          });
     }
   }
 

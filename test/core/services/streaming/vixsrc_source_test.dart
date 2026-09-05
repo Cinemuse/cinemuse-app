@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:dio/dio.dart';
@@ -47,6 +48,9 @@ void main() {
 #EXT-X-VERSION:3
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Italian",LANGUAGE="it",AUTOSELECT=YES,DEFAULT=YES,URI="it.m3u8"
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en",AUTOSELECT=YES,DEFAULT=NO,URI="en.m3u8"
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Italian",LANGUAGE="ita",URI="it.vtt"
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="eng",URI="en.vtt"
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Arabic",LANGUAGE="ara",URI="ara.vtt"
 #EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080
 1080p.m3u8
       ''';
@@ -89,11 +93,21 @@ void main() {
       expect(results.length, 1);
       final candidate = results.first;
       expect(candidate.provider, 'VixSrc');
-      expect(candidate.url, contains('token=test-token'));
-      expect(candidate.url, contains('expires=123456789'));
-      expect(candidate.url, contains('h=1'));
-      expect(candidate.metadata?.languages, containsAll(['IT', 'EN']));
+      expect(candidate.url, contains('.m3u8'));
+      expect(candidate.metadata?.languages, ['ITA', 'ENG']);
       expect(candidate.metadata?.video.resolution, VideoResolution.r1080p);
+
+      // Verify the generated temp file contains preferred subtitles but excludes unneeded ones
+      final savedManifest = await File(candidate.url!).readAsString();
+      expect(savedManifest, contains('LANGUAGE="ita"'));
+      expect(savedManifest, contains('LANGUAGE="eng"'));
+      expect(savedManifest, isNot(contains('LANGUAGE="ara"')));
+
+      // Verify unprobed subtitles are preserved as on-demand subtitles
+      final onDemand = candidate.metadata?.custom?['onDemandSubtitles']
+          as List<Map<String, String>>?;
+      expect(onDemand, isNotNull);
+      expect(onDemand!.any((s) => s['language'] == 'ara'), isTrue);
     });
 
     test('search should return empty if extraction fails', () async {
@@ -196,8 +210,7 @@ void main() {
       expect(results.length, 1);
       final candidate = results.first;
       expect(candidate.provider, 'VixSrc');
-      expect(candidate.url, contains('token=series-token'));
-      expect(candidate.url, contains('expires=987654321'));
+      expect(candidate.url, contains('.m3u8'));
     });
   });
 }

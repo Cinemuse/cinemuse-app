@@ -185,6 +185,7 @@ class UnifiedStreamResolver {
     int? episode,
     void Function(List<ProviderSearchStatus>)? onStatusUpdate,
     Future<void>? skipTrigger,
+    Map<String, dynamic>? preloadedDetails,
   }) async {
     final cacheKey = "$type:$queryId:${season ?? 0}:${episode ?? 0}";
     final cached = _searchCache[cacheKey];
@@ -215,7 +216,8 @@ class UnifiedStreamResolver {
       }
 
       // 1. Resolve Media Details and IDs
-      final details = await _tmdbService.getMediaDetails(queryId, type);
+      final details =
+          preloadedDetails ?? await _tmdbService.getMediaDetails(queryId, type);
       if (details == null) throw MediaDetailsResolutionException();
 
       // Proactively ingest into cache since we have full details
@@ -226,23 +228,34 @@ class UnifiedStreamResolver {
           int.tryParse(queryId) ?? int.tryParse(details['id'].toString());
       String? imdbId =
           details['external_ids']?['imdb_id'] ?? details['imdb_id'];
-      if (imdbId == null && tmdbId != null) {
-        imdbId = await _tmdbService.getImdbId(tmdbId, type);
-      }
 
-      if (imdbId == null) throw ImdbIdResolutionException();
+      // 2. Concurrently resolve missing IMDB ID and Anime mapping
+      final imdbTask = (imdbId == null && tmdbId != null)
+          ? _tmdbService.getImdbId(tmdbId, type)
+          : Future<String?>.value(imdbId);
 
-      // 2. Resolve Anime Mapping
-      final kitsuMapping = tmdbId != null
-          ? await _kitsuMappingService.getMapping(
+      final mappingTask = tmdbId != null
+          ? _kitsuMappingService.getMapping(
               tmdbId: tmdbId,
               type: type,
               season: season,
               episode: episode,
             )
-          : null;
+          : Future.value(null);
+
+      imdbId = await imdbTask;
+      final kitsuMapping = await mappingTask;
+
+      if (imdbId == null) throw ImdbIdResolutionException();
 
       final isAnime = kitsuMapping != null;
+      final prefSub = isAnime && _settings.splitAnimePreferences
+          ? _settings.animeSubtitleLanguage
+          : _settings.subtitleLanguage;
+      final preferredLanguages = <String>{
+        if (prefSub.isNotEmpty) prefSub.toLowerCase() else 'it',
+      }.toList();
+
       final context = StreamSearchContext(
         tmdbId: (tmdbId ?? details['id']).toString(),
         imdbId: imdbId,
@@ -252,9 +265,9 @@ class UnifiedStreamResolver {
         title: details['title'] ?? details['name'] ?? '',
         mapping: kitsuMapping,
         isAnime: isAnime,
+        preferredLanguages: preferredLanguages,
       );
 
-      // 3. Search All Sources
       final stopwatch = Stopwatch()..start();
       final searchStatuses = _sources
           .map((s) => ProviderSearchStatus(providerName: s.name))
@@ -360,8 +373,10 @@ class UnifiedStreamResolver {
         timestamp: DateTime.now(),
       );
 
+      final finalized = await _finalizeResults(candidates, context: context);
+
       return StreamSearchResult(
-        candidates: await _finalizeResults(candidates, context: context),
+        candidates: finalized,
         isAnime: isAnime,
       );
     } catch (e) {
