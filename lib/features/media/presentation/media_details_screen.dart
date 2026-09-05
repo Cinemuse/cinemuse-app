@@ -378,7 +378,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                                         ) ??
                                       0;
                               final String? imdbId =
-                                  details['external_ids']?['imdb_id'];
+                                  (details['external_ids']?['imdb_id'] ??
+                                          details['imdb_id'])
+                                      ?.toString();
                               if (tmdbId > 0) {
                                 showCommentsBottomSheet(
                                   context,
@@ -497,7 +499,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                                           ) ??
                                         0;
                                 final String? imdbId =
-                                    details['external_ids']?['imdb_id'];
+                                    (details['external_ids']?['imdb_id'] ??
+                                            details['imdb_id'])
+                                        ?.toString();
                                 if (tmdbId > 0) {
                                   showCommentsBottomSheet(
                                     context,

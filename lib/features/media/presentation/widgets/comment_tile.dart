@@ -13,11 +13,16 @@ class CommentTile extends StatefulWidget {
   State<CommentTile> createState() => _CommentTileState();
 }
 
-class _CommentTileState extends State<CommentTile> {
+class _CommentTileState extends State<CommentTile>
+    with AutomaticKeepAliveClientMixin {
   bool _isSpoilerRevealed = false;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     final comment = widget.comment;
     final isSpoiler = comment.isSpoiler && !_isSpoilerRevealed;
 

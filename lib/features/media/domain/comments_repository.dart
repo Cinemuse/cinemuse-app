@@ -13,12 +13,14 @@ class EpisodeCommentsRequest extends CommentsRequest {
   final int seasonNumber;
   final int episodeNumber;
   final int? seasonId;
+  final String? imdbId;
 
   const EpisodeCommentsRequest({
     required this.tmdbShowId,
     required this.seasonNumber,
     required this.episodeNumber,
     this.seasonId,
+    this.imdbId,
   });
 
   @override
@@ -27,6 +29,7 @@ class EpisodeCommentsRequest extends CommentsRequest {
     seasonNumber,
     episodeNumber,
     seasonId,
+    imdbId,
   ];
 }
 

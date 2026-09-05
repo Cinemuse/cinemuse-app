@@ -147,6 +147,22 @@ class TmdbService {
     }
   }
 
+  Future<String?> getEpisodeImdbId(
+    int showId,
+    int seasonNumber,
+    int episodeNumber,
+  ) async {
+    try {
+      final res = await _dio.get(
+        '$_baseUrl/tv/$showId/season/$seasonNumber/episode/$episodeNumber/external_ids',
+        queryParameters: {'api_key': _apiKey},
+      );
+      return res.data['imdb_id'] as String?;
+    } catch (e) {
+      return null;
+    }
+  }
+
   // Trending & Popular
   Future<List<MediaItem>> getTrending() async {
     final res = await _dio.get(

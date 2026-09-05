@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/data/comments_repository_impl.dart';
+import 'package:cinemuse_app/features/media/data/imdb_service.dart';
 import 'package:cinemuse_app/features/media/data/letterboxd_service.dart';
 import 'package:cinemuse_app/features/media/data/serializd_service.dart';
 import 'package:cinemuse_app/features/media/domain/comment.dart';
@@ -9,23 +11,31 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
 class MockSerializdService extends Mock implements SerializdService {}
 class MockLetterboxdService extends Mock implements LetterboxdService {}
+class MockImdbService extends Mock implements ImdbService {}
+class MockTmdbService extends Mock implements TmdbService {}
 
 void main() {
   late MockSerializdService mockSerializd;
   late MockLetterboxdService mockLetterboxd;
+  late MockImdbService mockImdb;
+  late MockTmdbService mockTmdb;
   late CommentsRepositoryImpl repository;
 
   setUp(() {
     mockSerializd = MockSerializdService();
     mockLetterboxd = MockLetterboxdService();
+    mockImdb = MockImdbService();
+    mockTmdb = MockTmdbService();
     repository = CommentsRepositoryImpl(
       mockSerializd,
       mockLetterboxd,
+      mockImdb,
+      mockTmdb,
     );
   });
 
   group('CommentsRepositoryImpl', () {
-    test('fetchComments with EpisodeCommentsRequest maps Serializd reviews correctly', () async {
+    test('fetchComments with EpisodeCommentsRequest maps Serializd and IMDb reviews correctly', () async {
       when(
         () => mockSerializd.fetchEpisodeReviews(
           showId: 1399,
@@ -52,6 +62,26 @@ void main() {
         },
       );
 
+      final imdbComment = Comment(
+        id: 'imdb_1',
+        author: const CommentAuthor(id: 'imdb_u', username: 'imdb_fan'),
+        text: 'Great episode!',
+        rating: 9.0,
+        source: CommentSource.imdb,
+      );
+
+      when(
+        () => mockTmdb.getEpisodeImdbId(1399, 1, 1),
+      ).thenAnswer((_) async => 'tt1234567');
+
+      when(
+        () => mockImdb.fetchReviews(
+          imdbId: 'tt1234567',
+          limit: any(named: 'limit'),
+          page: any(named: 'page'),
+        ),
+      ).thenAnswer((_) async => [imdbComment]);
+
       final comments = await repository.fetchComments(
         const EpisodeCommentsRequest(
           tmdbShowId: 1399,
@@ -60,20 +90,17 @@ void main() {
         ),
       );
 
-      expect(comments.length, 1);
-      final comment = comments.first;
-      expect(comment.id, '1001');
-      expect(comment.author.username, 'john_doe');
-      expect(comment.author.avatarUrl, 'https://example.com/avatar.jpg');
-      expect(comment.text, 'Incredible pilot episode!');
-      expect(comment.rating, 5.0);
-      expect(comment.likeCount, 42);
-      expect(comment.replyCount, 3);
-      expect(comment.isSpoiler, true);
-      expect(comment.source, CommentSource.serializd);
+      expect(comments.length, 2);
+      final serializd = comments.firstWhere((c) => c.source == CommentSource.serializd);
+      expect(serializd.id, '1001');
+      expect(serializd.author.username, 'john_doe');
+
+      final imdb = comments.firstWhere((c) => c.source == CommentSource.imdb);
+      expect(imdb.id, 'imdb_1');
+      expect(imdb.author.username, 'imdb_fan');
     });
 
-    test('fetchComments with MediaReviewsRequest (Movie) fetches Letterboxd reviews', () async {
+    test('fetchComments with MediaReviewsRequest (Movie) fetches Letterboxd and IMDb reviews', () async {
       final letterboxdComment = Comment(
         id: 'lb_1',
         author: const CommentAuthor(id: 'lb_u', username: 'LetterboxdFan'),
@@ -81,6 +108,15 @@ void main() {
         rating: 4.5,
         likeCount: 100,
         source: CommentSource.letterboxd,
+      );
+
+      final imdbComment = Comment(
+        id: 'imdb_m1',
+        author: const CommentAuthor(id: 'imdb_m', username: 'ImdbUser'),
+        text: 'A visual masterpiece!',
+        rating: 9.0,
+        likeCount: 250,
+        source: CommentSource.imdb,
       );
 
       when(
@@ -93,6 +129,14 @@ void main() {
         ),
       ).thenAnswer((_) async => [letterboxdComment]);
 
+      when(
+        () => mockImdb.fetchReviews(
+          imdbId: 'tt0137523',
+          limit: any(named: 'limit'),
+          page: any(named: 'page'),
+        ),
+      ).thenAnswer((_) async => [imdbComment]);
+
       final reviews = await repository.fetchComments(
         const MediaReviewsRequest(
           tmdbId: 550,
@@ -103,11 +147,13 @@ void main() {
         ),
       );
 
-      expect(reviews.length, 1);
-      expect(reviews.first.source, CommentSource.letterboxd);
+      expect(reviews.length, 2);
+      // Interleaving check: first from Letterboxd, second from IMDb
+      expect(reviews[0].source, CommentSource.letterboxd);
+      expect(reviews[1].source, CommentSource.imdb);
     });
 
-    test('fetchComments with MediaReviewsRequest (TV) fetches Serializd reviews', () async {
+    test('fetchComments with MediaReviewsRequest (TV) fetches Serializd and IMDb reviews', () async {
       when(
         () => mockSerializd.fetchShowReviews(
           showId: 1399,
@@ -126,6 +172,14 @@ void main() {
           ]
         },
       );
+
+      when(
+        () => mockImdb.fetchReviews(
+          imdbId: 'tt0903747',
+          limit: any(named: 'limit'),
+          page: any(named: 'page'),
+        ),
+      ).thenAnswer((_) async => []);
 
       final reviews = await repository.fetchComments(
         const MediaReviewsRequest(

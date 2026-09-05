@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/application/comments_provider.dart';
 import 'package:cinemuse_app/features/media/domain/comment.dart';
 import 'package:cinemuse_app/features/media/domain/comments_repository.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/comment_tile.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
@@ -20,7 +20,6 @@ class CommentsBottomSheet extends ConsumerStatefulWidget {
 }
 
 class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
-  int _displayCount = 20;
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -36,17 +35,12 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
   }
 
   void _onScroll() {
+    if (!_scrollController.hasClients) return;
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 300) {
       final state = ref.read(commentsProvider(widget.request));
-      if (!state.isLoading && !state.isLoadingMore) {
-        if (_displayCount < state.comments.length) {
-          setState(() {
-            _displayCount += 20;
-          });
-        } else if (state.hasMore) {
-          ref.read(commentsProvider(widget.request).notifier).loadNextPage();
-        }
+      if (!state.isLoading && !state.isLoadingMore && state.hasMore) {
+        ref.read(commentsProvider(widget.request).notifier).loadNextPage();
       }
     }
   }
@@ -56,29 +50,9 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(commentsProvider(widget.request));
 
-    ref.listen<CommentsState>(commentsProvider(widget.request), (prev, next) {
-      if (next.comments.length > (prev?.comments.length ?? 0)) {
-        if (_displayCount >= (prev?.comments.length ?? 0)) {
-          setState(() {
-            _displayCount = next.comments.length;
-          });
-        }
-      }
-    });
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-
-        int crossAxisCount = 1;
-        if (width >= 1200) {
-          crossAxisCount = 4;
-        } else if (width >= 900) {
-          crossAxisCount = 3;
-        } else if (width >= 600) {
-          crossAxisCount = 2;
-        }
-
         final bool isMobile = width < 600;
 
         return AppBottomSheet(
@@ -94,18 +68,8 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      if (state.availableSources.length > 1) ...[
-                        Expanded(
-                          child: _buildSourceFilterMenu(
-                            context,
-                            state,
-                            isMobile,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
                       Expanded(
-                        child: _buildLanguageFilterMenu(
+                        child: _buildSourceFilterMenu(
                           context,
                           state,
                           isMobile,
@@ -128,11 +92,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (state.availableSources.length > 1) ...[
-                            _buildSourceFilterMenu(context, state, isMobile),
-                            const SizedBox(width: 12),
-                          ],
-                          _buildLanguageFilterMenu(context, state, isMobile),
+                          _buildSourceFilterMenu(context, state, isMobile),
                           const SizedBox(width: 12),
                           _buildSortMenu(context, state, isMobile),
                         ],
@@ -141,7 +101,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                 ),
               ],
               const SizedBox(height: 24),
-              Expanded(child: _buildContent(context, state, crossAxisCount)),
+              Expanded(child: _buildContent(context, state)),
             ],
           ),
         );
@@ -152,7 +112,6 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
   Widget _buildContent(
     BuildContext context,
     CommentsState state,
-    int crossAxisCount,
   ) {
     final l10n = AppLocalizations.of(context)!;
 
@@ -178,45 +137,28 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       );
     }
 
-    final itemsToShow = state.comments.take(_displayCount).toList();
-    final bool showBottomLoader =
-        state.isLoadingMore || (_displayCount < state.comments.length);
-
-    if (crossAxisCount > 1) {
-      return MasonryGridView.count(
-        controller: _scrollController,
-        crossAxisCount: crossAxisCount,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        itemCount: itemsToShow.length + (showBottomLoader ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index >= itemsToShow.length) {
-            return const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Center(
-                child: CircularProgressIndicator(color: AppTheme.accent),
-              ),
-            );
-          }
-          return CommentTile(comment: itemsToShow[index]);
-        },
-      );
-    }
+    final comments = state.comments;
+    final bool showLoader = state.isLoadingMore;
 
     return ListView.separated(
       controller: _scrollController,
-      itemCount: itemsToShow.length + (showBottomLoader ? 1 : 0),
-      separatorBuilder: (context, index) => const SizedBox(height: 16),
+      padding: const EdgeInsets.only(bottom: 24),
+      itemCount: comments.length + (showLoader ? 1 : 0),
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        if (index >= itemsToShow.length) {
+        if (index >= comments.length) {
           return const Padding(
-            padding: EdgeInsets.all(16.0),
+            padding: EdgeInsets.symmetric(vertical: 24.0),
             child: Center(
               child: CircularProgressIndicator(color: AppTheme.accent),
             ),
           );
         }
-        return CommentTile(comment: itemsToShow[index]);
+        final comment = comments[index];
+        return CommentTile(
+          key: ValueKey(comment.id),
+          comment: comment,
+        );
       },
     );
   }
@@ -238,6 +180,9 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       case CommentSourceFilter.letterboxd:
         label = l10n.commentsSourceLetterboxd;
         break;
+      case CommentSourceFilter.imdb:
+        label = l10n.commentsSourceImdb;
+        break;
     }
 
     return PopupMenuButton<CommentSourceFilter>(
@@ -249,93 +194,43 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
         ref
             .read(commentsProvider(widget.request).notifier)
             .setSourceFilter(val);
-        _scrollController.jumpTo(0);
-        setState(() {
-          _displayCount = 20;
-        });
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(0);
+        }
       },
-      itemBuilder: (context) => [
-        _buildPopupMenuItem(
-          CommentSourceFilter.all,
-          l10n.commentsFilterAllSources,
-          state.sourceFilter,
-        ),
-        if (state.availableSources.contains(CommentSource.serializd))
+      itemBuilder: (context) {
+        final isTv = widget.request is EpisodeCommentsRequest ||
+            (widget.request is MediaReviewsRequest &&
+                (widget.request as MediaReviewsRequest).mediaType == MediaKind.tv);
+        final hasSerializd = state.availableSources.contains(CommentSource.serializd);
+        final hasLetterboxd = state.availableSources.contains(CommentSource.letterboxd);
+
+        return [
           _buildPopupMenuItem(
-            CommentSourceFilter.serializd,
-            l10n.commentsSourceSerializd,
+            CommentSourceFilter.all,
+            l10n.commentsFilterAllSources,
             state.sourceFilter,
           ),
-        if (state.availableSources.contains(CommentSource.letterboxd))
+          if (hasSerializd || isTv)
+            _buildPopupMenuItem(
+              CommentSourceFilter.serializd,
+              l10n.commentsSourceSerializd,
+              state.sourceFilter,
+            ),
+          if (hasLetterboxd || !isTv)
+            _buildPopupMenuItem(
+              CommentSourceFilter.letterboxd,
+              l10n.commentsSourceLetterboxd,
+              state.sourceFilter,
+            ),
           _buildPopupMenuItem(
-            CommentSourceFilter.letterboxd,
-            l10n.commentsSourceLetterboxd,
+            CommentSourceFilter.imdb,
+            l10n.commentsSourceImdb,
             state.sourceFilter,
           ),
-      ],
+        ];
+      },
       child: _buildFilterChip(label, Icons.layers_outlined, isMobile),
-    );
-  }
-
-  Widget _buildLanguageFilterMenu(
-    BuildContext context,
-    CommentsState state,
-    bool isMobile,
-  ) {
-    final l10n = AppLocalizations.of(context)!;
-    String label = l10n.commentsFilterAnyLanguage;
-    switch (state.languageFilter) {
-      case CommentLanguageFilter.english:
-        label = l10n.commentsFilterEnglish;
-        break;
-      case CommentLanguageFilter.italian:
-        label = l10n.commentsFilterItalian;
-        break;
-      case CommentLanguageFilter.englishAndItalian:
-        label = l10n.commentsFilterEnIt;
-        break;
-      case CommentLanguageFilter.unfiltered:
-        label = l10n.commentsFilterAnyLanguage;
-        break;
-    }
-
-    return PopupMenuButton<CommentLanguageFilter>(
-      color: AppTheme.surface,
-      surfaceTintColor: Colors.transparent,
-      position: PopupMenuPosition.under,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onSelected: (val) {
-        ref
-            .read(commentsProvider(widget.request).notifier)
-            .setLanguageFilter(val);
-        _scrollController.jumpTo(0);
-        setState(() {
-          _displayCount = 20;
-        });
-      },
-      itemBuilder: (context) => [
-        _buildPopupMenuItem(
-          CommentLanguageFilter.unfiltered,
-          l10n.commentsFilterAnyLanguage,
-          state.languageFilter,
-        ),
-        _buildPopupMenuItem(
-          CommentLanguageFilter.english,
-          l10n.commentsFilterEnglish,
-          state.languageFilter,
-        ),
-        _buildPopupMenuItem(
-          CommentLanguageFilter.italian,
-          l10n.commentsFilterItalian,
-          state.languageFilter,
-        ),
-        _buildPopupMenuItem(
-          CommentLanguageFilter.englishAndItalian,
-          l10n.commentsFilterEnIt,
-          state.languageFilter,
-        ),
-      ],
-      child: _buildFilterChip(label, Icons.language, isMobile),
     );
   }
 
@@ -367,10 +262,9 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
         ref
             .read(commentsProvider(widget.request).notifier)
             .setSortType(val);
-        _scrollController.jumpTo(0);
-        setState(() {
-          _displayCount = 20;
-        });
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(0);
+        }
       },
       itemBuilder: (context) => [
         _buildPopupMenuItem(
@@ -460,9 +354,13 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
 }
 
 void showCommentsBottomSheet(BuildContext context, CommentsRequest request) {
+  final screenWidth = MediaQuery.of(context).size.width;
   AppBottomSheet.show(
     context: context,
     heightFactor: 0.85,
+    constraints: BoxConstraints(
+      maxWidth: screenWidth > 680 ? 680 : screenWidth,
+    ),
     child: CommentsBottomSheet(request: request),
   );
 }

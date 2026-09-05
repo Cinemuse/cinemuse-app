@@ -2648,6 +2648,12 @@ abstract class AppLocalizations {
   /// **'Letterboxd'**
   String get commentsSourceLetterboxd;
 
+  /// No description provided for @commentsSourceImdb.
+  ///
+  /// In en, this message translates to:
+  /// **'IMDb'**
+  String get commentsSourceImdb;
+
   /// No description provided for @settingsSearchPreferences.
   ///
   /// In en, this message translates to:

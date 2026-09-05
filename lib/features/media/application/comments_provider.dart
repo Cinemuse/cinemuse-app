@@ -9,17 +9,11 @@ enum CommentSortType {
   highestRating,
 }
 
-enum CommentLanguageFilter {
-  unfiltered,
-  english,
-  italian,
-  englishAndItalian,
-}
-
 enum CommentSourceFilter {
   all,
   serializd,
   letterboxd,
+  imdb,
 }
 
 class CommentsState {
@@ -31,7 +25,6 @@ class CommentsState {
   final List<Comment> comments;
   final String? error;
   final CommentSortType sortType;
-  final CommentLanguageFilter languageFilter;
   final CommentSourceFilter sourceFilter;
   final Set<CommentSource> availableSources;
 
@@ -44,7 +37,6 @@ class CommentsState {
     this.comments = const [],
     this.error,
     this.sortType = CommentSortType.mostLiked,
-    this.languageFilter = CommentLanguageFilter.unfiltered,
     this.sourceFilter = CommentSourceFilter.all,
     this.availableSources = const {},
   });
@@ -58,7 +50,6 @@ class CommentsState {
     List<Comment>? comments,
     String? error,
     CommentSortType? sortType,
-    CommentLanguageFilter? languageFilter,
     CommentSourceFilter? sourceFilter,
     Set<CommentSource>? availableSources,
   }) {
@@ -71,7 +62,6 @@ class CommentsState {
       comments: comments ?? this.comments,
       error: error,
       sortType: sortType ?? this.sortType,
-      languageFilter: languageFilter ?? this.languageFilter,
       sourceFilter: sourceFilter ?? this.sourceFilter,
       availableSources: availableSources ?? this.availableSources,
     );
@@ -134,20 +124,31 @@ class CommentsNotifier
       }
 
       final seenIds = _allComments.map((c) => c.id).toSet();
-      int addedCount = 0;
+      final freshBatch = <Comment>[];
       for (final c in newComments) {
         if (seenIds.add(c.id)) {
           _allComments.add(c);
-          addedCount++;
+          freshBatch.add(c);
         }
       }
 
       _currentPage = nextPage;
-      _applySortAndFilter();
+
+      if (freshBatch.isEmpty) {
+        state = state.copyWith(isLoadingMore: false, hasMore: false);
+        return;
+      }
+
+      // Filter and sort ONLY the newly fetched batch so existing items above the viewport are undisturbed
+      final filteredFresh = _filterAndSortBatch(freshBatch);
+      final updatedComments = List<Comment>.from(state.comments)..addAll(filteredFresh);
+
       state = state.copyWith(
         isLoadingMore: false,
         currentPage: _currentPage,
-        hasMore: addedCount > 0,
+        hasMore: true,
+        comments: updatedComments,
+        availableSources: _allComments.map((c) => c.source).toSet(),
       );
     } catch (_) {
       state = state.copyWith(isLoadingMore: false);
@@ -160,22 +161,15 @@ class CommentsNotifier
     _applySortAndFilter();
   }
 
-  void setLanguageFilter(CommentLanguageFilter filter) {
-    if (state.languageFilter == filter) return;
-    state = state.copyWith(languageFilter: filter);
-    _applySortAndFilter();
-  }
-
   void setSourceFilter(CommentSourceFilter filter) {
     if (state.sourceFilter == filter) return;
     state = state.copyWith(sourceFilter: filter);
     _applySortAndFilter();
   }
 
-  void _applySortAndFilter() {
-    var filtered = List<Comment>.from(_allComments);
+  List<Comment> _filterAndSortBatch(List<Comment> batch) {
+    var filtered = List<Comment>.from(batch);
 
-    // Apply source filter
     if (state.sourceFilter != CommentSourceFilter.all) {
       filtered = filtered.where((c) {
         switch (state.sourceFilter) {
@@ -183,6 +177,8 @@ class CommentsNotifier
             return c.source == CommentSource.serializd;
           case CommentSourceFilter.letterboxd:
             return c.source == CommentSource.letterboxd;
+          case CommentSourceFilter.imdb:
+            return c.source == CommentSource.imdb;
           case CommentSourceFilter.all:
             return true;
         }
@@ -208,6 +204,12 @@ class CommentsNotifier
         });
         break;
     }
+
+    return filtered;
+  }
+
+  void _applySortAndFilter() {
+    final filtered = _filterAndSortBatch(_allComments);
 
     state = state.copyWith(
       isLoading: false,

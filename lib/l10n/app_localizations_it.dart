@@ -1408,6 +1408,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get commentsSourceLetterboxd => 'Letterboxd';
 
   @override
+  String get commentsSourceImdb => 'IMDb';
+
+  @override
   String get settingsSearchPreferences => 'Preferenze di Ricerca';
 
   @override

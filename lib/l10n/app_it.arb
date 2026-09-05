@@ -456,6 +456,7 @@
   "commentsFilterAllSources": "Tutte le fonti",
   "commentsSourceSerializd": "Serializd",
   "commentsSourceLetterboxd": "Letterboxd",
+  "commentsSourceImdb": "IMDb",
   "settingsSearchPreferences": "Preferenze di Ricerca",
   "settingsAutoSkipProviders": "Salta Automaticamente Provider Lenti",
   "settingsAutoSkipProvidersDesc": "Salta i provider di streaming che impiegano più di 30 secondi a rispondere.",
