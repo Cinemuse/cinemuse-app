@@ -269,6 +269,19 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                         }
                       }
                     : null,
+                onClearProgress: (watchHistory != null && watchHistory.progressSeconds > 0)
+                    ? () async {
+                        final user = ref.read(authProvider).value;
+                        if (user != null) {
+                          await ref.read(watchHistoryRepositoryProvider).clearProgress(
+                            userId: user.id,
+                            tmdbId: tmdbId,
+                            mediaType: typeForTmdb,
+                          );
+                          ref.invalidate(continueWatchingProvider);
+                        }
+                      }
+                    : null,
                 resumeData: (watchHistory != null && !watchHistory.isCompleted)
                     ? {
                         // map 'tv' mediaType to 'tv' string to ensure DetailsHero picks it up

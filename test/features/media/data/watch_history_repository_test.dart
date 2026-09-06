@@ -27,6 +27,12 @@ class FakeFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
   PostgrestFilterBuilder<T> eq(String column, Object value) => this;
 
   @override
+  PostgrestFilterBuilder<T> limit(int count, {String? referencedTable}) => this;
+
+  @override
+  PostgrestFilterBuilder<T> range(int from, int to, {String? referencedTable}) => this;
+
+  @override
   Future<R> then<R>(
     FutureOr<R> Function(T value) onValue, {
     Function? onError,
@@ -44,7 +50,7 @@ class FakeQueryBuilder extends Fake implements SupabaseQueryBuilder {
     String columns = '*',
   ]) {
     return FakeFilterBuilder<List<Map<String, dynamic>>>(
-      _value as List<Map<String, dynamic>>? ?? [],
+      (_value as List?)?.cast<Map<String, dynamic>>() ?? [],
     );
   }
 
@@ -55,6 +61,16 @@ class FakeQueryBuilder extends Fake implements SupabaseQueryBuilder {
     bool ignoreDuplicates = false,
     bool defaultToNull = true,
   }) {
+    return FakeFilterBuilder<List<Map<String, dynamic>>>([]);
+  }
+
+  @override
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> delete() {
+    return FakeFilterBuilder<List<Map<String, dynamic>>>([]);
+  }
+
+  @override
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> update(Map values) {
     return FakeFilterBuilder<List<Map<String, dynamic>>>([]);
   }
 }
@@ -79,6 +95,7 @@ void main() {
       mediaRepo,
       database,
       mockSeriesService,
+      mockTmdb,
     );
 
     // Register Fallbacks
@@ -158,5 +175,101 @@ void main() {
         verifyNever(() => mockSupabase.from(any()));
       },
     );
+
+    test('clearProgress for movie deletes from database (peek case)', () async {
+      await database.upsertWatchHistory(
+        LocalWatchHistoriesCompanion.insert(
+          userId: userId,
+          tmdbId: 42,
+          mediaType: 'movie',
+          status: 'watching',
+          progressSeconds: const Value(150),
+          lastWatchedAt: DateTime.now(),
+        ),
+      );
+
+      await repository.clearProgress(
+        userId: userId,
+        tmdbId: 42,
+        mediaType: 'movie',
+      );
+
+      final history = await database.getWatchHistory(userId);
+      expect(history.any((h) => h.tmdbId == 42), isFalse);
+    });
+
+    test('clearProgress for TV peek (0 completed episodes) deletes from database', () async {
+      when(() => mockSupabase.from('watch_logs')).thenAnswer((_) => FakeQueryBuilder([]));
+
+      await database.upsertWatchHistory(
+        LocalWatchHistoriesCompanion.insert(
+          userId: userId,
+          tmdbId: 101,
+          mediaType: 'tv',
+          season: const Value(1),
+          episode: const Value(1),
+          status: 'watching',
+          progressSeconds: const Value(180),
+          lastWatchedAt: DateTime.now(),
+        ),
+      );
+
+      await repository.clearProgress(
+        userId: userId,
+        tmdbId: 101,
+        mediaType: 'tv',
+      );
+
+      final history = await database.getWatchHistory(userId);
+      expect(history.any((h) => h.tmdbId == 101), isFalse);
+    });
+
+    test('clearProgress for TV with completed episodes resets progress to 0', () async {
+      when(() => mockSupabase.from('watch_logs')).thenAnswer(
+        (_) => FakeQueryBuilder([{'id': 1, 'season': 1, 'episode': 1}]),
+      );
+
+      await database.upsertWatchHistory(
+        LocalWatchHistoriesCompanion.insert(
+          userId: userId,
+          tmdbId: 202,
+          mediaType: 'tv',
+          season: const Value(1),
+          episode: const Value(2),
+          status: 'watching',
+          progressSeconds: const Value(500),
+          lastWatchedAt: DateTime.now(),
+        ),
+      );
+
+      await repository.clearProgress(
+        userId: userId,
+        tmdbId: 202,
+        mediaType: 'tv',
+      );
+
+      final history = await database.getWatchHistory(userId);
+      final item = history.firstWhere((h) => h.tmdbId == 202);
+      expect(item.progressSeconds, 0);
+      expect(item.season, 1);
+      expect(item.episode, 2);
+    });
+
+    test('removeFromDropped deletes item from database', () async {
+      await database.upsertWatchHistory(
+        LocalWatchHistoriesCompanion.insert(
+          userId: userId,
+          tmdbId: 303,
+          mediaType: 'tv',
+          status: 'dropped',
+          lastWatchedAt: DateTime.now(),
+        ),
+      );
+
+      await repository.removeFromDropped(userId, 303, 'tv');
+
+      final history = await database.getWatchHistory(userId);
+      expect(history.any((h) => h.tmdbId == 303), isFalse);
+    });
   });
 }

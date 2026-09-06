@@ -19,6 +19,7 @@ class BackdropCard extends StatefulWidget {
   final VoidCallback? onRestart;
   final VoidCallback? onWatchlistToggle;
   final VoidCallback? onClearCache;
+  final VoidCallback? onClearProgress;
   final VoidCallback? onAddToList;
   final bool isWatchlisted;
 
@@ -36,6 +37,7 @@ class BackdropCard extends StatefulWidget {
     this.onRestart,
     this.onWatchlistToggle,
     this.onClearCache,
+    this.onClearProgress,
     this.onAddToList,
     this.isWatchlisted = false,
   });
@@ -66,6 +68,12 @@ class _BackdropCardState extends State<BackdropCard> {
           icon: Icons.replay,
           label: l10n.menuRestart,
           onTap: widget.onRestart!,
+        ),
+      if (widget.onClearProgress != null && (widget.progress != null && widget.progress! > 0))
+        AppMenuOption(
+          icon: Icons.history_toggle_off_outlined,
+          label: l10n.menuClearProgress,
+          onTap: widget.onClearProgress!,
         ),
       if (widget.onDetails != null)
         AppMenuOption(

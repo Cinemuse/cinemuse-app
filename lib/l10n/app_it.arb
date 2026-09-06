@@ -395,6 +395,7 @@
   "menuShare": "Condividi",
   "menuResume": "Riprendi",
   "menuRestart": "Ricomincia",
+  "menuClearProgress": "Azzera Avanzamento",
   "menuMarkWatchedNow": "Segna come visto (ora)",
   "menuMarkWatchedCustomDate": "Segna come visto (data personalizzata)",
   "menuPlay": "Riproduci",

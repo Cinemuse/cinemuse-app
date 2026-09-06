@@ -1234,6 +1234,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get menuRestart => 'Ricomincia';
 
   @override
+  String get menuClearProgress => 'Azzera Avanzamento';
+
+  @override
   String get menuMarkWatchedNow => 'Segna come visto (ora)';
 
   @override

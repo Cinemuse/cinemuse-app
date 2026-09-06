@@ -1223,6 +1223,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuRestart => 'Restart';
 
   @override
+  String get menuClearProgress => 'Clear Progress';
+
+  @override
   String get menuMarkWatchedNow => 'Mark as watched (now)';
 
   @override

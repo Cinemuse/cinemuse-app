@@ -91,6 +91,22 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
     }
   }
 
+  void _onClearProgress(WatchHistory item) async {
+    final tmdbId = item.tmdbId;
+    final authState = ref.read(authProvider);
+    final repository = ref.read(watchHistoryRepositoryProvider);
+    final userId = authState.value?.id;
+
+    if (userId != null) {
+      await repository.clearProgress(
+        userId: userId,
+        tmdbId: tmdbId,
+        mediaType: item.mediaType.name,
+      );
+      ref.invalidate(continueWatchingProvider);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final historyAsync = ref.watch(continueWatchingProvider);
@@ -150,6 +166,7 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
           watchlistItems: watchlistItems,
           onDrop: () => _onDrop(historyItem),
           onCancelRewatch: () => _onCancelRewatch(historyItem),
+          onClearProgress: () => _onClearProgress(historyItem),
         );
       },
     );

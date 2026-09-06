@@ -2324,6 +2324,12 @@ abstract class AppLocalizations {
   /// **'Restart'**
   String get menuRestart;
 
+  /// No description provided for @menuClearProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Progress'**
+  String get menuClearProgress;
+
   /// No description provided for @menuMarkWatchedNow.
   ///
   /// In en, this message translates to:

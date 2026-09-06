@@ -653,12 +653,23 @@ class _ListMediaCard extends ConsumerWidget {
       rating: rating,
       releaseDate: year,
       tmdbId: item.tmdbId,
-      onRemoveFromList: (listId == 'dropped' || listId.startsWith('collection_'))
-          ? null 
-          : () {
-              ref
-                  .read(userListsProvider.notifier)
-                  .removeItemFromList(listId, item.tmdbId, item.mediaType);
+      onRemoveFromList: listId.startsWith('collection_')
+          ? null
+          : () async {
+              if (listId == 'dropped') {
+                final user = ref.read(authProvider).value;
+                if (user != null) {
+                  await ref
+                      .read(watchHistoryRepositoryProvider)
+                      .removeFromDropped(user.id, item.tmdbId, item.mediaType.name);
+                  ref.invalidate(droppedListProvider);
+                  ref.invalidate(continueWatchingProvider);
+                }
+              } else {
+                ref
+                    .read(userListsProvider.notifier)
+                    .removeItemFromList(listId, item.tmdbId, item.mediaType);
+              }
             },
       onRestore: listId == 'dropped'
           ? () async {

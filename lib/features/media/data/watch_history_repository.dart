@@ -995,6 +995,64 @@ class WatchHistoryRepository {
         .eq('tmdb_id', tmdbId);
   }
 
+  Future<void> clearProgress({
+    required String userId,
+    required int tmdbId,
+    required String mediaType,
+  }) async {
+    if (mediaType == 'movie') {
+      await _db.deleteWatchHistoryItem(userId, tmdbId, 'movie');
+      await _client
+          .from('watch_history')
+          .delete()
+          .eq('user_id', userId)
+          .eq('tmdb_id', tmdbId);
+      return;
+    }
+
+    // For TV: check if any episodes were completed in watch_logs
+    final completedLogs = await _client
+        .from('watch_logs')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId)
+        .eq('media_type', 'tv')
+        .limit(1);
+
+    final hasCompletedEpisodes = (completedLogs as List).isNotEmpty;
+
+    if (!hasCompletedEpisodes) {
+      // Peek state: 0 completed episodes. Revert to nothing.
+      await _db.deleteWatchHistoryItem(userId, tmdbId, 'tv');
+      await _client
+          .from('watch_history')
+          .delete()
+          .eq('user_id', userId)
+          .eq('tmdb_id', tmdbId);
+    } else {
+      // In-progress state: keep current episode on shelf, reset progress to 0
+      await (_db.update(_db.localWatchHistories)
+            ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
+          .write(const LocalWatchHistoriesCompanion(progressSeconds: Value(0)));
+
+      await _client
+          .from('watch_history')
+          .update({'progress_seconds': 0})
+          .eq('user_id', userId)
+          .eq('tmdb_id', tmdbId);
+    }
+  }
+
+  Future<void> removeFromDropped(String userId, int tmdbId, String mediaType) async {
+    await _db.deleteWatchHistoryItem(userId, tmdbId, mediaType);
+    await _client
+        .from('watch_history')
+        .delete()
+        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId)
+        .eq('status', 'dropped');
+  }
+
   // Simple StreamTransformer to debounce events
   StreamTransformer<T, T> _debounceTransformer<T>(Duration duration) {
     return StreamTransformer<T, T>.fromBind((Stream<T> stream) {

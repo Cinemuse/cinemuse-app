@@ -19,6 +19,7 @@ class ContinueWatchingCard extends ConsumerStatefulWidget {
   final List<UserListItem> watchlistItems;
   final VoidCallback onCancelRewatch;
   final VoidCallback? onDrop;
+  final VoidCallback? onClearProgress;
 
   const ContinueWatchingCard({
     super.key,
@@ -26,6 +27,7 @@ class ContinueWatchingCard extends ConsumerStatefulWidget {
     required this.watchlistItems,
     required this.onCancelRewatch,
     this.onDrop,
+    this.onClearProgress,
   });
 
   @override
@@ -197,6 +199,7 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
       } : null,
       onDrop: isRewatching ? null : widget.onDrop,
       onCancelRewatch: isRewatching ? widget.onCancelRewatch : null,
+      onClearProgress: widget.onClearProgress,
       onClearCache: hasCache
           ? () {
               resolver.clearCachedStream(

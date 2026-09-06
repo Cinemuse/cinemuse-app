@@ -395,6 +395,7 @@
   "menuShare": "Share",
   "menuResume": "Resume",
   "menuRestart": "Restart",
+  "menuClearProgress": "Clear Progress",
   "menuMarkWatchedNow": "Mark as watched (now)",
   "menuMarkWatchedCustomDate": "Mark as watched (custom date)",
   "menuPlay": "Play",

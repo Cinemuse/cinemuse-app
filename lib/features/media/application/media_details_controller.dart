@@ -3,6 +3,7 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
+import 'package:cinemuse_app/features/home/application/home_providers.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
@@ -138,6 +139,8 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
         season: season,
         episode: episode,
       );
+      ref.invalidate(droppedListProvider);
+      ref.invalidate(continueWatchingProvider);
     } catch (e) {
       ref
           .read(seriesWatchLogsProvider(tmdbId).notifier)
@@ -234,6 +237,8 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     // For now, let's keep it simple and just await. The debounce removal will help speed it up anyway.
 
     await _repository.deleteAllSeriesLogs(userId: userId, tmdbId: tmdbId);
+    ref.invalidate(droppedListProvider);
+    ref.invalidate(continueWatchingProvider);
   }
 
   Future<void> ensureEpisodeWatching({
@@ -286,6 +291,8 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
 
     try {
       await _repository.deleteLatestMovieLog(userId: userId, tmdbId: tmdbId);
+      ref.invalidate(droppedListProvider);
+      ref.invalidate(continueWatchingProvider);
     } catch (e) {
       ref
           .read(movieWatchLogsProvider(tmdbId).notifier)
@@ -302,6 +309,8 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
 
     try {
       await _repository.deleteAllMovieLogs(userId: userId, tmdbId: tmdbId);
+      ref.invalidate(droppedListProvider);
+      ref.invalidate(continueWatchingProvider);
     } catch (e) {
       ref
           .read(movieWatchLogsProvider(tmdbId).notifier)

@@ -26,6 +26,7 @@ class DetailsHero extends ConsumerWidget {
   final VoidCallback onListTap;
   final VoidCallback? onTrackTap;
   final VoidCallback? onDropClick;
+  final VoidCallback? onClearProgress;
   final int? movieWatchCount;
 
   const DetailsHero({
@@ -35,6 +36,7 @@ class DetailsHero extends ConsumerWidget {
     this.resumeData,
     required this.onPlayClick,
     this.onRestartClick,
+    this.onClearProgress,
     required this.onDeepSearch,
     this.contentPadding = 24.0,
     this.isFavorite = false,
@@ -310,6 +312,7 @@ class DetailsHero extends ConsumerWidget {
                   onListTap: onListTap,
                   onTrackTap: onTrackTap,
                   onDropClick: onDropClick,
+                  onClearProgress: onClearProgress,
                   seriesWatchStatus: seriesWatchStatus,
                   movieWatchCount: movieWatchCount,
                   hasResumeProgress: (resumeData?['progress'] as int? ?? 0) > 0,
