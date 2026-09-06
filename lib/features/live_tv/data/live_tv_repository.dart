@@ -17,110 +17,154 @@ class LiveTvRepository {
     List<LiveTvPlaylist>? customPlaylists,
   }) async {
     try {
-      final Map<int, Channel> channelMap = {};
-
-      // ── Load & Merge Custom Playlists ──
-      try {
-        if (customPlaylists != null) {
-          int syntheticLcn = 2000;
-          for (final playlist in customPlaylists) {
-            String content = '';
-            try {
-              if (playlist.isLocal) {
-                content = await File(playlist.urlOrPath).readAsString();
-              } else {
-                final response = await _dio.get(playlist.urlOrPath);
-                content = response.data is String
-                    ? response.data as String
-                    : json.encode(response.data);
-              }
-
-              if (playlist.type == PlaylistType.m3u) {
-                final m3uChannels = M3uParser.parse(
-                  content,
-                  startLcn: syntheticLcn,
-                );
-                for (final ch in m3uChannels) {
-                  // Ensure we don't overwrite existing LCNs
-                  while (channelMap.containsKey(syntheticLcn)) {
-                    syntheticLcn++;
-                  }
-                  channelMap[syntheticLcn] = Channel(
-                    lcn: syntheticLcn,
-                    name: ch.name,
-                    logo: ch.logo,
-                    group: ch.group ?? playlist.name,
-                    epgId: ch.epgId,
-                    links: ch.links,
-                  );
-                  syntheticLcn++;
-                }
-              } else if (playlist.type == PlaylistType.json) {
-                final dynamic jsonData = json.decode(content);
-                List<dynamic> channelsList = [];
-
-                // Handle both array format and standard object format
-                if (jsonData is List) {
-                  channelsList = jsonData;
-                } else if (jsonData is Map &&
-                    jsonData.containsKey('channels')) {
-                  channelsList = jsonData['channels'] as List<dynamic>;
-                }
-
-                for (final entry in channelsList) {
-                  if (entry is! Map<String, dynamic>) continue;
-
-                  final links = entry['links'] as List<dynamic>?;
-                  if (links == null || links.isEmpty) continue;
-
-                  final streamLinks = links
-                      .map(
-                        (l) => StreamLink.fromJson(l as Map<String, dynamic>),
-                      )
-                      .toList();
-
-                  while (channelMap.containsKey(syntheticLcn)) {
-                    syntheticLcn++;
-                  }
-
-                  channelMap[syntheticLcn] = Channel(
-                    lcn: syntheticLcn,
-                    name: (entry['name'] as String?) ?? 'Unknown',
-                    logo: (entry['logo'] as String?) ?? '',
-                    links: streamLinks,
-                    group:
-                        (entry['group'] ?? entry['category']) as String? ??
-                        playlist.name,
-                    provider: entry['provider'] as String?,
-                    subProvider: entry['sub_provider'] as String?,
-                    epgId: entry['epg_id'] as String?,
-                  );
-                  syntheticLcn++;
-                }
-              }
-            } catch (e) {
-              // Skip failed playlists
-            }
-          }
-        }
-      } catch (e) {
-        // Log but don't crash
+      if (customPlaylists == null || customPlaylists.isEmpty) {
+        return [];
       }
 
-      final channels = channelMap.values.toList();
+      final Map<String, Channel> channelsByKey = {};
+      final List<String> channelOrder = [];
+      int syntheticLcn = 2000;
 
-      // Sort: LCN 1-999 first, then alphabetically for channels without LCN
-      channels.sort((a, b) {
-        if (a.lcn > 0 && b.lcn > 0) return a.lcn.compareTo(b.lcn);
-        if (a.lcn > 0) return -1;
-        if (b.lcn > 0) return 1;
-        return a.name.compareTo(b.name);
-      });
+      for (final playlist in customPlaylists) {
+        try {
+          final content = await _loadPlaylistContent(playlist);
+          if (content.isEmpty) continue;
 
+          final playlistChannels = _parsePlaylistChannels(
+            playlist,
+            content,
+            syntheticLcn,
+          );
+
+          for (final ch in playlistChannels) {
+            final key = _buildChannelKey(ch.epgId, ch.name);
+            if (channelsByKey.containsKey(key)) {
+              final existing = channelsByKey[key]!;
+              final mergedLinks = _mergeStreamLinks(existing.links, ch.links);
+              channelsByKey[key] = existing.copyWith(
+                links: mergedLinks,
+                logo: existing.logo.isNotEmpty ? existing.logo : ch.logo,
+                group: existing.group ?? ch.group,
+                epgId: existing.epgId ?? ch.epgId,
+                provider: existing.provider ?? ch.provider,
+                subProvider: existing.subProvider ?? ch.subProvider,
+              );
+            } else {
+              final lcn = ch.lcn > 0 ? ch.lcn : syntheticLcn++;
+              channelsByKey[key] = ch.copyWith(lcn: lcn);
+              channelOrder.add(key);
+            }
+          }
+        } catch (_) {
+          // Skip failed playlists gracefully
+        }
+      }
+
+      final channels = channelOrder.map((k) => channelsByKey[k]!).toList();
+      _sortChannels(channels);
       return channels;
     } catch (e) {
       rethrow;
     }
+  }
+
+  Future<String> _loadPlaylistContent(LiveTvPlaylist playlist) async {
+    if (playlist.isLocal) {
+      return File(playlist.urlOrPath).readAsString();
+    }
+    final response = await _dio.get(playlist.urlOrPath);
+    return response.data is String
+        ? response.data as String
+        : json.encode(response.data);
+  }
+
+  List<Channel> _parsePlaylistChannels(
+    LiveTvPlaylist playlist,
+    String content,
+    int startLcn,
+  ) {
+    if (playlist.type == PlaylistType.m3u) {
+      return M3uParser.parse(content, startLcn: startLcn);
+    }
+    return _parseJsonChannels(content, playlist.name, startLcn);
+  }
+
+  List<Channel> _parseJsonChannels(
+    String content,
+    String fallbackGroup,
+    int startLcn,
+  ) {
+    final dynamic jsonData = json.decode(content);
+    List<dynamic> channelsList = [];
+
+    if (jsonData is List) {
+      channelsList = jsonData;
+    } else if (jsonData is Map && jsonData.containsKey('channels')) {
+      channelsList = jsonData['channels'] as List<dynamic>;
+    }
+
+    int currentLcn = startLcn;
+    final List<Channel> result = [];
+
+    for (final entry in channelsList) {
+      if (entry is! Map<String, dynamic>) continue;
+
+      final links = entry['links'] as List<dynamic>?;
+      if (links == null || links.isEmpty) continue;
+
+      final streamLinks = links
+          .map((l) => StreamLink.fromJson(l as Map<String, dynamic>))
+          .toList();
+
+      result.add(
+        Channel(
+          lcn: (entry['lcn'] as int?) ?? currentLcn++,
+          name: (entry['name'] as String?) ?? 'Unknown',
+          logo: (entry['logo'] as String?) ?? '',
+          links: streamLinks,
+          group: (entry['group'] ?? entry['category']) as String? ?? fallbackGroup,
+          provider: entry['provider'] as String?,
+          subProvider: entry['sub_provider'] as String?,
+          epgId: entry['epg_id'] as String?,
+        ),
+      );
+    }
+    return result;
+  }
+
+  List<StreamLink> _mergeStreamLinks(
+    List<StreamLink> existing,
+    List<StreamLink> incoming,
+  ) {
+    final combined = List<StreamLink>.from(existing);
+    for (final link in incoming) {
+      if (!combined.any((l) => l.url == link.url)) {
+        combined.add(link);
+      }
+    }
+    return combined;
+  }
+
+  String _buildChannelKey(String? epgId, String name) {
+    if (epgId != null && epgId.trim().isNotEmpty) {
+      return 'epg:${epgId.trim().toLowerCase()}';
+    }
+    final normalized = name
+        .toLowerCase()
+        .replaceAll(RegExp(r'\b(fhd|uhd|hd|sd|4k|1080p|720p)\b'), '')
+        .replaceAll(RegExp(r'[^\w\s]'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    return 'name:$normalized';
+  }
+
+  void _sortChannels(List<Channel> channels) {
+    channels.sort((a, b) {
+      if (a.lcn > 0 && b.lcn > 0) return a.lcn.compareTo(b.lcn);
+      if (a.lcn > 0) return -1;
+      if (b.lcn > 0) return 1;
+      return a.name.compareTo(b.name);
+    });
   }
 
   /// Fetches the EPG data.

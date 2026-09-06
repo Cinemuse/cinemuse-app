@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
+import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
@@ -36,7 +37,37 @@ class LiveTvSourceHandler {
     UserSettings settings, {
     VoidCallback? onStall,
   }) async {
-    final rawUrl = channel.url;
+    return _initializeStreamUrl(
+      channel,
+      channel.url,
+      'Live TV',
+      settings,
+      onStall: onStall,
+    );
+  }
+
+  Future<LiveTvInitializationResult> initializeWithLink(
+    Channel channel,
+    StreamLink link,
+    UserSettings settings, {
+    VoidCallback? onStall,
+  }) async {
+    return _initializeStreamUrl(
+      channel,
+      link.url,
+      link.displayProvider,
+      settings,
+      onStall: onStall,
+    );
+  }
+
+  Future<LiveTvInitializationResult> _initializeStreamUrl(
+    Channel channel,
+    String rawUrl,
+    String providerLabel,
+    UserSettings settings, {
+    VoidCallback? onStall,
+  }) async {
     final url = await _resolveIfDynamicRelinker(rawUrl);
     final isPremium =
         url.contains('.ts') ||
@@ -47,15 +78,23 @@ class LiveTvSourceHandler {
     // 1. Optimize Player properties for Live TV
     _optimizeForLiveStreaming(settings, isPremium);
 
+    final isTilescale = url.contains('tilescale.com') ||
+        url.contains('freebcloud') ||
+        url.contains('phantom') ||
+        url.contains('dlhd');
+
+    final isXtream = url.contains('/live/') || url.contains('.ts') || isPremium;
+    final userAgent = isXtream
+        ? 'VLC/3.0.18 LibVLC/3.0.18'
+        : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+
     // 2. Prepare headers
     final headers = {
-      'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'User-Agent': userAgent,
       'Accept': '*/*',
       if (url.contains('phantemlis.top')) 'Referer': 'https://hamis.romponalis.st/',
       if (url.contains('phantemlis.top')) 'Origin': 'https://hamis.romponalis.st',
-      if (isPremium && !url.contains('phantemlis.top'))
-        'Referer': 'https://tilescale.com/',
+      if (isTilescale) 'Referer': 'https://tilescale.com/',
     };
 
     // 3. Open the stream with explicit headers
@@ -98,14 +137,14 @@ class LiveTvSourceHandler {
       kind: StreamSourceKind.live,
       title: channel.name,
       url: url,
-      provider: 'Live TV',
+      provider: providerLabel,
       metadata: StreamMetadata.empty(),
       headers: headers,
     );
 
     final resolvedStream = ResolvedStream(
       url: url,
-      provider: 'Live TV',
+      provider: providerLabel,
       candidate: candidate,
       headers: headers,
     );
@@ -157,21 +196,13 @@ class LiveTvSourceHandler {
 
       // 3. Conditional Format & Reconnection
       if (isPremium) {
-        // MPEG-TS specific optimizations
-        platform.setProperty('ffmpeg-format', 'mpegts');
-        platform.setProperty(
-          'demuxer-lavf-o',
-          'analyze_max_duration=500000,probesize=500000,live_start_index=-3,reconnect_streamed=1,reconnect_delay_max=1',
-        );
-        platform.setProperty(
-          'force-seekable',
-          'no',
-        ); // Prevents stalls on raw TS
+        platform.setProperty('force-seekable', 'no'); // Prevents stalls on raw TS
       } else {
         platform.setProperty('demuxer-lavf-o', 'live_start_index=-3');
         platform.setProperty('force-seekable', 'yes');
       }
 
+      platform.setProperty('stream-lavf-o', 'reconnect_streamed=1,reconnect_delay_max=2');
       platform.setProperty('http-reconnect', 'yes');
       platform.setProperty('reconnect-on-network-error', 'yes');
       platform.setProperty('reconnect-on-http-error', 'all');
@@ -188,7 +219,9 @@ class LiveTvSourceHandler {
       // We set headers in the Media constructor, but keeping these as fallback
       platform.setProperty(
         'user-agent',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0',
+        isPremium
+            ? 'VLC/3.0.18 LibVLC/3.0.18'
+            : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0',
       );
     } catch (_) {}
   }
@@ -202,6 +235,34 @@ class LiveTvSourceHandler {
     }
     if (url.contains('dlhd_') || url.contains('live-tv-resolver/stream')) {
       return await _resolveDaddyLiveRelinker(url);
+    }
+    if (url.contains('/live/') && (url.contains('.ts') || url.contains('.m3u8'))) {
+      return await _resolveHttpRedirect(url);
+    }
+    return url;
+  }
+
+  Future<String> _resolveHttpRedirect(String url) async {
+    try {
+      final dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 4),
+          receiveTimeout: const Duration(seconds: 4),
+          followRedirects: false,
+          validateStatus: (status) => status != null && status < 400,
+          headers: {
+            'User-Agent': 'VLC/3.0.18 LibVLC/3.0.18',
+          },
+        ),
+      );
+      final response = await dio.get(url);
+      final location = response.headers.value('location');
+      if (location != null && location.isNotEmpty) {
+        debugPrint('LiveTvSourceHandler: Resolved redirect to $location');
+        return location;
+      }
+    } catch (e) {
+      debugPrint('LiveTvSourceHandler: Error checking redirect: $e');
     }
     return url;
   }

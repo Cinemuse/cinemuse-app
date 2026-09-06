@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
+import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cast/cast.dart';
@@ -83,6 +84,7 @@ class CinemaPlayerState {
   final double subtitleDelay;
   final bool isLive;
   final Channel? currentChannel;
+  final StreamLink? currentLiveLink;
 
   CinemaPlayerState({
     required this.controller,
@@ -106,6 +108,7 @@ class CinemaPlayerState {
     this.subtitleDelay = 0.0,
     this.isLive = false,
     this.currentChannel,
+    this.currentLiveLink,
   });
 
   CinemaPlayerState copyWith({
@@ -130,6 +133,7 @@ class CinemaPlayerState {
     double? subtitleDelay,
     bool? isLive,
     Object? currentChannel = _sentinel,
+    Object? currentLiveLink = _sentinel,
   }) {
     return CinemaPlayerState(
       controller: controller ?? this.controller,
@@ -169,6 +173,9 @@ class CinemaPlayerState {
       currentChannel: currentChannel == _sentinel
           ? this.currentChannel
           : (currentChannel as Channel?),
+      currentLiveLink: currentLiveLink == _sentinel
+          ? this.currentLiveLink
+          : (currentLiveLink as StreamLink?),
     );
   }
 }

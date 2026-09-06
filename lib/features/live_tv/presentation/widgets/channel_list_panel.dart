@@ -8,7 +8,6 @@ import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_tile.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_filter_sheet.dart';
-import 'package:cinemuse_app/features/live_tv/presentation/widgets/playlist_management_sheet.dart';
 
 /// Minimalist Live TV channel list panel.
 ///
@@ -203,24 +202,7 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
               ),
               tooltip: l10n.liveTvTabRecents,
             ),
-            // Playlist Management Icon
-            IconButton(
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.transparent,
-                  isScrollControlled: true,
-                  builder: (context) => const PlaylistManagementSheet(),
-                );
-              },
-              icon: const Icon(
-                Icons.playlist_play_rounded,
-                size: 22,
-                color: Colors.white30,
-              ),
-              tooltip: l10n.liveTvManagePlaylists,
-            ),
-            _FilterIconButton(isActive: filterIsActive),
+            _LiveTvOptionsButton(isActive: filterIsActive),
           ],
         ),
       ),
@@ -228,46 +210,112 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
   }
 }
 
-class _FilterIconButton extends StatelessWidget {
+class _LiveTvOptionsButton extends StatelessWidget {
   final bool isActive;
 
-  const _FilterIconButton({required this.isActive});
+  const _LiveTvOptionsButton({required this.isActive});
+
+  Future<void> _showQuickMenu(BuildContext context, Offset position) async {
+    final l10n = AppLocalizations.of(context)!;
+    final selected = await showMenu<LiveTvSheetTab>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy,
+        position.dx + 1,
+        position.dy + 1,
+      ),
+      color: AppTheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      items: [
+        PopupMenuItem(
+          value: LiveTvSheetTab.categories,
+          child: Row(
+            children: [
+              const Icon(
+                Icons.filter_list_rounded,
+                size: 18,
+                color: Colors.white70,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                l10n.liveTvFilterChannels,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: LiveTvSheetTab.playlists,
+          child: Row(
+            children: [
+              const Icon(
+                Icons.playlist_play_rounded,
+                size: 20,
+                color: Colors.white70,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                l10n.liveTvManagePlaylists,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (selected != null && context.mounted) {
+      showChannelFilterSheet(context, initialTab: selected);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Padding(
       padding: const EdgeInsets.only(right: 4),
-      child: Stack(
-        children: [
-          IconButton(
-            onPressed: () => showChannelFilterSheet(context),
-            icon: Icon(
-              Icons.tune_rounded,
-              size: 20,
-              color: isActive ? AppTheme.accent : Colors.white30,
+      child: GestureDetector(
+        onLongPressStart: (details) =>
+            _showQuickMenu(context, details.globalPosition),
+        onSecondaryTapDown: (details) =>
+            _showQuickMenu(context, details.globalPosition),
+        child: Stack(
+          children: [
+            IconButton(
+              onPressed: () => showChannelFilterSheet(context),
+              icon: Icon(
+                Icons.tune_rounded,
+                size: 20,
+                color: isActive ? AppTheme.accent : Colors.white30,
+              ),
+              tooltip: l10n.liveTvFilterAndPlaylists,
             ),
-            tooltip: AppLocalizations.of(context)!.liveTvFilterChannels,
-          ),
-          if (isActive)
-            Positioned(
-              right: 8,
-              top: 8,
-              child: Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: AppTheme.accent,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.accent.withValues(alpha: 0.5),
-                      blurRadius: 4,
-                    ),
-                  ],
+            if (isActive)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.accent.withValues(alpha: 0.5),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

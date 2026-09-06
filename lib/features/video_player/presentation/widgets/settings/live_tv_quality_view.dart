@@ -1,20 +1,23 @@
-import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'settings_widgets.dart';
 
 class LiveTvQualityView extends ConsumerWidget {
   final VoidCallback onBack;
   final CinemaPlayerState state;
+  final PlayerParams params;
 
   const LiveTvQualityView({
     super.key,
     required this.onBack,
     required this.state,
+    required this.params,
   });
 
   @override
@@ -22,8 +25,7 @@ class LiveTvQualityView extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
-    final availableQualities =
-        state.currentChannel?.links.map((l) => l.quality).toSet() ?? {};
+    final links = state.currentChannel?.links ?? [];
     final currentQuality = ref.watch(
       settingsProvider.select((s) => s.liveTvQuality),
     );
@@ -35,47 +37,145 @@ class LiveTvQualityView extends ConsumerWidget {
           onBack: onBack,
           compact: isLandscape,
         ),
-        if (availableQualities.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Text(
-              l10n.playerNoQualityOptions,
-              style: const TextStyle(color: AppTheme.textMuted),
-            ),
-          )
-        else
-          Flexible(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              shrinkWrap: true,
-              children: [
-                ...StreamQuality.values.reversed
-                    .where((q) => availableQualities.contains(q))
-                    .map((q) {
-                      return _buildQualityTile(
-                        context: context,
-                        ref: ref,
-                        quality: q,
-                        icon: _getQualityIcon(q),
-                        current: currentQuality,
-                        label: q == StreamQuality.fhd ? 'FULL HD' : null,
-                      );
-                    }),
-                const SizedBox(height: 24),
+        Flexible(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            shrinkWrap: true,
+            children: [
+              if (links.isNotEmpty) ...[
+                _buildSectionHeader(l10n.playerLiveSources),
+                const SizedBox(height: 8),
+                ...links.map((link) => _buildStreamSourceCard(
+                  ref: ref,
+                  link: link,
+                  isActive: state.currentLiveLink?.url == link.url,
+                  l10n: l10n,
+                )),
+                const SizedBox(height: 16),
               ],
-            ),
+              _buildSectionHeader(l10n.playerPreferredQuality),
+              const SizedBox(height: 8),
+              ...StreamQuality.values.reversed.map((q) => _buildQualityTile(
+                ref: ref,
+                quality: q,
+                icon: _getQualityIcon(q),
+                current: currentQuality,
+              )),
+              const SizedBox(height: 24),
+            ],
           ),
+        ),
       ],
     );
   }
 
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          color: AppTheme.textMuted.withValues(alpha: 0.8),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStreamSourceCard({
+    required WidgetRef ref,
+    required StreamLink link,
+    required bool isActive,
+    required AppLocalizations l10n,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            ref
+                .read(playerControllerProvider(params).notifier)
+                .switchLiveSource(link);
+            onBack();
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isActive
+                  ? AppTheme.accent.withValues(alpha: 0.12)
+                  : Colors.white.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isActive
+                    ? AppTheme.accent.withValues(alpha: 0.5)
+                    : Colors.white.withValues(alpha: 0.08),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                _buildQualityBadge(link.quality),
+                const SizedBox(width: 8),
+                _buildFormatBadge(link.formatLabel),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    link.displayProvider,
+                    style: TextStyle(
+                      color: isActive
+                          ? AppTheme.accent
+                          : AppTheme.textWhite.withValues(alpha: 0.9),
+                      fontSize: 14,
+                      fontWeight:
+                          isActive ? FontWeight.bold : FontWeight.w500,
+                    ),
+                  ),
+                ),
+                if (isActive)
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: AppTheme.accent,
+                    size: 20,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQualityBadge(StreamQuality quality) {
+    Color color;
+    switch (quality) {
+      case StreamQuality.uhd:
+        color = Colors.amberAccent;
+      case StreamQuality.fhd:
+        color = Colors.blueAccent;
+      case StreamQuality.hd:
+        color = Colors.cyanAccent;
+      case StreamQuality.sd:
+        color = Colors.grey;
+    }
+    return SettingsBadge(text: quality.label, color: color);
+  }
+
+  Widget _buildFormatBadge(String format) {
+    return SettingsBadge(
+      text: format,
+      color: Colors.purpleAccent.shade100,
+    );
+  }
+
   Widget _buildQualityTile({
-    required BuildContext context,
     required WidgetRef ref,
     required StreamQuality quality,
     required IconData icon,
     required StreamQuality current,
-    String? label,
   }) {
     final isSelected = quality == current;
 
@@ -115,15 +215,14 @@ class LiveTvQualityView extends ConsumerWidget {
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
-                    label ?? quality.label,
+                    quality.label,
                     style: TextStyle(
                       color: isSelected
                           ? AppTheme.accent
                           : AppTheme.textWhite.withValues(alpha: 0.9),
                       fontSize: 14,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w500,
                     ),
                   ),
                 ),

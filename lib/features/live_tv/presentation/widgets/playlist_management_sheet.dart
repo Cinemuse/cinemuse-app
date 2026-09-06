@@ -93,13 +93,10 @@ class PlaylistListSection extends ConsumerWidget {
           _buildEmptyState(context, l10n)
         else
           Flexible(
-            child: ListView.separated(
+            child: ListView.builder(
               shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: playlists.length,
-              separatorBuilder: (_, __) => Divider(
-                height: 1,
-                color: Colors.white.withValues(alpha: 0.05),
-              ),
               itemBuilder: (context, index) => _PlaylistTile(
                 playlist: playlists[index],
                 isLast: index == playlists.length - 1,
@@ -221,14 +218,24 @@ class _PlaylistTile extends ConsumerWidget {
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 200),
       opacity: isEnabled ? 1.0 : 0.5,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isEnabled
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.white.withValues(alpha: 0.03),
+          ),
+        ),
         child: Row(
           children: [
             // Type icon
             Container(
-              width: 40,
-              height: 40,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
                 color: isEnabled
                     ? AppTheme.accent.withValues(alpha: 0.12)
@@ -237,21 +244,22 @@ class _PlaylistTile extends ConsumerWidget {
               ),
               child: Icon(
                 playlist.isLocal ? LucideIcons.fileText : LucideIcons.globe,
-                size: 18,
+                size: 20,
                 color: isEnabled ? AppTheme.accent : Colors.white30,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             // Name + subtitle + badge
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     playlist.name,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
                     maxLines: 1,
@@ -261,13 +269,13 @@ class _PlaylistTile extends ConsumerWidget {
                   Text(
                     playlist.urlOrPath,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.4),
+                      color: Colors.white.withValues(alpha: 0.45),
                       fontSize: 11,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   _TypeBadge(playlist: playlist, l10n: l10n),
                 ],
               ),

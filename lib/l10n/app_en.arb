@@ -433,6 +433,8 @@
   "liveTvTypeJsonFile": "JSON File",
   "liveTvTypeM3uUrl": "M3U URL",
   "liveTvTypeJsonUrl": "JSON URL",
+  "liveTvPlaylists": "Playlists",
+  "liveTvFilterAndPlaylists": "Filter & Playlists",
 
   "tvTimeComments": "Comments",
   "tvTimeNoComments": "No comments yet.",
@@ -559,6 +561,10 @@
   "listPinToHome": "Pin to Home",
   "listUnpinFromHome": "Unpin from Home",
   "listPinnedSuccess": "Pinned to Home",
-  "listUnpinnedSuccess": "Unpinned from Home"
+  "listUnpinnedSuccess": "Unpinned from Home",
+  "playerLiveSources": "Available Streams",
+  "playerPreferredQuality": "Preferred Quality (Default)",
+  "playerActiveSource": "Active",
+  "playerSourceFailed": "Unavailable"
 }
 

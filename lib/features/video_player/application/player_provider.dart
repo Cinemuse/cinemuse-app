@@ -481,6 +481,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
                     : null,
                 error: null,
                 currentChannel: channel,
+                currentLiveLink: _currentLink,
               ) ??
               CinemaPlayerState(
                 controller: _controller!,
@@ -490,6 +491,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
                 isResolving: true,
                 isLive: true,
                 currentChannel: channel,
+                currentLiveLink: _currentLink,
               ),
         );
       }
@@ -501,17 +503,25 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       _liveTvHandler?.dispose();
       _liveTvHandler = LiveTvSourceHandler(_player!);
 
-      final result = await _liveTvHandler!.initialize(
-        channel,
-        settings,
-        onStall: () => _handleLiveTvFailover('Stream stalled'),
-      );
+      final result = _currentLink != null
+          ? await _liveTvHandler!.initializeWithLink(
+              channel,
+              _currentLink!,
+              settings,
+              onStall: () => _handleLiveTvFailover('Stream stalled'),
+            )
+          : await _liveTvHandler!.initialize(
+              channel,
+              settings,
+              onStall: () => _handleLiveTvFailover('Stream stalled'),
+            );
 
       // Only update state if this is still the most recent request
       if (mounted && requestId == _activeRequestId) {
         state = AsyncValue.data(
           state.value!.copyWith(
             currentStream: result.resolvedStream,
+            currentLiveLink: _currentLink,
             isResolving: false,
             error: null,
           ),
@@ -523,6 +533,57 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       }
     } finally {
       // Only clear the guard if no newer request has started
+      if (requestId == _activeRequestId) {
+        _isChangingChannel = false;
+      }
+    }
+  }
+
+  /// Manually switch the active Live TV stream source for the current channel.
+  Future<void> switchLiveSource(StreamLink link) async {
+    if (_currentChannel == null || _player == null) return;
+    final channel = _currentChannel!;
+    final requestId = ++_activeRequestId;
+    _isChangingChannel = true;
+    _currentLink = link;
+
+    try {
+      if (mounted) {
+        state = AsyncValue.data(
+          state.value!.copyWith(
+            isResolving: true,
+            currentLiveLink: link,
+            error: null,
+          ),
+        );
+      }
+
+      final settings = ref.read(settingsProvider);
+      _liveTvHandler?.dispose();
+      _liveTvHandler = LiveTvSourceHandler(_player!);
+
+      final result = await _liveTvHandler!.initializeWithLink(
+        channel,
+        link,
+        settings,
+        onStall: () => _handleLiveTvFailover('Stream stalled'),
+      );
+
+      if (mounted && requestId == _activeRequestId) {
+        state = AsyncValue.data(
+          state.value!.copyWith(
+            currentStream: result.resolvedStream,
+            currentLiveLink: link,
+            isResolving: false,
+            error: null,
+          ),
+        );
+      }
+    } catch (e, st) {
+      if (requestId == _activeRequestId) {
+        _handleInitializationError(e, st);
+      }
+    } finally {
       if (requestId == _activeRequestId) {
         _isChangingChannel = false;
       }

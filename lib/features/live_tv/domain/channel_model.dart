@@ -45,6 +45,50 @@ class Channel {
     this.isAdult = false,
   });
 
+  Channel copyWith({
+    int? lcn,
+    String? name,
+    String? logo,
+    bool? hd,
+    bool? uhd,
+    String? type,
+    String? urlOverride,
+    List<StreamLink>? links,
+    String? group,
+    String? provider,
+    String? subProvider,
+    String? subtitle,
+    String? epgSource,
+    String? epgId,
+    bool? isGeoblocked,
+    bool? isDisabled,
+    bool? isFeed,
+    bool? isRadio,
+    bool? isAdult,
+  }) {
+    return Channel(
+      lcn: lcn ?? this.lcn,
+      name: name ?? this.name,
+      logo: logo ?? this.logo,
+      hd: hd ?? this.hd,
+      uhd: uhd ?? this.uhd,
+      type: type ?? this.type,
+      urlOverride: urlOverride ?? this.urlOverride,
+      links: links ?? this.links,
+      group: group ?? this.group,
+      provider: provider ?? this.provider,
+      subProvider: subProvider ?? this.subProvider,
+      subtitle: subtitle ?? this.subtitle,
+      epgSource: epgSource ?? this.epgSource,
+      epgId: epgId ?? this.epgId,
+      isGeoblocked: isGeoblocked ?? this.isGeoblocked,
+      isDisabled: isDisabled ?? this.isDisabled,
+      isFeed: isFeed ?? this.isFeed,
+      isRadio: isRadio ?? this.isRadio,
+      isAdult: isAdult ?? this.isAdult,
+    );
+  }
+
   /// Unique identifier for this channel.
   /// Since many IPTV channels lack a unique LCN, we use a combination of name and LCN.
   String get uniqueId => '${name}_$lcn'.hashCode.toString();

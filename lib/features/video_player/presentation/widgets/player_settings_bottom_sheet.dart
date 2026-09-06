@@ -147,7 +147,11 @@ class _PlayerSettingsBottomSheetState
         );
       case SettingsView.quality:
         if (currentState.isLive) {
-          return LiveTvQualityView(onBack: _navigateBack, state: currentState);
+          return LiveTvQualityView(
+            onBack: _navigateBack,
+            state: currentState,
+            params: widget.params,
+          );
         }
         return QualitySettingsView(
           state: currentState,

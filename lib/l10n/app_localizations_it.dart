@@ -1349,6 +1349,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get liveTvTypeJsonUrl => 'URL JSON';
 
   @override
+  String get liveTvPlaylists => 'Playlist';
+
+  @override
+  String get liveTvFilterAndPlaylists => 'Filtri e Playlist';
+
+  @override
   String get tvTimeComments => 'Commenti';
 
   @override
@@ -1630,4 +1636,16 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get listUnpinnedSuccess => 'Rimosso dalla Home';
+
+  @override
+  String get playerLiveSources => 'Sorgenti Disponibili';
+
+  @override
+  String get playerPreferredQuality => 'Qualità Preferita (Predefinita)';
+
+  @override
+  String get playerActiveSource => 'Attiva';
+
+  @override
+  String get playerSourceFailed => 'Non disponibile';
 }

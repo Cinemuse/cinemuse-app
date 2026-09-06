@@ -2546,6 +2546,18 @@ abstract class AppLocalizations {
   /// **'JSON URL'**
   String get liveTvTypeJsonUrl;
 
+  /// No description provided for @liveTvPlaylists.
+  ///
+  /// In en, this message translates to:
+  /// **'Playlists'**
+  String get liveTvPlaylists;
+
+  /// No description provided for @liveTvFilterAndPlaylists.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter & Playlists'**
+  String get liveTvFilterAndPlaylists;
+
   /// No description provided for @tvTimeComments.
   ///
   /// In en, this message translates to:
@@ -3043,6 +3055,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unpinned from Home'**
   String get listUnpinnedSuccess;
+
+  /// No description provided for @playerLiveSources.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Streams'**
+  String get playerLiveSources;
+
+  /// No description provided for @playerPreferredQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred Quality (Default)'**
+  String get playerPreferredQuality;
+
+  /// No description provided for @playerActiveSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get playerActiveSource;
+
+  /// No description provided for @playerSourceFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get playerSourceFailed;
 }
 
 class _AppLocalizationsDelegate

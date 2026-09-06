@@ -108,8 +108,12 @@ class QualitySubtitle extends ConsumerWidget {
       final quality = ref.watch(
         settingsProvider.select((s) => s.liveTvQuality),
       );
+      final activeLink = state.currentLiveLink;
+      final label = activeLink != null
+          ? '${activeLink.displayProvider} (${activeLink.quality.label})'
+          : 'Preferred: ${quality.label}';
       return Text(
-        'Preferred: ${quality.label}',
+        label,
         style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
       );
     }

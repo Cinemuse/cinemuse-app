@@ -119,27 +119,38 @@ enum LiveTvGroupMode { category, provider }
 /// Filter state applied from the filter sheet.
 class ChannelFilter {
   final LiveTvGroupMode groupMode;
-  final String? selectedGroup;
+  final Set<String> selectedCategories;
+  final String? _selectedGroup;
   final String? selectedSubProvider;
 
   const ChannelFilter({
     this.groupMode = LiveTvGroupMode.category,
-    this.selectedGroup,
+    this.selectedCategories = const {},
+    String? selectedGroup,
     this.selectedSubProvider,
-  });
+  }) : _selectedGroup = selectedGroup;
 
-  bool get isActive => selectedGroup != null;
+  String? get selectedGroup => _selectedGroup ?? selectedCategories.firstOrNull;
+
+  Set<String> get effectiveCategories =>
+      selectedCategories.isNotEmpty
+          ? selectedCategories
+          : (_selectedGroup != null ? {_selectedGroup} : const {});
+
+  bool get isActive => selectedCategories.isNotEmpty || _selectedGroup != null;
 
   ChannelFilter copyWith({
     LiveTvGroupMode? groupMode,
+    Set<String>? selectedCategories,
     String? Function()? selectedGroup,
     String? Function()? selectedSubProvider,
   }) {
     return ChannelFilter(
       groupMode: groupMode ?? this.groupMode,
+      selectedCategories: selectedCategories ?? this.selectedCategories,
       selectedGroup: selectedGroup != null
           ? selectedGroup()
-          : this.selectedGroup,
+          : _selectedGroup,
       selectedSubProvider: selectedSubProvider != null
           ? selectedSubProvider()
           : this.selectedSubProvider,
@@ -147,9 +158,68 @@ class ChannelFilter {
   }
 }
 
+class ChannelFilterNotifier extends StateNotifier<ChannelFilter> {
+  ChannelFilterNotifier() : super(const ChannelFilter()) {
+    _load();
+  }
+
+  static const _key = 'live_tv_selected_categories';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getStringList(_key) ?? [];
+    if (cached.isNotEmpty) {
+      state = ChannelFilter(selectedCategories: cached.toSet());
+    }
+  }
+
+  Future<void> setFilter(ChannelFilter filter) async {
+    state = filter;
+    await _persist(filter);
+  }
+
+  Future<void> toggleCategory(String category) async {
+    final current = Set<String>.from(state.effectiveCategories);
+    if (current.contains(category)) {
+      current.remove(category);
+    } else {
+      current.add(category);
+    }
+    final next = ChannelFilter(selectedCategories: current);
+    state = next;
+    await _persist(next);
+  }
+
+  Future<void> selectAll() async {
+    await clear();
+  }
+
+  Future<void> clear() async {
+    state = const ChannelFilter();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
+  }
+
+  Future<void> _persist(ChannelFilter filter) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (filter.effectiveCategories.isEmpty) {
+      await prefs.remove(_key);
+    } else {
+      await prefs.setStringList(_key, filter.effectiveCategories.toList());
+    }
+  }
+
+  @override
+  set state(ChannelFilter value) {
+    super.state = value;
+    _persist(value);
+  }
+}
+
 /// The current filter state (set via the filter sheet).
-final channelFilterProvider = StateProvider<ChannelFilter>(
-  (ref) => const ChannelFilter(),
+final channelFilterProvider =
+    StateNotifierProvider<ChannelFilterNotifier, ChannelFilter>(
+  (ref) => ChannelFilterNotifier(),
 );
 
 /// The currently selected / playing channel.
@@ -272,12 +342,12 @@ final sectionedChannelsProvider = Provider<AsyncValue<List<ChannelSection>>>((
     }
 
     // Build sections
-    if (tab != LiveTvTab.all || filter.isActive || query.isNotEmpty) {
+    if (tab != LiveTvTab.all) {
       // Single flat list — no section headers
       return [ChannelSection(title: '', channels: pool)];
     }
 
-    // Group by category for "All" tab with no filter
+    // Group by category for "All" tab (always on)
     return _buildSections(pool);
   });
 });
@@ -309,18 +379,11 @@ List<Channel> _resolveRecents(
 List<Channel> _applyGroupFilter(List<Channel> channels, ChannelFilter filter) {
   if (!filter.isActive) return channels;
 
-  var result = channels.where((ch) {
-    final chGroup = filter.groupMode == LiveTvGroupMode.category
-        ? ch.group
-        : ch.provider;
-    return chGroup == filter.selectedGroup;
-  });
-
-  if (filter.selectedSubProvider != null) {
-    result = result.where((ch) => ch.subProvider == filter.selectedSubProvider);
-  }
-
-  return result.toList();
+  final targets = filter.effectiveCategories;
+  return channels.where((ch) {
+    if (ch.group == null) return false;
+    return targets.contains(ch.group);
+  }).toList();
 }
 
 List<Channel> _applySearch(List<Channel> channels, String query) {
