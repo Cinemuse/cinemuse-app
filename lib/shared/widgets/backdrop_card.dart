@@ -22,6 +22,7 @@ class BackdropCard extends StatefulWidget {
   final VoidCallback? onClearProgress;
   final VoidCallback? onAddToList;
   final bool isWatchlisted;
+  final double? width;
 
   const BackdropCard({
     super.key,
@@ -40,6 +41,7 @@ class BackdropCard extends StatefulWidget {
     this.onClearProgress,
     this.onAddToList,
     this.isWatchlisted = false,
+    this.width,
   });
 
   @override
@@ -148,7 +150,7 @@ class _BackdropCardState extends State<BackdropCard> {
         onEnter: (_) => setState(() => _isHovered = true),
         onExit: (_) => setState(() => _isHovered = false),
         child: SizedBox(
-          width: 280,
+          width: widget.width ?? 280,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -193,6 +195,24 @@ class _BackdropCardState extends State<BackdropCard> {
                                             _buildPlaceholder(),
                                       )
                                     : _buildPlaceholder(),
+                              ),
+
+                              // Subtle Static Bottom Vignette
+                              const DecoratedBox(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(8),
+                                  ),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.center,
+                                    colors: [
+                                      Color(0x73000000),
+                                      Colors.transparent,
+                                    ],
+                                    stops: [0.0, 0.4],
+                                  ),
+                                ),
                               ),
 
                               // Play Icon
@@ -279,54 +299,56 @@ class _BackdropCardState extends State<BackdropCard> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      // Title
-                      Text(
-                        widget.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                          color: _isHovered ? AppTheme.accent : Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
+                      // Title + Options Row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              widget.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                color: _isHovered ? AppTheme.accent : Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Builder(
+                            builder: (context) {
+                              final isMobile =
+                                  MediaQuery.of(context).size.width < 600;
+                              return AnimatedOpacity(
+                                opacity: (_isHovered || isMobile) ? 1.0 : 0.0,
+                                duration: const Duration(milliseconds: 200),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () => _showContextActions(context),
+                                    mouseCursor: SystemMouseCursors.click,
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      key: _menuKey,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 2,
+                                      ),
+                                      child: const Icon(
+                                        Icons.more_vert,
+                                        color: Colors.white60,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ),
-              ),
-
-              // 2. Context Menu Button (More Options)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Builder(
-                  builder: (context) {
-                    final isMobile = MediaQuery.of(context).size.width < 600;
-                    return AnimatedOpacity(
-                      opacity: (_isHovered || isMobile) ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 200),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () => _showContextActions(context),
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            key: _menuKey,
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.7),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.more_vert,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
                 ),
               ),
             ],

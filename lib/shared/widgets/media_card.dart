@@ -250,12 +250,27 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                                     ),
                                   ),
 
-                                // Gradient Overlay
+                                // Subtle Static Bottom Vignette (grounds the poster artwork)
+                                const DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.center,
+                                      colors: [
+                                        Color(0x73000000), // ~45% black at the bottom edge
+                                        Colors.transparent,
+                                      ],
+                                      stops: [0.0, 0.4],
+                                    ),
+                                  ),
+                                ),
+
+                                // Hover Gradient Overlay
                                 AnimatedOpacity(
                                   opacity: _isHovered ? 1.0 : 0.0,
                                   duration: const Duration(milliseconds: 300),
-                                  child: Container(
-                                    decoration: const BoxDecoration(
+                                  child: const DecoratedBox(
+                                    decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         begin: Alignment.bottomCenter,
                                         end: Alignment.center,
@@ -284,75 +299,66 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                               ),
                             ),
                           ),
-
-                          // Context Menu Button (More Options)
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Consumer(
-                              builder: (context, ref, child) {
-                                final isMobile =
-                                    MediaQuery.of(context).size.width < 600;
-                                return AnimatedOpacity(
-                                  opacity: (_isHovered || isMobile) ? 1.0 : 0.0,
-                                  duration: const Duration(milliseconds: 200),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      onTap: () => _showContextActions(context),
-                                      borderRadius: BorderRadius.circular(20),
-                                      child: Container(
-                                        key: _menuKey,
-                                        padding: const EdgeInsets.all(4),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withValues(
-                                            alpha: 0.4,
-                                          ),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.more_vert,
-                                          color: Colors.white,
-                                          size: 20,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
                         ],
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Title
-                PremiumHoverText(
-                  text: widget.title,
-                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    color: _isHovered ? AppTheme.accent : Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
+                // Title + Options Row
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: PremiumHoverText(
+                        text: widget.title,
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                          color: _isHovered ? AppTheme.accent : Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final isMobile =
+                            MediaQuery.of(context).size.width < 600;
+                        return AnimatedOpacity(
+                          opacity: (_isHovered || isMobile) ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 200),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => _showContextActions(context),
+                              mouseCursor: SystemMouseCursors.click,
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                key: _menuKey,
+                                padding: const EdgeInsets.only(
+                                  left: 4,
+                                  top: 2,
+                                  bottom: 2,
+                                ),
+                                child: const Icon(
+                                  Icons.more_vert,
+                                  color: Colors.white60,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 2),
                 // MetadataRow
                 Row(
                   children: [
-                    if (widget.rating != null && widget.rating! > 0)
+                    if (widget.rating != null && widget.rating! > 0) ...[
                       const Icon(Icons.star, size: 12, color: AppTheme.star),
-                    if (widget.rating != null && widget.rating! > 0)
                       const SizedBox(width: 4),
-                    if (widget.rating != null && widget.rating! > 0)
-                      Text(
-                        "", // Placeholder logic if needed, otherwise removed rating display
-                        style: TextStyle(
-                          color: AppTheme.textMuted,
-                          fontSize: 12,
-                        ),
-                      ),
-                    if (widget.rating != null && widget.rating! > 0)
                       Text(
                         widget.rating!.toStringAsFixed(1),
                         style: const TextStyle(
@@ -360,16 +366,20 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                           fontSize: 12,
                         ),
                       ),
+                    ],
                     if (widget.rating != null &&
                         widget.rating! > 0 &&
                         year.isNotEmpty)
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                     if (year.isNotEmpty)
-                      Text(
-                        year,
-                        style: const TextStyle(
-                          color: AppTheme.textMuted,
-                          fontSize: 12,
+                      Flexible(
+                        child: Text(
+                          year,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                   ],

@@ -13,6 +13,7 @@ import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/skeleton_box.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/carousel_layout_calculator.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/cards/continue_watching_card.dart';
 
 class ContinueWatchingRow extends ConsumerStatefulWidget {
@@ -150,13 +151,17 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
 
     if (effectiveItems.isEmpty) return const SizedBox.shrink();
 
+    final horizontalPadding = AppTheme.getResponsiveHorizontalPadding(context);
+    final dimensions = CarouselLayoutCalculator.getBackdropDimensions(
+      context,
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+    );
+
     return GenericCarouselRow(
       theme: CarouselTheme.homeRow,
       title: l10n.homeContinueWatching,
-      height: 216,
-      padding: EdgeInsets.symmetric(
-        horizontal: AppTheme.getResponsiveHorizontalPadding(context),
-      ),
+      height: dimensions.height,
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       itemCount: effectiveItems.length,
       separatorBuilder: (c, i) => const SizedBox(width: 16),
       itemBuilder: (context, index) {
@@ -164,6 +169,7 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
         return ContinueWatchingCard(
           historyItem: historyItem,
           watchlistItems: watchlistItems,
+          width: dimensions.itemWidth,
           onDrop: () => _onDrop(historyItem),
           onCancelRewatch: () => _onCancelRewatch(historyItem),
           onClearProgress: () => _onClearProgress(historyItem),
@@ -179,6 +185,10 @@ class ContinueWatchingSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final horizontalPadding = AppTheme.getResponsiveHorizontalPadding(context);
+    final dimensions = CarouselLayoutCalculator.getBackdropDimensions(
+      context,
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,16 +204,19 @@ class ContinueWatchingSkeleton extends StatelessWidget {
         ),
         GenericCarouselRow(
           theme: CarouselTheme.plain,
-          height: 216,
+          height: dimensions.height,
           padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
           itemCount: 4,
           separatorBuilder: (_, __) => const SizedBox(width: 16),
           itemBuilder: (_, __) => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 280, height: 280 * (9 / 16)),
+              SkeletonBox(
+                width: dimensions.itemWidth,
+                height: dimensions.itemWidth * (9 / 16),
+              ),
               const SizedBox(height: 10),
-              const SkeletonBox(width: 150, height: 16),
+              SkeletonBox(width: dimensions.itemWidth * 0.55, height: 16),
             ],
           ),
         ),

@@ -10,6 +10,7 @@ import 'package:cinemuse_app/features/media/presentation/media_details_screen.da
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart'; // for CarouselTheme
+import 'package:cinemuse_app/shared/widgets/carousels/carousel_layout_calculator.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class MediaRow extends ConsumerWidget {
@@ -50,14 +51,16 @@ class MediaRow extends ConsumerWidget {
       );
     }
 
+    final dimensions = CarouselLayoutCalculator.getPosterDimensions(context);
+
     if (asyncData.isLoading && !asyncData.hasValue) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildTitle(context),
-          const SizedBox(
-            height: 356,
-            child: Center(child: CircularProgressIndicator()),
+          SizedBox(
+            height: dimensions.height,
+            child: const Center(child: CircularProgressIndicator()),
           ),
         ],
       );
@@ -75,7 +78,7 @@ class MediaRow extends ConsumerWidget {
         children: [
           _buildTitle(context),
           SizedBox(
-            height: 356,
+            height: dimensions.height,
             child: Center(
               child: Text(
                 AppLocalizations.of(context)!.commonNoContent,
@@ -126,8 +129,6 @@ class MediaRow extends ConsumerWidget {
       title: title,
       theme: CarouselTheme.homeRow,
       items: cards,
-      height: 356,
-      itemWidth: 200,
       padding: EdgeInsets.symmetric(
         horizontal: AppTheme.getResponsiveHorizontalPadding(context),
       ),

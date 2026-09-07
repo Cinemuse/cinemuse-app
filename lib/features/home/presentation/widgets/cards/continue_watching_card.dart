@@ -20,6 +20,7 @@ class ContinueWatchingCard extends ConsumerStatefulWidget {
   final VoidCallback onCancelRewatch;
   final VoidCallback? onDrop;
   final VoidCallback? onClearProgress;
+  final double? width;
 
   const ContinueWatchingCard({
     super.key,
@@ -28,6 +29,7 @@ class ContinueWatchingCard extends ConsumerStatefulWidget {
     required this.onCancelRewatch,
     this.onDrop,
     this.onClearProgress,
+    this.width,
   });
 
   @override
@@ -97,12 +99,13 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
   }
 
   Widget _buildSkeleton() {
+    final w = widget.width ?? 280.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SkeletonBox(width: 280, height: 280 * (9 / 16)),
+        SkeletonBox(width: w, height: w * (9 / 16)),
         const SizedBox(height: 10),
-        const SkeletonBox(width: 150, height: 16),
+        SkeletonBox(width: w * 0.55, height: 16),
       ],
     );
   }
@@ -140,6 +143,7 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
     return BackdropCard(
       key: ValueKey(widget.historyItem.tmdbId),
       title: title,
+      width: widget.width,
       backdropPath: media?.backdropPath,
       posterPath: media?.posterPath,
       progress: percentage,

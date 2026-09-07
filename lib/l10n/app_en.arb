@@ -73,6 +73,8 @@
   "detailsCollectionNameHint": "Collection Name (e.g., 'Sci-Fi Gems')",
   "homeErrorLoadingFeatures": "Error loading features",
   "homeMoreInfo": "More Info",
+  "homeHeroPauseCarousel": "Pause carousel",
+  "homeHeroResumeCarousel": "Resume carousel",
   "homeTrendingNow": "Trending Now",
   "homePopularMovies": "Popular Movies",
   "homePopularSeries": "Popular Series",

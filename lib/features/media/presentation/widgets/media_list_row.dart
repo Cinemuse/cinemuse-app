@@ -71,8 +71,6 @@ class MediaListRow extends ConsumerWidget {
       icon: icon,
       theme: theme,
       items: cards,
-      height: 356,
-      itemWidth: 200,
       padding:
           padding ??
           (theme == CarouselTheme.bentoBox

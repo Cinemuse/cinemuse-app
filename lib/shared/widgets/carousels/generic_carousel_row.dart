@@ -257,18 +257,19 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
         break;
 
       case CarouselTheme.homeRow:
+        final isMobile = MediaQuery.of(context).size.width < 600;
         final horizontalPadding = widget.padding.left > 0
             ? widget.padding.left
-            : 24.0;
+            : (isMobile ? 16.0 : 24.0);
         content = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: EdgeInsets.fromLTRB(
                 horizontalPadding,
-                8,
+                isMobile ? 4 : 8,
                 horizontalPadding,
-                16,
+                isMobile ? 8 : 16,
               ),
               child: Row(
                 children: [

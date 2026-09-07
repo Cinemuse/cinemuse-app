@@ -73,6 +73,8 @@
   "detailsCollectionNameHint": "Nome Collezione (es., 'Gemme Sci-Fi')",
   "homeErrorLoadingFeatures": "Errore caricamento contenuti",
   "homeMoreInfo": "Più Info",
+  "homeHeroPauseCarousel": "Metti in pausa carosello",
+  "homeHeroResumeCarousel": "Riprendi carosello",
   "homeTrendingNow": "Di tendenza",
   "homePopularMovies": "Film Popolari",
   "homePopularSeries": "Serie Popolari",

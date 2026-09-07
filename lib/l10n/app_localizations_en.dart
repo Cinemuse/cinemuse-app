@@ -243,6 +243,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeMoreInfo => 'More Info';
 
   @override
+  String get homeHeroPauseCarousel => 'Pause carousel';
+
+  @override
+  String get homeHeroResumeCarousel => 'Resume carousel';
+
+  @override
   String get homeTrendingNow => 'Trending Now';
 
   @override

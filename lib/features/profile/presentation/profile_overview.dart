@@ -186,7 +186,7 @@ class ProfileOverview extends ConsumerWidget {
                   children: [
                     // Stats
                     const StatsDisplay(),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 16),
 
                     // Recent Movies Container
                     buildRecentRow(
@@ -199,7 +199,7 @@ class ProfileOverview extends ConsumerWidget {
                           .toList(),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
 
                     // Recent Series Container
                     buildRecentRow(
@@ -212,11 +212,11 @@ class ProfileOverview extends ConsumerWidget {
                           .toList(),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 16),
 
                     // Agenda
                     const AgendaWidget(),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 16),
                   ],
                 ),
         );

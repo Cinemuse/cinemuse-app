@@ -536,6 +536,18 @@ abstract class AppLocalizations {
   /// **'More Info'**
   String get homeMoreInfo;
 
+  /// No description provided for @homeHeroPauseCarousel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause carousel'**
+  String get homeHeroPauseCarousel;
+
+  /// No description provided for @homeHeroResumeCarousel.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume carousel'**
+  String get homeHeroResumeCarousel;
+
   /// No description provided for @homeTrendingNow.
   ///
   /// In en, this message translates to:

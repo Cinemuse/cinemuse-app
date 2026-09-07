@@ -81,6 +81,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final pinnedListIds = ref.watch(pinnedListIdsProvider);
 
     final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
 
     return Scaffold(
       backgroundColor: AppTheme.primary,
@@ -109,13 +110,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Column(
           children: [
             if (!isOffline) ...[
-              // 1. Hero Section (Trending #1)
+              // 1. Hero Section (Top 5 Trending Carousel)
               RepaintBoundary(
                 child: trendingAsync.when(
                   data: (data) =>
-                      HeroSection(media: data.isNotEmpty ? data[0] : null),
+                      HeroSection(items: data.take(5).toList()),
                   loading: () => SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.75,
+                    height: HeroSection.getHeroHeight(context),
                     child: const Center(child: CircularProgressIndicator()),
                   ),
                   error: (err, stack) {
@@ -149,8 +150,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Transform.translate(
               offset: Offset(
                 0,
-                isOffline ? 0 : -60,
-              ), // No overlap offset if offline
+                isOffline ? 0 : (isMobile ? -24 : -60),
+              ), // Responsive overlap offset
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -181,7 +182,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       return Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 10),
                           ...pinnedLists.map((list) {
                             final mediaItems = list.items.map((item) => item.toMediaItem()).toList();
 
@@ -195,7 +196,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             }
 
                             return Padding(
-                              padding: const EdgeInsets.only(bottom: 30),
+                              padding: const EdgeInsets.only(bottom: 16),
                               child: RepaintBoundary(
                                 child: FocusTraversalGroup(
                                   policy: OrderedTraversalPolicy(),
@@ -221,7 +222,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       .map((id) => _PinnedCollectionRow(collectionId: id)),
 
                   if (!isOffline) ...[
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
                     // Trending List
                     RepaintBoundary(
                       child: FocusTraversalGroup(
@@ -233,7 +234,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 16),
 
                     // Popular Movies
                     RepaintBoundary(
@@ -245,7 +246,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 16),
 
                     // Popular Series
                     RepaintBoundary(
@@ -259,7 +260,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
                 ],
               ),
             ),
@@ -302,7 +303,7 @@ class _PinnedCollectionRow extends ConsumerWidget {
         }).toList();
 
         return Padding(
-          padding: const EdgeInsets.only(bottom: 30),
+          padding: const EdgeInsets.only(bottom: 16),
           child: RepaintBoundary(
             child: FocusTraversalGroup(
               policy: OrderedTraversalPolicy(),
