@@ -17,6 +17,8 @@ import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/animetosho_source.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/real_debrid_service.dart';
+import 'package:cinemuse_app/core/services/streaming/debrid/torbox_service.dart';
+import 'package:cinemuse_app/core/services/streaming/debrid/composite_debrid_service.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/vixsrc_source.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/animeunity_source.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -34,6 +36,9 @@ final unifiedStreamResolverProvider = Provider((ref) {
         s.enableAnimeUnity,
         s.enableRealDebrid,
         s.realDebridKey,
+        s.enableTorBox,
+        s.torBoxKey,
+        s.preferredDebridProvider,
         s.smartSearchFilter,
         s.playerLanguage,
         s.splitAnimePreferences,
@@ -51,11 +56,14 @@ final unifiedStreamResolverProvider = Provider((ref) {
     enableAnimeUnity: settings.$4,
     enableRealDebrid: settings.$5,
     realDebridKey: settings.$6,
-    smartSearchFilter: settings.$7,
-    playerLanguage: settings.$8,
-    splitAnimePreferences: settings.$9,
-    animeAudioLanguage: settings.$10,
-    enableAutoSkipProviders: settings.$11,
+    enableTorBox: settings.$7,
+    torBoxKey: settings.$8,
+    preferredDebridProvider: settings.$9,
+    smartSearchFilter: settings.$10,
+    playerLanguage: settings.$11,
+    splitAnimePreferences: settings.$12,
+    animeAudioLanguage: settings.$13,
+    enableAutoSkipProviders: settings.$14,
   );
 
   final maxResolution = ref.watch(
@@ -63,7 +71,8 @@ final unifiedStreamResolverProvider = Provider((ref) {
   );
 
   final dio = ref.read(dioProvider);
-  final sources = <BaseSource>[];
+
+  final List<BaseSource> sources = [];
 
   // Dynamic Stremio Addons
   for (final addon in userSettings.installedAddons) {
@@ -82,7 +91,7 @@ final unifiedStreamResolverProvider = Provider((ref) {
     );
   }
 
-  // Native Build-in Sources
+  // Register built-in sources
   if (userSettings.enableAnimeTosho) {
     sources.add(AnimeToshoSource(dio));
   }
@@ -95,6 +104,23 @@ final unifiedStreamResolverProvider = Provider((ref) {
     sources.add(AnimeUnitySource(dio, ref.read(kitsuMappingServiceProvider)));
   }
 
+  final debridServices = <BaseDebridService>[];
+  if (userSettings.enableRealDebrid) {
+    debridServices.add(RealDebridService(dio, userSettings.realDebridKey));
+  }
+  if (userSettings.enableTorBox) {
+    debridServices.add(TorBoxService(dio, userSettings.torBoxKey));
+  }
+
+  final preferredName =
+      userSettings.preferredDebridProvider.toLowerCase() == 'torbox'
+          ? 'TorBox'
+          : 'Real-Debrid';
+
+  final debridService = debridServices.isNotEmpty
+      ? CompositeDebridService(debridServices, preferredProvider: preferredName)
+      : null;
+
   return UnifiedStreamResolver(
     sources: sources,
     tmdbService: ref.read(tmdbServiceProvider),
@@ -102,9 +128,7 @@ final unifiedStreamResolverProvider = Provider((ref) {
     mediaRepository: ref.read(mediaRepositoryProvider),
     settings: userSettings,
     maxResolution: maxResolution,
-    debridService: userSettings.enableRealDebrid
-        ? RealDebridService(dio, userSettings.realDebridKey)
-        : null,
+    debridService: debridService,
   );
 });
 
@@ -407,26 +431,42 @@ class UnifiedStreamResolver {
           'UnifiedStreamResolver: Checking availability for ${hashes.length} hashes on ${_debridService.name}',
         );
 
-        // Split into chunks if there are many (RD has limits, though usually 100 is fine)
-        final Map<String, bool> availability = {};
-        for (var i = 0; i < hashes.length; i += 100) {
-          final chunk = hashes.sublist(
-            i,
-            i + 100 > hashes.length ? hashes.length : i + 100,
-          );
-          final chunkRes = await _debridService.checkAvailability(chunk);
-          availability.addAll(chunkRes);
-        }
+        if (_debridService is CompositeDebridService) {
+          final detailed = await _debridService.checkDetailedAvailability(hashes);
 
-        results = results.map((c) {
-          final isAvailable = availability[c.infoHash.toLowerCase()] ?? false;
-          if (isAvailable) {
-            final updatedCachedOn = Map<String, bool>.from(c.cachedOn);
-            updatedCachedOn[_debridService.name] = true;
-            return c.copyWith(cachedOn: updatedCachedOn);
+          results = results.map((c) {
+            final providers = detailed[c.infoHash.toLowerCase()];
+            if (providers != null && providers.isNotEmpty) {
+              final updatedCachedOn = Map<String, bool>.from(c.cachedOn);
+              for (final p in providers) {
+                updatedCachedOn[p] = true;
+              }
+              return c.copyWith(cachedOn: updatedCachedOn);
+            }
+            return c;
+          }).toList();
+        } else {
+          // Split into chunks if there are many (RD has limits, though usually 100 is fine)
+          final Map<String, bool> availability = {};
+          for (var i = 0; i < hashes.length; i += 100) {
+            final chunk = hashes.sublist(
+              i,
+              i + 100 > hashes.length ? hashes.length : i + 100,
+            );
+            final chunkRes = await _debridService.checkAvailability(chunk);
+            availability.addAll(chunkRes);
           }
-          return c;
-        }).toList();
+
+          results = results.map((c) {
+            final isAvailable = availability[c.infoHash.toLowerCase()] ?? false;
+            if (isAvailable) {
+              final updatedCachedOn = Map<String, bool>.from(c.cachedOn);
+              updatedCachedOn[_debridService.name] = true;
+              return c.copyWith(cachedOn: updatedCachedOn);
+            }
+            return c;
+          }).toList();
+        }
       }
     }
 

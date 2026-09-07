@@ -139,6 +139,29 @@ void main() {
       expect(addon.queryParams, equals('apikey=123&user=456'));
       expect(addon.baseUrl, equals('https://test.io/config'));
     });
+
+    test('UserSettings handles TorBox preferences and serialization', () {
+      final profile = Profile(
+        id: 'user_tb',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        preferences: {
+          'enableTorBox': true,
+          'torBoxKey': 'test_tb_key',
+          'preferredDebridProvider': 'torbox',
+        },
+      );
+
+      final settings = UserSettings.fromProfile(profile);
+      expect(settings.enableTorBox, isTrue);
+      expect(settings.torBoxKey, equals('test_tb_key'));
+      expect(settings.preferredDebridProvider, equals('torbox'));
+
+      final json = settings.toPreferencesJson();
+      expect(json['enableTorBox'], isTrue);
+      expect(json['torBoxKey'], equals('test_tb_key'));
+      expect(json['preferredDebridProvider'], equals('torbox'));
+    });
   });
 
   group('UrlUtils Tests', () {

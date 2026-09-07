@@ -845,6 +845,23 @@ class AppLocalizationsIt extends AppLocalizations {
       'Usato per sorgenti native come AnimeTosho.';
 
   @override
+  String get settingsTorBoxTitle => 'TorBox (Nativo)';
+
+  @override
+  String get settingsTorBoxKey => 'Chiave API TorBox';
+
+  @override
+  String get settingsTorBoxKeyDesc =>
+      'Usato per sorgenti native come AnimeTosho.';
+
+  @override
+  String get settingsPreferredDebridTitle => 'Provider Debrid Preferito';
+
+  @override
+  String get settingsPreferredDebridDesc =>
+      'Servizio a cui dare priorità quando i contenuti sono in cache su entrambi.';
+
+  @override
   String get settingsOpenSubtitlesTitle => 'OpenSubtitles.com';
 
   @override

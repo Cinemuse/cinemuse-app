@@ -379,8 +379,21 @@ class StreamMetadataOverview extends StatelessWidget {
           runSpacing: 4,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            if (stream.isCached)
-              const SettingsBadge(text: 'CACHED', color: Colors.greenAccent),
+            if (stream.isCached) ...[
+              if (stream.cachedOn.isEmpty)
+                const SettingsBadge(text: 'CACHED', color: Colors.greenAccent)
+              else
+                for (final entry in stream.cachedOn.entries)
+                  if (entry.value)
+                    SettingsBadge(
+                      text: entry.key == 'Real-Debrid'
+                          ? 'RD'
+                          : entry.key == 'TorBox'
+                              ? 'TB'
+                              : 'CACHED',
+                      color: Colors.greenAccent,
+                    ),
+            ],
             if (meta.video.resolution != VideoResolution.unknown)
               SettingsBadge(
                 text: meta.video.resolution.label,

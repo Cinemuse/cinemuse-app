@@ -65,8 +65,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   ProviderSubscription? _qualitySubscription;
   Completer<void>? _skipCompleter;
 
-  /// Tracks candidate URLs already tried during auto-fallback to avoid retry loops.
-  final Set<String> _exhaustedCandidateUrls = {};
+  /// Tracks candidate identifiers already tried during auto-fallback to avoid retry loops.
+  final Set<String> _exhaustedCandidateIds = {};
 
   /// Optional callback to notify the UI of non-fatal player events (e.g. fallback snackbars).
   void Function(String message)? onNotification;
@@ -835,7 +835,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     if (state.value == null || _player == null) return;
 
     // A manual source change clears the exhausted set so the user can retry anything.
-    if (isManual) _exhaustedCandidateUrls.clear();
+    if (isManual) _exhaustedCandidateIds.clear();
 
     state = AsyncValue.data(
       state.value!.copyWith(isResolving: true, error: null),
@@ -859,6 +859,11 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       }
     } catch (e) {
       debugPrint("PlayerController: Error changing source: $e");
+      // For automated failover, cascade immediately to the next candidate
+      // instead of stopping playback on the first failed resolution.
+      if (!isManual) {
+        if (_tryNextCandidate()) return;
+      }
       if (mounted && state.value != null) {
         state = AsyncValue.data(
           state.value!.copyWith(
@@ -1089,6 +1094,22 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       return;
     }
 
+    if (resolvedParams.type != 'youtube') {
+      final position = _player?.state.position ?? Duration.zero;
+      final duration = _player?.state.duration ?? Duration.zero;
+      // If a non-live video completes in under 30 seconds, it is typically
+      // an anti-piracy takedown placeholder or corrupted dummy file.
+      if (duration > Duration.zero &&
+          (duration < const Duration(seconds: 30) ||
+              (position < const Duration(seconds: 30) &&
+                  duration < const Duration(minutes: 3)))) {
+        debugPrint(
+          'PlayerController: Premature playback completion detected (duration: $duration, pos: $position). Triggering candidate failover...',
+        );
+        if (_tryNextCandidate()) return;
+      }
+    }
+
     // 1. Initial log
     await _saveProgress(force: true);
 
@@ -1145,25 +1166,47 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     final currentState = state.valueOrNull;
     if (currentState == null) return false;
 
-    // Mark the current stream URL as exhausted
-    final currentUrl = currentState.currentStream?.url;
-    if (currentUrl != null) _exhaustedCandidateUrls.add(currentUrl);
-
-    // Also mark the current candidate's source URL as exhausted
-    final currentCandidateUrl = currentState.currentStream?.candidate.url;
-    if (currentCandidateUrl != null) {
-      _exhaustedCandidateUrls.add(currentCandidateUrl);
+    // Mark current stream identifiers as exhausted
+    final currentStream = currentState.currentStream;
+    if (currentStream != null) {
+      _exhaustedCandidateIds.add(currentStream.candidate.uniqueId);
+      if (currentStream.candidate.infoHash.isNotEmpty) {
+        _exhaustedCandidateIds.add(
+          currentStream.candidate.infoHash.toLowerCase(),
+        );
+      }
+      if (currentStream.url.isNotEmpty) {
+        _exhaustedCandidateIds.add(currentStream.url);
+      }
+      final candidateUrl = currentStream.candidate.url;
+      if (candidateUrl != null && candidateUrl.isNotEmpty) {
+        _exhaustedCandidateIds.add(candidateUrl);
+      }
     }
 
     // Find the first stream not yet tried — safe null return if none exist
-    final nextCandidate = currentState.availableStreams
-        .where((c) => !_exhaustedCandidateUrls.contains(c.url))
-        .firstOrNull;
+    final nextCandidate = currentState.availableStreams.where((c) {
+      if (_exhaustedCandidateIds.contains(c.uniqueId)) return false;
+      if (c.infoHash.isNotEmpty &&
+          _exhaustedCandidateIds.contains(c.infoHash.toLowerCase())) {
+        return false;
+      }
+      if (c.url != null && _exhaustedCandidateIds.contains(c.url)) {
+        return false;
+      }
+      return true;
+    }).firstOrNull;
 
     if (nextCandidate == null) return false;
 
+    // Mark this candidate immediately so it won't be re-selected if resolution fails
+    _exhaustedCandidateIds.add(nextCandidate.uniqueId);
+    if (nextCandidate.infoHash.isNotEmpty) {
+      _exhaustedCandidateIds.add(nextCandidate.infoHash.toLowerCase());
+    }
+
     debugPrint(
-      'PlayerController: Falling back to next candidate: ${nextCandidate.provider}',
+      'PlayerController: Falling back to next candidate: ${nextCandidate.provider} (${nextCandidate.title})',
     );
     _retryCount = 0; // Reset soft-retry counter for the new candidate
 

@@ -1604,6 +1604,36 @@ abstract class AppLocalizations {
   /// **'Used for native sources like AnimeTosho.'**
   String get settingsRealDebridKeyDesc;
 
+  /// No description provided for @settingsTorBoxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'TorBox (Native)'**
+  String get settingsTorBoxTitle;
+
+  /// No description provided for @settingsTorBoxKey.
+  ///
+  /// In en, this message translates to:
+  /// **'TorBox API Key'**
+  String get settingsTorBoxKey;
+
+  /// No description provided for @settingsTorBoxKeyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Used for native sources like AnimeTosho.'**
+  String get settingsTorBoxKeyDesc;
+
+  /// No description provided for @settingsPreferredDebridTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred Debrid Provider'**
+  String get settingsPreferredDebridTitle;
+
+  /// No description provided for @settingsPreferredDebridDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Service to prioritize when content is cached on multiple providers.'**
+  String get settingsPreferredDebridDesc;
+
   /// No description provided for @settingsOpenSubtitlesTitle.
   ///
   /// In en, this message translates to:

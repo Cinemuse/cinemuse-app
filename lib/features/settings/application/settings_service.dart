@@ -30,6 +30,9 @@ class UserSettings {
   final bool enableAnimeUnity;
   final bool enableRealDebrid;
   final String realDebridKey;
+  final bool enableTorBox;
+  final String torBoxKey;
+  final String preferredDebridProvider;
   final String openSubtitlesKey;
   final bool autoDownloadMissingSubtitles;
   final List<StremioAddon> installedAddons;
@@ -57,6 +60,9 @@ class UserSettings {
     this.enableAnimeUnity = true,
     this.enableRealDebrid = false,
     this.realDebridKey = '',
+    this.enableTorBox = false,
+    this.torBoxKey = '',
+    this.preferredDebridProvider = 'realdebrid',
     this.openSubtitlesKey = '',
     this.autoDownloadMissingSubtitles = false,
     this.installedAddons = const [],
@@ -87,6 +93,9 @@ class UserSettings {
       enableAnimeUnity: prefs['enableAnimeUnity'] ?? true,
       enableRealDebrid: prefs['enableRealDebrid'] ?? false,
       realDebridKey: prefs['realDebridKey'] ?? '',
+      enableTorBox: prefs['enableTorBox'] ?? false,
+      torBoxKey: prefs['torBoxKey'] ?? '',
+      preferredDebridProvider: prefs['preferredDebridProvider'] ?? 'realdebrid',
       openSubtitlesKey: prefs['openSubtitlesKey'] ?? '',
       autoDownloadMissingSubtitles:
           prefs['autoDownloadMissingSubtitles'] ?? false,
@@ -129,6 +138,9 @@ class UserSettings {
     bool? enableAnimeUnity,
     bool? enableRealDebrid,
     String? realDebridKey,
+    bool? enableTorBox,
+    String? torBoxKey,
+    String? preferredDebridProvider,
     String? openSubtitlesKey,
     bool? autoDownloadMissingSubtitles,
     List<StremioAddon>? installedAddons,
@@ -159,6 +171,10 @@ class UserSettings {
       enableAnimeUnity: enableAnimeUnity ?? this.enableAnimeUnity,
       enableRealDebrid: enableRealDebrid ?? this.enableRealDebrid,
       realDebridKey: realDebridKey ?? this.realDebridKey,
+      enableTorBox: enableTorBox ?? this.enableTorBox,
+      torBoxKey: torBoxKey ?? this.torBoxKey,
+      preferredDebridProvider:
+          preferredDebridProvider ?? this.preferredDebridProvider,
       openSubtitlesKey: openSubtitlesKey ?? this.openSubtitlesKey,
       autoDownloadMissingSubtitles:
           autoDownloadMissingSubtitles ?? this.autoDownloadMissingSubtitles,
@@ -190,6 +206,9 @@ class UserSettings {
       'enableAnimeUnity': enableAnimeUnity,
       'enableRealDebrid': enableRealDebrid,
       'realDebridKey': realDebridKey,
+      'enableTorBox': enableTorBox,
+      'torBoxKey': torBoxKey,
+      'preferredDebridProvider': preferredDebridProvider,
       'openSubtitlesKey': openSubtitlesKey,
       'autoDownloadMissingSubtitles': autoDownloadMissingSubtitles,
       'installedAddons': installedAddons.map((e) => e.toJson()).toList(),
@@ -261,6 +280,10 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
       enableAnimeUnity: updates['enableAnimeUnity'] ?? state.enableAnimeUnity,
       enableRealDebrid: updates['enableRealDebrid'] ?? state.enableRealDebrid,
       realDebridKey: updates['realDebridKey'] ?? state.realDebridKey,
+      enableTorBox: updates['enableTorBox'] ?? state.enableTorBox,
+      torBoxKey: updates['torBoxKey'] ?? state.torBoxKey,
+      preferredDebridProvider:
+          updates['preferredDebridProvider'] ?? state.preferredDebridProvider,
       openSubtitlesKey: updates['openSubtitlesKey'] ?? state.openSubtitlesKey,
       autoDownloadMissingSubtitles:
           updates['autoDownloadMissingSubtitles'] ??
