@@ -53,7 +53,7 @@ Version: ${VERSION}
 Section: video
 Priority: optional
 Architecture: ${ARCH}
-Depends: libc6, libgtk-3-0, libglib2.0-0, libmpv2 | libmpv1
+Depends: libc6, libgtk-3-0, libglib2.0-0, libsecret-1-0, libmpv2 | libmpv1
 Maintainer: Cinemuse Team <contact@cinemuse.app>
 Description: Modern media browser and player
  Cinemuse is a desktop and mobile media browser and player for movies,
