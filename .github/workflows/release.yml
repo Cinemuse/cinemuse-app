@@ -74,13 +74,19 @@ jobs:
           flutter build windows --release --build-name="${{ steps.version.outputs.BUILD_NAME }}" --build-number="${{ steps.version.outputs.BUILD_NUMBER }}"
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath build/windows/x64/runner/Release/cinemuse-windows.zip
 
+      - name: Stage Windows & Android Artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Get-ChildItem -Path build/app/outputs/flutter-apk/*.apk | Copy-Item -Destination dist/
+          Copy-Item -Path build/windows/x64/runner/Release/cinemuse-windows.zip -Destination dist/
+          Get-ChildItem -Path dist/ | ForEach-Object { Write-Output "Staged artifact: $($_.Name)" }
+
       - name: Upload Windows & Android Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-android-artifacts
-          path: |
-            build/app/outputs/flutter-apk/*.apk
-            build/windows/x64/runner/Release/cinemuse-windows.zip
+          path: dist/*
           retention-days: 1
 
   build-linux:
