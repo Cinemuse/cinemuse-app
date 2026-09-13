@@ -71,25 +71,57 @@ class SeriesProgressBar extends ConsumerWidget {
 
     final now = DateTime.now();
     final lastAired = details['last_episode_to_air'];
+    final status = details['status'] as String?;
+    final isEnded = status == 'Ended' || status == 'Canceled';
 
-    for (var season in seasons) {
-      final seasonNum = season['season_number'] as int? ?? 0;
-      if (seasonNum > 0 && season['episode_count'] != null) {
-        if (season['air_date'] == null) continue;
-        final airDate = DateTime.tryParse(season['air_date']);
-        if (airDate == null || airDate.isAfter(now)) continue;
+    if (isEnded) {
+      final numberOfEpisodes = details['number_of_episodes'] as int?;
+      if (numberOfEpisodes != null && numberOfEpisodes > 0) {
+        totalEpisodes = numberOfEpisodes;
+      } else {
+        for (var season in seasons) {
+          final seasonNum = season['season_number'] as int? ?? 0;
+          if (seasonNum > 0 && season['episode_count'] != null) {
+            totalEpisodes += (season['episode_count'] as int);
+          }
+        }
+      }
+    } else {
+      for (var season in seasons) {
+        final seasonNum = season['season_number'] as int? ?? 0;
+        if (seasonNum <= 0 || season['episode_count'] == null) continue;
 
-        if (lastAired != null && seasonNum == lastAired['season_number']) {
-          totalEpisodes += (lastAired['episode_number'] as int);
-        } else if (lastAired == null ||
-            seasonNum < (lastAired['season_number'] as int)) {
-          totalEpisodes += (season['episode_count'] as int);
+        final episodeCount = season['episode_count'] as int;
+
+        if (lastAired != null) {
+          final lastAiredSeason = lastAired['season_number'] as int? ?? 0;
+          final lastAiredEp = lastAired['episode_number'] as int? ?? 0;
+
+          if (seasonNum < lastAiredSeason) {
+            totalEpisodes += episodeCount;
+          } else if (seasonNum == lastAiredSeason) {
+            if (lastAiredEp > episodeCount) {
+              totalEpisodes += episodeCount;
+            } else {
+              totalEpisodes += lastAiredEp;
+            }
+          }
+        } else {
+          if (season['air_date'] != null) {
+            final airDate = DateTime.tryParse(season['air_date']);
+            if (airDate != null && !airDate.isAfter(now)) {
+              totalEpisodes += episodeCount;
+            }
+          }
         }
       }
     }
 
-    // Correctly count watched episodes from the map
-    watchedEpisodesCount = watchedMap.values.where((count) => count > 0).length;
+    // Only count regular episodes (season > 0), excluding season 0 specials
+    watchedEpisodesCount = watchedMap.entries.where((entry) {
+      final seasonNum = int.tryParse(entry.key.split('-').first) ?? 0;
+      return seasonNum > 0 && entry.value > 0;
+    }).length;
 
     if (totalEpisodes == 0) return null;
 

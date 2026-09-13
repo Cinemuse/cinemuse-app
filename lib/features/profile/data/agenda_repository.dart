@@ -62,6 +62,11 @@ class AgendaRepository {
 
     final events = <AgendaEvent>[];
     
+    // Only fetch movies that are upcoming or released within the last 30 days
+    final cutoff = DateTime.now().subtract(const Duration(days: 30));
+    final cutoffStr =
+        "${cutoff.year.toString().padLeft(4, '0')}-${cutoff.month.toString().padLeft(2, '0')}-${cutoff.day.toString().padLeft(2, '0')}";
+
     // Chunk queries to avoid URL length issues or limits
     final allIds = followedIds.toList();
     final allRows = <Map<String, dynamic>>[];
@@ -72,6 +77,7 @@ class AgendaRepository {
           .from('upcoming_agenda_cache')
           .select()
           .eq('media_type', 'movie')
+          .gte('release_date', cutoffStr)
           .inFilter('tmdb_id', chunk)
           .withErrorHandling();
       allRows.addAll(List<Map<String, dynamic>>.from(cacheRes as List));

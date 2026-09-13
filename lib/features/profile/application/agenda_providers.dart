@@ -82,12 +82,18 @@ GroupedAgenda _groupEvents(List<AgendaEvent> events) {
     const Duration(days: 6, hours: 23, minutes: 59, seconds: 59),
   );
 
+  // Agenda only shows releases up to 30 days in the past
+  final recentlyReleasedCutoff = today.subtract(const Duration(days: 30));
+
   for (final event in events) {
     final date = event.releaseDate;
     final dateNoTime = DateTime(date.year, date.month, date.day);
 
     if (event.isTbd) {
       groups[AgendaGroup.tbd]!.add(event);
+    } else if (dateNoTime.isBefore(recentlyReleasedCutoff)) {
+      // Released more than 30 days ago - outside agenda scope
+      continue;
     } else if (dateNoTime.isBefore(today)) {
       groups[AgendaGroup.recentlyReleased]!.add(event);
     } else if (dateNoTime == today) {
