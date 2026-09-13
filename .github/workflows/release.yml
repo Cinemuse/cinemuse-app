@@ -56,15 +56,19 @@ jobs:
         run: |
           $tag = "${{ github.ref_name }}".TrimStart('v')
           if ($tag -match '^([0-9]+\.[0-9]+\.[0-9]+)\+([0-9]+)$') {
-            Write-Output "BUILD_NAME=$($Matches[1])" >> $env:GITHUB_OUTPUT
-            Write-Output "BUILD_NUMBER=$($Matches[2])" >> $env:GITHUB_OUTPUT
+            $buildName = $Matches[1]
+            $buildNumber = $Matches[2]
           } elseif ($tag -match '^([0-9]+\.[0-9]+\.[0-9]+)$') {
-            Write-Output "BUILD_NAME=$tag" >> $env:GITHUB_OUTPUT
-            Write-Output "BUILD_NUMBER=1" >> $env:GITHUB_OUTPUT
+            $buildName = $tag
+            $buildNumber = 1
           } else {
-            Write-Output "BUILD_NAME=" >> $env:GITHUB_OUTPUT
-            Write-Output "BUILD_NUMBER=" >> $env:GITHUB_OUTPUT
+            $buildName = "1.0.0"
+            $buildNumber = 1
           }
+          Write-Output "BUILD_NAME=$buildName" >> $env:GITHUB_OUTPUT
+          Write-Output "BUILD_NUMBER=$buildNumber" >> $env:GITHUB_OUTPUT
+          # Also update pubspec.yaml so Flutter desktop asset generator embeds the exact version in version.json
+          (Get-Content pubspec.yaml) -replace '^version: .*', "version: $buildName+$buildNumber" | Set-Content pubspec.yaml
 
       - name: Build APK
         run: flutter build apk --release --split-per-abi --build-name="${{ steps.version.outputs.BUILD_NAME }}" --build-number="${{ steps.version.outputs.BUILD_NUMBER }}"
@@ -120,15 +124,18 @@ jobs:
         run: |
           TAG="${GITHUB_REF_NAME#v}"
           if [[ "$TAG" =~ ^([0-9]+\.[0-9]+\.[0-9]+)\+([0-9]+)$ ]]; then
-            echo "BUILD_NAME=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
-            echo "BUILD_NUMBER=${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+            BUILD_NAME="${BASH_REMATCH[1]}"
+            BUILD_NUMBER="${BASH_REMATCH[2]}"
           elif [[ "$TAG" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-            echo "BUILD_NAME=$TAG" >> "$GITHUB_OUTPUT"
-            echo "BUILD_NUMBER=1" >> "$GITHUB_OUTPUT"
+            BUILD_NAME="$TAG"
+            BUILD_NUMBER=1
           else
-            echo "BUILD_NAME=1.0.0" >> "$GITHUB_OUTPUT"
-            echo "BUILD_NUMBER=1" >> "$GITHUB_OUTPUT"
+            BUILD_NAME="1.0.0"
+            BUILD_NUMBER=1
           fi
+          echo "BUILD_NAME=${BUILD_NAME}" >> "$GITHUB_OUTPUT"
+          echo "BUILD_NUMBER=${BUILD_NUMBER}" >> "$GITHUB_OUTPUT"
+          sed -i "s/^version: .*/version: ${BUILD_NAME}+${BUILD_NUMBER}/" pubspec.yaml
 
       - name: Build Linux release bundle
         run: flutter build linux --release --build-name="${{ steps.version.outputs.BUILD_NAME }}" --build-number="${{ steps.version.outputs.BUILD_NUMBER }}"
