@@ -242,7 +242,7 @@ class _AppNavbarState extends State<AppNavbar> {
                   ),
                 ),
 
-                if (Platform.isWindows)
+                if (isDesktop)
                   const Positioned(
                     top: 0,
                     right: 0,
@@ -359,8 +359,45 @@ class _AppNavbarState extends State<AppNavbar> {
   }
 }
 
-class _WindowButtons extends StatelessWidget {
+class _WindowButtons extends StatefulWidget {
   const _WindowButtons();
+
+  @override
+  State<_WindowButtons> createState() => _WindowButtonsState();
+}
+
+class _WindowButtonsState extends State<_WindowButtons> with WindowListener {
+  bool _isMaximized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    windowManager.addListener(this);
+    _checkMaximized();
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  Future<void> _checkMaximized() async {
+    final maximized = await windowManager.isMaximized();
+    if (mounted) {
+      setState(() => _isMaximized = maximized);
+    }
+  }
+
+  @override
+  void onWindowMaximize() {
+    setState(() => _isMaximized = true);
+  }
+
+  @override
+  void onWindowUnmaximize() {
+    setState(() => _isMaximized = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -373,12 +410,14 @@ class _WindowButtons extends StatelessWidget {
           onTap: () => windowManager.minimize(),
         ),
         _WindowButton(
-          type: _WindowButtonType.maximize,
+          type: _isMaximized
+              ? _WindowButtonType.restore
+              : _WindowButtonType.maximize,
           onTap: () async {
             if (await windowManager.isMaximized()) {
-              windowManager.unmaximize();
+              await windowManager.unmaximize();
             } else {
-              windowManager.maximize();
+              await windowManager.maximize();
             }
           },
         ),
@@ -391,7 +430,7 @@ class _WindowButtons extends StatelessWidget {
   }
 }
 
-enum _WindowButtonType { minimize, maximize, close }
+enum _WindowButtonType { minimize, maximize, restore, close }
 
 class _WindowButton extends StatelessWidget {
   final _WindowButtonType type;
@@ -408,10 +447,10 @@ class _WindowButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         hoverColor: isClose
-            ? const Color(0xFFE81123) // Standard Windows close red
+            ? const Color(0xFFE81123) // Standard close red
             : Colors.white.withValues(alpha: 0.1),
         child: SizedBox(
-          width: 46, // Standard Windows title bar button width
+          width: 46, // Standard title bar button width
           child: Center(child: _buildIcon()),
         ),
       ),
@@ -430,6 +469,12 @@ class _WindowButton extends StatelessWidget {
             border: Border.all(color: Colors.white, width: 1),
           ),
         );
+      case _WindowButtonType.restore:
+        return SizedBox(
+          width: 10,
+          height: 10,
+          child: CustomPaint(painter: _RestoreIconPainter()),
+        );
       case _WindowButtonType.close:
         return SizedBox(
           width: 10,
@@ -438,6 +483,30 @@ class _WindowButton extends StatelessWidget {
         );
     }
   }
+}
+
+class _RestoreIconPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    // Back square (offset top-right)
+    canvas.drawRect(
+      Rect.fromLTWH(2, 0, size.width - 2, size.height - 2),
+      paint,
+    );
+    // Front square (bottom-left)
+    canvas.drawRect(
+      Rect.fromLTWH(0, 2, size.width - 2, size.height - 2),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _CloseIconPainter extends CustomPainter {

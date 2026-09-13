@@ -209,7 +209,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     _controller = VideoController(
       _player!,
       configuration: VideoControllerConfiguration(
-        hwdec: io.Platform.isAndroid ? 'mediacodec' : 'auto-safe',
+        hwdec: io.Platform.isAndroid
+            ? 'mediacodec'
+            : (io.Platform.isLinux ? 'auto' : 'auto-safe'),
         vo: io.Platform.isAndroid ? 'gpu' : null,
         enableHardwareAcceleration: true,
       ),
@@ -219,8 +221,15 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       final mpv = _player!.platform as dynamic;
       // ── Hardware Decoding & Rendering ─────────────────────────────────────
       // vd-lavc-dr: Zero-copy direct rendering from decoder to GPU texture.
-      // Reduces RAM usage and improves throughput, especially on 4K/HEVC.
-      mpv.setProperty('vd-lavc-dr', 'yes');
+      // On Linux, use 'auto' to avoid stalls on non-accelerated codecs (e.g. HEVC).
+      if (!io.Platform.isLinux) {
+        mpv.setProperty('vd-lavc-dr', 'yes');
+      } else {
+        mpv.setProperty('vd-lavc-dr', 'auto');
+        // Fast software decoding optimizations for low-power CPUs
+        mpv.setProperty('vd-lavc-fast', 'yes');
+        mpv.setProperty('vd-lavc-skiploopfilter', 'nonkey');
+      }
       mpv.setProperty('vd-lavc-threads', '0'); // Auto-pick optimal thread count
 
       final isMobile = io.Platform.isAndroid || io.Platform.isIOS;
@@ -272,9 +281,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       // Fallback strategies for unsupported audio codecs.
       mpv.setProperty('audio-fallback-to-null', 'yes');
 
-      // Force PulseAudio on Linux to avoid PipeWire issues in WSL
+      // Audio output on Linux
       if (io.Platform.isLinux) {
-        mpv.setProperty('ao', 'pulse');
+        mpv.setProperty('ao', 'pulse,alsa');
       }
 
       // --- Networking & Compatibility ---
@@ -285,9 +294,11 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       // --- Subtitle Rendering Fix for Windows d3d11va ---
       // With hardware decoding, video frames live on the GPU. MPV's subtitle compositor
       // normally blends subtitles *after* GPU output, which silently fails with d3d11va.
-      // 'blend-subtitles: video' forces compositing at decode time (before hardware upload),
-      // making subtitles compatible with any hwdec backend on any platform.
-      mpv.setProperty('blend-subtitles', 'video');
+      // 'blend-subtitles: video' forces compositing at decode time (before hardware upload).
+      // Only set on Windows: on Linux OpenGL/EGL this forces heavy CPU compositing.
+      if (io.Platform.isWindows) {
+        mpv.setProperty('blend-subtitles', 'video');
+      }
     } catch (e) {
       debugPrint('PlayerController: Failed to set MPV properties: $e');
     }

@@ -170,3 +170,5 @@ flutter_launcher_icons:
 
 dependency_overrides:
   bonsoir: 5.0.1
+  media_kit_video:
+    path: packages/media_kit_video

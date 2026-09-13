@@ -1,0 +1,11 @@
+﻿[Desktop Entry]
+Name=Cinemuse
+Comment=Modern media browser and player
+Exec=cinemuse_app %u
+Icon=cinemuse_app
+Terminal=false
+Type=Application
+Categories=AudioVideo;Player;Video;
+StartupWMClass=com.example.cinemuse_app
+MimeType=x-scheme-handler/cinemuse;
+Keywords=movies;tv;shows;streaming;anime;player;

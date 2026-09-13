@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:path/path.dart' as p;
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/local_playlist_storage.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
@@ -292,7 +294,10 @@ class _PlaylistTile extends ConsumerWidget {
                       .togglePlaylistEnabled(playlist.id),
                 ),
                 const SizedBox(width: 4),
-                if (playlist.isLocal && Platform.isWindows)
+                if (playlist.isLocal &&
+                    (Platform.isWindows ||
+                        Platform.isLinux ||
+                        Platform.isMacOS))
                   _OpenFolderButton(playlist: playlist, l10n: l10n),
                 if (!playlist.isLocal)
                   _OpenLinkButton(playlist: playlist, l10n: l10n),
@@ -358,7 +363,7 @@ class _TypeBadge extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Open folder button (Windows-only, local playlists only)
+// Open folder button (desktop, local playlists only)
 // ---------------------------------------------------------------------------
 
 class _OpenFolderButton extends StatelessWidget {
@@ -372,7 +377,14 @@ class _OpenFolderButton extends StatelessWidget {
       final absolutePath = await LocalPlaylistStorage.resolveToAbsolutePath(
         playlist.urlOrPath,
       );
-      await Process.run('explorer', ['/select,', absolutePath]);
+      if (Platform.isWindows) {
+        await Process.run('explorer', ['/select,', absolutePath]);
+      } else if (Platform.isLinux) {
+        final dirPath = p.dirname(absolutePath);
+        await Process.run('xdg-open', [dirPath]);
+      } else if (Platform.isMacOS) {
+        await Process.run('open', ['-R', absolutePath]);
+      }
     } catch (_) {
       // Silently fail — file may have been deleted
     }
@@ -402,7 +414,9 @@ class _OpenLinkButton extends StatelessWidget {
   Future<void> _openLink() async {
     try {
       final uri = Uri.parse(playlist.urlOrPath);
-      await Process.run('cmd', ['/c', 'start', '', uri.toString()]);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
     } catch (_) {}
   }
 

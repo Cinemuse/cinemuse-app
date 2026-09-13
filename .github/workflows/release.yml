@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build and Release
+  build-windows-android:
+    name: Build Android & Windows
     runs-on: windows-latest
     permissions:
       contents: write
@@ -69,28 +69,105 @@ jobs:
       - name: Build APK
         run: flutter build apk --release --split-per-abi --build-name="${{ steps.version.outputs.BUILD_NAME }}" --build-number="${{ steps.version.outputs.BUILD_NUMBER }}"
 
-      - name: Prepare Artifacts
-        shell: pwsh
-        run: |
-          $tag = "${{ github.ref_name }}"
-          # The Gradle script already renames the APKs, we just need to make sure they are in the right place
-          # or identified correctly if we want to change them further.
-          # We'll just ensure they are picked up by the release-action.
-          Get-ChildItem -Path build/app/outputs/flutter-apk/*.apk | ForEach-Object {
-            Write-Output "Found APK: $($_.Name)"
-          }
-
       - name: Build Windows ZIP
         run: |
           flutter build windows --release --build-name="${{ steps.version.outputs.BUILD_NAME }}" --build-number="${{ steps.version.outputs.BUILD_NUMBER }}"
-          # ZIP the entire Release folder using PowerShell
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath build/windows/x64/runner/Release/cinemuse-windows.zip
 
-      - name: Create Release
+      - name: Upload Windows & Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-android-artifacts
+          path: |
+            build/app/outputs/flutter-apk/*.apk
+            build/windows/x64/runner/Release/cinemuse-windows.zip
+          retention-days: 1
+
+  build-linux:
+    name: Build Linux (.tar.gz & .deb)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libmpv-dev dpkg-dev
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.41.0'
+
+      - name: Create .env from secret
+        run: echo "${{ secrets.ENV_FILE }}" > .env
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Parse version from tag
+        id: version
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          if [[ "$TAG" =~ ^([0-9]+\.[0-9]+\.[0-9]+)\+([0-9]+)$ ]]; then
+            echo "BUILD_NAME=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            echo "BUILD_NUMBER=${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+          elif [[ "$TAG" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "BUILD_NAME=$TAG" >> "$GITHUB_OUTPUT"
+            echo "BUILD_NUMBER=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "BUILD_NAME=1.0.0" >> "$GITHUB_OUTPUT"
+            echo "BUILD_NUMBER=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build Linux release bundle
+        run: flutter build linux --release --build-name="${{ steps.version.outputs.BUILD_NAME }}" --build-number="${{ steps.version.outputs.BUILD_NUMBER }}"
+
+      - name: Package Linux .tar.gz
+        run: |
+          mkdir -p dist
+          tar -czf "dist/cinemuse-linux-x64.tar.gz" -C build/linux/x64/release/bundle .
+
+      - name: Package Linux .deb
+        run: |
+          chmod +x linux/packaging/build_deb.sh
+          ./linux/packaging/build_deb.sh "${{ steps.version.outputs.BUILD_NAME }}" "amd64"
+          cp build/linux/*.deb dist/
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: dist/*
+          retention-days: 1
+
+  release:
+    name: Create GitHub Release
+    needs: [build-windows-android, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: List Release Assets
+        run: ls -lh release-assets/
+
+      - name: Publish Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/app/outputs/flutter-apk/*.apk,build/windows/x64/runner/Release/cinemuse-windows.zip"
+          artifacts: "release-assets/*"
           token: ${{ secrets.GITHUB_TOKEN }}
           generateReleaseNotes: true
           tag: ${{ github.ref_name }}
           commit: ${{ github.sha }}
+

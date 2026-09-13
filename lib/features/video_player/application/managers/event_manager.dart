@@ -28,9 +28,9 @@ class EventManager extends BaseManager {
     _subscriptions.add(
       player.stream.playing.listen((playing) {
         if (playing) {
-          WakelockPlus.enable();
+          WakelockPlus.enable().catchError((_) {});
         } else {
-          WakelockPlus.disable();
+          WakelockPlus.disable().catchError((_) {});
         }
         onStateChanged();
       }),
@@ -95,7 +95,7 @@ class EventManager extends BaseManager {
 
   @override
   void dispose() {
-    WakelockPlus.disable();
+    WakelockPlus.disable().catchError((_) {});
     _cancelSubscriptions();
     super.dispose();
   }
