@@ -154,6 +154,24 @@ class _HeroSectionState extends State<HeroSection>
     }
   }
 
+  void _onIndicatorTap(int index, int total) {
+    if (!_pageController.hasClients || index == _currentIndex) return;
+    int targetPage = index;
+    if (total > 1) {
+      final currentPage = _pageController.page?.round() ?? _currentIndex;
+      final currentCycle = currentPage ~/ total;
+      targetPage = (currentCycle * total) + index;
+    }
+    _pageController.animateToPage(
+      targetPage,
+      duration: _pageTransitionDuration,
+      curve: _pageTransitionCurve,
+    );
+    if (_isAutoPlayEnabled) {
+      _resetAutoPlayTimer();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.items.isEmpty) return const SizedBox.shrink();
@@ -195,7 +213,7 @@ class _HeroSectionState extends State<HeroSection>
           if (widget.items.length > 1)
             Positioned(
               right: AppTheme.getResponsiveHorizontalPadding(context),
-              bottom: isMobile ? 36 : 40,
+              bottom: isMobile ? 48 : 84,
               child: _buildControlsRow(l10n, widget.items.length, isMobile),
             ),
         ],
@@ -220,7 +238,7 @@ class _HeroSectionState extends State<HeroSection>
         Positioned(
           left: AppTheme.getResponsiveHorizontalPadding(context),
           bottom: isMobile ? 36 : 80,
-          right: isMobile ? 90 : 160, // Leave room for indicators on the right
+          right: isMobile ? 90 : 180, // Leave room for indicators on the right
           child: _buildContent(context, item, isMobile),
         ),
       ],
@@ -351,51 +369,10 @@ class _HeroSectionState extends State<HeroSection>
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: List.generate(total, (index) {
-        final isActive = index == _currentIndex;
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            if (!_pageController.hasClients) return;
-            int targetPage = index;
-            if (total > 1) {
-              final currentPage = _pageController.page?.round() ?? _currentIndex;
-              final currentCycle = currentPage ~/ total;
-              targetPage = (currentCycle * total) + index;
-            }
-            _pageController.animateToPage(
-              targetPage,
-              duration: _pageTransitionDuration,
-              curve: _pageTransitionCurve,
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 14),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: isActive ? (isMobile ? 18 : 24) : (isMobile ? 6 : 8),
-              height: isMobile ? 5 : 6,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(3),
-                color: isActive
-                    ? AppTheme.accent
-                    : Colors.white.withValues(alpha: 0.4),
-                boxShadow: isActive
-                    ? [
-                        BoxShadow(
-                          color: AppTheme.accent.withValues(alpha: 0.7),
-                          blurRadius: 6,
-                          spreadRadius: 1,
-                        ),
-                      ]
-                    : const [
-                        BoxShadow(
-                          color: Colors.black45,
-                          blurRadius: 4,
-                        ),
-                      ],
-              ),
-            ),
-          ),
+        return _HeroIndicatorDot(
+          isActive: index == _currentIndex,
+          isMobile: isMobile,
+          onTap: () => _onIndicatorTap(index, total),
         );
       }),
     );
@@ -646,6 +623,79 @@ class _HeroSectionState extends State<HeroSection>
         builder: (_) => MediaDetailsScreen(
           mediaId: item.tmdbId.toString(),
           mediaType: item.mediaType.name,
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroIndicatorDot extends StatefulWidget {
+  final bool isActive;
+  final bool isMobile;
+  final VoidCallback onTap;
+
+  const _HeroIndicatorDot({
+    required this.isActive,
+    required this.isMobile,
+    required this.onTap,
+  });
+
+  @override
+  State<_HeroIndicatorDot> createState() => _HeroIndicatorDotState();
+}
+
+class _HeroIndicatorDotState extends State<_HeroIndicatorDot> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = widget.isActive
+        ? (widget.isMobile ? 18.0 : 24.0)
+        : (widget.isMobile ? 6.0 : (_isHovered ? 12.0 : 8.0));
+    final height = widget.isMobile ? 5.0 : 6.0;
+
+    final dotColor = widget.isActive
+        ? AppTheme.accent
+        : (_isHovered
+            ? Colors.white.withValues(alpha: 0.8)
+            : Colors.white.withValues(alpha: 0.4));
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: widget.isMobile ? 4 : 6,
+            vertical: 14,
+          ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(3),
+              color: dotColor,
+              boxShadow: widget.isActive
+                  ? [
+                      BoxShadow(
+                        color: AppTheme.accent.withValues(alpha: 0.7),
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: _isHovered ? Colors.black87 : Colors.black45,
+                        blurRadius: _isHovered ? 6 : 4,
+                      ),
+                    ],
+            ),
+          ),
         ),
       ),
     );
