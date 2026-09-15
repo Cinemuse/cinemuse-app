@@ -1658,4 +1658,240 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playerSourceFailed => 'Unavailable';
+
+  @override
+  String get watchHistoryTitle => 'Watch History';
+
+  @override
+  String watchHistorySubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count titles',
+      one: '1 title',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String watchHistoryFilteredCount(int filtered, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$total titles',
+      one: '1 title',
+    );
+    return '$filtered of $_temp0';
+  }
+
+  @override
+  String watchHistoryBreakdown(int movies, int series) {
+    String _temp0 = intl.Intl.pluralLogic(
+      movies,
+      locale: localeName,
+      other: '$movies movies',
+      one: '1 movie',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      series,
+      locale: localeName,
+      other: '$series series',
+      one: '1 series',
+    );
+    return '$_temp0, $_temp1';
+  }
+
+  @override
+  String watchHistoryMoviesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count movies',
+      one: '1 movie',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String watchHistoryFilteredMoviesCount(int filtered, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$total movies',
+      one: '1 movie',
+    );
+    return '$filtered of $_temp0';
+  }
+
+  @override
+  String watchHistorySeriesBreakdown(int series, int seasons, int episodes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      series,
+      locale: localeName,
+      other: '$series series',
+      one: '1 series',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      seasons,
+      locale: localeName,
+      other: '$seasons seasons',
+      one: '1 season',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      episodes,
+      locale: localeName,
+      other: '$episodes episodes',
+      one: '1 episode',
+    );
+    return '$_temp0, $_temp1, $_temp2';
+  }
+
+  @override
+  String watchHistoryFilteredSeriesBreakdown(
+    int filteredSeries,
+    int totalSeries,
+    int seasons,
+    int episodes,
+  ) {
+    String _temp0 = intl.Intl.pluralLogic(
+      totalSeries,
+      locale: localeName,
+      other: '$totalSeries series',
+      one: '1 series',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      seasons,
+      locale: localeName,
+      other: '$seasons seasons',
+      one: '1 season',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      episodes,
+      locale: localeName,
+      other: '$episodes episodes',
+      one: '1 episode',
+    );
+    return '$filteredSeries of $_temp0, $_temp1, $_temp2';
+  }
+
+  @override
+  String get watchHistorySearchPlaceholder => 'Search watched titles...';
+
+  @override
+  String get watchHistoryAll => 'All';
+
+  @override
+  String get watchHistoryStatusAll => 'All Statuses';
+
+  @override
+  String get watchHistoryStatusWatching => 'In Progress';
+
+  @override
+  String get watchHistoryStatusCompleted => 'Completed';
+
+  @override
+  String get watchHistoryStatusDropped => 'Dropped';
+
+  @override
+  String get watchHistorySortRecent => 'Recently Watched';
+
+  @override
+  String get watchHistorySortTitle => 'Title (A-Z)';
+
+  @override
+  String get watchHistoryViewGrid => 'Grid';
+
+  @override
+  String get watchHistoryViewTimeline => 'Timeline';
+
+  @override
+  String get watchHistoryDateToday => 'Today';
+
+  @override
+  String get watchHistoryDateYesterday => 'Yesterday';
+
+  @override
+  String get watchHistoryDateThisWeek => 'This Week';
+
+  @override
+  String get watchHistoryDateThisMonth => 'This Month';
+
+  @override
+  String get watchHistoryResume => 'Resume';
+
+  @override
+  String get watchHistoryWatchAgain => 'Watch Again';
+
+  @override
+  String get watchHistoryReplay => 'Replay';
+
+  @override
+  String watchHistorySeasonEpisode(int season, int episode) {
+    return 'Season $season • Episode $episode';
+  }
+
+  @override
+  String watchHistoryHoursAgo(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: '$hours hours ago',
+      one: '1 hour ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String watchHistoryMinutesAgo(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes minutes ago',
+      one: '1 minute ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get watchHistoryEmpty => 'No watch history found';
+
+  @override
+  String get watchHistoryGranularityDaily => 'Daily';
+
+  @override
+  String get watchHistoryGranularityMonthly => 'Monthly';
+
+  @override
+  String get watchHistoryGranularityYearly => 'Yearly';
+
+  @override
+  String watchHistoryStackedEpisodes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count episodes',
+      one: '1 episode',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String watchHistoryEpisodeRange(int season, int start, int end) {
+    return 'S$season E$start–E$end';
+  }
+
+  @override
+  String watchHistoryMultiSeasonRange(
+    int startSeason,
+    int startEpisode,
+    int endSeason,
+    int endEpisode,
+  ) {
+    return 'S$startSeason E$startEpisode–S$endSeason E$endEpisode';
+  }
+
+  @override
+  String watchHistorySeasonRange(int startSeason, int endSeason) {
+    return 'S$startSeason–S$endSeason';
+  }
 }

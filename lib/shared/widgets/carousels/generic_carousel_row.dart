@@ -235,12 +235,34 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
                         const SizedBox(width: 8),
                       ],
                       Expanded(
-                        child: Text(
-                          widget.title ?? '',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: widget.onHeaderTap,
+                          child: MouseRegion(
+                            cursor: widget.onHeaderTap != null
+                                ? SystemMouseCursors.click
+                                : SystemMouseCursors.basic,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  widget.title ?? '',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                if (widget.onHeaderTap != null) ...[
+                                  const SizedBox(width: 6),
+                                  const Icon(
+                                    Icons.chevron_right,
+                                    color: AppTheme.textMuted,
+                                    size: 20,
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ),
                       ),

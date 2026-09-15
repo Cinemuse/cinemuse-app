@@ -98,6 +98,17 @@ final watchHistoryStreamProvider = StreamProvider<List<WatchHistory>>((ref) {
       });
 });
 
+// 3b. Watch Logs Provider (Full chronological event history from watch_logs for timeline)
+final watchLogsProvider = FutureProvider<List<WatchHistory>>((ref) async {
+  final userId = ref.watch(userIdProvider);
+  if (userId == null) return [];
+
+  // Invalidate / re-fetch whenever local watch history updates
+  ref.watch(watchHistoryStreamProvider);
+
+  return ref.watch(watchHistoryRepositoryProvider).getAllWatchLogs(userId);
+});
+
 // 4. Recently Watched Stream Provider (Log-based, permanent history)
 final recentlyWatchedStreamProvider = Provider<AsyncValue<List<WatchHistory>>>((ref) {
   final historyAsync = ref.watch(watchHistoryStreamProvider);

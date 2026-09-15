@@ -30,6 +30,13 @@ class WatchHistoryRepository {
   final SeriesDomainService _seriesService;
   final TmdbService _tmdbService;
 
+  /// In-memory cache for timeline watch logs to avoid redundant network & database roundtrips
+  List<WatchHistory>? _cachedWatchLogs;
+
+  void invalidateWatchLogsCache() {
+    _cachedWatchLogs = null;
+  }
+
   WatchHistoryRepository(
     this._client,
     this._mediaRepo,
@@ -292,6 +299,8 @@ class WatchHistoryRepository {
       'logged_at': (loggedAt ?? DateTime.now()).toIso8601String(),
       'duration_watched_seconds': durationWatched,
     }).withErrorHandling();
+
+    invalidateWatchLogsCache();
   }
 
   Future<void> markAsCompleted({
@@ -482,6 +491,158 @@ class WatchHistoryRepository {
     return List<Map<String, dynamic>>.from(response);
   }
 
+  /// Fetches all watch log entries for a user, enriched with media metadata.
+  /// Serves as the single source of truth for watch history timeline visualizations.
+  Future<List<WatchHistory>> getAllWatchLogs(
+    String userId, {
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh && _cachedWatchLogs != null) {
+      return _cachedWatchLogs!;
+    }
+    try {
+      final logs = await _fetchWatchLogs(userId);
+      if (logs.isEmpty) {
+        _cachedWatchLogs = [];
+        return [];
+      }
+
+      final mediaMap = await _resolveUniqueMediaItems(logs);
+      final result = logs.map((log) => _mapLogToWatchHistory(log, userId, mediaMap)).toList();
+      _cachedWatchLogs = result;
+      return result;
+    } catch (_) {
+      return _getLocalHistoryFallback(userId);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchWatchLogs(String userId) async {
+    const pageSize = 1000;
+    const parallelBatchSize = 4;
+
+    final firstPage = await _fetchLogsPage(userId, 0, pageSize);
+    if (firstPage.length < pageSize) {
+      return firstPage;
+    }
+
+    final allLogs = <Map<String, dynamic>>[...firstPage];
+    int currentOffset = pageSize;
+    bool hasMore = true;
+
+    while (hasMore) {
+      final futures = <Future<List<Map<String, dynamic>>>>[];
+      for (int i = 0; i < parallelBatchSize; i++) {
+        final pageOffset = currentOffset + (i * pageSize);
+        futures.add(_fetchLogsPage(userId, pageOffset, pageSize));
+      }
+
+      final pages = await Future.wait(futures);
+      for (final page in pages) {
+        allLogs.addAll(page);
+        if (page.length < pageSize) {
+          hasMore = false;
+          break;
+        }
+      }
+      currentOffset += parallelBatchSize * pageSize;
+    }
+
+    return allLogs;
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchLogsPage(
+    String userId,
+    int offset,
+    int limit,
+  ) async {
+    final response = await _client
+        .from('watch_logs')
+        .select('tmdb_id, media_type, season, episode, logged_at, duration_watched_seconds')
+        .eq('user_id', userId)
+        .order('logged_at', ascending: false)
+        .range(offset, offset + limit - 1)
+        .withErrorHandling();
+
+    return (response as List<dynamic>).cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, MediaItem?>> _resolveUniqueMediaItems(
+    List<Map<String, dynamic>> logs,
+  ) async {
+    final uniqueRequests = <String, ({int id, MediaKind type})>{};
+    for (final log in logs) {
+      final tmdbId = log['tmdb_id'] as int? ?? 0;
+      final typeStr = log['media_type'] as String? ?? 'movie';
+      final kind = typeStr == 'tv' ? MediaKind.tv : MediaKind.movie;
+      uniqueRequests.putIfAbsent('$typeStr-$tmdbId', () => (id: tmdbId, type: kind));
+    }
+
+    final mediaMap = <String, MediaItem?>{};
+    final bulkResults = await _mediaRepo.getMediaItems(uniqueRequests.values.toList());
+    for (final item in bulkResults) {
+      mediaMap['${item.mediaType.name}-${item.tmdbId}'] = item;
+    }
+
+    final missingRequests = uniqueRequests.entries
+        .where((entry) => !mediaMap.containsKey(entry.key))
+        .toList();
+
+    if (missingRequests.isNotEmpty) {
+      await Future.wait(
+        missingRequests.map((entry) async {
+          final media = await _mediaRepo.getMediaItem(entry.value.id, entry.value.type);
+          mediaMap[entry.key] = media;
+        }),
+      );
+    }
+    return mediaMap;
+  }
+
+  WatchHistory _mapLogToWatchHistory(
+    Map<String, dynamic> log,
+    String userId,
+    Map<String, MediaItem?> mediaMap,
+  ) {
+    final tmdbId = log['tmdb_id'] as int? ?? 0;
+    final typeStr = log['media_type'] as String? ?? 'movie';
+    final kind = typeStr == 'tv' ? MediaKind.tv : MediaKind.movie;
+    final loggedAtStr = log['logged_at'] as String?;
+    final loggedAt = loggedAtStr != null ? DateTime.parse(loggedAtStr) : DateTime.now();
+
+    return WatchHistory(
+      userId: userId,
+      tmdbId: tmdbId,
+      mediaType: kind,
+      status: WatchStatus.completed,
+      progressSeconds: log['duration_watched_seconds'] as int? ?? 0,
+      lastWatchedAt: loggedAt,
+      season: log['season'] as int?,
+      episode: log['episode'] as int?,
+      media: mediaMap['$typeStr-$tmdbId'],
+    );
+  }
+
+  Future<List<WatchHistory>> _getLocalHistoryFallback(String userId) async {
+    final list = await _db.getWatchHistory(userId);
+    final futures = list.map((local) async {
+      final mediaKind = local.mediaType == 'tv' ? MediaKind.tv : MediaKind.movie;
+      final media = await _mediaRepo.getMediaItem(local.tmdbId, mediaKind);
+      return WatchHistory(
+        userId: local.userId,
+        tmdbId: local.tmdbId,
+        mediaType: mediaKind,
+        status: WatchStatus.fromJson(local.status),
+        progressSeconds: local.progressSeconds,
+        totalDuration: local.totalDuration,
+        lastWatchedAt: local.lastWatchedAt,
+        season: local.season,
+        episode: local.episode,
+        media: media,
+      );
+    });
+    return Future.wait(futures);
+  }
+
   Future<void> deleteLatestMovieLog({
     required String userId,
     required int tmdbId,
@@ -500,6 +661,7 @@ class WatchHistoryRepository {
       await _client.from('watch_logs').delete().eq('id', response['id']);
 
       await _syncLogHistory(userId, tmdbId, 'movie');
+      invalidateWatchLogsCache();
     }
   }
 
@@ -515,6 +677,7 @@ class WatchHistoryRepository {
         .eq('media_type', 'movie');
 
     await _syncLogHistory(userId, tmdbId, 'movie');
+    invalidateWatchLogsCache();
   }
 
   Future<void> logMovieWatch({
@@ -530,6 +693,8 @@ class WatchHistoryRepository {
       'episode': 0,
       'logged_at': (loggedAt ?? DateTime.now()).toIso8601String(),
     }).withErrorHandling();
+
+    invalidateWatchLogsCache();
 
     final nowTime = loggedAt ?? DateTime.now();
     final existing = await (_db.select(_db.localWatchHistories)
@@ -594,6 +759,7 @@ class WatchHistoryRepository {
 
       // 3. Manually sync history since trigger handles inserts but maybe not deletions
       await _syncLogHistory(userId, tmdbId, 'tv');
+      invalidateWatchLogsCache();
     }
   }
 
@@ -612,6 +778,7 @@ class WatchHistoryRepository {
         .eq('episode', episode);
 
     await _syncLogHistory(userId, tmdbId, 'tv');
+    invalidateWatchLogsCache();
   }
 
   /// Helper to ensure watch_history table stays in sync after deletions
@@ -698,6 +865,7 @@ class WatchHistoryRepository {
         .toList();
 
     await _client.from('watch_logs').insert(logs);
+    invalidateWatchLogsCache();
 
     final nowTime = loggedAt ?? DateTime.now();
     final existing = await (_db.select(_db.localWatchHistories)
@@ -906,6 +1074,7 @@ class WatchHistoryRepository {
 
     // Also clear from watch_history (sync will handle it since no logs left)
     await _syncLogHistory(userId, tmdbId, 'tv');
+    invalidateWatchLogsCache();
   }
 
   Future<void> cancelRewatch(String userId, int tmdbId, String mediaType) async {

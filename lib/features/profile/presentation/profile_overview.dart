@@ -13,6 +13,7 @@ import 'package:cinemuse_app/features/settings/application/settings_service.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/features/profile/presentation/watch_history_screen.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class ProfileOverview extends ConsumerWidget {
@@ -41,7 +42,20 @@ class ProfileOverview extends ConsumerWidget {
 
     final appLanguage = ref.watch(settingsProvider).appLanguage;
 
-    Widget buildRecentRow(String title, IconData icon, List<MediaItem> items) {
+    void openWatchHistory(MediaKind type) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => WatchHistoryScreen(initialType: type),
+        ),
+      );
+    }
+
+    Widget buildRecentRow(
+      String title,
+      IconData icon,
+      List<MediaItem> items, {
+      VoidCallback? onHeaderTap,
+    }) {
       final cards = items.map((item) {
         return MediaCard(
           title: item.getLocalizedTitle(appLanguage) ?? 'Unknown',
@@ -78,6 +92,7 @@ class ProfileOverview extends ConsumerWidget {
         icon: icon,
         theme: CarouselTheme.profileRow,
         items: cards,
+        onHeaderTap: onHeaderTap,
         emptyBuilder: (context) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 24),
           child: Text(
@@ -138,6 +153,7 @@ class ProfileOverview extends ConsumerWidget {
                                     .map((h) => h.media)
                                     .whereType<MediaItem>()
                                     .toList(),
+                                onHeaderTap: () => openWatchHistory(MediaKind.movie),
                               ),
                               const SizedBox(height: 24),
                               buildRecentRow(
@@ -148,6 +164,7 @@ class ProfileOverview extends ConsumerWidget {
                                     .map((h) => h.media)
                                     .whereType<MediaItem>()
                                     .toList(),
+                                onHeaderTap: () => openWatchHistory(MediaKind.tv),
                               ),
                             ],
                           ),
@@ -197,6 +214,7 @@ class ProfileOverview extends ConsumerWidget {
                           .map((h) => h.media)
                           .whereType<MediaItem>()
                           .toList(),
+                      onHeaderTap: () => openWatchHistory(MediaKind.movie),
                     ),
 
                     const SizedBox(height: 12),
@@ -210,6 +228,7 @@ class ProfileOverview extends ConsumerWidget {
                           .map((h) => h.media)
                           .whereType<MediaItem>()
                           .toList(),
+                      onHeaderTap: () => openWatchHistory(MediaKind.tv),
                     ),
 
                     const SizedBox(height: 16),

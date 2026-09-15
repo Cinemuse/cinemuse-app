@@ -573,6 +573,127 @@
   "playerLiveSources": "Sorgenti Disponibili",
   "playerPreferredQuality": "Qualità Preferita (Predefinita)",
   "playerActiveSource": "Attiva",
-  "playerSourceFailed": "Non disponibile"
+  "playerSourceFailed": "Non disponibile",
+  "watchHistoryTitle": "Cronologia",
+  "watchHistorySubtitle": "{count, plural, =1{1 titolo} other{{count} titoli}}",
+  "@watchHistorySubtitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "watchHistoryFilteredCount": "{filtered} di {total, plural, =1{1 titolo} other{{total} titoli}}",
+  "@watchHistoryFilteredCount": {
+    "placeholders": {
+      "filtered": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "watchHistoryBreakdown": "{movies, plural, =1{1 film} other{{movies} film}}, {series, plural, =1{1 serie} other{{series} serie}}",
+  "@watchHistoryBreakdown": {
+    "placeholders": {
+      "movies": { "type": "int" },
+      "series": { "type": "int" }
+    }
+  },
+  "watchHistoryMoviesCount": "{count, plural, =1{1 film} other{{count} film}}",
+  "@watchHistoryMoviesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "watchHistoryFilteredMoviesCount": "{filtered} di {total, plural, =1{1 film} other{{total} film}}",
+  "@watchHistoryFilteredMoviesCount": {
+    "placeholders": {
+      "filtered": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "watchHistorySeriesBreakdown": "{series, plural, =1{1 serie TV} other{{series} serie TV}}, {seasons, plural, =1{1 stagione} other{{seasons} stagioni}}, {episodes, plural, =1{1 episodio} other{{episodes} episodi}}",
+  "@watchHistorySeriesBreakdown": {
+    "placeholders": {
+      "series": { "type": "int" },
+      "seasons": { "type": "int" },
+      "episodes": { "type": "int" }
+    }
+  },
+  "watchHistoryFilteredSeriesBreakdown": "{filteredSeries} di {totalSeries, plural, =1{1 serie TV} other{{totalSeries} serie TV}}, {seasons, plural, =1{1 stagione} other{{seasons} stagioni}}, {episodes, plural, =1{1 episodio} other{{episodes} episodi}}",
+  "@watchHistoryFilteredSeriesBreakdown": {
+    "placeholders": {
+      "filteredSeries": { "type": "int" },
+      "totalSeries": { "type": "int" },
+      "seasons": { "type": "int" },
+      "episodes": { "type": "int" }
+    }
+  },
+  "watchHistorySearchPlaceholder": "Cerca titoli visti...",
+  "watchHistoryAll": "Tutti",
+  "watchHistoryStatusAll": "Tutti gli stati",
+  "watchHistoryStatusWatching": "In corso",
+  "watchHistoryStatusCompleted": "Completati",
+  "watchHistoryStatusDropped": "Abbandonati",
+  "watchHistorySortRecent": "Visti di recente",
+  "watchHistorySortTitle": "Titolo (A-Z)",
+  "watchHistoryViewGrid": "Griglia",
+  "watchHistoryViewTimeline": "Cronologia",
+  "watchHistoryDateToday": "Oggi",
+  "watchHistoryDateYesterday": "Ieri",
+  "watchHistoryDateThisWeek": "Questa settimana",
+  "watchHistoryDateThisMonth": "Questo mese",
+  "watchHistoryResume": "Riprendi",
+  "watchHistoryWatchAgain": "Riguarda",
+  "watchHistoryReplay": "Rivedi",
+  "watchHistorySeasonEpisode": "Stagione {season} • Episodio {episode}",
+  "@watchHistorySeasonEpisode": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "episode": { "type": "int" }
+    }
+  },
+  "watchHistoryHoursAgo": "{hours, plural, =1{1 ora fa} other{{hours} ore fa}}",
+  "@watchHistoryHoursAgo": {
+    "placeholders": {
+      "hours": { "type": "int" }
+    }
+  },
+  "watchHistoryMinutesAgo": "{minutes, plural, =1{1 minuto fa} other{{minutes} minuti fa}}",
+  "@watchHistoryMinutesAgo": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "watchHistoryEmpty": "Nessuna cronologia trovata",
+  "watchHistoryGranularityDaily": "Giornaliero",
+  "watchHistoryGranularityMonthly": "Mensile",
+  "watchHistoryGranularityYearly": "Annuale",
+  "watchHistoryStackedEpisodes": "{count, plural, =1{1 episodio} other{{count} episodi}}",
+  "@watchHistoryStackedEpisodes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "watchHistoryEpisodeRange": "S{season} E{start}–E{end}",
+  "@watchHistoryEpisodeRange": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "start": { "type": "int" },
+      "end": { "type": "int" }
+    }
+  },
+  "watchHistoryMultiSeasonRange": "S{startSeason} E{startEpisode}–S{endSeason} E{endEpisode}",
+  "@watchHistoryMultiSeasonRange": {
+    "placeholders": {
+      "startSeason": { "type": "int" },
+      "startEpisode": { "type": "int" },
+      "endSeason": { "type": "int" },
+      "endEpisode": { "type": "int" }
+    }
+  },
+  "watchHistorySeasonRange": "S{startSeason}–S{endSeason}",
+  "@watchHistorySeasonRange": {
+    "placeholders": {
+      "startSeason": { "type": "int" },
+      "endSeason": { "type": "int" }
+    }
+  }
 }
 

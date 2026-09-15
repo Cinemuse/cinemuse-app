@@ -33,6 +33,30 @@ class FakeFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
   PostgrestFilterBuilder<T> range(int from, int to, {String? referencedTable}) => this;
 
   @override
+  PostgrestTransformBuilder<T> order(
+    String column, {
+    bool ascending = false,
+    bool nullsFirst = false,
+    String? referencedTable,
+  }) => FakeTransformBuilder<T>(_value);
+
+  @override
+  Future<R> then<R>(
+    FutureOr<R> Function(T value) onValue, {
+    Function? onError,
+  }) {
+    return Future.value(_value).then(onValue, onError: onError);
+  }
+}
+
+class FakeTransformBuilder<T> extends Fake implements PostgrestTransformBuilder<T> {
+  final T _value;
+  FakeTransformBuilder(this._value);
+
+  @override
+  PostgrestTransformBuilder<T> range(int from, int to, {String? referencedTable}) => this;
+
+  @override
   Future<R> then<R>(
     FutureOr<R> Function(T value) onValue, {
     Function? onError,
@@ -270,6 +294,59 @@ void main() {
 
       final history = await database.getWatchHistory(userId);
       expect(history.any((h) => h.tmdbId == 303), isFalse);
+    });
+
+    test('getAllWatchLogs fetches watch logs and maps to WatchHistory with metadata', () async {
+      final logsData = [
+        {
+          'tmdb_id': 100,
+          'media_type': 'tv',
+          'season': 1,
+          'episode': 1,
+          'logged_at': '2026-09-14T10:00:00.000Z',
+          'duration_watched_seconds': 2400,
+        },
+        {
+          'tmdb_id': 100,
+          'media_type': 'tv',
+          'season': 1,
+          'episode': 2,
+          'logged_at': '2026-09-14T11:00:00.000Z',
+          'duration_watched_seconds': 2400,
+        },
+      ];
+
+      when(() => mockSupabase.from('watch_logs')).thenAnswer(
+        (_) => FakeQueryBuilder(logsData),
+      );
+
+      await database.upsertMediaItem(
+        CachedMediaItemsCompanion.insert(
+          tmdbId: 100,
+          mediaType: 'tv',
+          titleEn: const Value('Test Series'),
+          updatedAt: DateTime.now(),
+        ),
+      );
+
+      final result = await repository.getAllWatchLogs(userId);
+
+      expect(result.length, 2);
+      expect(result.first.tmdbId, 100);
+      expect(result.first.mediaType, MediaKind.tv);
+      expect(result.first.season, 1);
+      expect(result.first.episode, 1);
+      expect(result.first.media?.titleEn, 'Test Series');
+      expect(result.last.episode, 2);
+
+      // Verify cached call returns same reference without hitting Supabase again
+      final cachedResult = await repository.getAllWatchLogs(userId);
+      expect(identical(result, cachedResult), isTrue);
+
+      // Invalidate cache and verify fresh call
+      repository.invalidateWatchLogsCache();
+      final freshResult = await repository.getAllWatchLogs(userId);
+      expect(freshResult.length, 2);
     });
   });
 }

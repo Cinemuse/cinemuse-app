@@ -3127,6 +3127,232 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unavailable'**
   String get playerSourceFailed;
+
+  /// No description provided for @watchHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch History'**
+  String get watchHistoryTitle;
+
+  /// No description provided for @watchHistorySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 title} other{{count} titles}}'**
+  String watchHistorySubtitle(int count);
+
+  /// No description provided for @watchHistoryFilteredCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{filtered} of {total, plural, =1{1 title} other{{total} titles}}'**
+  String watchHistoryFilteredCount(int filtered, int total);
+
+  /// No description provided for @watchHistoryBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'{movies, plural, =1{1 movie} other{{movies} movies}}, {series, plural, =1{1 series} other{{series} series}}'**
+  String watchHistoryBreakdown(int movies, int series);
+
+  /// No description provided for @watchHistoryMoviesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 movie} other{{count} movies}}'**
+  String watchHistoryMoviesCount(int count);
+
+  /// No description provided for @watchHistoryFilteredMoviesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{filtered} of {total, plural, =1{1 movie} other{{total} movies}}'**
+  String watchHistoryFilteredMoviesCount(int filtered, int total);
+
+  /// No description provided for @watchHistorySeriesBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'{series, plural, =1{1 series} other{{series} series}}, {seasons, plural, =1{1 season} other{{seasons} seasons}}, {episodes, plural, =1{1 episode} other{{episodes} episodes}}'**
+  String watchHistorySeriesBreakdown(int series, int seasons, int episodes);
+
+  /// No description provided for @watchHistoryFilteredSeriesBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'{filteredSeries} of {totalSeries, plural, =1{1 series} other{{totalSeries} series}}, {seasons, plural, =1{1 season} other{{seasons} seasons}}, {episodes, plural, =1{1 episode} other{{episodes} episodes}}'**
+  String watchHistoryFilteredSeriesBreakdown(
+    int filteredSeries,
+    int totalSeries,
+    int seasons,
+    int episodes,
+  );
+
+  /// No description provided for @watchHistorySearchPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search watched titles...'**
+  String get watchHistorySearchPlaceholder;
+
+  /// No description provided for @watchHistoryAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get watchHistoryAll;
+
+  /// No description provided for @watchHistoryStatusAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All Statuses'**
+  String get watchHistoryStatusAll;
+
+  /// No description provided for @watchHistoryStatusWatching.
+  ///
+  /// In en, this message translates to:
+  /// **'In Progress'**
+  String get watchHistoryStatusWatching;
+
+  /// No description provided for @watchHistoryStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get watchHistoryStatusCompleted;
+
+  /// No description provided for @watchHistoryStatusDropped.
+  ///
+  /// In en, this message translates to:
+  /// **'Dropped'**
+  String get watchHistoryStatusDropped;
+
+  /// No description provided for @watchHistorySortRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently Watched'**
+  String get watchHistorySortRecent;
+
+  /// No description provided for @watchHistorySortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title (A-Z)'**
+  String get watchHistorySortTitle;
+
+  /// No description provided for @watchHistoryViewGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid'**
+  String get watchHistoryViewGrid;
+
+  /// No description provided for @watchHistoryViewTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get watchHistoryViewTimeline;
+
+  /// No description provided for @watchHistoryDateToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get watchHistoryDateToday;
+
+  /// No description provided for @watchHistoryDateYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get watchHistoryDateYesterday;
+
+  /// No description provided for @watchHistoryDateThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This Week'**
+  String get watchHistoryDateThisWeek;
+
+  /// No description provided for @watchHistoryDateThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This Month'**
+  String get watchHistoryDateThisMonth;
+
+  /// No description provided for @watchHistoryResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get watchHistoryResume;
+
+  /// No description provided for @watchHistoryWatchAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch Again'**
+  String get watchHistoryWatchAgain;
+
+  /// No description provided for @watchHistoryReplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay'**
+  String get watchHistoryReplay;
+
+  /// No description provided for @watchHistorySeasonEpisode.
+  ///
+  /// In en, this message translates to:
+  /// **'Season {season} • Episode {episode}'**
+  String watchHistorySeasonEpisode(int season, int episode);
+
+  /// No description provided for @watchHistoryHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours, plural, =1{1 hour ago} other{{hours} hours ago}}'**
+  String watchHistoryHoursAgo(int hours);
+
+  /// No description provided for @watchHistoryMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes, plural, =1{1 minute ago} other{{minutes} minutes ago}}'**
+  String watchHistoryMinutesAgo(int minutes);
+
+  /// No description provided for @watchHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No watch history found'**
+  String get watchHistoryEmpty;
+
+  /// No description provided for @watchHistoryGranularityDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get watchHistoryGranularityDaily;
+
+  /// No description provided for @watchHistoryGranularityMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get watchHistoryGranularityMonthly;
+
+  /// No description provided for @watchHistoryGranularityYearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get watchHistoryGranularityYearly;
+
+  /// No description provided for @watchHistoryStackedEpisodes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 episode} other{{count} episodes}}'**
+  String watchHistoryStackedEpisodes(int count);
+
+  /// No description provided for @watchHistoryEpisodeRange.
+  ///
+  /// In en, this message translates to:
+  /// **'S{season} E{start}–E{end}'**
+  String watchHistoryEpisodeRange(int season, int start, int end);
+
+  /// No description provided for @watchHistoryMultiSeasonRange.
+  ///
+  /// In en, this message translates to:
+  /// **'S{startSeason} E{startEpisode}–S{endSeason} E{endEpisode}'**
+  String watchHistoryMultiSeasonRange(
+    int startSeason,
+    int startEpisode,
+    int endSeason,
+    int endEpisode,
+  );
+
+  /// No description provided for @watchHistorySeasonRange.
+  ///
+  /// In en, this message translates to:
+  /// **'S{startSeason}–S{endSeason}'**
+  String watchHistorySeasonRange(int startSeason, int endSeason);
 }
 
 class _AppLocalizationsDelegate

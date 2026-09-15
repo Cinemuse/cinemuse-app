@@ -29,6 +29,13 @@ class MediaCard extends ConsumerStatefulWidget {
   final int? tmdbId;
   final MediaKind? mediaType;
 
+  // Optional playback progress (0.0 to 1.0) & metadata subtitle (e.g. S1 E5)
+  final double? progress;
+  final String? infoText;
+
+  // Optional card deck stack count for grouped watch history items
+  final int? stackCount;
+
   const MediaCard({
     super.key,
     required this.title,
@@ -43,6 +50,9 @@ class MediaCard extends ConsumerStatefulWidget {
     this.onRestore,
     this.tmdbId,
     this.mediaType,
+    this.progress,
+    this.infoText,
+    this.stackCount,
   });
 
   final VoidCallback? onPlay;
@@ -167,6 +177,72 @@ class _MediaCardState extends ConsumerState<MediaCard> {
     );
   }
 
+  Widget? _buildOverlayBadge() {
+    final isStacked = widget.stackCount != null && widget.stackCount! > 1;
+    final hasInfo = widget.infoText != null && widget.infoText!.isNotEmpty;
+
+    if (!isStacked && !hasInfo) return null;
+
+    final String badgeText;
+    if (isStacked) {
+      badgeText = (hasInfo)
+          ? '${widget.stackCount} • ${widget.infoText!}'
+          : '${widget.stackCount}';
+    } else {
+      badgeText = widget.infoText!;
+    }
+
+    return Positioned(
+      top: 6,
+      right: 6,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 6,
+          vertical: 3,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: isStacked
+                ? AppTheme.accent.withValues(alpha: 0.7)
+                : Colors.white.withValues(alpha: 0.25),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.5),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isStacked) ...[
+              const Icon(
+                Icons.layers_rounded,
+                color: AppTheme.accent,
+                size: 11,
+              ),
+              const SizedBox(width: 3.5),
+            ],
+            Text(
+              badgeText,
+              style: TextStyle(
+                color: isStacked ? Colors.white : AppTheme.accent,
+                fontSize: 10.5,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final year = widget.releaseDate?.split('-').first ?? '';
@@ -193,115 +269,180 @@ class _MediaCardState extends ConsumerState<MediaCard> {
           onTap: widget.onTap,
           onLongPress: () => _showContextActions(context),
           onSecondaryTapDown: (_) => _showContextActions(context),
-          child: AnimatedScale(
-            scale: _isHovered ? 1.05 : 1.0,
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          child: RepaintBoundary(
+            child: AnimatedScale(
+              scale: _isHovered ? 1.05 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Poster Image
+                // Poster Image (with optional stacked deck layers behind)
                 Expanded(
-                  child: AspectRatio(
-                    aspectRatio: 0.7,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: AppTheme.surface,
-                        boxShadow: AppTheme.shadowCard,
-                      ),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          // Image Content (Clipped)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                if (imageUrl != null)
-                                  CachedNetworkImage(
-                                    imageUrl: imageUrl,
-                                    fit: BoxFit.cover,
-                                    memCacheWidth: 300, // Optimize memory usage
-                                    placeholder: (context, url) => Container(
-                                      color: AppTheme.surface,
-                                      child: const Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: AppTheme.accent,
-                                        ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      // Back Layer 2 (Bottom card in deck)
+                      if (widget.stackCount != null && widget.stackCount! > 2)
+                        Positioned.fill(
+                          child: Transform.translate(
+                            offset: const Offset(5.0, -5.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: const Color(0xFF16171B),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.08),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      // Back Layer 1 (Middle card in deck)
+                      if (widget.stackCount != null && widget.stackCount! > 1)
+                        Positioned.fill(
+                          child: Transform.translate(
+                            offset: const Offset(-4.0, -3.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: const Color(0xFF22242A),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      // Main Top Card
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: AppTheme.surface,
+                          boxShadow: AppTheme.shadowCard,
+                        ),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // Image Content (Clipped)
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  if (imageUrl != null)
+                                    CachedNetworkImage(
+                                      imageUrl: imageUrl,
+                                      fit: BoxFit.cover,
+                                      memCacheWidth: 260,
+                                      fadeInDuration: const Duration(milliseconds: 120),
+                                      placeholderFadeInDuration: Duration.zero,
+                                      placeholder: (context, url) => Container(
+                                        color: AppTheme.surface,
+                                      ),
+                                      errorWidget: (context, url, error) =>
+                                          const Center(
+                                            child: Icon(
+                                              Icons.broken_image,
+                                              color: Colors.white24,
+                                            ),
+                                          ),
+                                    )
+                                  else
+                                    const Center(
+                                      child: Icon(
+                                        Icons.movie,
+                                        color: Colors.white24,
+                                        size: 48,
                                       ),
                                     ),
-                                    errorWidget: (context, url, error) =>
-                                        const Center(
-                                          child: Icon(
-                                            Icons.broken_image,
-                                            color: Colors.white24,
-                                          ),
-                                        ),
-                                  )
-                                else
-                                  const Center(
-                                    child: Icon(
-                                      Icons.movie,
-                                      color: Colors.white24,
-                                      size: 48,
-                                    ),
-                                  ),
 
-                                // Subtle Static Bottom Vignette (grounds the poster artwork)
-                                const DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.bottomCenter,
-                                      end: Alignment.center,
-                                      colors: [
-                                        Color(0x73000000), // ~45% black at the bottom edge
-                                        Colors.transparent,
-                                      ],
-                                      stops: [0.0, 0.4],
-                                    ),
-                                  ),
-                                ),
-
-                                // Hover Gradient Overlay
-                                AnimatedOpacity(
-                                  opacity: _isHovered ? 1.0 : 0.0,
-                                  duration: const Duration(milliseconds: 300),
-                                  child: const DecoratedBox(
+                                  // Subtle Static Bottom Vignette
+                                  const DecoratedBox(
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         begin: Alignment.bottomCenter,
                                         end: Alignment.center,
                                         colors: [
-                                          Colors.black87,
+                                          Color(0x73000000),
                                           Colors.transparent,
                                         ],
+                                        stops: [0.0, 0.4],
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
 
-                          // Border Overlay (On Top)
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: _isHovered
-                                    ? AppTheme.accent.withValues(alpha: 0.5)
-                                    : Colors.white.withValues(alpha: 0.1),
-                                width: _isHovered ? 2 : 1,
+                                  // Hover Gradient Overlay
+                                  AnimatedOpacity(
+                                    opacity: _isHovered ? 1.0 : 0.0,
+                                    duration: const Duration(milliseconds: 300),
+                                    child: const DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.bottomCenter,
+                                          end: Alignment.center,
+                                          colors: [
+                                            Colors.black87,
+                                            Colors.transparent,
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Optional Playback Progress Bar
+                                  if (widget.progress != null &&
+                                      widget.progress! > 0)
+                                    Positioned(
+                                      left: 0,
+                                      right: 0,
+                                      bottom: 0,
+                                      child: ClipRRect(
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                          bottom: Radius.circular(8),
+                                        ),
+                                        child: LinearProgressIndicator(
+                                          value: widget.progress!.clamp(0.0, 1.0),
+                                          minHeight: 3.5,
+                                          backgroundColor: Colors.white24,
+                                          valueColor:
+                                              const AlwaysStoppedAnimation<Color>(
+                                            AppTheme.accent,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
-                          ),
-                        ],
+
+                            // Border Overlay (On Top)
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: _isHovered
+                                      ? AppTheme.accent.withValues(alpha: 0.5)
+                                      : Colors.white.withValues(alpha: 0.1),
+                                  width: _isHovered ? 2 : 1,
+                                ),
+                              ),
+                            ),
+
+                            // Unified Stack & Episode Overlay Badge (Top-Right)
+                            if (_buildOverlayBadge() != null)
+                              _buildOverlayBadge()!,
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -389,6 +530,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
