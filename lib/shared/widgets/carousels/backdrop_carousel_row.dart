@@ -34,12 +34,27 @@ class BackdropCarouselRow extends StatelessWidget {
     this.visibleCards = CarouselLayoutCalculator.defaultBackdropMobileVisibleCards,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final effectivePadding = padding ??
-        EdgeInsets.symmetric(
+  static EdgeInsets defaultPaddingForTheme(
+    BuildContext context,
+    CarouselTheme theme,
+  ) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    switch (theme) {
+      case CarouselTheme.profileRow:
+        return EdgeInsets.symmetric(horizontal: isMobile ? 16.0 : 24.0);
+      case CarouselTheme.bentoBox:
+        return EdgeInsets.zero;
+      case CarouselTheme.homeRow:
+      case CarouselTheme.plain:
+        return EdgeInsets.symmetric(
           horizontal: AppTheme.getResponsiveHorizontalPadding(context),
         );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final effectivePadding = padding ?? defaultPaddingForTheme(context, theme);
 
     final dimensions = CarouselLayoutCalculator.getBackdropDimensions(
       context,

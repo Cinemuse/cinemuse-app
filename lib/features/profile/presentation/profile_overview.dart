@@ -93,13 +93,19 @@ class ProfileOverview extends ConsumerWidget {
         theme: CarouselTheme.profileRow,
         items: cards,
         onHeaderTap: onHeaderTap,
-        emptyBuilder: (context) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 24),
-          child: Text(
-            l10n.profileNoRecentItems,
-            style: const TextStyle(color: Colors.grey),
-          ),
-        ),
+        emptyBuilder: (context) {
+          final isMobile = MediaQuery.of(context).size.width < 600;
+          return Padding(
+            padding: EdgeInsets.symmetric(
+              vertical: 24.0,
+              horizontal: isMobile ? 16.0 : 24.0,
+            ),
+            child: Text(
+              l10n.profileNoRecentItems,
+              style: const TextStyle(color: Colors.grey),
+            ),
+          );
+        },
       );
     }
 

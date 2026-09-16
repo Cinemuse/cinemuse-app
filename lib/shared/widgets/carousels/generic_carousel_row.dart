@@ -145,14 +145,15 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
     );
   }
 
-  Widget _buildList() {
+  Widget _buildList({EdgeInsets? overridePadding}) {
     if (widget.itemCount == 0 && widget.emptyBuilder != null) {
       return widget.emptyBuilder!(context);
     }
     if (widget.itemCount == 0) return const SizedBox.shrink();
 
-    final effectivePadding = widget.padding.copyWith(
-      bottom: widget.padding.bottom + 16,
+    final padding = overridePadding ?? widget.padding;
+    final effectivePadding = padding.copyWith(
+      bottom: padding.bottom + 16,
     );
 
     final list = widget.separatorBuilder != null
@@ -187,8 +188,8 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
         interactive: true,
         padding: EdgeInsets.only(
           bottom: 2,
-          left: widget.padding.left,
-          right: widget.padding.right,
+          left: padding.left,
+          right: padding.right,
         ),
         child: list,
       ),
@@ -214,6 +215,12 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
         break;
 
       case CarouselTheme.profileRow:
+        final isMobile = MediaQuery.of(context).size.width < 600;
+        final horizontalPadding = isMobile ? 16.0 : 24.0;
+        final listPadding = widget.padding != EdgeInsets.zero
+            ? widget.padding
+            : EdgeInsets.symmetric(horizontal: horizontalPadding);
+
         content = ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: Container(
@@ -227,7 +234,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   child: Row(
                     children: [
                       if (widget.icon != null) ...[
@@ -271,7 +278,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _buildList(),
+                _buildList(overridePadding: listPadding),
               ],
             ),
           ),

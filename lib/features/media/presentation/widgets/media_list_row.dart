@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/poster_carousel_row.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
@@ -71,13 +70,7 @@ class MediaListRow extends ConsumerWidget {
       icon: icon,
       theme: theme,
       items: cards,
-      padding:
-          padding ??
-          (theme == CarouselTheme.bentoBox
-              ? EdgeInsets.zero
-              : EdgeInsets.symmetric(
-                  horizontal: AppTheme.getResponsiveHorizontalPadding(context),
-                )),
+      padding: padding,
     );
   }
 }
