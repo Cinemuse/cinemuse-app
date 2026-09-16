@@ -106,7 +106,7 @@ final watchLogsProvider = FutureProvider<List<WatchHistory>>((ref) async {
   // Invalidate / re-fetch whenever local watch history updates
   ref.watch(watchHistoryStreamProvider);
 
-  return ref.watch(watchHistoryRepositoryProvider).getAllWatchLogs(userId);
+  return ref.watch(watchHistoryRepositoryProvider).getAllWatchLogs(userId, forceRefresh: true);
 });
 
 // 4. Recently Watched Stream Provider (Log-based, permanent history)

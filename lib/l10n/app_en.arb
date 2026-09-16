@@ -694,6 +694,19 @@
       "startSeason": { "type": "int" },
       "endSeason": { "type": "int" }
     }
+  },
+  "watchHistoryFiltersTitle": "Filters",
+  "watchHistoryResetFilters": "Reset",
+  "watchHistoryApplyFilters": "Apply Filters",
+  "watchHistoryFilterType": "Media Type",
+  "watchHistoryFilterStatus": "Watch Status",
+  "watchHistoryFilterSort": "Sort By",
+  "watchHistoryFilterGranularity": "Timeline Grouping",
+  "watchHistoryActiveFilterCount": "{count, plural, =1{1 filter} other{{count} filters}}",
+  "@watchHistoryActiveFilterCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
   }
 }
 

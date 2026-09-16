@@ -4,6 +4,7 @@ import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:drift/native.dart';
 import 'package:drift/drift.dart' hide isNull;
@@ -347,6 +348,58 @@ void main() {
       repository.invalidateWatchLogsCache();
       final freshResult = await repository.getAllWatchLogs(userId);
       expect(freshResult.length, 2);
+    });
+
+    test('getAllWatchLogs applies watching and dropped status from watch history', () async {
+      final logsData = [
+        {
+          'tmdb_id': 200,
+          'media_type': 'tv',
+          'season': 1,
+          'episode': 1,
+          'logged_at': '2026-09-14T10:00:00.000Z',
+          'duration_watched_seconds': 1800,
+        },
+        {
+          'tmdb_id': 300,
+          'media_type': 'movie',
+          'season': null,
+          'episode': null,
+          'logged_at': '2026-09-14T11:00:00.000Z',
+          'duration_watched_seconds': 5400,
+        },
+      ];
+
+      when(() => mockSupabase.from('watch_logs')).thenAnswer(
+        (_) => FakeQueryBuilder(logsData),
+      );
+
+      await database.upsertWatchHistory(
+        LocalWatchHistoriesCompanion.insert(
+          userId: userId,
+          tmdbId: 200,
+          mediaType: 'tv',
+          status: 'dropped',
+          lastWatchedAt: DateTime.now(),
+        ),
+      );
+      await database.upsertWatchHistory(
+        LocalWatchHistoriesCompanion.insert(
+          userId: userId,
+          tmdbId: 300,
+          mediaType: 'movie',
+          status: 'watching',
+          lastWatchedAt: DateTime.now(),
+        ),
+      );
+
+      final result = await repository.getAllWatchLogs(userId, forceRefresh: true);
+
+      expect(result.length, 2);
+      expect(result.first.tmdbId, 200);
+      expect(result.first.status, WatchStatus.dropped);
+      expect(result.last.tmdbId, 300);
+      expect(result.last.status, WatchStatus.watching);
     });
   });
 }

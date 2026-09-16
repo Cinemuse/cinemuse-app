@@ -508,7 +508,8 @@ class WatchHistoryRepository {
       }
 
       final mediaMap = await _resolveUniqueMediaItems(logs);
-      final result = logs.map((log) => _mapLogToWatchHistory(log, userId, mediaMap)).toList();
+      final statusMap = await _resolveStatusMap(userId);
+      final result = logs.map((log) => _mapLogToWatchHistory(log, userId, mediaMap, statusMap)).toList();
       _cachedWatchLogs = result;
       return result;
     } catch (_) {
@@ -598,10 +599,43 @@ class WatchHistoryRepository {
     return mediaMap;
   }
 
+  Future<Map<String, WatchStatus>> _resolveStatusMap(String userId) async {
+    final statusMap = <String, WatchStatus>{};
+
+    // 1. Check local Drift database (fastest, keeps offline state)
+    try {
+      final localHistories = await _db.getWatchHistory(userId);
+      for (final local in localHistories) {
+        statusMap['${local.mediaType}-${local.tmdbId}'] = WatchStatus.fromJson(local.status);
+      }
+    } catch (_) {}
+
+    // 2. If local database has no status entries, fetch from Supabase watch_history
+    if (statusMap.isEmpty) {
+      try {
+        final remoteHistory = await _client
+            .from('watch_history')
+            .select('tmdb_id, media_type, status')
+            .eq('user_id', userId)
+            .withErrorHandling();
+
+        for (final row in remoteHistory) {
+          final tmdbId = row['tmdb_id'] as int? ?? 0;
+          final typeStr = row['media_type'] as String? ?? 'movie';
+          final statusStr = row['status'] as String? ?? 'completed';
+          statusMap['$typeStr-$tmdbId'] = WatchStatus.fromJson(statusStr);
+        }
+      } catch (_) {}
+    }
+
+    return statusMap;
+  }
+
   WatchHistory _mapLogToWatchHistory(
     Map<String, dynamic> log,
     String userId,
     Map<String, MediaItem?> mediaMap,
+    Map<String, WatchStatus> statusMap,
   ) {
     final tmdbId = log['tmdb_id'] as int? ?? 0;
     final typeStr = log['media_type'] as String? ?? 'movie';
@@ -609,11 +643,13 @@ class WatchHistoryRepository {
     final loggedAtStr = log['logged_at'] as String?;
     final loggedAt = loggedAtStr != null ? DateTime.parse(loggedAtStr) : DateTime.now();
 
+    final status = statusMap['$typeStr-$tmdbId'] ?? WatchStatus.completed;
+
     return WatchHistory(
       userId: userId,
       tmdbId: tmdbId,
       mediaType: kind,
-      status: WatchStatus.completed,
+      status: status,
       progressSeconds: log['duration_watched_seconds'] as int? ?? 0,
       lastWatchedAt: loggedAt,
       season: log['season'] as int?,
@@ -1137,6 +1173,7 @@ class WatchHistoryRepository {
   }
 
   Future<void> dropFromContinueWatching(String userId, int tmdbId) async {
+    invalidateWatchLogsCache();
     // Update Local
     await (_db.update(_db.localWatchHistories)
           ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
@@ -1151,6 +1188,7 @@ class WatchHistoryRepository {
   }
 
   Future<void> restoreToContinueWatching(String userId, int tmdbId) async {
+    invalidateWatchLogsCache();
     // Update Local
     await (_db.update(_db.localWatchHistories)
           ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
@@ -1169,6 +1207,7 @@ class WatchHistoryRepository {
     required int tmdbId,
     required String mediaType,
   }) async {
+    invalidateWatchLogsCache();
     if (mediaType == 'movie') {
       await _db.deleteWatchHistoryItem(userId, tmdbId, 'movie');
       await _client
@@ -1213,6 +1252,7 @@ class WatchHistoryRepository {
   }
 
   Future<void> removeFromDropped(String userId, int tmdbId, String mediaType) async {
+    invalidateWatchLogsCache();
     await _db.deleteWatchHistoryItem(userId, tmdbId, mediaType);
     await _client
         .from('watch_history')

@@ -12,6 +12,8 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
+import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/watch_history_filter_sheet.dart';
 
 enum HistoryViewMode {
   grid,
@@ -41,16 +43,21 @@ class WatchHistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
-  late MediaKind? _selectedType;
-  WatchStatus? _selectedStatus;
-  HistorySortOption _sortOption = HistorySortOption.recentlyWatched;
-  HistoryViewMode _viewMode = HistoryViewMode.grid;
-  TimelineGranularity _granularity = TimelineGranularity.daily;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  String _searchQuery = '';
 
-  // Filter & sort memoization
+  MediaKind? _selectedType;
+  WatchStatus? _selectedStatus;
+  String _searchQuery = '';
+  HistoryViewMode _viewMode = HistoryViewMode.grid;
+  TimelineGranularity _granularity = TimelineGranularity.daily;
+  HistorySortOption _sortOption = HistorySortOption.recentlyWatched;
+
+  // Progressive batch loading state for high-performance rendering
+  int _visibleSectionCount = 30;
+  int _visibleGridCount = 60;
+
+  // Cache for filtered/sorted items
   List<WatchHistory>? _lastRawList;
   MediaKind? _lastType;
   WatchStatus? _lastStatus;
@@ -60,36 +67,11 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
   String? _lastLanguage;
   List<WatchHistory> _cachedFilteredList = const [];
 
-  // Timeline section clustering memoization
+  // Cache for timeline grouped sections
   List<WatchHistory>? _lastFilteredForTimeline;
   TimelineGranularity? _lastGranularity;
   String? _lastLanguageForTimeline;
   List<_TimelineSection> _cachedTimelineSections = const [];
-
-  // Progressive section / grid pagination for buttery smooth scrolling
-  int _visibleSectionCount = 30;
-  int _visibleGridCount = 60;
-
-  void _resetPagination() {
-    _visibleSectionCount = 30;
-    _visibleGridCount = 60;
-  }
-
-  void _loadMoreIfNeeded(int totalItems) {
-    if (_viewMode == HistoryViewMode.grid) {
-      if (_visibleGridCount < totalItems) {
-        setState(() {
-          _visibleGridCount = (_visibleGridCount + 60).clamp(0, totalItems);
-        });
-      }
-    } else {
-      if (_visibleSectionCount < _cachedTimelineSections.length) {
-        setState(() {
-          _visibleSectionCount = (_visibleSectionCount + 30).clamp(0, _cachedTimelineSections.length);
-        });
-      }
-    }
-  }
 
   @override
   void initState() {
@@ -122,27 +104,52 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     }
   }
 
+  void _resetPagination() {
+    _visibleSectionCount = 30;
+    _visibleGridCount = 60;
+  }
+
+  void _loadMoreIfNeeded(int totalItems) {
+    if (_viewMode == HistoryViewMode.grid) {
+      if (_visibleGridCount < totalItems) {
+        setState(() {
+          _visibleGridCount = (_visibleGridCount + 60).clamp(0, totalItems);
+        });
+      }
+    } else {
+      if (_visibleSectionCount < _cachedTimelineSections.length) {
+        setState(() {
+          _visibleSectionCount = (_visibleSectionCount + 30).clamp(0, _cachedTimelineSections.length);
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final appLanguage = ref.watch(settingsProvider).appLanguage;
     final historyAsync = ref.watch(watchLogsProvider);
+    final localHistoryAsync = ref.watch(watchHistoryStreamProvider);
     final stats = ref.watch(profileStatsProvider).valueOrNull ?? ProfileStats.empty();
     final horizontalPadding = AppTheme.getResponsiveHorizontalPadding(context);
 
     return Scaffold(
       backgroundColor: AppTheme.primary,
       body: SafeArea(
+        top: false,
         bottom: false,
         child: historyAsync.when(
           data: (historyList) {
-            final filtered = _filterAndSortItems(historyList, appLanguage);
+            final localList = localHistoryAsync.valueOrNull ?? const [];
+            final joined = _joinLogsWithLocalHistory(historyList, localList);
+            final filtered = _filterAndSortItems(joined, appLanguage);
             return _buildContent(
               context,
               l10n,
               appLanguage,
               filtered,
-              historyList,
+              joined,
               stats,
               horizontalPadding,
             );
@@ -150,15 +157,94 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
           loading: () => const Center(
             child: CircularProgressIndicator(color: AppTheme.accent),
           ),
-          error: (err, _) => Center(
-            child: Text(
-              '${l10n.commonError}: $err',
-              style: const TextStyle(color: Colors.white70),
-            ),
-          ),
+          error: (err, _) {
+            final localList = localHistoryAsync.valueOrNull;
+            if (localList != null && localList.isNotEmpty) {
+              final filtered = _filterAndSortItems(localList, appLanguage);
+              return _buildContent(
+                context,
+                l10n,
+                appLanguage,
+                filtered,
+                localList,
+                stats,
+                horizontalPadding,
+              );
+            }
+            return Center(
+              child: Text(
+                '${l10n.commonError}: $err',
+                style: const TextStyle(color: Colors.white70),
+              ),
+            );
+          },
         ),
       ),
     );
+  }
+
+  /// Locally joins remote chronological watch logs with local Drift watch history,
+  /// ensuring real-time status (watching, dropped, completed) and in-progress states are reflected.
+  List<WatchHistory> _joinLogsWithLocalHistory(
+    List<WatchHistory> logs,
+    List<WatchHistory> localList,
+  ) {
+    if (localList.isEmpty) return logs;
+
+    final localMap = <String, WatchHistory>{};
+    for (final item in localList) {
+      localMap['${item.mediaType.name}-${item.tmdbId}'] = item;
+    }
+
+    final joined = <WatchHistory>[];
+    final loggedMediaKeys = <String>{};
+
+    for (final log in logs) {
+      final key = '${log.mediaType.name}-${log.tmdbId}';
+      loggedMediaKeys.add(key);
+      final local = localMap[key];
+
+      if (local != null) {
+        joined.add(
+          WatchHistory(
+            userId: log.userId,
+            tmdbId: log.tmdbId,
+            mediaType: log.mediaType,
+            status: local.status ?? log.status ?? WatchStatus.completed,
+            progressSeconds: log.progressSeconds > 0 ? log.progressSeconds : local.progressSeconds,
+            totalDuration: log.totalDuration ?? local.totalDuration,
+            watchCount: log.watchCount,
+            lastWatchedAt: log.lastWatchedAt,
+            season: log.season ?? local.season,
+            episode: log.episode ?? local.episode,
+            media: log.media ?? local.media,
+          ),
+        );
+      } else {
+        joined.add(log);
+      }
+    }
+
+    // Append any local in-progress or dropped items that have no completed watch_logs entries
+    for (final local in localList) {
+      final key = '${local.mediaType.name}-${local.tmdbId}';
+      if (!loggedMediaKeys.contains(key)) {
+        joined.add(local);
+      } else if (local.status == WatchStatus.watching && local.progressSeconds > 0) {
+        final hasActiveEntry = joined.any(
+          (j) =>
+              j.tmdbId == local.tmdbId &&
+              j.season == local.season &&
+              j.episode == local.episode &&
+              j.status == WatchStatus.watching,
+        );
+        if (!hasActiveEntry) {
+          joined.add(local);
+        }
+      }
+    }
+
+    return joined;
   }
 
   Widget _buildContent(
@@ -242,13 +328,25 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
       child: RefreshIndicator(
         color: AppTheme.accent,
         backgroundColor: AppTheme.surface,
-        onRefresh: () => ref.refresh(watchLogsProvider.future),
+        onRefresh: () async {
+          final userId = ref.read(userIdProvider);
+          if (userId != null) {
+            await ref.read(watchHistoryRepositoryProvider).syncWatchHistory(userId);
+          }
+          ref.invalidate(watchLogsProvider);
+          await ref.read(watchLogsProvider.future);
+        },
         child: CustomScrollView(
           cacheExtent: 600,
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(horizontalPadding, 20, horizontalPadding, 20),
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  isDesktop ? 16 : 4,
+                  horizontalPadding,
+                  isDesktop ? 20 : 12,
+                ),
                 child: isDesktop
                     ? _buildDesktopHeader(context, l10n, subtitle)
                     : _buildMobileHeader(context, l10n, subtitle),
@@ -267,17 +365,27 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
                   horizontalPadding,
                   32,
                 ),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 200,
-                    childAspectRatio: 0.58,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _buildGridItem(context, gridItems[index], appLanguage, l10n),
-                    childCount: gridItems.length,
-                  ),
+                sliver: SliverLayoutBuilder(
+                  builder: (context, constraints) {
+                    final availableWidth = constraints.crossAxisExtent;
+                    final isMobile = availableWidth < 600;
+                    const spacing = 10.0;
+                    final crossAxisCount = isMobile
+                        ? 3
+                        : ((availableWidth + spacing) / (140 + spacing)).floor().clamp(3, 8);
+                    return SliverGrid(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        childAspectRatio: 0.54,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => _buildGridItem(context, gridItems[index], appLanguage, l10n),
+                        childCount: gridItems.length,
+                      ),
+                    );
+                  },
                 ),
               )
             else
@@ -395,26 +503,113 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
         const SizedBox(height: 16),
         _buildSearchBar(l10n),
         const SizedBox(height: 14),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
+        _buildMobileToolbar(context, l10n),
+      ],
+    );
+  }
+
+  Widget _buildMobileToolbar(BuildContext context, AppLocalizations l10n) {
+    final activeCount = _calculateActiveFilterCount();
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _buildViewModeToggle(l10n),
+        _buildMobileFilterButton(context, l10n, activeCount),
+      ],
+    );
+  }
+
+  int _calculateActiveFilterCount() {
+    int count = 0;
+    if (_selectedType != null) count++;
+    if (_selectedStatus != null) count++;
+    if (_sortOption != HistorySortOption.recentlyWatched) count++;
+    if (_viewMode == HistoryViewMode.timeline && _granularity != TimelineGranularity.daily) {
+      count++;
+    }
+    return count;
+  }
+
+  Widget _buildMobileFilterButton(BuildContext context, AppLocalizations l10n, int activeCount) {
+    final hasActive = activeCount > 0;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _openFilterSheet(context),
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: hasActive ? AppTheme.accent.withValues(alpha: 0.15) : AppTheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: hasActive ? AppTheme.accent : Colors.white.withValues(alpha: 0.1),
+              width: hasActive ? 1.2 : 1.0,
+            ),
+          ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              _buildViewModeToggle(l10n),
-              const SizedBox(width: 10),
-              _buildTypeFilter(l10n),
-              const SizedBox(width: 10),
-              _buildStatusFilter(l10n),
-              if (_viewMode == HistoryViewMode.timeline) ...[
-                const SizedBox(width: 10),
-                _buildGranularityToggle(l10n),
+              Icon(
+                Icons.tune_rounded,
+                size: 16,
+                color: hasActive ? AppTheme.accent : Colors.white70,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                l10n.watchHistoryFiltersTitle,
+                style: TextStyle(
+                  color: hasActive ? Colors.white : Colors.white70,
+                  fontSize: 13,
+                  fontWeight: hasActive ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ),
+              if (hasActive) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    activeCount.toString(),
+                    style: const TextStyle(
+                      color: AppTheme.primary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ],
-              const SizedBox(width: 10),
-              _buildSortDropdown(l10n),
             ],
           ),
         ),
-      ],
+      ),
     );
+  }
+
+  Future<void> _openFilterSheet(BuildContext context) async {
+    final result = await WatchHistoryFilterSheet.show(
+      context: context,
+      currentType: _selectedType,
+      currentStatus: _selectedStatus,
+      currentSortOption: _sortOption,
+      currentGranularity: _granularity,
+      isTimelineMode: _viewMode == HistoryViewMode.timeline,
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _selectedType = result.type;
+        _selectedStatus = result.status;
+        _sortOption = result.sortOption;
+        _granularity = result.granularity;
+        _resetPagination();
+      });
+    }
   }
 
   String _buildSubtitleText(
@@ -1032,10 +1227,13 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
       builder: (context, constraints) {
         final crossAxisExtent = constraints.crossAxisExtent;
         final availableWidth = (crossAxisExtent - (horizontalPadding * 2)).clamp(100.0, double.infinity);
-        const spacing = 16.0;
-        final crossAxisCount = (availableWidth / 200).floor().clamp(2, 8);
+        final isMobile = availableWidth < 600;
+        const spacing = 10.0;
+        final crossAxisCount = isMobile
+            ? 3
+            : ((availableWidth + spacing) / (140 + spacing)).floor().clamp(3, 8);
         final cardWidth = (availableWidth - (crossAxisCount - 1) * spacing) / crossAxisCount;
-        final cardHeight = cardWidth / 0.58;
+        final cardHeight = cardWidth / 0.54;
 
         final visibleSections = sections.take(_visibleSectionCount).toList();
         final rows = _buildTimelineRows(visibleSections, crossAxisCount);

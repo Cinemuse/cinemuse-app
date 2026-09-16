@@ -1910,4 +1910,36 @@ class AppLocalizationsIt extends AppLocalizations {
   String watchHistorySeasonRange(int startSeason, int endSeason) {
     return 'S$startSeason–S$endSeason';
   }
+
+  @override
+  String get watchHistoryFiltersTitle => 'Filtri';
+
+  @override
+  String get watchHistoryResetFilters => 'Reimposta';
+
+  @override
+  String get watchHistoryApplyFilters => 'Applica filtri';
+
+  @override
+  String get watchHistoryFilterType => 'Tipo';
+
+  @override
+  String get watchHistoryFilterStatus => 'Stato';
+
+  @override
+  String get watchHistoryFilterSort => 'Ordina per';
+
+  @override
+  String get watchHistoryFilterGranularity => 'Raggruppa per';
+
+  @override
+  String watchHistoryActiveFilterCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count filtri',
+      one: '1 filtro',
+    );
+    return '$_temp0';
+  }
 }

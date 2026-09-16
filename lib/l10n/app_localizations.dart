@@ -3353,6 +3353,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'S{startSeason}–S{endSeason}'**
   String watchHistorySeasonRange(int startSeason, int endSeason);
+
+  /// No description provided for @watchHistoryFiltersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get watchHistoryFiltersTitle;
+
+  /// No description provided for @watchHistoryResetFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get watchHistoryResetFilters;
+
+  /// No description provided for @watchHistoryApplyFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply Filters'**
+  String get watchHistoryApplyFilters;
+
+  /// No description provided for @watchHistoryFilterType.
+  ///
+  /// In en, this message translates to:
+  /// **'Media Type'**
+  String get watchHistoryFilterType;
+
+  /// No description provided for @watchHistoryFilterStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch Status'**
+  String get watchHistoryFilterStatus;
+
+  /// No description provided for @watchHistoryFilterSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort By'**
+  String get watchHistoryFilterSort;
+
+  /// No description provided for @watchHistoryFilterGranularity.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline Grouping'**
+  String get watchHistoryFilterGranularity;
+
+  /// No description provided for @watchHistoryActiveFilterCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 filter} other{{count} filters}}'**
+  String watchHistoryActiveFilterCount(int count);
 }
 
 class _AppLocalizationsDelegate
