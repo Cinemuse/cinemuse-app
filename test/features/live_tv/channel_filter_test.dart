@@ -138,5 +138,19 @@ void main() {
       expect(sections.first.title, 'Cinema');
       expect(sections.first.title.isNotEmpty, isTrue);
     });
+
+    test('inactive category filter produces a flat single section with empty title', () {
+      const filter = ChannelFilter();
+      final isFlat = !filter.isActive;
+      expect(isFlat, isTrue);
+
+      final sections = isFlat
+          ? [ChannelSection(title: '', channels: channels)]
+          : <ChannelSection>[];
+
+      expect(sections.length, 1);
+      expect(sections.first.title, isEmpty);
+      expect(sections.first.channels.map((c) => c.lcn).toList(), [1, 2, 3, 4]);
+    });
   });
 }

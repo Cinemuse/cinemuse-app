@@ -337,6 +337,20 @@ https://enfaqgwmuytoxkxgqqvp.supabase.co/functions/v1/live-tv-resolver/stream?ch
       expect(ch.links[1].provider, 'CDN Fallback');
       expect(ch.links[1].quality, StreamQuality.hd);
     });
+
+    test('extracts tvg-chno and preserves explicit LCN', () {
+      const m3u = '''#EXTM3U
+#EXTINF:-1 tvg-id="rai1" tvg-chno="1" tvg-name="Rai 1 HD" tvg-logo="https://logo.png" group-title="Nazionali",Rai 1 HD
+http://stream.com/rai1.m3u8
+#EXTINF:-1 tvg-id="dlhd_870" tvg-chno="202" tvg-name="Sky Sport Calcio HD" tvg-logo="https://logo.png" group-title="Sky Sport",Sky Sport Calcio HD
+http://stream.com/skysportcalcio.m3u8
+''';
+
+      final channels = M3uParser.parse(m3u);
+      expect(channels.length, 2);
+      expect(channels[0].lcn, 1);
+      expect(channels[1].lcn, 202);
+    });
   });
 
   group('Channel.copyWith', () {

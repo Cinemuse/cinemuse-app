@@ -342,12 +342,12 @@ final sectionedChannelsProvider = Provider<AsyncValue<List<ChannelSection>>>((
     }
 
     // Build sections
-    if (tab != LiveTvTab.all) {
-      // Single flat list — no section headers
+    if (tab != LiveTvTab.all || !filter.isActive) {
+      // Single flat list — no category section headers, preserving natural LCN order
       return [ChannelSection(title: '', channels: pool)];
     }
 
-    // Group by category for "All" tab (always on)
+    // Group by category when a specific category filter is active
     return _buildSections(pool);
   });
 });

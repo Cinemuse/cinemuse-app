@@ -116,11 +116,24 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     });
   }
 
+  bool _isTextInputFocused() {
+    final focus = FocusManager.instance.primaryFocus;
+    if (focus == null || focus.context == null || !focus.context!.mounted) {
+      return false;
+    }
+    final context = focus.context!;
+    return context.widget is EditableText ||
+        context.findAncestorWidgetOfExactType<EditableText>() != null;
+  }
+
   bool _handleKeyEvent(KeyEvent event) {
     if (!mounted) return false;
     // Only handle when Live TV tab is active
     if (ref.read(navIndexProvider) != 2) return false;
     if (event is! KeyDownEvent) return false;
+
+    // Do not intercept keystrokes if the user is typing into a text field (e.g. search, dialog)
+    if (_isTextInputFocused()) return false;
 
     // Number keys (both main keyboard and numpad)
     final key = event.logicalKey;

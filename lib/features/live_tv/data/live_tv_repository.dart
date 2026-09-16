@@ -41,7 +41,11 @@ class LiveTvRepository {
             if (channelsByKey.containsKey(key)) {
               final existing = channelsByKey[key]!;
               final mergedLinks = _mergeStreamLinks(existing.links, ch.links);
+              final preferredLcn = (existing.lcn > 0 && existing.lcn < 2000)
+                  ? existing.lcn
+                  : (ch.lcn > 0 && ch.lcn < 2000 ? ch.lcn : existing.lcn);
               channelsByKey[key] = existing.copyWith(
+                lcn: preferredLcn,
                 links: mergedLinks,
                 logo: existing.logo.isNotEmpty ? existing.logo : ch.logo,
                 group: existing.group ?? ch.group,

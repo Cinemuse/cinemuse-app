@@ -14,6 +14,7 @@ class M3uParser {
     String? currentEpgId;
     String? currentProvider;
     String? currentQuality;
+    int? currentChno;
 
     for (var line in lines) {
       line = line.trim();
@@ -26,6 +27,10 @@ class M3uParser {
         currentProvider = _extractAttribute(line, 'provider');
         currentQuality = _extractAttribute(line, 'quality');
         currentName = _extractChannelName(line);
+        final chnoStr = _extractAttribute(line, 'tvg-chno') ??
+            _extractAttribute(line, 'tvg-num') ??
+            _extractAttribute(line, 'channel-id');
+        currentChno = int.tryParse(chnoStr ?? '');
       } else if (!line.startsWith('#')) {
         if (currentName != null) {
           final key = _buildChannelKey(currentEpgId, currentName);
@@ -36,11 +41,19 @@ class M3uParser {
             provider: currentProvider,
           );
 
+          final explicitLcn = (currentChno != null && currentChno > 0)
+              ? currentChno
+              : null;
+
           if (channelsByKey.containsKey(key)) {
-            channelsByKey[key]!.addLink(link);
+            final builder = channelsByKey[key]!;
+            builder.addLink(link);
+            if (explicitLcn != null && builder.lcn >= startLcn) {
+              builder.lcn = explicitLcn;
+            }
           } else {
             final builder = _ParsedChannelBuilder(
-              lcn: currentLcn++,
+              lcn: explicitLcn ?? currentLcn++,
               name: currentName,
               logo: currentLogo ?? '',
               group: currentGroup,
@@ -58,6 +71,7 @@ class M3uParser {
         currentEpgId = null;
         currentProvider = null;
         currentQuality = null;
+        currentChno = null;
       }
     }
 
@@ -114,7 +128,7 @@ class M3uParser {
 }
 
 class _ParsedChannelBuilder {
-  final int lcn;
+  int lcn;
   final String name;
   final String logo;
   final String? group;

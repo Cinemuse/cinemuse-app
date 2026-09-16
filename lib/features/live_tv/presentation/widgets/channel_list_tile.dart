@@ -71,9 +71,11 @@ class ChannelListTile extends StatelessWidget {
 
   Widget _buildLcnNumber() {
     return SizedBox(
-      width: 32,
+      width: 36,
       child: Text(
         channel.lcn.toString(),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: isSelected ? AppTheme.accent : AppTheme.textMuted,
           fontWeight: FontWeight.w700,
