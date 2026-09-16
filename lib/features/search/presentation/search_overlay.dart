@@ -155,161 +155,183 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
     return Stack(
       children: [
         Positioned.fill(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Container(color: Colors.transparent),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _handleClose,
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: Container(color: Colors.transparent),
+            ),
           ),
         ),
 
         Positioned.fill(
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(
-                top: 20,
-                left: 16,
-                right: 16,
-                bottom: 0,
-              ),
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Container(
-                      width: double.infinity,
-                      constraints: const BoxConstraints(
-                        maxWidth: 800,
-                        maxHeight: 800,
-                      ),
-                      margin: const EdgeInsets.only(top: 40),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.1),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.5),
-                            blurRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.05),
-                                ),
-                              ),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _handleClose,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  top: 20,
+                  left: 16,
+                  right: 16,
+                  bottom: 0,
+                ),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 40),
+                    child: ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {},
+                        child: Material(
+                          color: Colors.transparent,
+                          child: Container(
+                            width: double.infinity,
+                            constraints: const BoxConstraints(
+                              maxWidth: 800,
+                              maxHeight: 800,
                             ),
-                            child: Row(
+                            decoration: BoxDecoration(
+                              color: AppTheme.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.1),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.5),
+                                  blurRadius: 10,
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                IconButton(
-                                  mouseCursor: SystemMouseCursors.click,
-                                  icon: const Icon(
-                                    LucideIcons.arrowLeft,
-                                    color: AppTheme.textMuted,
-                                    size: 24,
-                                  ),
-                                  onPressed: _handleClose,
-                                  tooltip: l10n.commonCancel,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _searchController,
-                                    enabled: !isOffline,
-                                    focusNode: _focusNode,
-                                    cursorColor: Colors.white,
-                                    textInputAction: TextInputAction.search,
-                                    onSubmitted: (val) {
-                                      final query = val.trim();
-                                      if (query.isNotEmpty) {
-                                        ref
-                                            .read(searchProvider.notifier)
-                                            .addToHistory(query);
-                                        ref
-                                            .read(searchProvider.notifier)
-                                            .search(query);
-                                      }
-                                    },
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      color: isOffline
-                                          ? AppTheme.textMuted
-                                          : Colors.white,
-                                      fontWeight: FontWeight.w300,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: l10n.searchPlaceholder,
-                                      hintStyle: TextStyle(
-                                        color: AppTheme.textMuted.withValues(
-                                          alpha: 0.5,
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.05,
                                         ),
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w300,
                                       ),
-                                      border: InputBorder.none,
-                                      enabledBorder: InputBorder.none,
-                                      focusedBorder: InputBorder.none,
-                                      filled: false,
-                                      contentPadding: EdgeInsets.zero,
-                                      hoverColor: Colors.transparent,
                                     ),
-                                    onChanged: (val) {
-                                      ref
-                                          .read(searchProvider.notifier)
-                                          .onQueryChanged(val);
-                                    },
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      IconButton(
+                                        mouseCursor: SystemMouseCursors.click,
+                                        icon: const Icon(
+                                          LucideIcons.arrowLeft,
+                                          color: AppTheme.textMuted,
+                                          size: 24,
+                                        ),
+                                        onPressed: _handleClose,
+                                        tooltip: l10n.commonCancel,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _searchController,
+                                          enabled: !isOffline,
+                                          focusNode: _focusNode,
+                                          cursorColor: Colors.white,
+                                          textInputAction:
+                                              TextInputAction.search,
+                                          onSubmitted: (val) {
+                                            final query = val.trim();
+                                            if (query.isNotEmpty) {
+                                              ref
+                                                  .read(searchProvider.notifier)
+                                                  .addToHistory(query);
+                                              ref
+                                                  .read(searchProvider.notifier)
+                                                  .search(query);
+                                            }
+                                          },
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            color: isOffline
+                                                ? AppTheme.textMuted
+                                                : Colors.white,
+                                            fontWeight: FontWeight.w300,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: l10n.searchPlaceholder,
+                                            hintStyle: TextStyle(
+                                              color: AppTheme.textMuted
+                                                  .withValues(alpha: 0.5),
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w300,
+                                            ),
+                                            border: InputBorder.none,
+                                            enabledBorder: InputBorder.none,
+                                            focusedBorder: InputBorder.none,
+                                            filled: false,
+                                            contentPadding: EdgeInsets.zero,
+                                            hoverColor: Colors.transparent,
+                                          ),
+                                          onChanged: (val) {
+                                            ref
+                                                .read(searchProvider.notifier)
+                                                .onQueryChanged(val);
+                                          },
+                                        ),
+                                      ),
+                                      if (_searchController.text.isNotEmpty)
+                                        IconButton(
+                                          mouseCursor: SystemMouseCursors.click,
+                                          icon: const Icon(
+                                            LucideIcons.x,
+                                            color: AppTheme.textMuted,
+                                            size: 18,
+                                          ),
+                                          onPressed: () {
+                                            _searchController.clear();
+                                            ref
+                                                .read(searchProvider.notifier)
+                                                .onQueryChanged('');
+                                          },
+                                          tooltip: l10n.commonClearAll,
+                                        ),
+                                      if (searchState.status ==
+                                          SearchStatus.loading)
+                                        const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: AppTheme.accent,
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ),
-                                if (_searchController.text.isNotEmpty)
-                                  IconButton(
-                                    mouseCursor: SystemMouseCursors.click,
-                                    icon: const Icon(
-                                      LucideIcons.x,
-                                      color: AppTheme.textMuted,
-                                      size: 18,
+
+                                Flexible(
+                                  child: Container(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    constraints: BoxConstraints(
+                                      maxHeight:
+                                          MediaQuery.of(context).size.height *
+                                          0.7,
+                                      minHeight: 200,
                                     ),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      ref
-                                          .read(searchProvider.notifier)
-                                          .onQueryChanged('');
-                                    },
-                                    tooltip: l10n.commonClearAll,
-                                  ),
-                                if (searchState.status == SearchStatus.loading)
-                                  const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppTheme.accent,
+                                    child: _buildBody(
+                                      searchState,
+                                      l10n,
+                                      isOffline,
                                     ),
                                   ),
+                                ),
                               ],
                             ),
                           ),
-
-                          Flexible(
-                            child: Container(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              constraints: BoxConstraints(
-                                maxHeight:
-                                    MediaQuery.of(context).size.height * 0.7,
-                                minHeight: 200,
-                              ),
-                              child: _buildBody(searchState, l10n, isOffline),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -386,7 +408,7 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 200,
-        childAspectRatio: 0.67,
+        childAspectRatio: 0.56,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
@@ -465,7 +487,12 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 20, right: 12, top: 16, bottom: 0),
+          padding: const EdgeInsets.only(
+            left: 20,
+            right: 12,
+            top: 16,
+            bottom: 0,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -481,12 +508,18 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
               TextButton(
                 style: TextButton.styleFrom(
                   foregroundColor: AppTheme.accent,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   enabledMouseCursor: SystemMouseCursors.click,
                 ),
                 child: Text(
                   l10n.commonClearAll,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 onPressed: () {
                   ref.read(searchProvider.notifier).clearHistory();
@@ -513,49 +546,55 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
                     mouseCursor: SystemMouseCursors.click,
                     onTap: () => _onHistoryItemTap(query),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          LucideIcons.clock,
-                          size: 16,
-                          color: AppTheme.textMuted,
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
-                            query,
-                            style: const TextStyle(
-                              color: AppTheme.textWhite,
-                              fontSize: 15,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        IconButton(
-                          mouseCursor: SystemMouseCursors.click,
-                          icon: const Icon(
-                            LucideIcons.x,
-                            size: 18,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            LucideIcons.clock,
+                            size: 16,
                             color: AppTheme.textMuted,
                           ),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                          onPressed: () {
-                            ref
-                                .read(searchProvider.notifier)
-                                .removeFromHistory(query);
-                          },
-                          tooltip: l10n.commonDelete,
-                        ),
-                      ],
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              query,
+                              style: const TextStyle(
+                                color: AppTheme.textWhite,
+                                fontSize: 15,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          IconButton(
+                            mouseCursor: SystemMouseCursors.click,
+                            icon: const Icon(
+                              LucideIcons.x,
+                              size: 18,
+                              color: AppTheme.textMuted,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
+                            onPressed: () {
+                              ref
+                                  .read(searchProvider.notifier)
+                                  .removeFromHistory(query);
+                            },
+                            tooltip: l10n.commonDelete,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
           ),
         ),
       ],

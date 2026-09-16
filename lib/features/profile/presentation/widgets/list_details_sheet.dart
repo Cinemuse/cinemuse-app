@@ -565,7 +565,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                     gridDelegate:
                         const SliverGridDelegateWithMaxCrossAxisExtent(
                           maxCrossAxisExtent: 180,
-                          childAspectRatio: 0.65,
+                          childAspectRatio: 0.56,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),

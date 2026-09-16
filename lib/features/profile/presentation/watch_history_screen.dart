@@ -343,7 +343,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
                   horizontalPadding,
-                  isDesktop ? 16 : 4,
+                  isDesktop ? 16 : 12,
                   horizontalPadding,
                   isDesktop ? 20 : 12,
                 ),

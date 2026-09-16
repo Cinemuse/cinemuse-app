@@ -279,7 +279,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                           crossAxisCount: crossAxisCount,
                           mainAxisSpacing: 16,
                           crossAxisSpacing: spacing,
-                          childAspectRatio: 0.68,
+                          childAspectRatio: 0.56,
                         ),
                         delegate: SliverChildBuilderDelegate(
                           (context, index) => _buildMediaCard(
@@ -297,7 +297,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                         crossAxisCount: crossAxisCount,
                         mainAxisSpacing: 16,
                         crossAxisSpacing: spacing,
-                        childAspectRatio: 0.68,
+                        childAspectRatio: 0.56,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) =>
