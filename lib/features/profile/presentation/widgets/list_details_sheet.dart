@@ -13,7 +13,6 @@ import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
-import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
 import 'package:cinemuse_app/features/search/presentation/search_overlay.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
@@ -554,26 +553,41 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                       ),
                     ),
                   )
-                : GridView.builder(
-                    addAutomaticKeepAlives: true,
-                    padding: EdgeInsets.fromLTRB(
-                      24,
-                      24,
-                      24,
-                      24 + MediaQuery.paddingOf(context).bottom,
-                    ),
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 180,
-                          childAspectRatio: 0.56,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isMobile = constraints.maxWidth < 600;
+                      final spacing = isMobile ? 10.0 : 16.0;
+                      final horizontalPadding = isMobile ? 16.0 : 24.0;
+                      final verticalPadding = isMobile ? 16.0 : 24.0;
+
+                      return GridView.builder(
+                        addAutomaticKeepAlives: true,
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalPadding,
+                          verticalPadding,
+                          horizontalPadding,
+                          verticalPadding + MediaQuery.paddingOf(context).bottom,
                         ),
-                    itemCount: currentList.items.length,
-                    itemBuilder: (context, index) {
-                      return _ListMediaCard(
-                        item: currentList.items[index],
-                        listId: currentList.id,
+                        gridDelegate: isMobile
+                            ? SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                childAspectRatio: 0.54,
+                                crossAxisSpacing: spacing,
+                                mainAxisSpacing: spacing,
+                              )
+                            : const SliverGridDelegateWithMaxCrossAxisExtent(
+                                maxCrossAxisExtent: 180,
+                                childAspectRatio: 0.56,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                              ),
+                        itemCount: currentList.items.length,
+                        itemBuilder: (context, index) {
+                          return _ListMediaCard(
+                            item: currentList.items[index],
+                            listId: currentList.id,
+                          );
+                        },
                       );
                     },
                   ),
@@ -683,8 +697,7 @@ class _ListMediaCard extends ConsumerWidget {
             }
           : null,
       onTap: () {
-        Navigator.of(context).pop();
-        ref.read(shellNavigatorKeyProvider).currentState?.push(
+        Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute(
             builder: (_) => MediaDetailsScreen(
               mediaId: item.tmdbId.toString(),

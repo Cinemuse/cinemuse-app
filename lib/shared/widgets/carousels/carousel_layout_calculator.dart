@@ -48,7 +48,7 @@ class CarouselLayoutCalculator {
   static const double defaultSpacing = 16.0;
 
   /// Number of cards visible on mobile for poster carousels.
-  static const double defaultPosterMobileVisibleCards = 3.2;
+  static const double defaultPosterMobileVisibleCards = 2.3;
 
   /// Number of cards visible on mobile for backdrop carousels.
   static const double defaultBackdropMobileVisibleCards = 1.3;

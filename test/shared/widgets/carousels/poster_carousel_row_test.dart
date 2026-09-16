@@ -6,11 +6,11 @@ import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart'
 
 void main() {
   group('CarouselLayoutCalculator', () {
-    test('calculates exactly 3.2 cards visible on 390px mobile viewport', () {
+    test('calculates exactly 2.3 cards visible on 390px mobile viewport', () {
       const screenWidth = 390.0;
       const padding = EdgeInsets.symmetric(horizontal: 16);
       const spacing = 16.0;
-      const visibleCards = 3.2;
+      const visibleCards = 2.3;
 
       final dimensions = CarouselLayoutCalculator.calculatePosterDimensions(
         screenWidth: screenWidth,
@@ -19,15 +19,15 @@ void main() {
         visibleCards: visibleCards,
       );
 
-      // Expected itemWidth = (390 - 16 - 3 * 16) / 3.2 = 326 / 3.2 = 101.875
-      expect(dimensions.itemWidth, closeTo(101.875, 0.001));
+      // Expected itemWidth = (390 - 16 - 2 * 16) / 2.3 = 342 / 2.3 ≈ 148.696
+      expect(dimensions.itemWidth, closeTo(148.696, 0.001));
 
       // Verify exact screen boundary visibility:
-      // Left padding + 3 full cards + 3 spacing gaps + 0.2 of 4th card
+      // Left padding + 2 full cards + 2 spacing gaps + 0.3 of 3rd card
       final totalOccupiedAtEdge = padding.left +
-          (3 * dimensions.itemWidth) +
-          (3 * spacing) +
-          (0.2 * dimensions.itemWidth);
+          (2 * dimensions.itemWidth) +
+          (2 * spacing) +
+          (0.3 * dimensions.itemWidth);
 
       expect(totalOccupiedAtEdge, closeTo(screenWidth, 0.001));
 
@@ -36,7 +36,7 @@ void main() {
       expect(dimensions.height, closeTo(expectedHeight, 0.001));
     });
 
-    test('calculates exactly 3.2 cards visible on 360px and 430px viewports', () {
+    test('calculates exactly 2.3 cards visible on 360px and 430px viewports', () {
       for (final width in [360.0, 393.0, 412.0, 430.0]) {
         const padding = EdgeInsets.symmetric(horizontal: 16);
         const spacing = 16.0;
@@ -48,12 +48,12 @@ void main() {
         );
 
         final totalAtEdge = padding.left +
-            (3 * dims.itemWidth) +
-            (3 * spacing) +
-            (0.2 * dims.itemWidth);
+            (2 * dims.itemWidth) +
+            (2 * spacing) +
+            (0.3 * dims.itemWidth);
 
         expect(totalAtEdge, closeTo(width, 0.001),
-            reason: 'Failed exact 3.2 card boundary for width $width');
+            reason: 'Failed exact 2.3 card boundary for width $width');
       }
     });
 
@@ -123,8 +123,8 @@ void main() {
       expect(firstItemFinder, findsOneWidget);
 
       final size = tester.getSize(firstItemFinder);
-      // Expected width is (390 - 16 - 48) / 3.2 = 101.875
-      expect(size.width, closeTo(101.875, 0.5));
+      // Expected width is (390 - 16 - 32) / 2.3 ≈ 148.696
+      expect(size.width, closeTo(148.696, 0.5));
     });
 
     testWidgets('renders items with default 200px width on desktop viewport',
