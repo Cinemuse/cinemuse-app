@@ -1,10 +1,13 @@
+import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/social_actions_group.dart';
+import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ResponsiveActionButtons extends ConsumerStatefulWidget {
@@ -174,6 +177,7 @@ class _ResponsiveActionButtonsState
         onPlayClick: widget.onPlayClick,
         label: widget.playButtonLabel,
         isFullWidth: isFullWidth,
+        onExitLeft: _handleExitLeft,
       );
     }
 
@@ -183,7 +187,16 @@ class _ResponsiveActionButtonsState
       isFullWidth: isFullWidth,
       onDropdownOpened: _refreshCacheState,
       dropdownItems: _buildDropdownItems(context),
+      onExitLeft: _handleExitLeft,
     );
+  }
+
+  void _handleExitLeft() {
+    final isBigPicture = ref.read(isBigPictureProvider);
+    if (isBigPicture) {
+      final focusRail = ref.read(tvRailFocusActionProvider);
+      focusRail?.call();
+    }
   }
 
   List<_DropdownItem> _buildDropdownItems(BuildContext context) {
@@ -247,56 +260,20 @@ class _SplitPlayButton extends StatelessWidget {
   final bool isFullWidth;
   final List<_DropdownItem> dropdownItems;
   final VoidCallback onDropdownOpened;
+  final VoidCallback? onExitLeft;
 
   const _SplitPlayButton({
     required this.onPlayClick,
     required this.label,
     required this.dropdownItems,
     required this.onDropdownOpened,
+    this.onExitLeft,
     this.isFullWidth = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final buttonDecoration = BoxDecoration(
-      color: AppTheme.accent,
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: AppTheme.shadowAccentGlow,
-    );
-
-    final mainButton = MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onPlayClick,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 15),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.play_arrow_outlined,
-                color: AppTheme.textWhite,
-                size: 24,
-              ),
-              const SizedBox(width: 12),
-              Flexible(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    color: AppTheme.textWhite,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    final popupKey = GlobalKey<PopupMenuButtonState<int>>();
 
     final divider = Container(
       width: 1,
@@ -305,6 +282,7 @@ class _SplitPlayButton extends StatelessWidget {
     );
 
     final chevronButton = PopupMenuButton<int>(
+      key: popupKey,
       onOpened: onDropdownOpened,
       tooltip: '',
       color: AppTheme.surface,
@@ -356,20 +334,82 @@ class _SplitPlayButton extends StatelessWidget {
       ),
     );
 
-    final content = Row(
-      mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
-      children: [
-        isFullWidth ? Expanded(child: mainButton) : mainButton,
-        divider,
-        chevronButton,
-      ],
+    return DpadFocusable(
+      autofocus: true,
+      autoScroll: false,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent || event is KeyRepeatEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+            onExitLeft?.call();
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      onTap: onPlayClick,
+      onLongPress: () {
+        onDropdownOpened();
+        popupKey.currentState?.showButtonMenu();
+      },
+      scale: 1.04,
+      borderRadius: BorderRadius.circular(12),
+      builder: (context, isFocused, isHovered, child) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isFocused
+                ? AppTheme.accent.withValues(alpha: 0.9)
+                : AppTheme.accent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isFocused ? Colors.white : Colors.transparent,
+              width: 2.0,
+            ),
+            boxShadow: isFocused
+                ? AppTheme.shadowSubtleGlow
+                : AppTheme.shadowAccentGlow,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: child,
+        );
+      },
+      child: Row(
+        mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
+        children: [
+          isFullWidth
+              ? Expanded(child: _buildMainPlayContent())
+              : _buildMainPlayContent(),
+          divider,
+          chevronButton,
+        ],
+      ),
     );
+  }
 
-    return HoverScale(
-      child: Container(
-        decoration: buttonDecoration,
-        clipBehavior: Clip.antiAlias,
-        child: content,
+  Widget _buildMainPlayContent() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 15),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.play_arrow_outlined,
+            color: AppTheme.textWhite,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: AppTheme.textWhite,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -383,61 +423,81 @@ class _PlayButton extends StatelessWidget {
   final VoidCallback onPlayClick;
   final String label;
   final bool isFullWidth;
+  final VoidCallback? onExitLeft;
 
   const _PlayButton({
     required this.onPlayClick,
     required this.label,
+    this.onExitLeft,
     this.isFullWidth = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onPlayClick,
-        child: HoverScale(
-          child: Container(
-            width: isFullWidth ? double.infinity : null,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 15),
-            decoration: BoxDecoration(
-              color: AppTheme.accent,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: AppTheme.shadowAccentGlow,
+    return DpadFocusable(
+      autofocus: true,
+      autoScroll: false,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent || event is KeyRepeatEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+            onExitLeft?.call();
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      onTap: onPlayClick,
+      scale: 1.04,
+      borderRadius: BorderRadius.circular(12),
+      builder: (context, isFocused, isHovered, child) {
+        return Container(
+          width: isFullWidth ? double.infinity : null,
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 15),
+          decoration: BoxDecoration(
+            color: isFocused
+                ? AppTheme.accent.withValues(alpha: 0.9)
+                : AppTheme.accent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isFocused ? Colors.white : Colors.transparent,
+              width: 2.0,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.play_arrow_outlined,
-                  color: AppTheme.textWhite,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Flexible(
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      color: AppTheme.textWhite,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
+            boxShadow: isFocused
+                ? AppTheme.shadowSubtleGlow
+                : AppTheme.shadowAccentGlow,
+          ),
+          child: child,
+        );
+      },
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.play_arrow_outlined,
+            color: AppTheme.textWhite,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: AppTheme.textWhite,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// Track Button (unchanged from original)
+// Track Button
 // ---------------------------------------------------------------------------
 
 class _TrackButton extends StatelessWidget {
@@ -462,64 +522,73 @@ class _TrackButton extends StatelessWidget {
     final minWatchCount =
         seriesWatchStatus?.minWatchCount ?? (movieWatchCount ?? 0);
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTrackTap,
-        child: HoverScale(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
-            decoration: BoxDecoration(
-              color: isFullyWatched
-                  ? Colors.green.withValues(alpha: 0.15)
-                  : AppTheme.textWhite.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isFullyWatched
+    return DpadFocusable(
+      autoScroll: false,
+      onTap: onTrackTap,
+      scale: 1.03,
+      borderRadius: BorderRadius.circular(12),
+      builder: (context, isFocused, isHovered, child) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
+          decoration: BoxDecoration(
+            color: isFullyWatched
+                ? (isFocused
                     ? Colors.green.withValues(alpha: 0.3)
-                    : AppTheme.textWhite.withValues(alpha: 0.05),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isFullyWatched
-                      ? Icons.check_circle
-                      : (isPartiallyWatched
-                            ? Icons.check_circle_outline
-                            : Icons.add_task),
-                  color: isFullyWatched ? Colors.green : AppTheme.textWhite,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Flexible(
-                  child: Text(
-                    isFullyWatched
-                        ? (isMovie
-                              ? (minWatchCount > 1
-                                    ? l10n.detailsWatchedCount(minWatchCount)
-                                    : l10n.detailsWatched)
-                              : (minWatchCount > 1
-                                    ? l10n.detailsUpToDateCount(minWatchCount)
-                                    : l10n.detailsUpToDate))
-                        : (isPartiallyWatched
-                              ? l10n.detailsFinishSeries
-                              : l10n.detailsTrack),
-                    style: TextStyle(
-                      color: isFullyWatched ? Colors.green : AppTheme.textWhite,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
+                    : Colors.green.withValues(alpha: 0.15))
+                : (isFocused
+                    ? Colors.white.withValues(alpha: 0.18)
+                    : (isHovered
+                        ? Colors.white.withValues(alpha: 0.12)
+                        : AppTheme.textWhite.withValues(alpha: 0.08))),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isFocused
+                  ? Colors.white
+                  : (isFullyWatched
+                      ? Colors.green.withValues(alpha: 0.3)
+                      : AppTheme.textWhite.withValues(alpha: 0.05)),
+              width: isFocused ? 1.5 : 1.0,
             ),
           ),
-        ),
+          child: child,
+        );
+      },
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isFullyWatched
+                ? Icons.check_circle
+                : (isPartiallyWatched
+                    ? Icons.check_circle_outline
+                    : Icons.add_task),
+            color: isFullyWatched ? Colors.green : AppTheme.textWhite,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              isFullyWatched
+                  ? (isMovie
+                      ? (minWatchCount > 1
+                          ? l10n.detailsWatchedCount(minWatchCount)
+                          : l10n.detailsWatched)
+                      : (minWatchCount > 1
+                          ? l10n.detailsUpToDateCount(minWatchCount)
+                          : l10n.detailsUpToDate))
+                  : (isPartiallyWatched
+                      ? l10n.detailsFinishSeries
+                      : l10n.detailsTrack),
+              style: TextStyle(
+                color: isFullyWatched ? Colors.green : AppTheme.textWhite,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }

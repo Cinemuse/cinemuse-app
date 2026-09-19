@@ -1,7 +1,6 @@
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -10,6 +9,8 @@ import 'package:cinemuse_app/shared/widgets/premium_hover_text.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 
 import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_sheet.dart';
 // Just in case, actually just add_to_list_sheet
@@ -53,9 +54,13 @@ class MediaCard extends ConsumerStatefulWidget {
     this.progress,
     this.infoText,
     this.stackCount,
+    this.focusNode,
+    this.onKeyEvent,
   });
 
   final VoidCallback? onPlay;
+  final FocusNode? focusNode;
+  final FocusOnKeyEventCallback? onKeyEvent;
 
   @override
   ConsumerState<MediaCard> createState() => _MediaCardState();
@@ -248,35 +253,22 @@ class _MediaCardState extends ConsumerState<MediaCard> {
     final year = widget.releaseDate?.split('-').first ?? '';
     final imageUrl = TmdbImageHelper.posterUrl(context, widget.posterPath);
 
-    return Focus(
-      onFocusChange: (value) => setState(() => _isHovered = value),
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent) {
-          final isEnter = event.logicalKey == LogicalKeyboardKey.enter;
-          final isSelect = event.logicalKey == LogicalKeyboardKey.select;
-          if (isEnter || isSelect) {
-            widget.onTap?.call();
-            return KeyEventResult.handled;
-          }
-        }
-        return KeyEventResult.ignored;
-      },
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: GestureDetector(
-          onTap: widget.onTap,
-          onLongPress: () => _showContextActions(context),
-          onSecondaryTapDown: (_) => _showContextActions(context),
-          child: RepaintBoundary(
-            child: AnimatedScale(
-              scale: _isHovered ? 1.05 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOutCubic,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+    return DpadFocusable(
+      focusNode: widget.focusNode,
+      onKeyEvent: widget.onKeyEvent,
+      onTap: widget.onTap,
+      onLongPress: () => _showContextActions(context),
+      onSecondaryTap: () => _showContextActions(context),
+      onFocusChange: (focused) => setState(() => _isHovered = focused),
+      onHoverChange: (hovered) => setState(() => _isHovered = hovered),
+      scale: 1.05,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      autoScroll: true,
+      child: RepaintBoundary(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
                 // Poster Image (with optional stacked deck layers behind)
                 Expanded(
                   child: Stack(
@@ -462,6 +454,8 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                     ),
                     Consumer(
                       builder: (context, ref, child) {
+                        final isBigPicture = ref.watch(isBigPictureProvider);
+                        if (isBigPicture) return const SizedBox.shrink();
                         final isMobile =
                             MediaQuery.of(context).size.width < 600;
                         return AnimatedOpacity(
@@ -470,6 +464,8 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                           child: Material(
                             color: Colors.transparent,
                             child: InkWell(
+                              canRequestFocus: false,
+                              excludeFromSemantics: true,
                               onTap: () => _showContextActions(context),
                               mouseCursor: SystemMouseCursors.click,
                               borderRadius: BorderRadius.circular(12),
@@ -528,9 +524,6 @@ class _MediaCardState extends ConsumerState<MediaCard> {
               ],
             ),
           ),
-        ),
-      ),
-    ),
-  );
+        );
   }
 }

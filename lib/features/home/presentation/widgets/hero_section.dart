@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
@@ -7,8 +9,11 @@ import 'package:cinemuse_app/features/video_player/presentation/video_player_scr
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
+import 'package:cinemuse_app/core/application/display_mode_provider.dart';
+import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
-class HeroSection extends StatefulWidget {
+class HeroSection extends ConsumerStatefulWidget {
   final List<MediaItem> items;
 
   HeroSection({
@@ -25,14 +30,15 @@ class HeroSection extends StatefulWidget {
   }
 
   @override
-  State<HeroSection> createState() => _HeroSectionState();
+  ConsumerState<HeroSection> createState() => _HeroSectionState();
 }
 
-class _HeroSectionState extends State<HeroSection>
+class _HeroSectionState extends ConsumerState<HeroSection>
     with WidgetsBindingObserver {
   late final PageController _pageController;
   int _currentIndex = 0;
   bool _isAutoPlayEnabled = true;
+  bool _isHeroFocused = false;
   Timer? _autoPlayTimer;
 
   static const Duration _autoPlayDuration = Duration(seconds: 7);
@@ -122,6 +128,16 @@ class _HeroSectionState extends State<HeroSection>
     );
   }
 
+  void _goToPreviousPage() {
+    if (!mounted || widget.items.length <= 1 || !_pageController.hasClients) return;
+    final prevPage = (_pageController.page?.round() ?? _currentIndex) - 1;
+    _pageController.animateToPage(
+      prevPage,
+      duration: _pageTransitionDuration,
+      curve: _pageTransitionCurve,
+    );
+  }
+
   void _toggleAutoPlay() {
     setState(() {
       _isAutoPlayEnabled = !_isAutoPlayEnabled;
@@ -177,6 +193,7 @@ class _HeroSectionState extends State<HeroSection>
     if (widget.items.isEmpty) return const SizedBox.shrink();
 
     final isMobile = MediaQuery.sizeOf(context).width < 600;
+    final isBigPicture = ref.watch(isBigPictureProvider);
     final heroHeight = HeroSection.getHeroHeight(context);
     final l10n = AppLocalizations.of(context)!;
     final hasMultipleItems = widget.items.length > 1;
@@ -184,7 +201,7 @@ class _HeroSectionState extends State<HeroSection>
         ? widget.items.length * _infiniteMultiplier
         : widget.items.length;
 
-    return SizedBox(
+    Widget carousel = SizedBox(
       height: heroHeight,
       width: double.infinity,
       child: Stack(
@@ -201,6 +218,7 @@ class _HeroSectionState extends State<HeroSection>
                 context,
                 item,
                 isMobile,
+                isBigPicture,
                 heroHeight,
               );
             },
@@ -214,17 +232,64 @@ class _HeroSectionState extends State<HeroSection>
             Positioned(
               right: AppTheme.getResponsiveHorizontalPadding(context),
               bottom: isMobile ? 48 : 84,
-              child: _buildControlsRow(l10n, widget.items.length, isMobile),
+              child: _buildControlsRow(l10n, widget.items.length, isMobile, isBigPicture),
             ),
         ],
       ),
     );
+
+    if (isBigPicture) {
+      final currentItem = widget.items.isNotEmpty
+          ? widget.items[_currentIndex % widget.items.length]
+          : null;
+
+      return DpadFocusable(
+        onTap: currentItem != null
+            ? () => _navigateToDetails(context, currentItem)
+            : null,
+        onFocusChange: (focused) {
+          setState(() => _isHeroFocused = focused);
+          if (focused) {
+            _stopAutoPlayTimer();
+          } else {
+            _startAutoPlayTimer();
+          }
+        },
+        onKeyEvent: (node, event) {
+          if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+            return KeyEventResult.ignored;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+            if (widget.items.length > 1) {
+              _advanceToNextPage();
+              return KeyEventResult.handled;
+            }
+          } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+            if (_currentIndex > 0) {
+              _goToPreviousPage();
+              return KeyEventResult.handled;
+            } else {
+              final focusRail = ref.read(tvRailFocusActionProvider);
+              focusRail?.call();
+              return KeyEventResult.handled;
+            }
+          }
+          return KeyEventResult.ignored;
+        },
+        scale: 1.0,
+        showFocusRing: false,
+        child: carousel,
+      );
+    }
+
+    return carousel;
   }
 
   Widget _buildSlide(
     BuildContext context,
     MediaItem item,
     bool isMobile,
+    bool isBigPicture,
     double heroHeight,
   ) {
     final backdrop = item.backdropPath;
@@ -235,11 +300,22 @@ class _HeroSectionState extends State<HeroSection>
       children: [
         _buildBackgroundImage(context, imageUrl, heroHeight),
         ..._buildGradients(isMobile),
+        // Ambient dimming when hero is not focused in Big Picture mode
+        if (isBigPicture)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: _isHeroFocused ? 0.0 : 0.4,
+                duration: const Duration(milliseconds: 300),
+                child: Container(color: AppTheme.primary),
+              ),
+            ),
+          ),
         Positioned(
           left: AppTheme.getResponsiveHorizontalPadding(context),
           bottom: isMobile ? 36 : 80,
           right: isMobile ? 90 : 180, // Leave room for indicators on the right
-          child: _buildContent(context, item, isMobile),
+          child: _buildContent(context, item, isMobile, isBigPicture),
         ),
       ],
     );
@@ -318,7 +394,11 @@ class _HeroSectionState extends State<HeroSection>
     AppLocalizations l10n,
     int total,
     bool isMobile,
+    bool isBigPicture,
   ) {
+    if (isBigPicture) {
+      return _buildIndicators(total, isMobile);
+    }
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -378,7 +458,12 @@ class _HeroSectionState extends State<HeroSection>
     );
   }
 
-  Widget _buildContent(BuildContext context, MediaItem item, bool isMobile) {
+  Widget _buildContent(
+    BuildContext context,
+    MediaItem item,
+    bool isMobile,
+    bool isBigPicture,
+  ) {
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context);
     final title = item.getLocalizedTitle(locale.languageCode) ?? 'Unknown';
@@ -395,9 +480,63 @@ class _HeroSectionState extends State<HeroSection>
           const SizedBox(height: 16),
           _buildOverview(context, overview),
         ],
-        SizedBox(height: isMobile ? 16 : 32),
-        _buildActionButtons(context, item, l10n, isMobile),
+        if (isBigPicture) ...[
+          const SizedBox(height: 20),
+          _buildTvInfoPill(context, l10n),
+        ] else ...[
+          SizedBox(height: isMobile ? 16 : 32),
+          _buildActionButtons(context, item, l10n, isMobile),
+        ],
       ],
+    );
+  }
+
+  Widget _buildTvInfoPill(BuildContext context, AppLocalizations l10n) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutCubic,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      decoration: BoxDecoration(
+        color: _isHeroFocused
+            ? Colors.white.withValues(alpha: 0.18)
+            : Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: _isHeroFocused
+              ? AppTheme.accent
+              : Colors.white.withValues(alpha: 0.15),
+          width: _isHeroFocused ? 2 : 1,
+        ),
+        boxShadow: _isHeroFocused
+            ? [
+                BoxShadow(
+                  color: AppTheme.accent.withValues(alpha: 0.35),
+                  blurRadius: 14,
+                  spreadRadius: 1,
+                ),
+              ]
+            : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            size: 20,
+            color: _isHeroFocused ? AppTheme.accent : Colors.white70,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            l10n.homeMoreInfo,
+            style: TextStyle(
+              color: _isHeroFocused ? Colors.white : Colors.white70,
+              fontSize: 15,
+              fontWeight: _isHeroFocused ? FontWeight.bold : FontWeight.w500,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -1,10 +1,12 @@
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
+import 'package:cinemuse_app/core/application/display_mode_provider.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 class BackdropCard extends StatefulWidget {
   final String title;
@@ -133,40 +135,21 @@ class _BackdropCardState extends State<BackdropCard> {
 
     final imageUrl = TmdbImageHelper.backdropCardUrl(context, effectiveImagePath);
 
-    return Focus(
-      onFocusChange: (value) => setState(() => _isHovered = value),
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent) {
-          final isEnter = event.logicalKey == LogicalKeyboardKey.enter;
-          final isSelect = event.logicalKey == LogicalKeyboardKey.select;
-          if (isEnter || isSelect) {
-            widget.onTap?.call();
-            return KeyEventResult.handled;
-          }
-        }
-        return KeyEventResult.ignored;
-      },
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: SizedBox(
-          width: widget.width ?? 280,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // 1. Scalable Card Content
-              AnimatedScale(
-                scale: _isHovered ? 1.02 : 1.0,
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOutCubic,
-                child: GestureDetector(
-                  onTap: widget.onTap,
-                  onLongPress: () => _showContextActions(context),
-                  onSecondaryTapDown: (_) => _showContextActions(context),
-                  behavior: HitTestBehavior.opaque,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+    return DpadFocusable(
+      onTap: widget.onTap,
+      onLongPress: () => _showContextActions(context),
+      onSecondaryTap: () => _showContextActions(context),
+      onFocusChange: (focused) => setState(() => _isHovered = focused),
+      onHoverChange: (hovered) => setState(() => _isHovered = hovered),
+      scale: 1.02,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      autoScroll: true,
+      child: SizedBox(
+        width: widget.width ?? 280,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
                       // Backdrop Image
                       AspectRatio(
                         aspectRatio: 16 / 9,
@@ -315,8 +298,10 @@ class _BackdropCardState extends State<BackdropCard> {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Builder(
-                            builder: (context) {
+                          Consumer(
+                            builder: (context, ref, _) {
+                              final isBigPicture = ref.watch(isBigPictureProvider);
+                              if (isBigPicture) return const SizedBox.shrink();
                               final isMobile =
                                   MediaQuery.of(context).size.width < 600;
                               return AnimatedOpacity(
@@ -325,6 +310,8 @@ class _BackdropCardState extends State<BackdropCard> {
                                 child: Material(
                                   color: Colors.transparent,
                                   child: InkWell(
+                                    canRequestFocus: false,
+                                    excludeFromSemantics: true,
                                     onTap: () => _showContextActions(context),
                                     mouseCursor: SystemMouseCursors.click,
                                     borderRadius: BorderRadius.circular(12),
@@ -350,12 +337,7 @@ class _BackdropCardState extends State<BackdropCard> {
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+              );
   }
 
   Widget _buildPlaceholder() {

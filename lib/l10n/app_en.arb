@@ -15,6 +15,7 @@
   "commonClearAll": "Clear All",
   "commonUndo": "Undo",
   "commonFeatured": "FEATURED",
+  "commonSeeAll": "See All",
   "commonUnexpectedError": "An unexpected error occurred",
   "commonOk": "OK",
   "commonUnknown": "Unknown",
@@ -24,6 +25,7 @@
   "offlineScreenMessage": "This feature requires an internet connection to browse content and stream media.",
   "searchPlaceholder": "Search movies, series, people...",
   "searchRecentSearches": "Recent Searches",
+  "searchHoldToDelete": "Hold to delete",
   "searchNoResults": "No results found for \"{query}\"",
   "searchEmptyStateTitle": "Find your next favorite story",
   "searchItemYear": "{year}",
@@ -229,6 +231,8 @@
   "playerSelectSubtitle": "Select Subtitle Track",
   "commonGoBack": "Go Back",
   "playerNextEpisode": "Next Episode",
+  "playerSkipBackward": "Rewind 10 seconds",
+  "playerSkipForward": "Forward 10 seconds",
   "playerSubtitleAppearance": "Subtitle Appearance",
   "playerAppearanceFontSize": "Font Size",
   "playerAppearanceTextColor": "Text Color",
@@ -707,6 +711,8 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "bigPictureMode": "Big Picture Mode",
+  "bigPictureModeSubtitle": "Optimized 10-foot UI for TV and remote navigation"
 }
 

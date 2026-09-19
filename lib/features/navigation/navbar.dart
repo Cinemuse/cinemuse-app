@@ -247,7 +247,7 @@ class _AppNavbarState extends State<AppNavbar> {
                     top: 0,
                     right: 0,
                     bottom: 0,
-                    child: _WindowButtons(),
+                    child: AppWindowButtons(),
                   ),
               ],
             )
@@ -359,14 +359,14 @@ class _AppNavbarState extends State<AppNavbar> {
   }
 }
 
-class _WindowButtons extends StatefulWidget {
-  const _WindowButtons();
+class AppWindowButtons extends StatefulWidget {
+  const AppWindowButtons({super.key});
 
   @override
-  State<_WindowButtons> createState() => _WindowButtonsState();
+  State<AppWindowButtons> createState() => _AppWindowButtonsState();
 }
 
-class _WindowButtonsState extends State<_WindowButtons> with WindowListener {
+class _AppWindowButtonsState extends State<AppWindowButtons> with WindowListener {
   bool _isMaximized = false;
 
   @override

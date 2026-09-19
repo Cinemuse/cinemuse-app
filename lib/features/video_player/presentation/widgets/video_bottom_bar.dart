@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/video_playback_controls.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 
-class VideoBottomBar extends StatefulWidget {
+class VideoBottomBar extends ConsumerStatefulWidget {
   final CinemaPlayerState playerState;
   final Duration? virtualPosition;
   final bool dragging;
@@ -16,6 +18,8 @@ class VideoBottomBar extends StatefulWidget {
   final bool isFullscreen;
   final VoidCallback onToggleFullscreen;
   final VoidCallback? onNextEpisode;
+  final VoidCallback? onSettingsPressed;
+  final FocusNode? playPauseFocusNode;
 
   const VideoBottomBar({
     super.key,
@@ -31,13 +35,15 @@ class VideoBottomBar extends StatefulWidget {
     required this.isFullscreen,
     required this.onToggleFullscreen,
     this.onNextEpisode,
+    this.onSettingsPressed,
+    this.playPauseFocusNode,
   });
 
   @override
-  State<VideoBottomBar> createState() => _VideoBottomBarState();
+  ConsumerState<VideoBottomBar> createState() => _VideoBottomBarState();
 }
 
-class _VideoBottomBarState extends State<VideoBottomBar> {
+class _VideoBottomBarState extends ConsumerState<VideoBottomBar> {
   double? _hoverX;
   Duration? _hoverDuration;
   bool _isHoveringSeekbar = false;
@@ -52,6 +58,7 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
   @override
   Widget build(BuildContext context) {
     final player = widget.playerState.controller.player;
+    final isBigPicture = ref.watch(isBigPictureProvider);
 
     return Container(
       decoration: BoxDecoration(
@@ -102,30 +109,33 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
                           child: Stack(
                             clipBehavior: Clip.none,
                             children: [
-                              SliderTheme(
-                                data: SliderThemeData(
-                                  trackHeight: 2,
-                                  thumbShape: const RoundSliderThumbShape(
-                                    enabledThumbRadius: 6,
+                              ExcludeFocus(
+                                excluding: isBigPicture,
+                                child: SliderTheme(
+                                  data: SliderThemeData(
+                                    trackHeight: isBigPicture ? 4 : 2,
+                                    thumbShape: RoundSliderThumbShape(
+                                      enabledThumbRadius: isBigPicture ? 8 : 6,
+                                    ),
+                                    overlayShape: RoundSliderOverlayShape(
+                                      overlayRadius: isBigPicture ? 16 : 12,
+                                    ),
+                                    activeTrackColor: AppTheme.textWhite,
+                                    inactiveTrackColor: AppTheme.textWhite
+                                        .withValues(alpha: 0.24),
+                                    thumbColor: AppTheme.textWhite,
                                   ),
-                                  overlayShape: const RoundSliderOverlayShape(
-                                    overlayRadius: 12,
+                                  child: Slider(
+                                    value: position.inSeconds.toDouble().clamp(
+                                      0,
+                                      duration.inSeconds.toDouble(),
+                                    ),
+                                    min: 0,
+                                    max: duration.inSeconds.toDouble(),
+                                    onChangeStart: widget.onChangeStart,
+                                    onChangeEnd: widget.onChangeEnd,
+                                    onChanged: widget.onChanged,
                                   ),
-                                  activeTrackColor: AppTheme.textWhite,
-                                  inactiveTrackColor: AppTheme.textWhite
-                                      .withValues(alpha: 0.24),
-                                  thumbColor: AppTheme.textWhite,
-                                ),
-                                child: Slider(
-                                  value: position.inSeconds.toDouble().clamp(
-                                    0,
-                                    duration.inSeconds.toDouble(),
-                                  ),
-                                  min: 0,
-                                  max: duration.inSeconds.toDouble(),
-                                  onChangeStart: widget.onChangeStart,
-                                  onChangeEnd: widget.onChangeEnd,
-                                  onChanged: widget.onChanged,
                                 ),
                               ),
                               if (_isHoveringSeekbar &&
@@ -176,7 +186,7 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
                     '${_formatDuration(position)} / ${_formatDuration(duration)}',
                     style: TextStyle(
                       color: AppTheme.textWhite.withValues(alpha: 0.7),
-                      fontSize: 13,
+                      fontSize: isBigPicture ? 15 : 13,
                       fontFamily: 'monospace',
                     ),
                   ),
@@ -194,6 +204,8 @@ class _VideoBottomBarState extends State<VideoBottomBar> {
             isFullscreen: widget.isFullscreen,
             onToggleFullscreen: widget.onToggleFullscreen,
             onNextEpisode: widget.onNextEpisode,
+            onSettingsPressed: widget.onSettingsPressed,
+            playPauseFocusNode: widget.playPauseFocusNode,
           ),
         ],
       ),

@@ -1,9 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/features/home/presentation/home_screen.dart';
 import 'package:cinemuse_app/features/explore/presentation/pages/explore_screen.dart';
 import 'package:cinemuse_app/features/navigation/navbar.dart';
+import 'package:cinemuse_app/features/navigation/tv_navigation_rail.dart';
 import 'package:cinemuse_app/features/profile/presentation/profile_hub.dart';
 import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
@@ -26,6 +29,9 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
+  final GlobalKey<TvNavigationRailState> _railKey = GlobalKey();
+  final FocusScopeNode _contentFocusScopeNode = FocusScopeNode();
+
   final List<Widget> _screens = [
     const HomeScreen(),
     const ExploreScreen(),
@@ -40,12 +46,55 @@ class _AppShellState extends ConsumerState<AppShell> {
       ref.read(updateProvider.notifier).checkForUpdates();
       // Background sync for anime mappings
       ref.read(animeMappingSyncServiceProvider).checkAndSync();
+      ref.read(tvRailFocusActionProvider.notifier).state = () {
+        _railKey.currentState?.focusActiveItem();
+      };
     });
+  }
+
+  @override
+  void dispose() {
+    _contentFocusScopeNode.dispose();
+    super.dispose();
+  }
+
+  void _handleBackNavigation() {
+    final shellNavigatorKey = ref.read(shellNavigatorKeyProvider);
+    final navigator = shellNavigatorKey.currentState;
+    if (navigator != null && navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+
+    final isBigPicture = ref.read(isBigPictureProvider);
+    if (isBigPicture) {
+      _railKey.currentState?.focusActiveItem();
+    }
+  }
+
+  void _onDestinationSelected(
+    int index,
+    GlobalKey<NavigatorState> shellNavigatorKey,
+  ) {
+    ref.read(navIndexProvider.notifier).state = index;
+    final navigator = shellNavigatorKey.currentState;
+    if (navigator != null && navigator.canPop()) {
+      navigator.popUntil((route) => route.isFirst);
+    }
+  }
+
+  void _openSettings(GlobalKey<NavigatorState> shellNavigatorKey) {
+    shellNavigatorKey.currentState?.push(
+      MaterialPageRoute(
+        builder: (_) => const SettingsScreen(),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(navIndexProvider);
+    final isBigPicture = ref.watch(isBigPictureProvider);
     final isMobile = MediaQuery.of(context).size.width < 600;
     final shellNavigatorKey = ref.watch(shellNavigatorKeyProvider);
 
@@ -73,6 +122,9 @@ class _AppShellState extends ConsumerState<AppShell> {
       }
     });
 
+    final isDesktop =
+        Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -84,81 +136,135 @@ class _AppShellState extends ConsumerState<AppShell> {
         canPop: false,
         onPopInvokedWithResult: (didPop, result) async {
           if (didPop) return;
-          final navigator = shellNavigatorKey.currentState;
-          if (navigator != null && navigator.canPop()) {
-            navigator.pop();
-          }
+          _handleBackNavigation();
         },
-        child: Scaffold(
-          backgroundColor: Colors.black, // Match "bg-primary"
-          bottomNavigationBar: isMobile
-              ? AppBottomNavbar(
-                  currentIndex: currentIndex,
-                  onTap: (index) {
-                    ref.read(navIndexProvider.notifier).state = index;
-                    final navigator = shellNavigatorKey.currentState;
-                    if (navigator != null && navigator.canPop()) {
-                      navigator.popUntil((route) => route.isFirst);
-                    }
-                  },
-                )
-              : null,
-          body: Stack(
-            children: [
-              Column(
-                children: [
-                  AppNavbar(
+        child: Focus(
+          autofocus: false,
+          onKeyEvent: (node, event) {
+            if (event is KeyDownEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.escape ||
+                  event.logicalKey == LogicalKeyboardKey.gameButtonB ||
+                  event.logicalKey == LogicalKeyboardKey.goBack) {
+                _handleBackNavigation();
+                return KeyEventResult.handled;
+              }
+            }
+            return KeyEventResult.ignored;
+          },
+          child: Scaffold(
+            backgroundColor: Colors.black, // Match "bg-primary"
+            bottomNavigationBar: (!isBigPicture && isMobile)
+                ? AppBottomNavbar(
                     currentIndex: currentIndex,
-                    onTap: (index) {
-                      ref.read(navIndexProvider.notifier).state = index;
-                      final navigator = shellNavigatorKey.currentState;
-                      if (navigator != null && navigator.canPop()) {
-                        navigator.popUntil((route) => route.isFirst);
-                      }
-                    },
-                    onSettingsTap: () {
-                      shellNavigatorKey.currentState?.push(
-                        MaterialPageRoute(
-                          builder: (_) => const SettingsScreen(),
-                        ),
-                      );
-                    },
-                    onLogoutTap: () {
-                      ref.read(authProvider.notifier).signOut();
-                    },
-                    onSearchTap: () => SearchOverlay.show(
-                      context,
-                      navigator: shellNavigatorKey.currentState,
-                    ),
+                    onTap: (index) =>
+                        _onDestinationSelected(index, shellNavigatorKey),
+                  )
+                : null,
+            body: isBigPicture
+                ? _buildBigPictureBody(
+                    currentIndex: currentIndex,
+                    shellNavigatorKey: shellNavigatorKey,
+                    isDesktop: isDesktop,
+                  )
+                : _buildStandardBody(
+                    currentIndex: currentIndex,
+                    shellNavigatorKey: shellNavigatorKey,
                   ),
-                  Expanded(
-                    child: Navigator(
-                      key: shellNavigatorKey,
-                      onGenerateRoute: (settings) {
-                        return MaterialPageRoute(
-                          settings: settings,
-                          builder: (context) => Consumer(
-                            builder: (context, ref, child) {
-                              final index = ref.watch(navIndexProvider);
-                              return IndexedStack(
-                                index: index,
-                                children: _screens,
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-
-              // Update Notification Overlay
-              const Positioned.fill(child: UpdateOverlay()),
-            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBigPictureBody({
+    required int currentIndex,
+    required GlobalKey<NavigatorState> shellNavigatorKey,
+    required bool isDesktop,
+  }) {
+    return Stack(
+      children: [
+        Row(
+          children: [
+            TvNavigationRail(
+              key: _railKey,
+              currentIndex: currentIndex,
+              onDestinationSelected: (index) =>
+                  _onDestinationSelected(index, shellNavigatorKey),
+              onSearchTap: () => SearchOverlay.show(
+                context,
+                navigator: shellNavigatorKey.currentState,
+              ),
+              onSettingsTap: () => _openSettings(shellNavigatorKey),
+              onExitRight: () => _contentFocusScopeNode.requestFocus(),
+            ),
+            Expanded(
+              child: FocusScope(
+                node: _contentFocusScopeNode,
+                child: _buildNavigator(shellNavigatorKey),
+              ),
+            ),
+          ],
+        ),
+        if (isDesktop)
+          const Positioned(
+            top: 8,
+            right: 8,
+            height: 32,
+            child: AppWindowButtons(),
+          ),
+        const Positioned.fill(child: UpdateOverlay()),
+      ],
+    );
+  }
+
+  Widget _buildStandardBody({
+    required int currentIndex,
+    required GlobalKey<NavigatorState> shellNavigatorKey,
+  }) {
+    return Stack(
+      children: [
+        Column(
+          children: [
+            AppNavbar(
+              currentIndex: currentIndex,
+              onTap: (index) =>
+                  _onDestinationSelected(index, shellNavigatorKey),
+              onSettingsTap: () => _openSettings(shellNavigatorKey),
+              onLogoutTap: () {
+                ref.read(authProvider.notifier).signOut();
+              },
+              onSearchTap: () => SearchOverlay.show(
+                context,
+                navigator: shellNavigatorKey.currentState,
+              ),
+            ),
+            Expanded(
+              child: _buildNavigator(shellNavigatorKey),
+            ),
+          ],
+        ),
+        const Positioned.fill(child: UpdateOverlay()),
+      ],
+    );
+  }
+
+  Widget _buildNavigator(GlobalKey<NavigatorState> shellNavigatorKey) {
+    return Navigator(
+      key: shellNavigatorKey,
+      onGenerateRoute: (settings) {
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (context) => Consumer(
+            builder: (context, ref, child) {
+              final index = ref.watch(navIndexProvider);
+              return IndexedStack(
+                index: index,
+                children: _screens,
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

@@ -9,6 +9,7 @@ import 'package:cinemuse_app/features/settings/application/settings_service.dart
 import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/addon_settings.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/subtitle_appearance_form.dart';
+import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/playlist_management_sheet.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 
@@ -52,6 +53,7 @@ class CustomizationSettings extends ConsumerWidget {
     final settingsNotifier = ref.read(settingsProvider.notifier);
     final localSettings = ref.watch(localSettingsProvider);
     final localNotifier = ref.read(localSettingsProvider.notifier);
+    final isBigPicture = ref.watch(isBigPictureProvider);
 
     return Column(
       children: [
@@ -59,7 +61,7 @@ class CustomizationSettings extends ConsumerWidget {
           title: l10n.settingsCustomization,
           description: l10n.settingsCustomizationDesc,
           children: [
-            // Interface Language
+            // Interface Language & Display Mode
             SettingsCard(
               children: [
                 SettingsTile(
@@ -80,6 +82,20 @@ class CustomizationSettings extends ConsumerWidget {
                     ],
                     onChanged: (lang) =>
                         settingsNotifier.updateSettings({'appLanguage': lang}),
+                  ),
+                ),
+                SettingsTile(
+                  label: l10n.bigPictureMode,
+                  description: l10n.bigPictureModeSubtitle,
+                  icon: Icons.tv,
+                  showDivider: false,
+                  trailing: SettingToggle(
+                    value: isBigPicture,
+                    onChanged: (val) {
+                      ref.read(displayModeProvider.notifier).setMode(
+                        val ? DisplayMode.bigPicture : DisplayMode.standard,
+                      );
+                    },
                   ),
                 ),
               ],

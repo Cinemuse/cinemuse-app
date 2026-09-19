@@ -15,6 +15,7 @@
   "commonClearAll": "Cancella tutto",
   "commonUndo": "Annulla",
   "commonFeatured": "IN PRIMO PIANO",
+  "commonSeeAll": "Vedi tutti",
   "commonUnexpectedError": "Si è verificato un errore inaspettato",
   "commonOk": "OK",
   "commonUnknown": "Sconosciuto",
@@ -24,6 +25,7 @@
   "offlineScreenMessage": "Questa funzione richiede una connessione internet per sfogliare i contenuti e avviare lo streaming.",
   "searchPlaceholder": "Cerca film, serie, persone...",
   "searchRecentSearches": "Ricerche Recenti",
+  "searchHoldToDelete": "Tieni premuto per eliminare",
   "searchNoResults": "Nessun risultato trovato per \"{query}\"",
   "searchEmptyStateTitle": "Trova la tua prossima storia preferita",
   "searchItemYear": "{year}",
@@ -229,6 +231,8 @@
   "playerSelectSubtitle": "Seleziona Sottotitolo",
   "commonGoBack": "Torna Indietro",
   "playerNextEpisode": "Prossimo Episodio",
+  "playerSkipBackward": "Riavvolgi 10 secondi",
+  "playerSkipForward": "Avanti 10 secondi",
   "playerSubtitleAppearance": "Aspetto Sottotitoli",
   "playerAppearanceFontSize": "Dimensione Carattere",
   "playerAppearanceTextColor": "Colore Testo",
@@ -707,6 +711,8 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "bigPictureMode": "Modalità Big Picture",
+  "bigPictureModeSubtitle": "Interfaccia ottimizzata per TV e navigazione con telecomando"
 }
 

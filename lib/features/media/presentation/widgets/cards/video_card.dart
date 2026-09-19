@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 class VideoCard extends StatelessWidget {
   final String youtubeKey;
@@ -17,20 +17,30 @@ class VideoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: SizedBox(
+    return DpadFocusable(
+      onTap: onTap,
+      scale: 1.04,
+      borderRadius: BorderRadius.circular(16),
+      builder: (context, isFocused, isHovered, child) {
+        return SizedBox(
           width: 320,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AspectRatio(
                 aspectRatio: 16 / 9,
-                child: HoverScale(
-                  child: ClipRRect(
+                child: Container(
+                  decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isFocused ? Colors.white : Colors.transparent,
+                      width: 2.0,
+                    ),
+                    boxShadow:
+                        isFocused ? AppTheme.shadowCard : null,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
@@ -46,14 +56,16 @@ class VideoCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.black45,
+                            color: isFocused ? Colors.white24 : Colors.black45,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white30),
+                            border: Border.all(
+                              color: isFocused ? Colors.white : Colors.white30,
+                            ),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.play_arrow,
                             color: Colors.white,
-                            size: 24,
+                            size: isFocused ? 28 : 24,
                           ),
                         ),
                       ],
@@ -70,14 +82,15 @@ class VideoCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: DesktopTypography.bodySecondary.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textWhite,
+                    color: isFocused ? Colors.white : AppTheme.textWhite,
                   ),
                 ),
               ),
             ],
           ),
-        ),
-      ),
+        );
+      },
+      child: const SizedBox.shrink(),
     );
   }
 }

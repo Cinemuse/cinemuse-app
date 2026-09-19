@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
+import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 
 class VideoTopBar extends ConsumerWidget {
   final CinemaPlayerState playerState;
@@ -23,6 +24,7 @@ class VideoTopBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(localizationsProvider);
+    final isBigPicture = ref.watch(isBigPictureProvider);
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -72,19 +74,21 @@ class VideoTopBar extends ConsumerWidget {
               ],
             ),
           ),
-          IconButton(
-            icon: Icon(
-              playerState.isCasting ? Icons.cast_connected : Icons.cast,
-              color: playerState.isCasting
-                  ? Colors.blueAccent
-                  : AppTheme.textWhite,
+          if (!isBigPicture) ...[
+            IconButton(
+              icon: Icon(
+                playerState.isCasting ? Icons.cast_connected : Icons.cast,
+                color: playerState.isCasting
+                    ? Colors.blueAccent
+                    : AppTheme.textWhite,
+              ),
+              onPressed: onCastPressed,
             ),
-            onPressed: onCastPressed,
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings, color: AppTheme.textWhite),
-            onPressed: onSettingsPressed,
-          ),
+            IconButton(
+              icon: const Icon(Icons.settings, color: AppTheme.textWhite),
+              onPressed: onSettingsPressed,
+            ),
+          ],
         ],
       ),
     );

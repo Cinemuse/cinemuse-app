@@ -120,7 +120,12 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(height: isLandscape ? 4 : 12),
-                _buildDisableTrackTile(player, noTrack, selectedTrack),
+                _buildDisableTrackTile(
+                  player,
+                  noTrack,
+                  selectedTrack,
+                  autofocus: selectedTrack.id == 'no',
+                ),
                 if (allInternalTracks.isNotEmpty || widget.isSubtitle)
                   const Divider(
                     color: Colors.white10,
@@ -134,6 +139,7 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
                     allInternalTracks,
                     selectedTrack,
                     prefLang,
+                    hasSelectionPrior: selectedTrack.id == 'no',
                   ),
                 if (widget.isSubtitle &&
                     ref.read(subtitleServiceProvider).hasActiveProviders) ...[
@@ -163,17 +169,20 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
   Widget _buildDisableTrackTile(
     Player player,
     dynamic noTrack,
-    dynamic selectedTrack,
-  ) {
+    dynamic selectedTrack, {
+    bool autofocus = false,
+  }) {
+    final isSelected = selectedTrack.id == 'no';
     return TrackTile(
       player: player,
       track: noTrack,
-      isSelected: selectedTrack.id == 'no',
+      isSelected: isSelected,
       isSubtitle: widget.isSubtitle,
       customTitle: widget.isSubtitle ? "Off / Disable" : "No Audio / Mute",
       color: AppTheme.textMuted,
       onBack: widget.onBack,
       onSelected: () => _notifyManualSelection(),
+      autofocus: autofocus || isSelected,
     );
   }
 
@@ -182,8 +191,9 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
     Player player,
     List<dynamic> tracks,
     dynamic selectedTrack,
-    String prefLang,
-  ) {
+    String prefLang, {
+    bool hasSelectionPrior = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -191,9 +201,19 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
         Builder(
           builder: (context) {
             bool foundAutoMatch = false;
+            final hasMatchInList = tracks.any(
+              (track) =>
+                  selectedTrack.id == track.id ||
+                  (selectedTrack.title != null &&
+                      track.title != null &&
+                      selectedTrack.title == track.title),
+            );
+
             return Column(
               mainAxisSize: MainAxisSize.min,
-              children: tracks.map((track) {
+              children: tracks.asMap().entries.map((entry) {
+                final index = entry.key;
+                final track = entry.value;
                 bool isSelected = selectedTrack.id == track.id ||
                     (selectedTrack.title != null &&
                         track.title != null &&
@@ -207,6 +227,9 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
                   foundAutoMatch = true;
                 }
 
+                final shouldAutofocus = isSelected ||
+                    (!hasSelectionPrior && !hasMatchInList && index == 0);
+
                 return TrackTile(
                   player: player,
                   track: track,
@@ -214,6 +237,7 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
                   isSubtitle: widget.isSubtitle,
                   onBack: widget.onBack,
                   onSelected: () => _notifyManualSelection(),
+                  autofocus: shouldAutofocus,
                 );
               }).toList(),
             );

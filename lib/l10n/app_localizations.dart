@@ -188,6 +188,12 @@ abstract class AppLocalizations {
   /// **'FEATURED'**
   String get commonFeatured;
 
+  /// No description provided for @commonSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See All'**
+  String get commonSeeAll;
+
   /// No description provided for @commonUnexpectedError.
   ///
   /// In en, this message translates to:
@@ -241,6 +247,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recent Searches'**
   String get searchRecentSearches;
+
+  /// No description provided for @searchHoldToDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to delete'**
+  String get searchHoldToDelete;
 
   /// No description provided for @searchNoResults.
   ///
@@ -1363,6 +1375,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Next Episode'**
   String get playerNextEpisode;
+
+  /// No description provided for @playerSkipBackward.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewind 10 seconds'**
+  String get playerSkipBackward;
+
+  /// No description provided for @playerSkipForward.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward 10 seconds'**
+  String get playerSkipForward;
 
   /// No description provided for @playerSubtitleAppearance.
   ///
@@ -3401,6 +3425,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 filter} other{{count} filters}}'**
   String watchHistoryActiveFilterCount(int count);
+
+  /// No description provided for @bigPictureMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Big Picture Mode'**
+  String get bigPictureMode;
+
+  /// No description provided for @bigPictureModeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Optimized 10-foot UI for TV and remote navigation'**
+  String get bigPictureModeSubtitle;
 }
 
 class _AppLocalizationsDelegate

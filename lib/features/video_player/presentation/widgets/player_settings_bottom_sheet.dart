@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
@@ -80,42 +81,69 @@ class _PlayerSettingsBottomSheetState
     final maxSheetHeight = screenHeight * (isLandscape ? 0.9 : 0.6);
     final minSheetHeight = screenHeight * 0.15;
 
-    return AppBottomSheet(
-      blurSigma: 12,
-      backgroundColor: AppTheme.glass.withValues(alpha: 0.8),
-      border: Border.all(
-        color: AppTheme.border.withValues(alpha: 0.1),
-        width: 1.5,
-      ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          minHeight: minSheetHeight,
-          maxHeight: maxSheetHeight,
+    return Focus(
+      canRequestFocus: false,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.escape ||
+              event.logicalKey == LogicalKeyboardKey.gameButtonB ||
+              event.logicalKey == LogicalKeyboardKey.goBack) {
+            if (_currentView != SettingsView.main) {
+              _navigateBack();
+              return KeyEventResult.handled;
+            } else {
+              Navigator.of(context).pop();
+              return KeyEventResult.handled;
+            }
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: AppBottomSheet(
+        blurSigma: 12,
+        backgroundColor: AppTheme.glass.withValues(alpha: 0.8),
+        border: Border.all(
+          color: AppTheme.border.withValues(alpha: 0.1),
+          width: 1.5,
         ),
-        child: AnimatedSize(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOutCubic,
-          alignment: Alignment.topCenter,
-          child: AnimatedSwitcher(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: minSheetHeight,
+            maxHeight: maxSheetHeight,
+          ),
+          child: AnimatedSize(
             duration: const Duration(milliseconds: 300),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            layoutBuilder:
-                (Widget? currentChild, List<Widget> previousChildren) {
-                  return Stack(
-                    alignment: Alignment.topCenter,
-                    children: <Widget>[
-                      ...previousChildren,
-                      if (currentChild != null) currentChild,
-                    ],
-                  );
-                },
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            child: KeyedSubtree(
-              key: ValueKey(_currentView),
-              child: _buildView(_currentView, currentState),
+            curve: Curves.easeInOutCubic,
+            alignment: Alignment.topCenter,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              layoutBuilder:
+                  (Widget? currentChild, List<Widget> previousChildren) {
+                    return Stack(
+                      alignment: Alignment.topCenter,
+                      children: <Widget>[
+                        ...previousChildren.map(
+                          (child) => ExcludeFocus(
+                            excluding: true,
+                            child: child,
+                          ),
+                        ),
+                        if (currentChild != null) currentChild,
+                      ],
+                    );
+                  },
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: KeyedSubtree(
+                key: ValueKey(_currentView),
+                child: FocusScope(
+                  autofocus: true,
+                  child: _buildView(_currentView, currentState),
+                ),
+              ),
             ),
           ),
         ),

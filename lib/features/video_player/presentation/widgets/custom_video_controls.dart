@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import 'dart:async';
 import 'dart:io';
 import 'package:window_manager/window_manager.dart';
 
+import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/video_top_bar.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/video_bottom_bar.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/next_episode_overlay.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/cast_device_selector.dart';
-import 'package:cinemuse_app/core/constants/playback_constants.dart';
 import 'package:cinemuse_app/core/presentation/widgets/buffering_indicator.dart';
 import 'package:cinemuse_app/core/presentation/widgets/play_pause_overlay.dart';
 
@@ -45,6 +46,9 @@ class CustomVideoControls extends ConsumerStatefulWidget {
 }
 
 class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
+  final FocusNode _rootFocusNode = FocusNode(debugLabel: 'CustomVideoControlsRoot');
+  final FocusNode _playPauseFocusNode = FocusNode(debugLabel: 'PlayPauseTvButton');
+
   bool _visible = true;
   Timer? _hideTimer;
   bool _dragging = false;
@@ -76,6 +80,9 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     super.initState();
     _startHideTimer();
     _initFullscreenState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _syncFocusForVisibility();
+    });
   }
 
   void _initFullscreenState() {
@@ -89,30 +96,67 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     _clearVirtualPositionTimer?.cancel();
     _hideIndicatorTimer?.cancel();
     _seekIndicatorTimer?.cancel();
+    _rootFocusNode.dispose();
+    _playPauseFocusNode.dispose();
     super.dispose();
+  }
+
+  void _syncFocusForVisibility() {
+    final isBigPicture = ref.read(isBigPictureProvider);
+    if (!isBigPicture) {
+      _rootFocusNode.requestFocus();
+      return;
+    }
+    if (_visible) {
+      _playPauseFocusNode.requestFocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _visible) {
+          _playPauseFocusNode.requestFocus();
+        }
+      });
+    } else {
+      _rootFocusNode.requestFocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_visible) {
+          _rootFocusNode.requestFocus();
+        }
+      });
+    }
   }
 
   void _startHideTimer() {
     _hideTimer?.cancel();
-    _hideTimer = Timer(const Duration(seconds: 3), () {
+    _hideTimer = Timer(const Duration(seconds: 4), () {
       if (mounted &&
           !_dragging &&
           _currentDragType == DragType.none &&
           widget.playerState.controller.player.state.playing) {
-        setState(() {
-          _visible = false;
-        });
+        _hideControls();
       }
     });
   }
 
-  void _onHover() {
-    if (!_visible) {
-      setState(() {
-        _visible = true;
-      });
+  void _showControls() {
+    final wasHidden = !_visible;
+    if (wasHidden) {
+      setState(() => _visible = true);
     }
     _startHideTimer();
+    if (wasHidden) {
+      _syncFocusForVisibility();
+    }
+  }
+
+  void _hideControls() {
+    if (_visible) {
+      setState(() => _visible = false);
+      _hideTimer?.cancel();
+      _syncFocusForVisibility();
+    }
+  }
+
+  void _onHover() {
+    _showControls();
   }
 
   void _togglePlayPause() {
@@ -210,91 +254,196 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     if (mounted) widget.onBackPressed();
   }
 
-  void _handleKeyEvent(KeyEvent event) {
-    final player = widget.playerState.controller.player;
+  KeyEventResult _handleKeyEvent(KeyEvent event) {
+    if (event is KeyUpEvent) {
+      return _handleKeyUp(event);
+    }
+    if (event is! KeyDownEvent) {
+      return KeyEventResult.ignored;
+    }
+
     final key = event.logicalKey;
+    if (_lastSkipKey == key) return KeyEventResult.handled;
 
-    if (event is KeyDownEvent) {
-      if (_lastSkipKey == key) return;
+    final mediaResult = _handleMediaKeys(key);
+    if (mediaResult != KeyEventResult.ignored) return mediaResult;
 
-      if (key == LogicalKeyboardKey.space) {
-        _togglePlayPause();
-      } else if (key == LogicalKeyboardKey.arrowLeft ||
-          key == LogicalKeyboardKey.arrowRight) {
-        _lastSkipKey = key;
-        _skipCount = 0;
+    final player = widget.playerState.controller.player;
+    if (!_visible) {
+      return _handleHiddenControlsKeys(key, player);
+    }
+
+    final isBigPicture = ref.read(isBigPictureProvider);
+    return _handleVisibleControlsKeys(key, player, isBigPicture);
+  }
+
+  KeyEventResult _handleKeyUp(KeyUpEvent event) {
+    if (event.logicalKey == _lastSkipKey) {
+      _skipTimer?.cancel();
+      _lastSkipKey = null;
+
+      if (_virtualPosition != null) {
+        ref
+            .read(playerControllerProvider(widget.params).notifier)
+            .seek(_virtualPosition!);
 
         _clearVirtualPositionTimer?.cancel();
-        if (_virtualPosition == null) {
-          setState(() {
-            _virtualPosition = player.state.position;
-          });
-        }
-
-        _performVirtualSkip(key == LogicalKeyboardKey.arrowRight, step: 10);
-
-        _skipTimer?.cancel();
-        _skipTimer = Timer(const Duration(milliseconds: 400), () {
-          _startContinuousVirtualSkip(key == LogicalKeyboardKey.arrowRight);
-        });
-      } else if (key == LogicalKeyboardKey.arrowUp) {
-        final vol = player.state.volume;
-        player.setVolume((vol + 10.0).clamp(0.0, 100.0));
-        _onHover();
-      } else if (key == LogicalKeyboardKey.arrowDown) {
-        final vol = player.state.volume;
-        player.setVolume((vol - 10.0).clamp(0.0, 100.0));
-        _onHover();
-      } else if (key == LogicalKeyboardKey.keyM) {
-        _toggleMute();
-      } else if (key == LogicalKeyboardKey.keyF ||
-          key == LogicalKeyboardKey.f11) {
-        _toggleFullscreen();
-      } else if (key == LogicalKeyboardKey.escape) {
-        if (_isFullscreenSafe()) {
-          _toggleFullscreen();
-        } else {
-          _handleBack();
-        }
-      } else if (key == LogicalKeyboardKey.keyQ) {
-        _handleBack();
-      } else if (key == LogicalKeyboardKey.enter ||
-          key == LogicalKeyboardKey.numpadEnter) {
-        final pos = player.state.position.inSeconds;
-        final dur = player.state.duration.inSeconds;
-        final isFinished =
-            dur > 0 &&
-            (dur - pos < PlaybackThresholds.completionRemainingSeconds ||
-                (pos / dur) > PlaybackThresholds.completionPercentage);
-
-        if (isFinished && widget.onNextEpisode != null) {
-          widget.onNextEpisode!();
-        }
+        _clearVirtualPositionTimer = Timer(
+          const Duration(milliseconds: 500),
+          () {
+            if (mounted) {
+              setState(() => _virtualPosition = null);
+            }
+          },
+        );
       }
-    } else if (event is KeyUpEvent) {
-      if (key == _lastSkipKey) {
-        _skipTimer?.cancel();
-        _lastSkipKey = null;
-
-        if (_virtualPosition != null) {
-          ref
-              .read(playerControllerProvider(widget.params).notifier)
-              .seek(_virtualPosition!);
-
-          _clearVirtualPositionTimer?.cancel();
-          _clearVirtualPositionTimer = Timer(
-            const Duration(milliseconds: 500),
-            () {
-              if (mounted) {
-                setState(() {
-                  _virtualPosition = null;
-                });
-              }
-            },
-          );
-        }
-      }
+      return KeyEventResult.handled;
     }
+    return KeyEventResult.ignored;
+  }
+
+  KeyEventResult _handleMediaKeys(LogicalKeyboardKey key) {
+    if (key == LogicalKeyboardKey.mediaPlayPause ||
+        key == LogicalKeyboardKey.mediaPlay ||
+        key == LogicalKeyboardKey.mediaPause) {
+      _togglePlayPause();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.mediaFastForward) {
+      _performRealSkip(true);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.mediaRewind) {
+      _performRealSkip(false);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  KeyEventResult _handleHiddenControlsKeys(
+    LogicalKeyboardKey key,
+    Player player,
+  ) {
+    if (key == LogicalKeyboardKey.space) {
+      _togglePlayPause();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.select ||
+        key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter ||
+        key == LogicalKeyboardKey.gameButtonA ||
+        key == LogicalKeyboardKey.arrowUp ||
+        key == LogicalKeyboardKey.arrowDown) {
+      _onHover();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowLeft ||
+        key == LogicalKeyboardKey.arrowRight) {
+      _startVirtualSkip(key == LogicalKeyboardKey.arrowRight, player);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.escape ||
+        key == LogicalKeyboardKey.gameButtonB ||
+        key == LogicalKeyboardKey.goBack) {
+      _handleBack();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.keyF || key == LogicalKeyboardKey.f11) {
+      _toggleFullscreen();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.keyM) {
+      _toggleMute();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  KeyEventResult _handleVisibleControlsKeys(
+    LogicalKeyboardKey key,
+    Player player,
+    bool isBigPicture,
+  ) {
+    _startHideTimer();
+
+    if (key == LogicalKeyboardKey.escape ||
+        key == LogicalKeyboardKey.gameButtonB ||
+        key == LogicalKeyboardKey.goBack) {
+      if (_isFullscreenSafe() && !isBigPicture) {
+        _toggleFullscreen();
+      } else {
+        _hideControls();
+      }
+      return KeyEventResult.handled;
+    }
+
+    if (isBigPicture) {
+      if (key == LogicalKeyboardKey.arrowDown) {
+        _hideControls();
+        return KeyEventResult.handled;
+      }
+      if (key == LogicalKeyboardKey.space) {
+        _togglePlayPause();
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    }
+
+    return _handleDesktopVisibleControlsKeys(key, player);
+  }
+
+  KeyEventResult _handleDesktopVisibleControlsKeys(
+    LogicalKeyboardKey key,
+    Player player,
+  ) {
+    if (key == LogicalKeyboardKey.space) {
+      _togglePlayPause();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowLeft ||
+        key == LogicalKeyboardKey.arrowRight) {
+      _startVirtualSkip(key == LogicalKeyboardKey.arrowRight, player);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowUp) {
+      player.setVolume((player.state.volume + 10.0).clamp(0.0, 100.0));
+      _onHover();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowDown) {
+      player.setVolume((player.state.volume - 10.0).clamp(0.0, 100.0));
+      _onHover();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.keyM) {
+      _toggleMute();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.keyF || key == LogicalKeyboardKey.f11) {
+      _toggleFullscreen();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.keyQ) {
+      _handleBack();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  void _startVirtualSkip(bool forward, Player player) {
+    _lastSkipKey = forward
+        ? LogicalKeyboardKey.arrowRight
+        : LogicalKeyboardKey.arrowLeft;
+    _skipCount = 0;
+    _clearVirtualPositionTimer?.cancel();
+    if (_virtualPosition == null) {
+      setState(() => _virtualPosition = player.state.position);
+    }
+    _performVirtualSkip(forward, step: 10);
+    _skipTimer?.cancel();
+    _skipTimer = Timer(const Duration(milliseconds: 400), () {
+      _startContinuousVirtualSkip(forward);
+    });
   }
 
   void _performVirtualSkip(bool forward, {int step = 5}) {
@@ -443,13 +592,13 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   @override
   Widget build(BuildContext context) {
     final player = widget.playerState.controller.player;
+    final isBigPicture = ref.watch(isBigPictureProvider);
 
     return Focus(
+      focusNode: _rootFocusNode,
       autofocus: true,
-      onKeyEvent: (node, event) {
-        _handleKeyEvent(event);
-        return KeyEventResult.handled;
-      },
+      canRequestFocus: !isBigPicture || !_visible,
+      onKeyEvent: (node, event) => _handleKeyEvent(event),
       child: MouseRegion(
         onHover: (_) => _onHover(),
         cursor: (_visible || !_isFullScreen)
@@ -486,13 +635,23 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                       top: 0,
                       left: 0,
                       right: 0,
-                      child:
-                          (!_isFullScreen &&
-                              (Platform.isWindows ||
-                                  Platform.isLinux ||
-                                  Platform.isMacOS))
-                          ? DragToMoveArea(
-                              child: VideoTopBar(
+                      child: ExcludeFocus(
+                        excluding: isBigPicture,
+                        child: (!_isFullScreen &&
+                                (Platform.isWindows ||
+                                    Platform.isLinux ||
+                                    Platform.isMacOS))
+                            ? DragToMoveArea(
+                                child: VideoTopBar(
+                                  playerState: widget.playerState,
+                                  params: widget.params,
+                                  onSettingsPressed: widget.onSettingsPressed,
+                                  onCastPressed: () =>
+                                      _handleCastPressed(context),
+                                  onBackPressed: _handleBack,
+                                ),
+                              )
+                            : VideoTopBar(
                                 playerState: widget.playerState,
                                 params: widget.params,
                                 onSettingsPressed: widget.onSettingsPressed,
@@ -500,14 +659,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                                     _handleCastPressed(context),
                                 onBackPressed: _handleBack,
                               ),
-                            )
-                          : VideoTopBar(
-                              playerState: widget.playerState,
-                              params: widget.params,
-                              onSettingsPressed: widget.onSettingsPressed,
-                              onCastPressed: () => _handleCastPressed(context),
-                              onBackPressed: _handleBack,
-                            ),
+                      ),
                     ),
 
                     // Buffering / play-pause center overlay
@@ -580,53 +732,61 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                       bottom: 0,
                       left: 0,
                       right: 0,
-                      child: VideoBottomBar(
-                        playerState: widget.playerState,
-                        virtualPosition: _virtualPosition,
-                        dragging: _dragging,
-                        onChangeStart: (value) {
-                          setState(() {
-                            _dragging = true;
-                            _virtualPosition = Duration(seconds: value.toInt());
-                          });
-                          _hideTimer?.cancel();
-                          _clearVirtualPositionTimer?.cancel();
-                        },
-                        onChangeEnd: (value) {
-                          final target = Duration(seconds: value.toInt());
-                          ref
-                              .read(
-                                playerControllerProvider(
-                                  widget.params,
-                                ).notifier,
-                              )
-                              .seek(target);
-                          setState(() {
-                            _dragging = false;
-                            _virtualPosition = target;
-                          });
-                          _startHideTimer();
-                          _clearVirtualPositionTimer?.cancel();
-                          _clearVirtualPositionTimer = Timer(
-                            const Duration(milliseconds: 500),
-                            () {
-                              if (mounted) {
-                                setState(() => _virtualPosition = null);
-                              }
-                            },
-                          );
-                        },
-                        onChanged: (value) => setState(
-                          () => _virtualPosition = Duration(
-                            seconds: value.toInt(),
+                      child: ExcludeFocus(
+                        excluding: !_visible,
+                        child: VideoBottomBar(
+                          playerState: widget.playerState,
+                          virtualPosition: _virtualPosition,
+                          dragging: _dragging,
+                          onChangeStart: (value) {
+                            setState(() {
+                              _dragging = true;
+                              _virtualPosition = Duration(seconds: value.toInt());
+                            });
+                            _hideTimer?.cancel();
+                            _clearVirtualPositionTimer?.cancel();
+                          },
+                          onChangeEnd: (value) {
+                            final target = Duration(seconds: value.toInt());
+                            ref
+                                .read(
+                                  playerControllerProvider(
+                                    widget.params,
+                                  ).notifier,
+                                )
+                                .seek(target);
+                            setState(() {
+                              _dragging = false;
+                              _virtualPosition = target;
+                            });
+                            _startHideTimer();
+                            _clearVirtualPositionTimer?.cancel();
+                            _clearVirtualPositionTimer = Timer(
+                              const Duration(milliseconds: 500),
+                              () {
+                                if (mounted) {
+                                  setState(() => _virtualPosition = null);
+                                }
+                              },
+                            );
+                          },
+                          onChanged: (value) => setState(
+                            () => _virtualPosition = Duration(
+                              seconds: value.toInt(),
+                            ),
                           ),
+                          onTogglePlayPause: _togglePlayPause,
+                          onSkip: _performRealSkip,
+                          onToggleMute: _toggleMute,
+                          isFullscreen: _isFullScreen,
+                          onToggleFullscreen: _toggleFullscreen,
+                          onNextEpisode: widget.onNextEpisode,
+                          onSettingsPressed: () {
+                            _hideTimer?.cancel();
+                            widget.onSettingsPressed();
+                          },
+                          playPauseFocusNode: _playPauseFocusNode,
                         ),
-                        onTogglePlayPause: _togglePlayPause,
-                        onSkip: _performRealSkip,
-                        onToggleMute: _toggleMute,
-                        isFullscreen: _isFullScreen,
-                        onToggleFullscreen: _toggleFullscreen,
-                        onNextEpisode: widget.onNextEpisode,
                       ),
                     ),
                   ],

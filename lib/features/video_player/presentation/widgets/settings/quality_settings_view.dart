@@ -4,6 +4,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'settings_widgets.dart';
 
 class QualitySettingsView extends ConsumerStatefulWidget {
@@ -253,32 +254,52 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                       final isSelected =
                           currentState.currentStream?.candidate.uniqueId ==
                           stream.uniqueId;
+                      final hasSelectedInList = currentState.availableStreams.any(
+                        (s) =>
+                            currentState.currentStream?.candidate.uniqueId ==
+                            s.uniqueId,
+                      );
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: () {
-                              ref
-                                  .read(
-                                    playerControllerProvider(params).notifier,
-                                  )
-                                  .changeSource(stream);
-                            },
-                            child: Container(
+                        child: DpadFocusable(
+                          autofocus: isSelected ||
+                              (index == 0 && !hasSelectedInList),
+                          scale: 1.02,
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () {
+                            ref
+                                .read(
+                                  playerControllerProvider(params).notifier,
+                                )
+                                .changeSource(stream);
+                          },
+                          builder: (context, isFocused, isHovered, child) {
+                            final isHighlighted = isFocused || isHovered;
+                            return Container(
                               padding: EdgeInsets.all(isLandscape ? 12 : 16),
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? AppTheme.accent.withValues(alpha: 0.1)
-                                    : Colors.white.withValues(alpha: 0.03),
+                                    : (isHighlighted
+                                        ? Colors.white.withValues(alpha: 0.08)
+                                        : Colors.white.withValues(alpha: 0.03)),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: isSelected
-                                      ? AppTheme.accent.withValues(alpha: 0.5)
-                                      : Colors.white.withValues(alpha: 0.05),
-                                  width: 1,
+                                  color: isFocused
+                                      ? Colors.white
+                                      : (isSelected
+                                          ? AppTheme.accent.withValues(
+                                              alpha: 0.5,
+                                            )
+                                          : (isHovered
+                                              ? Colors.white.withValues(
+                                                  alpha: 0.2,
+                                                )
+                                              : Colors.white.withValues(
+                                                  alpha: 0.05,
+                                                ))),
+                                  width: isFocused ? 2 : 1,
                                 ),
                               ),
                               child: Column(
@@ -317,8 +338,9 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                   ),
                                 ],
                               ),
-                            ),
-                          ),
+                            );
+                          },
+                          child: const SizedBox.shrink(),
                         ),
                       );
                     }),

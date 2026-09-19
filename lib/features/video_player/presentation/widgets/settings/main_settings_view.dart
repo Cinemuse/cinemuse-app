@@ -47,6 +47,7 @@ class MainSettingsView extends ConsumerWidget {
               subtitle: QualitySubtitle(state: state),
               onTap: () => onNavigate('quality'),
               compact: isLandscape,
+              autofocus: true,
             ),
             if (!state.isLive) ...[
               SettingsTile(

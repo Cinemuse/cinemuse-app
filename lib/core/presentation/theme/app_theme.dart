@@ -26,6 +26,17 @@ class AppTheme {
   static const Color textSecondary = Color(0xFFe5e7eb); // Gray 200
   static const Color textMuted = Color(0xFF9ca3af); // Gray 400
 
+  // Focus & Navigation Constants
+  static const Color focusRing = Color(0xFFffffff);
+  static const Color focusRingAccent = Color(0xFFffffff);
+  static const List<BoxShadow> shadowFocusGlow = [
+    BoxShadow(
+      color: Color(0x33ffffff),
+      blurRadius: 12,
+      spreadRadius: 1,
+    ),
+  ];
+
   // Shadows
   static const List<BoxShadow> shadowNeon = [
     BoxShadow(color: accentGlow, blurRadius: 20, spreadRadius: 0),

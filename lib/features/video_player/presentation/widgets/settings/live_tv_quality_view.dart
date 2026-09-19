@@ -6,6 +6,7 @@ import 'package:cinemuse_app/features/settings/application/settings_service.dart
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'settings_widgets.dart';
 
 class LiveTvQualityView extends ConsumerWidget {
@@ -45,22 +46,36 @@ class LiveTvQualityView extends ConsumerWidget {
               if (links.isNotEmpty) ...[
                 _buildSectionHeader(l10n.playerLiveSources),
                 const SizedBox(height: 8),
-                ...links.map((link) => _buildStreamSourceCard(
-                  ref: ref,
-                  link: link,
-                  isActive: state.currentLiveLink?.url == link.url,
-                  l10n: l10n,
-                )),
+                ...links.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final link = entry.value;
+                  final isActive = state.currentLiveLink?.url == link.url;
+                  final hasActive = links.any(
+                    (l) => state.currentLiveLink?.url == l.url,
+                  );
+                  return _buildStreamSourceCard(
+                    ref: ref,
+                    link: link,
+                    isActive: isActive,
+                    l10n: l10n,
+                    autofocus: isActive || (!hasActive && index == 0),
+                  );
+                }),
                 const SizedBox(height: 16),
               ],
               _buildSectionHeader(l10n.playerPreferredQuality),
               const SizedBox(height: 8),
-              ...StreamQuality.values.reversed.map((q) => _buildQualityTile(
-                ref: ref,
-                quality: q,
-                icon: _getQualityIcon(q),
-                current: currentQuality,
-              )),
+              ...StreamQuality.values.reversed.toList().asMap().entries.map((entry) {
+                final index = entry.key;
+                final q = entry.value;
+                return _buildQualityTile(
+                  ref: ref,
+                  quality: q,
+                  icon: _getQualityIcon(q),
+                  current: currentQuality,
+                  autofocus: links.isEmpty && (q == currentQuality || index == 0),
+                );
+              }),
               const SizedBox(height: 24),
             ],
           ),
@@ -89,31 +104,40 @@ class LiveTvQualityView extends ConsumerWidget {
     required StreamLink link,
     required bool isActive,
     required AppLocalizations l10n,
+    bool autofocus = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            ref
-                .read(playerControllerProvider(params).notifier)
-                .switchLiveSource(link);
-            onBack();
-          },
-          child: Container(
+      child: DpadFocusable(
+        autofocus: autofocus,
+        scale: 1.02,
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          ref
+              .read(playerControllerProvider(params).notifier)
+              .switchLiveSource(link);
+          onBack();
+        },
+        builder: (context, isFocused, isHovered, child) {
+          final isHighlighted = isFocused || isHovered;
+          return Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: isActive
                   ? AppTheme.accent.withValues(alpha: 0.12)
-                  : Colors.white.withValues(alpha: 0.04),
+                  : (isHighlighted
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.white.withValues(alpha: 0.04)),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isActive
-                    ? AppTheme.accent.withValues(alpha: 0.5)
-                    : Colors.white.withValues(alpha: 0.08),
-                width: 1,
+                color: isFocused
+                    ? Colors.white
+                    : (isActive
+                        ? AppTheme.accent.withValues(alpha: 0.5)
+                        : (isHovered
+                            ? Colors.white.withValues(alpha: 0.2)
+                            : Colors.white.withValues(alpha: 0.08))),
+                width: isFocused ? 2 : 1,
               ),
             ),
             child: Row(
@@ -143,8 +167,9 @@ class LiveTvQualityView extends ConsumerWidget {
                   ),
               ],
             ),
-          ),
-        ),
+          );
+        },
+        child: const SizedBox.shrink(),
       ),
     );
   }
@@ -176,33 +201,42 @@ class LiveTvQualityView extends ConsumerWidget {
     required StreamQuality quality,
     required IconData icon,
     required StreamQuality current,
+    bool autofocus = false,
   }) {
     final isSelected = quality == current;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            ref.read(settingsProvider.notifier).updateSettings({
-              'liveTvQuality': quality,
-            });
-            onBack();
-          },
-          child: Container(
+      child: DpadFocusable(
+        autofocus: autofocus,
+        scale: 1.02,
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          ref.read(settingsProvider.notifier).updateSettings({
+            'liveTvQuality': quality,
+          });
+          onBack();
+        },
+        builder: (context, isFocused, isHovered, child) {
+          final isHighlighted = isFocused || isHovered;
+          return Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: isSelected
                   ? AppTheme.accent.withValues(alpha: 0.1)
-                  : Colors.white.withValues(alpha: 0.04),
+                  : (isHighlighted
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.white.withValues(alpha: 0.04)),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected
-                    ? AppTheme.accent.withValues(alpha: 0.4)
-                    : Colors.white.withValues(alpha: 0.08),
-                width: 1,
+                color: isFocused
+                    ? Colors.white
+                    : (isSelected
+                        ? AppTheme.accent.withValues(alpha: 0.4)
+                        : (isHovered
+                            ? Colors.white.withValues(alpha: 0.2)
+                            : Colors.white.withValues(alpha: 0.08))),
+                width: isFocused ? 2 : 1,
               ),
             ),
             child: Row(
@@ -234,8 +268,9 @@ class LiveTvQualityView extends ConsumerWidget {
                   ),
               ],
             ),
-          ),
-        ),
+          );
+        },
+        child: const SizedBox.shrink(),
       ),
     );
   }

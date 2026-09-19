@@ -1,0 +1,63 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cinemuse_app/core/utils/platform_info.dart';
+
+/// Supported display modes for Cinemuse.
+enum DisplayMode {
+  /// Standard UI layout suited for touch screens and mouse/keyboard desktop usage.
+  standard,
+
+  /// 10-foot Big Picture UI designed for TV screens, gamepads, and D-Pad remotes.
+  bigPicture,
+}
+
+class DisplayModeNotifier extends StateNotifier<DisplayMode> {
+  static const String _prefKey = 'display_mode';
+
+  DisplayModeNotifier() : super(_initialMode) {
+    _loadPreference();
+  }
+
+  static DisplayMode get _initialMode {
+    return PlatformInfo.isTV ? DisplayMode.bigPicture : DisplayMode.standard;
+  }
+
+  Future<void> _loadPreference() async {
+    // If we're on a physical TV device, enforce bigPicture by default unless explicitly configured.
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString(_prefKey);
+      if (saved != null) {
+        state = saved == DisplayMode.bigPicture.name
+            ? DisplayMode.bigPicture
+            : DisplayMode.standard;
+      }
+    } catch (_) {
+      // Fallback gracefully to current state if preferences are unavailable
+    }
+  }
+
+  Future<void> setMode(DisplayMode mode) async {
+    state = mode;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefKey, mode.name);
+    } catch (_) {}
+  }
+
+  Future<void> toggleMode() async {
+    final next = state == DisplayMode.standard
+        ? DisplayMode.bigPicture
+        : DisplayMode.standard;
+    await setMode(next);
+  }
+}
+
+final displayModeProvider =
+    StateNotifierProvider<DisplayModeNotifier, DisplayMode>((ref) {
+  return DisplayModeNotifier();
+});
+
+final isBigPictureProvider = Provider<bool>((ref) {
+  return ref.watch(displayModeProvider) == DisplayMode.bigPicture;
+});

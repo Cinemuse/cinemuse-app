@@ -54,6 +54,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonFeatured => 'FEATURED';
 
   @override
+  String get commonSeeAll => 'See All';
+
+  @override
   String get commonUnexpectedError => 'An unexpected error occurred';
 
   @override
@@ -80,6 +83,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchRecentSearches => 'Recent Searches';
+
+  @override
+  String get searchHoldToDelete => 'Hold to delete';
 
   @override
   String searchNoResults(Object query) {
@@ -710,6 +716,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playerNextEpisode => 'Next Episode';
+
+  @override
+  String get playerSkipBackward => 'Rewind 10 seconds';
+
+  @override
+  String get playerSkipForward => 'Forward 10 seconds';
 
   @override
   String get playerSubtitleAppearance => 'Subtitle Appearance';
@@ -1926,4 +1938,11 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get bigPictureMode => 'Big Picture Mode';
+
+  @override
+  String get bigPictureModeSubtitle =>
+      'Optimized 10-foot UI for TV and remote navigation';
 }

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 class SettingToggle extends StatelessWidget {
   final String? label;
   final String? description;
   final bool value;
   final ValueChanged<bool> onChanged;
+  final FocusNode? focusNode;
 
   const SettingToggle({
     super.key,
@@ -13,14 +15,18 @@ class SettingToggle extends StatelessWidget {
     this.description,
     required this.value,
     required this.onChanged,
+    this.focusNode,
   });
 
   @override
   Widget build(BuildContext context) {
-    final toggle = MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => onChanged(!value),
+    final toggle = DpadFocusable(
+      focusNode: focusNode,
+      onTap: () => onChanged(!value),
+      borderRadius: BorderRadius.circular(11),
+      scale: 1.05,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           width: 44,

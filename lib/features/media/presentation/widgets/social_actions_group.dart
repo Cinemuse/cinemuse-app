@@ -1,6 +1,6 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
-import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
@@ -162,59 +162,73 @@ class _SocialIconState extends State<_SocialIcon>
       }
     }
 
-    return HoverScale(
-      scale: 1.2,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            if (widget.icon != Icons.format_list_bulleted) {
-              setState(() {
-                _isOptimisticActive = !isActive;
-              });
-            }
-            _controller.forward(from: 0.0);
-            widget.onTap();
-          },
-          child: Container(
-            alignment: Alignment.center,
-            padding: EdgeInsets.symmetric(
-              horizontal: horizontalPadding,
-              vertical: 15,
+    return DpadFocusable(
+      autoScroll: false,
+      onTap: () {
+        if (widget.icon != Icons.format_list_bulleted) {
+          setState(() {
+            _isOptimisticActive = !isActive;
+          });
+        }
+        _controller.forward(from: 0.0);
+        widget.onTap();
+      },
+      scale: 1.15,
+      borderRadius: BorderRadius.circular(10),
+      builder: (context, isFocused, isHovered, child) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isFocused
+                ? Colors.white.withValues(alpha: 0.16)
+                : (isHovered
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : Colors.transparent),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isFocused
+                  ? Colors.white.withValues(alpha: 0.3)
+                  : Colors.transparent,
             ),
-            // FittedBox scales down contents if they still exceed the container width
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 150),
-                      transitionBuilder: (child, anim) =>
-                          FadeTransition(opacity: anim, child: child),
-                      child: Icon(
-                        effectiveIcon,
-                        key: ValueKey(effectiveIcon),
-                        color: effectiveColor,
-                        size: 24,
-                      ),
-                    ),
+          ),
+          child: child,
+        );
+      },
+      child: Container(
+        alignment: Alignment.center,
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: 15,
+        ),
+        // FittedBox scales down contents if they still exceed the container width
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ScaleTransition(
+                scale: _scaleAnimation,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 150),
+                  transitionBuilder: (child, anim) =>
+                      FadeTransition(opacity: anim, child: child),
+                  child: Icon(
+                    effectiveIcon,
+                    key: ValueKey(effectiveIcon),
+                    color: effectiveColor,
+                    size: 24,
                   ),
-                  if (widget.showArrow) ...[
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.keyboard_arrow_down,
-                      color: effectiveColor.withValues(alpha: 0.5),
-                      size: 14,
-                    ),
-                  ],
-                ],
+                ),
               ),
-            ),
+              if (widget.showArrow) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.keyboard_arrow_down,
+                  color: effectiveColor.withValues(alpha: 0.5),
+                  size: 14,
+                ),
+              ],
+            ],
           ),
         ),
       ),

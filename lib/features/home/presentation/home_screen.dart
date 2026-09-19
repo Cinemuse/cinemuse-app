@@ -156,19 +156,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Continue Watching
-                  RepaintBoundary(
-                    child: FocusTraversalGroup(
-                      policy: OrderedTraversalPolicy(),
-                      child: const ContinueWatchingRow(),
-                    ),
+                  const RepaintBoundary(
+                    child: ContinueWatchingRow(),
                   ),
 
                   // Sports Schedule
-                  RepaintBoundary(
-                    child: FocusTraversalGroup(
-                      policy: OrderedTraversalPolicy(),
-                      child: const SportScheduleRow(),
-                    ),
+                  const RepaintBoundary(
+                    child: SportScheduleRow(),
                   ),
 
                   // Pinned Lists
@@ -198,13 +192,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 16),
                               child: RepaintBoundary(
-                                child: FocusTraversalGroup(
-                                  policy: OrderedTraversalPolicy(),
-                                  child: MediaRow(
-                                    title: title,
-                                    asyncData: AsyncValue.data(mediaItems),
-                                    onHeaderTap: () => _showListDetails(context, list),
-                                  ),
+                                child: MediaRow(
+                                  title: title,
+                                  asyncData: AsyncValue.data(mediaItems),
+                                  onHeaderTap: () => _showListDetails(context, list),
                                 ),
                               ),
                             );
@@ -225,37 +216,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     const SizedBox(height: 10),
                     // Trending List
                     RepaintBoundary(
-                      child: FocusTraversalGroup(
-                        policy: OrderedTraversalPolicy(),
-                        child: MediaRow(
-                          title: l10n.homeTrendingNow,
-                          asyncData: trendingAsync,
-                          skipFirst: true,
-                        ),
+                      child: MediaRow(
+                        title: l10n.homeTrendingNow,
+                        asyncData: trendingAsync,
+                        skipFirst: true,
                       ),
                     ),
                     const SizedBox(height: 16),
 
                     // Popular Movies
                     RepaintBoundary(
-                      child: FocusTraversalGroup(
-                        policy: OrderedTraversalPolicy(),
-                        child: MediaRow(
-                          title: l10n.homePopularMovies,
-                          asyncData: popularMoviesAsync,
-                        ),
+                      child: MediaRow(
+                        title: l10n.homePopularMovies,
+                        asyncData: popularMoviesAsync,
                       ),
                     ),
                     const SizedBox(height: 16),
 
                     // Popular Series
                     RepaintBoundary(
-                      child: FocusTraversalGroup(
-                        policy: OrderedTraversalPolicy(),
-                        child: MediaRow(
-                          title: l10n.homePopularSeries,
-                          asyncData: popularSeriesAsync,
-                        ),
+                      child: MediaRow(
+                        title: l10n.homePopularSeries,
+                        asyncData: popularSeriesAsync,
                       ),
                     ),
                   ],
@@ -305,9 +287,7 @@ class _PinnedCollectionRow extends ConsumerWidget {
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: RepaintBoundary(
-            child: FocusTraversalGroup(
-              policy: OrderedTraversalPolicy(),
-              child: MediaRow(
+            child: MediaRow(
                 title: data['name'] ?? l10n.collectionTitleFallback,
                 asyncData: AsyncValue.data(mediaItems),
                 onHeaderTap: () {
@@ -332,9 +312,8 @@ class _PinnedCollectionRow extends ConsumerWidget {
                 },
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
     );

@@ -7,6 +7,7 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
+import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 
@@ -52,6 +53,7 @@ class DetailsHero extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final isBigPicture = ref.watch(isBigPictureProvider);
     final type =
         media['type'] ?? (details['title'] != null ? 'movie' : 'series');
     final titleIt = MediaItem.extractTitleFromTmdb(details, 'it');
@@ -100,8 +102,12 @@ class DetailsHero extends ConsumerWidget {
       updatedAt: DateTime.now(),
     );
 
+    final heroHeight = isBigPicture
+        ? MediaQuery.of(context).size.height * 0.8
+        : MediaQuery.of(context).size.height * 0.7;
+
     return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.7,
+      height: heroHeight,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
@@ -151,20 +157,26 @@ class DetailsHero extends ConsumerWidget {
             ),
           ),
 
-          Positioned(
-            top: MediaQuery.of(context).padding.top > 0
-                ? MediaQuery.of(context).padding.top + 16
-                : 24,
-            left: contentPadding,
-            child: AppBackButton(
-              onTap: () => Navigator.of(context).pop(),
-              backgroundColor: Colors.black.withValues(alpha: 0.4),
+          if (!isBigPicture)
+            Positioned(
+              top: MediaQuery.of(context).padding.top > 0
+                  ? MediaQuery.of(context).padding.top + 16
+                  : 24,
+              left: contentPadding,
+              child: AppBackButton(
+                onTap: () => Navigator.of(context).pop(),
+                backgroundColor: Colors.black.withValues(alpha: 0.4),
+              ),
             ),
-          ),
 
           // Content
           Padding(
-            padding: EdgeInsets.fromLTRB(contentPadding, 0, contentPadding, 48),
+            padding: EdgeInsets.fromLTRB(
+              contentPadding,
+              0,
+              contentPadding,
+              isBigPicture ? 16 : 48,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
@@ -302,24 +314,40 @@ class DetailsHero extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 // Action Buttons (Responsive)
-                ResponsiveActionButtons(
-                  onPlayClick: onPlayClick,
-                  onRestartClick: onRestartClick,
-                  playButtonLabel: _getPlayButtonLabel(l10n, type, resumeData),
-                  mediaItem: mediaItem,
-                  isFavorite: isFavorite,
-                  isInWatchlist: isInWatchlist,
-                  onListTap: onListTap,
-                  onTrackTap: onTrackTap,
-                  onDropClick: onDropClick,
-                  onClearProgress: onClearProgress,
-                  seriesWatchStatus: seriesWatchStatus,
-                  movieWatchCount: movieWatchCount,
-                  hasResumeProgress: (resumeData?['progress'] as int? ?? 0) > 0,
-                  mediaId: media['id']?.toString() ?? '',
-                  mediaType: type == 'series' ? 'tv' : type,
-                  season: resumeData?['season'] as int?,
-                  episode: resumeData?['episode'] as int?,
+                Focus(
+                  canRequestFocus: false,
+                  skipTraversal: true,
+                  onFocusChange: (hasFocus) {
+                    if (hasFocus) {
+                      final scrollable = Scrollable.maybeOf(context);
+                      if (scrollable != null && scrollable.position.pixels > 0) {
+                        scrollable.position.animateTo(
+                          0.0,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutCubic,
+                        );
+                      }
+                    }
+                  },
+                  child: ResponsiveActionButtons(
+                    onPlayClick: onPlayClick,
+                    onRestartClick: onRestartClick,
+                    playButtonLabel: _getPlayButtonLabel(l10n, type, resumeData),
+                    mediaItem: mediaItem,
+                    isFavorite: isFavorite,
+                    isInWatchlist: isInWatchlist,
+                    onListTap: onListTap,
+                    onTrackTap: onTrackTap,
+                    onDropClick: onDropClick,
+                    onClearProgress: onClearProgress,
+                    seriesWatchStatus: seriesWatchStatus,
+                    movieWatchCount: movieWatchCount,
+                    hasResumeProgress: (resumeData?['progress'] as int? ?? 0) > 0,
+                    mediaId: media['id']?.toString() ?? '',
+                    mediaType: type == 'series' ? 'tv' : type,
+                    season: resumeData?['season'] as int?,
+                    episode: resumeData?['episode'] as int?,
+                  ),
                 ),
 
                 // Series Progress Bar (extracted)

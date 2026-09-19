@@ -7,6 +7,7 @@ import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 class SubViewHeader extends StatelessWidget {
   final String title;
@@ -58,6 +59,7 @@ class SettingsTile extends StatelessWidget {
   final Widget? subtitle;
   final VoidCallback onTap;
   final bool compact;
+  final bool autofocus;
 
   const SettingsTile({
     super.key,
@@ -66,34 +68,67 @@ class SettingsTile extends StatelessWidget {
     this.subtitle,
     required this.onTap,
     this.compact = false,
+    this.autofocus = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: 24,
-        vertical: compact ? 4 : 8,
-      ),
-      leading: Container(
-        padding: EdgeInsets.all(compact ? 10 : 12),
-        decoration: BoxDecoration(
-          color: AppTheme.accent.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, color: AppTheme.accent, size: compact ? 20 : 24),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: AppTheme.textWhite,
-          fontSize: compact ? 14 : 16,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      subtitle: subtitle ?? const SizedBox.shrink(),
-      trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24),
+    return DpadFocusable(
+      autofocus: autofocus,
       onTap: onTap,
+      scale: 1.02,
+      borderRadius: BorderRadius.circular(12),
+      builder: (context, isFocused, isHovered, child) {
+        final isHighlighted = isFocused || isHovered;
+        return Container(
+          decoration: BoxDecoration(
+            color: isHighlighted
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isFocused
+                  ? Colors.white
+                  : (isHovered
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.transparent),
+              width: 1.5,
+            ),
+          ),
+          child: ListTile(
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: compact ? 4 : 8,
+            ),
+            leading: Container(
+              padding: EdgeInsets.all(compact ? 10 : 12),
+              decoration: BoxDecoration(
+                color: isHighlighted
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: isHighlighted ? Colors.white : Colors.white70,
+                size: compact ? 20 : 24,
+              ),
+            ),
+            title: Text(
+              title,
+              style: TextStyle(
+                color: AppTheme.textWhite,
+                fontSize: compact ? 14 : 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle: subtitle ?? const SizedBox.shrink(),
+            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24),
+            onTap: onTap,
+          ),
+        );
+      },
+      child: const SizedBox.shrink(),
     );
   }
 }
@@ -231,6 +266,7 @@ class TrackTile extends ConsumerWidget {
   final Color? color;
   final VoidCallback onBack;
   final VoidCallback? onSelected;
+  final bool autofocus;
 
   const TrackTile({
     super.key,
@@ -242,6 +278,7 @@ class TrackTile extends ConsumerWidget {
     this.color,
     required this.onBack,
     this.onSelected,
+    this.autofocus = false,
   });
 
   @override
@@ -252,59 +289,79 @@ class TrackTile extends ConsumerWidget {
           track.title ?? track.language ?? track.id,
         );
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? AppTheme.accent.withValues(alpha: 0.1)
-            : Colors.white.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSelected
-              ? AppTheme.accent.withValues(alpha: 0.5)
-              : Colors.white.withValues(alpha: 0.05),
-          width: 1,
-        ),
-      ),
-      child: ListTile(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Text(
-          title,
-          style: TextStyle(
+    return DpadFocusable(
+      autofocus: autofocus,
+      onTap: () => _handleTrackSelection(),
+      scale: 1.02,
+      borderRadius: BorderRadius.circular(12),
+      builder: (context, isFocused, isHovered, child) {
+        final isHighlighted = isFocused || isHovered;
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          decoration: BoxDecoration(
             color: isSelected
-                ? (color ?? AppTheme.textWhite)
-                : AppTheme.textWhite.withValues(alpha: 0.7),
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 15,
+                ? AppTheme.accent.withValues(alpha: 0.15)
+                : (isHighlighted
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : Colors.white.withValues(alpha: 0.02)),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isFocused
+                  ? Colors.white
+                  : (isSelected
+                      ? AppTheme.accent.withValues(alpha: 0.5)
+                      : (isHovered
+                          ? Colors.white.withValues(alpha: 0.2)
+                          : Colors.white.withValues(alpha: 0.05))),
+              width: isFocused ? 2 : 1,
+            ),
           ),
-        ),
-        trailing: isSelected
-            ? Icon(
-                Icons.check_circle_rounded,
-                color: color ?? AppTheme.accent,
-                size: 20,
-              )
-            : null,
-        onTap: () async {
-          if (isSelected) return;
-          try {
-            if (isSubtitle) {
-              await player.setSubtitleTrack(track);
-            } else {
-              await player.setAudioTrack(track);
-            }
-          } catch (_) {
-            // Ignore "already selected" or stale track errors from MPV
-          }
-
-          if (onSelected != null) {
-            onSelected!();
-          }
-
-          onBack();
-        },
-      ),
+          child: ListTile(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: Text(
+              title,
+              style: TextStyle(
+                color: isSelected
+                    ? (color ?? AppTheme.textWhite)
+                    : AppTheme.textWhite.withValues(alpha: 0.7),
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 15,
+              ),
+            ),
+            trailing: isSelected
+                ? Icon(
+                    Icons.check_circle_rounded,
+                    color: color ?? AppTheme.accent,
+                    size: 20,
+                  )
+                : null,
+            onTap: _handleTrackSelection,
+          ),
+        );
+      },
+      child: const SizedBox.shrink(),
     );
+  }
+
+  Future<void> _handleTrackSelection() async {
+    if (isSelected) return;
+    try {
+      if (isSubtitle) {
+        await player.setSubtitleTrack(track);
+      } else {
+        await player.setAudioTrack(track);
+      }
+    } catch (_) {
+      // Ignore "already selected" or stale track errors from MPV
+    }
+
+    if (onSelected != null) {
+      onSelected!();
+    }
+
+    onBack();
   }
 }
 

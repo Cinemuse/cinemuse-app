@@ -1,12 +1,13 @@
 import 'package:cinemuse_app/features/home/application/sport_schedule_scraper.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:intl/intl.dart';
 
 class SportEventCard extends ConsumerStatefulWidget {
@@ -107,37 +108,21 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
       imageAsset = 'assets/sports/$key.jpg';
     }
 
-    return Focus(
+    return DpadFocusable(
+      onTap: _handleTap,
+      onLongPress: () => _showContextActions(context),
+      onSecondaryTap: () => _showContextActions(context),
+      onHoverChange: (value) => setState(() => _isHovered = value),
       onFocusChange: (value) => setState(() => _isHovered = value),
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent) {
-          final isEnter = event.logicalKey == LogicalKeyboardKey.enter;
-          final isSelect = event.logicalKey == LogicalKeyboardKey.select;
-          if (isEnter || isSelect) {
-            _handleTap();
-            return KeyEventResult.handled;
-          }
-        }
-        return KeyEventResult.ignored;
-      },
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: SizedBox(
-          width: 280,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              AnimatedScale(
-                scale: _isHovered ? 1.02 : 1.0,
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOutCubic,
-                child: GestureDetector(
-                  onTap: _handleTap,
-                  onLongPress: () => _showContextActions(context),
-                  onSecondaryTapDown: (_) => _showContextActions(context),
-                  behavior: HitTestBehavior.opaque,
-                  child: Column(
+      scale: 1.02,
+      showFocusRing: false,
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        width: 280,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Backdrop Image
@@ -281,8 +266,6 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                       ),
                     ],
                   ),
-                ),
-              ),
 
               // Context Menu Button (More Options)
               if (widget.event.channels.isNotEmpty)
@@ -291,6 +274,8 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                   right: 8,
                   child: Builder(
                     builder: (context) {
+                      final isBigPicture = ref.watch(isBigPictureProvider);
+                      if (isBigPicture) return const SizedBox.shrink();
                       final isMobile = MediaQuery.of(context).size.width < 600;
                       return AnimatedOpacity(
                         opacity: (_isHovered || isMobile) ? 1.0 : 0.0,
@@ -298,6 +283,8 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
+                            canRequestFocus: false,
+                            excludeFromSemantics: true,
                             onTap: () => _showContextActions(context),
                             borderRadius: BorderRadius.circular(20),
                             child: Container(
@@ -322,8 +309,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   String _getLocalizedSportName(BuildContext context) {

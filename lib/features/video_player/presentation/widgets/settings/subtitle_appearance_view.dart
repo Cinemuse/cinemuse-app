@@ -40,6 +40,7 @@ class SubtitleAppearanceView extends ConsumerWidget {
                   value:
                       '${state.subtitleDelay >= 0 ? '+' : ''}${state.subtitleDelay.toStringAsFixed(1)}s',
                   overlayType: SliderOverlayType.sync,
+                  autofocus: true,
                 ),
                 _buildTile(
                   context,
@@ -86,10 +87,12 @@ class SubtitleAppearanceView extends ConsumerWidget {
     required String title,
     String? value,
     required SliderOverlayType overlayType,
+    bool autofocus = false,
   }) {
     return SettingsTile(
       icon: icon,
       title: title,
+      autofocus: autofocus,
       subtitle: value != null
           ? Text(
               value,

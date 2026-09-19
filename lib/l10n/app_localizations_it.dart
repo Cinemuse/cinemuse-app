@@ -54,6 +54,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get commonFeatured => 'IN PRIMO PIANO';
 
   @override
+  String get commonSeeAll => 'Vedi tutti';
+
+  @override
   String get commonUnexpectedError => 'Si è verificato un errore inaspettato';
 
   @override
@@ -80,6 +83,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get searchRecentSearches => 'Ricerche Recenti';
+
+  @override
+  String get searchHoldToDelete => 'Tieni premuto per eliminare';
 
   @override
   String searchNoResults(Object query) {
@@ -714,6 +720,12 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get playerNextEpisode => 'Prossimo Episodio';
+
+  @override
+  String get playerSkipBackward => 'Riavvolgi 10 secondi';
+
+  @override
+  String get playerSkipForward => 'Avanti 10 secondi';
 
   @override
   String get playerSubtitleAppearance => 'Aspetto Sottotitoli';
@@ -1942,4 +1954,11 @@ class AppLocalizationsIt extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get bigPictureMode => 'Modalità Big Picture';
+
+  @override
+  String get bigPictureModeSubtitle =>
+      'Interfaccia ottimizzata per TV e navigazione con telecomando';
 }

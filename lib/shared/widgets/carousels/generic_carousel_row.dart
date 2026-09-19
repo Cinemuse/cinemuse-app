@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 enum CarouselTheme {
   homeRow, // Title + chevron right (no box)
@@ -9,40 +15,46 @@ enum CarouselTheme {
   plain, // No header
 }
 
-class GenericCarouselRow extends StatefulWidget {
+class GenericCarouselRow extends ConsumerStatefulWidget {
   final String? title;
   final IconData? icon;
   final CarouselTheme theme;
-  final int itemCount;
-  final Widget Function(BuildContext context, int index) itemBuilder;
-  final Widget Function(BuildContext context, int index)? separatorBuilder;
-  final WidgetBuilder? emptyBuilder;
-  final double? height;
-  final EdgeInsets padding;
+  final Widget? headerAction;
   final ScrollController? controller;
   final VoidCallback? onHeaderTap;
+  final WidgetBuilder? emptyBuilder;
+  final double height;
+  final int itemCount;
+  final EdgeInsets padding;
+  final IndexedWidgetBuilder itemBuilder;
+  final IndexedWidgetBuilder? separatorBuilder;
 
   const GenericCarouselRow({
     super.key,
     this.title,
     this.icon,
-    this.theme = CarouselTheme.plain,
-    required this.itemCount,
-    required this.itemBuilder,
-    this.separatorBuilder,
-    this.emptyBuilder,
-    this.height,
-    this.padding = EdgeInsets.zero,
+    this.theme = CarouselTheme.homeRow,
+    this.headerAction,
     this.controller,
     this.onHeaderTap,
+    this.emptyBuilder,
+    required this.height,
+    required this.itemCount,
+    this.padding = EdgeInsets.zero,
+    required this.itemBuilder,
+    this.separatorBuilder,
   });
 
   @override
-  State<GenericCarouselRow> createState() => _GenericCarouselRowState();
+  ConsumerState<GenericCarouselRow> createState() => _GenericCarouselRowState();
 }
 
-class _GenericCarouselRowState extends State<GenericCarouselRow> {
+class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
   late ScrollController _controller;
+  late final FocusNode _rowFocusNode;
+  final Map<int, FocusNode> _trackedNodes = {};
+  FocusNode? _lastFocusedNode;
+  bool _wasFocused = false;
   bool _canScrollLeft = false;
   bool _canScrollRight = false;
   bool _isHoveringList = false;
@@ -50,6 +62,12 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
   @override
   void initState() {
     super.initState();
+    _rowFocusNode = FocusNode(
+      debugLabel: 'Carousel_${widget.title ?? "Row"}',
+      canRequestFocus: false,
+      skipTraversal: true,
+    );
+    _rowFocusNode.addListener(_handleRowFocusChange);
     _controller = widget.controller ?? ScrollController();
     _controller.addListener(_updateScrollButtons);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -59,11 +77,50 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
 
   @override
   void dispose() {
+    for (final node in _trackedNodes.values) {
+      node.dispose();
+    }
+    _trackedNodes.clear();
+    _rowFocusNode.removeListener(_handleRowFocusChange);
+    _rowFocusNode.dispose();
     _controller.removeListener(_updateScrollButtons);
     if (widget.controller == null) {
       _controller.dispose();
     }
     super.dispose();
+  }
+
+  void _handleRowFocusChange() {
+    final hasFocus = _rowFocusNode.hasFocus;
+    if (!_wasFocused && hasFocus) {
+      if (_lastFocusedNode != null &&
+          _lastFocusedNode!.canRequestFocus &&
+          !_lastFocusedNode!.hasFocus) {
+        // Row Memory: restore last focused item
+        final target = _lastFocusedNode!;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _rowFocusNode.hasFocus && target.canRequestFocus) {
+            target.requestFocus();
+          }
+        });
+      } else if (_lastFocusedNode == null) {
+        // First time reaching this row: start from the first card on the left!
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || !_rowFocusNode.hasFocus) return;
+          final firstFocusable = _getFirstFocusableNode();
+          if (firstFocusable != null) {
+            firstFocusable.requestFocus();
+            _lastFocusedNode = firstFocusable;
+            if (_controller.hasClients && _controller.position.pixels > 0) {
+              _controller.jumpTo(0.0);
+            }
+          }
+        });
+      }
+      _wasFocused = true;
+    } else if (!hasFocus) {
+      _wasFocused = false;
+    }
   }
 
   void _updateScrollButtons() {
@@ -108,9 +165,10 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
       return const SizedBox.shrink();
     }
 
+    final isBigPicture = ref.watch(isBigPictureProvider);
     final isMobile = MediaQuery.of(context).size.width < 600;
-    if (isMobile) {
-      return const SizedBox.shrink(); // hide on mobile natively
+    if (isMobile || isBigPicture) {
+      return const SizedBox.shrink(); // hide on mobile natively and in Big Picture mode
     }
 
     return AnimatedOpacity(
@@ -122,6 +180,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
+            focusNode: FocusNode(skipTraversal: true),
             icon: const Icon(Icons.chevron_left, size: 28),
             onPressed: _canScrollLeft ? _scrollLeft : null,
             color: Colors.white,
@@ -132,6 +191,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
           ),
           const SizedBox(width: 8),
           IconButton(
+            focusNode: FocusNode(skipTraversal: true),
             icon: const Icon(Icons.chevron_right, size: 28),
             onPressed: _canScrollRight ? _scrollRight : null,
             color: Colors.white,
@@ -145,7 +205,175 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
     );
   }
 
-  Widget _buildList({EdgeInsets? overridePadding}) {
+  FocusNode _getOrCreateTrackedNode(int index) {
+    return _trackedNodes.putIfAbsent(
+      index,
+      () => FocusNode(
+        debugLabel: 'Carousel_${widget.title ?? "Item"}_$index',
+        canRequestFocus: false,
+        skipTraversal: true,
+      ),
+    );
+  }
+
+  bool _isFirstFocusableIndex(int index) => index == 0;
+
+  bool _isLastFocusableIndex(int index, int totalCount) =>
+      index >= totalCount - 1;
+
+  FocusNode? _getFirstFocusableNode() {
+    final sortedIndices = _trackedNodes.keys.toList()..sort();
+    for (final i in sortedIndices) {
+      final node = _trackedNodes[i];
+      if (node == null) continue;
+      if (node.canRequestFocus) return node;
+      for (final d in node.descendants) {
+        if (d.canRequestFocus) return d;
+      }
+    }
+    for (final d in _rowFocusNode.descendants) {
+      if (d.canRequestFocus && d != _rowFocusNode) return d;
+    }
+    return null;
+  }
+
+  Widget _buildTrackedItem(
+    BuildContext context,
+    int index,
+    int totalCount, {
+    bool isSeeAll = false,
+  }) {
+    final item = isSeeAll
+        ? _buildSeeAllCard(context)
+        : widget.itemBuilder(context, index);
+    final node = _getOrCreateTrackedNode(index);
+
+    return Focus(
+      focusNode: node,
+      canRequestFocus: false,
+      skipTraversal: true,
+      onFocusChange: (hasFocus) {
+        if (hasFocus) {
+          if (_wasFocused) {
+            _lastFocusedNode = FocusManager.instance.primaryFocus;
+          }
+          if (_isFirstFocusableIndex(index)) {
+            // Reveal leading headers (e.g. "Today" marker in sport schedule)
+            if (_controller.hasClients && _controller.position.pixels > 0) {
+              _controller.animateTo(
+                0.0,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+              );
+            }
+          }
+        }
+      },
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+          return KeyEventResult.ignored;
+        }
+
+        // 1. Left boundary: if at leftmost focusable card and pressing arrowLeft
+        if (event.logicalKey == LogicalKeyboardKey.arrowLeft &&
+            _isFirstFocusableIndex(index)) {
+          final isBigPicture = ref.read(isBigPictureProvider);
+          if (isBigPicture) {
+            final focusRail = ref.read(tvRailFocusActionProvider);
+            focusRail?.call();
+          }
+          // Always consume arrowLeft at leftmost focusable item so it NEVER escapes or jumps between rows
+          return KeyEventResult.handled;
+        }
+
+        // 2. Right boundary: if at rightmost focusable card and pressing arrowRight, clamp focus
+        if (event.logicalKey == LogicalKeyboardKey.arrowRight &&
+            _isLastFocusableIndex(index, totalCount)) {
+          return KeyEventResult.handled;
+        }
+
+        return KeyEventResult.ignored;
+      },
+      child: item,
+    );
+  }
+
+  Widget _buildSeeAllCard(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final label = l10n?.commonSeeAll ?? 'See All';
+
+    return DpadFocusable(
+      onTap: widget.onHeaderTap,
+      scale: 1.03,
+      showFocusRing: false,
+      borderRadius: BorderRadius.circular(12),
+      builder: (context, isFocused, isHovered, child) {
+        return Container(
+          width: 140,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isFocused
+                ? Colors.white.withValues(alpha: 0.14)
+                : (isHovered
+                    ? AppTheme.surface
+                    : AppTheme.surface.withValues(alpha: 0.8)),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isFocused
+                  ? Colors.white.withValues(alpha: 0.4)
+                  : Colors.white.withValues(alpha: 0.15),
+              width: 1.5,
+            ),
+          ),
+          child: child,
+        );
+      },
+      child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.accent.withValues(alpha: 0.2),
+                border: Border.all(
+                  color: AppTheme.accent.withValues(alpha: 0.4),
+                  width: 1.5,
+                ),
+              ),
+              child: const Icon(
+                Icons.arrow_forward_rounded,
+                color: AppTheme.accent,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+    );
+  }
+
+  Widget _buildList({
+    EdgeInsets? overridePadding,
+    bool hasSeeAllCard = false,
+    int totalCount = 0,
+  }) {
     if (widget.itemCount == 0 && widget.emptyBuilder != null) {
       return widget.emptyBuilder!(context);
     }
@@ -156,6 +384,8 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
       bottom: padding.bottom + 16,
     );
 
+    final count = totalCount > 0 ? totalCount : widget.itemCount;
+
     final list = widget.separatorBuilder != null
         ? ListView.separated(
             controller: _controller,
@@ -163,9 +393,17 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
             clipBehavior: Clip.none,
             padding: effectivePadding,
             cacheExtent: 9999,
-            itemCount: widget.itemCount,
+            itemCount: count,
             separatorBuilder: widget.separatorBuilder!,
-            itemBuilder: widget.itemBuilder,
+            itemBuilder: (context, index) {
+              final isSeeAll = hasSeeAllCard && index == widget.itemCount;
+              return _buildTrackedItem(
+                context,
+                index,
+                count,
+                isSeeAll: isSeeAll,
+              );
+            },
           )
         : ListView.builder(
             controller: _controller,
@@ -173,8 +411,16 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
             clipBehavior: Clip.none,
             padding: effectivePadding,
             cacheExtent: 9999,
-            itemCount: widget.itemCount,
-            itemBuilder: widget.itemBuilder,
+            itemCount: count,
+            itemBuilder: (context, index) {
+              final isSeeAll = hasSeeAllCard && index == widget.itemCount;
+              return _buildTrackedItem(
+                context,
+                index,
+                count,
+                isSeeAll: isSeeAll,
+              );
+            },
           );
 
     return SizedBox(
@@ -191,7 +437,10 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
           left: padding.left,
           right: padding.right,
         ),
-        child: list,
+        child: Focus(
+          focusNode: _rowFocusNode,
+          child: list,
+        ),
       ),
     );
   }
@@ -202,6 +451,10 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
       return const SizedBox.shrink();
     }
 
+    final isBigPicture = ref.watch(isBigPictureProvider);
+    final hasSeeAllCard = isBigPicture && widget.onHeaderTap != null;
+    final totalCount = widget.itemCount + (hasSeeAllCard ? 1 : 0);
+
     Widget content;
 
     switch (widget.theme) {
@@ -209,8 +462,20 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
         content = BentoBox(
           title: widget.title ?? '',
           icon: widget.icon,
-          action: _buildArrowButtons(),
-          child: _buildList(),
+          action: widget.headerAction != null
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    widget.headerAction!,
+                    const SizedBox(width: 8),
+                    _buildArrowButtons(),
+                  ],
+                )
+              : _buildArrowButtons(),
+          child: _buildList(
+            hasSeeAllCard: hasSeeAllCard,
+            totalCount: totalCount,
+          ),
         );
         break;
 
@@ -242,16 +507,10 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
                         const SizedBox(width: 8),
                       ],
                       Expanded(
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: widget.onHeaderTap,
-                          child: MouseRegion(
-                            cursor: widget.onHeaderTap != null
-                                ? SystemMouseCursors.click
-                                : SystemMouseCursors.basic,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
+                        child: Row(
+                          children: [
+                            if (widget.onHeaderTap != null)
+                              if (isBigPicture)
                                 Text(
                                   widget.title ?? '',
                                   style: const TextStyle(
@@ -259,18 +518,47 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
                                   ),
-                                ),
-                                if (widget.onHeaderTap != null) ...[
-                                  const SizedBox(width: 6),
-                                  const Icon(
-                                    Icons.chevron_right,
-                                    color: AppTheme.textMuted,
-                                    size: 20,
+                                )
+                              else
+                                InkWell(
+                                  onTap: widget.onHeaderTap,
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          widget.title ?? '',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        const Icon(
+                                          Icons.chevron_right,
+                                          color: AppTheme.textMuted,
+                                          size: 20,
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ],
-                              ],
-                            ),
-                          ),
+                                )
+                            else
+                              Text(
+                                widget.title ?? '',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                       _buildArrowButtons(),
@@ -278,7 +566,11 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _buildList(overridePadding: listPadding),
+                _buildList(
+                  overridePadding: listPadding,
+                  hasSeeAllCard: hasSeeAllCard,
+                  totalCount: totalCount,
+                ),
               ],
             ),
           ),
@@ -305,37 +597,58 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
                   Expanded(
                     child: Row(
                       children: [
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: widget.onHeaderTap,
-                          child: MouseRegion(
-                            cursor: widget.onHeaderTap != null
-                                ? SystemMouseCursors.click
-                                : SystemMouseCursors.basic,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  widget.title ?? '',
-                                  style: Theme.of(context).textTheme.bodyMedium!
-                                      .copyWith(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
-                                if (widget.onHeaderTap != null) ...[
-                                  const SizedBox(width: 8),
-                                  const Icon(
-                                    Icons.chevron_right,
-                                    color: AppTheme.textMuted,
-                                    size: 24,
+                        if (widget.onHeaderTap != null)
+                          if (isBigPicture)
+                            Text(
+                              widget.title ?? '',
+                              style: Theme.of(context).textTheme.bodyMedium!
+                                  .copyWith(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                ],
-                              ],
-                            ),
+                            )
+                          else
+                            InkWell(
+                              onTap: widget.onHeaderTap,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      widget.title ?? '',
+                                      style: Theme.of(context).textTheme.bodyMedium!
+                                          .copyWith(
+                                            color: Colors.white,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.chevron_right,
+                                      color: AppTheme.textMuted,
+                                      size: 24,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                        else
+                          Text(
+                            widget.title ?? '',
+                            style: Theme.of(context).textTheme.bodyMedium!
+                                .copyWith(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -343,13 +656,19 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
                 ],
               ),
             ),
-            _buildList(),
+            _buildList(
+              hasSeeAllCard: hasSeeAllCard,
+              totalCount: totalCount,
+            ),
           ],
         );
         break;
 
       case CarouselTheme.plain:
-        content = _buildList();
+        content = _buildList(
+          hasSeeAllCard: hasSeeAllCard,
+          totalCount: totalCount,
+        );
         break;
     }
 

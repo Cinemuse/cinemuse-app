@@ -24,6 +24,7 @@ import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
 import 'package:cinemuse_app/core/presentation/intents.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:cinemuse_app/core/utils/platform_info.dart';
 
 void main() {
   io.HttpOverrides.global = AppHttpOverrides();
@@ -40,6 +41,7 @@ void main() {
       await Future.wait([
         initializeDateFormatting(),
         dotenv.load(fileName: ".env"),
+        PlatformInfo.initialize(),
         SystemChrome.setEnabledSystemUIMode(
           SystemUiMode.manual,
           overlays: SystemUiOverlay.values,

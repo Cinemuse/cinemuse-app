@@ -1,11 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
-class HoverScale extends StatefulWidget {
+/// Interactive wrapper that scales on mouse hover, touch, and D-Pad / remote focus.
+/// Backwards-compatible drop-in replacement for existing HoverScale usages.
+class HoverScale extends StatelessWidget {
   final Widget child;
   final double scale;
   final Duration duration;
   final Curve curve;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onSecondaryTap;
+  final ValueChanged<bool>? onFocusChange;
+  final FocusNode? focusNode;
+  final bool autofocus;
+  final bool autoScroll;
+  final bool showFocusRing;
+  final BorderRadius? borderRadius;
+  final Color? focusRingColor;
+  final DpadFocusableBuilder? builder;
 
   const HoverScale({
     super.key,
@@ -14,31 +27,36 @@ class HoverScale extends StatefulWidget {
     this.duration = const Duration(milliseconds: 200),
     this.curve = Curves.easeOutCubic,
     this.onTap,
+    this.onLongPress,
+    this.onSecondaryTap,
+    this.onFocusChange,
+    this.focusNode,
+    this.autofocus = false,
+    this.autoScroll = true,
+    this.showFocusRing = false,
+    this.borderRadius,
+    this.focusRingColor,
+    this.builder,
   });
 
   @override
-  State<HoverScale> createState() => _HoverScaleState();
-}
-
-class _HoverScaleState extends State<HoverScale> {
-  bool _isHovered = false;
-
-  @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
-        child: AnimatedScale(
-          scale: _isHovered ? widget.scale : 1.0,
-          duration: widget.duration,
-          curve: widget.curve,
-          child: widget.child,
-        ),
-      ),
+    return DpadFocusable(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      onSecondaryTap: onSecondaryTap,
+      onFocusChange: onFocusChange,
+      focusNode: focusNode,
+      autofocus: autofocus,
+      autoScroll: autoScroll,
+      scale: scale,
+      duration: duration,
+      curve: curve,
+      showFocusRing: showFocusRing,
+      borderRadius: borderRadius,
+      focusRingColor: focusRingColor,
+      builder: builder,
+      child: child,
     );
   }
 }

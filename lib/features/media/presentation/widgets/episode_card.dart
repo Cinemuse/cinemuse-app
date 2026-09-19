@@ -2,6 +2,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
@@ -219,84 +220,91 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
 
     final isMobile = MediaQuery.of(context).size.width < 600;
 
-    return GestureDetector(
-      onSecondaryTapDown: (details) => _tapPosition = details.globalPosition,
-      onSecondaryTap: () => _showContextMenu(context),
-      onLongPressStart: (details) => _tapPosition = details.globalPosition,
+    return DpadFocusable(
+      onTap: () =>
+          widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, name),
       onLongPress: () => _showContextMenu(context),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.secondary.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.05)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () =>
-                widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, name),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: isMobile
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildEpisodeStill(
-                              context,
-                              l10n,
-                              stillPath,
-                              runtime,
-                              160,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildEpisodeHeader(name, formattedAirDate),
-                                  const SizedBox(height: 8),
-                                  _buildActions(context, l10n, isMobile: true),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _buildExpandableOverview(context, l10n, overview),
-                      ],
-                    )
-                  : Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildEpisodeStill(
-                          context,
-                          l10n,
-                          stillPath,
-                          runtime,
-                          160,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildEpisodeHeader(name, formattedAirDate),
-                              const SizedBox(height: 4),
-                              _buildExpandableOverview(context, l10n, overview),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        _buildActions(context, l10n, isMobile: false),
-                      ],
-                    ),
+      onSecondaryTap: () => _showContextMenu(context),
+      scale: 1.01,
+      borderRadius: BorderRadius.circular(16),
+      builder: (context, isFocused, isHovered, child) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isFocused
+                ? Colors.white.withValues(alpha: 0.12)
+                : (isHovered
+                    ? AppTheme.secondary.withValues(alpha: 0.7)
+                    : AppTheme.secondary.withValues(alpha: 0.5)),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isFocused
+                  ? Colors.white.withValues(alpha: 0.4)
+                  : AppTheme.textWhite.withValues(alpha: 0.05),
+              width: isFocused ? 1.5 : 1.0,
             ),
           ),
-        ),
+          clipBehavior: Clip.antiAlias,
+          child: child,
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: isMobile
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildEpisodeStill(
+                        context,
+                        l10n,
+                        stillPath,
+                        runtime,
+                        160,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildEpisodeHeader(name, formattedAirDate),
+                            const SizedBox(height: 8),
+                            _buildActions(context, l10n, isMobile: true),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _buildExpandableOverview(context, l10n, overview),
+                ],
+              )
+            : Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildEpisodeStill(
+                    context,
+                    l10n,
+                    stillPath,
+                    runtime,
+                    160,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildEpisodeHeader(name, formattedAirDate),
+                        const SizedBox(height: 4),
+                        _buildExpandableOverview(context, l10n, overview),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _buildActions(context, l10n, isMobile: false),
+                ],
+              ),
       ),
     );
   }
