@@ -9,7 +9,6 @@ import 'package:cinemuse_app/features/video_player/presentation/video_player_scr
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
@@ -193,7 +192,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     if (widget.items.isEmpty) return const SizedBox.shrink();
 
     final isMobile = MediaQuery.sizeOf(context).width < 600;
-    final isBigPicture = ref.watch(isBigPictureProvider);
+    final isWidescreen = !isMobile;
     final heroHeight = HeroSection.getHeroHeight(context);
     final l10n = AppLocalizations.of(context)!;
     final hasMultipleItems = widget.items.length > 1;
@@ -218,7 +217,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
                 context,
                 item,
                 isMobile,
-                isBigPicture,
+                isWidescreen,
                 heroHeight,
               );
             },
@@ -232,13 +231,13 @@ class _HeroSectionState extends ConsumerState<HeroSection>
             Positioned(
               right: AppTheme.getResponsiveHorizontalPadding(context),
               bottom: isMobile ? 48 : 84,
-              child: _buildControlsRow(l10n, widget.items.length, isMobile, isBigPicture),
+              child: _buildControlsRow(l10n, widget.items.length, isMobile, isWidescreen),
             ),
         ],
       ),
     );
 
-    if (isBigPicture) {
+    if (isWidescreen) {
       final currentItem = widget.items.isNotEmpty
           ? widget.items[_currentIndex % widget.items.length]
           : null;
@@ -289,7 +288,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     BuildContext context,
     MediaItem item,
     bool isMobile,
-    bool isBigPicture,
+    bool isWidescreen,
     double heroHeight,
   ) {
     final backdrop = item.backdropPath;
@@ -300,8 +299,8 @@ class _HeroSectionState extends ConsumerState<HeroSection>
       children: [
         _buildBackgroundImage(context, imageUrl, heroHeight),
         ..._buildGradients(isMobile),
-        // Ambient dimming when hero is not focused in Big Picture mode
-        if (isBigPicture)
+        // Ambient dimming when hero is not focused in widescreen mode
+        if (isWidescreen)
           Positioned.fill(
             child: IgnorePointer(
               child: AnimatedOpacity(
@@ -315,7 +314,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
           left: AppTheme.getResponsiveHorizontalPadding(context),
           bottom: isMobile ? 36 : 80,
           right: isMobile ? 90 : 180, // Leave room for indicators on the right
-          child: _buildContent(context, item, isMobile, isBigPicture),
+          child: _buildContent(context, item, isMobile, isWidescreen),
         ),
       ],
     );
@@ -394,9 +393,9 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     AppLocalizations l10n,
     int total,
     bool isMobile,
-    bool isBigPicture,
+    bool isWidescreen,
   ) {
-    if (isBigPicture) {
+    if (isWidescreen) {
       return _buildIndicators(total, isMobile);
     }
     return Row(
@@ -462,7 +461,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     BuildContext context,
     MediaItem item,
     bool isMobile,
-    bool isBigPicture,
+    bool isWidescreen,
   ) {
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context);
@@ -480,7 +479,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
           const SizedBox(height: 16),
           _buildOverview(context, overview),
         ],
-        if (isBigPicture) ...[
+        if (isWidescreen) ...[
           const SizedBox(height: 20),
           _buildTvInfoPill(context, l10n),
         ] else ...[
@@ -503,14 +502,14 @@ class _HeroSectionState extends ConsumerState<HeroSection>
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: _isHeroFocused
-              ? AppTheme.accent
+              ? Colors.white
               : Colors.white.withValues(alpha: 0.15),
           width: _isHeroFocused ? 2 : 1,
         ),
         boxShadow: _isHeroFocused
             ? [
                 BoxShadow(
-                  color: AppTheme.accent.withValues(alpha: 0.35),
+                  color: Colors.white.withValues(alpha: 0.2),
                   blurRadius: 14,
                   spreadRadius: 1,
                 ),
@@ -523,7 +522,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
           Icon(
             Icons.info_outline_rounded,
             size: 20,
-            color: _isHeroFocused ? AppTheme.accent : Colors.white70,
+            color: _isHeroFocused ? Colors.white : Colors.white70,
           ),
           const SizedBox(width: 8),
           Text(

@@ -2,14 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/features/home/presentation/home_screen.dart';
 import 'package:cinemuse_app/features/explore/presentation/pages/explore_screen.dart';
 import 'package:cinemuse_app/features/navigation/navbar.dart';
 import 'package:cinemuse_app/features/navigation/tv_navigation_rail.dart';
 import 'package:cinemuse_app/features/profile/presentation/profile_hub.dart';
 import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
-import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/search/presentation/search_overlay.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/features/navigation/bottom_navbar.dart';
@@ -66,8 +64,8 @@ class _AppShellState extends ConsumerState<AppShell> {
       return;
     }
 
-    final isBigPicture = ref.read(isBigPictureProvider);
-    if (isBigPicture) {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+    if (!isMobile) {
       _railKey.currentState?.focusActiveItem();
     }
   }
@@ -94,7 +92,6 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(navIndexProvider);
-    final isBigPicture = ref.watch(isBigPictureProvider);
     final isMobile = MediaQuery.of(context).size.width < 600;
     final shellNavigatorKey = ref.watch(shellNavigatorKeyProvider);
 
@@ -153,22 +150,19 @@ class _AppShellState extends ConsumerState<AppShell> {
           },
           child: Scaffold(
             backgroundColor: Colors.black, // Match "bg-primary"
-            bottomNavigationBar: (!isBigPicture && isMobile)
+            bottomNavigationBar: isMobile
                 ? AppBottomNavbar(
                     currentIndex: currentIndex,
                     onTap: (index) =>
                         _onDestinationSelected(index, shellNavigatorKey),
                   )
                 : null,
-            body: isBigPicture
-                ? _buildBigPictureBody(
+            body: isMobile
+                ? _buildMobileBody(shellNavigatorKey)
+                : _buildWidescreenBody(
                     currentIndex: currentIndex,
                     shellNavigatorKey: shellNavigatorKey,
                     isDesktop: isDesktop,
-                  )
-                : _buildStandardBody(
-                    currentIndex: currentIndex,
-                    shellNavigatorKey: shellNavigatorKey,
                   ),
           ),
         ),
@@ -176,7 +170,16 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  Widget _buildBigPictureBody({
+  Widget _buildMobileBody(GlobalKey<NavigatorState> shellNavigatorKey) {
+    return Stack(
+      children: [
+        _buildNavigator(shellNavigatorKey),
+        const Positioned.fill(child: UpdateOverlay()),
+      ],
+    );
+  }
+
+  Widget _buildWidescreenBody({
     required int currentIndex,
     required GlobalKey<NavigatorState> shellNavigatorKey,
     required bool isDesktop,
@@ -212,37 +215,6 @@ class _AppShellState extends ConsumerState<AppShell> {
             height: 32,
             child: AppWindowButtons(),
           ),
-        const Positioned.fill(child: UpdateOverlay()),
-      ],
-    );
-  }
-
-  Widget _buildStandardBody({
-    required int currentIndex,
-    required GlobalKey<NavigatorState> shellNavigatorKey,
-  }) {
-    return Stack(
-      children: [
-        Column(
-          children: [
-            AppNavbar(
-              currentIndex: currentIndex,
-              onTap: (index) =>
-                  _onDestinationSelected(index, shellNavigatorKey),
-              onSettingsTap: () => _openSettings(shellNavigatorKey),
-              onLogoutTap: () {
-                ref.read(authProvider.notifier).signOut();
-              },
-              onSearchTap: () => SearchOverlay.show(
-                context,
-                navigator: shellNavigatorKey.currentState,
-              ),
-            ),
-            Expanded(
-              child: _buildNavigator(shellNavigatorKey),
-            ),
-          ],
-        ),
         const Positioned.fill(child: UpdateOverlay()),
       ],
     );

@@ -216,10 +216,27 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
     );
   }
 
-  bool _isFirstFocusableIndex(int index) => index == 0;
+  bool _isFirstFocusableIndex(int index) {
+    if (index == 0) return true;
+    final firstNode = _getFirstFocusableNode();
+    final currentNode = _trackedNodes[index];
+    if (firstNode != null && currentNode != null) {
+      return firstNode == currentNode ||
+          currentNode.descendants.contains(firstNode);
+    }
+    return false;
+  }
 
-  bool _isLastFocusableIndex(int index, int totalCount) =>
-      index >= totalCount - 1;
+  bool _isLastFocusableIndex(int index, int totalCount) {
+    if (index >= totalCount - 1) return true;
+    final lastNode = _getLastFocusableNode();
+    final currentNode = _trackedNodes[index];
+    if (lastNode != null && currentNode != null) {
+      return lastNode == currentNode ||
+          currentNode.descendants.contains(lastNode);
+    }
+    return false;
+  }
 
   FocusNode? _getFirstFocusableNode() {
     final sortedIndices = _trackedNodes.keys.toList()..sort();
@@ -233,6 +250,19 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
     }
     for (final d in _rowFocusNode.descendants) {
       if (d.canRequestFocus && d != _rowFocusNode) return d;
+    }
+    return null;
+  }
+
+  FocusNode? _getLastFocusableNode() {
+    final sortedIndices = _trackedNodes.keys.toList()..sort();
+    for (final i in sortedIndices.reversed) {
+      final node = _trackedNodes[i];
+      if (node == null) continue;
+      if (node.canRequestFocus) return node;
+      for (final d in node.descendants) {
+        if (d.canRequestFocus) return d;
+      }
     }
     return null;
   }
@@ -304,68 +334,79 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
 
     return DpadFocusable(
       onTap: widget.onHeaderTap,
-      scale: 1.03,
+      scale: 1.05,
       showFocusRing: false,
-      borderRadius: BorderRadius.circular(12),
-      builder: (context, isFocused, isHovered, child) {
-        return Container(
-          width: 140,
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isFocused
-                ? Colors.white.withValues(alpha: 0.14)
-                : (isHovered
-                    ? AppTheme.surface
-                    : AppTheme.surface.withValues(alpha: 0.8)),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isFocused
-                  ? Colors.white.withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.15),
-              width: 1.5,
-            ),
+      builder: (context, isFocused, isHovered, _) {
+        final isHighlighted = isFocused || isHovered;
+        return SizedBox(
+          width: 100,
+          child: Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOutCubic,
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isFocused
+                              ? Colors.white.withValues(alpha: 0.22)
+                              : (isHovered
+                                  ? Colors.white.withValues(alpha: 0.14)
+                                  : Colors.white.withValues(alpha: 0.07)),
+                          border: Border.all(
+                            color: isFocused
+                                ? Colors.white
+                                : (isHovered
+                                    ? Colors.white.withValues(alpha: 0.35)
+                                    : Colors.white.withValues(alpha: 0.14)),
+                            width: isFocused ? 2.0 : 1.5,
+                          ),
+                          boxShadow: isFocused
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.white.withValues(alpha: 0.25),
+                                    blurRadius: 12,
+                                    spreadRadius: 1,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Icon(
+                          Icons.arrow_forward_rounded,
+                          color: isHighlighted ? Colors.white : Colors.white70,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: isHighlighted ? Colors.white : Colors.white60,
+                          fontSize: 13,
+                          fontWeight:
+                              isFocused ? FontWeight.w700 : FontWeight.w600,
+                          letterSpacing: 0.2,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 48),
+            ],
           ),
-          child: child,
         );
       },
-      child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.accent.withValues(alpha: 0.2),
-                border: Border.all(
-                  color: AppTheme.accent.withValues(alpha: 0.4),
-                  width: 1.5,
-                ),
-              ),
-              child: const Icon(
-                Icons.arrow_forward_rounded,
-                color: AppTheme.accent,
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
+      child: const SizedBox.shrink(),
     );
   }
 

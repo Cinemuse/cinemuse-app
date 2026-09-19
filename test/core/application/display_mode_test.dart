@@ -30,26 +30,20 @@ void main() {
   });
 
   group('DisplayModeNotifier', () {
-    test('initializes with standard mode by default on non-TV', () {
-      final notifier = DisplayModeNotifier();
-      expect(notifier.state, equals(DisplayMode.standard));
-    });
-
-    test('initializes with bigPicture mode when on TV', () {
-      PlatformInfo.setTvForTesting(true);
+    test('initializes with bigPicture mode by default', () {
       final notifier = DisplayModeNotifier();
       expect(notifier.state, equals(DisplayMode.bigPicture));
     });
 
-    test('toggleMode switches between standard and bigPicture', () async {
+    test('toggleMode switches between bigPicture and standard', () async {
       final notifier = DisplayModeNotifier();
-      expect(notifier.state, equals(DisplayMode.standard));
-
-      await notifier.toggleMode();
       expect(notifier.state, equals(DisplayMode.bigPicture));
 
       await notifier.toggleMode();
       expect(notifier.state, equals(DisplayMode.standard));
+
+      await notifier.toggleMode();
+      expect(notifier.state, equals(DisplayMode.bigPicture));
     });
 
     test('setMode updates state and persists preference', () async {
