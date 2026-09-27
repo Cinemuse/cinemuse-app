@@ -4,6 +4,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 /// A single channel row in the channel list panel.
 class ChannelListTile extends StatelessWidget {
@@ -13,6 +14,9 @@ class ChannelListTile extends StatelessWidget {
   final EpgProgram? currentProgram;
   final VoidCallback onTap;
   final VoidCallback? onFavoriteToggle;
+  final FocusNode? focusNode;
+  final bool autofocus;
+  final FocusOnKeyEventCallback? onKeyEvent;
 
   const ChannelListTile({
     super.key,
@@ -22,43 +26,57 @@ class ChannelListTile extends StatelessWidget {
     this.currentProgram,
     required this.onTap,
     this.onFavoriteToggle,
+    this.focusNode,
+    this.autofocus = false,
+    this.onKeyEvent,
   });
 
   @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          onLongPress: _handleLongPress,
-          borderRadius: BorderRadius.circular(10),
-          hoverColor: AppTheme.accent.withValues(alpha: 0.08),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: DpadFocusable(
+        focusNode: focusNode,
+        autofocus: autofocus,
+        onTap: onTap,
+        onLongPress: onFavoriteToggle != null ? _handleLongPress : null,
+        onSecondaryTap: onFavoriteToggle != null ? _handleLongPress : null,
+        onKeyEvent: onKeyEvent,
+        borderRadius: BorderRadius.circular(10),
+        builder: (context, isFocused, isHovered, _) {
+          final isHighlighted = isFocused || isHovered;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected
-                  ? AppTheme.accent.withValues(alpha: 0.12)
-                  : Colors.transparent,
+              color: isFocused
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : (isHovered
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : (isSelected
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : Colors.transparent)),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isSelected
-                    ? AppTheme.accent.withValues(alpha: 0.4)
-                    : Colors.transparent,
+                color: isFocused
+                    ? Colors.white
+                    : (isSelected
+                        ? Colors.white.withValues(alpha: 0.25)
+                        : Colors.transparent),
+                width: isFocused ? 1.5 : 1.0,
               ),
             ),
             child: Row(
               children: [
-                _buildLcnNumber(),
+                _buildLcnNumber(isHighlighted),
                 _buildChannelLogo(),
                 const SizedBox(width: 10),
-                _buildChannelInfo(),
+                _buildChannelInfo(isHighlighted),
                 _buildTrailingIndicator(),
               ],
             ),
-          ),
-        ),
+          );
+        },
+        child: const SizedBox.shrink(),
       ),
     );
   }
@@ -69,7 +87,7 @@ class ChannelListTile extends StatelessWidget {
     onFavoriteToggle!();
   }
 
-  Widget _buildLcnNumber() {
+  Widget _buildLcnNumber(bool isHighlighted) {
     return SizedBox(
       width: 36,
       child: Text(
@@ -77,7 +95,9 @@ class ChannelListTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          color: isSelected ? AppTheme.accent : AppTheme.textMuted,
+          color: (isSelected || isHighlighted)
+              ? Colors.white
+              : AppTheme.textMuted,
           fontWeight: FontWeight.w700,
           fontSize: 12,
         ),
@@ -95,7 +115,8 @@ class ChannelListTile extends StatelessWidget {
         child: Image.network(
           channel.logo,
           fit: BoxFit.contain,
-          cacheWidth: 80,
+          cacheWidth: 72,
+          cacheHeight: 72,
           errorBuilder: (_, __, ___) => Center(
             child: Text(
               channel.name.isNotEmpty ? channel.name.substring(0, 1) : '?',
@@ -111,7 +132,7 @@ class ChannelListTile extends StatelessWidget {
     );
   }
 
-  Widget _buildChannelInfo() {
+  Widget _buildChannelInfo(bool isHighlighted) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,14 +141,16 @@ class ChannelListTile extends StatelessWidget {
           Row(
             children: [
               if (isFavorite) ...[
-                const Icon(Icons.star, size: 12, color: AppTheme.accent),
+                const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
                 const SizedBox(width: 4),
               ],
               Flexible(
                 child: Text(
                   channel.name,
                   style: TextStyle(
-                    color: isSelected ? Colors.white : AppTheme.textSecondary,
+                    color: (isSelected || isHighlighted)
+                        ? Colors.white
+                        : AppTheme.textSecondary,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     fontSize: 13,
                   ),
@@ -145,7 +168,12 @@ class ChannelListTile extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               currentProgram!.name,
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+              style: TextStyle(
+                color: isHighlighted
+                    ? Colors.white.withValues(alpha: 0.7)
+                    : AppTheme.textMuted,
+                fontSize: 11,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -156,13 +184,14 @@ class ChannelListTile extends StatelessWidget {
   }
 
   Widget _buildQualityBadge() {
-    final color = channel.quality == StreamQuality.uhd
-        ? Colors.amber
-        : AppTheme.accent;
+    final isUhd = channel.quality == StreamQuality.uhd;
+    final color = isUhd ? Colors.amber : Colors.white70;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: isUhd
+            ? Colors.amber.withValues(alpha: 0.15)
+            : Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
@@ -179,14 +208,14 @@ class ChannelListTile extends StatelessWidget {
   Widget _buildTrailingIndicator() {
     if (!isSelected) return const SizedBox.shrink();
     return Container(
-      width: 8,
-      height: 8,
+      width: 7,
+      height: 7,
       margin: const EdgeInsets.only(left: 8),
-      decoration: BoxDecoration(
-        color: Colors.red,
+      decoration: const BoxDecoration(
+        color: Colors.redAccent,
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(color: Colors.red.withValues(alpha: 0.5), blurRadius: 6),
+          BoxShadow(color: Colors.redAccent, blurRadius: 4),
         ],
       ),
     );

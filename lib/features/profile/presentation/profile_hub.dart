@@ -1,16 +1,18 @@
-import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/features/profile/presentation/profile_collections.dart';
-import 'package:cinemuse_app/features/profile/presentation/profile_overview.dart';
-import 'package:cinemuse_app/features/profile/presentation/widgets/profile_hero.dart';
-import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/shared/widgets/offline_banner.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/profile_hero.dart';
+import 'package:cinemuse_app/features/profile/presentation/profile_overview.dart';
+import 'package:cinemuse_app/features/profile/presentation/profile_collections.dart';
 
 class ProfileHub extends ConsumerStatefulWidget {
   const ProfileHub({super.key});
@@ -22,16 +24,30 @@ class ProfileHub extends ConsumerStatefulWidget {
 class _ProfileHubState extends ConsumerState<ProfileHub>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final FocusNode _tabBarFocusNode = FocusNode(debugLabel: 'ProfileTabBar');
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(pageContentFocusActionsProvider.notifier).update(
+          (map) => {
+            ...map,
+            3: () {
+              _tabBarFocusNode.requestFocus();
+            },
+          },
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _tabBarFocusNode.dispose();
     super.dispose();
   }
 
@@ -84,28 +100,44 @@ class _ProfileHubState extends ConsumerState<ProfileHub>
                         const ProfileHero(),
                         const SizedBox(height: 24),
                         // Navigation Tabs
-                        TabBar(
-                          controller: _tabController,
-                          isScrollable: true,
-                          indicatorColor: AppTheme.accent,
-                          indicatorWeight: 2,
-                          labelColor: Colors.white,
-                          unselectedLabelColor: Colors.grey,
-                          labelStyle: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                        Focus(
+                          focusNode: _tabBarFocusNode,
+                          onKeyEvent: (node, event) {
+                            if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+                              return KeyEventResult.ignored;
+                            }
+                            if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                              final focusNavbar = ref.read(topNavbarFocusActionProvider);
+                              if (focusNavbar != null) {
+                                focusNavbar();
+                                return KeyEventResult.handled;
+                              }
+                            }
+                            return KeyEventResult.ignored;
+                          },
+                          child: TabBar(
+                            controller: _tabController,
+                            isScrollable: true,
+                            indicatorColor: AppTheme.accent,
+                            indicatorWeight: 2,
+                            labelColor: Colors.white,
+                            unselectedLabelColor: Colors.grey,
+                            labelStyle: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                            unselectedLabelStyle: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                            dividerColor: Colors.transparent,
+                            tabAlignment: TabAlignment.start,
+                            tabs: [
+                              Tab(text: l10n.profileOverview),
+                              Tab(text: l10n.profileCollections),
+                              Tab(text: l10n.profileActivity),
+                            ],
                           ),
-                          unselectedLabelStyle: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                          dividerColor: Colors.transparent,
-                          tabAlignment: TabAlignment.start,
-                          tabs: [
-                            Tab(text: l10n.profileOverview),
-                            Tab(text: l10n.profileCollections),
-                            Tab(text: l10n.profileActivity),
-                          ],
                         ),
                         const Divider(height: 1, color: Colors.white24),
                       ],

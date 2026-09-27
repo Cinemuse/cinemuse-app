@@ -231,6 +231,9 @@
   "playerSelectSubtitle": "Select Subtitle Track",
   "commonGoBack": "Go Back",
   "playerNextEpisode": "Next Episode",
+  "playerPlay": "Play",
+  "playerPause": "Pause",
+  "playerStop": "Stop",
   "playerSkipBackward": "Rewind 10 seconds",
   "playerSkipForward": "Forward 10 seconds",
   "playerSubtitleAppearance": "Subtitle Appearance",
@@ -713,6 +716,16 @@
     }
   },
   "bigPictureMode": "Big Picture Mode",
-  "bigPictureModeSubtitle": "Optimized 10-foot UI for TV and remote navigation"
+  "bigPictureModeSubtitle": "Optimized 10-foot UI for TV and remote navigation",
+  "liveTvFullWindow": "Full Window",
+  "liveTvSplitView": "Split View",
+  "liveTvChannels": "Channels",
+  "liveTvCloseOverlay": "Close channel list",
+  "liveTvLive": "Live",
+  "liveTvGoToLive": "Go to Live",
+  "playerFullscreen": "Fullscreen",
+  "playerExitFullscreen": "Exit fullscreen",
+  "seriesStatusOngoing": "Ongoing",
+  "menuViewWatchHistory": "View Watch History"
 }
 

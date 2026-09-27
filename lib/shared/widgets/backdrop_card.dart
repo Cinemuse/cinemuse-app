@@ -7,6 +7,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 
 class BackdropCard extends StatefulWidget {
   final String title;
@@ -51,7 +52,6 @@ class BackdropCard extends StatefulWidget {
 }
 
 class _BackdropCardState extends State<BackdropCard> {
-  bool _isHovered = false;
   final GlobalKey _menuKey = GlobalKey();
 
   void _showContextActions(
@@ -139,8 +139,6 @@ class _BackdropCardState extends State<BackdropCard> {
       onTap: widget.onTap,
       onLongPress: () => _showContextActions(context),
       onSecondaryTap: () => _showContextActions(context),
-      onFocusChange: (focused) => setState(() => _isHovered = focused),
-      onHoverChange: (hovered) => setState(() => _isHovered = hovered),
       scale: 1.02,
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
@@ -199,18 +197,25 @@ class _BackdropCardState extends State<BackdropCard> {
                               ),
 
                               // Play Icon
-                              Center(
-                                child: AnimatedScale(
-                                  scale: _isHovered ? 1.1 : 1.0,
-                                  duration: const Duration(milliseconds: 200),
-                                  child: Icon(
-                                    Icons.play_circle_outline,
-                                    color: _isHovered
-                                        ? AppTheme.accent
-                                        : Colors.white.withValues(alpha: 0.8),
-                                    size: 48,
-                                  ),
-                                ),
+                              Builder(
+                                builder: (context) {
+                                  final isHighlighted =
+                                      DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
+                                  final theme = Theme.of(context);
+                                  return Center(
+                                    child: AnimatedScale(
+                                      scale: isHighlighted ? 1.1 : 1.0,
+                                      duration: const Duration(milliseconds: 200),
+                                      child: Icon(
+                                        Icons.play_circle_outline,
+                                        color: isHighlighted
+                                            ? theme.colorScheme.primary
+                                            : Colors.white.withValues(alpha: 0.8),
+                                        size: 48,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
 
                               // Info Badge
@@ -265,74 +270,82 @@ class _BackdropCardState extends State<BackdropCard> {
                                 ),
 
                               // Border Overlay
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: _isHovered
-                                        ? AppTheme.accent.withValues(alpha: 0.5)
-                                        : Colors.white.withValues(alpha: 0.1),
-                                    width: _isHovered ? 2 : 1,
-                                  ),
-                                ),
-                              ),
+                              const CardFocusBorder(),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 8),
                       // Title + Options Row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              widget.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                color: _isHovered ? AppTheme.accent : Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Consumer(
-                            builder: (context, ref, _) {
-                              final isBigPicture = ref.watch(isBigPictureProvider);
-                              if (isBigPicture) return const SizedBox.shrink();
-                              final isMobile =
-                                  MediaQuery.of(context).size.width < 600;
-                              return AnimatedOpacity(
-                                opacity: (_isHovered || isMobile) ? 1.0 : 0.0,
-                                duration: const Duration(milliseconds: 200),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    canRequestFocus: false,
-                                    excludeFromSemantics: true,
-                                    onTap: () => _showContextActions(context),
-                                    mouseCursor: SystemMouseCursors.click,
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Container(
-                                      key: _menuKey,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
-                                        vertical: 2,
-                                      ),
-                                      child: const Icon(
-                                        Icons.more_vert,
-                                        color: Colors.white60,
-                                        size: 18,
-                                      ),
-                                    ),
+                      Builder(
+                        builder: (context) {
+                          final isHighlighted =
+                              DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
+                          final theme = Theme.of(context);
+
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  widget.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodyMedium!.copyWith(
+                                    color: isHighlighted
+                                        ? theme.colorScheme.primary
+                                        : Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
                                   ),
                                 ),
-                              );
-                            },
-                          ),
-                        ],
+                              ),
+                              const SizedBox(width: 4),
+                              Consumer(
+                                builder: (context, ref, _) {
+                                  final isBigPicture =
+                                      ref.watch(isBigPictureProvider);
+                                  if (isBigPicture) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  final isMobile =
+                                      MediaQuery.of(context).size.width < 600;
+                                  return AnimatedOpacity(
+                                    opacity:
+                                        (isHighlighted || isMobile) ? 1.0 : 0.0,
+                                    duration:
+                                        const Duration(milliseconds: 200),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        canRequestFocus: false,
+                                        excludeFromSemantics: true,
+                                        onTap: () =>
+                                            _showContextActions(context),
+                                        mouseCursor:
+                                            SystemMouseCursors.click,
+                                        borderRadius:
+                                            BorderRadius.circular(12),
+                                        child: Container(
+                                          key: _menuKey,
+                                          padding:
+                                              const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                            vertical: 2,
+                                          ),
+                                          child: const Icon(
+                                            Icons.more_vert,
+                                            color: Colors.white60,
+                                            size: 18,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),

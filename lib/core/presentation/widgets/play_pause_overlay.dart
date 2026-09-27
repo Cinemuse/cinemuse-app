@@ -77,21 +77,20 @@ class PlayPauseOverlay extends StatelessWidget {
             );
           }
 
-          // Desktop behavior
+          // Desktop / Big Picture behavior
           if (!isPlaying && visible) {
             return IgnorePointer(
               ignoring: true,
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Colors.black45,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.play_arrow,
-                  color: Colors.white,
-                  size: 48,
-                ),
+              child: Icon(
+                Icons.play_arrow_rounded,
+                color: Colors.white.withValues(alpha: 0.95),
+                size: 64,
+                shadows: const [
+                  BoxShadow(
+                    color: Colors.black54,
+                    blurRadius: 18,
+                  ),
+                ],
               ),
             );
           }

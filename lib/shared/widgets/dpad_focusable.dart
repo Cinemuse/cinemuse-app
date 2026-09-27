@@ -322,9 +322,43 @@ class _DpadFocusableState extends State<DpadFocusable> {
           },
           onLongPress: widget.onLongPress,
           onSecondaryTap: widget.onSecondaryTap,
-          child: _buildContent(context),
+          child: DpadFocusScope(
+            isFocused: _isFocused,
+            isHovered: _isHovered,
+            child: _buildContent(context),
+          ),
         ),
       ),
     );
+  }
+}
+
+/// An [InheritedWidget] exposing the focus and hover state of an ancestor [DpadFocusable].
+class DpadFocusScope extends InheritedWidget {
+  final bool isFocused;
+  final bool isHovered;
+
+  const DpadFocusScope({
+    super.key,
+    required this.isFocused,
+    required this.isHovered,
+    required super.child,
+  });
+
+  bool get isHighlighted => isFocused || isHovered;
+
+  static DpadFocusScope? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<DpadFocusScope>();
+  }
+
+  static DpadFocusScope of(BuildContext context) {
+    final scope = maybeOf(context);
+    assert(scope != null, 'No DpadFocusScope found in context');
+    return scope!;
+  }
+
+  @override
+  bool updateShouldNotify(DpadFocusScope oldWidget) {
+    return isFocused != oldWidget.isFocused || isHovered != oldWidget.isHovered;
   }
 }

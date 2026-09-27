@@ -722,6 +722,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playerNextEpisode => 'Prossimo Episodio';
 
   @override
+  String get playerPlay => 'Riproduci';
+
+  @override
+  String get playerPause => 'Pausa';
+
+  @override
+  String get playerStop => 'Interrompi';
+
+  @override
   String get playerSkipBackward => 'Riavvolgi 10 secondi';
 
   @override
@@ -1090,7 +1099,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get liveTvNext => 'A SEGUIRE';
 
   @override
-  String get liveTvLive => 'LIVE';
+  String get liveTvLive => 'Diretta';
 
   @override
   String get liveTvNoEpg => 'Nessuna informazione sul programma';
@@ -1961,4 +1970,31 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get bigPictureModeSubtitle =>
       'Interfaccia ottimizzata per TV e navigazione con telecomando';
+
+  @override
+  String get liveTvFullWindow => 'A tutto schermo';
+
+  @override
+  String get liveTvSplitView => 'Vista divisa';
+
+  @override
+  String get liveTvChannels => 'Canali';
+
+  @override
+  String get liveTvCloseOverlay => 'Chiudi lista canali';
+
+  @override
+  String get liveTvGoToLive => 'Vai alla diretta';
+
+  @override
+  String get playerFullscreen => 'Schermo intero';
+
+  @override
+  String get playerExitFullscreen => 'Esci da schermo intero';
+
+  @override
+  String get seriesStatusOngoing => 'In corso';
+
+  @override
+  String get menuViewWatchHistory => 'Visualizza cronologia';
 }

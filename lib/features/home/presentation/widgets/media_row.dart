@@ -72,6 +72,8 @@ class MediaRow extends ConsumerWidget {
       list = list.take(limit!).toList();
     }
 
+    final l10n = AppLocalizations.of(context)!;
+
     if (list.isEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,7 +83,7 @@ class MediaRow extends ConsumerWidget {
             height: dimensions.height,
             child: Center(
               child: Text(
-                AppLocalizations.of(context)!.commonNoContent,
+                l10n.commonNoContent,
                 style: const TextStyle(color: Colors.white54),
               ),
             ),
@@ -96,7 +98,7 @@ class MediaRow extends ConsumerWidget {
 
     final cards = mediaItems.map((item) {
       return MediaCard(
-        title: item.getLocalizedTitle(appLanguage) ?? 'Unknown',
+        title: item.getLocalizedTitle(appLanguage) ?? l10n.commonUnknown,
         posterPath: item.posterPath,
         releaseDate: item.releaseDate?.year.toString(),
         rating: item.voteAverage,
@@ -161,7 +163,13 @@ class MediaRow extends ConsumerWidget {
               ),
               if (onHeaderTap != null) ...[
                 const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, color: AppTheme.textMuted),
+                Icon(
+                  Icons.chevron_right,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.6),
+                ),
               ],
             ],
           ),

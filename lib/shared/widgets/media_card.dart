@@ -10,6 +10,7 @@ import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 
 import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_sheet.dart';
@@ -67,7 +68,6 @@ class MediaCard extends ConsumerStatefulWidget {
 }
 
 class _MediaCardState extends ConsumerState<MediaCard> {
-  bool _isHovered = false;
   final GlobalKey _menuKey = GlobalKey();
 
   void _showContextActions(
@@ -259,8 +259,6 @@ class _MediaCardState extends ConsumerState<MediaCard> {
       onTap: widget.onTap,
       onLongPress: () => _showContextActions(context),
       onSecondaryTap: () => _showContextActions(context),
-      onFocusChange: (focused) => setState(() => _isHovered = focused),
-      onHoverChange: (hovered) => setState(() => _isHovered = hovered),
       scale: 1.05,
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
@@ -370,21 +368,30 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                                   ),
 
                                   // Hover Gradient Overlay
-                                  AnimatedOpacity(
-                                    opacity: _isHovered ? 1.0 : 0.0,
-                                    duration: const Duration(milliseconds: 300),
-                                    child: const DecoratedBox(
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.bottomCenter,
-                                          end: Alignment.center,
-                                          colors: [
-                                            Colors.black87,
-                                            Colors.transparent,
-                                          ],
+                                  Builder(
+                                    builder: (context) {
+                                      final isHighlighted =
+                                          DpadFocusScope.maybeOf(context)
+                                              ?.isHighlighted ??
+                                          false;
+                                      return AnimatedOpacity(
+                                        opacity: isHighlighted ? 1.0 : 0.0,
+                                        duration:
+                                            const Duration(milliseconds: 300),
+                                        child: const DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              begin: Alignment.bottomCenter,
+                                              end: Alignment.center,
+                                              colors: [
+                                                Colors.black87,
+                                                Colors.transparent,
+                                              ],
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ),
+                                      );
+                                    },
                                   ),
 
                                   // Optional Playback Progress Bar
@@ -415,18 +422,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                             ),
 
                             // Border Overlay (On Top)
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: _isHovered
-                                      ? AppTheme.accent.withValues(alpha: 0.5)
-                                      : Colors.white.withValues(alpha: 0.1),
-                                  width: _isHovered ? 2 : 1,
-                                ),
-                              ),
-                            ),
+                            const CardFocusBorder(),
 
                             // Unified Stack & Episode Overlay Badge (Top-Right)
                             if (_buildOverlayBadge() != null)
@@ -439,55 +435,66 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                 ),
                 const SizedBox(height: 8),
                 // Title + Options Row
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: PremiumHoverText(
-                        text: widget.title,
-                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                          color: _isHovered ? AppTheme.accent : Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    Consumer(
-                      builder: (context, ref, child) {
-                        final isBigPicture = ref.watch(isBigPictureProvider);
-                        if (isBigPicture) return const SizedBox.shrink();
-                        final isMobile =
-                            MediaQuery.of(context).size.width < 600;
-                        return AnimatedOpacity(
-                          opacity: (_isHovered || isMobile) ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 200),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              canRequestFocus: false,
-                              excludeFromSemantics: true,
-                              onTap: () => _showContextActions(context),
-                              mouseCursor: SystemMouseCursors.click,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                key: _menuKey,
-                                padding: const EdgeInsets.only(
-                                  left: 4,
-                                  top: 2,
-                                  bottom: 2,
-                                ),
-                                child: const Icon(
-                                  Icons.more_vert,
-                                  color: Colors.white60,
-                                  size: 16,
-                                ),
-                              ),
+                Builder(
+                  builder: (context) {
+                    final isHighlighted =
+                        DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
+                    final theme = Theme.of(context);
+
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: PremiumHoverText(
+                            text: widget.title,
+                            style: theme.textTheme.bodyMedium!.copyWith(
+                              color: isHighlighted
+                                  ? theme.colorScheme.primary
+                                  : Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ],
+                        ),
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final isBigPicture =
+                                ref.watch(isBigPictureProvider);
+                            if (isBigPicture) return const SizedBox.shrink();
+                            final isMobile =
+                                MediaQuery.of(context).size.width < 600;
+                            return AnimatedOpacity(
+                              opacity: (isHighlighted || isMobile) ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 200),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  canRequestFocus: false,
+                                  excludeFromSemantics: true,
+                                  onTap: () => _showContextActions(context),
+                                  mouseCursor: SystemMouseCursors.click,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    key: _menuKey,
+                                    padding: const EdgeInsets.only(
+                                      left: 4,
+                                      top: 2,
+                                      bottom: 2,
+                                    ),
+                                    child: const Icon(
+                                      Icons.more_vert,
+                                      color: Colors.white60,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 2),
                 // MetadataRow

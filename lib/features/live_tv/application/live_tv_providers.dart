@@ -228,6 +228,26 @@ final selectedChannelProvider = StateProvider<Channel?>((ref) => null);
 /// The active search query for filtering channels.
 final channelSearchQueryProvider = StateProvider<String>((ref) => '');
 
+/// Viewing layout modes for the Live TV screen on widescreen devices.
+enum LiveTvViewMode {
+  /// Default side-by-side view: channel list on left, preview player + EPG on right.
+  split,
+
+  /// Immersive full-window view: video player fills the entire app window (like movie playback).
+  fullWindow,
+}
+
+/// Current viewing mode for Live TV.
+final liveTvViewModeProvider =
+    StateProvider<LiveTvViewMode>((ref) => LiveTvViewMode.split);
+
+/// Whether the slide-in channel list overlay is currently open in full-window or OS fullscreen mode.
+final liveTvChannelOverlayProvider = StateProvider<bool>((ref) => false);
+
+/// Action to focus the live preview player from the channel list via D-Pad Right.
+final livePlayerFocusActionProvider =
+    StateProvider<void Function()?>((ref) => null);
+
 // ---------------------------------------------------------------------------
 // Favorites
 // ---------------------------------------------------------------------------

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/video_playback_controls.dart';
@@ -15,11 +17,13 @@ class VideoBottomBar extends ConsumerStatefulWidget {
   final VoidCallback onTogglePlayPause;
   final Function(bool) onSkip;
   final VoidCallback onToggleMute;
+  final VoidCallback onStopPressed;
   final bool isFullscreen;
   final VoidCallback onToggleFullscreen;
   final VoidCallback? onNextEpisode;
   final VoidCallback? onSettingsPressed;
   final FocusNode? playPauseFocusNode;
+  final FocusNode? seekbarFocusNode;
 
   const VideoBottomBar({
     super.key,
@@ -32,11 +36,13 @@ class VideoBottomBar extends ConsumerStatefulWidget {
     required this.onTogglePlayPause,
     required this.onSkip,
     required this.onToggleMute,
+    required this.onStopPressed,
     required this.isFullscreen,
     required this.onToggleFullscreen,
     this.onNextEpisode,
     this.onSettingsPressed,
     this.playPauseFocusNode,
+    this.seekbarFocusNode,
   });
 
   @override
@@ -47,6 +53,20 @@ class _VideoBottomBarState extends ConsumerState<VideoBottomBar> {
   double? _hoverX;
   Duration? _hoverDuration;
   bool _isHoveringSeekbar = false;
+  bool _isSeekbarFocused = false;
+  DateTime? _lastSeekbarStepTime;
+
+  void _handleSeekbarStep(Player player, bool forward) {
+    const stepSeconds = 10;
+    final duration = player.state.duration;
+    final currentPos = widget.virtualPosition ?? player.state.position;
+    final newSec = (currentPos.inSeconds + (forward ? stepSeconds : -stepSeconds))
+        .clamp(0, duration.inSeconds);
+
+    widget.onChangeStart(newSec.toDouble());
+    widget.onChanged(newSec.toDouble());
+    widget.onChangeEnd(newSec.toDouble());
+  }
 
   String _formatDuration(Duration d) {
     if (d.inHours > 0) {
@@ -109,33 +129,96 @@ class _VideoBottomBarState extends ConsumerState<VideoBottomBar> {
                           child: Stack(
                             clipBehavior: Clip.none,
                             children: [
-                              ExcludeFocus(
-                                excluding: isBigPicture,
-                                child: SliderTheme(
-                                  data: SliderThemeData(
-                                    trackHeight: isBigPicture ? 4 : 2,
-                                    thumbShape: RoundSliderThumbShape(
-                                      enabledThumbRadius: isBigPicture ? 8 : 6,
-                                    ),
-                                    overlayShape: RoundSliderOverlayShape(
-                                      overlayRadius: isBigPicture ? 16 : 12,
-                                    ),
-                                    activeTrackColor: AppTheme.textWhite,
-                                    inactiveTrackColor: AppTheme.textWhite
-                                        .withValues(alpha: 0.24),
-                                    thumbColor: AppTheme.textWhite,
-                                  ),
-                                  child: Slider(
-                                    value: position.inSeconds.toDouble().clamp(
-                                      0,
-                                      duration.inSeconds.toDouble(),
-                                    ),
-                                    min: 0,
-                                    max: duration.inSeconds.toDouble(),
-                                    onChangeStart: widget.onChangeStart,
-                                    onChangeEnd: widget.onChangeEnd,
-                                    onChanged: widget.onChanged,
-                                  ),
+                              Focus(
+                                focusNode: widget.seekbarFocusNode,
+                                onFocusChange: (focused) {
+                                  setState(() => _isSeekbarFocused = focused);
+                                },
+                                onKeyEvent: (node, event) {
+                                  if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+                                    return KeyEventResult.ignored;
+                                  }
+
+                                  if (event.logicalKey ==
+                                      LogicalKeyboardKey.arrowDown) {
+                                    if (event is KeyDownEvent) {
+                                      widget.playPauseFocusNode?.requestFocus();
+                                    }
+                                    return KeyEventResult.handled;
+                                  }
+
+                                  if (event.logicalKey ==
+                                      LogicalKeyboardKey.arrowUp) {
+                                    return KeyEventResult.handled;
+                                  }
+
+                                  if (event.logicalKey ==
+                                          LogicalKeyboardKey.arrowLeft ||
+                                      event.logicalKey ==
+                                          LogicalKeyboardKey.arrowRight) {
+                                    final now = DateTime.now();
+                                    if (event is KeyRepeatEvent) {
+                                      if (_lastSeekbarStepTime != null &&
+                                          now
+                                                  .difference(
+                                                    _lastSeekbarStepTime!,
+                                                  )
+                                                  .inMilliseconds <
+                                              100) {
+                                        return KeyEventResult.handled;
+                                      }
+                                    }
+                                    _lastSeekbarStepTime = now;
+                                    _handleSeekbarStep(
+                                      player,
+                                      event.logicalKey ==
+                                          LogicalKeyboardKey.arrowRight,
+                                    );
+                                    return KeyEventResult.handled;
+                                  }
+
+                                  return KeyEventResult.ignored;
+                                },
+                                child: Builder(
+                                  builder: (context) {
+                                    // Unused theme/primary removed
+                                    return SliderTheme(
+                                      data: SliderThemeData(
+                                        trackHeight: _isSeekbarFocused
+                                            ? 5
+                                            : (isBigPicture ? 4 : 2.5),
+                                        thumbShape: RoundSliderThumbShape(
+                                          enabledThumbRadius: _isSeekbarFocused
+                                              ? 8
+                                              : (isBigPicture ? 6 : 5),
+                                        ),
+                                        overlayShape: RoundSliderOverlayShape(
+                                          overlayRadius: _isSeekbarFocused
+                                              ? 14
+                                              : (isBigPicture ? 12 : 10),
+                                        ),
+                                        activeTrackColor: Colors.white,
+                                        inactiveTrackColor:
+                                            Colors.white.withValues(alpha: 0.24),
+                                        thumbColor: Colors.white,
+                                        overlayColor:
+                                            AppTheme.accentGlow,
+                                      ),
+                                      child: Slider(
+                                        value: position.inSeconds
+                                            .toDouble()
+                                            .clamp(
+                                              0,
+                                              duration.inSeconds.toDouble(),
+                                            ),
+                                        min: 0,
+                                        max: duration.inSeconds.toDouble(),
+                                        onChangeStart: widget.onChangeStart,
+                                        onChangeEnd: widget.onChangeEnd,
+                                        onChanged: widget.onChanged,
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
                               if (_isHoveringSeekbar &&
@@ -153,24 +236,25 @@ class _VideoBottomBarState extends ConsumerState<VideoBottomBar> {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.primary.withValues(
-                                        alpha: 0.8,
+                                      color: Colors.black.withValues(
+                                        alpha: 0.75,
                                       ),
-                                      borderRadius: BorderRadius.circular(4),
+                                      borderRadius: BorderRadius.circular(6),
                                       border: Border.all(
-                                        color: AppTheme.textWhite.withValues(
-                                          alpha: 0.24,
+                                        color: Colors.white.withValues(
+                                          alpha: 0.2,
                                         ),
                                         width: 0.5,
                                       ),
+                                      boxShadow: AppTheme.shadowNeonSm,
                                     ),
                                     child: Text(
                                       _formatDuration(_hoverDuration!),
                                       style: const TextStyle(
                                         color: AppTheme.textWhite,
                                         fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: 'monospace',
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Outfit',
                                       ),
                                     ),
                                   ),
@@ -185,9 +269,10 @@ class _VideoBottomBarState extends ConsumerState<VideoBottomBar> {
                   Text(
                     '${_formatDuration(position)} / ${_formatDuration(duration)}',
                     style: TextStyle(
-                      color: AppTheme.textWhite.withValues(alpha: 0.7),
-                      fontSize: isBigPicture ? 15 : 13,
-                      fontFamily: 'monospace',
+                      color: AppTheme.textWhite.withValues(alpha: 0.85),
+                      fontSize: isBigPicture ? 14 : 12,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Outfit',
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -201,11 +286,13 @@ class _VideoBottomBarState extends ConsumerState<VideoBottomBar> {
             onTogglePlayPause: widget.onTogglePlayPause,
             onSkip: widget.onSkip,
             onToggleMute: widget.onToggleMute,
+            onStopPressed: widget.onStopPressed,
             isFullscreen: widget.isFullscreen,
             onToggleFullscreen: widget.onToggleFullscreen,
             onNextEpisode: widget.onNextEpisode,
             onSettingsPressed: widget.onSettingsPressed,
             playPauseFocusNode: widget.playPauseFocusNode,
+            seekbarFocusNode: widget.seekbarFocusNode,
           ),
         ],
       ),

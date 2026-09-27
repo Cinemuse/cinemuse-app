@@ -180,6 +180,8 @@ class _DayHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = _label(context);
     final isToday = _isToday();
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
 
     return Padding(
       padding: EdgeInsets.only(left: isFirst ? 0 : 8, right: trailingSpacing),
@@ -197,7 +199,7 @@ class _DayHeader extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    isToday ? AppTheme.accent : Colors.white24,
+                    isToday ? primary : Colors.white24,
                   ],
                 ),
               ),
@@ -207,20 +209,20 @@ class _DayHeader extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
                 color: isToday
-                    ? AppTheme.accent.withValues(alpha: 0.15)
+                    ? primary.withValues(alpha: 0.15)
                     : Colors.white.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isToday
-                      ? AppTheme.accent.withValues(alpha: 0.5)
+                      ? primary.withValues(alpha: 0.5)
                       : Colors.white.withValues(alpha: 0.1),
                 ),
               ),
               child: Text(
                 label,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: isToday ? AppTheme.accent : Colors.white70,
+                style: theme.textTheme.bodyMedium!.copyWith(
+                  color: isToday ? primary : Colors.white70,
                   fontSize: 11,
                   fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
                   height: 1.3,
@@ -236,7 +238,7 @@ class _DayHeader extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    isToday ? AppTheme.accent : Colors.white24,
+                    isToday ? primary : Colors.white24,
                     Colors.transparent,
                   ],
                 ),

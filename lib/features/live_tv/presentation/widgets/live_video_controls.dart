@@ -2,17 +2,23 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart' as mkv;
 import 'package:window_manager/window_manager.dart';
+import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/presentation/widgets/volume_control.dart';
 import 'package:cinemuse_app/core/presentation/widgets/fullscreen_button.dart';
 import 'package:cinemuse_app/core/presentation/widgets/buffering_indicator.dart';
 import 'package:cinemuse_app/core/presentation/widgets/play_pause_overlay.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/number_input_osd.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_panel.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 enum DragType { none, volume, brightness }
 
@@ -20,7 +26,7 @@ enum DragType { none, volume, brightness }
 ///
 /// Matches the visual style of [CustomVideoControls] but operates on the
 /// unified [CinemaPlayerState].
-class LiveVideoControls extends StatefulWidget {
+class LiveVideoControls extends ConsumerStatefulWidget {
   final CinemaPlayerState playerState;
   final Channel? channel;
   final mkv.VideoState videoState;
@@ -47,10 +53,21 @@ class LiveVideoControls extends StatefulWidget {
   });
 
   @override
-  State<LiveVideoControls> createState() => _LiveVideoControlsState();
+  ConsumerState<LiveVideoControls> createState() => _LiveVideoControlsState();
 }
 
-class _LiveVideoControlsState extends State<LiveVideoControls> {
+class _LiveVideoControlsState extends ConsumerState<LiveVideoControls> {
+  final FocusNode _rootFocusNode =
+      FocusNode(debugLabel: 'LiveVideoControlsRoot');
+  late final FocusNode _rewindFocusNode;
+  late final FocusNode _playPauseFocusNode;
+  late final FocusNode _forwardFocusNode;
+  late final FocusNode _liveFocusNode;
+  late final FocusNode _channelsFocusNode;
+  late final FocusNode _settingsFocusNode;
+  late final FocusNode _viewModeFocusNode;
+  late final FocusNode _fullscreenFocusNode;
+
   bool _visible = true;
   Timer? _hideTimer;
   bool _dragging = false;
@@ -79,8 +96,20 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
   @override
   void initState() {
     super.initState();
+    _rewindFocusNode = FocusNode(debugLabel: 'LiveRewindTvButton');
+    _playPauseFocusNode = FocusNode(debugLabel: 'LivePlayPauseTvButton');
+    _forwardFocusNode = FocusNode(debugLabel: 'LiveForwardTvButton');
+    _liveFocusNode = FocusNode(debugLabel: 'LiveCatchUpTvButton');
+    _channelsFocusNode = FocusNode(debugLabel: 'LiveChannelsTvButton');
+    _settingsFocusNode = FocusNode(debugLabel: 'LiveSettingsTvButton');
+    _viewModeFocusNode = FocusNode(debugLabel: 'LiveViewModeTvButton');
+    _fullscreenFocusNode = FocusNode(debugLabel: 'LiveFullscreenTvButton');
+
     _startHideTimer();
     _initFullscreenState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _syncFocusForVisibility();
+    });
   }
 
   void _initFullscreenState() {
@@ -93,7 +122,39 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
     _clearVirtualPositionTimer?.cancel();
     _hideIndicatorTimer?.cancel();
     _seekIndicatorTimer?.cancel();
+    _rewindFocusNode.dispose();
+    _playPauseFocusNode.dispose();
+    _forwardFocusNode.dispose();
+    _liveFocusNode.dispose();
+    _channelsFocusNode.dispose();
+    _settingsFocusNode.dispose();
+    _viewModeFocusNode.dispose();
+    _fullscreenFocusNode.dispose();
+    _rootFocusNode.dispose();
     super.dispose();
+  }
+
+  void _syncFocusForVisibility() {
+    final isBigPicture = ref.read(isBigPictureProvider);
+    if (!isBigPicture) {
+      _rootFocusNode.requestFocus();
+      return;
+    }
+    if (_visible) {
+      _playPauseFocusNode.requestFocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _visible) {
+          _playPauseFocusNode.requestFocus();
+        }
+      });
+    } else {
+      _rootFocusNode.requestFocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_visible) {
+          _rootFocusNode.requestFocus();
+        }
+      });
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -102,19 +163,37 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
 
   void _startHideTimer() {
     _hideTimer?.cancel();
-    _hideTimer = Timer(const Duration(seconds: 3), () {
+    _hideTimer = Timer(const Duration(seconds: 4), () {
       if (mounted &&
           !_dragging &&
           _currentDragType == DragType.none &&
+          !ref.read(liveTvChannelOverlayProvider) &&
           widget.playerState.controller.player.state.playing) {
-        setState(() => _visible = false);
+        _hideControls();
       }
     });
   }
 
-  void _onHover() {
-    if (!_visible) setState(() => _visible = true);
+  void _showControls() {
+    final wasHidden = !_visible;
+    if (wasHidden) {
+      setState(() => _visible = true);
+    }
     _startHideTimer();
+    if (wasHidden) {
+      _syncFocusForVisibility();
+    }
+  }
+
+  void _hideControls() {
+    if (_visible) {
+      setState(() => _visible = false);
+      _syncFocusForVisibility();
+    }
+  }
+
+  void _onHover() {
+    _showControls();
   }
 
   // ---------------------------------------------------------------------------
@@ -221,34 +300,159 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
   // Keyboard
   // ---------------------------------------------------------------------------
 
-  void _handleKeyEvent(KeyEvent event) {
-    if (event is! KeyDownEvent) return;
+  KeyEventResult _handleKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
     final key = event.logicalKey;
+    final isOverlayOpen = ref.read(liveTvChannelOverlayProvider);
+    final isFullWindow =
+        ref.read(liveTvViewModeProvider) == LiveTvViewMode.fullWindow;
+    final isBigPicture = ref.read(isBigPictureProvider);
 
+    // When overlay is open: Escape, Gamepad B, or Right closes it
+    if (isOverlayOpen) {
+      if (key == LogicalKeyboardKey.escape ||
+          key == LogicalKeyboardKey.gameButtonB ||
+          key == LogicalKeyboardKey.arrowRight) {
+        ref.read(liveTvChannelOverlayProvider.notifier).state = false;
+        _onHover();
+        return KeyEventResult.handled;
+      }
+    }
+
+    // Direct channel number input (0–9) always works whether controls are visible or not
+    if (widget.onNumberInput != null) {
+      final keyLabel = key.keyLabel;
+      if (keyLabel.length == 1 && int.tryParse(keyLabel) != null) {
+        widget.onNumberInput!(keyLabel);
+        _onHover();
+        return KeyEventResult.handled;
+      }
+    }
+
+    if (!_visible) {
+      return _handleHiddenControlsKeys(key, isFullWindow, isBigPicture);
+    }
+
+    return _handleVisibleControlsKeys(key, isFullWindow, isBigPicture);
+  }
+
+  KeyEventResult _handleHiddenControlsKeys(
+    LogicalKeyboardKey key,
+    bool isFullWindow,
+    bool isBigPicture,
+  ) {
     if (key == LogicalKeyboardKey.space) {
       _togglePlayPause();
-    } else if (key == LogicalKeyboardKey.keyF) {
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.select ||
+        key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter ||
+        key == LogicalKeyboardKey.gameButtonA ||
+        key == LogicalKeyboardKey.arrowUp ||
+        key == LogicalKeyboardKey.arrowDown) {
+      _showControls();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowLeft) {
+      if (isFullWindow || _isFullScreen) {
+        ref.read(liveTvChannelOverlayProvider.notifier).state = true;
+      } else {
+        _performSkip(false);
+      }
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowRight) {
+      _performSkip(true);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.escape ||
+        key == LogicalKeyboardKey.gameButtonB ||
+        key == LogicalKeyboardKey.goBack) {
+      if (_isFullScreen) {
+        _toggleFullscreen();
+      } else if (isFullWindow) {
+        ref.read(liveTvViewModeProvider.notifier).state = LiveTvViewMode.split;
+      }
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.keyF || key == LogicalKeyboardKey.f11) {
       _toggleFullscreen();
-    } else if (key == LogicalKeyboardKey.keyM) {
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.keyM) {
       _volumeKey.currentState?.toggleMute();
       _onHover();
-    } else if (key == LogicalKeyboardKey.arrowUp) {
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  KeyEventResult _handleVisibleControlsKeys(
+    LogicalKeyboardKey key,
+    bool isFullWindow,
+    bool isBigPicture,
+  ) {
+    _startHideTimer();
+
+    if (key == LogicalKeyboardKey.escape ||
+        key == LogicalKeyboardKey.gameButtonB ||
+        key == LogicalKeyboardKey.goBack) {
+      _hideControls();
+      return KeyEventResult.handled;
+    }
+
+    if (isBigPicture) {
+      if (key == LogicalKeyboardKey.arrowDown) {
+        _hideControls();
+        return KeyEventResult.handled;
+      }
+      if (key == LogicalKeyboardKey.space) {
+        _togglePlayPause();
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    }
+
+    // Standard desktop visible controls keys
+    if (key == LogicalKeyboardKey.space) {
+      _togglePlayPause();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.keyF) {
+      _toggleFullscreen();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.keyM) {
+      _volumeKey.currentState?.toggleMute();
+      _onHover();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowUp) {
       final vol = widget.playerState.controller.player.state.volume;
       widget.playerState.controller.player.setVolume((vol + 10).clamp(0, 100));
       _onHover();
-    } else if (key == LogicalKeyboardKey.arrowDown) {
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowDown) {
       final vol = widget.playerState.controller.player.state.volume;
       widget.playerState.controller.player.setVolume((vol - 10).clamp(0, 100));
       _onHover();
-    } else if (key == LogicalKeyboardKey.arrowRight) {
-      _performSkip(true);
-    } else if (key == LogicalKeyboardKey.arrowLeft) {
-      _performSkip(false);
-    } else if (key == LogicalKeyboardKey.escape) {
-      if (_isFullScreen) {
-        _toggleFullscreen();
-      }
+      return KeyEventResult.handled;
     }
+    if (key == LogicalKeyboardKey.arrowRight) {
+      _performSkip(true);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowLeft) {
+      if (isFullWindow || _isFullScreen) {
+        ref.read(liveTvChannelOverlayProvider.notifier).state = true;
+      } else {
+        _performSkip(false);
+      }
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   void _onVerticalDragStart(DragStartDetails details) {
@@ -333,12 +537,15 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
 
   @override
   Widget build(BuildContext context) {
+    final viewMode = ref.watch(liveTvViewModeProvider);
+    final isFullWindow = viewMode == LiveTvViewMode.fullWindow;
+    final isBigPicture = ref.watch(isBigPictureProvider);
+
     return Focus(
+      focusNode: _rootFocusNode,
       autofocus: true,
-      onKeyEvent: (_, event) {
-        _handleKeyEvent(event);
-        return KeyEventResult.handled;
-      },
+      canRequestFocus: !isBigPicture || !_visible,
+      onKeyEvent: (_, event) => _handleKeyEvent(event),
       child: MouseRegion(
         onHover: (_) => _onHover(),
         cursor: (_visible || !_isFullScreen)
@@ -383,7 +590,10 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
                         top: 0,
                         left: 0,
                         right: 0,
-                        child: _buildTopBar(),
+                        child: ExcludeFocus(
+                          excluding: isBigPicture,
+                          child: _buildTopBar(isFullWindow, isBigPicture),
+                        ),
                       ),
 
                       // Play/Pause center overlay
@@ -401,7 +611,14 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
                         bottom: 0,
                         left: 0,
                         right: 0,
-                        child: _buildBottomBar(),
+                        child: ExcludeFocus(
+                          excluding: !_visible,
+                          child: _buildBottomBar(
+                            context,
+                            isFullWindow,
+                            isBigPicture,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -465,6 +682,9 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
               // Number input OSD (always visible, above controls)
               if (widget.numberBuffer.isNotEmpty)
                 NumberInputOsd(buffer: widget.numberBuffer),
+
+              // Channel List Overlay Drawer (accessible in full-window & OS fullscreen)
+              _buildChannelOverlayDrawer(isFullWindow),
             ],
           ),
         ),
@@ -472,11 +692,46 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
     );
   }
 
+  Widget _buildChannelOverlayDrawer(bool isFullWindow) {
+    if (!isFullWindow && !_isFullScreen) return const SizedBox.shrink();
+
+    final isOverlayOpen = ref.watch(liveTvChannelOverlayProvider);
+    if (!isOverlayOpen) return const SizedBox.shrink();
+
+    return Stack(
+      children: [
+        // Semi-transparent backdrop outside drawer: tap to dismiss
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () {
+              ref.read(liveTvChannelOverlayProvider.notifier).state = false;
+            },
+          ),
+        ),
+        Positioned(
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 360,
+          child: RepaintBoundary(
+            child: ChannelListPanel(
+              isOverlay: true,
+              onClose: () {
+                ref.read(liveTvChannelOverlayProvider.notifier).state = false;
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // Top bar — channel name, logo, and settings cog
   // ---------------------------------------------------------------------------
 
-  Widget _buildTopBar() {
+  Widget _buildTopBar(bool isFullWindow, bool isBigPicture) {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -488,6 +743,18 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
+          if (isFullWindow) ...[
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: AppTheme.textWhite),
+              tooltip: 'Back',
+              onPressed: () {
+                _onHover();
+                ref.read(liveTvViewModeProvider.notifier).state =
+                    LiveTvViewMode.split;
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
           // Channel logo
           if (widget.channel != null) ...[
             ClipRRect(
@@ -498,6 +765,8 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
                 child: Image.network(
                   widget.channel!.logoUrl,
                   fit: BoxFit.contain,
+                  cacheWidth: 56,
+                  cacheHeight: 56,
                   errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                 ),
               ),
@@ -506,16 +775,16 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
             Text(
               widget.channel!.name,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppTheme.textWhite,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ],
           const Spacer(),
-          if (widget.onSettingsPressed != null)
+          if (!isBigPicture && widget.onSettingsPressed != null)
             IconButton(
-              icon: const Icon(Icons.settings, color: Colors.white),
+              icon: const Icon(Icons.settings, color: AppTheme.textWhite),
               onPressed: () {
                 _onHover(); // Keep controls visible while settings open
                 widget.onSettingsPressed!();
@@ -530,19 +799,36 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
   // Bottom bar with stable seek bar + controls
   // ---------------------------------------------------------------------------
 
-  Widget _buildBottomBar() {
+  Widget _buildBottomBar(
+    BuildContext context,
+    bool isFullWindow,
+    bool isBigPicture,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
-          colors: [Colors.black87, Colors.transparent],
+          colors: [
+            AppTheme.primary.withValues(alpha: 0.87),
+            Colors.transparent,
+          ],
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: 24,
+        vertical: isBigPicture ? 16 : 12,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [_buildSeekBar(), _buildControlsRow()],
+        children: [
+          _buildSeekBar(isBigPicture),
+          if (isBigPicture)
+            _buildBigPictureControls(context, isFullWindow, l10n)
+          else
+            _buildStandardControls(context, isFullWindow, l10n),
+        ],
       ),
     );
   }
@@ -552,7 +838,7 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
   /// When at the live edge (within 5s of duration), position is snapped
   /// to duration so the thumb sits stable at the far right instead of
   /// jittering as duration grows every second.
-  Widget _buildSeekBar() {
+  Widget _buildSeekBar(bool isBigPicture) {
     return StreamBuilder<Duration>(
       stream: widget.playerState.controller.player.stream.position,
       builder: (context, snapshot) {
@@ -562,25 +848,16 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
         if (rawDuration <= Duration.zero) return const SizedBox.shrink();
 
         // 1. Calculate relative offset from live (0 is Live)
-        // Values will be negative, e.g., -120 means 2 minutes behind live.
         final secondsBehindLive =
             -(rawDuration.inSeconds - rawPosition.inSeconds).toDouble();
 
         // 2. Stabilize the seekbar window (the "min" value)
-        // We use the actual available duration but round up ONLY the UI scale
-        // to the next 60-second increment to prevent jitter every second.
-        // We clamp the actual seek within rawDuration in onChange.
         final uiTotalSeconds = ((rawDuration.inSeconds / 60).ceil() * 60)
             .toDouble()
             .clamp(60.0, 7200.0);
-
-        // Final sanity check for slider limits: the slider range [-uiTotalSeconds, 0]
-        // must always contain the current position.
         final safeMin = -uiTotalSeconds;
 
         // 3. Determine if we are "At Live"
-        // Most streams have a safety buffer of 1-3 segments (~18s).
-        // We treat anything within 30s of the edge as "LIVE" for UI stability.
         final isAtLive = !_dragging && secondsBehindLive >= -30;
 
         return Row(
@@ -597,7 +874,6 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
                           0.0,
                           1.0,
                         );
-                        // Convert percent to seconds behind live relative to UI scale
                         final hoverSeconds =
                             -((1.0 - percent) * uiTotalSeconds);
                         _hoverDuration = Duration(
@@ -615,86 +891,85 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
-                        SliderTheme(
-                          data: SliderThemeData(
-                            trackHeight: 3,
-                            thumbShape: const RoundSliderThumbShape(
-                              enabledThumbRadius: 7,
+                        ExcludeFocus(
+                          excluding: isBigPicture,
+                          child: SliderTheme(
+                            data: SliderThemeData(
+                              trackHeight: isBigPicture ? 4 : 3,
+                              thumbShape: RoundSliderThumbShape(
+                                enabledThumbRadius: isBigPicture ? 8 : 7,
+                              ),
+                              overlayShape: RoundSliderOverlayShape(
+                                overlayRadius: isBigPicture ? 16 : 14,
+                              ),
+                              activeTrackColor: AppTheme.textWhite,
+                              inactiveTrackColor: AppTheme.textWhite.withValues(
+                                alpha: 0.24,
+                              ),
+                              thumbColor: AppTheme.textWhite,
+                              activeTickMarkColor: Colors.transparent,
+                              inactiveTickMarkColor: Colors.transparent,
                             ),
-                            overlayShape: const RoundSliderOverlayShape(
-                              overlayRadius: 14,
-                            ),
-                            activeTrackColor: AppTheme.accent,
-                            inactiveTrackColor: AppTheme.textWhite.withValues(
-                              alpha: 0.24,
-                            ),
-                            thumbColor: AppTheme.textWhite,
-                            activeTickMarkColor: Colors.transparent,
-                            inactiveTickMarkColor: Colors.transparent,
-                          ),
-                          child: Slider(
-                            // We slider from safeMin (past) to 0 (Live)
-                            value: isAtLive
-                                ? 0
-                                : secondsBehindLive.clamp(safeMin, 0),
-                            min: safeMin,
-                            max: 0,
-                            onChangeStart: (v) {
-                              setState(() {
-                                _dragging = true;
-                                // Clamp virtual position within rawDuration to avoid "jump back"
+                            child: Slider(
+                              value: isAtLive
+                                  ? 0
+                                  : secondsBehindLive.clamp(safeMin, 0),
+                              min: safeMin,
+                              max: 0,
+                              onChangeStart: (v) {
+                                setState(() {
+                                  _dragging = true;
+                                  final clampedOffset = v.clamp(
+                                    -rawDuration.inSeconds.toDouble(),
+                                    0.0,
+                                  );
+                                  _virtualPosition =
+                                      rawDuration +
+                                      Duration(seconds: clampedOffset.toInt());
+                                });
+                                _hideTimer?.cancel();
+                                _clearVirtualPositionTimer?.cancel();
+                              },
+                              onChanged: (v) {
+                                setState(() {
+                                  final clampedOffset = v.clamp(
+                                    -rawDuration.inSeconds.toDouble(),
+                                    0.0,
+                                  );
+                                  _virtualPosition =
+                                      rawDuration +
+                                      Duration(seconds: clampedOffset.toInt());
+                                });
+                              },
+                              onChangeEnd: (v) async {
                                 final clampedOffset = v.clamp(
                                   -rawDuration.inSeconds.toDouble(),
                                   0.0,
                                 );
-                                _virtualPosition =
+                                final target =
                                     rawDuration +
                                     Duration(seconds: clampedOffset.toInt());
-                              });
-                              _hideTimer?.cancel();
-                              _clearVirtualPositionTimer?.cancel();
-                            },
-                            onChanged: (v) {
-                              setState(() {
-                                final clampedOffset = v.clamp(
-                                  -rawDuration.inSeconds.toDouble(),
-                                  0.0,
+                                try {
+                                  await widget.playerState.controller.player.seek(
+                                    target,
+                                  );
+                                } catch (_) {}
+                                setState(() {
+                                  _dragging = false;
+                                  _virtualPosition = target;
+                                });
+                                _startHideTimer();
+                                _clearVirtualPositionTimer?.cancel();
+                                _clearVirtualPositionTimer = Timer(
+                                  const Duration(milliseconds: 1000),
+                                  () {
+                                    if (mounted) {
+                                      setState(() => _virtualPosition = null);
+                                    }
+                                  },
                                 );
-                                _virtualPosition =
-                                    rawDuration +
-                                    Duration(seconds: clampedOffset.toInt());
-                              });
-                            },
-                            onChangeEnd: (v) async {
-                              final clampedOffset = v.clamp(
-                                -rawDuration.inSeconds.toDouble(),
-                                0.0,
-                              );
-                              final target =
-                                  rawDuration +
-                                  Duration(seconds: clampedOffset.toInt());
-                              try {
-                                await widget.playerState.controller.player.seek(
-                                  target,
-                                );
-                              } catch (_) {
-                                // Ignore seek errors on some problematic live streams or if force-seekable fails
-                              }
-                              setState(() {
-                                _dragging = false;
-                                _virtualPosition = target;
-                              });
-                              _startHideTimer();
-                              _clearVirtualPositionTimer?.cancel();
-                              _clearVirtualPositionTimer = Timer(
-                                const Duration(milliseconds: 1000),
-                                () {
-                                  if (mounted) {
-                                    setState(() => _virtualPosition = null);
-                                  }
-                                },
-                              );
-                            },
+                              },
+                            ),
                           ),
                         ),
                         if (_isHoveringSeekbar &&
@@ -740,7 +1015,7 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
             ),
             const SizedBox(width: 8),
             Container(
-              width: 70,
+              width: isBigPicture ? 80 : 70,
               alignment: Alignment.centerRight,
               child: Text(
                 isAtLive
@@ -748,7 +1023,7 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
                     : '-${_formatDuration(Duration(seconds: secondsBehindLive.toInt().abs()))}',
                 style: TextStyle(
                   color: isAtLive ? AppTheme.favorites : AppTheme.textWhite,
-                  fontSize: 12,
+                  fontSize: isBigPicture ? 15 : 12,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'monospace',
                 ),
@@ -760,7 +1035,257 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
     );
   }
 
-  Widget _buildControlsRow() {
+  // ---------------------------------------------------------------------------
+  // Big Picture TV Controls
+  // ---------------------------------------------------------------------------
+
+  Widget _buildBigPictureControls(
+    BuildContext context,
+    bool isFullWindow,
+    AppLocalizations l10n,
+  ) {
+    final player = widget.playerState.controller.player;
+    final isOverlayOpen = ref.watch(liveTvChannelOverlayProvider);
+    final showChannels = isFullWindow || _isFullScreen;
+    final showSettings = widget.onSettingsPressed != null;
+
+    final chain = <FocusNode>[
+      _rewindFocusNode,
+      _playPauseFocusNode,
+      _forwardFocusNode,
+      _liveFocusNode,
+      if (showChannels) _channelsFocusNode,
+      if (showSettings) _settingsFocusNode,
+      _viewModeFocusNode,
+      _fullscreenFocusNode,
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Rewind 10s
+          _buildTvIconButton(
+            icon: Icons.replay_10_rounded,
+            tooltip: l10n.playerSkipBackward,
+            focusNode: _rewindFocusNode,
+            onKeyEvent: (node, event) =>
+                _handleChainKey(event, _rewindFocusNode, chain, isFullWindow),
+            onTap: () => _performSkip(false),
+          ),
+          const SizedBox(width: 16),
+          // Play / Pause (large, centered)
+          _buildPlayPauseTvButton(player, chain, isFullWindow),
+          const SizedBox(width: 16),
+          // Forward 10s
+          _buildTvIconButton(
+            icon: Icons.forward_10_rounded,
+            tooltip: l10n.playerSkipForward,
+            focusNode: _forwardFocusNode,
+            onKeyEvent: (node, event) =>
+                _handleChainKey(event, _forwardFocusNode, chain, isFullWindow),
+            onTap: () => _performSkip(true),
+          ),
+          const SizedBox(width: 16),
+          // LIVE catch-up
+          _buildTvIconButton(
+            icon: Icons.sensors_rounded,
+            tooltip: l10n.liveTvGoToLive,
+            focusNode: _liveFocusNode,
+            onKeyEvent: (node, event) =>
+                _handleChainKey(event, _liveFocusNode, chain, isFullWindow),
+            onTap: _seekToLive,
+          ),
+          // Channels drawer (in full-window or fullscreen)
+          if (showChannels) ...[
+            const SizedBox(width: 16),
+            _buildTvIconButton(
+              icon: isOverlayOpen
+                  ? Icons.view_sidebar_rounded
+                  : Icons.view_sidebar_outlined,
+              tooltip: l10n.liveTvChannels,
+              focusNode: _channelsFocusNode,
+              onKeyEvent: (node, event) =>
+                  _handleChainKey(event, _channelsFocusNode, chain, isFullWindow),
+              onTap: () {
+                _onHover();
+                ref.read(liveTvChannelOverlayProvider.notifier).state =
+                    !isOverlayOpen;
+              },
+            ),
+          ],
+          // Settings (if provided)
+          if (showSettings) ...[
+            const SizedBox(width: 16),
+            _buildTvIconButton(
+              icon: Icons.tune_rounded,
+              tooltip: l10n.playerSettings,
+              focusNode: _settingsFocusNode,
+              onKeyEvent: (node, event) =>
+                  _handleChainKey(event, _settingsFocusNode, chain, isFullWindow),
+              onTap: () {
+                _onHover();
+                widget.onSettingsPressed!();
+              },
+            ),
+          ],
+          const SizedBox(width: 16),
+          // View Mode (Full Window / Split)
+          _buildTvIconButton(
+            icon: isFullWindow
+                ? Icons.view_quilt_rounded
+                : Icons.aspect_ratio_rounded,
+            tooltip: isFullWindow ? l10n.liveTvSplitView : l10n.liveTvFullWindow,
+            focusNode: _viewModeFocusNode,
+            onKeyEvent: (node, event) =>
+                _handleChainKey(event, _viewModeFocusNode, chain, isFullWindow),
+            onTap: () {
+              _onHover();
+              ref.read(liveTvViewModeProvider.notifier).state = isFullWindow
+                  ? LiveTvViewMode.split
+                  : LiveTvViewMode.fullWindow;
+            },
+          ),
+          const SizedBox(width: 16),
+          // Fullscreen
+          _buildTvIconButton(
+            icon: _isFullScreen
+                ? Icons.fullscreen_exit_rounded
+                : Icons.fullscreen_rounded,
+            tooltip: _isFullScreen
+                ? l10n.playerExitFullscreen
+                : l10n.playerFullscreen,
+            focusNode: _fullscreenFocusNode,
+            onKeyEvent: (node, event) =>
+                _handleChainKey(event, _fullscreenFocusNode, chain, isFullWindow),
+            onTap: _toggleFullscreen,
+          ),
+        ],
+      ),
+    );
+  }
+
+  KeyEventResult _handleChainKey(
+    KeyEvent event,
+    FocusNode current,
+    List<FocusNode> chain,
+    bool isFullWindow,
+  ) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+    if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+      final index = chain.indexOf(current);
+      if (index > 0) {
+        chain[index - 1].requestFocus();
+        return KeyEventResult.handled;
+      } else if (index == 0 && (isFullWindow || _isFullScreen)) {
+        // Pressing Left from the first button opens the channel overlay drawer!
+        ref.read(liveTvChannelOverlayProvider.notifier).state = true;
+        return KeyEventResult.handled;
+      }
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+      final index = chain.indexOf(current);
+      if (index >= 0 && index < chain.length - 1) {
+        chain[index + 1].requestFocus();
+        return KeyEventResult.handled;
+      }
+    }
+
+    return KeyEventResult.ignored;
+  }
+
+  Widget _buildPlayPauseTvButton(
+    Player player,
+    List<FocusNode> chain,
+    bool isFullWindow,
+  ) {
+    return StreamBuilder<bool>(
+      stream: player.stream.playing,
+      initialData: player.state.playing,
+      builder: (context, snapshot) {
+        final isPlaying = snapshot.data ?? player.state.playing;
+        return _buildTvIconButton(
+          icon: isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+          tooltip: isPlaying ? 'Pause' : 'Play',
+          focusNode: _playPauseFocusNode,
+          autofocus: true,
+          iconSize: 34,
+          buttonSize: 52,
+          onKeyEvent: (node, event) =>
+              _handleChainKey(event, _playPauseFocusNode, chain, isFullWindow),
+          onTap: _togglePlayPause,
+        );
+      },
+    );
+  }
+
+  Widget _buildTvIconButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+    FocusNode? focusNode,
+    FocusOnKeyEventCallback? onKeyEvent,
+    bool autofocus = false,
+    double iconSize = 28,
+    double buttonSize = 48,
+    Color? iconColor,
+  }) {
+    return DpadFocusable(
+      focusNode: focusNode,
+      onKeyEvent: onKeyEvent,
+      autofocus: autofocus,
+      onTap: onTap,
+      scale: 1.12,
+      borderRadius: BorderRadius.circular(buttonSize / 2),
+      builder: (context, isFocused, isHovered, child) {
+        final isHighlighted = isFocused || isHovered;
+        return Tooltip(
+          message: tooltip,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: buttonSize,
+            height: buttonSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isHighlighted
+                  ? Colors.white.withValues(alpha: 0.22)
+                  : Colors.white.withValues(alpha: 0.08),
+              border: Border.all(
+                color: isFocused
+                    ? Colors.white
+                    : (isHovered
+                        ? Colors.white.withValues(alpha: 0.4)
+                        : Colors.transparent),
+                width: 2,
+              ),
+              boxShadow: isFocused ? AppTheme.shadowFocusGlow : null,
+            ),
+            child: Icon(
+              icon,
+              color: iconColor ?? Colors.white,
+              size: iconSize,
+            ),
+          ),
+        );
+      },
+      child: const SizedBox.shrink(),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Standard Controls (Compact / Mobile)
+  // ---------------------------------------------------------------------------
+
+  Widget _buildStandardControls(
+    BuildContext context,
+    bool isFullWindow,
+    AppLocalizations l10n,
+  ) {
+    final isOverlayOpen = ref.watch(liveTvChannelOverlayProvider);
+
     return Row(
       children: [
         // Play/Pause
@@ -791,6 +1316,38 @@ class _LiveVideoControlsState extends State<LiveVideoControls> {
           onTap: _seekToLive,
         ),
         const Spacer(),
+        // Channel list overlay toggle (visible in full window or OS fullscreen)
+        if (isFullWindow || _isFullScreen)
+          IconButton(
+            icon: Icon(
+              isOverlayOpen
+                  ? Icons.view_sidebar_rounded
+                  : Icons.view_sidebar_outlined,
+              color: isOverlayOpen ? Colors.white : Colors.white70,
+            ),
+            tooltip: l10n.liveTvChannels,
+            onPressed: () {
+              _onHover();
+              ref.read(liveTvChannelOverlayProvider.notifier).state =
+                  !isOverlayOpen;
+            },
+          ),
+        // Full Window / Split toggle
+        IconButton(
+          icon: Icon(
+            isFullWindow
+                ? Icons.view_quilt_rounded
+                : Icons.aspect_ratio_rounded,
+            color: Colors.white,
+          ),
+          tooltip: isFullWindow ? l10n.liveTvSplitView : l10n.liveTvFullWindow,
+          onPressed: () {
+            _onHover();
+            ref.read(liveTvViewModeProvider.notifier).state = isFullWindow
+                ? LiveTvViewMode.split
+                : LiveTvViewMode.fullWindow;
+          },
+        ),
         // Fullscreen
         FullscreenButton(
           isFullscreen: _isFullScreen,

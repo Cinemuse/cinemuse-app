@@ -1376,6 +1376,24 @@ abstract class AppLocalizations {
   /// **'Next Episode'**
   String get playerNextEpisode;
 
+  /// No description provided for @playerPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get playerPlay;
+
+  /// No description provided for @playerPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get playerPause;
+
+  /// No description provided for @playerStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get playerStop;
+
   /// No description provided for @playerSkipBackward.
   ///
   /// In en, this message translates to:
@@ -2057,7 +2075,7 @@ abstract class AppLocalizations {
   /// No description provided for @liveTvLive.
   ///
   /// In en, this message translates to:
-  /// **'LIVE'**
+  /// **'Live'**
   String get liveTvLive;
 
   /// No description provided for @liveTvNoEpg.
@@ -3437,6 +3455,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Optimized 10-foot UI for TV and remote navigation'**
   String get bigPictureModeSubtitle;
+
+  /// No description provided for @liveTvFullWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Window'**
+  String get liveTvFullWindow;
+
+  /// No description provided for @liveTvSplitView.
+  ///
+  /// In en, this message translates to:
+  /// **'Split View'**
+  String get liveTvSplitView;
+
+  /// No description provided for @liveTvChannels.
+  ///
+  /// In en, this message translates to:
+  /// **'Channels'**
+  String get liveTvChannels;
+
+  /// No description provided for @liveTvCloseOverlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Close channel list'**
+  String get liveTvCloseOverlay;
+
+  /// No description provided for @liveTvGoToLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Live'**
+  String get liveTvGoToLive;
+
+  /// No description provided for @playerFullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Fullscreen'**
+  String get playerFullscreen;
+
+  /// No description provided for @playerExitFullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit fullscreen'**
+  String get playerExitFullscreen;
+
+  /// No description provided for @seriesStatusOngoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ongoing'**
+  String get seriesStatusOngoing;
+
+  /// No description provided for @menuViewWatchHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'View Watch History'**
+  String get menuViewWatchHistory;
 }
 
 class _AppLocalizationsDelegate

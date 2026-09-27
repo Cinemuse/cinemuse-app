@@ -149,7 +149,7 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
       progress: percentage,
       infoText: widget.historyItem.mediaType == MediaKind.tv
           ? "S${widget.historyItem.season} E${widget.historyItem.episode}"
-          : "Movie",
+          : l10n.personMovie,
       isWatchlisted: isWatchlisted,
       onTap: () {
         Navigator.of(context, rootNavigator: true).push(

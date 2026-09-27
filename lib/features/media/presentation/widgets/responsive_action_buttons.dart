@@ -273,23 +273,24 @@ class _SplitPlayButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final popupKey = GlobalKey<PopupMenuButtonState<int>>();
 
     final divider = Container(
       width: 1,
       height: 28,
-      color: AppTheme.textWhite.withValues(alpha: 0.3),
+      color: theme.colorScheme.onPrimary.withValues(alpha: 0.3),
     );
 
     final chevronButton = PopupMenuButton<int>(
       key: popupKey,
       onOpened: onDropdownOpened,
       tooltip: '',
-      color: AppTheme.surface,
+      color: theme.colorScheme.surface,
       elevation: 10,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppTheme.border),
+        side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
       ),
       offset: const Offset(0, 48),
       itemBuilder: (_) => dropdownItems.asMap().entries.map((entry) {
@@ -304,7 +305,7 @@ class _SplitPlayButton extends StatelessWidget {
                 size: 18,
                 color: item.isDestructive
                     ? AppTheme.favorites
-                    : AppTheme.textWhite.withValues(alpha: 0.8),
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.8),
               ),
               const SizedBox(width: 12),
               Text(
@@ -312,7 +313,7 @@ class _SplitPlayButton extends StatelessWidget {
                 style: TextStyle(
                   color: item.isDestructive
                       ? AppTheme.favorites
-                      : AppTheme.textWhite,
+                      : theme.colorScheme.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -325,9 +326,9 @@ class _SplitPlayButton extends StatelessWidget {
         cursor: SystemMouseCursors.click,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-          child: const Icon(
+          child: Icon(
             Icons.keyboard_arrow_down,
-            color: AppTheme.textWhite,
+            color: theme.colorScheme.onPrimary,
             size: 22,
           ),
         ),
@@ -351,22 +352,29 @@ class _SplitPlayButton extends StatelessWidget {
         onDropdownOpened();
         popupKey.currentState?.showButtonMenu();
       },
-      scale: 1.04,
+      scale: 1.06,
       borderRadius: BorderRadius.circular(12),
       builder: (context, isFocused, isHovered, child) {
         return Container(
           decoration: BoxDecoration(
-            color: isFocused
-                ? AppTheme.accent.withValues(alpha: 0.9)
-                : AppTheme.accent,
+            color: theme.colorScheme.primary,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isFocused ? Colors.white : Colors.transparent,
-              width: 2.0,
-            ),
             boxShadow: isFocused
-                ? AppTheme.shadowSubtleGlow
-                : AppTheme.shadowAccentGlow,
+                ? const [
+                    BoxShadow(
+                      color: Color(0x99000000), // black 60%
+                      blurRadius: 18,
+                      spreadRadius: 1,
+                      offset: Offset(0, 6),
+                    ),
+                  ]
+                : const [
+                    BoxShadow(
+                      color: Color(0x40000000), // black 25%
+                      blurRadius: 8,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
           ),
           clipBehavior: Clip.antiAlias,
           child: child,
@@ -434,6 +442,8 @@ class _PlayButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return DpadFocusable(
       autofocus: true,
       autoScroll: false,
@@ -447,24 +457,31 @@ class _PlayButton extends StatelessWidget {
         return KeyEventResult.ignored;
       },
       onTap: onPlayClick,
-      scale: 1.04,
+      scale: 1.06,
       borderRadius: BorderRadius.circular(12),
       builder: (context, isFocused, isHovered, child) {
         return Container(
           width: isFullWidth ? double.infinity : null,
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 15),
           decoration: BoxDecoration(
-            color: isFocused
-                ? AppTheme.accent.withValues(alpha: 0.9)
-                : AppTheme.accent,
+            color: theme.colorScheme.primary,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isFocused ? Colors.white : Colors.transparent,
-              width: 2.0,
-            ),
             boxShadow: isFocused
-                ? AppTheme.shadowSubtleGlow
-                : AppTheme.shadowAccentGlow,
+                ? const [
+                    BoxShadow(
+                      color: Color(0x99000000), // black 60%
+                      blurRadius: 18,
+                      spreadRadius: 1,
+                      offset: Offset(0, 6),
+                    ),
+                  ]
+                : const [
+                    BoxShadow(
+                      color: Color(0x40000000), // black 25%
+                      blurRadius: 8,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
           ),
           child: child,
         );
@@ -525,9 +542,11 @@ class _TrackButton extends StatelessWidget {
     return DpadFocusable(
       autoScroll: false,
       onTap: onTrackTap,
-      scale: 1.03,
+      scale: 1.0,
       borderRadius: BorderRadius.circular(12),
       builder: (context, isFocused, isHovered, child) {
+        final theme = Theme.of(context);
+        final baseColor = theme.colorScheme.onSurface.withValues(alpha: 0.08);
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
           decoration: BoxDecoration(
@@ -536,18 +555,16 @@ class _TrackButton extends StatelessWidget {
                     ? Colors.green.withValues(alpha: 0.3)
                     : Colors.green.withValues(alpha: 0.15))
                 : (isFocused
-                    ? Colors.white.withValues(alpha: 0.18)
+                    ? Color.alphaBlend(theme.focusColor, baseColor)
                     : (isHovered
-                        ? Colors.white.withValues(alpha: 0.12)
-                        : AppTheme.textWhite.withValues(alpha: 0.08))),
+                        ? Color.alphaBlend(theme.hoverColor, baseColor)
+                        : baseColor)),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isFocused
-                  ? Colors.white
-                  : (isFullyWatched
-                      ? Colors.green.withValues(alpha: 0.3)
-                      : AppTheme.textWhite.withValues(alpha: 0.05)),
-              width: isFocused ? 1.5 : 1.0,
+              color: isFullyWatched
+                  ? Colors.green.withValues(alpha: 0.3)
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.05),
+              width: 1.0,
             ),
           ),
           child: child,

@@ -14,11 +14,13 @@ import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 class HeroSection extends ConsumerStatefulWidget {
   final List<MediaItem> items;
+  final FocusNode? focusNode;
 
   HeroSection({
     super.key,
     List<MediaItem>? items,
     MediaItem? media,
+    this.focusNode,
   }) : items = items ?? (media != null ? [media] : const []);
 
   /// Responsive hero height: 46% of screen height on mobile, 75% on desktop/TV.
@@ -224,7 +226,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
           ),
 
           // 2. Bottom Seal (prevents hairline backdrop leaks during scrolling)
-          _buildBottomSeal(),
+          _buildBottomSeal(context),
 
           // 3. Carousel Controls (Indicators + Pause/Play Toggle)
           if (widget.items.length > 1)
@@ -243,6 +245,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
           : null;
 
       return DpadFocusable(
+        focusNode: widget.focusNode,
         onTap: currentItem != null
             ? () => _navigateToDetails(context, currentItem)
             : null,
@@ -258,6 +261,13 @@ class _HeroSectionState extends ConsumerState<HeroSection>
           if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
             return KeyEventResult.ignored;
           }
+          if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+            final focusNavbar = ref.read(topNavbarFocusActionProvider);
+            if (focusNavbar != null) {
+              focusNavbar();
+              return KeyEventResult.handled;
+            }
+          }
           if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
             if (widget.items.length > 1) {
               _advanceToNextPage();
@@ -272,6 +282,13 @@ class _HeroSectionState extends ConsumerState<HeroSection>
               focusRail?.call();
               return KeyEventResult.handled;
             }
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+            final moved = node.focusInDirection(TraversalDirection.down);
+            if (!moved) {
+              node.nextFocus();
+            }
+            return KeyEventResult.handled;
           }
           return KeyEventResult.ignored;
         },
@@ -298,7 +315,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
       fit: StackFit.expand,
       children: [
         _buildBackgroundImage(context, imageUrl, heroHeight),
-        ..._buildGradients(isMobile),
+        ..._buildGradients(context, isMobile),
         // Ambient dimming when hero is not focused in widescreen mode
         if (isWidescreen)
           Positioned.fill(
@@ -306,7 +323,9 @@ class _HeroSectionState extends ConsumerState<HeroSection>
               child: AnimatedOpacity(
                 opacity: _isHeroFocused ? 0.0 : 0.4,
                 duration: const Duration(milliseconds: 300),
-                child: Container(color: AppTheme.primary),
+                child: Container(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                ),
               ),
             ),
           ),
@@ -325,6 +344,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     String? imageUrl,
     double heroHeight,
   ) {
+    final surfaceColor = Theme.of(context).colorScheme.surface;
     if (imageUrl != null) {
       final pixelRatio = MediaQuery.devicePixelRatioOf(context);
       final cacheHeight = (heroHeight * pixelRatio).round();
@@ -334,14 +354,15 @@ class _HeroSectionState extends ConsumerState<HeroSection>
         fit: BoxFit.cover,
         alignment: Alignment.topCenter,
         memCacheHeight: cacheHeight,
-        placeholder: (context, url) => Container(color: AppTheme.surface),
-        errorWidget: (context, url, error) => Container(color: AppTheme.surface),
+        placeholder: (context, url) => Container(color: surfaceColor),
+        errorWidget: (context, url, error) => Container(color: surfaceColor),
       );
     }
-    return Container(color: AppTheme.surface);
+    return Container(color: surfaceColor);
   }
 
-  List<Widget> _buildGradients(bool isMobile) {
+  List<Widget> _buildGradients(BuildContext context, bool isMobile) {
+    final bgColor = Theme.of(context).scaffoldBackgroundColor;
     return [
       // Left to Right (Primary -> Transparent)
       Container(
@@ -350,8 +371,8 @@ class _HeroSectionState extends ConsumerState<HeroSection>
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: [
-              AppTheme.primary,
-              AppTheme.primary.withValues(alpha: isMobile ? 0.35 : 0.4),
+              bgColor,
+              bgColor.withValues(alpha: isMobile ? 0.35 : 0.4),
               Colors.transparent,
             ],
             stops: isMobile ? const [0.0, 0.3, 0.85] : const [0.0, 0.4, 1.0],
@@ -366,9 +387,9 @@ class _HeroSectionState extends ConsumerState<HeroSection>
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
             colors: [
-              AppTheme.primary,
-              AppTheme.primary,
-              AppTheme.primary.withValues(alpha: isMobile ? 0.45 : 0.6),
+              bgColor,
+              bgColor,
+              bgColor.withValues(alpha: isMobile ? 0.45 : 0.6),
               Colors.transparent,
             ],
             stops: isMobile
@@ -380,12 +401,15 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     ];
   }
 
-  Widget _buildBottomSeal() {
+  Widget _buildBottomSeal(BuildContext context) {
     return Positioned(
       bottom: -1,
       left: 0,
       right: 0,
-      child: Container(height: 2, color: AppTheme.primary),
+      child: Container(
+        height: 2,
+        color: Theme.of(context).scaffoldBackgroundColor,
+      ),
     );
   }
 
@@ -465,14 +489,15 @@ class _HeroSectionState extends ConsumerState<HeroSection>
   ) {
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context);
-    final title = item.getLocalizedTitle(locale.languageCode) ?? 'Unknown';
+    final title =
+        item.getLocalizedTitle(locale.languageCode) ?? l10n.commonUnknown;
     final overview = item.overview ?? '';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildFeaturedTag(l10n, isMobile),
+        _buildFeaturedTag(context, l10n, isMobile),
         SizedBox(height: isMobile ? 8 : 16),
         _buildTitle(title, isMobile),
         if (!isMobile) ...[
@@ -491,30 +516,24 @@ class _HeroSectionState extends ConsumerState<HeroSection>
   }
 
   Widget _buildTvInfoPill(BuildContext context, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOutCubic,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
       decoration: BoxDecoration(
         color: _isHeroFocused
-            ? Colors.white.withValues(alpha: 0.18)
+            ? theme.focusColor
             : Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: _isHeroFocused
-              ? Colors.white
+              ? primary.withValues(alpha: 0.5)
               : Colors.white.withValues(alpha: 0.15),
-          width: _isHeroFocused ? 2 : 1,
+          width: 1.0,
         ),
-        boxShadow: _isHeroFocused
-            ? [
-                BoxShadow(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  blurRadius: 14,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -522,7 +541,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
           Icon(
             Icons.info_outline_rounded,
             size: 20,
-            color: _isHeroFocused ? Colors.white : Colors.white70,
+            color: _isHeroFocused ? primary : Colors.white70,
           ),
           const SizedBox(width: 8),
           Text(
@@ -539,23 +558,30 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     );
   }
 
-  Widget _buildFeaturedTag(AppLocalizations l10n, bool isMobile) {
+  Widget _buildFeaturedTag(
+    BuildContext context,
+    AppLocalizations l10n,
+    bool isMobile,
+  ) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 8 : 12,
         vertical: isMobile ? 4 : 6,
       ),
       decoration: BoxDecoration(
-        color: AppTheme.accent.withValues(alpha: 0.2),
+        color: primary.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: AppTheme.accent.withValues(alpha: 0.5),
+          color: primary.withValues(alpha: 0.5),
         ),
       ),
       child: Text(
         l10n.commonFeatured,
         style: TextStyle(
-          color: AppTheme.accent,
+          color: primary,
           fontWeight: FontWeight.bold,
           letterSpacing: isMobile ? 1.5 : 2,
           fontSize: isMobile ? 10 : 12,
@@ -571,7 +597,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
             fontSize: 24,
             fontWeight: FontWeight.w800,
             height: 1.15,
-            color: AppTheme.textWhite,
+            color: Colors.white,
           )
         : DesktopTypography.heroTitle;
 
@@ -618,6 +644,9 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     MediaItem item,
     AppLocalizations l10n,
   ) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
     return FocusTraversalGroup(
       child: Row(
         children: [
@@ -630,19 +659,19 @@ class _HeroSectionState extends ConsumerState<HeroSection>
             ),
             label: Text(l10n.detailsPlayNow),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.accent,
+              backgroundColor: primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(
                 horizontal: 22,
                 vertical: 12,
               ),
-              textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
+              textStyle: theme.textTheme.bodyMedium!.copyWith(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
               shape: const StadiumBorder(),
-              elevation: 8,
-              shadowColor: AppTheme.accent.withValues(alpha: 0.5),
+              elevation: 6,
+              shadowColor: primary.withValues(alpha: 0.35),
             ),
           ),
           const SizedBox(width: 14),
@@ -650,33 +679,43 @@ class _HeroSectionState extends ConsumerState<HeroSection>
           // Sleek Circular Glass Info Button
           Tooltip(
             message: l10n.homeMoreInfo,
-            child: InkWell(
+            child: DpadFocusable(
               onTap: () => _navigateToDetails(context, item),
-              borderRadius: BorderRadius.circular(24),
-              child: Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.12),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.25),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+              showFocusRing: false,
+              child: const SizedBox.shrink(),
+              builder: (context, isFocused, isHovered, _) {
+                final isHighlighted = isFocused || isHovered;
+                return Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isFocused
+                        ? theme.focusColor
+                        : (isHovered
+                            ? theme.hoverColor
+                            : Colors.white.withValues(alpha: 0.12)),
+                    border: Border.all(
+                      color: isHighlighted
+                          ? primary.withValues(alpha: 0.5)
+                          : Colors.white.withValues(alpha: 0.25),
+                      width: 1.0,
                     ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.info_outline_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.info_outline_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -689,6 +728,9 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     MediaItem item,
     AppLocalizations l10n,
   ) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
     return FocusTraversalGroup(
       child: Row(
         children: [
@@ -696,22 +738,36 @@ class _HeroSectionState extends ConsumerState<HeroSection>
             onPressed: () => _navigateToPlayer(context, item),
             icon: const Icon(Icons.play_arrow_rounded, size: 28),
             label: Text(l10n.detailsPlayNow),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.accent,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 32,
-                vertical: 20,
+            style: ButtonStyle(
+              backgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.hovered) ||
+                    states.contains(WidgetState.focused)) {
+                  return theme.colorScheme.secondary;
+                }
+                return primary;
+              }),
+              foregroundColor: const WidgetStatePropertyAll(Colors.white),
+              padding: const WidgetStatePropertyAll(
+                EdgeInsets.symmetric(horizontal: 32, vertical: 20),
               ),
-              textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+              textStyle: WidgetStatePropertyAll(
+                theme.textTheme.bodyMedium!.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              elevation: 10,
-              shadowColor: AppTheme.accent.withValues(alpha: 0.5),
+              side: const WidgetStatePropertyAll(BorderSide.none),
+              shape: WidgetStatePropertyAll(
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              elevation: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.focused)) return 4;
+                if (states.contains(WidgetState.hovered)) return 4;
+                return 2;
+              }),
+              shadowColor: WidgetStatePropertyAll(
+                primary.withValues(alpha: 0.25),
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -719,24 +775,46 @@ class _HeroSectionState extends ConsumerState<HeroSection>
             onPressed: () => _navigateToDetails(context, item),
             icon: const Icon(Icons.info_outline_rounded, size: 28),
             label: Text(l10n.homeMoreInfo),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: BorderSide(
-                color: Colors.white.withValues(alpha: 0.2),
-                width: 2,
+            style: ButtonStyle(
+              foregroundColor: const WidgetStatePropertyAll(Colors.white),
+              side: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.focused) ||
+                    states.contains(WidgetState.hovered)) {
+                  return BorderSide(
+                    color: primary.withValues(alpha: 0.5),
+                    width: 1.5,
+                  );
+                }
+                return BorderSide(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  width: 1.5,
+                );
+              }),
+              backgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.focused)) {
+                  return theme.focusColor;
+                }
+                if (states.contains(WidgetState.hovered)) {
+                  return theme.hoverColor;
+                }
+                return Colors.white.withValues(alpha: 0.1);
+              }),
+              elevation: const WidgetStatePropertyAll(0),
+              shadowColor: WidgetStatePropertyAll(
+                primary.withValues(alpha: 0.3),
               ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 32,
-                vertical: 20,
+              padding: const WidgetStatePropertyAll(
+                EdgeInsets.symmetric(horizontal: 32, vertical: 20),
               ),
-              textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+              textStyle: WidgetStatePropertyAll(
+                theme.textTheme.bodyMedium!.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              backgroundColor: Colors.white.withValues(alpha: 0.1),
+              shape: WidgetStatePropertyAll(
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
             ),
           ),
         ],
@@ -792,8 +870,9 @@ class _HeroIndicatorDotState extends State<_HeroIndicatorDot> {
         : (widget.isMobile ? 6.0 : (_isHovered ? 12.0 : 8.0));
     final height = widget.isMobile ? 5.0 : 6.0;
 
+    final theme = Theme.of(context);
     final dotColor = widget.isActive
-        ? AppTheme.accent
+        ? theme.colorScheme.primary
         : (_isHovered
             ? Colors.white.withValues(alpha: 0.8)
             : Colors.white.withValues(alpha: 0.4));
@@ -821,7 +900,7 @@ class _HeroIndicatorDotState extends State<_HeroIndicatorDot> {
               boxShadow: widget.isActive
                   ? [
                       BoxShadow(
-                        color: AppTheme.accent.withValues(alpha: 0.7),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.7),
                         blurRadius: 6,
                         spreadRadius: 1,
                       ),

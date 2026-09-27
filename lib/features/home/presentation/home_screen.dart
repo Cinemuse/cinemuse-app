@@ -1,4 +1,3 @@
-import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/continue_watching_row.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/sport_schedule_row.dart';
@@ -17,6 +16,7 @@ import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_sheet.dart';
+import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -29,6 +29,39 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final ScrollController _scrollController = ScrollController();
+  final FocusNode _heroFocusNode = FocusNode(debugLabel: 'HomeHero');
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(pageContentFocusActionsProvider.notifier).update(
+          (map) => {
+            ...map,
+            0: () {
+              if (_scrollController.hasClients && _scrollController.offset > 0) {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                );
+              }
+              _heroFocusNode.requestFocus();
+            },
+          },
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _heroFocusNode.dispose();
+    super.dispose();
+  }
   void _showListDetails(BuildContext context, UserList list) {
     final l10n = AppLocalizations.of(context)!;
     final isSystemList =
@@ -83,11 +116,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
     final isMobile = MediaQuery.sizeOf(context).width < 600;
 
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppTheme.primary,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: RefreshIndicator(
-        color: AppTheme.accent,
-        backgroundColor: AppTheme.secondary,
+        color: theme.colorScheme.primary,
+        backgroundColor: theme.colorScheme.surfaceContainer,
         onRefresh: () async {
           final user = ref.read(authProvider).value;
           if (user != null) {
@@ -105,6 +140,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           await Future.delayed(const Duration(milliseconds: 500));
         },
         child: SingleChildScrollView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.zero,
           child: Column(
@@ -113,8 +149,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               // 1. Hero Section (Top 5 Trending Carousel)
               RepaintBoundary(
                 child: trendingAsync.when(
-                  data: (data) =>
-                      HeroSection(items: data.take(5).toList()),
+                  data: (data) => HeroSection(
+                    items: data.take(5).toList(),
+                    focusNode: _heroFocusNode,
+                  ),
                   loading: () => SizedBox(
                     height: HeroSection.getHeroHeight(context),
                     child: const Center(child: CircularProgressIndicator()),

@@ -231,6 +231,9 @@
   "playerSelectSubtitle": "Seleziona Sottotitolo",
   "commonGoBack": "Torna Indietro",
   "playerNextEpisode": "Prossimo Episodio",
+  "playerPlay": "Riproduci",
+  "playerPause": "Pausa",
+  "playerStop": "Interrompi",
   "playerSkipBackward": "Riavvolgi 10 secondi",
   "playerSkipForward": "Avanti 10 secondi",
   "playerSubtitleAppearance": "Aspetto Sottotitoli",
@@ -713,6 +716,16 @@
     }
   },
   "bigPictureMode": "Modalità Big Picture",
-  "bigPictureModeSubtitle": "Interfaccia ottimizzata per TV e navigazione con telecomando"
+  "bigPictureModeSubtitle": "Interfaccia ottimizzata per TV e navigazione con telecomando",
+  "liveTvFullWindow": "A tutto schermo",
+  "liveTvSplitView": "Vista divisa",
+  "liveTvChannels": "Canali",
+  "liveTvCloseOverlay": "Chiudi lista canali",
+  "liveTvLive": "Diretta",
+  "liveTvGoToLive": "Vai alla diretta",
+  "playerFullscreen": "Schermo intero",
+  "playerExitFullscreen": "Esci da schermo intero",
+  "seriesStatusOngoing": "In corso",
+  "menuViewWatchHistory": "Visualizza cronologia"
 }
 

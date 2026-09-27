@@ -3,6 +3,7 @@ import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
@@ -209,9 +210,16 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildThumbnail(context, l10n, stillPath, runtime, isFocused),
+              _buildThumbnail(
+                context,
+                l10n,
+                stillPath,
+                runtime,
+                isFocused,
+                isHovered,
+              ),
               const SizedBox(height: 10),
-              _buildMetaInfo(formattedAirDate, isFocused),
+              _buildMetaInfo(context, formattedAirDate, isFocused),
             ],
           ),
         );
@@ -236,70 +244,70 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
     String? stillPath,
     dynamic runtime,
     bool isFocused,
+    bool isHovered,
   ) {
     return AspectRatio(
       aspectRatio: 16 / 9,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isFocused ? Colors.white : Colors.transparent,
-            width: 2.0,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _buildStillImage(context, stillPath),
+                _buildPlayOverlay(context, isFocused),
+                _buildBadges(l10n, runtime),
+                _buildProgressBar(),
+              ],
+            ),
           ),
-          boxShadow: isFocused ? AppTheme.shadowCard : null,
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              _buildStillImage(context, stillPath),
-              _buildPlayOverlay(isFocused),
-              _buildBadges(l10n, runtime),
-              _buildProgressBar(),
-            ],
+          Positioned.fill(
+            child: CardFocusBorder(
+              isFocused: isFocused,
+              isHovered: isHovered,
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildStillImage(BuildContext context, String? stillPath) {
+    final theme = Theme.of(context);
     if (stillPath != null) {
       return CachedNetworkImage(
         imageUrl: TmdbImageHelper.stillUrl(context, stillPath) ?? '',
         fit: BoxFit.cover,
-        placeholder: (context, url) => Container(color: AppTheme.secondary),
+        placeholder: (context, url) => Container(color: theme.colorScheme.surfaceContainer),
         errorWidget: (context, url, error) => Container(
-          color: AppTheme.secondary,
-          child: const Center(
-            child: Icon(Icons.tv, color: AppTheme.textMuted, size: 32),
-          ),
+          color: theme.colorScheme.surfaceContainer,
+          child: Icon(Icons.tv, color: theme.colorScheme.onSurface.withValues(alpha: 0.5), size: 32),
         ),
       );
     }
     return Container(
-      color: AppTheme.secondary,
-      child: const Center(
-        child: Icon(Icons.tv, color: AppTheme.textMuted, size: 32),
-      ),
+      color: theme.colorScheme.surfaceContainer,
+      child: Icon(Icons.tv, color: theme.colorScheme.onSurface.withValues(alpha: 0.5), size: 32),
     );
   }
 
-  Widget _buildPlayOverlay(bool isFocused) {
+  Widget _buildPlayOverlay(BuildContext context, bool isFocused) {
+    final theme = Theme.of(context);
     return Center(
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isFocused ? Colors.white24 : Colors.black45,
+          color: isFocused ? theme.focusColor : Colors.black45,
           shape: BoxShape.circle,
           border: Border.all(
-            color: isFocused ? Colors.white : Colors.white30,
+            color: isFocused ? theme.colorScheme.primary : Colors.white30,
           ),
         ),
         child: Icon(
           Icons.play_arrow,
-          color: Colors.white,
+          color: isFocused ? theme.colorScheme.primary : Colors.white,
           size: isFocused ? 28 : 22,
         ),
       ),
@@ -412,7 +420,8 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
     );
   }
 
-  Widget _buildMetaInfo(String? formattedAirDate, bool isFocused) {
+  Widget _buildMetaInfo(BuildContext context, String? formattedAirDate, bool isFocused) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -423,7 +432,9 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
           overflow: TextOverflow.ellipsis,
           style: DesktopTypography.bodySecondary.copyWith(
             fontWeight: FontWeight.bold,
-            color: isFocused ? Colors.white : AppTheme.textWhite,
+            color: isFocused
+                ? theme.colorScheme.onSurface
+                : theme.colorScheme.onSurface.withValues(alpha: 0.9),
           ),
         ),
         if (formattedAirDate != null) ...[
@@ -431,7 +442,7 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
           Text(
             formattedAirDate,
             style: TextStyle(
-              color: AppTheme.textMuted.withValues(alpha: 0.8),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),

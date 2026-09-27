@@ -78,6 +78,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final typeForTmdb = widget.mediaType == 'series' ? 'tv' : widget.mediaType;
     final detailsAsync = ref.watch(
@@ -91,8 +92,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     final isBigPicture = ref.watch(isBigPictureProvider);
 
     final bodyContent = detailsAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: AppTheme.accent),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: theme.colorScheme.primary),
       ),
       error: (err, stack) {
         if (isOffline) {
@@ -104,7 +105,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         return Center(
           child: Text(
             '${l10n.commonError}: $message',
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: theme.colorScheme.onSurface),
           ),
         );
       },
@@ -118,7 +119,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           return Center(
             child: Text(
               l10n.commonError,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: theme.colorScheme.onSurface),
             ),
           );
         }
@@ -1229,6 +1230,7 @@ class _SeasonSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final seasons = (media['seasons'] as List? ?? [])
         .where((s) => (s['season_number'] as int? ?? 0) > 0)
@@ -1247,19 +1249,20 @@ class _SeasonSelector extends ConsumerWidget {
           onTap: () => popupKey.currentState?.showButtonMenu(),
           borderRadius: BorderRadius.circular(8),
           builder: (context, isFocused, isHovered, child) {
+            final theme = Theme.of(context);
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: isFocused
-                    ? Colors.white.withValues(alpha: 0.16)
+                    ? theme.focusColor
                     : (isHovered
-                        ? Colors.white.withValues(alpha: 0.12)
-                        : Colors.white10),
+                        ? theme.hoverColor
+                        : theme.colorScheme.surfaceContainer.withValues(alpha: 0.5)),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isFocused
-                      ? Colors.white.withValues(alpha: 0.3)
-                      : Colors.white.withValues(alpha: 0.05),
+                      ? theme.colorScheme.primary.withValues(alpha: 0.5)
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.1),
                 ),
               ),
               child: child,
@@ -1271,8 +1274,8 @@ class _SeasonSelector extends ConsumerWidget {
               Flexible(
                 child: Text(
                   l10n.detailsSeasonNumber(selectedSeason),
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1280,10 +1283,10 @@ class _SeasonSelector extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(
+              Icon(
                 Icons.keyboard_arrow_down,
                 size: 14,
-                color: Colors.white54,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ],
           ),

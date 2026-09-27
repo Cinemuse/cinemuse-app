@@ -14,6 +14,7 @@ import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/shared/widgets/offline_placeholder.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../../../shared/widgets/app_bottom_sheet.dart';
+import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
@@ -27,16 +28,38 @@ class ExploreScreen extends ConsumerStatefulWidget {
 
 class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _mediaTypeFocusNode = FocusNode(debugLabel: 'ExploreMediaType');
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(pageContentFocusActionsProvider.notifier).update(
+          (map) => {
+            ...map,
+            1: () {
+              if (_scrollController.hasClients && _scrollController.offset > 0) {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                );
+              }
+              _mediaTypeFocusNode.requestFocus();
+            },
+          },
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _mediaTypeFocusNode.dispose();
     super.dispose();
   }
 
@@ -112,6 +135,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                                   children: [
                                     MediaTypeSelector(
                                       selectedType: mediaType,
+                                      movieFocusNode: mediaType == MediaType.movie ? _mediaTypeFocusNode : null,
+                                      tvFocusNode: mediaType == MediaType.tv ? _mediaTypeFocusNode : null,
+                                      personFocusNode: mediaType == MediaType.person ? _mediaTypeFocusNode : null,
                                       onTypeChanged: (type) {
                                         ref
                                                 .read(
@@ -155,6 +181,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                                   children: [
                                     MediaTypeSelector(
                                       selectedType: mediaType,
+                                      movieFocusNode: mediaType == MediaType.movie ? _mediaTypeFocusNode : null,
+                                      tvFocusNode: mediaType == MediaType.tv ? _mediaTypeFocusNode : null,
+                                      personFocusNode: mediaType == MediaType.person ? _mediaTypeFocusNode : null,
                                       onTypeChanged: (type) {
                                         ref
                                                 .read(

@@ -6,9 +6,11 @@ import 'package:media_kit_video/media_kit_video.dart';
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 import 'package:window_manager/window_manager.dart';
 
 import 'package:cinemuse_app/core/application/display_mode_provider.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/video_top_bar.dart';
@@ -48,14 +50,12 @@ class CustomVideoControls extends ConsumerStatefulWidget {
 class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   final FocusNode _rootFocusNode = FocusNode(debugLabel: 'CustomVideoControlsRoot');
   final FocusNode _playPauseFocusNode = FocusNode(debugLabel: 'PlayPauseTvButton');
+  final FocusNode _seekbarFocusNode = FocusNode(debugLabel: 'SeekbarFocusNode');
 
   bool _visible = true;
   Timer? _hideTimer;
   bool _dragging = false;
   double _lastVolume = 100.0;
-  Timer? _skipTimer;
-  LogicalKeyboardKey? _lastSkipKey;
-  int _skipCount = 0;
   Duration? _virtualPosition;
   Timer? _clearVirtualPositionTimer;
   bool _isFullScreen = false;
@@ -69,6 +69,11 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   bool _showSeekIndicator = false;
   int _seekAmount = 0;
   Timer? _seekIndicatorTimer;
+
+  bool _showVolumeOsd = false;
+  double _volumeOsdValue = 1.0;
+  Timer? _volumeOsdTimer;
+  DateTime? _lastHiddenSkipTime;
 
   /// Tracks whether the window was already maximized before we entered
   /// fullscreen, so we can restore the original state on exit.
@@ -92,12 +97,13 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   @override
   void dispose() {
     _hideTimer?.cancel();
-    _skipTimer?.cancel();
     _clearVirtualPositionTimer?.cancel();
     _hideIndicatorTimer?.cancel();
     _seekIndicatorTimer?.cancel();
+    _volumeOsdTimer?.cancel();
     _rootFocusNode.dispose();
     _playPauseFocusNode.dispose();
+    _seekbarFocusNode.dispose();
     super.dispose();
   }
 
@@ -255,58 +261,29 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   }
 
   KeyEventResult _handleKeyEvent(KeyEvent event) {
-    if (event is KeyUpEvent) {
-      return _handleKeyUp(event);
-    }
-    if (event is! KeyDownEvent) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
 
     final key = event.logicalKey;
-    if (_lastSkipKey == key) return KeyEventResult.handled;
 
-    final mediaResult = _handleMediaKeys(key);
+    final mediaResult = _handleMediaKeys(event, key);
     if (mediaResult != KeyEventResult.ignored) return mediaResult;
 
     final player = widget.playerState.controller.player;
     if (!_visible) {
-      return _handleHiddenControlsKeys(key, player);
+      return _handleHiddenControlsKeys(event, key, player);
     }
 
     final isBigPicture = ref.read(isBigPictureProvider);
-    return _handleVisibleControlsKeys(key, player, isBigPicture);
+    return _handleVisibleControlsKeys(event, key, player, isBigPicture);
   }
 
-  KeyEventResult _handleKeyUp(KeyUpEvent event) {
-    if (event.logicalKey == _lastSkipKey) {
-      _skipTimer?.cancel();
-      _lastSkipKey = null;
-
-      if (_virtualPosition != null) {
-        ref
-            .read(playerControllerProvider(widget.params).notifier)
-            .seek(_virtualPosition!);
-
-        _clearVirtualPositionTimer?.cancel();
-        _clearVirtualPositionTimer = Timer(
-          const Duration(milliseconds: 500),
-          () {
-            if (mounted) {
-              setState(() => _virtualPosition = null);
-            }
-          },
-        );
-      }
-      return KeyEventResult.handled;
-    }
-    return KeyEventResult.ignored;
-  }
-
-  KeyEventResult _handleMediaKeys(LogicalKeyboardKey key) {
+  KeyEventResult _handleMediaKeys(KeyEvent event, LogicalKeyboardKey key) {
     if (key == LogicalKeyboardKey.mediaPlayPause ||
         key == LogicalKeyboardKey.mediaPlay ||
         key == LogicalKeyboardKey.mediaPause) {
-      _togglePlayPause();
+      if (event is KeyDownEvent) _togglePlayPause();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.mediaFastForward) {
@@ -320,46 +297,85 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     return KeyEventResult.ignored;
   }
 
+  void _adjustVolume(Player player, double delta) {
+    final newVol = (player.state.volume + delta).clamp(0.0, 100.0);
+    player.setVolume(newVol);
+    _showVolumeFeedback(newVol / 100.0);
+  }
+
+  void _showVolumeFeedback(double fraction) {
+    _volumeOsdTimer?.cancel();
+    setState(() {
+      _showVolumeOsd = true;
+      _volumeOsdValue = fraction;
+    });
+    _volumeOsdTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted) {
+        setState(() => _showVolumeOsd = false);
+      }
+    });
+  }
+
   KeyEventResult _handleHiddenControlsKeys(
+    KeyEvent event,
     LogicalKeyboardKey key,
     Player player,
   ) {
     if (key == LogicalKeyboardKey.space) {
-      _togglePlayPause();
+      if (event is KeyDownEvent) _togglePlayPause();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.select ||
         key == LogicalKeyboardKey.enter ||
         key == LogicalKeyboardKey.numpadEnter ||
-        key == LogicalKeyboardKey.gameButtonA ||
-        key == LogicalKeyboardKey.arrowUp ||
+        key == LogicalKeyboardKey.gameButtonA) {
+      if (event is KeyDownEvent) {
+        _showControls();
+        _playPauseFocusNode.requestFocus();
+      }
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowUp ||
         key == LogicalKeyboardKey.arrowDown) {
-      _onHover();
+      final isUp = key == LogicalKeyboardKey.arrowUp;
+      final delta = (event is KeyRepeatEvent)
+          ? (isUp ? 2.0 : -2.0)
+          : (isUp ? 5.0 : -5.0);
+      _adjustVolume(player, delta);
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.arrowLeft ||
         key == LogicalKeyboardKey.arrowRight) {
-      _startVirtualSkip(key == LogicalKeyboardKey.arrowRight, player);
+      final now = DateTime.now();
+      if (event is KeyRepeatEvent) {
+        if (_lastHiddenSkipTime != null &&
+            now.difference(_lastHiddenSkipTime!).inMilliseconds < 110) {
+          return KeyEventResult.handled;
+        }
+      }
+      _lastHiddenSkipTime = now;
+      _performRealSkip(key == LogicalKeyboardKey.arrowRight, showControls: false);
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.escape ||
         key == LogicalKeyboardKey.gameButtonB ||
         key == LogicalKeyboardKey.goBack) {
-      _handleBack();
+      if (event is KeyDownEvent) _handleBack();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.keyF || key == LogicalKeyboardKey.f11) {
-      _toggleFullscreen();
+      if (event is KeyDownEvent) _toggleFullscreen();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.keyM) {
-      _toggleMute();
+      if (event is KeyDownEvent) _toggleMute();
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
   }
 
   KeyEventResult _handleVisibleControlsKeys(
+    KeyEvent event,
     LogicalKeyboardKey key,
     Player player,
     bool isBigPicture,
@@ -369,126 +385,61 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     if (key == LogicalKeyboardKey.escape ||
         key == LogicalKeyboardKey.gameButtonB ||
         key == LogicalKeyboardKey.goBack) {
-      if (_isFullscreenSafe() && !isBigPicture) {
-        _toggleFullscreen();
-      } else {
-        _hideControls();
+      if (event is KeyDownEvent) {
+        if (_isFullscreenSafe() && !isBigPicture) {
+          _toggleFullscreen();
+        } else {
+          _hideControls();
+        }
       }
       return KeyEventResult.handled;
     }
 
-    if (isBigPicture) {
-      if (key == LogicalKeyboardKey.arrowDown) {
-        _hideControls();
-        return KeyEventResult.handled;
-      }
-      if (key == LogicalKeyboardKey.space) {
-        _togglePlayPause();
-        return KeyEventResult.handled;
-      }
-      return KeyEventResult.ignored;
-    }
-
-    return _handleDesktopVisibleControlsKeys(key, player);
-  }
-
-  KeyEventResult _handleDesktopVisibleControlsKeys(
-    LogicalKeyboardKey key,
-    Player player,
-  ) {
     if (key == LogicalKeyboardKey.space) {
-      _togglePlayPause();
+      if (event is KeyDownEvent) _togglePlayPause();
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.arrowLeft ||
-        key == LogicalKeyboardKey.arrowRight) {
-      _startVirtualSkip(key == LogicalKeyboardKey.arrowRight, player);
-      return KeyEventResult.handled;
-    }
-    if (key == LogicalKeyboardKey.arrowUp) {
-      player.setVolume((player.state.volume + 10.0).clamp(0.0, 100.0));
-      _onHover();
-      return KeyEventResult.handled;
-    }
-    if (key == LogicalKeyboardKey.arrowDown) {
-      player.setVolume((player.state.volume - 10.0).clamp(0.0, 100.0));
-      _onHover();
-      return KeyEventResult.handled;
-    }
+
     if (key == LogicalKeyboardKey.keyM) {
-      _toggleMute();
+      if (event is KeyDownEvent) _toggleMute();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.keyF || key == LogicalKeyboardKey.f11) {
-      _toggleFullscreen();
+      if (event is KeyDownEvent) _toggleFullscreen();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.keyQ) {
-      _handleBack();
+      if (event is KeyDownEvent) _handleBack();
       return KeyEventResult.handled;
     }
+
+    // Directional navigation (Left/Right/Up/Down) is delegated to the focused
+    // control button or seekbar so buttons can be traversed without skipping video.
     return KeyEventResult.ignored;
   }
 
-  void _startVirtualSkip(bool forward, Player player) {
-    _lastSkipKey = forward
-        ? LogicalKeyboardKey.arrowRight
-        : LogicalKeyboardKey.arrowLeft;
-    _skipCount = 0;
-    _clearVirtualPositionTimer?.cancel();
-    if (_virtualPosition == null) {
-      setState(() => _virtualPosition = player.state.position);
-    }
-    _performVirtualSkip(forward, step: 10);
-    _skipTimer?.cancel();
-    _skipTimer = Timer(const Duration(milliseconds: 400), () {
-      _startContinuousVirtualSkip(forward);
-    });
-  }
-
-  void _performVirtualSkip(bool forward, {int step = 5}) {
-    final duration = widget.playerState.controller.player.state.duration;
-    if (_virtualPosition == null) return;
-
-    setState(() {
-      final offset = forward ? step : -step;
-      _virtualPosition = Duration(
-        seconds: (_virtualPosition!.inSeconds + offset).clamp(
-          0,
-          duration.inSeconds,
-        ),
-      );
-    });
-    _onHover();
-  }
-
-  void _startContinuousVirtualSkip(bool forward) {
-    _onHover();
-    _skipTimer?.cancel();
-
-    _skipTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
-      _performVirtualSkip(forward, step: 5);
-      _skipCount++;
-
-      if (_skipCount > 40) {
-        _performVirtualSkip(forward, step: 10);
-      }
-    });
-  }
-
-  void _performRealSkip(bool forward) {
+  void _performRealSkip(bool forward, {bool showControls = true}) {
     _showSeekFeedback(forward);
     final player = widget.playerState.controller.player;
-    final pos = player.state.position;
+    final currentPos = _virtualPosition ?? player.state.position;
     final duration = player.state.duration;
     final target = Duration(
-      seconds: (pos.inSeconds + (forward ? 10 : -10)).clamp(
+      seconds: (currentPos.inSeconds + (forward ? 10 : -10)).clamp(
         0,
         duration.inSeconds,
       ),
     );
+    setState(() => _virtualPosition = target);
     ref.read(playerControllerProvider(widget.params).notifier).seek(target);
-    _onHover();
+    _clearVirtualPositionTimer?.cancel();
+    _clearVirtualPositionTimer = Timer(const Duration(milliseconds: 600), () {
+      if (mounted) {
+        setState(() => _virtualPosition = null);
+      }
+    });
+    if (showControls) {
+      _onHover();
+    }
   }
 
   void _showSeekFeedback(bool forward) {
@@ -673,60 +624,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                       showSeekIndicator: _showSeekIndicator,
                     ),
 
-                    // Drag Indicator Overlay
-                    if (_currentDragType != DragType.none)
-                      Align(
-                        alignment: Alignment.topCenter,
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 72.0),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.1),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  _currentDragType == DragType.volume
-                                      ? (_dragIndicatorValue == 0
-                                            ? Icons.volume_off
-                                            : Icons.volume_up)
-                                      : Icons.brightness_6,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 12),
-                                SizedBox(
-                                  width: 100,
-                                  height: 4,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(2),
-                                    child: LinearProgressIndicator(
-                                      value: _dragIndicatorValue,
-                                      backgroundColor: Colors.white.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                      valueColor:
-                                          const AlwaysStoppedAnimation<Color>(
-                                            Colors.white,
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
 
                     Positioned(
                       bottom: 0,
@@ -778,6 +675,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                           onTogglePlayPause: _togglePlayPause,
                           onSkip: _performRealSkip,
                           onToggleMute: _toggleMute,
+                          onStopPressed: _handleBack,
                           isFullscreen: _isFullScreen,
                           onToggleFullscreen: _toggleFullscreen,
                           onNextEpisode: widget.onNextEpisode,
@@ -786,12 +684,159 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                             widget.onSettingsPressed();
                           },
                           playPauseFocusNode: _playPauseFocusNode,
+                          seekbarFocusNode: _seekbarFocusNode,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
+
+              // Center Seek Indicator HUD (sleek modern frosted badge)
+              if (_showSeekIndicator)
+                Center(
+                  child: IgnorePointer(
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.85, end: 1.0),
+                      duration: const Duration(milliseconds: 160),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, scale, child) {
+                        return Transform.scale(
+                          scale: scale,
+                          child: child,
+                        );
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 22,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.55),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                width: 1,
+                              ),
+                              boxShadow: AppTheme.shadowNeonSm,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _seekAmount > 0
+                                      ? Icons.fast_forward_rounded
+                                      : Icons.fast_rewind_rounded,
+                                  color: AppTheme.textWhite,
+                                  size: 26,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  _seekAmount > 0
+                                      ? '+${_seekAmount}s'
+                                      : '${_seekAmount}s',
+                                  style: const TextStyle(
+                                    color: AppTheme.textWhite,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                    fontFamily: 'Outfit',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Top-Center Volume & Brightness Indicator HUD (modern floating frosted capsule)
+              if (_currentDragType != DragType.none || _showVolumeOsd)
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 36.0),
+                    child: IgnorePointer(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.55),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                width: 1,
+                              ),
+                              boxShadow: AppTheme.shadowNeonSm,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _currentDragType == DragType.brightness
+                                      ? Icons.brightness_6_rounded
+                                      : (((_currentDragType == DragType.volume
+                                                  ? _dragIndicatorValue
+                                                  : _volumeOsdValue) <=
+                                              0)
+                                          ? Icons.volume_off_rounded
+                                          : Icons.volume_up_rounded),
+                                  color: AppTheme.textWhite,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 10),
+                                SizedBox(
+                                  width: 90,
+                                  height: 4,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(2),
+                                    child: LinearProgressIndicator(
+                                      value: _currentDragType ==
+                                              DragType.brightness
+                                          ? _dragIndicatorValue
+                                          : (_currentDragType == DragType.volume
+                                              ? _dragIndicatorValue
+                                              : _volumeOsdValue),
+                                      backgroundColor:
+                                          Colors.white.withValues(alpha: 0.18),
+                                      valueColor:
+                                          const AlwaysStoppedAnimation<Color>(
+                                        AppTheme.textWhite,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  '${(((_currentDragType == DragType.brightness ? _dragIndicatorValue : (_currentDragType == DragType.volume ? _dragIndicatorValue : _volumeOsdValue)) * 100).round())}%',
+                                  style: TextStyle(
+                                    color: AppTheme.textWhite
+                                        .withValues(alpha: 0.8),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Outfit',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
 
               if (widget.onNextEpisode != null)
                 NextEpisodeOverlay(

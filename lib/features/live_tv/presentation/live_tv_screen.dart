@@ -27,6 +27,7 @@ class LiveTvScreen extends ConsumerStatefulWidget {
 class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
   Timer? _numberInputTimer;
   Timer? _channelSwitchTimer;
+  final FocusNode _playerFocusNode = FocusNode();
 
   // We use a constant PlayerParams for Live TV to keep the provider alive.
   // The actual channel is swapped via `changeChannel`.
@@ -36,6 +37,21 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
   void initState() {
     super.initState();
     HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(livePlayerFocusActionProvider.notifier).state = () {
+          _playerFocusNode.requestFocus();
+        };
+        ref.read(pageContentFocusActionsProvider.notifier).update(
+          (map) => {
+            ...map,
+            2: () {
+              _playerFocusNode.requestFocus();
+            },
+          },
+        );
+      }
+    });
   }
 
   @override
@@ -43,6 +59,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     _numberInputTimer?.cancel();
     _channelSwitchTimer?.cancel();
+    _playerFocusNode.dispose();
     super.dispose();
   }
 
@@ -182,8 +199,18 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
       return true;
     }
 
-    // Escape cancels number input
+    // Escape handling
     if (key == LogicalKeyboardKey.escape) {
+      final isOverlayOpen = ref.read(liveTvChannelOverlayProvider);
+      if (isOverlayOpen) {
+        ref.read(liveTvChannelOverlayProvider.notifier).state = false;
+        return true;
+      }
+      final viewMode = ref.read(liveTvViewModeProvider);
+      if (viewMode == LiveTvViewMode.fullWindow) {
+        ref.read(liveTvViewModeProvider.notifier).state = LiveTvViewMode.split;
+        return true;
+      }
       _numberInputTimer?.cancel();
       ref.read(numberInputBufferProvider.notifier).state = '';
       return true;
@@ -249,16 +276,44 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
       }
     }
 
+    final viewMode = ref.watch(liveTvViewModeProvider);
+    final isFullWindow = !isMobile && viewMode == LiveTvViewMode.fullWindow;
+
     return Scaffold(
       backgroundColor: AppTheme.primary,
       body: isMobile
           ? _buildMobileLayout(selectedChannel, numberBuffer, playerState)
-          : _buildDesktopLayout(selectedChannel, numberBuffer, playerState),
+          : (isFullWindow
+              ? _buildFullWindowLayout(selectedChannel, numberBuffer, playerState)
+              : _buildDesktopLayout(selectedChannel, numberBuffer, playerState)),
     );
   }
 
   // -----------------------------------------------------------------------
-  // Desktop Layout
+  // Full Window Layout (Player fills 100% of the app window)
+  // -----------------------------------------------------------------------
+  Widget _buildFullWindowLayout(
+    Channel? selectedChannel,
+    String numberBuffer,
+    AsyncValue<CinemaPlayerState>? playerState,
+  ) {
+    return RepaintBoundary(
+      child: LivePlayerSection(
+        channel: selectedChannel,
+        playerState: playerState,
+        onNumberInput: _handleNumberInput,
+        onConfirmNumber: _confirmNumberInput,
+        numberBuffer: numberBuffer,
+        isFullWindow: true,
+        onSettingsPressed: playerState?.valueOrNull != null
+            ? () => _openSettings(playerState!.valueOrNull!)
+            : null,
+      ),
+    );
+  }
+
+  // -----------------------------------------------------------------------
+  // Desktop Layout (Split View: Channels on left, Preview + EPG on right)
   // -----------------------------------------------------------------------
   Widget _buildDesktopLayout(
     Channel? selectedChannel,
@@ -298,6 +353,12 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
                             onNumberInput: _handleNumberInput,
                             onConfirmNumber: _confirmNumberInput,
                             numberBuffer: numberBuffer,
+                            focusNode: _playerFocusNode,
+                            isFullWindow: false,
+                            onExpand: () {
+                              ref.read(liveTvViewModeProvider.notifier).state =
+                                  LiveTvViewMode.fullWindow;
+                            },
                             onSettingsPressed: playerState?.valueOrNull != null
                                 ? () => _openSettings(playerState!.valueOrNull!)
                                 : null,

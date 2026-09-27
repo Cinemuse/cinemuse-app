@@ -7,6 +7,7 @@ import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:intl/intl.dart';
 
@@ -20,7 +21,6 @@ class SportEventCard extends ConsumerStatefulWidget {
 }
 
 class _SportEventCardState extends ConsumerState<SportEventCard> {
-  bool _isHovered = false;
   final GlobalKey _menuKey = GlobalKey();
 
   void _navigateToLiveTvSearch(String channelName) {
@@ -98,6 +98,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final String imageAsset;
     final key = widget.event.sportTranslationKey;
     if (key == 'sport_motorcycling') {
@@ -112,8 +113,6 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
       onTap: _handleTap,
       onLongPress: () => _showContextActions(context),
       onSecondaryTap: () => _showContextActions(context),
-      onHoverChange: (value) => setState(() => _isHovered = value),
-      onFocusChange: (value) => setState(() => _isHovered = value),
       scale: 1.02,
       showFocusRing: false,
       borderRadius: BorderRadius.circular(8),
@@ -131,7 +130,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                         child: Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
-                            color: AppTheme.surface,
+                            color: theme.colorScheme.surface,
                             boxShadow: AppTheme.shadowCard,
                           ),
                           child: Stack(
@@ -171,9 +170,9 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.schedule,
-                                        color: AppTheme.accent,
+                                        color: theme.colorScheme.primary,
                                         size: 10,
                                       ),
                                       const SizedBox(width: 4),
@@ -207,12 +206,12 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                                               vertical: 2,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: AppTheme.surface
+                                              color: theme.colorScheme.surface
                                                   .withValues(alpha: 0.8),
                                               borderRadius:
                                                   BorderRadius.circular(4),
                                               border: Border.all(
-                                                color: AppTheme.accent
+                                                color: theme.colorScheme.primary
                                                     .withValues(alpha: 0.5),
                                               ),
                                             ),
@@ -234,35 +233,34 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                                 ),
 
                               // Border Overlay
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: _isHovered
-                                        ? AppTheme.accent.withValues(alpha: 0.5)
-                                        : Colors.white.withValues(alpha: 0.1),
-                                    width: _isHovered ? 2 : 1,
-                                  ),
-                                ),
-                              ),
+                              const CardFocusBorder(),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 8),
                       // Title (Sport Name & Description)
-                      Text(
-                        widget.event.sportName.isNotEmpty
-                            ? '${widget.event.sportName}${widget.event.description.isNotEmpty ? ' - ${widget.event.description}' : ''}'
-                            : widget.event.description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                          color: _isHovered ? AppTheme.accent : Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
+                      Builder(
+                        builder: (context) {
+                          final isHighlighted =
+                              DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
+                          final theme = Theme.of(context);
+
+                          return Text(
+                            widget.event.sportName.isNotEmpty
+                                ? '${widget.event.sportName}${widget.event.description.isNotEmpty ? ' - ${widget.event.description}' : ''}'
+                                : widget.event.description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium!.copyWith(
+                              color: isHighlighted
+                                  ? theme.colorScheme.primary
+                                  : Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -274,11 +272,13 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                   right: 8,
                   child: Builder(
                     builder: (context) {
+                      final isHighlighted =
+                          DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
                       final isBigPicture = ref.watch(isBigPictureProvider);
                       if (isBigPicture) return const SizedBox.shrink();
                       final isMobile = MediaQuery.of(context).size.width < 600;
                       return AnimatedOpacity(
-                        opacity: (_isHovered || isMobile) ? 1.0 : 0.0,
+                        opacity: (isHighlighted || isMobile) ? 1.0 : 0.0,
                         duration: const Duration(milliseconds: 200),
                         child: Material(
                           color: Colors.transparent,
@@ -344,7 +344,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
 
   Widget _buildPlaceholder(BuildContext context) {
     return Container(
-      color: AppTheme.surface.withValues(alpha: 0.5),
+      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

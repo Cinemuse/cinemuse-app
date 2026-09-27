@@ -10,7 +10,7 @@ class VideoTopBar extends ConsumerWidget {
   final PlayerParams params;
   final VoidCallback onSettingsPressed;
   final VoidCallback onCastPressed;
-  final VoidCallback onBackPressed;
+  final VoidCallback? onBackPressed;
 
   const VideoTopBar({
     super.key,
@@ -18,7 +18,7 @@ class VideoTopBar extends ConsumerWidget {
     required this.params,
     required this.onSettingsPressed,
     required this.onCastPressed,
-    required this.onBackPressed,
+    this.onBackPressed,
   });
 
   @override
@@ -36,11 +36,6 @@ class VideoTopBar extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppTheme.textWhite),
-            onPressed: onBackPressed,
-          ),
-          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

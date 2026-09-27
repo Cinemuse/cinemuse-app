@@ -1,18 +1,18 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/home/presentation/home_screen.dart';
 import 'package:cinemuse_app/features/explore/presentation/pages/explore_screen.dart';
 import 'package:cinemuse_app/features/navigation/navbar.dart';
-import 'package:cinemuse_app/features/navigation/tv_navigation_rail.dart';
 import 'package:cinemuse_app/features/profile/presentation/profile_hub.dart';
 import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
+import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/search/presentation/search_overlay.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/features/navigation/bottom_navbar.dart';
 import 'package:cinemuse_app/features/settings/presentation/settings_screen.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/live_tv_screen.dart';
+import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/core/services/updates/update_service.dart';
 import 'package:cinemuse_app/core/presentation/widgets/update_overlay.dart';
 import 'package:cinemuse_app/core/services/anime/anime_mapping_sync_service.dart';
@@ -27,9 +27,6 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  final GlobalKey<TvNavigationRailState> _railKey = GlobalKey();
-  final FocusScopeNode _contentFocusScopeNode = FocusScopeNode();
-
   final List<Widget> _screens = [
     const HomeScreen(),
     const ExploreScreen(),
@@ -44,16 +41,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       ref.read(updateProvider.notifier).checkForUpdates();
       // Background sync for anime mappings
       ref.read(animeMappingSyncServiceProvider).checkAndSync();
-      ref.read(tvRailFocusActionProvider.notifier).state = () {
-        _railKey.currentState?.focusActiveItem();
-      };
     });
-  }
-
-  @override
-  void dispose() {
-    _contentFocusScopeNode.dispose();
-    super.dispose();
   }
 
   void _handleBackNavigation() {
@@ -64,9 +52,11 @@ class _AppShellState extends ConsumerState<AppShell> {
       return;
     }
 
-    final isMobile = MediaQuery.sizeOf(context).width < 600;
-    if (!isMobile) {
-      _railKey.currentState?.focusActiveItem();
+    // If currently in Live TV full-window mode, restore split mode
+    if (ref.read(navIndexProvider) == 2 &&
+        ref.read(liveTvViewModeProvider) == LiveTvViewMode.fullWindow) {
+      ref.read(liveTvViewModeProvider.notifier).state = LiveTvViewMode.split;
+      return;
     }
   }
 
@@ -74,6 +64,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     int index,
     GlobalKey<NavigatorState> shellNavigatorKey,
   ) {
+    if (ref.read(liveTvViewModeProvider) == LiveTvViewMode.fullWindow) {
+      ref.read(liveTvViewModeProvider.notifier).state = LiveTvViewMode.split;
+    }
     ref.read(navIndexProvider.notifier).state = index;
     final navigator = shellNavigatorKey.currentState;
     if (navigator != null && navigator.canPop()) {
@@ -119,9 +112,6 @@ class _AppShellState extends ConsumerState<AppShell> {
       }
     });
 
-    final isDesktop =
-        Platform.isWindows || Platform.isLinux || Platform.isMacOS;
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -162,7 +152,6 @@ class _AppShellState extends ConsumerState<AppShell> {
                 : _buildWidescreenBody(
                     currentIndex: currentIndex,
                     shellNavigatorKey: shellNavigatorKey,
-                    isDesktop: isDesktop,
                   ),
           ),
         ),
@@ -182,39 +171,32 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget _buildWidescreenBody({
     required int currentIndex,
     required GlobalKey<NavigatorState> shellNavigatorKey,
-    required bool isDesktop,
   }) {
+    final isLiveTvFullWindow = currentIndex == 2 &&
+        ref.watch(liveTvViewModeProvider) == LiveTvViewMode.fullWindow;
+
     return Stack(
       children: [
-        Row(
+        Column(
           children: [
-            TvNavigationRail(
-              key: _railKey,
-              currentIndex: currentIndex,
-              onDestinationSelected: (index) =>
-                  _onDestinationSelected(index, shellNavigatorKey),
-              onSearchTap: () => SearchOverlay.show(
-                context,
-                navigator: shellNavigatorKey.currentState,
+            if (!isLiveTvFullWindow)
+              AppNavbar(
+                currentIndex: currentIndex,
+                onTap: (index) =>
+                    _onDestinationSelected(index, shellNavigatorKey),
+                onSettingsTap: () => _openSettings(shellNavigatorKey),
+                onLogoutTap: () =>
+                    ref.read(authProvider.notifier).signOut(),
+                onSearchTap: () => SearchOverlay.show(
+                  context,
+                  navigator: shellNavigatorKey.currentState,
+                ),
               ),
-              onSettingsTap: () => _openSettings(shellNavigatorKey),
-              onExitRight: () => _contentFocusScopeNode.requestFocus(),
-            ),
             Expanded(
-              child: FocusScope(
-                node: _contentFocusScopeNode,
-                child: _buildNavigator(shellNavigatorKey),
-              ),
+              child: _buildNavigator(shellNavigatorKey),
             ),
           ],
         ),
-        if (isDesktop)
-          const Positioned(
-            top: 8,
-            right: 8,
-            height: 32,
-            child: AppWindowButtons(),
-          ),
         const Positioned.fill(child: UpdateOverlay()),
       ],
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 class VideoCard extends StatelessWidget {
@@ -17,6 +18,8 @@ class VideoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return DpadFocusable(
       onTap: onTap,
       scale: 1.04,
@@ -29,48 +32,54 @@ class VideoCard extends StatelessWidget {
             children: [
               AspectRatio(
                 aspectRatio: 16 / 9,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isFocused ? Colors.white : Colors.transparent,
-                      width: 2.0,
-                    ),
-                    boxShadow:
-                        isFocused ? AppTheme.shadowCard : null,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        CachedNetworkImage(
-                          imageUrl:
-                              'https://img.youtube.com/vi/$youtubeKey/mqdefault.jpg',
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) =>
-                              Container(color: Colors.white10),
-                          errorWidget: (context, url, error) =>
-                              Container(color: Colors.white10),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: isFocused ? Colors.white24 : Colors.black45,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isFocused ? Colors.white : Colors.white30,
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CachedNetworkImage(
+                            imageUrl:
+                                'https://img.youtube.com/vi/$youtubeKey/mqdefault.jpg',
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) =>
+                                Container(color: theme.colorScheme.surfaceContainer),
+                            errorWidget: (context, url, error) =>
+                                Container(color: theme.colorScheme.surfaceContainer),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: isFocused
+                                  ? theme.focusColor
+                                  : Colors.black45,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isFocused
+                                    ? theme.colorScheme.primary
+                                    : Colors.white30,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.play_arrow,
+                              color: isFocused
+                                  ? theme.colorScheme.primary
+                                  : Colors.white,
+                              size: isFocused ? 28 : 24,
                             ),
                           ),
-                          child: Icon(
-                            Icons.play_arrow,
-                            color: Colors.white,
-                            size: isFocused ? 28 : 24,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                    Positioned.fill(
+                      child: CardFocusBorder(
+                        isFocused: isFocused,
+                        isHovered: isHovered,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 12),
@@ -82,7 +91,9 @@ class VideoCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: DesktopTypography.bodySecondary.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isFocused ? Colors.white : AppTheme.textWhite,
+                    color: isFocused
+                        ? theme.colorScheme.onSurface
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.9),
                   ),
                 ),
               ),

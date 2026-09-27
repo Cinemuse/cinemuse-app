@@ -8,38 +8,50 @@ import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/live_video_controls.dart';
 
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 
 /// The live video player section with custom controls overlay.
-class LivePlayerSection extends StatelessWidget {
+class LivePlayerSection extends ConsumerWidget {
   final Channel? channel;
   final AsyncValue<CinemaPlayerState>? playerState;
   final ValueChanged<String>? onNumberInput;
   final VoidCallback? onConfirmNumber;
   final String numberBuffer;
+  final bool isFullWindow;
+  final VoidCallback? onExpand;
   final VoidCallback? onSettingsPressed;
+  final FocusNode? focusNode;
 
   const LivePlayerSection({
     super.key,
-    this.channel,
-    this.playerState,
+    required this.channel,
+    required this.playerState,
     this.onNumberInput,
     this.onConfirmNumber,
     this.numberBuffer = '',
+    this.isFullWindow = false,
+    this.onExpand,
     this.onSettingsPressed,
+    this.focusNode,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final radius = isFullWindow ? BorderRadius.zero : BorderRadius.circular(12);
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+    final playerWidget = ClipRRect(
+      borderRadius: radius,
       child: Container(
         decoration: BoxDecoration(
           color: AppTheme.primary,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          borderRadius: radius,
+          border: isFullWindow
+              ? null
+              : Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         child: playerState == null
             ? _buildPlaceholder(l10n)
@@ -71,6 +83,36 @@ class LivePlayerSection extends StatelessWidget {
                 },
               ),
       ),
+    );
+
+    if (isFullWindow) {
+      return playerWidget;
+    }
+
+    return DpadFocusable(
+      focusNode: focusNode,
+      showFocusRing: true,
+      focusRingColor: Colors.white,
+      focusRingWidth: 2.0,
+      borderRadius: BorderRadius.circular(12),
+      onTap: onExpand,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+          final focusNavbar = ref.read(topNavbarFocusActionProvider);
+          if (focusNavbar != null) {
+            focusNavbar();
+            return KeyEventResult.handled;
+          }
+        }
+        if (event.logicalKey == LogicalKeyboardKey.enter ||
+            event.logicalKey == LogicalKeyboardKey.select) {
+          onExpand?.call();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: playerWidget,
     );
   }
 

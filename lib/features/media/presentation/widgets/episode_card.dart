@@ -2,6 +2,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
+import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
@@ -132,7 +133,7 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
         if (widget.onViewHistory != null)
           AppMenuOption(
             icon: Icons.history,
-            label: 'View Watch History',
+            label: l10n.menuViewWatchHistory,
             onTap: widget.onViewHistory!,
           ),
       ] else ...[
@@ -228,23 +229,29 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
       scale: 1.01,
       borderRadius: BorderRadius.circular(16),
       builder: (context, isFocused, isHovered, child) {
-        return Container(
-          decoration: BoxDecoration(
-            color: isFocused
-                ? Colors.white.withValues(alpha: 0.12)
-                : (isHovered
-                    ? AppTheme.secondary.withValues(alpha: 0.7)
-                    : AppTheme.secondary.withValues(alpha: 0.5)),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isFocused
-                  ? Colors.white.withValues(alpha: 0.4)
-                  : AppTheme.textWhite.withValues(alpha: 0.05),
-              width: isFocused ? 1.5 : 1.0,
+        final theme = Theme.of(context);
+        return Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: isFocused
+                    ? theme.focusColor
+                    : (isHovered
+                        ? theme.colorScheme.surfaceContainer.withValues(alpha: 0.7)
+                        : theme.colorScheme.surfaceContainer.withValues(alpha: 0.5)),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: child,
             ),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: child,
+            Positioned.fill(
+              child: CardFocusBorder(
+                isFocused: isFocused,
+                isHovered: isHovered,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ],
         );
       },
       child: Padding(

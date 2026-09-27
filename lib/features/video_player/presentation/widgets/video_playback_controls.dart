@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/core/presentation/widgets/volume_control.dart';
-import 'package:cinemuse_app/core/presentation/widgets/fullscreen_button.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
@@ -18,11 +14,13 @@ class VideoPlaybackControls extends ConsumerStatefulWidget {
   final VoidCallback onTogglePlayPause;
   final Function(bool) onSkip;
   final VoidCallback onToggleMute;
+  final VoidCallback onStopPressed;
   final bool isFullscreen;
   final VoidCallback onToggleFullscreen;
   final VoidCallback? onNextEpisode;
   final VoidCallback? onSettingsPressed;
   final FocusNode? playPauseFocusNode;
+  final FocusNode? seekbarFocusNode;
 
   const VideoPlaybackControls({
     super.key,
@@ -30,11 +28,13 @@ class VideoPlaybackControls extends ConsumerStatefulWidget {
     required this.onTogglePlayPause,
     required this.onSkip,
     required this.onToggleMute,
+    required this.onStopPressed,
     required this.isFullscreen,
     required this.onToggleFullscreen,
     this.onNextEpisode,
     this.onSettingsPressed,
     this.playPauseFocusNode,
+    this.seekbarFocusNode,
   });
 
   @override
@@ -44,92 +44,105 @@ class VideoPlaybackControls extends ConsumerStatefulWidget {
 
 class _VideoPlaybackControlsState
     extends ConsumerState<VideoPlaybackControls> {
+  late final FocusNode _stopFocusNode;
   late final FocusNode _rewindFocusNode;
   late final FocusNode _forwardFocusNode;
   late final FocusNode _settingsFocusNode;
   late final FocusNode _nextEpisodeFocusNode;
+  late final FocusNode _fullscreenFocusNode;
   FocusNode? _internalPlayPauseFocusNode;
 
   FocusNode get _effectivePlayPauseFocusNode =>
       widget.playPauseFocusNode ??
-      (_internalPlayPauseFocusNode ??= FocusNode(debugLabel: 'PlayPauseTvButton'));
+      (_internalPlayPauseFocusNode ??=
+          FocusNode(debugLabel: 'PlayPauseTvButton'));
 
   @override
   void initState() {
     super.initState();
+    _stopFocusNode = FocusNode(debugLabel: 'StopTvButton');
     _rewindFocusNode = FocusNode(debugLabel: 'RewindTvButton');
     _forwardFocusNode = FocusNode(debugLabel: 'ForwardTvButton');
     _settingsFocusNode = FocusNode(debugLabel: 'SettingsTvButton');
     _nextEpisodeFocusNode = FocusNode(debugLabel: 'NextEpisodeTvButton');
+    _fullscreenFocusNode = FocusNode(debugLabel: 'FullscreenTvButton');
   }
 
   @override
   void dispose() {
+    _stopFocusNode.dispose();
     _rewindFocusNode.dispose();
     _forwardFocusNode.dispose();
     _settingsFocusNode.dispose();
     _nextEpisodeFocusNode.dispose();
+    _fullscreenFocusNode.dispose();
     _internalPlayPauseFocusNode?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isBigPicture = ref.watch(isBigPictureProvider);
     final player = widget.playerState.controller.player;
     final l10n = ref.watch(localizationsProvider);
 
-    if (isBigPicture) {
-      return _buildBigPictureControls(context, player, l10n);
-    }
-
-    return _buildStandardControls(context, player, l10n);
-  }
-
-  Widget _buildBigPictureControls(
-    BuildContext context,
-    Player player,
-    AppLocalizations l10n,
-  ) {
     final hasSettings = widget.onSettingsPressed != null;
     final hasNext = widget.onNextEpisode != null;
 
     final forwardNextNode = hasSettings
         ? _settingsFocusNode
-        : (hasNext ? _nextEpisodeFocusNode : null);
-    final settingsNextNode = hasNext ? _nextEpisodeFocusNode : null;
-    final nextPrevNode = hasSettings ? _settingsFocusNode : _forwardFocusNode;
+        : (hasNext ? _nextEpisodeFocusNode : _fullscreenFocusNode);
+    final settingsNextNode =
+        hasNext ? _nextEpisodeFocusNode : _fullscreenFocusNode;
+    final nextPrevNode =
+        hasSettings ? _settingsFocusNode : _forwardFocusNode;
+    final fullscreenPrevNode = hasNext
+        ? _nextEpisodeFocusNode
+        : (hasSettings ? _settingsFocusNode : _forwardFocusNode);
 
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildTvIconButton(
+          _buildControlButton(
             icon: Icons.replay_10_rounded,
             tooltip: l10n.playerSkipBackward,
             focusNode: _rewindFocusNode,
-            onKeyEvent: (node, event) =>
-                _handleKey(event, prev: null, next: _effectivePlayPauseFocusNode),
+            onKeyEvent: (node, event) => _handleKey(
+              event,
+              prev: null,
+              next: _effectivePlayPauseFocusNode,
+            ),
             onTap: () => widget.onSkip(false),
           ),
-          const SizedBox(width: 16),
-          _buildPlayPauseTvButton(player),
-          const SizedBox(width: 16),
-          _buildTvIconButton(
+          const SizedBox(width: 4),
+          _buildPlayPauseButton(player, l10n),
+          const SizedBox(width: 4),
+          _buildControlButton(
+            icon: Icons.stop_rounded,
+            tooltip: l10n.playerStop,
+            focusNode: _stopFocusNode,
+            onKeyEvent: (node, event) => _handleKey(
+              event,
+              prev: _effectivePlayPauseFocusNode,
+              next: _forwardFocusNode,
+            ),
+            onTap: widget.onStopPressed,
+          ),
+          const SizedBox(width: 4),
+          _buildControlButton(
             icon: Icons.forward_10_rounded,
             tooltip: l10n.playerSkipForward,
             focusNode: _forwardFocusNode,
             onKeyEvent: (node, event) => _handleKey(
               event,
-              prev: _effectivePlayPauseFocusNode,
+              prev: _stopFocusNode,
               next: forwardNextNode,
             ),
             onTap: () => widget.onSkip(true),
           ),
+          const Spacer(),
           if (hasSettings) ...[
-            const SizedBox(width: 16),
-            _buildTvIconButton(
+            _buildControlButton(
               icon: Icons.tune_rounded,
               tooltip: l10n.playerSettings,
               focusNode: _settingsFocusNode,
@@ -140,21 +153,23 @@ class _VideoPlaybackControlsState
               ),
               onTap: widget.onSettingsPressed!,
             ),
+            const SizedBox(width: 4),
           ],
           if (hasNext) ...[
-            const SizedBox(width: 16),
-            _buildTvIconButton(
+            _buildControlButton(
               icon: Icons.skip_next_rounded,
               tooltip: l10n.playerNextEpisode,
               focusNode: _nextEpisodeFocusNode,
               onKeyEvent: (node, event) => _handleKey(
                 event,
                 prev: nextPrevNode,
-                next: null,
+                next: _fullscreenFocusNode,
               ),
               onTap: widget.onNextEpisode!,
             ),
+            const SizedBox(width: 4),
           ],
+          _buildFullscreenButton(l10n, fullscreenPrevNode),
         ],
       ),
     );
@@ -165,18 +180,27 @@ class _VideoPlaybackControlsState
     FocusNode? prev,
     FocusNode? next,
   }) {
-    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
 
     if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-      if (prev != null) {
+      if (event is KeyDownEvent && prev != null) {
         prev.requestFocus();
       }
       return KeyEventResult.handled;
     }
 
     if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-      if (next != null) {
+      if (event is KeyDownEvent && next != null) {
         next.requestFocus();
+      }
+      return KeyEventResult.handled;
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      if (event is KeyDownEvent && widget.seekbarFocusNode != null) {
+        widget.seekbarFocusNode!.requestFocus();
       }
       return KeyEventResult.handled;
     }
@@ -184,23 +208,23 @@ class _VideoPlaybackControlsState
     return KeyEventResult.ignored;
   }
 
-  Widget _buildPlayPauseTvButton(Player player) {
+  Widget _buildPlayPauseButton(Player player, AppLocalizations l10n) {
     return StreamBuilder<bool>(
       stream: player.stream.playing,
       initialData: player.state.playing,
       builder: (context, snapshot) {
         final isPlaying = snapshot.data ?? player.state.playing;
-        return _buildTvIconButton(
+        return _buildControlButton(
           icon: isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-          tooltip: isPlaying ? 'Pause' : 'Play',
+          tooltip: isPlaying ? l10n.playerPause : l10n.playerPlay,
           focusNode: _effectivePlayPauseFocusNode,
           autofocus: true,
-          iconSize: 34,
-          buttonSize: 52,
+          iconSize: 28,
+          buttonSize: 42,
           onKeyEvent: (node, event) => _handleKey(
             event,
             prev: _rewindFocusNode,
-            next: _forwardFocusNode,
+            next: _stopFocusNode,
           ),
           onTap: widget.onTogglePlayPause,
         );
@@ -208,115 +232,82 @@ class _VideoPlaybackControlsState
     );
   }
 
-  Widget _buildTvIconButton({
+  Widget _buildFullscreenButton(
+    AppLocalizations l10n,
+    FocusNode? prevNode,
+  ) {
+    return _buildControlButton(
+      icon: widget.isFullscreen
+          ? Icons.fullscreen_exit_rounded
+          : Icons.fullscreen_rounded,
+      tooltip: widget.isFullscreen
+          ? l10n.playerExitFullscreen
+          : l10n.playerFullscreen,
+      focusNode: _fullscreenFocusNode,
+      iconSize: 26,
+      buttonSize: 40,
+      onKeyEvent: (node, event) => _handleKey(
+        event,
+        prev: prevNode,
+        next: null,
+      ),
+      onTap: widget.onToggleFullscreen,
+    );
+  }
+
+  Widget _buildControlButton({
     required IconData icon,
     required String tooltip,
     required VoidCallback onTap,
     FocusNode? focusNode,
     FocusOnKeyEventCallback? onKeyEvent,
     bool autofocus = false,
-    double iconSize = 28,
-    double buttonSize = 48,
+    double iconSize = 24,
+    double buttonSize = 40,
   }) {
     return DpadFocusable(
       focusNode: focusNode,
       onKeyEvent: onKeyEvent,
       autofocus: autofocus,
       onTap: onTap,
-      scale: 1.12,
+      scale: 1.1,
       borderRadius: BorderRadius.circular(buttonSize / 2),
       builder: (context, isFocused, isHovered, child) {
-        final isHighlighted = isFocused || isHovered;
         return Tooltip(
           message: tooltip,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
+            duration: const Duration(milliseconds: 150),
             width: buttonSize,
             height: buttonSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isHighlighted
-                  ? Colors.white.withValues(alpha: 0.22)
-                  : Colors.white.withValues(alpha: 0.08),
+              color: isFocused
+                  ? AppTheme.accent.withValues(alpha: 0.22)
+                  : (isHovered
+                      ? Colors.white.withValues(alpha: 0.12)
+                      : Colors.transparent),
               border: Border.all(
                 color: isFocused
-                    ? Colors.white
+                    ? AppTheme.accent
                     : (isHovered
-                        ? Colors.white.withValues(alpha: 0.4)
+                        ? Colors.white.withValues(alpha: 0.3)
                         : Colors.transparent),
-                width: 2,
+                width: 1.5,
               ),
-              boxShadow: isFocused ? AppTheme.shadowFocusGlow : null,
+              boxShadow: isFocused ? AppTheme.shadowNeonSm : null,
             ),
+            alignment: Alignment.center,
             child: Icon(
               icon,
-              color: Colors.white,
+              color: isFocused || isHovered
+                  ? AppTheme.textWhite
+                  : AppTheme.textWhite.withValues(alpha: 0.9),
               size: iconSize,
             ),
           ),
         );
       },
       child: const SizedBox.shrink(),
-    );
-  }
-
-  Widget _buildStandardControls(
-    BuildContext context,
-    Player player,
-    AppLocalizations l10n,
-  ) {
-    final isMobile =
-        defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS;
-
-    return Row(
-      children: [
-        if (!isMobile) ...[
-          StreamBuilder<bool>(
-            stream: player.stream.playing,
-            initialData: player.state.playing,
-            builder: (context, snapshot) {
-              final isPlaying = snapshot.data ?? player.state.playing;
-              return IconButton(
-                icon: Icon(
-                  isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  color: Colors.white,
-                  size: 32,
-                ),
-                onPressed: widget.onTogglePlayPause,
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.replay_10_rounded, color: Colors.white),
-            onPressed: () => widget.onSkip(false),
-          ),
-          IconButton(
-            icon: const Icon(Icons.forward_10_rounded, color: Colors.white),
-            onPressed: () => widget.onSkip(true),
-          ),
-          const SizedBox(width: 4),
-        ],
-        VolumeControl(player: player),
-        const Spacer(),
-        if (widget.onNextEpisode != null)
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: IconButton(
-              icon: const Icon(
-                Icons.skip_next_rounded,
-                color: Colors.white,
-                size: 28,
-              ),
-              onPressed: widget.onNextEpisode,
-              tooltip: l10n.playerNextEpisode,
-            ),
-          ),
-        FullscreenButton(
-          isFullscreen: widget.isFullscreen,
-          onToggle: widget.onToggleFullscreen,
-        ),
-      ],
     );
   }
 }

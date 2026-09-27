@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 
@@ -20,6 +21,8 @@ class PersonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return DpadFocusable(
       onTap: onTap,
       scale: 1.05,
@@ -30,34 +33,35 @@ class PersonCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Profile Photo
               AspectRatio(
                 aspectRatio: 2 / 3,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isFocused ? Colors.white : Colors.transparent,
-                      width: 2.0,
-                    ),
-                    boxShadow:
-                        isFocused ? AppTheme.shadowCard : null,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: CachedNetworkImage(
-                      imageUrl: profilePath != null
-                          ? TmdbImageHelper.profileUrl(context, profilePath)!
-                          : '',
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) =>
-                          Container(color: AppTheme.secondary),
-                      errorWidget: (context, url, error) => Image.asset(
-                        'assets/cast_placeholder.png',
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: CachedNetworkImage(
+                        imageUrl: profilePath != null
+                            ? TmdbImageHelper.profileUrl(context, profilePath)!
+                            : '',
                         fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                        placeholder: (context, url) =>
+                            Container(color: theme.colorScheme.surfaceContainer),
+                        errorWidget: (context, url, error) => Image.asset(
+                          'assets/cast_placeholder.png',
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
-                  ),
+                    Positioned.fill(
+                      child: CardFocusBorder(
+                        isFocused: isFocused,
+                        isHovered: isHovered,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 12),
@@ -65,7 +69,9 @@ class PersonCard extends StatelessWidget {
               Text(
                 name,
                 style: DesktopTypography.bodySecondary.copyWith(
-                  color: isFocused ? Colors.white : AppTheme.textWhite,
+                  color: isFocused
+                      ? theme.colorScheme.onSurface
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.9),
                   fontWeight: FontWeight.bold,
                 ),
                 maxLines: 1,
@@ -77,6 +83,7 @@ class PersonCard extends StatelessWidget {
                 character,
                 style: DesktopTypography.captionMeta.copyWith(
                   fontFamily: 'monospace',
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

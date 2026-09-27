@@ -24,11 +24,12 @@ class SocialActionsGroup extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.textWhite.withValues(alpha: 0.08),
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.05)),
+        border: Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.05)),
       ),
       child: Row(
         mainAxisSize: isExpanded ? MainAxisSize.max : MainAxisSize.min,
@@ -36,7 +37,7 @@ class SocialActionsGroup extends ConsumerWidget {
           _buildIcon(
             _SocialIcon(
               icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: isFavorite ? AppTheme.favorites : AppTheme.textWhite,
+              color: isFavorite ? AppTheme.favorites : theme.colorScheme.onSurface,
               onTap: () => ref
                   .read(mediaDetailsControllerProvider.notifier)
                   .toggleFavorite(mediaItem),
@@ -46,7 +47,7 @@ class SocialActionsGroup extends ConsumerWidget {
           _buildIcon(
             _SocialIcon(
               icon: isInWatchlist ? Icons.bookmark : Icons.bookmark_border,
-              color: isInWatchlist ? AppTheme.watchlist : AppTheme.textWhite,
+              color: isInWatchlist ? AppTheme.watchlist : theme.colorScheme.onSurface,
               onTap: () => ref
                   .read(mediaDetailsControllerProvider.notifier)
                   .toggleWatchlist(mediaItem),
@@ -147,18 +148,19 @@ class _SocialIconState extends State<_SocialIcon>
       }
     }
 
-    Color effectiveColor = widget.color ?? AppTheme.textWhite;
+    final theme = Theme.of(context);
+    Color effectiveColor = widget.color ?? theme.colorScheme.onSurface;
     if (_isOptimisticActive != null) {
       if (widget.icon == Icons.favorite ||
           widget.icon == Icons.favorite_border) {
         effectiveColor = _isOptimisticActive!
             ? AppTheme.favorites
-            : AppTheme.textWhite;
+            : theme.colorScheme.onSurface;
       } else if (widget.icon == Icons.bookmark ||
           widget.icon == Icons.bookmark_border) {
         effectiveColor = _isOptimisticActive!
             ? AppTheme.watchlist
-            : AppTheme.textWhite;
+            : theme.colorScheme.onSurface;
       }
     }
 
@@ -173,22 +175,17 @@ class _SocialIconState extends State<_SocialIcon>
         _controller.forward(from: 0.0);
         widget.onTap();
       },
-      scale: 1.15,
+      scale: 1.0,
       borderRadius: BorderRadius.circular(10),
       builder: (context, isFocused, isHovered, child) {
         return Container(
           decoration: BoxDecoration(
             color: isFocused
-                ? Colors.white.withValues(alpha: 0.16)
+                ? theme.focusColor
                 : (isHovered
-                    ? Colors.white.withValues(alpha: 0.08)
+                    ? theme.hoverColor
                     : Colors.transparent),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isFocused
-                  ? Colors.white.withValues(alpha: 0.3)
-                  : Colors.transparent,
-            ),
           ),
           child: child,
         );

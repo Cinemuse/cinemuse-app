@@ -8,7 +8,8 @@ class AppTheme {
 
   static const Color accent = Color(0xFFd946ef); // Pink/Purple
   static const Color accentHover = Color(0xFFc026d3);
-  static const Color accentGlow = Color(0x80d946ef); // rgba(217, 70, 239, 0.5)
+  static const Color accentGlow = Color(0x40d946ef); // rgba(217, 70, 239, 0.25)
+  static Color get accentHoverBg => accent.withValues(alpha: 0.1);
 
   static const Color favorites = Color(0xFFef4444); // Red 500
   static const Color favoritesGlow = Color(0x80ef4444);
@@ -39,11 +40,11 @@ class AppTheme {
 
   // Shadows
   static const List<BoxShadow> shadowNeon = [
-    BoxShadow(color: accentGlow, blurRadius: 20, spreadRadius: 0),
+    BoxShadow(color: accentGlow, blurRadius: 16, spreadRadius: 0),
   ];
 
   static const List<BoxShadow> shadowNeonSm = [
-    BoxShadow(color: accentGlow, blurRadius: 10, spreadRadius: 0),
+    BoxShadow(color: accentGlow, blurRadius: 8, spreadRadius: 0),
   ];
 
   /// Standard card drop shadow. Used by MediaCard, BackdropCard.
@@ -122,20 +123,97 @@ class AppTheme {
         ),
       ),
 
+      // Focus & Hover
+      focusColor: accentHoverBg,
+      hoverColor: accentHoverBg,
+
       // ElevatedButton Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: accent,
-          foregroundColor: textWhite,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          textStyle: const TextStyle(
-            fontFamily: 'Outfit',
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.hovered) ||
+                states.contains(WidgetState.focused)) {
+              return accentHover;
+            }
+            return accent;
+          }),
+          foregroundColor: const WidgetStatePropertyAll(textWhite),
+          side: const WidgetStatePropertyAll(BorderSide.none),
+          elevation: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) return 4;
+            if (states.contains(WidgetState.hovered)) return 4;
+            return 2;
+          }),
+          shadowColor: const WidgetStatePropertyAll(accentGlow),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) {
+              return accent.withValues(alpha: 0.12);
+            }
+            return null;
+          }),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
-          elevation: 5,
-          shadowColor: accentGlow,
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          ),
+          textStyle: const WidgetStatePropertyAll(
+            TextStyle(
+              fontFamily: 'Outfit',
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      ),
+
+      // OutlinedButton Theme
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: ButtonStyle(
+          foregroundColor: const WidgetStatePropertyAll(textWhite),
+          side: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused) ||
+                states.contains(WidgetState.hovered)) {
+              return BorderSide(
+                color: accent.withValues(alpha: 0.5),
+                width: 1.5,
+              );
+            }
+            return BorderSide(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 1.5,
+            );
+          }),
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) {
+              return accentHoverBg;
+            }
+            if (states.contains(WidgetState.hovered)) {
+              return accent.withValues(alpha: 0.08);
+            }
+            return Colors.transparent;
+          }),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) {
+              return accent.withValues(alpha: 0.12);
+            }
+            return null;
+          }),
+          elevation: const WidgetStatePropertyAll(0),
+          shadowColor: const WidgetStatePropertyAll(accentGlow),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          ),
+          textStyle: const WidgetStatePropertyAll(
+            TextStyle(
+              fontFamily: 'Outfit',
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
         ),
       ),
 

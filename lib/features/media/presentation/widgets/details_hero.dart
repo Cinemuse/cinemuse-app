@@ -254,7 +254,7 @@ class DetailsHero extends ConsumerWidget {
                         const _DotSeparator(),
                         Text(
                           details['status'] == 'Returning Series'
-                              ? 'Ongoing'
+                              ? l10n.seriesStatusOngoing
                               : details['status'],
                           style: TextStyle(
                             color: _getStatusColor(details['status']),
@@ -290,13 +290,13 @@ class DetailsHero extends ConsumerWidget {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.08),
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 g['name'],
                                 style: TextStyle(
-                                  color: AppTheme.textWhite.withValues(
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(
                                     alpha: 0.6,
                                   ),
                                   fontSize: 12,

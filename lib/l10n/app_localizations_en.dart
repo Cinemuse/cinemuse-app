@@ -718,6 +718,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playerNextEpisode => 'Next Episode';
 
   @override
+  String get playerPlay => 'Play';
+
+  @override
+  String get playerPause => 'Pause';
+
+  @override
+  String get playerStop => 'Stop';
+
+  @override
   String get playerSkipBackward => 'Rewind 10 seconds';
 
   @override
@@ -1081,7 +1090,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get liveTvNext => 'NEXT';
 
   @override
-  String get liveTvLive => 'LIVE';
+  String get liveTvLive => 'Live';
 
   @override
   String get liveTvNoEpg => 'No program information available';
@@ -1945,4 +1954,31 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get bigPictureModeSubtitle =>
       'Optimized 10-foot UI for TV and remote navigation';
+
+  @override
+  String get liveTvFullWindow => 'Full Window';
+
+  @override
+  String get liveTvSplitView => 'Split View';
+
+  @override
+  String get liveTvChannels => 'Channels';
+
+  @override
+  String get liveTvCloseOverlay => 'Close channel list';
+
+  @override
+  String get liveTvGoToLive => 'Go to Live';
+
+  @override
+  String get playerFullscreen => 'Fullscreen';
+
+  @override
+  String get playerExitFullscreen => 'Exit fullscreen';
+
+  @override
+  String get seriesStatusOngoing => 'Ongoing';
+
+  @override
+  String get menuViewWatchHistory => 'View Watch History';
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -8,16 +9,46 @@ import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_tile.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_filter_sheet.dart';
+import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 
 /// Minimalist Live TV channel list panel.
 ///
-/// Layout: 3 segmented tabs → search + filter icon → flat channel list
-/// with sticky section headers. No sidebar, no accordions.
+/// Supports standard split-screen presentation or high-performance
+/// zero-blur drawer overlay when playing in full-window/fullscreen.
 class ChannelListPanel extends ConsumerWidget {
-  const ChannelListPanel({super.key});
+  final bool isOverlay;
+  final VoidCallback? onClose;
+
+  const ChannelListPanel({
+    super.key,
+    this.isOverlay = false,
+    this.onClose,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (isOverlay) {
+      return Container(
+        decoration: BoxDecoration(
+          color: const Color(0xF5101014),
+          border: Border(
+            right: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
+          ),
+        ),
+        child: Column(
+          children: [
+            _buildOverlayHeader(context),
+            const Divider(height: 1, color: Colors.white10),
+            const _SearchRow(),
+            const Divider(height: 1, color: Colors.white10),
+            Expanded(
+              child: _ChannelList(isOverlay: true, onClose: onClose),
+            ),
+          ],
+        ),
+      );
+    }
+
     return ClipRRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
@@ -26,14 +57,43 @@ class ChannelListPanel extends ConsumerWidget {
             color: AppTheme.surface.withValues(alpha: 0.6),
             border: _resolveBorder(context),
           ),
-          child: const Column(
+          child: Column(
             children: [
-              _SearchRow(),
-              Divider(height: 1, color: Colors.white10),
-              Expanded(child: _ChannelList()),
+              const _SearchRow(),
+              const Divider(height: 1, color: Colors.white10),
+              Expanded(
+                child: _ChannelList(isOverlay: false, onClose: onClose),
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildOverlayHeader(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+      child: Row(
+        children: [
+          const Icon(Icons.tv_rounded, size: 20, color: Colors.white70),
+          const SizedBox(width: 10),
+          Text(
+            l10n.liveTvChannels,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 20),
+            tooltip: l10n.liveTvCloseOverlay,
+            onPressed: onClose,
+          ),
+        ],
       ),
     );
   }
@@ -179,7 +239,7 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
                     : Icons.star_outline_rounded,
                 size: 20,
                 color: currentTab == LiveTvTab.favorites
-                    ? AppTheme.accent
+                    ? Colors.amber
                     : Colors.white30,
               ),
               tooltip: l10n.liveTvTabFavorites,
@@ -197,7 +257,7 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
                 Icons.history_rounded,
                 size: 20,
                 color: currentTab == LiveTvTab.recents
-                    ? AppTheme.accent
+                    ? Colors.white
                     : Colors.white30,
               ),
               tooltip: l10n.liveTvTabRecents,
@@ -291,7 +351,7 @@ class _LiveTvOptionsButton extends StatelessWidget {
               icon: Icon(
                 Icons.tune_rounded,
                 size: 20,
-                color: isActive ? AppTheme.accent : Colors.white30,
+                color: isActive ? Colors.white : Colors.white30,
               ),
               tooltip: l10n.liveTvFilterAndPlaylists,
             ),
@@ -302,15 +362,9 @@ class _LiveTvOptionsButton extends StatelessWidget {
                 child: Container(
                   width: 7,
                   height: 7,
-                  decoration: BoxDecoration(
-                    color: AppTheme.accent,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.accent.withValues(alpha: 0.5),
-                        blurRadius: 4,
-                      ),
-                    ],
                   ),
                 ),
               ),
@@ -326,7 +380,13 @@ class _LiveTvOptionsButton extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _ChannelList extends ConsumerStatefulWidget {
-  const _ChannelList();
+  final bool isOverlay;
+  final VoidCallback? onClose;
+
+  const _ChannelList({
+    this.isOverlay = false,
+    this.onClose,
+  });
 
   @override
   ConsumerState<_ChannelList> createState() => _ChannelListState();
@@ -346,7 +406,7 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
     final index = channels.indexWhere((ch) => ch.uniqueId == selected.uniqueId);
     if (index < 0) return;
 
-    final offset = (index * 60.0).clamp(
+    final offset = (index * 58.0).clamp(
       0.0,
       _scrollController.position.maxScrollExtent,
     );
@@ -376,7 +436,6 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
           return _buildEmptyState(tab);
         }
 
-        // If there's only one section (filtered/favorites/recents), render flat
         final isSingleSection =
             sections.length == 1 && sections.first.title.isEmpty;
 
@@ -387,7 +446,7 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
         return _buildSectionedList(sections, selectedChannel);
       },
       loading: () => const Center(
-        child: CircularProgressIndicator(color: AppTheme.accent),
+        child: CircularProgressIndicator(color: Colors.white),
       ),
       error: (_, __) => const SizedBox.shrink(),
     );
@@ -455,18 +514,20 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       itemCount: channels.length,
-      itemExtent: 60,
+      itemExtent: 58.0,
       itemBuilder: (context, index) {
         return _ChannelTileWrapper(
           channel: channels[index],
           selectedChannel: selected,
+          isOverlay: widget.isOverlay,
+          onClose: widget.onClose,
+          isFirst: index == 0,
         );
       },
     );
   }
 
   Widget _buildSectionedList(List<ChannelSection> sections, Channel? selected) {
-    // Build a flat list of items: headers + channels
     final items = <_ListItem>[];
     for (final section in sections) {
       items.add(_ListItem.header(section.title));
@@ -484,11 +545,15 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
         if (item.isHeader) {
           return _SectionHeader(title: item.headerTitle!);
         }
+        final isFirst = index == 0 || (index == 1 && items[0].isHeader);
         return SizedBox(
-          height: 60,
+          height: 58.0,
           child: _ChannelTileWrapper(
             channel: item.channel!,
             selectedChannel: selected,
+            isOverlay: widget.isOverlay,
+            onClose: widget.onClose,
+            isFirst: isFirst,
           ),
         );
       },
@@ -538,28 +603,85 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Channel Tile Wrapper — connects tile to providers
+// Channel Tile Wrapper — connects tile to providers & D-Pad navigation
 // ---------------------------------------------------------------------------
 
 class _ChannelTileWrapper extends ConsumerWidget {
   final Channel channel;
   final Channel? selectedChannel;
+  final bool isOverlay;
+  final VoidCallback? onClose;
+  final bool isFirst;
 
-  const _ChannelTileWrapper({required this.channel, this.selectedChannel});
+  const _ChannelTileWrapper({
+    required this.channel,
+    this.selectedChannel,
+    this.isOverlay = false,
+    this.onClose,
+    this.isFirst = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentProgram = ref.watch(currentProgramProvider(channel));
     final favoriteIds = ref.watch(favoriteChannelIdsProvider);
     final l10n = AppLocalizations.of(context)!;
+    final isPlaying = selectedChannel?.uniqueId == channel.uniqueId;
 
     return ChannelListTile(
       channel: channel,
-      isSelected: selectedChannel?.uniqueId == channel.uniqueId,
+      isSelected: isPlaying,
       isFavorite: favoriteIds.contains(channel.uniqueId),
       currentProgram: currentProgram,
       onTap: () {
-        ref.read(selectedChannelProvider.notifier).state = channel;
+        if (!isOverlay && isPlaying) {
+          ref.read(liveTvViewModeProvider.notifier).state =
+              LiveTvViewMode.fullWindow;
+        } else {
+          ref.read(selectedChannelProvider.notifier).state = channel;
+        }
+      },
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+        // In overlay mode: Right or Escape dismisses the overlay
+        if (isOverlay) {
+          if (event.logicalKey == LogicalKeyboardKey.arrowRight ||
+              event.logicalKey == LogicalKeyboardKey.escape) {
+            onClose?.call();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        }
+
+        // In split mode: Up on first item focuses top navbar
+        if (event.logicalKey == LogicalKeyboardKey.arrowUp && isFirst) {
+          final focusNavbar = ref.read(topNavbarFocusActionProvider);
+          if (focusNavbar != null) {
+            focusNavbar();
+            return KeyEventResult.handled;
+          }
+        }
+
+        // In split mode: Left focuses the sidebar navigation rail
+        if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+          final focusRail = ref.read(tvRailFocusActionProvider);
+          if (focusRail != null) {
+            focusRail();
+            return KeyEventResult.handled;
+          }
+        }
+
+        // In split mode: Right focuses the preview player
+        if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+          final focusPlayer = ref.read(livePlayerFocusActionProvider);
+          if (focusPlayer != null) {
+            focusPlayer();
+            return KeyEventResult.handled;
+          }
+        }
+
+        return KeyEventResult.ignored;
       },
       onFavoriteToggle: () {
         final notifier = ref.read(favoriteChannelIdsProvider.notifier);

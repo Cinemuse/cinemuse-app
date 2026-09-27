@@ -337,6 +337,7 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
       scale: 1.05,
       showFocusRing: false,
       builder: (context, isFocused, isHovered, _) {
+        final theme = Theme.of(context);
         final isHighlighted = isFocused || isHovered;
         return SizedBox(
           width: 100,
@@ -355,27 +356,16 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: isFocused
-                              ? Colors.white.withValues(alpha: 0.22)
+                              ? theme.focusColor
                               : (isHovered
-                                  ? Colors.white.withValues(alpha: 0.14)
+                                  ? theme.hoverColor
                                   : Colors.white.withValues(alpha: 0.07)),
                           border: Border.all(
-                            color: isFocused
-                                ? Colors.white
-                                : (isHovered
-                                    ? Colors.white.withValues(alpha: 0.35)
-                                    : Colors.white.withValues(alpha: 0.14)),
-                            width: isFocused ? 2.0 : 1.5,
+                            color: isHighlighted
+                                ? theme.colorScheme.primary.withValues(alpha: 0.5)
+                                : Colors.white.withValues(alpha: 0.14),
+                            width: 1.0,
                           ),
-                          boxShadow: isFocused
-                              ? [
-                                  BoxShadow(
-                                    color: Colors.white.withValues(alpha: 0.25),
-                                    blurRadius: 12,
-                                    spreadRadius: 1,
-                                  ),
-                                ]
-                              : null,
                         ),
                         child: Icon(
                           Icons.arrow_forward_rounded,
@@ -387,7 +377,9 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
                       Text(
                         label,
                         style: TextStyle(
-                          color: isHighlighted ? Colors.white : Colors.white60,
+                          color: isHighlighted
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white60,
                           fontSize: 13,
                           fontWeight:
                               isFocused ? FontWeight.w700 : FontWeight.w600,
@@ -581,9 +573,12 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
                                           ),
                                         ),
                                         const SizedBox(width: 6),
-                                        const Icon(
+                                        Icon(
                                           Icons.chevron_right,
-                                          color: AppTheme.textMuted,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(alpha: 0.6),
                                           size: 20,
                                         ),
                                       ],
@@ -671,9 +666,12 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
                                           ),
                                     ),
                                     const SizedBox(width: 8),
-                                    const Icon(
+                                    Icon(
                                       Icons.chevron_right,
-                                      color: AppTheme.textMuted,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.6),
                                       size: 24,
                                     ),
                                   ],
