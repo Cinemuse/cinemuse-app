@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
-import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
@@ -16,7 +15,6 @@ import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_s
 
 class ContinueWatchingCard extends ConsumerStatefulWidget {
   final WatchHistory historyItem;
-  final List<UserListItem> watchlistItems;
   final VoidCallback onCancelRewatch;
   final VoidCallback? onDrop;
   final VoidCallback? onClearProgress;
@@ -25,7 +23,6 @@ class ContinueWatchingCard extends ConsumerStatefulWidget {
   const ContinueWatchingCard({
     super.key,
     required this.historyItem,
-    required this.watchlistItems,
     required this.onCancelRewatch,
     this.onDrop,
     this.onClearProgress,
@@ -41,7 +38,8 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
   @override
   Widget build(BuildContext context) {
     final localMedia = widget.historyItem.media;
-    final appLanguage = ref.watch(settingsProvider).appLanguage;
+    final appLanguage =
+        ref.watch(settingsProvider.select((s) => s.appLanguage));
 
     final hasValidTitle = localMedia != null &&
         (localMedia.getLocalizedTitle(appLanguage) ?? '').isNotEmpty &&
@@ -49,7 +47,7 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
         localMedia.getLocalizedTitle(appLanguage) != '...';
 
     if (hasValidTitle) {
-      return _buildCard(context, ref, localMedia);
+      return _buildCard(context, ref, localMedia, appLanguage);
     }
 
     final providerArg = (
@@ -67,12 +65,12 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
     return mediaAsync.when(
       data: (media) {
         if (media != null && hasFetchedValidTitle) {
-          return _buildCard(context, ref, media);
+          return _buildCard(context, ref, media, appLanguage);
         }
         return _buildSkeleton();
       },
       loading: () => _buildSkeleton(),
-      error: (_, __) => _buildCard(context, ref, localMedia),
+      error: (_, __) => _buildCard(context, ref, localMedia, appLanguage),
     );
   }
 
@@ -88,26 +86,25 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
     );
   }
 
-  Widget _buildCard(BuildContext context, WidgetRef ref, MediaItem? media) {
-    final isWatchlisted = widget.watchlistItems.any(
-      (i) =>
-          i.tmdbId == widget.historyItem.tmdbId &&
-          i.mediaType == widget.historyItem.mediaType,
-    );
-    final appLanguage = ref.watch(settingsProvider).appLanguage;
+  Widget _buildCard(
+    BuildContext context,
+    WidgetRef ref,
+    MediaItem? media,
+    String appLanguage,
+  ) {
     final l10n = AppLocalizations.of(context)!;
-    final isRewatching = ref.watch(isRewatchingProvider(widget.historyItem)).valueOrNull ?? false;
-    
+    final isRewatching =
+        ref.watch(isRewatchingProvider(widget.historyItem)).valueOrNull ?? false;
+
     String title = media?.getLocalizedTitle(appLanguage) ?? '';
     if (title.isEmpty || title == '...') {
       title = l10n.commonUnknown;
     }
 
-    final percentage =
-        (widget.historyItem.totalDuration != null &&
+    final percentage = (widget.historyItem.totalDuration != null &&
             widget.historyItem.totalDuration! > 0)
         ? (widget.historyItem.progressSeconds /
-              widget.historyItem.totalDuration!)
+            widget.historyItem.totalDuration!)
         : 0.0;
 
     final resolver = ref.read(unifiedStreamResolverProvider);
@@ -128,7 +125,12 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
       infoText: widget.historyItem.mediaType == MediaKind.tv
           ? "S${widget.historyItem.season} E${widget.historyItem.episode}"
           : l10n.personMovie,
-      isWatchlisted: isWatchlisted,
+      isWatchlistedCallback: () => ref
+          .read(userListsProvider.notifier)
+          .isInWatchlist(
+            widget.historyItem.tmdbId,
+            widget.historyItem.mediaType,
+          ),
       onTap: () {
         Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute(

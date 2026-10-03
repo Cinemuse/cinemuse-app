@@ -1,14 +1,14 @@
-import 'package:cinemuse_app/features/home/application/sport_schedule_scraper.dart';
+import 'package:cinemuse_app/core/application/display_mode_provider.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/features/home/domain/sport_tv_event.dart';
+import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
+import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/features/navigation/nav_providers.dart';
-import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
-import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
-import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:intl/intl.dart';
 
 class SportEventCard extends ConsumerStatefulWidget {
@@ -24,12 +24,9 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
   final GlobalKey _menuKey = GlobalKey();
 
   void _navigateToLiveTvSearch(String channelName) {
-    // Navigate to Live TV tab
     ref.read(navIndexProvider.notifier).state = 2;
-    // Reset filters and select ALL tab
     ref.read(liveTvTabProvider.notifier).state = LiveTvTab.all;
     ref.read(channelFilterProvider.notifier).state = const ChannelFilter();
-    // Pre-fill search with the selected channel
     ref.read(channelSearchQueryProvider.notifier).state = channelName;
   }
 
@@ -98,18 +95,41 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
     return '$dayStr • $timeStr';
   }
 
+  String _getLocalizedSportName(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return widget.event.sportName;
+
+    final sportLabels = <String, String>{
+      'sport_football': l10n.sportFootball,
+      'sport_basketball': l10n.sportBasketball,
+      'sport_motorcycling': l10n.sportMotorcycling,
+      'sport_volleyball': l10n.sportVolleyball,
+      'sport_athletics': l10n.sportAthletics,
+      'sport_tennis': l10n.sportTennis,
+      'sport_cycling': l10n.sportCycling,
+      'sport_rugby': l10n.sportRugby,
+      'sport_f1': l10n.sportF1,
+    };
+
+    return sportLabels[widget.event.sportTranslationKey] ??
+        (widget.event.sportName.isNotEmpty
+            ? widget.event.sportName
+            : l10n.sportGeneric);
+  }
+
+  static const _sportAssetOverrides = <String, String>{
+    'sport_motorcycling': 'assets/sports/sport_motogp.jpg',
+    'sport_volleyball': 'assets/sports/sport_volleyball.png',
+  };
+
+  String _getSportAsset() {
+    final key = widget.event.sportTranslationKey;
+    return _sportAssetOverrides[key] ?? 'assets/sports/$key.jpg';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final String imageAsset;
-    final key = widget.event.sportTranslationKey;
-    if (key == 'sport_motorcycling') {
-      imageAsset = 'assets/sports/sport_motogp.jpg';
-    } else if (key == 'sport_volleyball') {
-      imageAsset = 'assets/sports/sport_volleyball.png';
-    } else {
-      imageAsset = 'assets/sports/$key.jpg';
-    }
 
     return DpadFocusable(
       onTap: _handleTap,
@@ -124,223 +144,184 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
           clipBehavior: Clip.none,
           children: [
             Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Backdrop Image
-                      AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: theme.colorScheme.surface,
-                            boxShadow: AppTheme.shadowCard,
-                          ),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              // Image
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.asset(
-                                  imageAsset,
-                                  fit: BoxFit.cover,
-                                  color: Colors.black.withValues(alpha: 0.3),
-                                  colorBlendMode: BlendMode.darken,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      _buildPlaceholder(context),
-                                ),
-                              ),
-
-                              // Time Badge
-                              Positioned(
-                                top: 8,
-                                left: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.glass,
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(
-                                      color: AppTheme.border,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.schedule,
-                                        color: theme.colorScheme.primary,
-                                        size: 10,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        _getDateTimeString(context),
-                                        style: const TextStyle(
-                                          color: AppTheme.textWhite,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-
-                              // Channels Overlay
-                              if (widget.event.channels.isNotEmpty)
-                                Positioned(
-                                  bottom: 8,
-                                  left: 8,
-                                  right: 8,
-                                  child: Wrap(
-                                    spacing: 4,
-                                    runSpacing: 4,
-                                    children: widget.event.channels
-                                        .map(
-                                          (channel) => Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: theme.colorScheme.surface
-                                                  .withValues(alpha: 0.8),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                              border: Border.all(
-                                                color: theme.colorScheme.primary
-                                                    .withValues(alpha: 0.5),
-                                              ),
-                                            ),
-                                            child: Text(
-                                              channel,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium!
-                                                  .copyWith(
-                                                    color: AppTheme.textWhite,
-                                                    fontSize: 9,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                            ),
-                                          ),
-                                        )
-                                        .toList(),
-                                  ),
-                                ),
-
-                              // Border Overlay
-                              const CardFocusBorder(),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Title (Sport Name & Description)
-                      Builder(
-                        builder: (context) {
-                          final isHighlighted =
-                              DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
-                          final theme = Theme.of(context);
-                          final localizedSport = _getLocalizedSportName(context);
-
-                          return Text(
-                            localizedSport.isNotEmpty
-                                ? '$localizedSport${widget.event.description.isNotEmpty ? ' - ${widget.event.description}' : ''}'
-                                : widget.event.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyMedium!.copyWith(
-                              color: isHighlighted
-                                  ? theme.colorScheme.primary
-                                  : AppTheme.textWhite,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-
-              // Context Menu Button (More Options)
-              if (widget.event.channels.isNotEmpty)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Builder(
-                    builder: (context) {
-                      final isHighlighted =
-                          DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
-                      final isBigPicture = ref.watch(isBigPictureProvider);
-                      if (isBigPicture) return const SizedBox.shrink();
-                      final isMobile = MediaQuery.of(context).size.width < 600;
-                      return AnimatedOpacity(
-                        opacity: (isHighlighted || isMobile) ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 200),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            canRequestFocus: false,
-                            excludeFromSemantics: true,
-                            onTap: () => _showContextActions(context),
-                            borderRadius: BorderRadius.circular(20),
-                            child: Container(
-                              key: _menuKey,
-                              padding: const EdgeInsets.all(8),
-                              decoration: const BoxDecoration(
-                                color: AppTheme.glass,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.more_vert,
-                                color: AppTheme.textWhite,
-                                size: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-            ],
-          ),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildBackdrop(theme),
+                const SizedBox(height: 8),
+                _buildTitle(theme),
+              ],
+            ),
+            if (widget.event.channels.isNotEmpty)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: _buildContextMenuButton(),
+              ),
+          ],
         ),
-      );
+      ),
+    );
   }
 
-  String _getLocalizedSportName(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    if (l10n == null) return widget.event.sportName;
+  Widget _buildBackdrop(ThemeData theme) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: theme.colorScheme.surface,
+          boxShadow: AppTheme.shadowCard,
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                _getSportAsset(),
+                fit: BoxFit.cover,
+                color: AppTheme.primary.withValues(alpha: 0.3),
+                colorBlendMode: BlendMode.darken,
+                errorBuilder: (context, error, stackTrace) =>
+                    _buildPlaceholder(context),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              left: 8,
+              child: _buildTimeBadge(theme),
+            ),
+            if (widget.event.channels.isNotEmpty)
+              Positioned(
+                bottom: 8,
+                left: 8,
+                right: 8,
+                child: _buildChannelsOverlay(theme),
+              ),
+            const CardFocusBorder(),
+          ],
+        ),
+      ),
+    );
+  }
 
-    switch (widget.event.sportTranslationKey) {
-      case 'sport_football':
-        return l10n.sportFootball;
-      case 'sport_basketball':
-        return l10n.sportBasketball;
-      case 'sport_motorcycling':
-        return l10n.sportMotorcycling;
-      case 'sport_volleyball':
-        return l10n.sportVolleyball;
-      case 'sport_athletics':
-        return l10n.sportAthletics;
-      case 'sport_tennis':
-        return l10n.sportTennis;
-      case 'sport_cycling':
-        return l10n.sportCycling;
-      case 'sport_rugby':
-        return l10n.sportRugby;
-      case 'sport_f1':
-        return l10n.sportF1;
-      default:
-        return widget.event.sportName.isNotEmpty
-            ? widget.event.sportName
-            : l10n.sportGeneric;
-    }
+  Widget _buildTimeBadge(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppTheme.glass,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.schedule, color: theme.colorScheme.primary, size: 10),
+          const SizedBox(width: 4),
+          Text(
+            _getDateTimeString(context),
+            style: const TextStyle(
+              color: AppTheme.textWhite,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChannelsOverlay(ThemeData theme) {
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: widget.event.channels
+          .map(
+            (channel) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                ),
+              ),
+              child: Text(
+                channel,
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: AppTheme.textWhite,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _buildTitle(ThemeData theme) {
+    return Builder(
+      builder: (context) {
+        final isHighlighted =
+            DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
+        final localizedSport = _getLocalizedSportName(context);
+
+        return Text(
+          localizedSport.isNotEmpty
+              ? '$localizedSport${widget.event.description.isNotEmpty ? ' - ${widget.event.description}' : ''}'
+              : widget.event.description,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodyMedium!.copyWith(
+            color: isHighlighted
+                ? theme.colorScheme.primary
+                : AppTheme.textWhite,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildContextMenuButton() {
+    return Builder(
+      builder: (context) {
+        final isHighlighted =
+            DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
+        final isBigPicture = ref.watch(isBigPictureProvider);
+        if (isBigPicture) return const SizedBox.shrink();
+        final isMobile = MediaQuery.of(context).size.width < 600;
+
+        return AnimatedOpacity(
+          opacity: (isHighlighted || isMobile) ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 200),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              canRequestFocus: false,
+              excludeFromSemantics: true,
+              onTap: () => _showContextActions(context),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                key: _menuKey,
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: AppTheme.glass,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.more_vert,
+                  color: AppTheme.textWhite,
+                  size: 16,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildPlaceholder(BuildContext context) {

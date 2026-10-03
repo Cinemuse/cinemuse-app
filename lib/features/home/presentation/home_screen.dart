@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/continue_watching_row.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/sport_schedule_row.dart';
@@ -106,17 +107,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final trendingAsync = ref.watch(trendingProvider);
-    final popularMoviesAsync = ref.watch(popularMoviesProvider);
-    final popularSeriesAsync = ref.watch(popularSeriesProvider);
-    final connectivity = ref.watch(connectivityProvider);
-    final userListsAsync = ref.watch(userListsProvider);
-    final pinnedListIds = ref.watch(pinnedListIdsProvider);
-
-    final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
+    final isOffline = ref.watch(
+      connectivityProvider
+          .select((c) => c.valueOrNull == ConnectivityResult.none),
+    );
     final isMobile = MediaQuery.sizeOf(context).width < 600;
-
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -130,7 +125,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             await Future.wait([
               ref.read(watchHistoryRepositoryProvider).syncWatchHistory(user.id),
               ref.read(listsRepositoryProvider).syncUserLists(user.id),
-            ]).catchError((_) => []);
+            ]).catchError((e, st) {
+              developer.log(
+                'Background sync failed during pull-to-refresh',
+                name: 'HomeScreen',
+                error: e,
+                stackTrace: st,
+              );
+              return <void>[];
+            });
           }
 
           ref.invalidate(trendingProvider);
@@ -145,153 +148,214 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.zero,
           child: Column(
-          children: [
-            if (!isOffline) ...[
-              // 1. Hero Section (Top 5 Trending Carousel)
-              RepaintBoundary(
-                child: trendingAsync.when(
-                  data: (data) => HeroSection(
-                    items: data.take(5).toList(),
-                    focusNode: _heroFocusNode,
-                  ),
-                  loading: () => SizedBox(
-                    height: HeroSection.getHeroHeight(context),
-                    child: const Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (err, stack) {
-                    final mapped = ref.read(errorMapperProvider).map(err);
-                    return SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.6,
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(32.0),
-                          child: ErrorCard(
-                            message: mapped.message,
-                            hint: mapped.hint,
-                            type: mapped.type,
-                            onRetry: () => ref.refresh(trendingProvider),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+            children: [
+              if (!isOffline) ...[
+                // 1. Hero Section (Top 5 Trending Carousel)
+                _HomeHeroSection(focusNode: _heroFocusNode),
+              ] else ...[
+                // Offline Spacer to account for missing Hero height
+                const SizedBox(height: 40),
+                OfflineBanner(
+                  onRetry: () => ref.invalidate(connectivityProvider),
                 ),
-              ),
-            ] else ...[
-              // Offline Spacer to account for missing Hero height
-              const SizedBox(height: 40),
-              OfflineBanner(
-                onRetry: () => ref.invalidate(connectivityProvider),
+              ],
+
+              // 2. Content
+              Transform.translate(
+                offset: Offset(
+                  0,
+                  AppTheme.getHeroContentOverlap(
+                    isMobile: isMobile,
+                    isOffline: isOffline,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Continue Watching
+                    const RepaintBoundary(
+                      child: ContinueWatchingRow(),
+                    ),
+
+                    // Sports Schedule
+                    const RepaintBoundary(
+                      child: SportScheduleRow(),
+                    ),
+
+                    // Pinned Lists & Collections
+                    _PinnedListsSection(onShowListDetails: _showListDetails),
+
+                    if (!isOffline) ...[
+                      const SizedBox(height: 10),
+                      const _TrendingMediaRow(),
+                      const SizedBox(height: 16),
+                      const _PopularMoviesRow(),
+                      const SizedBox(height: 16),
+                      const _PopularSeriesRow(),
+                    ],
+
+                    const SizedBox(height: 12),
+                  ],
+                ),
               ),
             ],
-
-            // 2. Content
-            Transform.translate(
-              offset: Offset(
-                0,
-                AppTheme.getHeroContentOverlap(
-                  isMobile: isMobile,
-                  isOffline: isOffline,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Continue Watching
-                  const RepaintBoundary(
-                    child: ContinueWatchingRow(),
-                  ),
-
-                  // Sports Schedule
-                  const RepaintBoundary(
-                    child: SportScheduleRow(),
-                  ),
-
-                  // Pinned Lists
-                  userListsAsync.when(
-                    data: (lists) {
-                      final pinnedLists = lists
-                          .where((list) => pinnedListIds.contains(list.id))
-                          .toList();
-                      if (pinnedLists.isEmpty) return const SizedBox.shrink();
-
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(height: 10),
-                          ...pinnedLists.map((list) {
-                            final mediaItems = list.items.map((item) => item.toMediaItem()).toList();
-
-                            final String title;
-                            if (list.type == ListType.watchlist) {
-                              title = l10n.listWatchLater;
-                            } else if (list.type == ListType.favorites) {
-                              title = l10n.listFavorites;
-                            } else {
-                              title = list.name;
-                            }
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 16),
-                              child: RepaintBoundary(
-                                child: MediaRow(
-                                  title: title,
-                                  asyncData: AsyncValue.data(mediaItems),
-                                  onHeaderTap: () => _showListDetails(context, list),
-                                ),
-                              ),
-                            );
-                          }),
-                        ],
-                      );
-                    },
-                    loading: () => const SizedBox.shrink(),
-                    error: (err, stack) => const SizedBox.shrink(),
-                  ),
-
-                  // Pinned Collections
-                  ...pinnedListIds
-                      .where((id) => id.startsWith('collection_'))
-                      .map((id) => _PinnedCollectionRow(collectionId: id)),
-
-                  if (!isOffline) ...[
-                    const SizedBox(height: 10),
-                    // Trending List
-                    RepaintBoundary(
-                      child: MediaRow(
-                        title: l10n.homeTrendingNow,
-                        asyncData: trendingAsync,
-                        skipFirst: true,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Popular Movies
-                    RepaintBoundary(
-                      child: MediaRow(
-                        title: l10n.homePopularMovies,
-                        asyncData: popularMoviesAsync,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Popular Series
-                    RepaintBoundary(
-                      child: MediaRow(
-                        title: l10n.homePopularSeries,
-                        asyncData: popularSeriesAsync,
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 12),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _HomeHeroSection extends ConsumerWidget {
+  final FocusNode focusNode;
+
+  const _HomeHeroSection({required this.focusNode});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final trendingAsync = ref.watch(trendingProvider);
+
+    return RepaintBoundary(
+      child: trendingAsync.when(
+        data: (data) => HeroSection(
+          items: data.take(5).toList(),
+          focusNode: focusNode,
+        ),
+        loading: () => SizedBox(
+          height: HeroSection.getHeroHeight(context),
+          child: const Center(child: CircularProgressIndicator()),
+        ),
+        error: (err, stack) {
+          final mapped = ref.read(errorMapperProvider).map(err);
+          return SizedBox(
+            height: MediaQuery.sizeOf(context).height * 0.6,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: ErrorCard(
+                  message: mapped.message,
+                  hint: mapped.hint,
+                  type: mapped.type,
+                  onRetry: () => ref.refresh(trendingProvider),
+                ),
+              ),
+            ),
+          );
+        },
       ),
+    );
+  }
+}
+
+class _TrendingMediaRow extends ConsumerWidget {
+  const _TrendingMediaRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final trendingAsync = ref.watch(trendingProvider);
+
+    return RepaintBoundary(
+      child: MediaRow(
+        title: l10n.homeTrendingNow,
+        asyncData: trendingAsync,
+        skipFirst: true,
+      ),
+    );
+  }
+}
+
+class _PopularMoviesRow extends ConsumerWidget {
+  const _PopularMoviesRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final popularMoviesAsync = ref.watch(popularMoviesProvider);
+
+    return RepaintBoundary(
+      child: MediaRow(
+        title: l10n.homePopularMovies,
+        asyncData: popularMoviesAsync,
+      ),
+    );
+  }
+}
+
+class _PopularSeriesRow extends ConsumerWidget {
+  const _PopularSeriesRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final popularSeriesAsync = ref.watch(popularSeriesProvider);
+
+    return RepaintBoundary(
+      child: MediaRow(
+        title: l10n.homePopularSeries,
+        asyncData: popularSeriesAsync,
+      ),
+    );
+  }
+}
+
+class _PinnedListsSection extends ConsumerWidget {
+  final void Function(BuildContext context, UserList list) onShowListDetails;
+
+  const _PinnedListsSection({required this.onShowListDetails});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pinnedListIds = ref.watch(pinnedListIdsProvider);
+    final userListsAsync = ref.watch(userListsProvider);
+    final l10n = AppLocalizations.of(context)!;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        userListsAsync.when(
+          data: (lists) {
+            final pinnedLists = lists
+                .where((list) => pinnedListIds.contains(list.id))
+                .toList();
+            if (pinnedLists.isEmpty) return const SizedBox.shrink();
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
+                ...pinnedLists.map((list) {
+                  final mediaItems =
+                      list.items.map((item) => item.toMediaItem()).toList();
+
+                  final title = switch (list.type) {
+                    ListType.watchlist => l10n.listWatchLater,
+                    ListType.favorites => l10n.listFavorites,
+                    _ => list.name,
+                  };
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: RepaintBoundary(
+                      child: MediaRow(
+                        title: title,
+                        asyncData: AsyncValue.data(mediaItems),
+                        onHeaderTap: () => onShowListDetails(context, list),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (err, stack) => const SizedBox.shrink(),
+        ),
+        ...pinnedListIds
+            .where((id) => id.startsWith('collection_'))
+            .map((id) => _PinnedCollectionRow(collectionId: id)),
+      ],
     );
   }
 }

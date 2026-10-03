@@ -1,5 +1,5 @@
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
-import 'package:cinemuse_app/features/home/application/sport_schedule_scraper.dart';
+import 'package:cinemuse_app/features/home/domain/sport_tv_event.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/sport_event_card.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';

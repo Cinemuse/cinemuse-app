@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
@@ -7,14 +8,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
-import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/skeleton_box.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/carousel_layout_calculator.dart';
-import 'package:cinemuse_app/features/home/presentation/widgets/cards/continue_watching_card.dart';
+import 'package:cinemuse_app/features/home/presentation/widgets/continue_watching_card.dart';
 
 class ContinueWatchingRow extends ConsumerStatefulWidget {
   const ContinueWatchingRow({super.key});
@@ -28,68 +28,50 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
   // Set of tmdbId that are hidden because they are pending removal or being removed.
   final Set<int> _hiddenItems = {};
 
-  void _onCancelRewatch(WatchHistory item) async {
-    final tmdbId = item.tmdbId;
-    setState(() {
-      _hiddenItems.add(tmdbId);
-    });
-
-    final authState = ref.read(authProvider);
-    final repository = ref.read(watchHistoryRepositoryProvider);
-    final userId = authState.value?.id;
-
-    if (userId != null) {
-      try {
-        await repository.cancelRewatch(userId, tmdbId, item.mediaType.name);
-
-        // Wait a bit for the provider to update before clearing the hidden state
+  Future<void> _runWithOptimisticHide(
+    int tmdbId,
+    Future<void> Function(String userId) action,
+  ) async {
+    setState(() => _hiddenItems.add(tmdbId));
+    try {
+      final userId = ref.read(authProvider).value?.id;
+      if (userId != null) {
+        await action(userId);
         await Future.delayed(const Duration(milliseconds: 500));
-      } finally {
-        if (mounted) {
-          setState(() {
-            _hiddenItems.remove(tmdbId);
-          });
-        }
       }
-    } else {
+    } catch (e, st) {
+      developer.log(
+        'Failed optimistic action for item $tmdbId',
+        name: 'ContinueWatchingRow',
+        error: e,
+        stackTrace: st,
+      );
+    } finally {
       if (mounted) {
-        setState(() {
-          _hiddenItems.remove(tmdbId);
-        });
+        setState(() => _hiddenItems.remove(tmdbId));
       }
     }
   }
 
-  void _onDrop(WatchHistory item) async {
-    final tmdbId = item.tmdbId;
-    setState(() {
-      _hiddenItems.add(tmdbId);
+  void _onCancelRewatch(WatchHistory item) {
+    _runWithOptimisticHide(
+      item.tmdbId,
+      (userId) => ref.read(watchHistoryRepositoryProvider).cancelRewatch(
+            userId,
+            item.tmdbId,
+            item.mediaType.name,
+          ),
+    );
+  }
+
+  void _onDrop(WatchHistory item) {
+    _runWithOptimisticHide(item.tmdbId, (userId) async {
+      await ref
+          .read(watchHistoryRepositoryProvider)
+          .dropFromContinueWatching(userId, item.tmdbId);
+      ref.invalidate(droppedListProvider);
+      ref.invalidate(continueWatchingProvider);
     });
-
-    final authState = ref.read(authProvider);
-    final repository = ref.read(watchHistoryRepositoryProvider);
-    final userId = authState.value?.id;
-
-    if (userId != null) {
-      try {
-        await repository.dropFromContinueWatching(userId, tmdbId);
-        ref.invalidate(droppedListProvider);
-        ref.invalidate(continueWatchingProvider);
-        await Future.delayed(const Duration(milliseconds: 500));
-      } finally {
-        if (mounted) {
-          setState(() {
-            _hiddenItems.remove(tmdbId);
-          });
-        }
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          _hiddenItems.remove(tmdbId);
-        });
-      }
-    }
   }
 
   void _onClearProgress(WatchHistory item) async {
@@ -99,12 +81,21 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
     final userId = authState.value?.id;
 
     if (userId != null) {
-      await repository.clearProgress(
-        userId: userId,
-        tmdbId: tmdbId,
-        mediaType: item.mediaType.name,
-      );
-      ref.invalidate(continueWatchingProvider);
+      try {
+        await repository.clearProgress(
+          userId: userId,
+          tmdbId: tmdbId,
+          mediaType: item.mediaType.name,
+        );
+        ref.invalidate(continueWatchingProvider);
+      } catch (e, st) {
+        developer.log(
+          'Failed to clear progress for item $tmdbId',
+          name: 'ContinueWatchingRow',
+          error: e,
+          stackTrace: st,
+        );
+      }
     }
   }
 
@@ -135,14 +126,6 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
     }
 
     final items = historyAsync.value ?? [];
-    final watchlistItems =
-        ref
-            .watch(userListsProvider)
-            .valueOrNull
-            ?.where((l) => l.type == ListType.watchlist)
-            .firstOrNull
-            ?.items ??
-        [];
 
     // Filter out locally hidden items
     final effectiveItems = items.where((i) {
@@ -168,7 +151,6 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
         final historyItem = effectiveItems[index];
         return ContinueWatchingCard(
           historyItem: historyItem,
-          watchlistItems: watchlistItems,
           width: dimensions.itemWidth,
           onDrop: () => _onDrop(historyItem),
           onCancelRewatch: () => _onCancelRewatch(historyItem),

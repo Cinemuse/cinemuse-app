@@ -94,7 +94,8 @@ class MediaRow extends ConsumerWidget {
 
     final mediaItems = list;
 
-    final appLanguage = ref.watch(settingsProvider).appLanguage;
+    final appLanguage =
+        ref.watch(settingsProvider.select((s) => s.appLanguage));
 
     final cards = mediaItems.map((item) {
       return MediaCard(
