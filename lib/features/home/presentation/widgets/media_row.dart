@@ -84,7 +84,7 @@ class MediaRow extends ConsumerWidget {
             child: Center(
               child: Text(
                 l10n.commonNoContent,
-                style: const TextStyle(color: Colors.white54),
+                style: const TextStyle(color: AppTheme.textMuted),
               ),
             ),
           ),
@@ -156,7 +156,7 @@ class MediaRow extends ConsumerWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: Colors.white,
+                  color: AppTheme.textWhite,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),

@@ -199,7 +199,7 @@ class _DayHeader extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    isToday ? primary : Colors.white24,
+                    isToday ? primary : AppTheme.border,
                   ],
                 ),
               ),
@@ -210,19 +210,19 @@ class _DayHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isToday
                     ? primary.withValues(alpha: 0.15)
-                    : Colors.white.withValues(alpha: 0.06),
+                    : AppTheme.surface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isToday
                       ? primary.withValues(alpha: 0.5)
-                      : Colors.white.withValues(alpha: 0.1),
+                      : AppTheme.border,
                 ),
               ),
               child: Text(
                 label,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium!.copyWith(
-                  color: isToday ? primary : Colors.white70,
+                  color: isToday ? primary : AppTheme.textMuted,
                   fontSize: 11,
                   fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
                   height: 1.3,
@@ -238,7 +238,7 @@ class _DayHeader extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    isToday ? primary : Colors.white24,
+                    isToday ? primary : AppTheme.border,
                     Colors.transparent,
                   ],
                 ),

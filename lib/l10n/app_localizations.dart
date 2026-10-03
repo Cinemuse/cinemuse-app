@@ -656,6 +656,18 @@ abstract class AppLocalizations {
   /// **'Sport Event'**
   String get sportGeneric;
 
+  /// No description provided for @sportWatchOnChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch on {channel}'**
+  String sportWatchOnChannel(String channel);
+
+  /// No description provided for @sportChannelsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Channels'**
+  String get sportChannelsTitle;
+
   /// No description provided for @homeRemovedFromContinueWatching.
   ///
   /// In en, this message translates to:

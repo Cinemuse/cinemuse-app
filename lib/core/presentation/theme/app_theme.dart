@@ -249,6 +249,17 @@ class AppTheme {
     return width * 0.05;
   }
 
+  /// Layout offset for overlapping the hero section with downstream content rails.
+  /// On mobile, content overlaps slightly (-24px), whereas desktop/TV uses a deeper overlap (-60px).
+  /// If offline banner or similar top spacing exists, offset is 0.
+  static double getHeroContentOverlap({
+    required bool isMobile,
+    bool isOffline = false,
+  }) {
+    if (isOffline) return 0.0;
+    return isMobile ? -24.0 : -60.0;
+  }
+
   static TextStyle monoStyle({
     double? fontSize,
     FontWeight? fontWeight,

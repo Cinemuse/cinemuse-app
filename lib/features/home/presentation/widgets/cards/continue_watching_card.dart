@@ -64,28 +64,6 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
         fetchedMedia.getLocalizedTitle(appLanguage) != 'Unknown' &&
         fetchedMedia.getLocalizedTitle(appLanguage) != '...';
 
-    if (fetchedMedia != null && !hasFetchedValidTitle) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await ref.read(
-          mediaDetailsProvider((
-            id: widget.historyItem.tmdbId.toString(),
-            type: widget.historyItem.mediaType.name,
-          )).future,
-        );
-        ref.invalidate(mediaItemProvider(providerArg));
-      });
-    } else if (!mediaAsync.isLoading && !mediaAsync.hasError && fetchedMedia == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await ref.read(
-          mediaDetailsProvider((
-            id: widget.historyItem.tmdbId.toString(),
-            type: widget.historyItem.mediaType.name,
-          )).future,
-        );
-        ref.invalidate(mediaItemProvider(providerArg));
-      });
-    }
-
     return mediaAsync.when(
       data: (media) {
         if (media != null && hasFetchedValidTitle) {

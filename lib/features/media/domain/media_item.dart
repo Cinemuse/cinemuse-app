@@ -233,3 +233,48 @@ class MediaItem {
     };
   }
 }
+
+/// Strongly-typed domain entity representing a TMDB movie collection (franchise).
+class MediaCollection {
+  final int id;
+  final String name;
+  final String? overview;
+  final String? posterPath;
+  final String? backdropPath;
+  final List<MediaItem> parts;
+
+  const MediaCollection({
+    required this.id,
+    required this.name,
+    this.overview,
+    this.posterPath,
+    this.backdropPath,
+    required this.parts,
+  });
+
+  factory MediaCollection.fromTmdbMap(Map<String, dynamic> json) {
+    final rawParts = json['parts'] as List? ?? [];
+    final items = rawParts.whereType<Map>().map((part) {
+      final map = Map<String, dynamic>.from(part);
+      return MediaItem(
+        tmdbId: (map['id'] as num?)?.toInt() ?? 0,
+        mediaType: MediaKind.movie,
+        titleEn: map['title'] as String? ?? map['name'] as String? ?? '',
+        posterPath: map['poster_path'] as String?,
+        backdropPath: map['backdrop_path'] as String?,
+        releaseDate: DateTime.tryParse(map['release_date'] as String? ?? ''),
+        voteAverage: (map['vote_average'] as num?)?.toDouble(),
+        updatedAt: DateTime.now(),
+      );
+    }).toList();
+
+    return MediaCollection(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      name: json['name'] as String? ?? '',
+      overview: json['overview'] as String?,
+      posterPath: json['poster_path'] as String?,
+      backdropPath: json['backdrop_path'] as String?,
+      parts: items,
+    );
+  }
+}

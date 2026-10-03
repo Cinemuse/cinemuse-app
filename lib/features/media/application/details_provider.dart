@@ -22,10 +22,15 @@ final mediaItemProvider =
 
       // 1. Check local cache (Memory/Drift)
       final cached = await repo.getMediaItem(args.id, args.type);
-      if (cached != null) return cached;
+      final title = cached?.titleEn?.trim();
+      final hasCompleteTitle = title != null &&
+          title.isNotEmpty &&
+          title != 'Unknown' &&
+          title != '...';
+      if (hasCompleteTitle) return cached;
 
       final connectivity = ref.watch(connectivityProvider).valueOrNull;
-      if (connectivity == ConnectivityResult.none) return null;
+      if (connectivity == ConnectivityResult.none) return cached;
 
       // 2. Fetch from TMDB
       final tmdbService = ref.watch(tmdbServiceProvider);
@@ -84,7 +89,7 @@ final seasonDetailsProvider =
       return tmdbService.getSeasonDetails(args.tmdbId, args.seasonNumber);
     });
 
-// Family provider to fetch collection details
+// Family provider to fetch collection details (raw map for compatibility)
 final collectionDetailsProvider =
     FutureProvider.family<Map<String, dynamic>?, int>((
       ref,
@@ -95,6 +100,17 @@ final collectionDetailsProvider =
 
       final tmdbService = ref.watch(tmdbServiceProvider);
       return tmdbService.getCollectionDetails(collectionId);
+    });
+
+// Family provider to fetch strongly-typed collection domain model
+final collectionModelProvider =
+    FutureProvider.family<MediaCollection?, int>((
+      ref,
+      collectionId,
+    ) async {
+      final raw = await ref.watch(collectionDetailsProvider(collectionId).future);
+      if (raw == null) return null;
+      return MediaCollection.fromTmdbMap(raw);
     });
 
 // Family state provider for the currently selected season number of a specific series

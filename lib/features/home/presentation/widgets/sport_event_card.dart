@@ -47,12 +47,14 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
     BuildContext? anchorContext,
   }) {
     if (widget.event.channels.isEmpty) return;
+    final l10n = AppLocalizations.of(context);
+    final localizedSport = _getLocalizedSportName(context);
 
     final options = widget.event.channels
         .map(
           (channel) => AppMenuOption(
             icon: Icons.tv,
-            label: 'Watch on $channel',
+            label: l10n?.sportWatchOnChannel(channel) ?? 'Watch on $channel',
             onTap: () => _navigateToLiveTvSearch(channel),
           ),
         )
@@ -61,9 +63,9 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
     AppMenu.show(
       context: context,
       options: options,
-      title: widget.event.sportName.isNotEmpty
-          ? widget.event.sportName
-          : 'Channels',
+      title: localizedSport.isNotEmpty
+          ? localizedSport
+          : (l10n?.sportChannelsTitle ?? 'Channels'),
       anchorContext: anchorContext ?? _menuKey.currentContext,
     );
   }
@@ -159,12 +161,10 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.6),
+                                    color: AppTheme.glass,
                                     borderRadius: BorderRadius.circular(4),
                                     border: Border.all(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.1,
-                                      ),
+                                      color: AppTheme.border,
                                     ),
                                   ),
                                   child: Row(
@@ -179,7 +179,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                                       Text(
                                         _getDateTimeString(context),
                                         style: const TextStyle(
-                                          color: Colors.white,
+                                          color: AppTheme.textWhite,
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -221,7 +221,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                                                   .textTheme
                                                   .bodyMedium!
                                                   .copyWith(
-                                                    color: Colors.white,
+                                                    color: AppTheme.textWhite,
                                                     fontSize: 9,
                                                     fontWeight: FontWeight.w500,
                                                   ),
@@ -245,17 +245,18 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                           final isHighlighted =
                               DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
                           final theme = Theme.of(context);
+                          final localizedSport = _getLocalizedSportName(context);
 
                           return Text(
-                            widget.event.sportName.isNotEmpty
-                                ? '${widget.event.sportName}${widget.event.description.isNotEmpty ? ' - ${widget.event.description}' : ''}'
+                            localizedSport.isNotEmpty
+                                ? '$localizedSport${widget.event.description.isNotEmpty ? ' - ${widget.event.description}' : ''}'
                                 : widget.event.description,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.bodyMedium!.copyWith(
                               color: isHighlighted
                                   ? theme.colorScheme.primary
-                                  : Colors.white,
+                                  : AppTheme.textWhite,
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
                             ),
@@ -290,13 +291,13 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                             child: Container(
                               key: _menuKey,
                               padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.7),
+                              decoration: const BoxDecoration(
+                                color: AppTheme.glass,
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
                                 Icons.more_vert,
-                                color: Colors.white,
+                                color: AppTheme.textWhite,
                                 size: 16,
                               ),
                             ),
@@ -351,7 +352,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
           children: [
             Icon(
               Icons.sports_soccer,
-              color: Colors.white.withValues(alpha: 0.2),
+              color: AppTheme.textMuted.withValues(alpha: 0.4),
               size: 40,
             ),
             const SizedBox(height: 8),
@@ -363,7 +364,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: AppTheme.textMuted,
                   fontSize: 12,
                 ),
               ),

@@ -303,6 +303,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sportGeneric => 'Evento Sportivo';
 
   @override
+  String sportWatchOnChannel(String channel) {
+    return 'Guarda su $channel';
+  }
+
+  @override
+  String get sportChannelsTitle => 'Canali';
+
+  @override
   String homeRemovedFromContinueWatching(Object title) {
     return '$title rimosso';
   }

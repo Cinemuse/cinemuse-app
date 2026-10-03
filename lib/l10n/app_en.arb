@@ -93,6 +93,13 @@
   "sportRugby": "Rugby",
   "sportF1": "Formula 1",
   "sportGeneric": "Sport Event",
+  "sportWatchOnChannel": "Watch on {channel}",
+  "@sportWatchOnChannel": {
+    "placeholders": {
+      "channel": { "type": "String" }
+    }
+  },
+  "sportChannelsTitle": "Channels",
   "homeRemovedFromContinueWatching": "Removed {title}",
   "authContinueGuest": "Continue as Guest",
   "authWelcomeBack": "Welcome Back",

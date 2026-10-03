@@ -257,41 +257,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
             _startAutoPlayTimer();
           }
         },
-        onKeyEvent: (node, event) {
-          if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
-            return KeyEventResult.ignored;
-          }
-          if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-            final focusNavbar = ref.read(topNavbarFocusActionProvider);
-            if (focusNavbar != null) {
-              focusNavbar();
-              return KeyEventResult.handled;
-            }
-          }
-          if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-            if (widget.items.length > 1) {
-              _advanceToNextPage();
-              return KeyEventResult.handled;
-            }
-          } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-            if (_currentIndex > 0) {
-              _goToPreviousPage();
-              return KeyEventResult.handled;
-            } else {
-              final focusRail = ref.read(tvRailFocusActionProvider);
-              focusRail?.call();
-              return KeyEventResult.handled;
-            }
-          }
-          if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-            final moved = node.focusInDirection(TraversalDirection.down);
-            if (!moved) {
-              node.nextFocus();
-            }
-            return KeyEventResult.handled;
-          }
-          return KeyEventResult.ignored;
-        },
+        onKeyEvent: _handleKeyEvent,
         scale: 1.0,
         showFocusRing: false,
         child: carousel,
@@ -299,6 +265,36 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     }
 
     return carousel;
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.arrowUp) {
+      ref.read(topNavbarFocusActionProvider)?.call();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowRight && widget.items.length > 1) {
+      _advanceToNextPage();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowLeft) {
+      if (_currentIndex > 0) {
+        _goToPreviousPage();
+      } else {
+        ref.read(tvRailFocusActionProvider)?.call();
+      }
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowDown) {
+      if (!node.focusInDirection(TraversalDirection.down)) {
+        node.nextFocus();
+      }
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   Widget _buildSlide(
@@ -438,32 +434,13 @@ class _HeroSectionState extends ConsumerState<HeroSection>
         ? l10n.homeHeroPauseCarousel
         : l10n.homeHeroResumeCarousel;
 
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _toggleAutoPlay,
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            child: Icon(
-              _isAutoPlayEnabled
-                  ? Icons.pause_rounded
-                  : Icons.play_arrow_rounded,
-              color: Colors.white.withValues(alpha: 0.8),
-              size: isMobile ? 20 : 22,
-              shadows: const [
-                Shadow(
-                  color: Colors.black87,
-                  blurRadius: 4,
-                ),
-              ],
-            ),
-          ),
-        ),
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: _toggleAutoPlay,
+      iconSize: isMobile ? 20 : 22,
+      color: AppTheme.textWhite.withValues(alpha: 0.85),
+      icon: Icon(
+        _isAutoPlayEnabled ? Icons.pause_rounded : Icons.play_arrow_rounded,
       ),
     );
   }
@@ -508,8 +485,8 @@ class _HeroSectionState extends ConsumerState<HeroSection>
           const SizedBox(height: 20),
           _buildTvInfoPill(context, l10n),
         ] else ...[
-          SizedBox(height: isMobile ? 16 : 32),
-          _buildActionButtons(context, item, l10n, isMobile),
+          const SizedBox(height: 16),
+          _buildActionButtons(context, item, l10n),
         ],
       ],
     );
@@ -526,12 +503,12 @@ class _HeroSectionState extends ConsumerState<HeroSection>
       decoration: BoxDecoration(
         color: _isHeroFocused
             ? theme.focusColor
-            : Colors.white.withValues(alpha: 0.06),
+            : AppTheme.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: _isHeroFocused
               ? primary.withValues(alpha: 0.5)
-              : Colors.white.withValues(alpha: 0.15),
+              : AppTheme.border,
           width: 1.0,
         ),
       ),
@@ -541,13 +518,13 @@ class _HeroSectionState extends ConsumerState<HeroSection>
           Icon(
             Icons.info_outline_rounded,
             size: 20,
-            color: _isHeroFocused ? primary : Colors.white70,
+            color: _isHeroFocused ? primary : AppTheme.textSecondary,
           ),
           const SizedBox(width: 8),
           Text(
             l10n.homeMoreInfo,
             style: TextStyle(
-              color: _isHeroFocused ? Colors.white : Colors.white70,
+              color: _isHeroFocused ? AppTheme.textWhite : AppTheme.textSecondary,
               fontSize: 15,
               fontWeight: _isHeroFocused ? FontWeight.bold : FontWeight.w500,
               letterSpacing: 0.5,
@@ -597,7 +574,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
             fontSize: 24,
             fontWeight: FontWeight.w800,
             height: 1.15,
-            color: Colors.white,
+            color: AppTheme.textWhite,
           )
         : DesktopTypography.heroTitle;
 
@@ -617,7 +594,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
         maxLines: 3,
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-              color: Colors.white70,
+              color: AppTheme.textSecondary,
               fontSize: 18,
               fontWeight: FontWeight.w500,
               height: 1.5,
@@ -631,18 +608,6 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     BuildContext context,
     MediaItem item,
     AppLocalizations l10n,
-    bool isMobile,
-  ) {
-    if (isMobile) {
-      return _buildMobileActionButtons(context, item, l10n);
-    }
-    return _buildDesktopActionButtons(context, item, l10n);
-  }
-
-  Widget _buildMobileActionButtons(
-    BuildContext context,
-    MediaItem item,
-    AppLocalizations l10n,
   ) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
@@ -653,18 +618,12 @@ class _HeroSectionState extends ConsumerState<HeroSection>
           // Prominent Capsule Play Button
           ElevatedButton.icon(
             onPressed: () => _navigateToPlayer(context, item),
-            icon: const Icon(
-              Icons.play_arrow_rounded,
-              size: 24,
-            ),
+            icon: const Icon(Icons.play_arrow_rounded, size: 24),
             label: Text(l10n.detailsPlayNow),
             style: ElevatedButton.styleFrom(
               backgroundColor: primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 22,
-                vertical: 12,
-              ),
+              foregroundColor: AppTheme.textWhite,
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
               textStyle: theme.textTheme.bodyMedium!.copyWith(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
@@ -694,127 +653,22 @@ class _HeroSectionState extends ConsumerState<HeroSection>
                         ? theme.focusColor
                         : (isHovered
                             ? theme.hoverColor
-                            : Colors.white.withValues(alpha: 0.12)),
+                            : AppTheme.accent.withValues(alpha: 0.12)),
                     border: Border.all(
                       color: isHighlighted
                           ? primary.withValues(alpha: 0.5)
-                          : Colors.white.withValues(alpha: 0.25),
+                          : AppTheme.border,
                       width: 1.0,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    boxShadow: AppTheme.shadowCard,
                   ),
                   child: const Icon(
                     Icons.info_outline_rounded,
-                    color: Colors.white,
+                    color: AppTheme.textWhite,
                     size: 22,
                   ),
                 );
               },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDesktopActionButtons(
-    BuildContext context,
-    MediaItem item,
-    AppLocalizations l10n,
-  ) {
-    final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
-
-    return FocusTraversalGroup(
-      child: Row(
-        children: [
-          ElevatedButton.icon(
-            onPressed: () => _navigateToPlayer(context, item),
-            icon: const Icon(Icons.play_arrow_rounded, size: 28),
-            label: Text(l10n.detailsPlayNow),
-            style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.hovered) ||
-                    states.contains(WidgetState.focused)) {
-                  return theme.colorScheme.secondary;
-                }
-                return primary;
-              }),
-              foregroundColor: const WidgetStatePropertyAll(Colors.white),
-              padding: const WidgetStatePropertyAll(
-                EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-              ),
-              textStyle: WidgetStatePropertyAll(
-                theme.textTheme.bodyMedium!.copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              side: const WidgetStatePropertyAll(BorderSide.none),
-              shape: WidgetStatePropertyAll(
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              elevation: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.focused)) return 4;
-                if (states.contains(WidgetState.hovered)) return 4;
-                return 2;
-              }),
-              shadowColor: WidgetStatePropertyAll(
-                primary.withValues(alpha: 0.25),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          OutlinedButton.icon(
-            onPressed: () => _navigateToDetails(context, item),
-            icon: const Icon(Icons.info_outline_rounded, size: 28),
-            label: Text(l10n.homeMoreInfo),
-            style: ButtonStyle(
-              foregroundColor: const WidgetStatePropertyAll(Colors.white),
-              side: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.focused) ||
-                    states.contains(WidgetState.hovered)) {
-                  return BorderSide(
-                    color: primary.withValues(alpha: 0.5),
-                    width: 1.5,
-                  );
-                }
-                return BorderSide(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  width: 1.5,
-                );
-              }),
-              backgroundColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.focused)) {
-                  return theme.focusColor;
-                }
-                if (states.contains(WidgetState.hovered)) {
-                  return theme.hoverColor;
-                }
-                return Colors.white.withValues(alpha: 0.1);
-              }),
-              elevation: const WidgetStatePropertyAll(0),
-              shadowColor: WidgetStatePropertyAll(
-                primary.withValues(alpha: 0.3),
-              ),
-              padding: const WidgetStatePropertyAll(
-                EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-              ),
-              textStyle: WidgetStatePropertyAll(
-                theme.textTheme.bodyMedium!.copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              shape: WidgetStatePropertyAll(
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
             ),
           ),
         ],
@@ -845,7 +699,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
   }
 }
 
-class _HeroIndicatorDot extends StatefulWidget {
+class _HeroIndicatorDot extends StatelessWidget {
   final bool isActive;
   final bool isMobile;
   final VoidCallback onTap;
@@ -857,61 +711,38 @@ class _HeroIndicatorDot extends StatefulWidget {
   });
 
   @override
-  State<_HeroIndicatorDot> createState() => _HeroIndicatorDotState();
-}
-
-class _HeroIndicatorDotState extends State<_HeroIndicatorDot> {
-  bool _isHovered = false;
-
-  @override
   Widget build(BuildContext context) {
-    final width = widget.isActive
-        ? (widget.isMobile ? 18.0 : 24.0)
-        : (widget.isMobile ? 6.0 : (_isHovered ? 12.0 : 8.0));
-    final height = widget.isMobile ? 5.0 : 6.0;
-
     final theme = Theme.of(context);
-    final dotColor = widget.isActive
-        ? theme.colorScheme.primary
-        : (_isHovered
-            ? Colors.white.withValues(alpha: 0.8)
-            : Colors.white.withValues(alpha: 0.4));
+    final width = isActive ? (isMobile ? 18.0 : 24.0) : (isMobile ? 6.0 : 8.0);
+    final height = isMobile ? 5.0 : 6.0;
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: widget.isMobile ? 4 : 6,
-            vertical: 14,
-          ),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            width: width,
-            height: height,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(3),
-              color: dotColor,
-              boxShadow: widget.isActive
-                  ? [
-                      BoxShadow(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.7),
-                        blurRadius: 6,
-                        spreadRadius: 1,
-                      ),
-                    ]
-                  : [
-                      BoxShadow(
-                        color: _isHovered ? Colors.black87 : Colors.black45,
-                        blurRadius: _isHovered ? 6 : 4,
-                      ),
-                    ],
-            ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 4 : 6,
+          vertical: 14,
+        ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(3),
+            color: isActive
+                ? theme.colorScheme.primary
+                : AppTheme.textMuted.withValues(alpha: 0.4),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                      blurRadius: 6,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
           ),
         ),
       ),

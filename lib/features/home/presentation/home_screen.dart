@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/offline_banner.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
@@ -19,7 +20,6 @@ import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
-import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -63,7 +63,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
   void _showListDetails(BuildContext context, UserList list) {
-    final l10n = AppLocalizations.of(context)!;
     final isSystemList =
         list.type == ListType.watchlist || list.type == ListType.favorites;
 
@@ -77,30 +76,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   .read(userListsProvider.notifier)
                   .updateList(list.id, name, description);
             },
-      onDelete: () async {
-        // Optimistic delete
-        // The modal is closed by ListDetailsSheet itself to avoid context issues
-        final notifier = ref.read(userListsProvider.notifier);
-        notifier.optimisticRemove(list.id);
-
-        final reason = await AppSnackBar.show(
-          context,
-          message: l10n.detailsListDeleted(list.name),
-          actionLabel: l10n.commonUndo,
-          showTimer: true,
-          onAction:
-              () {}, // Action just closes the snackbar with 'action' reason
-        ).closed;
-
-        if (reason != SnackBarClosedReason.action) {
-          final repo = ref.read(listsRepositoryProvider);
-          await repo.deleteList(list.id);
-        } else {
-          // User undid the deletion, restore the UI state
-          ref.invalidate(userListsProvider);
-        }
-      },
+      onDelete: () => _deleteListWithUndo(context, list),
     );
+  }
+
+  Future<void> _deleteListWithUndo(BuildContext context, UserList list) async {
+    final l10n = AppLocalizations.of(context)!;
+    // Optimistic delete
+    // The modal is closed by ListDetailsSheet itself to avoid context issues
+    final notifier = ref.read(userListsProvider.notifier);
+    notifier.optimisticRemove(list.id);
+
+    final reason = await AppSnackBar.show(
+      context,
+      message: l10n.detailsListDeleted(list.name),
+      actionLabel: l10n.commonUndo,
+      showTimer: true,
+      onAction: () {}, // Action just closes the snackbar with 'action' reason
+    ).closed;
+
+    if (reason != SnackBarClosedReason.action) {
+      final repo = ref.read(listsRepositoryProvider);
+      await repo.deleteList(list.id);
+    } else {
+      // User undid the deletion, restore the UI state
+      ref.invalidate(userListsProvider);
+    }
   }
 
   @override
@@ -188,8 +189,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Transform.translate(
               offset: Offset(
                 0,
-                isOffline ? 0 : (isMobile ? -24 : -60),
-              ), // Responsive overlap offset
+                AppTheme.getHeroContentOverlap(
+                  isMobile: isMobile,
+                  isOffline: isOffline,
+                ),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -301,57 +305,50 @@ class _PinnedCollectionRow extends ConsumerWidget {
     final id = int.tryParse(collectionId.replaceFirst('collection_', '')) ?? 0;
     if (id == 0) return const SizedBox.shrink();
 
-    final asyncData = ref.watch(collectionDetailsProvider(id));
+    final asyncData = ref.watch(collectionModelProvider(id));
 
     return asyncData.when(
-      data: (data) {
-        if (data == null) return const SizedBox.shrink();
+      data: (collection) {
+        if (collection == null || collection.parts.isEmpty) {
+          return const SizedBox.shrink();
+        }
         final l10n = AppLocalizations.of(context)!;
-        final parts = data['parts'] as List<dynamic>? ?? [];
-        final mediaItems = parts.map((part) {
-          final itemMap = part as Map<String, dynamic>;
-          return MediaItem(
-            tmdbId: itemMap['id'] as int,
-            mediaType: MediaKind.movie,
-            titleEn: itemMap['title'] ?? itemMap['name'] ?? l10n.commonUnknown,
-            posterPath: itemMap['poster_path'],
-            backdropPath: itemMap['backdrop_path'],
-            releaseDate: DateTime.tryParse(itemMap['release_date'] ?? ''),
-            voteAverage: (itemMap['vote_average'] as num?)?.toDouble(),
-            updatedAt: DateTime.now(),
-          );
-        }).toList();
+        final title = collection.name.isNotEmpty
+            ? collection.name
+            : l10n.collectionTitleFallback;
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: RepaintBoundary(
             child: MediaRow(
-                title: data['name'] ?? l10n.collectionTitleFallback,
-                asyncData: AsyncValue.data(mediaItems),
-                onHeaderTap: () {
-                  final listItems = mediaItems.map((mediaItem) => UserListItem(
-                    listId: collectionId,
-                    addedAt: DateTime.now(),
-                    tmdbId: mediaItem.tmdbId,
-                    mediaType: mediaItem.mediaType,
-                    media: mediaItem,
-                    meta: {},
-                  )).toList();
-                  final userList = UserList(
-                    id: collectionId,
-                    name: data['name'] ?? l10n.collectionTitleFallback,
-                    description: data['overview'],
-                    type: ListType.custom,
-                    items: listItems,
-                    createdAt: DateTime.now(),
-                    userId: 'system',
-                  );
-                  ListDetailsSheet.show(context, list: userList);
-                },
-              ),
+              title: title,
+              asyncData: AsyncValue.data(collection.parts),
+              onHeaderTap: () {
+                final listItems = collection.parts
+                    .map((mediaItem) => UserListItem(
+                          listId: collectionId,
+                          addedAt: DateTime.now(),
+                          tmdbId: mediaItem.tmdbId,
+                          mediaType: mediaItem.mediaType,
+                          media: mediaItem,
+                          meta: const {},
+                        ))
+                    .toList();
+                final userList = UserList(
+                  id: collectionId,
+                  name: title,
+                  description: collection.overview,
+                  type: ListType.custom,
+                  items: listItems,
+                  createdAt: DateTime.now(),
+                  userId: 'system',
+                );
+                ListDetailsSheet.show(context, list: userList);
+              },
             ),
-          );
-        },
+          ),
+        );
+      },
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
     );
