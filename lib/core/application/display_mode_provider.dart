@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,8 +32,13 @@ class DisplayModeNotifier extends StateNotifier<DisplayMode> {
             ? DisplayMode.bigPicture
             : DisplayMode.standard;
       }
-    } catch (_) {
-      // Fallback gracefully to current state if preferences are unavailable
+    } catch (e, s) {
+      developer.log(
+        'Failed to load display mode preference, keeping default',
+        name: 'DisplayModeNotifier',
+        error: e,
+        stackTrace: s,
+      );
     }
   }
 
@@ -41,7 +47,14 @@ class DisplayModeNotifier extends StateNotifier<DisplayMode> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_prefKey, mode.name);
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log(
+        'Failed to persist display mode preference: ${mode.name}',
+        name: 'DisplayModeNotifier',
+        error: e,
+        stackTrace: s,
+      );
+    }
   }
 
   Future<void> toggleMode() async {

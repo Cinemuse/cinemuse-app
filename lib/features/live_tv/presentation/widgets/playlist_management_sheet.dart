@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -393,8 +394,13 @@ class _OpenFolderButton extends StatelessWidget {
       } else if (Platform.isMacOS) {
         await Process.run('open', ['-R', absolutePath]);
       }
-    } catch (_) {
-      // Silently fail — file may have been deleted
+    } catch (e, s) {
+      developer.log(
+        'Failed to open file location for path: ${playlist.urlOrPath}',
+        name: 'PlaylistManagementSheet',
+        error: e,
+        stackTrace: s,
+      );
     }
   }
 
@@ -425,7 +431,14 @@ class _OpenLinkButton extends StatelessWidget {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log(
+        'Failed to open external playlist URL: ${playlist.urlOrPath}',
+        name: 'PlaylistManagementSheet',
+        error: e,
+        stackTrace: s,
+      );
+    }
   }
 
   @override

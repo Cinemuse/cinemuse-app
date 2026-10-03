@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/video_player/application/language_mapper.dart';
@@ -72,7 +73,14 @@ class TrackManager extends BaseManager {
       platform.setProperty('slang', subCodes);
       // Disable auto-showing forced subtitles as an overlay
       platform.setProperty('sub-forced-events-only', 'no');
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log(
+        'Failed to set alang/slang platform properties on player',
+        name: 'TrackManager',
+        error: e,
+        stackTrace: s,
+      );
+    }
   }
 
   /// Enables reactive track selection once `isAnime` is known.
@@ -287,7 +295,14 @@ class TrackManager extends BaseManager {
           language: bestMatch.language,
         ),
       );
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log(
+        'Failed to download or apply external subtitle track: ${bestMatch.title}',
+        name: 'TrackManager',
+        error: e,
+        stackTrace: s,
+      );
+    }
   }
 
   /// Waits up to 3 seconds for the external subtitles cache to be populated.

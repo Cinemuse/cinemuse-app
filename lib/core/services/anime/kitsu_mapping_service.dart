@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:dio/dio.dart';
@@ -179,7 +180,14 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
         final epVal = int.tryParse(cleanRange);
         if (epVal == episode) return 1;
       }
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log(
+        'Failed to parse episode offset from range "$range" for episode $episode',
+        name: 'KitsuMappingService',
+        error: e,
+        stackTrace: s,
+      );
+    }
     return null;
   }
 

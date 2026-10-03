@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
@@ -223,7 +224,14 @@ class LiveTvSourceHandler {
             ? 'VLC/3.0.18 LibVLC/3.0.18'
             : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0',
       );
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log(
+        'Failed to set Live TV player platform properties',
+        name: 'LiveTvSourceHandler',
+        error: e,
+        stackTrace: s,
+      );
+    }
   }
 
   Future<String> _resolveIfDynamicRelinker(String url) async {

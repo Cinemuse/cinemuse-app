@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:cinemuse_app/core/data/database.dart';
@@ -48,7 +49,14 @@ class MediaRepository {
         _memoryCache[key] = item;
         return item;
       }
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log(
+        'Failed to read media item ($tmdbId, ${type.name}) from Drift cache',
+        name: 'MediaRepository',
+        error: e,
+        stackTrace: s,
+      );
+    }
 
     // 3. Fallback to TMDB
     try {
@@ -62,7 +70,14 @@ class MediaRepository {
         await saveMediaItem(item);
         return item;
       }
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log(
+        'Failed to fetch media details ($tmdbId, ${type.name}) from TMDB service',
+        name: 'MediaRepository',
+        error: e,
+        stackTrace: s,
+      );
+    }
 
     return null;
   }
@@ -81,7 +96,13 @@ class MediaRepository {
       return localResults
           .map<MediaItem>((data) => mapToMediaItem(data))
           .toList();
-    } catch (_) {
+    } catch (e, s) {
+      developer.log(
+        'Failed to fetch batch media items from Drift database',
+        name: 'MediaRepository',
+        error: e,
+        stackTrace: s,
+      );
       return [];
     }
   }
@@ -113,7 +134,14 @@ class MediaRepository {
           updatedAt: Value(item.updatedAt),
         ),
       );
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log(
+        'Failed to upsert media item ($key) into Drift database',
+        name: 'MediaRepository',
+        error: e,
+        stackTrace: s,
+      );
+    }
 
     // Save to Remote Cache (Supabase)
     try {

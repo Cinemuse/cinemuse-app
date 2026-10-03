@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -418,7 +419,14 @@ class WatchHistoryRepository {
       }).toList();
 
       await _db.syncWatchHistory(userId, companions);
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log(
+        'Failed to sync remote watch history to Drift database for user: $userId',
+        name: 'WatchHistoryRepository',
+        error: e,
+        stackTrace: s,
+      );
+    }
   }
 
   Stream<List<WatchHistory>> watchAllHistory(String userId) {
@@ -608,7 +616,14 @@ class WatchHistoryRepository {
       for (final local in localHistories) {
         statusMap['${local.mediaType}-${local.tmdbId}'] = WatchStatus.fromJson(local.status);
       }
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log(
+        'Failed to read watch status from Drift database for user: $userId',
+        name: 'WatchHistoryRepository',
+        error: e,
+        stackTrace: s,
+      );
+    }
 
     // 2. If local database has no status entries, fetch from Supabase watch_history
     if (statusMap.isEmpty) {
@@ -625,7 +640,14 @@ class WatchHistoryRepository {
           final statusStr = row['status'] as String? ?? 'completed';
           statusMap['$typeStr-$tmdbId'] = WatchStatus.fromJson(statusStr);
         }
-      } catch (_) {}
+      } catch (e, s) {
+        developer.log(
+          'Failed to fetch remote watch status from Supabase for user: $userId',
+          name: 'WatchHistoryRepository',
+          error: e,
+          stackTrace: s,
+        );
+      }
     }
 
     return statusMap;

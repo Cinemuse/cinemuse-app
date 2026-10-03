@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
@@ -88,6 +89,13 @@ class EpgStorageService {
       if (await file.exists()) {
         await file.delete();
       }
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log(
+        'Failed to clear EPG disk cache',
+        name: 'EpgStorageService',
+        error: e,
+        stackTrace: s,
+      );
+    }
   }
 }

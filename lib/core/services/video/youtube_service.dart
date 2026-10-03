@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
@@ -152,7 +153,14 @@ class YoutubeService {
       await sink.close();
       try {
         await file.delete();
-      } catch (_) {}
+      } catch (deleteError, deleteStack) {
+        developer.log(
+          'Failed to clean up temporary audio file after download error',
+          name: 'YoutubeService',
+          error: deleteError,
+          stackTrace: deleteStack,
+        );
+      }
       debugPrint('YT-DEBUG: Audio download FAILED: $e');
       rethrow;
     }

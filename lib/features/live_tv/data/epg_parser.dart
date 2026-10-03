@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
@@ -15,8 +16,13 @@ class EpgParser {
       try {
         final decompressed = GZipDecoder().decodeBytes(bytes);
         raw = Uint8List.fromList(decompressed);
-      } catch (_) {
-        // Fallback to original bytes if decompression fails
+      } catch (e, s) {
+        developer.log(
+          'GZip decompression failed, falling back to raw bytes',
+          name: 'EpgParser',
+          error: e,
+          stackTrace: s,
+        );
         raw = bytes;
       }
     }
@@ -49,11 +55,25 @@ class EpgParser {
         if (item is Map<String, dynamic>) {
           try {
             programs.add(EpgProgram.fromJson(item));
-          } catch (_) {}
+          } catch (e, s) {
+            developer.log(
+              'Failed to parse EPG program entry for key: $key',
+              name: 'EpgParser',
+              error: e,
+              stackTrace: s,
+            );
+          }
         } else if (item is Map) {
           try {
             programs.add(EpgProgram.fromJson(Map<String, dynamic>.from(item)));
-          } catch (_) {}
+          } catch (e, s) {
+            developer.log(
+              'Failed to parse EPG program map entry for key: $key',
+              name: 'EpgParser',
+              error: e,
+              stackTrace: s,
+            );
+          }
         }
       }
 

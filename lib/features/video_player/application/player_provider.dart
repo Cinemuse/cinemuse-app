@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io' as io;
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
@@ -738,7 +739,14 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           state = AsyncValue.data(current.copyWith(nextEpisode: nextEpisode));
         }
       }
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log(
+        'Failed to calculate or load next episode asynchronously',
+        name: 'PlayerController',
+        error: e,
+        stackTrace: s,
+      );
+    }
   }
 
   Future<void> _ensureMediaCached() async {
