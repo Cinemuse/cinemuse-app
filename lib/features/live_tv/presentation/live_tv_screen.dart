@@ -6,11 +6,12 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_panel.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/live_tv_guide_screen.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/live_player_section.dart';
-import 'package:cinemuse_app/features/live_tv/presentation/widgets/epg_info_card.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/player_settings_bottom_sheet.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/shared/widgets/offline_placeholder.dart';
@@ -28,6 +29,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
   Timer? _numberInputTimer;
   Timer? _channelSwitchTimer;
   final FocusNode _playerFocusNode = FocusNode();
+  final FocusNode _guideFocusNode = FocusNode(debugLabel: 'LiveTvGuide');
 
   // We use a constant PlayerParams for Live TV to keep the provider alive.
   // The actual channel is swapped via `changeChannel`.
@@ -46,7 +48,12 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
           (map) => {
             ...map,
             2: () {
-              _playerFocusNode.requestFocus();
+              final isMobile = MediaQuery.of(context).size.width < 600;
+              if (isMobile) {
+                _playerFocusNode.requestFocus();
+              } else {
+                _guideFocusNode.requestFocus();
+              }
             },
           },
         );
@@ -60,6 +67,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     _numberInputTimer?.cancel();
     _channelSwitchTimer?.cancel();
     _playerFocusNode.dispose();
+    _guideFocusNode.dispose();
     super.dispose();
   }
 
@@ -120,6 +128,19 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     ref.read(numberInputBufferProvider.notifier).state = '';
   }
 
+  void _openPlayer(Channel channel) {
+    ref.read(selectedChannelProvider.notifier).state = channel;
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        builder: (_) => VideoPlayerScreen(
+          queryId: channel.uniqueId,
+          type: 'livetv',
+          channel: channel,
+        ),
+      ),
+    );
+  }
+
   void _tuneToLcn(int lcn) {
     if (!mounted) return;
     final channelsAsync = ref.read(channelsProvider);
@@ -128,7 +149,12 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
       final match = channels.where((ch) => ch.lcn == lcn).firstOrNull;
       if (match != null) {
         ref.read(selectedChannelProvider.notifier).state = match;
-        _playChannel(match);
+        final isMobile = MediaQuery.of(context).size.width < 600;
+        if (isMobile) {
+          _playChannel(match);
+        } else {
+          _openPlayer(match);
+        }
       }
     });
   }
@@ -145,8 +171,9 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
 
   bool _handleKeyEvent(KeyEvent event) {
     if (!mounted) return false;
-    // Only handle when Live TV tab is active
+    // Only handle when Live TV tab is active and this screen is the current active route
     if (ref.read(navIndexProvider) != 2) return false;
+    if (ModalRoute.of(context)?.isCurrent != true) return false;
     if (event is! KeyDownEvent) return false;
 
     // Do not intercept keystrokes if the user is typing into a text field (e.g. search, dialog)
@@ -192,11 +219,15 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
       return true;
     }
 
-    // Enter confirms number input immediately
+    // Enter confirms number input immediately if a number is being entered
     if (key == LogicalKeyboardKey.enter ||
         key == LogicalKeyboardKey.numpadEnter) {
-      _confirmNumberInput();
-      return true;
+      final buffer = ref.read(numberInputBufferProvider);
+      if (buffer.isNotEmpty) {
+        _confirmNumberInput();
+        return true;
+      }
+      return false;
     }
 
     // Escape handling
@@ -206,14 +237,9 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
         ref.read(liveTvChannelOverlayProvider.notifier).state = false;
         return true;
       }
-      final viewMode = ref.read(liveTvViewModeProvider);
-      if (viewMode == LiveTvViewMode.fullWindow) {
-        ref.read(liveTvViewModeProvider.notifier).state = LiveTvViewMode.split;
-        return true;
-      }
       _numberInputTimer?.cancel();
       ref.read(numberInputBufferProvider.notifier).state = '';
-      return true;
+      return false;
     }
 
     return false;
@@ -238,17 +264,17 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     final navIndex = ref.watch(navIndexProvider);
     final isLiveTvTab = navIndex == 2;
 
-    // React to channel selection changes — only when the Live TV tab is active
-    // so we don't create the Player on other pages.
+    // React to channel selection changes — only on mobile mini-player
     ref.listen(selectedChannelProvider, (prev, next) {
-      if (isLiveTvTab && next != null && next.uniqueId != prev?.uniqueId) {
+      if (isMobile &&
+          isLiveTvTab &&
+          next != null &&
+          next.uniqueId != prev?.uniqueId) {
         _playChannel(next);
       }
     });
 
-    // Auto-select first channel when data loads.
-    // Intentionally does NOT call _playChannel here; the player isn't
-    // initialised yet. The build-time trigger below handles first-play.
+    // Auto-select first channel when data loads on mobile
     ref.listen(channelsProvider, (prev, next) {
       next.whenData((channels) {
         if (channels.isNotEmpty && ref.read(selectedChannelProvider) == null) {
@@ -258,7 +284,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     });
 
     AsyncValue<CinemaPlayerState>? playerState;
-    if (isLiveTvTab) {
+    if (isMobile && isLiveTvTab) {
       final ps = ref.watch(playerControllerProvider(_liveTvParams));
       playerState = ps;
 
@@ -276,108 +302,23 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
       }
     }
 
-    final viewMode = ref.watch(liveTvViewModeProvider);
-    final isFullWindow = !isMobile && viewMode == LiveTvViewMode.fullWindow;
-
     return Scaffold(
       backgroundColor: AppTheme.primary,
       body: isMobile
           ? _buildMobileLayout(selectedChannel, numberBuffer, playerState)
-          : (isFullWindow
-              ? _buildFullWindowLayout(selectedChannel, numberBuffer, playerState)
-              : _buildDesktopLayout(selectedChannel, numberBuffer, playerState)),
+          : _buildChannelGuideBrowser(),
     );
   }
 
   // -----------------------------------------------------------------------
-  // Full Window Layout (Player fills 100% of the app window)
+  // Desktop & TV Layout (Classic Cinemuse EPG TV Guide)
   // -----------------------------------------------------------------------
-  Widget _buildFullWindowLayout(
-    Channel? selectedChannel,
-    String numberBuffer,
-    AsyncValue<CinemaPlayerState>? playerState,
-  ) {
+  Widget _buildChannelGuideBrowser() {
     return RepaintBoundary(
-      child: LivePlayerSection(
-        channel: selectedChannel,
-        playerState: playerState,
-        onNumberInput: _handleNumberInput,
-        onConfirmNumber: _confirmNumberInput,
-        numberBuffer: numberBuffer,
-        isFullWindow: true,
-        onSettingsPressed: playerState?.valueOrNull != null
-            ? () => _openSettings(playerState!.valueOrNull!)
-            : null,
+      child: LiveTvGuideScreen(
+        focusNode: _guideFocusNode,
+        onChannelSelected: _openPlayer,
       ),
-    );
-  }
-
-  // -----------------------------------------------------------------------
-  // Desktop Layout (Split View: Channels on left, Preview + EPG on right)
-  // -----------------------------------------------------------------------
-  Widget _buildDesktopLayout(
-    Channel? selectedChannel,
-    String numberBuffer,
-    AsyncValue<CinemaPlayerState>? playerState,
-  ) {
-    const double padding = 20;
-    const double epgHeight = 200;
-    const double gap = 16;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final availableHeight = constraints.maxHeight;
-        final playerHeight = availableHeight - (padding * 2) - epgHeight - gap;
-        final playerWidth = playerHeight * (16 / 9);
-        final rightPanelWidth = playerWidth + (padding * 2);
-
-        return Row(
-          children: [
-            const Expanded(child: RepaintBoundary(child: ChannelListPanel())),
-
-            SizedBox(
-              width: rightPanelWidth.clamp(400, constraints.maxWidth * 0.7),
-              child: Padding(
-                padding: const EdgeInsets.all(padding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Player — Flexible prevents overflow
-                    Flexible(
-                      child: AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: RepaintBoundary(
-                          child: LivePlayerSection(
-                            channel: selectedChannel,
-                            playerState: playerState,
-                            onNumberInput: _handleNumberInput,
-                            onConfirmNumber: _confirmNumberInput,
-                            numberBuffer: numberBuffer,
-                            focusNode: _playerFocusNode,
-                            isFullWindow: false,
-                            onExpand: () {
-                              ref.read(liveTvViewModeProvider.notifier).state =
-                                  LiveTvViewMode.fullWindow;
-                            },
-                            onSettingsPressed: playerState?.valueOrNull != null
-                                ? () => _openSettings(playerState!.valueOrNull!)
-                                : null,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    if (selectedChannel != null) ...[
-                      const SizedBox(height: gap),
-                      _buildEpgCard(selectedChannel),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -402,6 +343,11 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
                 onNumberInput: _handleNumberInput,
                 onConfirmNumber: _confirmNumberInput,
                 numberBuffer: numberBuffer,
+                onExpand: () {
+                  if (selectedChannel != null) {
+                    _openPlayer(selectedChannel);
+                  }
+                },
                 onSettingsPressed: playerState?.valueOrNull != null
                     ? () => _openSettings(playerState!.valueOrNull!)
                     : null,
@@ -412,17 +358,6 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
         // EPG card removed for mobile to maximize space
         const Expanded(child: RepaintBoundary(child: ChannelListPanel())),
       ],
-    );
-  }
-
-  Widget _buildEpgCard(Channel channel) {
-    final currentProgram = ref.watch(currentProgramProvider(channel));
-    final nextProgram = ref.watch(nextProgramProvider(channel));
-
-    return EpgInfoCard(
-      currentProgram: currentProgram,
-      nextProgram: nextProgram,
-      channelName: channel.name,
     );
   }
 }

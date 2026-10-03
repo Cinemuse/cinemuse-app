@@ -5,12 +5,17 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
 import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 
+import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
+import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
+
 class VideoTopBar extends ConsumerWidget {
   final CinemaPlayerState playerState;
   final PlayerParams params;
   final VoidCallback onSettingsPressed;
   final VoidCallback onCastPressed;
   final VoidCallback? onBackPressed;
+  final Channel? channel;
+  final bool isLive;
 
   const VideoTopBar({
     super.key,
@@ -19,12 +24,16 @@ class VideoTopBar extends ConsumerWidget {
     required this.onSettingsPressed,
     required this.onCastPressed,
     this.onBackPressed,
+    this.channel,
+    this.isLive = false,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(localizationsProvider);
     final isBigPicture = ref.watch(isBigPictureProvider);
+    final currentProgram =
+        channel != null ? ref.watch(currentProgramProvider(channel!)) : null;
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -36,39 +45,175 @@ class VideoTopBar extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  playerState.title,
-                  style: const TextStyle(
-                    color: AppTheme.textWhite,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+          if (onBackPressed != null && !isBigPicture) ...[
+            IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textWhite),
+              tooltip: l10n.commonGoBack,
+              onPressed: onBackPressed,
+            ),
+            const SizedBox(width: 8),
+          ],
+          if (isLive || channel != null) ...[
+            if (channel != null) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  padding: const EdgeInsets.all(3),
+                  width: 34,
+                  height: 34,
+                  child: Image.network(
+                    channel!.logoUrl,
+                    fit: BoxFit.contain,
+                    cacheWidth: 68,
+                    cacheHeight: 68,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.tv_rounded,
+                      color: AppTheme.textWhite,
+                      size: 20,
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                if (params.type == 'tv' &&
-                    params.season != null &&
-                    params.episode != null) ...[
-                  const SizedBox(height: 2),
+              ),
+              const SizedBox(width: 12),
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          channel?.name ?? playerState.title,
+                          style: const TextStyle(
+                            color: AppTheme.textWhite,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Outfit',
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.favorites.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: AppTheme.favorites.withValues(alpha: 0.6),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: AppTheme.favorites,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              'LIVE',
+                              style: TextStyle(
+                                color: AppTheme.favorites,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (currentProgram != null) ...[
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            currentProgram.name,
+                            style: const TextStyle(
+                              color: AppTheme.textWhite,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          currentProgram.timeRange,
+                          style: TextStyle(
+                            color: AppTheme.textWhite.withValues(alpha: 0.65),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else if (channel?.group != null && channel!.group!.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      channel!.group!,
+                      style: TextStyle(
+                        color: AppTheme.textWhite.withValues(alpha: 0.65),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ] else ...[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   Text(
-                    '${l10n.detailsSeasonNumber(params.season!)}, ${l10n.detailsEpisodeNumber(params.episode!)}${params.episodeTitle != null ? ' - ${params.episodeTitle}' : ''}',
-                    style: TextStyle(
-                      color: AppTheme.textWhite.withValues(alpha: 0.7),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                    playerState.title,
+                    style: const TextStyle(
+                      color: AppTheme.textWhite,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (params.type == 'tv' &&
+                      params.season != null &&
+                      params.episode != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      '${l10n.detailsSeasonNumber(params.season!)}, ${l10n.detailsEpisodeNumber(params.episode!)}${params.episodeTitle != null ? ' - ${params.episodeTitle}' : ''}',
+                      style: TextStyle(
+                        color: AppTheme.textWhite.withValues(alpha: 0.7),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
+          ],
           if (!isBigPicture) ...[
             IconButton(
               icon: Icon(

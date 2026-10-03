@@ -1,16 +1,25 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 import 'package:cinemuse_app/features/live_tv/data/m3u_parser.dart';
+import 'package:cinemuse_app/features/live_tv/data/epg_parser.dart';
+import 'package:cinemuse_app/features/live_tv/data/epg_channel_matcher.dart';
+import 'package:cinemuse_app/features/live_tv/data/epg_storage_service.dart';
 
 class LiveTvRepository {
-  final Dio _dio;
+  static const String defaultEpgUrl =
+      'https://enfaqgwmuytoxkxgqqvp.supabase.co/functions/v1/live-tv-resolver/epg.json';
 
-  LiveTvRepository(this._dio);
+  final Dio _dio;
+  final EpgStorageService _epgStorage;
+
+  LiveTvRepository(this._dio, {EpgStorageService? epgStorage})
+      : _epgStorage = epgStorage ?? EpgStorageService();
 
   /// Fetches the channel list, filtering to only playable channels.
   Future<List<Channel>> fetchChannels({
@@ -171,45 +180,73 @@ class LiveTvRepository {
     });
   }
 
-  /// Fetches the EPG data.
-  ///
-  /// Returns a map: `{ "source": { "channelId": [EpgProgram, ...] } }`
-  Future<Map<String, Map<String, List<EpgProgram>>>> fetchEpg() async {
-    return {};
-  }
+  /// Fetches EPG program guide data from the specified URL or default endpoint.
+  /// Automatically checks local cache first unless [forceRefresh] is true.
+  Future<Map<String, List<EpgProgram>>> fetchEpg({
+    String? url,
+    bool forceRefresh = false,
+  }) async {
+    final effectiveUrl = (url != null && url.trim().isNotEmpty)
+        ? url.trim()
+        : defaultEpgUrl;
 
-  /// Looks up the current and next programs for a given channel.
-  ({EpgProgram? current, EpgProgram? next}) getProgramsForChannel(
-    Channel channel,
-    Map<String, Map<String, List<EpgProgram>>> epgData,
-  ) {
-    if (channel.epgSource == null || channel.epgId == null) {
-      return (current: null, next: null);
-    }
-
-    final sourcePrograms = epgData[channel.epgSource];
-    if (sourcePrograms == null) return (current: null, next: null);
-
-    final programs = sourcePrograms[channel.epgId];
-    if (programs == null || programs.isEmpty) {
-      return (current: null, next: null);
-    }
-
-    final now = DateTime.now();
-    EpgProgram? current;
-    EpgProgram? next;
-
-    for (int i = 0; i < programs.length; i++) {
-      final program = programs[i];
-      if (now.isAfter(program.startTime) && now.isBefore(program.endTime)) {
-        current = program;
-        if (i + 1 < programs.length) {
-          next = programs[i + 1];
-        }
-        break;
+    if (!forceRefresh) {
+      final cached = await _epgStorage.loadCachedEpg(expectedUrl: effectiveUrl);
+      if (cached != null && cached.isNotEmpty) {
+        return cached;
       }
     }
 
-    return (current: current, next: next);
+    try {
+      final response = await _dio.get<List<int>>(
+        effectiveUrl,
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {
+            'Accept': 'application/json, application/xml, text/xml, */*',
+          },
+        ),
+      );
+
+      final bytes = response.data;
+      if (bytes == null || bytes.isEmpty) {
+        return await _epgStorage.loadCachedEpg(
+              expectedUrl: effectiveUrl,
+              ttl: const Duration(days: 7),
+            ) ??
+            {};
+      }
+
+      final epgData = EpgParser.parseBytes(Uint8List.fromList(bytes));
+      if (epgData.isNotEmpty) {
+        await _epgStorage.saveCachedEpg(effectiveUrl, epgData);
+      }
+      return epgData;
+    } catch (e) {
+      debugPrint('LiveTvRepository: Error fetching EPG from $effectiveUrl: $e');
+      // Fallback to expired cache if available
+      final fallback = await _epgStorage.loadCachedEpg(
+        expectedUrl: effectiveUrl,
+        ttl: const Duration(days: 7),
+      );
+      if (fallback != null) return fallback;
+      return {};
+    }
+  }
+
+  /// Looks up the current and next programs for a given channel using smart matching.
+  ({EpgProgram? current, EpgProgram? next}) getProgramsForChannel(
+    Channel channel,
+    Map<String, List<EpgProgram>> epgData,
+  ) {
+    return EpgChannelMatcher.getNowAndNext(channel, epgData);
+  }
+
+  /// Returns full program schedule for a given channel.
+  List<EpgProgram> getChannelSchedule(
+    Channel channel,
+    Map<String, List<EpgProgram>> epgData,
+  ) {
+    return EpgChannelMatcher.findPrograms(channel, epgData);
   }
 }

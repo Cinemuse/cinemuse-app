@@ -36,6 +36,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get commonCancel => 'Annulla';
 
   @override
+  String get commonClose => 'Chiudi';
+
+  @override
   String get commonConfirm => 'Conferma';
 
   @override
@@ -722,6 +725,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playerNextEpisode => 'Prossimo Episodio';
 
   @override
+  String get playerPreviousChannel => 'Canale precedente';
+
+  @override
+  String get playerNextChannel => 'Canale successivo';
+
+  @override
+  String get playerChannelList => 'Lista canali';
+
+  @override
   String get playerPlay => 'Riproduci';
 
   @override
@@ -1402,6 +1414,40 @@ class AppLocalizationsIt extends AppLocalizations {
   String get liveTvFilterAndPlaylists => 'Filtri e Playlist';
 
   @override
+  String get liveTvEpgSection => 'Guida TV (EPG)';
+
+  @override
+  String get liveTvEpgSectionDesc =>
+      'Configura una sorgente per la guida programmi elettronica dei canali.';
+
+  @override
+  String get liveTvEpgUrl => 'URL Guida EPG';
+
+  @override
+  String get liveTvEpgCustom => 'Personalizzato';
+
+  @override
+  String get liveTvEpgDefault => 'Cinemuse Unificato (Predefinito)';
+
+  @override
+  String get liveTvConfigureEpg => 'Configura EPG';
+
+  @override
+  String get liveTvResetEpg => 'Ripristina Predefinito';
+
+  @override
+  String get liveTvRefreshEpg => 'Aggiorna Guida';
+
+  @override
+  String get liveTvEpgRefreshed => 'Guida EPG aggiornata con successo';
+
+  @override
+  String get liveTvEpgDialogTitle => 'Configura Guida EPG';
+
+  @override
+  String get liveTvEpgDialogHint => 'Inserisci un URL EPG XMLTV o JSON';
+
+  @override
   String get tvTimeComments => 'Commenti';
 
   @override
@@ -1997,4 +2043,22 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get menuViewWatchHistory => 'Visualizza cronologia';
+
+  @override
+  String get liveTvWatchChannel => 'Guarda Canale';
+
+  @override
+  String get liveTvJumpToNow => 'Vai alla diretta';
+
+  @override
+  String get liveTvTvGuide => 'Guida TV';
+
+  @override
+  String get liveTvNoProgramDetails =>
+      'Nessuna sinossi disponibile per questo programma.';
+
+  @override
+  String liveTvMinutesRemaining(int minutes) {
+    return '${minutes}m rimanenti';
+  }
 }

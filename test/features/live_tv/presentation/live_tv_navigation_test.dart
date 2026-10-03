@@ -12,10 +12,12 @@ import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_tile.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_panel.dart';
-import 'package:cinemuse_app/features/live_tv/presentation/widgets/live_video_controls.dart';
+import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_video_controls.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
-import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/live_tv_screen.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/live_tv_guide_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class MockLivePlayer extends Mock implements Player {}
@@ -27,6 +29,17 @@ class FakeLiveVideoState extends Fake implements mkv.VideoState {
   bool isFullscreen() => false;
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) => 'FakeLiveVideoState';
+}
+
+class FakeLivePlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>>
+    implements PlayerController {
+  FakeLivePlayerController() : super(const AsyncValue.loading());
+
+  @override
+  Future<void> seek(Duration position) async {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 Channel createMockChannel({
@@ -50,7 +63,12 @@ Widget buildTestWidget({
   List<Override> overrides = const [],
 }) {
   return ProviderScope(
-    overrides: overrides,
+    overrides: [
+      playerControllerProvider.overrideWith(
+        (ref, params) => FakeLivePlayerController(),
+      ),
+      ...overrides,
+    ],
     child: MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -278,6 +296,45 @@ void main() {
       expect(playerFocused, isTrue);
     });
 
+    testWidgets('ArrowLeft in overlay mode invokes onClose', (tester) async {
+      final channel = createMockChannel();
+      bool overlayClosed = false;
+
+      final container = ProviderContainer(
+        overrides: [
+          channelsProvider.overrideWith((ref) => Future.value([channel])),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: ChannelListPanel(
+                isOverlay: true,
+                onClose: () => overlayClosed = true,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final tileFinder = find.byType(ChannelListTile);
+      await tester.tap(tileFinder);
+      await tester.pump();
+
+      // Send ArrowLeft in overlay mode
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pump();
+
+      expect(overlayClosed, isTrue);
+    });
+
     testWidgets('ArrowRight in overlay mode invokes onClose', (tester) async {
       final channel = createMockChannel();
       bool overlayClosed = false;
@@ -315,6 +372,37 @@ void main() {
       await tester.pump();
 
       expect(overlayClosed, isTrue);
+    });
+
+    testWidgets('does not render category filter chips in overlay mode', (tester) async {
+      final channel = createMockChannel();
+
+      final container = ProviderContainer(
+        overrides: [
+          channelsProvider.overrideWith((ref) => Future.value([channel])),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: ChannelListPanel(
+                isOverlay: true,
+                onClose: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Category filter chips ("All", etc.) are removed from overlay drawer
+      expect(find.text('All'), findsNothing);
     });
   });
 
@@ -370,22 +458,29 @@ void main() {
           overrides: [
             isBigPictureProvider.overrideWith((ref) => true),
           ],
-          child: LiveVideoControls(
+          child: CustomVideoControls(
             playerState: playerState,
             channel: channel,
             videoState: FakeLiveVideoState(),
+            params: const PlayerParams('livetv_session', 'livetv'),
+            isLive: true,
+            onSettingsPressed: () {},
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      // Big Picture buttons
-      expect(find.widgetWithIcon(DpadFocusable, Icons.replay_10_rounded), findsOneWidget);
-      expect(find.byTooltip('Pause'), findsOneWidget);
-      expect(find.widgetWithIcon(DpadFocusable, Icons.forward_10_rounded), findsOneWidget);
-      expect(find.widgetWithIcon(DpadFocusable, Icons.sensors_rounded), findsOneWidget);
-      expect(find.widgetWithIcon(DpadFocusable, Icons.aspect_ratio_rounded), findsOneWidget);
-      expect(find.widgetWithIcon(DpadFocusable, Icons.fullscreen_rounded), findsOneWidget);
+      // Live TV buttons: Stop button is present to exit player
+      expect(find.byIcon(Icons.skip_previous_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
+      expect(find.byIcon(Icons.close_rounded), findsNothing);
+      expect(find.byIcon(Icons.skip_next_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.fullscreen_rounded), findsOneWidget);
+      expect(find.byType(Slider), findsOneWidget);
+      expect(find.text('Test Channel'), findsOneWidget);
+      expect(find.text('LIVE'), findsWidgets);
     });
 
     testWidgets('hides settings in top bar and shows tune icon in TV row when isBigPicture is true', (tester) async {
@@ -397,10 +492,12 @@ void main() {
           overrides: [
             isBigPictureProvider.overrideWith((ref) => true),
           ],
-          child: LiveVideoControls(
+          child: CustomVideoControls(
             playerState: playerState,
             channel: channel,
             videoState: FakeLiveVideoState(),
+            params: const PlayerParams('livetv_session', 'livetv'),
+            isLive: true,
             onSettingsPressed: () {},
           ),
         ),
@@ -413,7 +510,7 @@ void main() {
       expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
     });
 
-    testWidgets('renders channels drawer button in TV row when in fullWindow', (tester) async {
+    testWidgets('renders channels drawer button in TV row when onOpenChannelGuide is provided', (tester) async {
       final channel = createMockChannel();
       final playerState = createTestPlayerState();
 
@@ -423,17 +520,153 @@ void main() {
             isBigPictureProvider.overrideWith((ref) => true),
             liveTvViewModeProvider.overrideWith((ref) => LiveTvViewMode.fullWindow),
           ],
-          child: LiveVideoControls(
+          child: CustomVideoControls(
             playerState: playerState,
             channel: channel,
             videoState: FakeLiveVideoState(),
+            params: const PlayerParams('livetv_session', 'livetv'),
+            isLive: true,
+            onSettingsPressed: () {},
+            onOpenChannelGuide: () {},
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      // In fullWindow, sidebar/channels button is shown
-      expect(find.byIcon(Icons.view_sidebar_outlined), findsOneWidget);
+      // Channel guide button is shown
+      expect(find.byIcon(Icons.list_rounded), findsOneWidget);
+    });
+  });
+
+  group('Channel Guide Browser & VideoPlayerScreen Navigation Tests', () {
+    testWidgets('tapping channel with onChannelSelected invokes callback', (tester) async {
+      final channel = createMockChannel(name: 'Canale 5 HD', lcn: 5);
+      Channel? selectedChannel;
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            channelsProvider.overrideWith((ref) => Future.value([channel])),
+          ],
+          child: ChannelListPanel(
+            isOverlay: false,
+            onChannelSelected: (ch) => selectedChannel = ch,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Canale 5 HD'));
+      await tester.pump();
+
+      expect(selectedChannel, isNotNull);
+      expect(selectedChannel!.uniqueId, equals(channel.uniqueId));
+    });
+
+    testWidgets('renders empty state with Manage Playlists button when no channels exist', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            channelsProvider.overrideWith((ref) => Future.value([])),
+          ],
+          child: const ChannelListPanel(isOverlay: false),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.tv_off_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.playlist_add_rounded), findsOneWidget);
+      expect(find.text('Manage Playlists'), findsOneWidget);
+    });
+  });
+
+  group('Top Navbar to LiveTvScreen Navigation Integration', () {
+    testWidgets('pageContentFocusActionsProvider[2] focuses LiveTvGuideScreen from navbar', (tester) async {
+      tester.view.physicalSize = const Size(1280, 720);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final channel = createMockChannel(name: 'Rai 1 HD', lcn: 1);
+      final container = ProviderContainer(
+        overrides: [
+          channelsProvider.overrideWith((ref) => Future.value([channel])),
+          epgDataProvider.overrideWith((ref) => Future.value({})),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: LiveTvScreen()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Retrieve registered action for Live TV tab (index 2)
+      final actions = container.read(pageContentFocusActionsProvider);
+      expect(actions[2], isNotNull);
+
+      // Invoke action (as AppNavbar does on ArrowDown)
+      actions[2]!();
+      await tester.pumpAndSettle();
+
+      // Focus should be in LiveTvGuideScreen on the "All" tab button
+      expect(find.byType(LiveTvGuideScreen), findsOneWidget);
+      expect(find.text('All'), findsWidgets);
+    });
+
+    testWidgets('ArrowUp on All tab invokes topNavbarFocusActionProvider', (tester) async {
+      final channel = createMockChannel(name: 'Rai 1 HD', lcn: 1);
+      bool navbarFocused = false;
+
+      final focusNode = FocusNode();
+      addTearDown(focusNode.dispose);
+
+      final container = ProviderContainer(
+        overrides: [
+          channelsProvider.overrideWith((ref) => Future.value([channel])),
+          epgDataProvider.overrideWith((ref) => Future.value({})),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      container.read(topNavbarFocusActionProvider.notifier).state = () {
+        navbarFocused = true;
+      };
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: LiveTvGuideScreen(focusNode: focusNode),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Request focus on the All tab
+      focusNode.requestFocus();
+      await tester.pump();
+      expect(focusNode.hasFocus, isTrue);
+
+      // Send ArrowUp key
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+
+      // Top navbar focus action should have been triggered
+      expect(navbarFocused, isTrue);
     });
   });
 }

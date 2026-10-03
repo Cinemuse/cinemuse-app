@@ -59,4 +59,14 @@ class EpgProgram {
       imageUrl: json['image'] as String?,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'startTime': {'unix': startTime.millisecondsSinceEpoch},
+    'endTime': {'unix': endTime.millisecondsSinceEpoch},
+    if (subtitle != null) 'subtitle': subtitle,
+    if (description != null) 'description': description,
+    if (imageUrl != null) 'image': imageUrl,
+  };
 }
+

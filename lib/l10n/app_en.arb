@@ -9,6 +9,7 @@
   "commonError": "Error",
   "commonRetry": "Retry",
   "commonCancel": "Cancel",
+  "commonClose": "Close",
   "commonConfirm": "Confirm",
   "commonCreate": "Create",
   "commonDelete": "Delete",
@@ -231,6 +232,9 @@
   "playerSelectSubtitle": "Select Subtitle Track",
   "commonGoBack": "Go Back",
   "playerNextEpisode": "Next Episode",
+  "playerPreviousChannel": "Previous Channel",
+  "playerNextChannel": "Next Channel",
+  "playerChannelList": "Channel List",
   "playerPlay": "Play",
   "playerPause": "Pause",
   "playerStop": "Stop",
@@ -450,6 +454,17 @@
   "liveTvTypeJsonUrl": "JSON URL",
   "liveTvPlaylists": "Playlists",
   "liveTvFilterAndPlaylists": "Filter & Playlists",
+  "liveTvEpgSection": "TV Guide (EPG)",
+  "liveTvEpgSectionDesc": "Configure an electronic program guide source for channel schedules.",
+  "liveTvEpgUrl": "EPG Guide URL",
+  "liveTvEpgCustom": "Custom",
+  "liveTvEpgDefault": "Cinemuse Unified (Default)",
+  "liveTvConfigureEpg": "Configure EPG",
+  "liveTvResetEpg": "Reset to Default",
+  "liveTvRefreshEpg": "Refresh Guide",
+  "liveTvEpgRefreshed": "EPG guide refreshed successfully",
+  "liveTvEpgDialogTitle": "Configure EPG Guide",
+  "liveTvEpgDialogHint": "Enter an XMLTV or JSON EPG URL",
 
   "tvTimeComments": "Comments",
   "tvTimeNoComments": "No comments yet.",
@@ -726,6 +741,16 @@
   "playerFullscreen": "Fullscreen",
   "playerExitFullscreen": "Exit fullscreen",
   "seriesStatusOngoing": "Ongoing",
-  "menuViewWatchHistory": "View Watch History"
+  "menuViewWatchHistory": "View Watch History",
+  "liveTvWatchChannel": "Watch Channel",
+  "liveTvJumpToNow": "Jump to Live",
+  "liveTvTvGuide": "TV Guide",
+  "liveTvNoProgramDetails": "No synopsis available for this program.",
+  "liveTvMinutesRemaining": "{minutes}m remaining",
+  "@liveTvMinutesRemaining": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  }
 }
 

@@ -43,7 +43,16 @@ class VideoBottomBar extends ConsumerStatefulWidget {
     this.onSettingsPressed,
     this.playPauseFocusNode,
     this.seekbarFocusNode,
+    this.isLive = false,
+    this.onPreviousChannel,
+    this.onNextChannel,
+    this.onOpenChannelGuide,
   });
+
+  final bool isLive;
+  final VoidCallback? onPreviousChannel;
+  final VoidCallback? onNextChannel;
+  final VoidCallback? onOpenChannelGuide;
 
   @override
   ConsumerState<VideoBottomBar> createState() => _VideoBottomBarState();
@@ -95,12 +104,265 @@ class _VideoBottomBarState extends ConsumerState<VideoBottomBar> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Seekbar
+          // Seekbar (VOD and Live TV)
           StreamBuilder<Duration>(
             stream: player.stream.position,
             builder: (context, snapshot) {
+              final rawDuration = player.state.duration;
               final position =
                   widget.virtualPosition ?? snapshot.data ?? Duration.zero;
+
+              if (widget.isLive) {
+                if (rawDuration <= Duration.zero) {
+                  return const SizedBox(height: 8);
+                }
+
+                final secondsBehindLive =
+                    -(rawDuration.inSeconds - position.inSeconds).toDouble();
+                final uiTotalSeconds =
+                    ((rawDuration.inSeconds / 60).ceil() * 60)
+                        .toDouble()
+                        .clamp(60.0, 7200.0);
+                final safeMin = -uiTotalSeconds;
+                final isAtLive =
+                    !widget.dragging && secondsBehindLive >= -30;
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return MouseRegion(
+                            onHover: (event) {
+                              setState(() {
+                                _hoverX = event.localPosition.dx;
+                                _isHoveringSeekbar = true;
+                                final percent =
+                                    (_hoverX! / constraints.maxWidth)
+                                        .clamp(0.0, 1.0);
+                                final hoverOffsetSeconds =
+                                    ((1.0 - percent) * uiTotalSeconds).toInt();
+                                _hoverDuration =
+                                    Duration(seconds: hoverOffsetSeconds);
+                              });
+                            },
+                            onExit: (_) {
+                              setState(() {
+                                _isHoveringSeekbar = false;
+                                _hoverX = null;
+                                _hoverDuration = null;
+                              });
+                            },
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Focus(
+                                  focusNode: widget.seekbarFocusNode,
+                                  onFocusChange: (focused) {
+                                    setState(() => _isSeekbarFocused = focused);
+                                  },
+                                  onKeyEvent: (node, event) {
+                                    if (event is! KeyDownEvent &&
+                                        event is! KeyRepeatEvent) {
+                                      return KeyEventResult.ignored;
+                                    }
+
+                                    if (event.logicalKey ==
+                                        LogicalKeyboardKey.arrowDown) {
+                                      if (event is KeyDownEvent) {
+                                        widget.playPauseFocusNode?.requestFocus();
+                                      }
+                                      return KeyEventResult.handled;
+                                    }
+
+                                    if (event.logicalKey ==
+                                        LogicalKeyboardKey.arrowUp) {
+                                      return KeyEventResult.handled;
+                                    }
+
+                                    if (event.logicalKey ==
+                                            LogicalKeyboardKey.arrowLeft ||
+                                        event.logicalKey ==
+                                            LogicalKeyboardKey.arrowRight) {
+                                      final now = DateTime.now();
+                                      if (event is KeyRepeatEvent) {
+                                        if (_lastSeekbarStepTime != null &&
+                                            now
+                                                    .difference(
+                                                      _lastSeekbarStepTime!,
+                                                    )
+                                                    .inMilliseconds <
+                                                100) {
+                                          return KeyEventResult.handled;
+                                        }
+                                      }
+                                      _lastSeekbarStepTime = now;
+                                      _handleSeekbarStep(
+                                        player,
+                                        event.logicalKey ==
+                                            LogicalKeyboardKey.arrowRight,
+                                      );
+                                      return KeyEventResult.handled;
+                                    }
+
+                                    return KeyEventResult.ignored;
+                                  },
+                                  child: SliderTheme(
+                                    data: SliderThemeData(
+                                      trackHeight: _isSeekbarFocused
+                                          ? 5
+                                          : (isBigPicture ? 4 : 2.5),
+                                      thumbShape: RoundSliderThumbShape(
+                                        enabledThumbRadius: _isSeekbarFocused
+                                            ? 8
+                                            : (isBigPicture ? 6 : 5),
+                                      ),
+                                      overlayShape: RoundSliderOverlayShape(
+                                        overlayRadius: _isSeekbarFocused
+                                            ? 14
+                                            : (isBigPicture ? 12 : 10),
+                                      ),
+                                      activeTrackColor: Colors.white,
+                                      inactiveTrackColor: Colors.white
+                                          .withValues(alpha: 0.24),
+                                      thumbColor: Colors.white,
+                                      overlayColor: AppTheme.accentGlow,
+                                    ),
+                                    child: Slider(
+                                      value: isAtLive
+                                          ? 0.0
+                                          : secondsBehindLive.clamp(safeMin, 0.0),
+                                      min: safeMin,
+                                      max: 0.0,
+                                      onChangeStart: (v) {
+                                        final clampedOffset = v.clamp(
+                                          -rawDuration.inSeconds.toDouble(),
+                                          0.0,
+                                        );
+                                        final target = rawDuration +
+                                            Duration(seconds: clampedOffset.toInt());
+                                        widget.onChangeStart(
+                                            target.inSeconds.toDouble());
+                                      },
+                                      onChanged: (v) {
+                                        final clampedOffset = v.clamp(
+                                          -rawDuration.inSeconds.toDouble(),
+                                          0.0,
+                                        );
+                                        final target = rawDuration +
+                                            Duration(seconds: clampedOffset.toInt());
+                                        widget.onChanged(
+                                            target.inSeconds.toDouble());
+                                      },
+                                      onChangeEnd: (v) {
+                                        final clampedOffset = v.clamp(
+                                          -rawDuration.inSeconds.toDouble(),
+                                          0.0,
+                                        );
+                                        final target = rawDuration +
+                                            Duration(seconds: clampedOffset.toInt());
+                                        widget.onChangeEnd(
+                                            target.inSeconds.toDouble());
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                if (_isHoveringSeekbar &&
+                                    _hoverX != null &&
+                                    _hoverDuration != null)
+                                  Positioned(
+                                    left: (_hoverX! - 35).clamp(
+                                      0,
+                                      constraints.maxWidth - 70,
+                                    ),
+                                    top: -35,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(alpha: 0.75),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.2),
+                                          width: 0.5,
+                                        ),
+                                        boxShadow: AppTheme.shadowNeonSm,
+                                      ),
+                                      child: Text(
+                                        _hoverDuration!.inSeconds <= 5
+                                            ? 'LIVE'
+                                            : '-${_formatDuration(_hoverDuration!)}',
+                                        style: const TextStyle(
+                                          color: AppTheme.textWhite,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          fontFamily: 'Outfit',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    InkWell(
+                      onTap: isAtLive
+                          ? null
+                          : () {
+                              widget.onChangeStart(
+                                  rawDuration.inSeconds.toDouble());
+                              widget.onChangeEnd(
+                                  rawDuration.inSeconds.toDouble());
+                            },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isAtLive
+                                    ? AppTheme.favorites
+                                    : AppTheme.textMuted,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              isAtLive
+                                  ? 'LIVE'
+                                  : '-${_formatDuration(Duration(seconds: secondsBehindLive.toInt().abs()))}',
+                              style: TextStyle(
+                                color: isAtLive
+                                    ? AppTheme.favorites
+                                    : AppTheme.textWhite,
+                                fontSize: isBigPicture ? 14 : 12,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                );
+              }
+
+              // VOD Seekbar
               final duration = player.state.duration;
               return Row(
                 children: [
@@ -181,7 +443,6 @@ class _VideoBottomBarState extends ConsumerState<VideoBottomBar> {
                                 },
                                 child: Builder(
                                   builder: (context) {
-                                    // Unused theme/primary removed
                                     return SliderTheme(
                                       data: SliderThemeData(
                                         trackHeight: _isSeekbarFocused
@@ -293,6 +554,10 @@ class _VideoBottomBarState extends ConsumerState<VideoBottomBar> {
             onSettingsPressed: widget.onSettingsPressed,
             playPauseFocusNode: widget.playPauseFocusNode,
             seekbarFocusNode: widget.seekbarFocusNode,
+            isLive: widget.isLive,
+            onPreviousChannel: widget.onPreviousChannel,
+            onNextChannel: widget.onNextChannel,
+            onOpenChannelGuide: widget.onOpenChannelGuide,
           ),
         ],
       ),

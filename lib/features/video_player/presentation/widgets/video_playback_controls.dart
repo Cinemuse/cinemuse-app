@@ -21,6 +21,10 @@ class VideoPlaybackControls extends ConsumerStatefulWidget {
   final VoidCallback? onSettingsPressed;
   final FocusNode? playPauseFocusNode;
   final FocusNode? seekbarFocusNode;
+  final bool isLive;
+  final VoidCallback? onPreviousChannel;
+  final VoidCallback? onNextChannel;
+  final VoidCallback? onOpenChannelGuide;
 
   const VideoPlaybackControls({
     super.key,
@@ -35,6 +39,10 @@ class VideoPlaybackControls extends ConsumerStatefulWidget {
     this.onSettingsPressed,
     this.playPauseFocusNode,
     this.seekbarFocusNode,
+    this.isLive = false,
+    this.onPreviousChannel,
+    this.onNextChannel,
+    this.onOpenChannelGuide,
   });
 
   @override
@@ -50,6 +58,9 @@ class _VideoPlaybackControlsState
   late final FocusNode _settingsFocusNode;
   late final FocusNode _nextEpisodeFocusNode;
   late final FocusNode _fullscreenFocusNode;
+  late final FocusNode _prevChannelFocusNode;
+  late final FocusNode _nextChannelFocusNode;
+  late final FocusNode _channelGuideFocusNode;
   FocusNode? _internalPlayPauseFocusNode;
 
   FocusNode get _effectivePlayPauseFocusNode =>
@@ -66,6 +77,9 @@ class _VideoPlaybackControlsState
     _settingsFocusNode = FocusNode(debugLabel: 'SettingsTvButton');
     _nextEpisodeFocusNode = FocusNode(debugLabel: 'NextEpisodeTvButton');
     _fullscreenFocusNode = FocusNode(debugLabel: 'FullscreenTvButton');
+    _prevChannelFocusNode = FocusNode(debugLabel: 'PrevChannelTvButton');
+    _nextChannelFocusNode = FocusNode(debugLabel: 'NextChannelTvButton');
+    _channelGuideFocusNode = FocusNode(debugLabel: 'ChannelGuideTvButton');
   }
 
   @override
@@ -76,6 +90,9 @@ class _VideoPlaybackControlsState
     _settingsFocusNode.dispose();
     _nextEpisodeFocusNode.dispose();
     _fullscreenFocusNode.dispose();
+    _prevChannelFocusNode.dispose();
+    _nextChannelFocusNode.dispose();
+    _channelGuideFocusNode.dispose();
     _internalPlayPauseFocusNode?.dispose();
     super.dispose();
   }
@@ -87,6 +104,98 @@ class _VideoPlaybackControlsState
 
     final hasSettings = widget.onSettingsPressed != null;
     final hasNext = widget.onNextEpisode != null;
+    final hasGuide = widget.onOpenChannelGuide != null;
+
+    if (widget.isLive) {
+      final rightStartNode = hasGuide
+          ? _channelGuideFocusNode
+          : (hasSettings ? _settingsFocusNode : _fullscreenFocusNode);
+      final guideNextNode =
+          hasSettings ? _settingsFocusNode : _fullscreenFocusNode;
+      final settingsPrevNode =
+          hasGuide ? _channelGuideFocusNode : _nextChannelFocusNode;
+      final fullscreenPrevNode = hasSettings
+          ? _settingsFocusNode
+          : (hasGuide ? _channelGuideFocusNode : _nextChannelFocusNode);
+
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Row(
+          children: [
+            _buildControlButton(
+              icon: Icons.skip_previous_rounded,
+              tooltip: l10n.playerPreviousChannel,
+              focusNode: _prevChannelFocusNode,
+              onKeyEvent: (node, event) => _handleKey(
+                event,
+                prev: null,
+                next: _effectivePlayPauseFocusNode,
+              ),
+              onTap: widget.onPreviousChannel ?? () {},
+            ),
+            const SizedBox(width: 4),
+            _buildPlayPauseButton(player, l10n),
+            const SizedBox(width: 4),
+            _buildControlButton(
+              icon: Icons.stop_rounded,
+              tooltip: l10n.playerStop,
+              focusNode: _stopFocusNode,
+              onKeyEvent: (node, event) => _handleKey(
+                event,
+                prev: _effectivePlayPauseFocusNode,
+                next: _nextChannelFocusNode,
+              ),
+              onTap: widget.onStopPressed,
+            ),
+            const SizedBox(width: 4),
+            _buildControlButton(
+              icon: Icons.skip_next_rounded,
+              tooltip: l10n.playerNextChannel,
+              focusNode: _nextChannelFocusNode,
+              onKeyEvent: (node, event) => _handleKey(
+                event,
+                prev: _stopFocusNode,
+                next: rightStartNode,
+              ),
+              onTap: widget.onNextChannel ?? () {},
+            ),
+            const Spacer(),
+            if (hasGuide) ...[
+              _buildControlButton(
+                icon: Icons.list_rounded,
+                tooltip: l10n.playerChannelList,
+                focusNode: _channelGuideFocusNode,
+                onKeyEvent: (node, event) => _handleKey(
+                  event,
+                  prev: _nextChannelFocusNode,
+                  next: guideNextNode,
+                ),
+                onTap: widget.onOpenChannelGuide!,
+              ),
+              const SizedBox(width: 4),
+            ],
+            if (hasSettings) ...[
+              _buildControlButton(
+                icon: Icons.tune_rounded,
+                tooltip: l10n.playerSettings,
+                focusNode: _settingsFocusNode,
+                onKeyEvent: (node, event) => _handleKey(
+                  event,
+                  prev: settingsPrevNode,
+                  next: _fullscreenFocusNode,
+                ),
+                onTap: widget.onSettingsPressed!,
+              ),
+              const SizedBox(width: 4),
+            ],
+            _buildFullscreenButton(
+              l10n,
+              fullscreenPrevNode,
+            ),
+          ],
+        ),
+      );
+    }
 
     final forwardNextNode = hasSettings
         ? _settingsFocusNode
@@ -209,6 +318,8 @@ class _VideoPlaybackControlsState
   }
 
   Widget _buildPlayPauseButton(Player player, AppLocalizations l10n) {
+    final prevNode = widget.isLive ? _prevChannelFocusNode : _rewindFocusNode;
+    final nextNode = _stopFocusNode;
     return StreamBuilder<bool>(
       stream: player.stream.playing,
       initialData: player.state.playing,
@@ -223,8 +334,8 @@ class _VideoPlaybackControlsState
           buttonSize: 42,
           onKeyEvent: (node, event) => _handleKey(
             event,
-            prev: _rewindFocusNode,
-            next: _stopFocusNode,
+            prev: prevNode,
+            next: nextNode,
           ),
           onTap: widget.onTogglePlayPause,
         );
@@ -234,8 +345,9 @@ class _VideoPlaybackControlsState
 
   Widget _buildFullscreenButton(
     AppLocalizations l10n,
-    FocusNode? prevNode,
-  ) {
+    FocusNode? prevNode, {
+    FocusNode? nextNode,
+  }) {
     return _buildControlButton(
       icon: widget.isFullscreen
           ? Icons.fullscreen_exit_rounded
@@ -249,7 +361,7 @@ class _VideoPlaybackControlsState
       onKeyEvent: (node, event) => _handleKey(
         event,
         prev: prevNode,
-        next: null,
+        next: nextNode,
       ),
       onTap: widget.onToggleFullscreen,
     );

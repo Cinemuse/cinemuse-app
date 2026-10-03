@@ -38,10 +38,13 @@ class FakeSettingsNotifier extends StateNotifier<UserSettings>
 
 class FakePlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>>
     implements PlayerController {
-  FakePlayerController() : super(const AsyncValue.loading());
+  FakePlayerController({this.onSeek}) : super(const AsyncValue.loading());
+  final void Function(Duration position)? onSeek;
 
   @override
-  Future<void> seek(Duration position) async {}
+  Future<void> seek(Duration position) async {
+    onSeek?.call(position);
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -99,6 +102,7 @@ void main() {
   Widget buildTestableWidget(
     Widget child, {
     DisplayMode mode = DisplayMode.bigPicture,
+    void Function(Duration)? onSeek,
   }) {
     return ProviderScope(
       key: ValueKey(mode),
@@ -110,7 +114,7 @@ void main() {
         }),
         settingsProvider.overrideWith((ref) => FakeSettingsNotifier()),
         playerControllerProvider.overrideWith(
-          (ref, params) => FakePlayerController(),
+          (ref, params) => FakePlayerController(onSeek: onSeek),
         ),
       ],
       child: MaterialApp(
@@ -603,14 +607,15 @@ void main() {
       );
     });
 
-    testWidgets('Long-pressing Left/Right and Up/Down when controls are hidden triggers skip and volume adjustments', (tester) async {
+    testWidgets('Long-pressing Left/Right triggers skip and Up/Down is unused on VOD when controls are hidden', (tester) async {
       final fakeVideoState = FakeVideoState();
       when(() => mockStream.position).thenAnswer((_) => Stream.value(Duration.zero));
       when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
       when(() => mockState.volume).thenReturn(50.0);
       when(() => mockState.playing).thenReturn(true);
-      when(() => mockPlayer.seek(any())).thenAnswer((_) async {});
       when(() => mockPlayer.setVolume(any())).thenAnswer((_) async {});
+
+      Duration? seekTarget;
 
       await tester.pumpWidget(
         buildTestableWidget(
@@ -623,6 +628,7 @@ void main() {
             onOverlayRequested: (_) {},
           ),
           mode: DisplayMode.bigPicture,
+          onSeek: (pos) => seekTarget = pos,
         ),
       );
       await tester.pumpAndSettle();
@@ -663,24 +669,72 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Long press arrowUp (volume ramping: KeyDown steps +5, repeats step +2)
+      // Verify seek was called for skip
+      expect(seekTarget, isNotNull);
+
+      // Press arrowUp: Volume adjustment removed on VOD
       await tester.sendKeyDownEvent(
         LogicalKeyboardKey.arrowUp,
         physicalKey: PhysicalKeyboardKey.arrowUp,
       );
       await tester.pump(const Duration(milliseconds: 50));
-      await tester.sendKeyRepeatEvent(
-        LogicalKeyboardKey.arrowUp,
-        physicalKey: PhysicalKeyboardKey.arrowUp,
-      );
-      await tester.pump(const Duration(milliseconds: 60));
       await tester.sendKeyUpEvent(
         LogicalKeyboardKey.arrowUp,
         physicalKey: PhysicalKeyboardKey.arrowUp,
       );
       await tester.pumpAndSettle();
 
-      verify(() => mockPlayer.setVolume(any())).called(greaterThanOrEqualTo(1));
+      // Volume should NOT have been adjusted
+      verifyNever(() => mockPlayer.setVolume(any()));
+    });
+
+    testWidgets('Up/Down keys zap channels on Live TV when controls are hidden', (tester) async {
+      final fakeVideoState = FakeVideoState();
+      when(() => mockStream.position).thenAnswer((_) => Stream.value(Duration.zero));
+      when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
+      when(() => mockState.volume).thenReturn(50.0);
+      when(() => mockState.playing).thenReturn(true);
+
+      bool nextChannelZapped = false;
+      bool prevChannelZapped = false;
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          CustomVideoControls(
+            videoState: fakeVideoState,
+            playerState: createDummyPlayerState(),
+            params: const PlayerParams('livetv_session', 'livetv'),
+            isLive: true,
+            onSettingsPressed: () {},
+            onBackPressed: () {},
+            onOverlayRequested: (_) {},
+            onNextChannel: () => nextChannelZapped = true,
+            onPreviousChannel: () => prevChannelZapped = true,
+          ),
+          mode: DisplayMode.bigPicture,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Wait 5 seconds to let hide timer expire
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+
+      // Verify controls are hidden
+      final animatedOpacity = tester.widget<AnimatedOpacity>(
+        find.byType(AnimatedOpacity).first,
+      );
+      expect(animatedOpacity.opacity, equals(0.0));
+
+      // Press ArrowDown to zap next channel
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      expect(nextChannelZapped, isTrue);
+
+      // Press ArrowUp to zap previous channel
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pumpAndSettle();
+      expect(prevChannelZapped, isTrue);
     });
   });
 

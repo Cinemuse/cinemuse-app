@@ -10,6 +10,7 @@ import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_tile.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_filter_sheet.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 /// Minimalist Live TV channel list panel.
 ///
@@ -18,33 +19,74 @@ import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 class ChannelListPanel extends ConsumerWidget {
   final bool isOverlay;
   final VoidCallback? onClose;
+  final void Function(Channel channel)? onChannelSelected;
 
   const ChannelListPanel({
     super.key,
     this.isOverlay = false,
     this.onClose,
+    this.onChannelSelected,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (isOverlay) {
-      return Container(
-        decoration: BoxDecoration(
-          color: const Color(0xF5101014),
-          border: Border(
-            right: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
-          ),
-        ),
-        child: Column(
-          children: [
-            _buildOverlayHeader(context),
-            const Divider(height: 1, color: Colors.white10),
-            const _SearchRow(),
-            const Divider(height: 1, color: Colors.white10),
-            Expanded(
-              child: _ChannelList(isOverlay: true, onClose: onClose),
+      return Focus(
+        onKeyEvent: (node, event) {
+          if (event is! KeyDownEvent) return KeyEventResult.ignored;
+          if (event.logicalKey == LogicalKeyboardKey.escape ||
+              event.logicalKey == LogicalKeyboardKey.gameButtonB ||
+              event.logicalKey == LogicalKeyboardKey.goBack) {
+            onClose?.call();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFA0F0518),
+                    Color(0xF71A0B2E),
+                  ],
+                ),
+                border: Border(
+                  right: BorderSide(
+                    color: AppTheme.border,
+                    width: 1,
+                  ),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.7),
+                    blurRadius: 32,
+                    spreadRadius: 2,
+                    offset: const Offset(6, 0),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  _buildOverlayHeader(context, ref),
+                  const Divider(height: 1, color: Colors.white10),
+                  _SearchRow(isOverlay: true, onClose: onClose),
+                  const Divider(height: 1, color: Colors.white10),
+                  Expanded(
+                    child: _ChannelList(
+                      isOverlay: true,
+                      onClose: onClose,
+                      onChannelSelected: onChannelSelected,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       );
     }
@@ -60,9 +102,14 @@ class ChannelListPanel extends ConsumerWidget {
           child: Column(
             children: [
               const _SearchRow(),
+              const _CategoryChipsRow(),
               const Divider(height: 1, color: Colors.white10),
               Expanded(
-                child: _ChannelList(isOverlay: false, onClose: onClose),
+                child: _ChannelList(
+                  isOverlay: false,
+                  onClose: onClose,
+                  onChannelSelected: onChannelSelected,
+                ),
               ),
             ],
           ),
@@ -71,27 +118,86 @@ class ChannelListPanel extends ConsumerWidget {
     );
   }
 
-  Widget _buildOverlayHeader(BuildContext context) {
+  Widget _buildOverlayHeader(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final channelsCount =
+        ref.watch(filteredChannelsProvider).valueOrNull?.length;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+      padding: const EdgeInsets.fromLTRB(16, 14, 12, 10),
       child: Row(
         children: [
-          const Icon(Icons.tv_rounded, size: 20, color: Colors.white70),
-          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: AppTheme.accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppTheme.border,
+                width: 1,
+              ),
+            ),
+            child: const Icon(
+              Icons.tv_rounded,
+              size: 18,
+              color: AppTheme.accent,
+            ),
+          ),
+          const SizedBox(width: 12),
           Text(
             l10n.liveTvChannels,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.bold,
+              fontFamily: 'Outfit',
+              letterSpacing: 0.3,
             ),
           ),
+          if (channelsCount != null) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppTheme.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppTheme.border,
+                  width: 0.8,
+                ),
+              ),
+              child: Text(
+                '$channelsCount',
+                style: const TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
           const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 20),
-            tooltip: l10n.liveTvCloseOverlay,
-            onPressed: onClose,
+          Focus(
+            onKeyEvent: (node, event) {
+              if (event is! KeyDownEvent) return KeyEventResult.ignored;
+              if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                onClose?.call();
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
+            },
+            child: IconButton(
+              icon: const Icon(
+                Icons.close_rounded,
+                color: Colors.white70,
+                size: 20,
+              ),
+              tooltip: l10n.commonClose,
+              splashRadius: 18,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              onPressed: onClose,
+            ),
           ),
         ],
       ),
@@ -99,6 +205,7 @@ class ChannelListPanel extends ConsumerWidget {
   }
 
   BoxBorder? _resolveBorder(BuildContext context) {
+    if (onChannelSelected != null) return null;
     final isMobile = MediaQuery.of(context).size.width < 600;
     if (isMobile) return null;
     return Border(
@@ -108,11 +215,156 @@ class ChannelListPanel extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
+// Category Chips Row — Horizontal filter chips for Live TV
+// ---------------------------------------------------------------------------
+
+class _CategoryChipsRow extends ConsumerWidget {
+  const _CategoryChipsRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final channelsAsync = ref.watch(channelsProvider);
+    final filter = ref.watch(channelFilterProvider);
+    final l10n = AppLocalizations.of(context)!;
+
+    final groups = channelsAsync.whenOrNull(
+      data: (channels) {
+        final g = channels
+            .map((ch) => ch.group)
+            .where((g) => g != null && g.isNotEmpty)
+            .cast<String>()
+            .toSet()
+            .toList();
+        g.sort();
+        if (g.contains('DTT')) {
+          g.remove('DTT');
+          g.insert(0, 'DTT');
+        }
+        return g;
+      },
+    ) ?? [];
+
+    if (groups.isEmpty) return const SizedBox.shrink();
+
+    final selectedCategories = filter.effectiveCategories;
+
+    return Container(
+      height: 38,
+      margin: const EdgeInsets.only(bottom: 6),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: groups.length + 1,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final isAll = index == 0;
+          final title = isAll ? l10n.liveTvAllChannels : groups[index - 1];
+          final isSelected = isAll
+              ? selectedCategories.isEmpty
+              : selectedCategories.contains(title);
+
+          return _CategoryChip(
+            label: title,
+            isSelected: isSelected,
+            onTap: () {
+              if (isAll) {
+                ref.read(channelFilterProvider.notifier).selectAll();
+              } else {
+                ref.read(channelFilterProvider.notifier).toggleCategory(title);
+              }
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _CategoryChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DpadFocusable(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          node.focusInDirection(TraversalDirection.down);
+          return KeyEventResult.handled;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+          node.focusInDirection(TraversalDirection.up);
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      builder: (context, isFocused, isHovered, _) {
+        final highlighted = isFocused || isHovered;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? (isFocused
+                    ? AppTheme.accent
+                    : AppTheme.accent.withValues(alpha: 0.22))
+                : (isFocused
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : (isHovered
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.white.withValues(alpha: 0.04))),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isFocused
+                  ? Colors.white
+                  : (isSelected
+                      ? AppTheme.accent.withValues(alpha: 0.6)
+                      : Colors.white.withValues(alpha: 0.08)),
+              width: isFocused ? 1.5 : 1.0,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected && isFocused
+                  ? Colors.white
+                  : (isSelected || highlighted
+                      ? Colors.white
+                      : AppTheme.textMuted),
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            ),
+          ),
+        );
+      },
+      child: const SizedBox.shrink(),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Search Row — Search field + Tab Icons + Filter icon
 // ---------------------------------------------------------------------------
 
 class _SearchRow extends ConsumerStatefulWidget {
-  const _SearchRow();
+  final bool isOverlay;
+  final VoidCallback? onClose;
+
+  const _SearchRow({
+    this.isOverlay = false,
+    this.onClose,
+  });
 
   @override
   ConsumerState<_SearchRow> createState() => _SearchRowState();
@@ -120,6 +372,7 @@ class _SearchRow extends ConsumerStatefulWidget {
 
 class _SearchRowState extends ConsumerState<_SearchRow> {
   late final TextEditingController _controller;
+  late final FocusNode _searchFocusNode;
   Timer? _debounce;
 
   @override
@@ -128,11 +381,58 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
     _controller = TextEditingController(
       text: ref.read(channelSearchQueryProvider),
     );
+    _searchFocusNode = FocusNode(
+      debugLabel: 'LiveTvSearchFocusNode',
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        final key = event.logicalKey;
+
+        // Escape, Gamepad B, or GoBack -> close overlay
+        if (key == LogicalKeyboardKey.escape ||
+            key == LogicalKeyboardKey.gameButtonB ||
+            key == LogicalKeyboardKey.goBack) {
+          widget.onClose?.call();
+          return KeyEventResult.handled;
+        }
+
+        // Arrow Down -> move focus down to category chips or channel list
+        if (key == LogicalKeyboardKey.arrowDown) {
+          node.focusInDirection(TraversalDirection.down);
+          return KeyEventResult.handled;
+        }
+
+        // Arrow Up -> move focus up to close button in header
+        if (key == LogicalKeyboardKey.arrowUp) {
+          node.focusInDirection(TraversalDirection.up);
+          return KeyEventResult.handled;
+        }
+
+        // Arrow Left -> if cursor is at the beginning or text is empty, close overlay
+        if (widget.isOverlay && key == LogicalKeyboardKey.arrowLeft) {
+          if (_controller.text.isEmpty ||
+              _controller.selection.baseOffset <= 0) {
+            widget.onClose?.call();
+            return KeyEventResult.handled;
+          }
+        }
+
+        // Arrow Right -> if cursor is at the end or text is empty, close overlay
+        if (widget.isOverlay && key == LogicalKeyboardKey.arrowRight) {
+          if (_controller.text.isEmpty ||
+              _controller.selection.baseOffset >= _controller.text.length) {
+            widget.onClose?.call();
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+    );
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _searchFocusNode.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -175,6 +475,69 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
       }
     });
 
+    if (widget.isOverlay) {
+      return Container(
+        height: 38,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: _searchFocusNode.hasFocus
+                ? AppTheme.accent
+                : Colors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        child: TextField(
+          controller: _controller,
+          focusNode: _searchFocusNode,
+          onChanged: _onChanged,
+          textInputAction: TextInputAction.search,
+          onSubmitted: (_) {
+            _searchFocusNode.focusInDirection(TraversalDirection.down);
+          },
+          decoration: InputDecoration(
+            hintText: l10n.liveTvSearchPlaceholder,
+            hintStyle: const TextStyle(
+              color: Colors.white30,
+              fontSize: 13,
+            ),
+            prefixIcon: const Icon(
+              Icons.search,
+              size: 18,
+              color: Colors.white30,
+            ),
+            border: InputBorder.none,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 8),
+            suffixIcon: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _controller,
+              builder: (context, value, child) {
+                return value.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(
+                          Icons.close,
+                          size: 16,
+                          color: Colors.white30,
+                        ),
+                        splashRadius: 16,
+                        padding: EdgeInsets.zero,
+                        onPressed: () {
+                          _controller.clear();
+                          _onChanged('');
+                          setState(() {});
+                        },
+                      )
+                    : const SizedBox.shrink();
+              },
+            ),
+          ),
+          style: const TextStyle(color: Colors.white, fontSize: 13),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: SizedBox(
@@ -186,6 +549,7 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
                 padding: EdgeInsets.only(left: isMobile ? 8 : 16),
                 child: TextField(
                   controller: _controller,
+                  focusNode: _searchFocusNode,
                   onChanged: _onChanged,
                   decoration: InputDecoration(
                     hintText: l10n.liveTvSearchPlaceholder,
@@ -382,10 +746,12 @@ class _LiveTvOptionsButton extends StatelessWidget {
 class _ChannelList extends ConsumerStatefulWidget {
   final bool isOverlay;
   final VoidCallback? onClose;
+  final void Function(Channel channel)? onChannelSelected;
 
   const _ChannelList({
     this.isOverlay = false,
     this.onClose,
+    this.onChannelSelected,
   });
 
   @override
@@ -393,10 +759,42 @@ class _ChannelList extends ConsumerStatefulWidget {
 }
 
 class _ChannelListState extends ConsumerState<_ChannelList> {
-  final ScrollController _scrollController = ScrollController();
+  late final ScrollController _scrollController;
+  final FocusNode _selectedChannelFocusNode = FocusNode(
+    debugLabel: 'LiveTvOverlaySelectedChannelTile',
+  );
+  bool _hasCenteredInitial = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final savedOffset = widget.isOverlay
+        ? ref.read(liveTvOverlayScrollOffsetProvider)
+        : null;
+    _scrollController = ScrollController(
+      initialScrollOffset: savedOffset ?? 0.0,
+    );
+    if (widget.isOverlay) {
+      _scrollController.addListener(_onScroll);
+      if (savedOffset != null) {
+        _hasCenteredInitial = true;
+      }
+    }
+  }
+
+  void _onScroll() {
+    if (widget.isOverlay && _scrollController.hasClients) {
+      ref.read(liveTvOverlayScrollOffsetProvider.notifier).state =
+          _scrollController.offset;
+    }
+  }
 
   @override
   void dispose() {
+    if (widget.isOverlay) {
+      _scrollController.removeListener(_onScroll);
+    }
+    _selectedChannelFocusNode.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -417,23 +815,75 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
     );
   }
 
+  void _centerOnCurrentChannelOnce(
+    List<ChannelSection> sections,
+    Channel? selected,
+  ) {
+    if (selected == null || !_scrollController.hasClients) return;
+    _hasCenteredInitial = true;
+
+    final isSingleSection =
+        sections.length == 1 && sections.first.title.isEmpty;
+    double offset = 0.0;
+    bool found = false;
+
+    for (final section in sections) {
+      if (!isSingleSection) {
+        offset += 44.0;
+      }
+      for (final ch in section.channels) {
+        if (ch.uniqueId == selected.uniqueId) {
+          found = true;
+          break;
+        }
+        offset += 58.0;
+      }
+      if (found) break;
+    }
+
+    if (found) {
+      final viewport = _scrollController.position.viewportDimension;
+      final target = (offset - (viewport / 2) + 29.0).clamp(
+        0.0,
+        _scrollController.position.maxScrollExtent,
+      );
+      _scrollController.jumpTo(target);
+      ref.read(liveTvOverlayScrollOffsetProvider.notifier).state = target;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _selectedChannelFocusNode.canRequestFocus) {
+          _selectedChannelFocusNode.requestFocus();
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sectionsAsync = ref.watch(sectionedChannelsProvider);
     final selectedChannel = ref.watch(selectedChannelProvider);
     final tab = ref.watch(liveTvTabProvider);
 
-    // Auto-scroll when selected channel changes
-    ref.listen(selectedChannelProvider, (_, next) {
-      if (next == null) return;
-      final flat = ref.read(filteredChannelsProvider);
-      flat.whenData((channels) => _scrollToSelected(channels, next));
-    });
+    // Auto-scroll when selected channel changes in split mode only
+    if (!widget.isOverlay) {
+      ref.listen(selectedChannelProvider, (_, next) {
+        if (next == null) return;
+        final flat = ref.read(filteredChannelsProvider);
+        flat.whenData((channels) => _scrollToSelected(channels, next));
+      });
+    }
 
     return sectionsAsync.when(
       data: (sections) {
         if (sections.isEmpty || sections.every((s) => s.channels.isEmpty)) {
           return _buildEmptyState(tab);
+        }
+
+        if (widget.isOverlay && !_hasCenteredInitial) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted || _hasCenteredInitial) return;
+            _centerOnCurrentChannelOnce(sections, selectedChannel);
+          });
         }
 
         final isSingleSection =
@@ -503,6 +953,32 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
                 textAlign: TextAlign.center,
               ),
             ],
+            if (tab == LiveTvTab.all) ...[
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () => showChannelFilterSheet(
+                  context,
+                  initialTab: LiveTvSheetTab.playlists,
+                ),
+                icon: const Icon(Icons.playlist_add_rounded, size: 20),
+                label: Text(l10n.liveTvManagePlaylists),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.08),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -516,12 +992,19 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
       itemCount: channels.length,
       itemExtent: 58.0,
       itemBuilder: (context, index) {
+        final channel = channels[index];
+        final isSelected = selected?.uniqueId == channel.uniqueId;
         return _ChannelTileWrapper(
-          channel: channels[index],
+          channel: channel,
           selectedChannel: selected,
           isOverlay: widget.isOverlay,
           onClose: widget.onClose,
+          onChannelSelected: widget.onChannelSelected,
           isFirst: index == 0,
+          focusNode: (widget.isOverlay && isSelected)
+              ? _selectedChannelFocusNode
+              : null,
+          autofocus: widget.isOverlay && isSelected,
         );
       },
     );
@@ -546,14 +1029,21 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
           return _SectionHeader(title: item.headerTitle!);
         }
         final isFirst = index == 0 || (index == 1 && items[0].isHeader);
+        final channel = item.channel!;
+        final isSelected = selected?.uniqueId == channel.uniqueId;
         return SizedBox(
           height: 58.0,
           child: _ChannelTileWrapper(
-            channel: item.channel!,
+            channel: channel,
             selectedChannel: selected,
             isOverlay: widget.isOverlay,
             onClose: widget.onClose,
+            onChannelSelected: widget.onChannelSelected,
             isFirst: isFirst,
+            focusNode: (widget.isOverlay && isSelected)
+                ? _selectedChannelFocusNode
+                : null,
+            autofocus: widget.isOverlay && isSelected,
           ),
         );
       },
@@ -611,14 +1101,20 @@ class _ChannelTileWrapper extends ConsumerWidget {
   final Channel? selectedChannel;
   final bool isOverlay;
   final VoidCallback? onClose;
+  final void Function(Channel channel)? onChannelSelected;
   final bool isFirst;
+  final FocusNode? focusNode;
+  final bool autofocus;
 
   const _ChannelTileWrapper({
     required this.channel,
     this.selectedChannel,
     this.isOverlay = false,
     this.onClose,
+    this.onChannelSelected,
     this.isFirst = false,
+    this.focusNode,
+    this.autofocus = false,
   });
 
   @override
@@ -633,8 +1129,12 @@ class _ChannelTileWrapper extends ConsumerWidget {
       isSelected: isPlaying,
       isFavorite: favoriteIds.contains(channel.uniqueId),
       currentProgram: currentProgram,
+      focusNode: focusNode,
+      autofocus: autofocus,
       onTap: () {
-        if (!isOverlay && isPlaying) {
+        if (!isOverlay && onChannelSelected != null) {
+          onChannelSelected!(channel);
+        } else if (!isOverlay && isPlaying) {
           ref.read(liveTvViewModeProvider.notifier).state =
               LiveTvViewMode.fullWindow;
         } else {
@@ -644,9 +1144,10 @@ class _ChannelTileWrapper extends ConsumerWidget {
       onKeyEvent: (node, event) {
         if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
-        // In overlay mode: Right or Escape dismisses the overlay
+        // In overlay mode: Left, Right or Escape dismisses the overlay
         if (isOverlay) {
-          if (event.logicalKey == LogicalKeyboardKey.arrowRight ||
+          if (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
+              event.logicalKey == LogicalKeyboardKey.arrowRight ||
               event.logicalKey == LogicalKeyboardKey.escape) {
             onClose?.call();
             return KeyEventResult.handled;

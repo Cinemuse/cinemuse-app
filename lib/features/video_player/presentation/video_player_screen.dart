@@ -12,6 +12,8 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
+import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
+import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 
 class VideoPlayerScreen extends ConsumerStatefulWidget {
@@ -23,6 +25,7 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
   final int? startPosition;
   final String? loadingMessage;
   final String? errorMessage;
+  final Channel? channel;
 
   const VideoPlayerScreen({
     super.key,
@@ -34,6 +37,7 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
     this.startPosition,
     this.loadingMessage,
     this.errorMessage,
+    this.channel,
   });
 
   @override
@@ -43,6 +47,27 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
 class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   SliderOverlayType _activeOverlay = SliderOverlayType.none;
   bool _settingsOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.type == 'livetv') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          if (widget.channel != null) {
+            ref.read(selectedChannelProvider.notifier).state = widget.channel;
+          }
+          ref.read(liveTvChannelOverlayProvider.notifier).state = false;
+          ref.read(liveTvOverlayScrollOffsetProvider.notifier).state = null;
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   void _openSettings(
     CinemaPlayerState state,
@@ -78,17 +103,48 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveTitle = widget.episodeTitle ?? widget.channel?.name;
     final params = PlayerParams(
       widget.queryId,
       widget.type,
       season: widget.season,
       episode: widget.episode,
-      episodeTitle: widget.episodeTitle,
+      episodeTitle: effectiveTitle,
       startPosition: widget.startPosition,
     );
     final playerState = ref.watch(playerControllerProvider(params));
     final isPortrait =
         MediaQuery.of(context).orientation == Orientation.portrait;
+
+    if (widget.type == 'livetv') {
+      final stateValue = playerState.valueOrNull;
+      final currentChannel =
+          ref.watch(selectedChannelProvider) ?? widget.channel;
+      if (currentChannel != null &&
+          stateValue != null &&
+          stateValue.currentStream == null &&
+          !stateValue.isResolving) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ref
+                .read(recentChannelIdsProvider.notifier)
+                .push(currentChannel.uniqueId);
+            ref
+                .read(playerControllerProvider(params).notifier)
+                .changeChannel(currentChannel);
+          }
+        });
+      }
+
+      ref.listen<Channel?>(selectedChannelProvider, (previous, next) {
+        if (next != null && next.uniqueId != previous?.uniqueId) {
+          ref.read(recentChannelIdsProvider.notifier).push(next.uniqueId);
+          ref
+              .read(playerControllerProvider(params).notifier)
+              .changeChannel(next);
+        }
+      });
+    }
 
     ref.listen<AsyncValue<CinemaPlayerState>>(
       playerControllerProvider(params),
@@ -209,6 +265,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                           videoState: videoState,
                           playerState: state,
                           params: params,
+                          channel: ref.watch(selectedChannelProvider) ??
+                              widget.channel,
+                          isLive: widget.type == 'livetv',
+                          isFullWindow: true,
                           onSettingsPressed: () => _openSettings(state, params),
                           onBackPressed: () => Navigator.of(context).pop(),
                           onOverlayRequested: (type) {

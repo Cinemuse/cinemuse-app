@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
+import 'package:cinemuse_app/features/live_tv/data/epg_channel_matcher.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
@@ -70,6 +71,50 @@ final customPlaylistsProvider =
     });
 
 // ---------------------------------------------------------------------------
+// Custom EPG Settings
+// ---------------------------------------------------------------------------
+
+class CustomEpgUrlNotifier extends StateNotifier<String?> {
+  CustomEpgUrlNotifier() : super(null) {
+    _load();
+  }
+
+  static const _key = 'live_tv_custom_epg_url';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getString(_key);
+  }
+
+  Future<void> setUrl(String url) async {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) {
+      await reset();
+      return;
+    }
+    state = trimmed;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, trimmed);
+  }
+
+  Future<void> reset() async {
+    state = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
+  }
+}
+
+final customEpgUrlProvider =
+    StateNotifierProvider<CustomEpgUrlNotifier, String?>((ref) {
+  return CustomEpgUrlNotifier();
+});
+
+/// Currently active EPG URL (custom URL if configured, otherwise unified default).
+final activeEpgUrlProvider = Provider<String>((ref) {
+  return ref.watch(customEpgUrlProvider) ?? LiveTvRepository.defaultEpgUrl;
+});
+
+// ---------------------------------------------------------------------------
 // Data Providers
 // ---------------------------------------------------------------------------
 
@@ -96,12 +141,13 @@ final channelsProvider = FutureProvider<List<Channel>>((ref) async {
   return repo.fetchChannels(customPlaylists: resolvedPlaylists);
 });
 
-/// Full EPG data keyed by source → channel id → programs.
+/// Full EPG data keyed by channel identifier → programs.
 final epgDataProvider =
-    FutureProvider<Map<String, Map<String, List<EpgProgram>>>>((ref) async {
-      final repo = ref.watch(liveTvRepositoryProvider);
-      return repo.fetchEpg();
-    });
+    FutureProvider<Map<String, List<EpgProgram>>>((ref) async {
+  final repo = ref.watch(liveTvRepositoryProvider);
+  final epgUrl = ref.watch(activeEpgUrlProvider);
+  return repo.fetchEpg(url: epgUrl);
+});
 
 // ---------------------------------------------------------------------------
 // UI State — Tabs & Filters
@@ -243,6 +289,9 @@ final liveTvViewModeProvider =
 
 /// Whether the slide-in channel list overlay is currently open in full-window or OS fullscreen mode.
 final liveTvChannelOverlayProvider = StateProvider<bool>((ref) => false);
+
+/// Saved scroll offset for the Live TV channel list overlay drawer.
+final liveTvOverlayScrollOffsetProvider = StateProvider<double?>((ref) => null);
 
 /// Action to focus the live preview player from the channel list via D-Pad Right.
 final livePlayerFocusActionProvider =
@@ -445,15 +494,9 @@ final currentProgramProvider = Provider.family<EpgProgram?, Channel>((
   final programs = ref.watch(
     epgDataProvider.select((asyncEpg) {
       return asyncEpg.whenOrNull(
-            data: (epgData) {
-              if (channel.epgSource == null || channel.epgId == null) {
-                return <EpgProgram>[];
-              }
-              return epgData[channel.epgSource]?[channel.epgId] ??
-                  <EpgProgram>[];
-            },
+            data: (epgData) => EpgChannelMatcher.findPrograms(channel, epgData),
           ) ??
-          <EpgProgram>[];
+          const <EpgProgram>[];
     }),
   );
 
@@ -477,15 +520,9 @@ final nextProgramProvider = Provider.family<EpgProgram?, Channel>((
   final programs = ref.watch(
     epgDataProvider.select((asyncEpg) {
       return asyncEpg.whenOrNull(
-            data: (epgData) {
-              if (channel.epgSource == null || channel.epgId == null) {
-                return <EpgProgram>[];
-              }
-              return epgData[channel.epgSource]?[channel.epgId] ??
-                  <EpgProgram>[];
-            },
+            data: (epgData) => EpgChannelMatcher.findPrograms(channel, epgData),
           ) ??
-          <EpgProgram>[];
+          const <EpgProgram>[];
     }),
   );
 
@@ -499,6 +536,16 @@ final nextProgramProvider = Provider.family<EpgProgram?, Channel>((
     }
   }
   return null;
+});
+
+/// Full schedule for a given channel.
+final channelScheduleProvider =
+    Provider.family<List<EpgProgram>, Channel>((ref, channel) {
+  final asyncEpg = ref.watch(epgDataProvider);
+  final epgData = asyncEpg.valueOrNull;
+  if (epgData == null || epgData.isEmpty) return const [];
+
+  return ref.watch(liveTvRepositoryProvider).getChannelSchedule(channel, epgData);
 });
 
 // ---------------------------------------------------------------------------

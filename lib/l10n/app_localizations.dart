@@ -152,6 +152,12 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get commonCancel;
 
+  /// No description provided for @commonClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get commonClose;
+
   /// No description provided for @commonConfirm.
   ///
   /// In en, this message translates to:
@@ -1375,6 +1381,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Next Episode'**
   String get playerNextEpisode;
+
+  /// No description provided for @playerPreviousChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Channel'**
+  String get playerPreviousChannel;
+
+  /// No description provided for @playerNextChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Channel'**
+  String get playerNextChannel;
+
+  /// No description provided for @playerChannelList.
+  ///
+  /// In en, this message translates to:
+  /// **'Channel List'**
+  String get playerChannelList;
 
   /// No description provided for @playerPlay.
   ///
@@ -2648,6 +2672,72 @@ abstract class AppLocalizations {
   /// **'Filter & Playlists'**
   String get liveTvFilterAndPlaylists;
 
+  /// No description provided for @liveTvEpgSection.
+  ///
+  /// In en, this message translates to:
+  /// **'TV Guide (EPG)'**
+  String get liveTvEpgSection;
+
+  /// No description provided for @liveTvEpgSectionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure an electronic program guide source for channel schedules.'**
+  String get liveTvEpgSectionDesc;
+
+  /// No description provided for @liveTvEpgUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'EPG Guide URL'**
+  String get liveTvEpgUrl;
+
+  /// No description provided for @liveTvEpgCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get liveTvEpgCustom;
+
+  /// No description provided for @liveTvEpgDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Cinemuse Unified (Default)'**
+  String get liveTvEpgDefault;
+
+  /// No description provided for @liveTvConfigureEpg.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure EPG'**
+  String get liveTvConfigureEpg;
+
+  /// No description provided for @liveTvResetEpg.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to Default'**
+  String get liveTvResetEpg;
+
+  /// No description provided for @liveTvRefreshEpg.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh Guide'**
+  String get liveTvRefreshEpg;
+
+  /// No description provided for @liveTvEpgRefreshed.
+  ///
+  /// In en, this message translates to:
+  /// **'EPG guide refreshed successfully'**
+  String get liveTvEpgRefreshed;
+
+  /// No description provided for @liveTvEpgDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure EPG Guide'**
+  String get liveTvEpgDialogTitle;
+
+  /// No description provided for @liveTvEpgDialogHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an XMLTV or JSON EPG URL'**
+  String get liveTvEpgDialogHint;
+
   /// No description provided for @tvTimeComments.
   ///
   /// In en, this message translates to:
@@ -3509,6 +3599,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View Watch History'**
   String get menuViewWatchHistory;
+
+  /// No description provided for @liveTvWatchChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch Channel'**
+  String get liveTvWatchChannel;
+
+  /// No description provided for @liveTvJumpToNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Jump to Live'**
+  String get liveTvJumpToNow;
+
+  /// No description provided for @liveTvTvGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'TV Guide'**
+  String get liveTvTvGuide;
+
+  /// No description provided for @liveTvNoProgramDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'No synopsis available for this program.'**
+  String get liveTvNoProgramDetails;
+
+  /// No description provided for @liveTvMinutesRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m remaining'**
+  String liveTvMinutesRemaining(int minutes);
 }
 
 class _AppLocalizationsDelegate

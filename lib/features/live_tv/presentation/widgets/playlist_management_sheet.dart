@@ -65,7 +65,11 @@ class PlaylistManagementSheet extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              const Flexible(child: PlaylistListSection()),
+              const Flexible(
+                child: SingleChildScrollView(
+                  child: PlaylistListSection(),
+                ),
+              ),
             ],
           ),
         ),
@@ -127,6 +131,10 @@ class PlaylistListSection extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: 24),
+        const Divider(height: 1, color: Colors.white10),
+        const SizedBox(height: 20),
+        const _EpgSection(),
       ],
     );
   }
@@ -523,3 +531,264 @@ class _AddRemotePlaylistDialogState extends State<_AddRemotePlaylistDialog> {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// EPG / TV Guide Section
+// ---------------------------------------------------------------------------
+
+class _EpgSection extends ConsumerWidget {
+  const _EpgSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final customUrl = ref.watch(customEpgUrlProvider);
+    final activeUrl = ref.watch(activeEpgUrlProvider);
+    final isCustom = customUrl != null && customUrl.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                LucideIcons.calendar,
+                size: 18,
+                color: AppTheme.accent,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.liveTvEpgSection,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    l10n.liveTvEpgSectionDesc,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isCustom
+                          ? Colors.amber.withValues(alpha: 0.15)
+                          : AppTheme.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      isCustom ? l10n.liveTvEpgCustom : l10n.liveTvEpgDefault,
+                      style: TextStyle(
+                        color: isCustom ? Colors.amber : AppTheme.accent,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                activeUrl,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: 12,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showConfigureEpgDialog(
+                        context,
+                        ref,
+                        l10n,
+                        customUrl,
+                      ),
+                      icon: const Icon(LucideIcons.edit2, size: 14),
+                      label: Text(l10n.liveTvConfigureEpg),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.tonalIcon(
+                    onPressed: () => _refreshEpg(context, ref, l10n),
+                    icon: const Icon(LucideIcons.refreshCw, size: 14),
+                    label: Text(l10n.liveTvRefreshEpg),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showConfigureEpgDialog(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+    String? currentUrl,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => _ConfigureEpgDialog(
+        initialUrl: currentUrl ?? '',
+        onSave: (url) {
+          ref.read(customEpgUrlProvider.notifier).setUrl(url);
+          ref.invalidate(epgDataProvider);
+        },
+        onReset: () {
+          ref.read(customEpgUrlProvider.notifier).reset();
+          ref.invalidate(epgDataProvider);
+        },
+      ),
+    );
+  }
+
+  Future<void> _refreshEpg(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+  ) async {
+    final epgUrl = ref.read(activeEpgUrlProvider);
+    await ref
+        .read(liveTvRepositoryProvider)
+        .fetchEpg(url: epgUrl, forceRefresh: true);
+    ref.invalidate(epgDataProvider);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.liveTvEpgRefreshed),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Dialog for configuring EPG guide URL
+// ---------------------------------------------------------------------------
+
+class _ConfigureEpgDialog extends StatefulWidget {
+  final String initialUrl;
+  final ValueChanged<String> onSave;
+  final VoidCallback onReset;
+
+  const _ConfigureEpgDialog({
+    required this.initialUrl,
+    required this.onSave,
+    required this.onReset,
+  });
+
+  @override
+  State<_ConfigureEpgDialog> createState() => _ConfigureEpgDialogState();
+}
+
+class _ConfigureEpgDialogState extends State<_ConfigureEpgDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialUrl);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return AlertDialog(
+      title: Text(l10n.liveTvEpgDialogTitle),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                labelText: l10n.liveTvEpgUrl,
+                hintText: l10n.liveTvEpgDialogHint,
+              ),
+              keyboardType: TextInputType.url,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        if (widget.initialUrl.isNotEmpty)
+          TextButton(
+            onPressed: () {
+              widget.onReset();
+              Navigator.pop(context);
+            },
+            child: Text(
+              l10n.liveTvResetEpg,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.commonCancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            widget.onSave(_controller.text);
+            Navigator.pop(context);
+          },
+          child: Text(l10n.settingsSave),
+        ),
+      ],
+    );
+  }
+}
+

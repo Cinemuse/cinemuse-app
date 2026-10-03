@@ -5,7 +5,8 @@ import 'package:media_kit_video/media_kit_video.dart' as mkv;
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
-import 'package:cinemuse_app/features/live_tv/presentation/widgets/live_video_controls.dart';
+import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_video_controls.dart';
 
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:flutter/services.dart';
@@ -70,14 +71,23 @@ class LivePlayerSection extends ConsumerWidget {
                   return mkv.Video(
                     controller: state.controller,
                     filterQuality: FilterQuality.none,
-                    controls: (videoState) => LiveVideoControls(
+                    controls: (videoState) => CustomVideoControls(
                       playerState: state,
                       channel: channel,
                       videoState: videoState,
+                      params: const PlayerParams('livetv_session', 'livetv'),
+                      isLive: true,
+                      isFullWindow: isFullWindow,
                       onNumberInput: onNumberInput,
                       onConfirmNumber: onConfirmNumber,
                       numberBuffer: numberBuffer,
-                      onSettingsPressed: onSettingsPressed,
+                      onBackPressed: isFullWindow
+                          ? () {
+                              ref.read(liveTvViewModeProvider.notifier).state =
+                                  LiveTvViewMode.split;
+                            }
+                          : null,
+                      onSettingsPressed: onSettingsPressed ?? () {},
                     ),
                   );
                 },

@@ -2,6 +2,23 @@ import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 
 class M3uParser {
+  /// Extracts the EPG / TV guide URL from the #EXTM3U header if present.
+  /// Looks for attributes like url-tvg="..." or x-tvg-url="...".
+  static String? extractEpgUrl(String content) {
+    final lines = content.split('\n');
+    for (var i = 0; i < lines.length && i < 15; i++) {
+      final line = lines[i].trim();
+      if (line.startsWith('#EXTM3U')) {
+        final urlTvg = _extractAttribute(line, 'url-tvg') ??
+            _extractAttribute(line, 'x-tvg-url');
+        if (urlTvg != null && urlTvg.trim().isNotEmpty) {
+          return urlTvg.trim();
+        }
+      }
+    }
+    return null;
+  }
+
   static List<Channel> parse(String content, {int startLcn = 2000}) {
     final lines = content.split('\n');
     final channelsByKey = <String, _ParsedChannelBuilder>{};

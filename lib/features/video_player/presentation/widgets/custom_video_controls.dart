@@ -19,6 +19,10 @@ import 'package:cinemuse_app/features/video_player/presentation/widgets/next_epi
 import 'package:cinemuse_app/features/video_player/presentation/widgets/cast_device_selector.dart';
 import 'package:cinemuse_app/core/presentation/widgets/buffering_indicator.dart';
 import 'package:cinemuse_app/core/presentation/widgets/play_pause_overlay.dart';
+import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
+import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/number_input_osd.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_panel.dart';
 
 enum DragType { none, volume, brightness }
 
@@ -27,9 +31,19 @@ class CustomVideoControls extends ConsumerStatefulWidget {
   final CinemaPlayerState playerState;
   final PlayerParams params;
   final VoidCallback onSettingsPressed;
-  final VoidCallback onBackPressed;
-  final ValueChanged<SliderOverlayType> onOverlayRequested;
+  final VoidCallback? onBackPressed;
+  final ValueChanged<SliderOverlayType>? onOverlayRequested;
   final VoidCallback? onNextEpisode;
+  final Channel? channel;
+  final bool isLive;
+  final ValueChanged<String>? onNumberInput;
+  final VoidCallback? onConfirmNumber;
+  final String numberBuffer;
+  final VoidCallback? onNextChannel;
+  final VoidCallback? onPreviousChannel;
+  final VoidCallback? onOpenChannelGuide;
+  final bool isFullWindow;
+  final VoidCallback? onToggleFullWindow;
 
   const CustomVideoControls({
     super.key,
@@ -37,9 +51,19 @@ class CustomVideoControls extends ConsumerStatefulWidget {
     required this.playerState,
     required this.params,
     required this.onSettingsPressed,
-    required this.onBackPressed,
-    required this.onOverlayRequested,
+    this.onBackPressed,
+    this.onOverlayRequested,
     this.onNextEpisode,
+    this.channel,
+    this.isLive = false,
+    this.onNumberInput,
+    this.onConfirmNumber,
+    this.numberBuffer = '',
+    this.onNextChannel,
+    this.onPreviousChannel,
+    this.onOpenChannelGuide,
+    this.isFullWindow = false,
+    this.onToggleFullWindow,
   });
 
   @override
@@ -70,10 +94,8 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   int _seekAmount = 0;
   Timer? _seekIndicatorTimer;
 
-  bool _showVolumeOsd = false;
-  double _volumeOsdValue = 1.0;
-  Timer? _volumeOsdTimer;
   DateTime? _lastHiddenSkipTime;
+  Timer? _numberInputTimer;
 
   /// Tracks whether the window was already maximized before we entered
   /// fullscreen, so we can restore the original state on exit.
@@ -100,7 +122,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     _clearVirtualPositionTimer?.cancel();
     _hideIndicatorTimer?.cancel();
     _seekIndicatorTimer?.cancel();
-    _volumeOsdTimer?.cancel();
+    _numberInputTimer?.cancel();
     _rootFocusNode.dispose();
     _playPauseFocusNode.dispose();
     _seekbarFocusNode.dispose();
@@ -108,11 +130,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   }
 
   void _syncFocusForVisibility() {
-    final isBigPicture = ref.read(isBigPictureProvider);
-    if (!isBigPicture) {
-      _rootFocusNode.requestFocus();
-      return;
-    }
     if (_visible) {
       _playPauseFocusNode.requestFocus();
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -136,6 +153,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       if (mounted &&
           !_dragging &&
           _currentDragType == DragType.none &&
+          !ref.read(liveTvChannelOverlayProvider) &&
           widget.playerState.controller.player.state.playing) {
         _hideControls();
       }
@@ -257,7 +275,110 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       }
       _isFullScreen = false;
     }
-    if (mounted) widget.onBackPressed();
+    if (widget.onBackPressed != null) {
+      if (mounted) widget.onBackPressed!();
+    }
+  }
+
+  void _zapNextChannel() {
+    if (widget.onNextChannel != null) {
+      widget.onNextChannel!();
+      return;
+    }
+    final channels = ref.read(filteredChannelsProvider).valueOrNull ??
+        ref.read(channelsProvider).valueOrNull ??
+        [];
+    if (channels.isEmpty) return;
+    final current = widget.channel ?? ref.read(selectedChannelProvider);
+    final idx = channels.indexWhere((c) => c.uniqueId == current?.uniqueId);
+    final nextIdx = idx == -1 ? 0 : (idx + 1) % channels.length;
+    ref.read(selectedChannelProvider.notifier).state = channels[nextIdx];
+  }
+
+  void _zapPreviousChannel() {
+    if (widget.onPreviousChannel != null) {
+      widget.onPreviousChannel!();
+      return;
+    }
+    final channels = ref.read(filteredChannelsProvider).valueOrNull ??
+        ref.read(channelsProvider).valueOrNull ??
+        [];
+    if (channels.isEmpty) return;
+    final current = widget.channel ?? ref.read(selectedChannelProvider);
+    final idx = channels.indexWhere((c) => c.uniqueId == current?.uniqueId);
+    final prevIdx =
+        idx == -1 ? 0 : (idx - 1 + channels.length) % channels.length;
+    ref.read(selectedChannelProvider.notifier).state = channels[prevIdx];
+  }
+
+  void _handleNumberInput(String digit) {
+    if (widget.onNumberInput != null) {
+      widget.onNumberInput!(digit);
+      return;
+    }
+    final buffer = ref.read(numberInputBufferProvider);
+    ref.read(numberInputBufferProvider.notifier).state = buffer + digit;
+    _numberInputTimer?.cancel();
+    _numberInputTimer = Timer(const Duration(seconds: 2), () {
+      _confirmNumberInput();
+    });
+  }
+
+  void _confirmNumberInput() {
+    if (widget.onConfirmNumber != null) {
+      widget.onConfirmNumber!();
+      return;
+    }
+    _numberInputTimer?.cancel();
+    final buffer = ref.read(numberInputBufferProvider);
+    if (buffer.isEmpty) return;
+
+    final lcn = int.tryParse(buffer);
+    if (lcn != null) {
+      final channels = ref.read(channelsProvider).valueOrNull ?? [];
+      final match = channels.where((c) => c.lcn == lcn).firstOrNull;
+      if (match != null) {
+        ref.read(selectedChannelProvider.notifier).state = match;
+      }
+    }
+    ref.read(numberInputBufferProvider.notifier).state = '';
+  }
+
+  Widget _buildChannelOverlayDrawer() {
+    final isOverlayOpen = ref.watch(liveTvChannelOverlayProvider);
+    if (!isOverlayOpen) return const SizedBox.shrink();
+
+    void closeOverlayAndReturnToControls() {
+      ref.read(liveTvChannelOverlayProvider.notifier).state = false;
+      _showControls();
+      _playPauseFocusNode.requestFocus();
+    }
+
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: closeOverlayAndReturnToControls,
+          ),
+        ),
+        Positioned(
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 380,
+          child: RepaintBoundary(
+            child: FocusScope(
+              autofocus: true,
+              child: ChannelListPanel(
+                isOverlay: true,
+                onClose: closeOverlayAndReturnToControls,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   KeyEventResult _handleKeyEvent(KeyEvent event) {
@@ -266,6 +387,38 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     }
 
     final key = event.logicalKey;
+    final isLive = widget.isLive || widget.params.type == 'livetv';
+
+    // Channel drawer overlay handling: overlay navigation is completely self-contained.
+    // Do not process any background keys (playback, shortcuts, number input, etc.)
+    final isOverlayOpen = ref.read(liveTvChannelOverlayProvider);
+    if (isOverlayOpen) {
+      return KeyEventResult.ignored;
+    }
+
+    // Direct channel number input (0-9)
+    if (isLive) {
+      final keyLabel = key.keyLabel;
+      if (keyLabel.length == 1 && int.tryParse(keyLabel) != null) {
+        if (event is KeyDownEvent) {
+          _handleNumberInput(keyLabel);
+        }
+        _onHover();
+        return KeyEventResult.handled;
+      }
+      if (key == LogicalKeyboardKey.enter ||
+          key == LogicalKeyboardKey.numpadEnter) {
+        final buffer = widget.numberBuffer.isNotEmpty
+            ? widget.numberBuffer
+            : ref.read(numberInputBufferProvider);
+        if (buffer.isNotEmpty) {
+          if (event is KeyDownEvent) {
+            _confirmNumberInput();
+          }
+          return KeyEventResult.handled;
+        }
+      }
+    }
 
     final mediaResult = _handleMediaKeys(event, key);
     if (mediaResult != KeyEventResult.ignored) return mediaResult;
@@ -297,30 +450,13 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     return KeyEventResult.ignored;
   }
 
-  void _adjustVolume(Player player, double delta) {
-    final newVol = (player.state.volume + delta).clamp(0.0, 100.0);
-    player.setVolume(newVol);
-    _showVolumeFeedback(newVol / 100.0);
-  }
-
-  void _showVolumeFeedback(double fraction) {
-    _volumeOsdTimer?.cancel();
-    setState(() {
-      _showVolumeOsd = true;
-      _volumeOsdValue = fraction;
-    });
-    _volumeOsdTimer = Timer(const Duration(milliseconds: 1500), () {
-      if (mounted) {
-        setState(() => _showVolumeOsd = false);
-      }
-    });
-  }
-
   KeyEventResult _handleHiddenControlsKeys(
     KeyEvent event,
     LogicalKeyboardKey key,
     Player player,
   ) {
+    final isLive = widget.isLive || widget.params.type == 'livetv';
+
     if (key == LogicalKeyboardKey.space) {
       if (event is KeyDownEvent) _togglePlayPause();
       return KeyEventResult.handled;
@@ -335,17 +471,46 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       }
       return KeyEventResult.handled;
     }
+
+    // Up / Down / Channel Up / Channel Down / Page Up / Page Down:
+    // Live TV: Zaps channels!
+    // VOD: Unused!
     if (key == LogicalKeyboardKey.arrowUp ||
-        key == LogicalKeyboardKey.arrowDown) {
-      final isUp = key == LogicalKeyboardKey.arrowUp;
-      final delta = (event is KeyRepeatEvent)
-          ? (isUp ? 2.0 : -2.0)
-          : (isUp ? 5.0 : -5.0);
-      _adjustVolume(player, delta);
+        key == LogicalKeyboardKey.arrowDown ||
+        key == LogicalKeyboardKey.channelUp ||
+        key == LogicalKeyboardKey.channelDown ||
+        key == LogicalKeyboardKey.pageUp ||
+        key == LogicalKeyboardKey.pageDown) {
+      if (isLive) {
+        if (event is KeyDownEvent) {
+          final isUp = key == LogicalKeyboardKey.arrowUp ||
+              key == LogicalKeyboardKey.channelUp ||
+              key == LogicalKeyboardKey.pageUp;
+          if (isUp) {
+            _zapPreviousChannel();
+          } else {
+            _zapNextChannel();
+          }
+        }
+        return KeyEventResult.handled;
+      }
+      // VOD player: Up/Down are unused when controls are hidden
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.arrowLeft ||
-        key == LogicalKeyboardKey.arrowRight) {
+
+    if (key == LogicalKeyboardKey.arrowLeft) {
+      if (isLive) {
+        if (event is KeyDownEvent) {
+          final isFullOrStandalone = widget.isFullWindow ||
+              widget.params.type == 'livetv' ||
+              ref.read(liveTvViewModeProvider) == LiveTvViewMode.fullWindow ||
+              _isFullScreen;
+          if (isFullOrStandalone) {
+            ref.read(liveTvChannelOverlayProvider.notifier).state = true;
+          }
+        }
+        return KeyEventResult.handled;
+      }
       final now = DateTime.now();
       if (event is KeyRepeatEvent) {
         if (_lastHiddenSkipTime != null &&
@@ -354,9 +519,26 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
         }
       }
       _lastHiddenSkipTime = now;
-      _performRealSkip(key == LogicalKeyboardKey.arrowRight, showControls: false);
+      _performRealSkip(false, showControls: false);
       return KeyEventResult.handled;
     }
+
+    if (key == LogicalKeyboardKey.arrowRight) {
+      if (isLive) {
+        return KeyEventResult.handled;
+      }
+      final now = DateTime.now();
+      if (event is KeyRepeatEvent) {
+        if (_lastHiddenSkipTime != null &&
+            now.difference(_lastHiddenSkipTime!).inMilliseconds < 110) {
+          return KeyEventResult.handled;
+        }
+      }
+      _lastHiddenSkipTime = now;
+      _performRealSkip(true, showControls: false);
+      return KeyEventResult.handled;
+    }
+
     if (key == LogicalKeyboardKey.escape ||
         key == LogicalKeyboardKey.gameButtonB ||
         key == LogicalKeyboardKey.goBack) {
@@ -544,11 +726,14 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   Widget build(BuildContext context) {
     final player = widget.playerState.controller.player;
     final isBigPicture = ref.watch(isBigPictureProvider);
+    final isOverlayOpen = ref.watch(liveTvChannelOverlayProvider);
+
+    final isLive = widget.isLive || widget.params.type == 'livetv';
 
     return Focus(
       focusNode: _rootFocusNode,
       autofocus: true,
-      canRequestFocus: !isBigPicture || !_visible,
+      canRequestFocus: (!isBigPicture || !_visible) && !isOverlayOpen,
       onKeyEvent: (node, event) => _handleKeyEvent(event),
       child: MouseRegion(
         onHover: (_) => _onHover(),
@@ -557,6 +742,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
             : SystemMouseCursors.none,
         child: GestureDetector(
           onTap: () {
+            if (isOverlayOpen) return;
             if (_visible) {
               _togglePlayPause();
             } else {
@@ -577,10 +763,12 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                   color: Colors.black.withValues(alpha: 1.0 - _brightnessLevel),
                 ),
               ),
-              AnimatedOpacity(
-                opacity: _visible ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 200),
-                child: Stack(
+              ExcludeFocus(
+                excluding: isOverlayOpen,
+                child: AnimatedOpacity(
+                  opacity: _visible ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Stack(
                   children: [
                     Positioned(
                       top: 0,
@@ -600,6 +788,8 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                                   onCastPressed: () =>
                                       _handleCastPressed(context),
                                   onBackPressed: _handleBack,
+                                  channel: widget.channel,
+                                  isLive: isLive,
                                 ),
                               )
                             : VideoTopBar(
@@ -609,6 +799,8 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                                 onCastPressed: () =>
                                     _handleCastPressed(context),
                                 onBackPressed: _handleBack,
+                                channel: widget.channel,
+                                isLive: isLive,
                               ),
                       ),
                     ),
@@ -624,7 +816,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                       showSeekIndicator: _showSeekIndicator,
                     ),
 
-
                     Positioned(
                       bottom: 0,
                       left: 0,
@@ -635,10 +826,19 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                           playerState: widget.playerState,
                           virtualPosition: _virtualPosition,
                           dragging: _dragging,
+                          isLive: isLive,
+                          onPreviousChannel: _zapPreviousChannel,
+                          onNextChannel: _zapNextChannel,
+                          onOpenChannelGuide: () {
+                            ref
+                                .read(liveTvChannelOverlayProvider.notifier)
+                                .state = true;
+                          },
                           onChangeStart: (value) {
                             setState(() {
                               _dragging = true;
-                              _virtualPosition = Duration(seconds: value.toInt());
+                              _virtualPosition =
+                                  Duration(seconds: value.toInt());
                             });
                             _hideTimer?.cancel();
                             _clearVirtualPositionTimer?.cancel();
@@ -691,6 +891,21 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                   ],
                 ),
               ),
+            ),
+
+              // Number input OSD (always visible, above controls)
+              Consumer(
+                builder: (context, ref, _) {
+                  final buffer = widget.numberBuffer.isNotEmpty
+                      ? widget.numberBuffer
+                      : ref.watch(numberInputBufferProvider);
+                  if (buffer.isEmpty) return const SizedBox.shrink();
+                  return NumberInputOsd(buffer: buffer);
+                },
+              ),
+
+              // Channel List Overlay Drawer (for Live TV)
+              if (isLive) _buildChannelOverlayDrawer(),
 
               // Center Seek Indicator HUD (sleek modern frosted badge)
               if (_showSeekIndicator)
@@ -757,7 +972,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                 ),
 
               // Top-Center Volume & Brightness Indicator HUD (modern floating frosted capsule)
-              if (_currentDragType != DragType.none || _showVolumeOsd)
+              if (_currentDragType != DragType.none)
                 Align(
                   alignment: Alignment.topCenter,
                   child: Padding(
@@ -787,10 +1002,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                                 Icon(
                                   _currentDragType == DragType.brightness
                                       ? Icons.brightness_6_rounded
-                                      : (((_currentDragType == DragType.volume
-                                                  ? _dragIndicatorValue
-                                                  : _volumeOsdValue) <=
-                                              0)
+                                      : (_dragIndicatorValue <= 0
                                           ? Icons.volume_off_rounded
                                           : Icons.volume_up_rounded),
                                   color: AppTheme.textWhite,
@@ -803,12 +1015,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(2),
                                     child: LinearProgressIndicator(
-                                      value: _currentDragType ==
-                                              DragType.brightness
-                                          ? _dragIndicatorValue
-                                          : (_currentDragType == DragType.volume
-                                              ? _dragIndicatorValue
-                                              : _volumeOsdValue),
+                                      value: _dragIndicatorValue,
                                       backgroundColor:
                                           Colors.white.withValues(alpha: 0.18),
                                       valueColor:
@@ -820,7 +1027,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
-                                  '${(((_currentDragType == DragType.brightness ? _dragIndicatorValue : (_currentDragType == DragType.volume ? _dragIndicatorValue : _volumeOsdValue)) * 100).round())}%',
+                                  '${((_dragIndicatorValue) * 100).round()}%',
                                   style: TextStyle(
                                     color: AppTheme.textWhite
                                         .withValues(alpha: 0.8),
