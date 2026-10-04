@@ -8,10 +8,8 @@ import 'package:cinemuse_app/features/video_player/application/managers/track_ma
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:lucide_icons/lucide_icons.dart';
-import 'package:cinemuse_app/core/services/streaming/subtitles/external_subtitle.dart';
 import 'package:cinemuse_app/core/services/streaming/subtitles/subtitle_service.dart';
-import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/settings/external_subtitles_section.dart';
 import 'settings_widgets.dart';
 
 class TrackSettingsView extends ConsumerStatefulWidget {
@@ -35,8 +33,6 @@ class TrackSettingsView extends ConsumerStatefulWidget {
 }
 
 class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
-  final Map<String, bool> _expandedLanguages = {};
-
   @override
   Widget build(BuildContext context) {
     final currentState =
@@ -124,11 +120,12 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
                   player,
                   noTrack,
                   selectedTrack,
+                  l10n,
                   autofocus: selectedTrack.id == 'no',
                 ),
                 if (allInternalTracks.isNotEmpty || widget.isSubtitle)
                   const Divider(
-                    color: Colors.white10,
+                    color: AppTheme.borderSubtle,
                     height: 32,
                     indent: 8,
                     endIndent: 8,
@@ -139,18 +136,25 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
                     allInternalTracks,
                     selectedTrack,
                     prefLang,
+                    l10n,
                     hasSelectionPrior: selectedTrack.id == 'no',
                   ),
                 if (widget.isSubtitle &&
                     ref.read(subtitleServiceProvider).hasActiveProviders) ...[
                   if (allInternalTracks.isNotEmpty)
                     const Divider(
-                      color: Colors.white10,
+                      color: AppTheme.borderSubtle,
                       height: 32,
                       indent: 8,
                       endIndent: 8,
                     ),
-                  _buildExternalTracks(player, externalSubsAsync!, isLandscape),
+                  ExternalSubtitlesSection(
+                    player: player,
+                    externalSubsAsync: externalSubsAsync!,
+                    isLandscape: isLandscape,
+                    onBack: widget.onBack,
+                    params: widget.params,
+                  ),
                 ],
                 const SizedBox(height: 24),
               ],
@@ -169,7 +173,8 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
   Widget _buildDisableTrackTile(
     Player player,
     dynamic noTrack,
-    dynamic selectedTrack, {
+    dynamic selectedTrack,
+    AppLocalizations l10n, {
     bool autofocus = false,
   }) {
     final isSelected = selectedTrack.id == 'no';
@@ -178,7 +183,8 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
       track: noTrack,
       isSelected: isSelected,
       isSubtitle: widget.isSubtitle,
-      customTitle: widget.isSubtitle ? "Off / Disable" : "No Audio / Mute",
+      customTitle:
+          widget.isSubtitle ? l10n.playerTrackOff : l10n.playerTrackNoAudio,
       color: AppTheme.textMuted,
       onBack: widget.onBack,
       onSelected: () => _notifyManualSelection(),
@@ -191,13 +197,16 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
     Player player,
     List<dynamic> tracks,
     dynamic selectedTrack,
-    String prefLang, {
+    String prefLang,
+    AppLocalizations l10n, {
     bool hasSelectionPrior = false,
   }) {
+    final internalTracksHeader =
+        widget.isSubtitle ? l10n.playerInternalTracks : l10n.playerAudioTracks;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _sectionHeader(widget.isSubtitle ? "INTERNAL TRACKS" : "AUDIO TRACKS"),
+        _sectionHeader(internalTracksHeader),
         Builder(
           builder: (context) {
             bool foundAutoMatch = false;
@@ -247,154 +256,6 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
     );
   }
 
-  /// Builds the "EXTERNAL TRACKS" section with grouped, expandable language folders.
-  Widget _buildExternalTracks(
-    Player player,
-    AsyncValue<List<ExternalSubtitle>> externalSubsAsync,
-    bool isLandscape,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _sectionHeader("EXTERNAL TRACKS"),
-        externalSubsAsync.when(
-          data: (subs) => _buildExternalSubtitleList(player, subs, isLandscape),
-          loading: () => const Padding(
-            padding: EdgeInsets.all(32.0),
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          ),
-          error: (e, st) => Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Center(
-              child: Text(
-                "Error: $e",
-                style: const TextStyle(color: Colors.redAccent),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Builds the grouped language folders for external subtitles.
-  Widget _buildExternalSubtitleList(
-    Player player,
-    List<ExternalSubtitle> subs,
-    bool isLandscape,
-  ) {
-    if (subs.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Center(
-          child: Text(
-            "No external subtitles found.",
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
-          ),
-        ),
-      );
-    }
-
-    final grouped = <String, List<ExternalSubtitle>>{};
-    for (var sub in subs) {
-      grouped.putIfAbsent(sub.languageName, () => []).add(sub);
-    }
-
-    return Column(
-      children: grouped.entries
-          .map(
-            (entry) => _buildLanguageFolder(
-              player: player,
-              language: entry.key,
-              subtitles: entry.value,
-              isLandscape: isLandscape,
-            ),
-          )
-          .toList(),
-    );
-  }
-
-  /// Builds a single expandable language folder with its subtitle entries.
-  Widget _buildLanguageFolder({
-    required Player player,
-    required String language,
-    required List<ExternalSubtitle> subtitles,
-    required bool isLandscape,
-  }) {
-    final isExpanded = _expandedLanguages[language] ?? false;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () =>
-                setState(() => _expandedLanguages[language] = !isExpanded),
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: isLandscape ? 8 : 12,
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.folder_open_rounded,
-                    color: AppTheme.accent,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          language.toUpperCase(),
-                          style: const TextStyle(
-                            color: AppTheme.textWhite,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        Text(
-                          "${subtitles.length} subtitles",
-                          style: TextStyle(
-                            color: AppTheme.textMuted.withValues(alpha: 0.8),
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    isExpanded
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                    color: AppTheme.textMuted,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        if (isExpanded) ...[
-          const SizedBox(height: 4),
-          ...subtitles.map(
-            (sub) => _ExternalSubtitleTile(
-              subtitle: sub,
-              player: player,
-              onBack: widget.onBack,
-              params: widget.params,
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-      ],
-    );
-  }
-
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
@@ -416,144 +277,3 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
       .read(playerControllerProvider(widget.params).notifier)
       .setManualTrackSelection();
 }
-
-// =============================================================================
-// External Subtitle Tile
-// =============================================================================
-
-class _ExternalSubtitleTile extends ConsumerStatefulWidget {
-  final ExternalSubtitle subtitle;
-  final Player player;
-  final VoidCallback onBack;
-  final PlayerParams params;
-
-  const _ExternalSubtitleTile({
-    required this.subtitle,
-    required this.player,
-    required this.onBack,
-    required this.params,
-  });
-
-  @override
-  ConsumerState<_ExternalSubtitleTile> createState() =>
-      _ExternalSubtitleTileState();
-}
-
-class _ExternalSubtitleTileState extends ConsumerState<_ExternalSubtitleTile> {
-  bool _isApplying = false;
-
-  Future<void> _apply() async {
-    if (_isApplying) return;
-    setState(() => _isApplying = true);
-
-    try {
-      final service = ref.read(subtitleServiceProvider);
-      final url = await service.getDownloadUrl(widget.subtitle);
-      if (url != null && url.isNotEmpty) {
-        final track = SubtitleTrack.uri(
-          url,
-          title: widget.subtitle.title,
-          language: widget.subtitle.language,
-        );
-        await widget.player.setSubtitleTrack(track);
-        ref
-            .read(playerControllerProvider(widget.params).notifier)
-            .setManualTrackSelection();
-        widget.onBack();
-      } else {
-        if (mounted) {
-          AppSnackBar.show(
-            context,
-            message: 'Failed to load external subtitle.',
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        AppSnackBar.show(context, message: 'Error: $e');
-      }
-    } finally {
-      if (mounted) setState(() => _isApplying = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final sub = widget.subtitle;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: _isApplying ? null : _apply,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.08),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        sub.title,
-                        style: TextStyle(
-                          color: AppTheme.textWhite.withValues(alpha: 0.9),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          SettingsBadge(
-                            text: sub.providerName,
-                            color: AppTheme.accent,
-                          ),
-                          if (sub.downloadCount != null)
-                            SettingsBadge(
-                              text: "\u2193 ${sub.downloadCount}",
-                              color: Colors.blueAccent,
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                if (_isApplying)
-                  const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                else
-                  const Icon(
-                    LucideIcons.download,
-                    color: AppTheme.textMuted,
-                    size: 20,
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// Track Tile
-// =============================================================================

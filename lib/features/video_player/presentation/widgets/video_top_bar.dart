@@ -32,14 +32,18 @@ class VideoTopBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(localizationsProvider);
     final isBigPicture = ref.watch(isBigPictureProvider);
-    final currentProgram =
-        channel != null ? ref.watch(currentProgramProvider(channel!)) : null;
+    final currentProgram = (isLive && channel != null)
+        ? ref.watch(currentProgramProvider(channel!))
+        : null;
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.black87, Colors.transparent],
+          colors: [
+            AppTheme.surfaceOverlay,
+            AppTheme.surfaceOverlay.withValues(alpha: 0),
+          ],
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -53,12 +57,12 @@ class VideoTopBar extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
           ],
-          if (isLive || channel != null) ...[
+          if (isLive) ...[
             if (channel != null) ...[
               ClipRRect(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: AppTheme.radiusMd,
                 child: Container(
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: AppTheme.borderSubtle,
                   padding: const EdgeInsets.all(3),
                   width: 34,
                   height: 34,
@@ -105,7 +109,7 @@ class VideoTopBar extends ConsumerWidget {
                         ),
                         decoration: BoxDecoration(
                           color: AppTheme.favorites.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: AppTheme.radiusSm,
                           border: Border.all(
                             color: AppTheme.favorites.withValues(alpha: 0.6),
                             width: 0.8,
@@ -123,9 +127,9 @@ class VideoTopBar extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            const Text(
-                              'LIVE',
-                              style: TextStyle(
+                            Text(
+                              l10n.liveTvLive.toUpperCase(),
+                              style: const TextStyle(
                                 color: AppTheme.favorites,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -219,7 +223,7 @@ class VideoTopBar extends ConsumerWidget {
               icon: Icon(
                 playerState.isCasting ? Icons.cast_connected : Icons.cast,
                 color: playerState.isCasting
-                    ? Colors.blueAccent
+                    ? AppTheme.accent
                     : AppTheme.textWhite,
               ),
               onPressed: onCastPressed,

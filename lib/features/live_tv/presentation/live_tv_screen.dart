@@ -38,7 +38,6 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
   @override
   void initState() {
     super.initState();
-    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref.read(livePlayerFocusActionProvider.notifier).state = () {
@@ -63,7 +62,6 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
 
   @override
   void dispose() {
-    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     _numberInputTimer?.cancel();
     _channelSwitchTimer?.cancel();
     _playerFocusNode.dispose();
@@ -169,15 +167,12 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
         context.findAncestorWidgetOfExactType<EditableText>() != null;
   }
 
-  bool _handleKeyEvent(KeyEvent event) {
-    if (!mounted) return false;
-    // Only handle when Live TV tab is active and this screen is the current active route
-    if (ref.read(navIndexProvider) != 2) return false;
-    if (ModalRoute.of(context)?.isCurrent != true) return false;
-    if (event is! KeyDownEvent) return false;
+  KeyEventResult _handleKeyEvent(KeyEvent event) {
+    if (!mounted) return KeyEventResult.ignored;
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
     // Do not intercept keystrokes if the user is typing into a text field (e.g. search, dialog)
-    if (_isTextInputFocused()) return false;
+    if (_isTextInputFocused()) return KeyEventResult.ignored;
 
     // Number keys (both main keyboard and numpad)
     final key = event.logicalKey;
@@ -216,7 +211,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
 
     if (digit != null) {
       _handleNumberInput(digit);
-      return true;
+      return KeyEventResult.handled;
     }
 
     // Enter confirms number input immediately if a number is being entered
@@ -225,9 +220,9 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
       final buffer = ref.read(numberInputBufferProvider);
       if (buffer.isNotEmpty) {
         _confirmNumberInput();
-        return true;
+        return KeyEventResult.handled;
       }
-      return false;
+      return KeyEventResult.ignored;
     }
 
     // Escape handling
@@ -235,14 +230,14 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
       final isOverlayOpen = ref.read(liveTvChannelOverlayProvider);
       if (isOverlayOpen) {
         ref.read(liveTvChannelOverlayProvider.notifier).state = false;
-        return true;
+        return KeyEventResult.handled;
       }
       _numberInputTimer?.cancel();
       ref.read(numberInputBufferProvider.notifier).state = '';
-      return false;
+      return KeyEventResult.ignored;
     }
 
-    return false;
+    return KeyEventResult.ignored;
   }
 
   @override
@@ -302,11 +297,14 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
       }
     }
 
-    return Scaffold(
-      backgroundColor: AppTheme.primary,
-      body: isMobile
-          ? _buildMobileLayout(selectedChannel, numberBuffer, playerState)
-          : _buildChannelGuideBrowser(),
+    return Focus(
+      onKeyEvent: (node, event) => _handleKeyEvent(event),
+      child: Scaffold(
+        backgroundColor: AppTheme.primary,
+        body: isMobile
+            ? _buildMobileLayout(selectedChannel, numberBuffer, playerState)
+            : _buildChannelGuideBrowser(),
+      ),
     );
   }
 

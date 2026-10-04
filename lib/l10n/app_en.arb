@@ -212,6 +212,21 @@
   "playerSubtitleDelay": "Subtitle Delay",
   "playerSubtitleDelayReset": "Reset",
   "playerSelectAudio": "Audio Tracks",
+  "playerTrackOff": "Off / Disable",
+  "playerTrackNoAudio": "No Audio / Mute",
+  "playerInternalTracks": "INTERNAL TRACKS",
+  "playerAudioTracks": "AUDIO TRACKS",
+  "playerExternalTracks": "EXTERNAL TRACKS",
+  "playerNoExternalSubtitles": "No external subtitles found.",
+  "playerFailedLoadSubtitle": "Failed to load external subtitle.",
+  "playerSubtitlesCount": "{count} subtitles",
+  "@playerSubtitlesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "playerResolving": "Resolving stream...",
   "playerSkipResolution": "Skip",
   "playerTryingNextSource": "Stream failed, trying next source...",
@@ -234,6 +249,34 @@
   "streamingErrorImdbId": "Could not resolve IMDB ID.",
   "streamingErrorProviderSearchFailed": "Search failed for addon: {providerName}.",
   "playerFiles": "Files",
+  "playerFilesCount": "{count} files available",
+  "@playerFilesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playerProviderFailed": "Failed ({time})",
+  "@playerProviderFailed": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "playerProviderResults": "{count} results ({time})",
+  "@playerProviderResults": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "playerSkipToPlayback": "Skip to playback",
   "playerSelectFile": "Select File",
   "playerSubtitles": "Subtitles",
   "playerSelectSubtitle": "Select Subtitle Track",
@@ -757,6 +800,15 @@
   "@liveTvMinutesRemaining": {
     "placeholders": {
       "minutes": { "type": "int" }
+    }
+  },
+  "playerCached": "CACHED",
+  "castDefaultDevice": "Chromecast",
+  "playerErrorPrefix": "Error: {error}",
+  "@playerErrorPrefix": {
+    "description": "Error prefix message",
+    "placeholders": {
+      "error": { "type": "String" }
     }
   }
 }

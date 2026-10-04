@@ -1,10 +1,34 @@
 import 'dart:developer' as developer;
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final youtubeServiceProvider = Provider((ref) => YoutubeService());
+
+/// Strongly-typed domain model representing an available YouTube stream quality.
+class YouTubeStreamQuality {
+  final String title;
+  final String url;
+  final String quality;
+  final int res;
+  final String container;
+  final String tag;
+  final bool isHls;
+  final bool needsAudio;
+  final String? audioUrl;
+
+  const YouTubeStreamQuality({
+    required this.title,
+    required this.url,
+    required this.quality,
+    required this.res,
+    required this.container,
+    required this.tag,
+    this.isHls = false,
+    this.needsAudio = false,
+    this.audioUrl,
+  });
+}
 
 class YoutubeService {
   final _yt = YoutubeExplode();
@@ -16,36 +40,41 @@ class YoutubeService {
   /// Returns the best audio StreamInfo from the last getStreamQualities() call.
   AudioOnlyStreamInfo? get bestAudioStreamInfo => _bestAudioStreamInfo;
 
-  Future<List<Map<String, dynamic>>> getStreamQualities(String videoId) async {
+  Future<List<YouTubeStreamQuality>> getStreamQualities(String videoId) async {
     try {
       // Use AndroidVR first as iOS might be 403-ing in some regions
       final manifest = await _yt.videos.streamsClient.getManifest(
         videoId,
         ytClients: [YoutubeApiClient.androidVr],
       );
-      final streams = <Map<String, dynamic>>[];
+      final streams = <YouTubeStreamQuality>[];
 
       // 1. Try HLS Manifest (Master m3u8) - Most stable for HD
       if (manifest.hls.isNotEmpty) {
         final hlsUrl = manifest.hls.first.url.toString();
-        debugPrint('YT-DEBUG: Found HLS Manifest: $hlsUrl');
-        streams.add({
-          'title': 'High Definition (Auto)',
-          'url': hlsUrl,
-          'quality': 'hls',
-          'res': 1080,
-          'container': 'm3u8',
-          'tag': 'youtube',
-          'isHls': true,
-        });
+        developer.log('Found HLS Manifest: $hlsUrl', name: 'YoutubeService');
+        streams.add(
+          YouTubeStreamQuality(
+            title: 'High Definition (Auto)',
+            url: hlsUrl,
+            quality: 'hls',
+            res: 1080,
+            container: 'm3u8',
+            tag: 'youtube',
+            isHls: true,
+          ),
+        );
       } else {
-        debugPrint('YT-DEBUG: No HLS Manifest found.');
+        developer.log('No HLS Manifest found.', name: 'YoutubeService');
       }
 
       // 2. Add Video-Only Streams (1080p, 1440p, 2160p etc.)
       final bestAudio = manifest.audioOnly.withHighestBitrate();
       _bestAudioStreamInfo = bestAudio;
-      debugPrint('YT-DEBUG: Best Audio Bitrate: ${bestAudio.bitrate}');
+      developer.log(
+        'Best Audio Bitrate: ${bestAudio.bitrate}',
+        name: 'YoutubeService',
+      );
 
       for (var s in manifest.videoOnly) {
         final qLabel = s.videoQuality.toString().split('.').last;
@@ -53,23 +82,27 @@ class YoutubeService {
         final label = '${res}p ${res >= 720 ? "(HD)" : "(SD)"}';
 
         final existingIdx = streams.indexWhere(
-          (e) => e['res'] == res && e['isHls'] != true,
+          (e) => e.res == res && !e.isHls,
         );
 
         if (existingIdx == -1) {
-          debugPrint('YT-DEBUG: Adding Video-Only Stream: $label');
-          streams.add({
-            'title': label,
-            'url': s.url.toString(),
-            'audioUrl': bestAudio.url.toString(),
-            'quality': qLabel,
-            'res': res,
-            'container': s.container.name,
-            'tag': 'youtube',
-            'isHls': false,
-            'needsAudio':
-                true, // Flag: this stream needs a separate audio track
-          });
+          developer.log(
+            'Adding Video-Only Stream: $label',
+            name: 'YoutubeService',
+          );
+          streams.add(
+            YouTubeStreamQuality(
+              title: label,
+              url: s.url.toString(),
+              audioUrl: bestAudio.url.toString(),
+              quality: qLabel,
+              res: res,
+              container: s.container.name,
+              tag: 'youtube',
+              isHls: false,
+              needsAudio: true,
+            ),
+          );
         }
       }
 
@@ -78,31 +111,45 @@ class YoutubeService {
         final qLabel = s.videoQuality.toString().split('.').last;
         final res = int.tryParse(qLabel.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
 
-        if (!streams.any((e) => e['res'] == res)) {
-          debugPrint('YT-DEBUG: Adding Muxed Stream: ${res}p Standard');
-          streams.add({
-            'title': '${res}p Standard',
-            'url': s.url.toString(),
-            'quality': qLabel,
-            'res': res,
-            'container': s.container.name,
-            'tag': 'youtube',
-            'isHls': false,
-            'needsAudio': false,
-          });
+        if (!streams.any((e) => e.res == res)) {
+          developer.log(
+            'Adding Muxed Stream: ${res}p Standard',
+            name: 'YoutubeService',
+          );
+          streams.add(
+            YouTubeStreamQuality(
+              title: '${res}p Standard',
+              url: s.url.toString(),
+              quality: qLabel,
+              res: res,
+              container: s.container.name,
+              tag: 'youtube',
+              isHls: false,
+              needsAudio: false,
+            ),
+          );
         }
       }
 
-      debugPrint('YT-DEBUG: Total streams found: ${streams.length}');
+      developer.log(
+        'Total streams found: ${streams.length}',
+        name: 'YoutubeService',
+      );
       streams.sort((a, b) {
-        if (a['isHls'] == true) return -1;
-        if (b['isHls'] == true) return 1;
-        return (b['res'] as int) - (a['res'] as int);
+        if (a.isHls) return -1;
+        if (b.isHls) return 1;
+        return b.res - a.res;
       });
 
       return streams;
-    } catch (e) {
-      debugPrint('Error extracting YouTube streams: $e');
+    } catch (e, st) {
+      developer.log(
+        'Error extracting YouTube streams: $e',
+        name: 'YoutubeService',
+        error: e,
+        stackTrace: st,
+        level: 900,
+      );
       return [];
     }
   }
@@ -116,11 +163,9 @@ class YoutubeService {
       );
     }
 
-    debugPrint(
-      'YT-DEBUG: Downloading audio via youtube_explode stream client...',
-    );
-    debugPrint(
-      'YT-DEBUG: Audio bitrate: ${_bestAudioStreamInfo!.bitrate}, size: ${_bestAudioStreamInfo!.size}',
+    developer.log(
+      'Downloading audio via youtube_explode stream client. Bitrate: ${_bestAudioStreamInfo!.bitrate}, size: ${_bestAudioStreamInfo!.size}',
+      name: 'YoutubeService',
     );
 
     final file = File(tempFilePath);
@@ -136,8 +181,9 @@ class YoutubeService {
         totalBytes += chunk.length;
         final currentKB = totalBytes ~/ 1024;
         if (currentKB - lastLoggedKB >= 250) {
-          debugPrint(
-            'YT-DEBUG: Audio download progress: ${currentKB}KB / ${_bestAudioStreamInfo!.size}',
+          developer.log(
+            'Audio download progress: ${currentKB}KB / ${_bestAudioStreamInfo!.size}',
+            name: 'YoutubeService',
           );
           lastLoggedKB = currentKB;
         }
@@ -145,11 +191,12 @@ class YoutubeService {
 
       await sink.flush();
       await sink.close();
-      debugPrint(
-        'YT-DEBUG: Audio download complete: $totalBytes bytes -> $tempFilePath',
+      developer.log(
+        'Audio download complete: $totalBytes bytes -> $tempFilePath',
+        name: 'YoutubeService',
       );
       return tempFilePath;
-    } catch (e) {
+    } catch (e, st) {
       await sink.close();
       try {
         await file.delete();
@@ -161,7 +208,13 @@ class YoutubeService {
           stackTrace: deleteStack,
         );
       }
-      debugPrint('YT-DEBUG: Audio download FAILED: $e');
+      developer.log(
+        'Audio download FAILED: $e',
+        name: 'YoutubeService',
+        error: e,
+        stackTrace: st,
+        level: 900,
+      );
       rethrow;
     }
   }

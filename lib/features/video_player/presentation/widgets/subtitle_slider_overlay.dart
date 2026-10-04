@@ -90,13 +90,19 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           onChanged: (val) {
             controller.updateSubtitleStyle(
               currentStyle.copyWith(
-                backgroundColor: Colors.black.withValues(alpha: val),
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.scrim.withValues(alpha: val),
               ),
             );
           },
         );
         onReset = () => controller.updateSubtitleStyle(
-          currentStyle.copyWith(backgroundColor: Colors.transparent),
+          currentStyle.copyWith(
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.scrim.withValues(alpha: 0),
+          ),
         );
         onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
         break;
@@ -109,7 +115,7 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           ),
         );
         onReset = () => controller.updateSubtitleStyle(
-          currentStyle.copyWith(color: Colors.white),
+          currentStyle.copyWith(color: AppTheme.textWhite),
         );
         onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
         break;
@@ -122,7 +128,7 @@ class SubtitleSliderOverlay extends ConsumerWidget {
         // Backdrop scrim to close
         GestureDetector(
           onTap: () => onClose(false),
-          child: Container(color: Colors.black26),
+          child: Container(color: AppTheme.surfaceOverlay),
         ),
 
         // Floating Panel
@@ -131,7 +137,7 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: AppTheme.radiusXl,
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
@@ -139,8 +145,8 @@ class SubtitleSliderOverlay extends ConsumerWidget {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: AppTheme.surface.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white10),
+                    borderRadius: AppTheme.radiusXl,
+                    border: Border.all(color: AppTheme.borderSubtle),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -152,7 +158,7 @@ class SubtitleSliderOverlay extends ConsumerWidget {
                           Text(
                             title.toUpperCase(),
                             style: const TextStyle(
-                              color: Colors.white70,
+                              color: AppTheme.textSecondary,
                               fontSize: 12,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1.2,
@@ -255,8 +261,8 @@ class _SliderControl extends StatelessWidget {
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
             overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
             activeTrackColor: AppTheme.accent,
-            inactiveTrackColor: Colors.white10,
-            thumbColor: Colors.white,
+            inactiveTrackColor: AppTheme.borderSubtle,
+            thumbColor: AppTheme.textWhite,
           ),
           child: Slider(
             value: value,
@@ -326,11 +332,11 @@ class _StepButton extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 3),
       child: Material(
-        color: Colors.white10,
-        borderRadius: BorderRadius.circular(10),
+        color: AppTheme.surfaceOverlay,
+        borderRadius: AppTheme.radiusMd,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: AppTheme.radiusMd,
           child: Container(
             width: 44,
             height: 40,
@@ -338,7 +344,7 @@ class _StepButton extends StatelessWidget {
             child: Text(
               label,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppTheme.textWhite,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -362,14 +368,14 @@ class _ColorControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = const [
-      Colors.white,
-      Colors.yellow,
-      Colors.lightGreenAccent,
-      Colors.cyanAccent,
-      Colors.blueAccent,
-      Colors.purpleAccent,
-      Colors.redAccent,
-      Colors.orangeAccent,
+      AppTheme.textWhite,
+      AppTheme.watchlist,
+      AppTheme.success,
+      AppTheme.badgeSize,
+      AppTheme.badgeResolution,
+      AppTheme.badgeAudio,
+      AppTheme.favorites,
+      AppTheme.badgeHdr,
     ];
 
     return Wrap(
@@ -387,7 +393,7 @@ class _ColorControl extends StatelessWidget {
               color: color,
               shape: BoxShape.circle,
               border: Border.all(
-                color: isSelected ? Colors.white : Colors.white24,
+                color: isSelected ? AppTheme.textWhite : AppTheme.borderSubtle,
                 width: isSelected ? 3 : 1,
               ),
               boxShadow: isSelected
@@ -406,8 +412,8 @@ class _ColorControl extends StatelessWidget {
                 ? Icon(
                     Icons.check,
                     color: color.computeLuminance() > 0.5
-                        ? Colors.black
-                        : Colors.white,
+                        ? AppTheme.primary
+                        : AppTheme.textWhite,
                   )
                 : null,
           ),
@@ -435,10 +441,10 @@ class _OverlayButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isPrimary ? AppTheme.accent : Colors.white10,
-          foregroundColor: isPrimary ? Colors.black : Colors.white,
+          backgroundColor: isPrimary ? AppTheme.accent : AppTheme.surfaceOverlay,
+          foregroundColor: isPrimary ? AppTheme.primary : AppTheme.textWhite,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppTheme.radiusMd,
           ),
           elevation: 0,
         ),

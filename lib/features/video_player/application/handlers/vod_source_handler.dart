@@ -1,36 +1,36 @@
 import 'dart:async';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
-import 'package:cinemuse_app/features/video_player/application/handlers/rd_handler.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:flutter/foundation.dart';
+import 'dart:developer' as developer;
 
 class VodInitializationResult {
   final List<StreamCandidate> candidates;
   final ResolvedStream resolvedStream;
+  final MediaItem? mediaItem;
   final Map<String, dynamic>? mediaDetails;
   final bool isAnime;
 
   VodInitializationResult({
     required this.candidates,
     required this.resolvedStream,
+    this.mediaItem,
     this.mediaDetails,
     this.isAnime = false,
   });
 }
 
 class VodSourceHandler {
-  final RdHandler _rdHandler;
   final UnifiedStreamResolver _resolver;
   final TmdbService _tmdbService;
   final Player _player;
 
   VodSourceHandler(
-    this._rdHandler,
     this._resolver,
     this._tmdbService,
     this._player,
@@ -39,10 +39,10 @@ class VodSourceHandler {
   Future<VodInitializationResult> initialize(
     PlayerParams params, {
     required Function(List<ProviderSearchStatus>) onStatusUpdate,
-    required Function(Map<String, dynamic>?) onMediaDetailsFetched,
+    required Function(MediaItem?, Map<String, dynamic>?) onMediaDetailsFetched,
     Future<void>? skipTrigger,
   }) async {
-    final mediaDetails = await _fetchMediaDetails(
+    final detailsResult = await _fetchMediaDetails(
       params,
       onMediaDetailsFetched,
     );
@@ -51,7 +51,7 @@ class VodSourceHandler {
       params,
       onStatusUpdate,
       skipTrigger: skipTrigger,
-      preloadedDetails: mediaDetails,
+      preloadedDetails: detailsResult.raw,
     );
 
     final resolution = await _resolveBestStream(
@@ -67,21 +67,24 @@ class VodSourceHandler {
     return VodInitializationResult(
       candidates: searchResult.candidates,
       resolvedStream: resolution.stream,
-      mediaDetails: mediaDetails,
+      mediaItem: detailsResult.item,
+      mediaDetails: detailsResult.raw,
       isAnime: searchResult.isAnime,
     );
   }
 
-  Future<Map<String, dynamic>?> _fetchMediaDetails(
+  Future<({MediaItem? item, Map<String, dynamic>? raw})> _fetchMediaDetails(
     PlayerParams params,
-    Function(Map<String, dynamic>?) onFetched,
+    Function(MediaItem?, Map<String, dynamic>?) onFetched,
   ) async {
     final details = await _tmdbService.getMediaDetails(
       params.queryId,
       params.type,
     );
-    onFetched(details);
-    return details;
+    final kind = params.type == 'movie' ? MediaKind.movie : MediaKind.tv;
+    final item = details != null ? MediaItem.fromTmdbDetails(details, kind) : null;
+    onFetched(item, details);
+    return (item: item, raw: details);
   }
 
   Future<StreamSearchResult> _searchAvailableStreams(
@@ -113,7 +116,7 @@ class VodSourceHandler {
   ) async {
     for (var candidate in candidates) {
       try {
-        final resolvedStream = await _rdHandler.resolveAndMerge(
+        final resolvedStream = await _resolver.resolveStream(
           candidate,
           season: params.season,
           episode: params.episode,
@@ -122,8 +125,14 @@ class VodSourceHandler {
         if (resolvedStream != null) {
           return (stream: resolvedStream, candidate: candidate);
         }
-      } catch (e) {
-        debugPrint('VodSourceHandler: Failed to resolve candidate: $e');
+      } catch (e, st) {
+        developer.log(
+          'Failed to resolve candidate: ${candidate.title}',
+          name: 'VideoPlayer.VodSourceHandler',
+          error: e,
+          stackTrace: st,
+          level: 800,
+        );
       }
     }
 

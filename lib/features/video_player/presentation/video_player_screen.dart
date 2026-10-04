@@ -1,6 +1,6 @@
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
-import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/overlays/resolving_overlay.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_video_controls.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/subtitle_slider_overlay.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/player_settings_bottom_sheet.dart';
@@ -117,25 +117,6 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
         MediaQuery.of(context).orientation == Orientation.portrait;
 
     if (widget.type == 'livetv') {
-      final stateValue = playerState.valueOrNull;
-      final currentChannel =
-          ref.watch(selectedChannelProvider) ?? widget.channel;
-      if (currentChannel != null &&
-          stateValue != null &&
-          stateValue.currentStream == null &&
-          !stateValue.isResolving) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            ref
-                .read(recentChannelIdsProvider.notifier)
-                .push(currentChannel.uniqueId);
-            ref
-                .read(playerControllerProvider(params).notifier)
-                .changeChannel(currentChannel);
-          }
-        });
-      }
-
       ref.listen<Channel?>(selectedChannelProvider, (previous, next) {
         if (next != null && next.uniqueId != previous?.uniqueId) {
           ref.read(recentChannelIdsProvider.notifier).push(next.uniqueId);
@@ -160,33 +141,36 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
               margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
             );
           }
+
+          final notice = next.value.notification;
+          final prevNotice = previous?.valueOrNull?.notification;
+          if (notice != null && notice != prevNotice) {
+            AppSnackBar.show(
+              context,
+              message: notice,
+              backgroundColor: AppTheme.secondary,
+              duration: const Duration(seconds: 3),
+              margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+            );
+          }
         }
       },
     );
-
-    // Register the notification callback once so auto-fallback snackbars surface.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ref
-          .read(playerControllerProvider(params).notifier)
-          .onNotification = (message) {
-        if (!mounted) return;
-        AppSnackBar.show(
-          context,
-          message: message,
-          backgroundColor: AppTheme.secondary,
-          duration: const Duration(seconds: 3),
-          margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
-        );
-      };
-    });
 
     return Scaffold(
       backgroundColor: AppTheme.primary,
       body: playerState.when(
         data: (state) {
           if (state.isResolving) {
-            return _buildResolvingOverlay(state, params);
+            return ResolvingOverlay(
+              state: state,
+              loadingMessage: widget.loadingMessage,
+              onSkipResolution: () {
+                ref
+                    .read(playerControllerProvider(params).notifier)
+                    .skipResolution();
+              },
+            );
           }
 
           if (state.isCasting) {
@@ -230,11 +214,11 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                       color: subtitleStyle.color,
                       backgroundColor: subtitleStyle.backgroundColor,
                       shadows: [
-                        if (subtitleStyle.backgroundColor == Colors.transparent)
-                          const Shadow(
+                        if (subtitleStyle.backgroundColor.a == 0)
+                          Shadow(
                             blurRadius: 2.0,
-                            color: Colors.black,
-                            offset: Offset(0, 2),
+                            color: Theme.of(context).colorScheme.scrim,
+                            offset: const Offset(0, 2),
                           ),
                       ],
                     ),
@@ -265,8 +249,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                           videoState: videoState,
                           playerState: state,
                           params: params,
-                          channel: ref.watch(selectedChannelProvider) ??
-                              widget.channel,
+                          channel: widget.type == 'livetv'
+                              ? (ref.watch(selectedChannelProvider) ??
+                                  widget.channel)
+                              : null,
                           isLive: widget.type == 'livetv',
                           isFullWindow: true,
                           onSettingsPressed: () => _openSettings(state, params),
@@ -358,9 +344,9 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                     onPressed: () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.textWhite,
-                      side: const BorderSide(color: Colors.white54),
+                      side: const BorderSide(color: AppTheme.borderSubtle),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: AppTheme.radiusMd,
                       ),
                       padding: const EdgeInsets.symmetric(
                         vertical: 16,
@@ -397,143 +383,5 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       ),
     );
   }
-
-  Widget _buildResolvingOverlay(CinemaPlayerState state, PlayerParams params) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 24),
-          Text(
-            widget.loadingMessage ??
-                AppLocalizations.of(context)!.playerResolving,
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 16),
-          ),
-          if (state.providerStatuses.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            SizedBox(
-              width: 300,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ...state.providerStatuses.map((s) {
-                    final isSearching = s.status == ProviderStatus.searching;
-                    final isFailed = s.status == ProviderStatus.failed;
-
-                    Color iconColor = Colors.white54;
-                    IconData iconData = Icons.search;
-                    String trailingText =
-                        '${(s.timeElapsed.inMilliseconds / 1000).toStringAsFixed(1)}s';
-
-                    if (!isSearching) {
-                      if (isFailed) {
-                        iconData = Icons.error_outline;
-                        iconColor = Colors.redAccent;
-                        trailingText = 'Failed ($trailingText)';
-                      } else {
-                        iconData = Icons.check_circle_outline;
-                        iconColor = Colors.greenAccent;
-                        trailingText =
-                            '${s.resultsCount} results ($trailingText)';
-                      }
-                    }
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Row(
-                        children: [
-                          if (isSearching)
-                            const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppTheme.accent,
-                              ),
-                            )
-                          else
-                            Icon(iconData, size: 16, color: iconColor),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              s.providerName,
-                              style: TextStyle(
-                                color: isSearching
-                                    ? Colors.white
-                                    : Colors.white70,
-                                fontWeight: isSearching
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            trailingText,
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                  if (_canSkipResolution(state)) ...[
-                    const SizedBox(height: 24),
-                    TextButton.icon(
-                      onPressed: () {
-                        ref
-                            .read(playerControllerProvider(params).notifier)
-                            .skipResolution();
-                      },
-                      icon: const Icon(Icons.skip_next, color: AppTheme.accent),
-                      label: Text(
-                        AppLocalizations.of(context)!.playerSkipResolution,
-                        style: const TextStyle(
-                          color: AppTheme.textWhite,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          shadows: [
-                            Shadow(color: AppTheme.accentGlow, blurRadius: 10),
-                          ],
-                        ),
-                      ),
-                      style: TextButton.styleFrom(
-                        backgroundColor: AppTheme.secondary.withValues(
-                          alpha: 0.6,
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 20,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: AppTheme.border),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  bool _canSkipResolution(CinemaPlayerState state) {
-    final hasResults = state.providerStatuses.any(
-      (s) => s.status == ProviderStatus.finished && s.resultsCount > 0,
-    );
-    if (!hasResults) return false;
-
-    final maxElapsedSeconds = state.providerStatuses.isEmpty
-        ? 0
-        : state.providerStatuses
-              .map((s) => s.timeElapsed.inSeconds)
-              .reduce((a, b) => a > b ? a : b);
-    return maxElapsedSeconds >= 15;
-  }
 }
+

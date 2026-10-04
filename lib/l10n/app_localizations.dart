@@ -1232,6 +1232,54 @@ abstract class AppLocalizations {
   /// **'Audio Tracks'**
   String get playerSelectAudio;
 
+  /// No description provided for @playerTrackOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off / Disable'**
+  String get playerTrackOff;
+
+  /// No description provided for @playerTrackNoAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'No Audio / Mute'**
+  String get playerTrackNoAudio;
+
+  /// No description provided for @playerInternalTracks.
+  ///
+  /// In en, this message translates to:
+  /// **'INTERNAL TRACKS'**
+  String get playerInternalTracks;
+
+  /// No description provided for @playerAudioTracks.
+  ///
+  /// In en, this message translates to:
+  /// **'AUDIO TRACKS'**
+  String get playerAudioTracks;
+
+  /// No description provided for @playerExternalTracks.
+  ///
+  /// In en, this message translates to:
+  /// **'EXTERNAL TRACKS'**
+  String get playerExternalTracks;
+
+  /// No description provided for @playerNoExternalSubtitles.
+  ///
+  /// In en, this message translates to:
+  /// **'No external subtitles found.'**
+  String get playerNoExternalSubtitles;
+
+  /// No description provided for @playerFailedLoadSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load external subtitle.'**
+  String get playerFailedLoadSubtitle;
+
+  /// No description provided for @playerSubtitlesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} subtitles'**
+  String playerSubtitlesCount(int count);
+
   /// No description provided for @playerResolving.
   ///
   /// In en, this message translates to:
@@ -1363,6 +1411,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Files'**
   String get playerFiles;
+
+  /// No description provided for @playerFilesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} files available'**
+  String playerFilesCount(int count);
+
+  /// No description provided for @playerProviderFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed ({time})'**
+  String playerProviderFailed(String time);
+
+  /// No description provided for @playerProviderResults.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} results ({time})'**
+  String playerProviderResults(int count, String time);
+
+  /// No description provided for @playerSkipToPlayback.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip to playback'**
+  String get playerSkipToPlayback;
 
   /// No description provided for @playerSelectFile.
   ///
@@ -3641,6 +3713,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{minutes}m remaining'**
   String liveTvMinutesRemaining(int minutes);
+
+  /// No description provided for @playerCached.
+  ///
+  /// In en, this message translates to:
+  /// **'CACHED'**
+  String get playerCached;
+
+  /// No description provided for @castDefaultDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Chromecast'**
+  String get castDefaultDevice;
+
+  /// Error prefix message
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {error}'**
+  String playerErrorPrefix(String error);
 }
 
 class _AppLocalizationsDelegate

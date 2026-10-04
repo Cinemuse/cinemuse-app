@@ -37,14 +37,10 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
         MediaQuery.of(context).orientation == Orientation.landscape;
 
     // Sort files alphabetically by filename
-    final sortedFiles = List<Map<String, dynamic>>.from(
-      currentState.currentStream?.files ?? [],
-    );
-    sortedFiles.sort((a, b) {
-      final nameA = (a['path'] as String? ?? '').split('/').last.toLowerCase();
-      final nameB = (b['path'] as String? ?? '').split('/').last.toLowerCase();
-      return nameA.compareTo(nameB);
-    });
+    final sortedFiles = (currentState.currentStream?.files ?? [])
+        .map(StreamFileInfo.fromMap)
+        .toList()
+      ..sort((a, b) => a.filename.toLowerCase().compareTo(b.filename.toLowerCase()));
 
     return Stack(
       children: [
@@ -70,11 +66,11 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                     if (currentState.currentStream?.files.isNotEmpty ??
                         false) ...[
                       Material(
-                        color: Colors.transparent,
+                        type: MaterialType.transparency,
                         child: InkWell(
                           onTap: () =>
                               setState(() => _filesExpanded = !_filesExpanded),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: AppTheme.radius12,
                           child: Padding(
                             padding: EdgeInsets.symmetric(
                               horizontal: 8,
@@ -103,7 +99,9 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                         ),
                                       ),
                                       Text(
-                                        "${currentState.currentStream?.files.length} files available",
+                                        l10n.playerFilesCount(
+                                          currentState.currentStream?.files.length ?? 0,
+                                        ),
                                         style: TextStyle(
                                           color: AppTheme.textMuted.withAlpha(
                                             128,
@@ -130,21 +128,15 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                         const SizedBox(height: 8),
                         ...sortedFiles.map((file) {
                           final isSelected =
-                              file['id'] ==
+                              file.id ==
                               currentState.currentStream?.activeFileId;
-                          final fileName = (file['path'] as String)
-                              .split('/')
-                              .last;
-                          final size =
-                              (file['bytes'] as int? ?? 0) /
-                              (1024 * 1024 * 1024); // GB
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 8.0),
                             child: Material(
-                              color: Colors.transparent,
+                              type: MaterialType.transparency,
                               child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: AppTheme.radius12,
                                 onTap: () {
                                   ref
                                       .read(
@@ -152,7 +144,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                           params,
                                         ).notifier,
                                       )
-                                      .changeFile(file['id']);
+                                      .changeFile(file.id);
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
@@ -164,14 +156,16 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                         ? AppTheme.accent.withValues(
                                             alpha: 0.12,
                                           )
-                                        : Colors.white.withValues(alpha: 0.04),
-                                    borderRadius: BorderRadius.circular(12),
+                                        : AppTheme.textWhite.withValues(
+                                            alpha: 0.04,
+                                          ),
+                                    borderRadius: AppTheme.radius12,
                                     border: Border.all(
                                       color: isSelected
                                           ? AppTheme.accent.withValues(
                                               alpha: 0.6,
                                             )
-                                          : Colors.white.withValues(
+                                          : AppTheme.textWhite.withValues(
                                               alpha: 0.08,
                                             ),
                                       width: 1,
@@ -185,10 +179,10 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              fileName,
+                                              file.filename,
                                               style: TextStyle(
                                                 color: isSelected
-                                                    ? Colors.white
+                                                    ? AppTheme.textWhite
                                                     : AppTheme.textWhite
                                                           .withValues(
                                                             alpha: 0.7,
@@ -203,7 +197,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
-                                              "${size.toStringAsFixed(2)} GB",
+                                              "${file.sizeInGB.toStringAsFixed(2)} GB",
                                               style: TextStyle(
                                                 color: AppTheme.textMuted
                                                     .withValues(alpha: 0.5),
@@ -227,7 +221,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                           );
                         }),
                       ],
-                      const Divider(color: Colors.white10, height: 32),
+                      const Divider(color: AppTheme.borderSubtle, height: 32),
                     ],
 
                     // Sources Section
@@ -266,7 +260,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                           autofocus: isSelected ||
                               (index == 0 && !hasSelectedInList),
                           scale: 1.02,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: AppTheme.radiusLg,
                           onTap: () {
                             ref
                                 .read(
@@ -282,21 +276,25 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                 color: isSelected
                                     ? AppTheme.accent.withValues(alpha: 0.1)
                                     : (isHighlighted
-                                        ? Colors.white.withValues(alpha: 0.08)
-                                        : Colors.white.withValues(alpha: 0.03)),
-                                borderRadius: BorderRadius.circular(16),
+                                        ? AppTheme.textWhite.withValues(
+                                            alpha: 0.08,
+                                          )
+                                        : AppTheme.textWhite.withValues(
+                                            alpha: 0.03,
+                                          )),
+                                borderRadius: AppTheme.radiusLg,
                                 border: Border.all(
                                   color: isFocused
-                                      ? Colors.white
+                                      ? AppTheme.textWhite
                                       : (isSelected
                                           ? AppTheme.accent.withValues(
                                               alpha: 0.5,
                                             )
                                           : (isHovered
-                                              ? Colors.white.withValues(
+                                              ? AppTheme.textWhite.withValues(
                                                   alpha: 0.2,
                                                 )
-                                              : Colors.white.withValues(
+                                              : AppTheme.textWhite.withValues(
                                                   alpha: 0.05,
                                                 ))),
                                   width: isFocused ? 2 : 1,
@@ -325,7 +323,9 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                     stream.title,
                                     style: TextStyle(
                                       color: isSelected
-                                          ? Colors.white.withValues(alpha: 0.9)
+                                          ? AppTheme.textWhite.withValues(
+                                              alpha: 0.9,
+                                            )
                                           : AppTheme.textMuted.withValues(
                                               alpha: 0.6,
                                             ),
@@ -357,7 +357,9 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.7),
+                color: Theme.of(context).colorScheme.scrim.withValues(
+                  alpha: 0.7,
+                ),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(24),
                 ),
@@ -371,7 +373,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                     Text(
                       l10n.playerResolvingStream,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: AppTheme.textWhite.withValues(alpha: 0.9),
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -380,7 +382,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                     Text(
                       l10n.playerCheckingDebridCache,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: AppTheme.textWhite.withValues(alpha: 0.5),
                         fontSize: 13,
                       ),
                     ),
@@ -399,11 +401,15 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.redAccent.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(12),
+                color: Theme.of(context).colorScheme.error.withValues(
+                  alpha: 0.9,
+                ),
+                borderRadius: AppTheme.radius12,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
+                    color: Theme.of(context).colorScheme.scrim.withValues(
+                      alpha: 0.3,
+                    ),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -413,7 +419,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                 children: [
                   const Icon(
                     Icons.error_outline_rounded,
-                    color: Colors.white,
+                    color: AppTheme.textWhite,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -421,7 +427,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                     child: Text(
                       currentState.error!,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppTheme.textWhite,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -430,7 +436,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                   IconButton(
                     icon: const Icon(
                       Icons.close_rounded,
-                      color: Colors.white70,
+                      color: AppTheme.textSecondary,
                       size: 18,
                     ),
                     onPressed: () => ref

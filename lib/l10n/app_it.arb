@@ -204,6 +204,14 @@
   "playerAudio": "Audio",
   "playerSelectQuality": "Seleziona Qualità",
   "playerSelectAudio": "Seleziona Traccia Audio",
+  "playerTrackOff": "Disattiva",
+  "playerTrackNoAudio": "Nessun audio / Muto",
+  "playerInternalTracks": "TRACCE INTERNE",
+  "playerAudioTracks": "TRACCE AUDIO",
+  "playerExternalTracks": "TRACCE ESTERNE",
+  "playerNoExternalSubtitles": "Nessun sottotitolo esterno trovato.",
+  "playerFailedLoadSubtitle": "Impossibile caricare il sottotitolo esterno.",
+  "playerSubtitlesCount": "{count} sottotitoli",
   "playerSubtitleSize": "Dimensione Sottotitoli",
   "playerSubtitleDelay": "Sincronizzazione",
   "playerSubtitleDelayReset": "Ripristina",
@@ -229,6 +237,10 @@
   "streamingErrorImdbId": "Impossibile risolvere l'ID IMDB.",
   "streamingErrorProviderSearchFailed": "Ricerca fallita per l'addon: {providerName}.",
   "playerFiles": "File",
+  "playerFilesCount": "{count} file disponibili",
+  "playerProviderFailed": "Fallito ({time})",
+  "playerProviderResults": "{count} risultati ({time})",
+  "playerSkipToPlayback": "Passa alla riproduzione",
   "playerSelectFile": "Seleziona File",
   "playerSubtitles": "Sottotitoli",
   "playerSelectSubtitle": "Seleziona Sottotitolo",
@@ -752,6 +764,15 @@
   "@liveTvMinutesRemaining": {
     "placeholders": {
       "minutes": { "type": "int" }
+    }
+  },
+  "playerCached": "IN CACHE",
+  "castDefaultDevice": "Chromecast",
+  "playerErrorPrefix": "Errore: {error}",
+  "@playerErrorPrefix": {
+    "description": "Messaggio prefisso di errore",
+    "placeholders": {
+      "error": { "type": "String" }
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:ui';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/core/constants/playback_constants.dart';
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
@@ -26,6 +27,8 @@ class _NextEpisodeOverlayState extends ConsumerState<NextEpisodeOverlay> {
   Widget build(BuildContext context) {
     if (widget.playerState.nextEpisode == null) return const SizedBox.shrink();
 
+    final l10n = ref.watch(localizationsProvider);
+    final scrimColor = Theme.of(context).colorScheme.scrim;
     final player = widget.playerState.controller.player;
 
     return StreamBuilder<Duration>(
@@ -54,7 +57,7 @@ class _NextEpisodeOverlayState extends ConsumerState<NextEpisodeOverlay> {
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOutCubic,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: AppTheme.radiusLg,
                   child: BackdropFilter(
                     filter: ImageFilter.blur(
                       sigmaX: _isNextButtonHovered ? 16 : 12,
@@ -69,26 +72,26 @@ class _NextEpisodeOverlayState extends ConsumerState<NextEpisodeOverlay> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Colors.white.withValues(
+                            AppTheme.textWhite.withValues(
                               alpha: _isNextButtonHovered ? 0.95 : 0.85,
                             ),
-                            Colors.white.withValues(
+                            AppTheme.textWhite.withValues(
                               alpha: _isNextButtonHovered ? 0.85 : 0.65,
                             ),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: AppTheme.radiusLg,
                         border: Border.all(
-                          color: Colors.white.withValues(
+                          color: AppTheme.textWhite.withValues(
                             alpha: _isNextButtonHovered ? 0.4 : 0.2,
                           ),
                           width: 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(
+                            color: scrimColor.withValues(
                               alpha: _isNextButtonHovered ? 0.4 : 0.3,
                             ),
                             blurRadius: _isNextButtonHovered ? 30 : 25,
@@ -101,12 +104,9 @@ class _NextEpisodeOverlayState extends ConsumerState<NextEpisodeOverlay> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            ref
-                                .watch(localizationsProvider)
-                                .playerNextEpisode
-                                .toUpperCase(),
+                            l10n.playerNextEpisode.toUpperCase(),
                             style: TextStyle(
-                              color: Colors.black.withValues(alpha: 0.85),
+                              color: scrimColor.withValues(alpha: 0.85),
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1.5,
@@ -115,7 +115,7 @@ class _NextEpisodeOverlayState extends ConsumerState<NextEpisodeOverlay> {
                           const SizedBox(width: 14),
                           Icon(
                             Icons.arrow_forward_ios_rounded,
-                            color: Colors.black.withValues(alpha: 0.85),
+                            color: scrimColor.withValues(alpha: 0.85),
                             size: 18,
                           ),
                         ],

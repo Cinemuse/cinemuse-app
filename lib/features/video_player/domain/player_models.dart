@@ -85,6 +85,7 @@ class CinemaPlayerState {
   final bool isLive;
   final Channel? currentChannel;
   final StreamLink? currentLiveLink;
+  final String? notification;
 
   CinemaPlayerState({
     required this.controller,
@@ -109,6 +110,7 @@ class CinemaPlayerState {
     this.isLive = false,
     this.currentChannel,
     this.currentLiveLink,
+    this.notification,
   });
 
   CinemaPlayerState copyWith({
@@ -134,6 +136,7 @@ class CinemaPlayerState {
     bool? isLive,
     Object? currentChannel = _sentinel,
     Object? currentLiveLink = _sentinel,
+    Object? notification = _sentinel,
   }) {
     return CinemaPlayerState(
       controller: controller ?? this.controller,
@@ -176,10 +179,40 @@ class CinemaPlayerState {
       currentLiveLink: currentLiveLink == _sentinel
           ? this.currentLiveLink
           : (currentLiveLink as StreamLink?),
+      notification: notification == _sentinel
+          ? this.notification
+          : (notification as String?),
     );
   }
 }
 
 enum SliderOverlayType { none, sync, fontSize, position, background, color }
 
+class StreamFileInfo {
+  final int id;
+  final String path;
+  final int bytes;
+
+  const StreamFileInfo({
+    required this.id,
+    required this.path,
+    required this.bytes,
+  });
+
+  factory StreamFileInfo.fromMap(Map<String, dynamic> map) {
+    return StreamFileInfo(
+      id: map['id'] as int? ?? 0,
+      path: map['path'] as String? ?? '',
+      bytes: map['bytes'] as int? ?? 0,
+    );
+  }
+
+  String get filename => path.split('/').last;
+
+  double get sizeInGB => bytes / (1024 * 1024 * 1024);
+}
+
 const Object _sentinel = Object();
+
+/// Gesture drag interaction types supported on touch/mouse screens.
+enum DragType { none, volume, brightness }

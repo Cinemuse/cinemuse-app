@@ -2,6 +2,7 @@ import 'package:cinemuse_app/features/video_player/application/player_provider.d
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class CastRemoteView extends ConsumerWidget {
@@ -22,7 +23,7 @@ class CastRemoteView extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTheme.primary,
       body: Stack(
         children: [
           // Background Gradient or Backdrop
@@ -33,8 +34,8 @@ class CastRemoteView extends ConsumerWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    theme.colorScheme.primary.withValues(alpha: 0.2),
-                    Colors.black,
+                    AppTheme.accent.withValues(alpha: 0.2),
+                    AppTheme.primary,
                   ],
                 ),
               ),
@@ -54,7 +55,7 @@ class CastRemoteView extends ConsumerWidget {
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        icon: const Icon(Icons.arrow_back, color: AppTheme.textWhite),
                         onPressed: onBackPressed,
                       ),
                       const SizedBox(width: 8),
@@ -65,7 +66,7 @@ class CastRemoteView extends ConsumerWidget {
                             Text(
                               playerState.title,
                               style: theme.textTheme.titleMedium?.copyWith(
-                                color: Colors.white,
+                                color: AppTheme.textWhite,
                                 fontWeight: FontWeight.bold,
                               ),
                               maxLines: 1,
@@ -74,10 +75,10 @@ class CastRemoteView extends ConsumerWidget {
                             Text(
                               AppLocalizations.of(context)!.castCastingTo(
                                 playerState.selectedCastDevice?.name ??
-                                    "Chromecast",
+                                    (AppLocalizations.of(context)?.castDefaultDevice ?? 'Chromecast'),
                               ),
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: Colors.white70,
+                                color: AppTheme.textSecondary,
                               ),
                             ),
                           ],
@@ -86,7 +87,7 @@ class CastRemoteView extends ConsumerWidget {
                       IconButton(
                         icon: Icon(
                           Icons.cast_connected,
-                          color: theme.colorScheme.primary,
+                          color: AppTheme.accent,
                         ),
                         onPressed: () => notifier.stopCasting(),
                       ),
@@ -103,13 +104,11 @@ class CastRemoteView extends ConsumerWidget {
                     height: 300,
                     constraints: const BoxConstraints(maxHeight: 300),
                     decoration: BoxDecoration(
-                      color: Colors.white10,
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppTheme.surfaceOverlay,
+                      borderRadius: AppTheme.radiusMd,
                       boxShadow: [
                         BoxShadow(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.3,
-                          ),
+                          color: AppTheme.accentGlow,
                           blurRadius: 40,
                           spreadRadius: 2,
                         ),
@@ -118,7 +117,7 @@ class CastRemoteView extends ConsumerWidget {
                     child: const Icon(
                       Icons.movie,
                       size: 80,
-                      color: Colors.white24,
+                      color: AppTheme.borderSubtle,
                     ),
                   ),
                 ),
@@ -134,7 +133,7 @@ class CastRemoteView extends ConsumerWidget {
                         playerState.title,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.headlineMedium?.copyWith(
-                          color: Colors.white,
+                          color: AppTheme.textWhite,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -146,7 +145,7 @@ class CastRemoteView extends ConsumerWidget {
                             context,
                           )!.castSeasonEpisode(params.season!, params.episode!),
                           style: theme.textTheme.titleMedium?.copyWith(
-                            color: Colors.white60,
+                            color: AppTheme.textMuted,
                           ),
                         ),
                     ],
@@ -167,9 +166,9 @@ class CastRemoteView extends ConsumerWidget {
                           overlayShape: const RoundSliderOverlayShape(
                             overlayRadius: 14,
                           ),
-                          activeTrackColor: theme.colorScheme.primary,
-                          inactiveTrackColor: Colors.white24,
-                          thumbColor: theme.colorScheme.primary,
+                          activeTrackColor: AppTheme.accent,
+                          inactiveTrackColor: AppTheme.borderSubtle,
+                          thumbColor: AppTheme.accent,
                         ),
                         child: Slider(
                           value: playerState.remotePosition.inSeconds
@@ -196,14 +195,14 @@ class CastRemoteView extends ConsumerWidget {
                             Text(
                               _formatDuration(playerState.remotePosition),
                               style: const TextStyle(
-                                color: Colors.white70,
+                                color: AppTheme.textSecondary,
                                 fontSize: 12,
                               ),
                             ),
                             Text(
                               _formatDuration(playerState.remoteDuration),
                               style: const TextStyle(
-                                color: Colors.white70,
+                                color: AppTheme.textSecondary,
                                 fontSize: 12,
                               ),
                             ),
@@ -227,7 +226,7 @@ class CastRemoteView extends ConsumerWidget {
                     children: [
                       IconButton(
                         iconSize: 40,
-                        icon: const Icon(Icons.replay_10, color: Colors.white),
+                        icon: const Icon(Icons.replay_10, color: AppTheme.textWhite),
                         onPressed: () {
                           notifier.seek(
                             playerState.remotePosition -
@@ -237,14 +236,14 @@ class CastRemoteView extends ConsumerWidget {
                       ),
                       CircleAvatar(
                         radius: 40,
-                        backgroundColor: theme.colorScheme.primary,
+                        backgroundColor: AppTheme.accent,
                         child: IconButton(
                           iconSize: 50,
                           icon: Icon(
                             playerState.remotePlaying
                                 ? Icons.pause
                                 : Icons.play_arrow,
-                            color: Colors.white,
+                            color: AppTheme.primary,
                           ),
                           onPressed: () {
                             if (playerState.remotePlaying) {
@@ -257,7 +256,7 @@ class CastRemoteView extends ConsumerWidget {
                       ),
                       IconButton(
                         iconSize: 40,
-                        icon: const Icon(Icons.forward_10, color: Colors.white),
+                        icon: const Icon(Icons.forward_10, color: AppTheme.textWhite),
                         onPressed: () {
                           notifier.seek(
                             playerState.remotePosition +
@@ -274,7 +273,7 @@ class CastRemoteView extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 32),
                   child: TextButton.icon(
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.redAccent,
+                      foregroundColor: theme.colorScheme.error,
                     ),
                     icon: const Icon(Icons.stop),
                     label: Text(

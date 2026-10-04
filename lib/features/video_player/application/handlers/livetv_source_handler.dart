@@ -22,6 +22,19 @@ class LiveTvInitializationResult {
 }
 
 class LiveTvSourceHandler {
+  static final RegExp _dlhdChannelIdRegex = RegExp(r'dlhd_(\d+)');
+  static final RegExp _iframeSrcRegex =
+      RegExp(r'iframe src=["\x27]([^"\x27]+)', caseSensitive: false);
+  static final RegExp _daddySourceRegex =
+      RegExp(r'source\s*:\s*window\.atob\(["\x27]([^"\x27]+)');
+
+  static final Dio _relinkerDio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 5),
+    ),
+  );
+
   final Player _player;
   Timer? _stallTimer;
   StreamSubscription? _bufferingSub;
@@ -111,8 +124,10 @@ class LiveTvSourceHandler {
     _bufferingSub = _player.stream.buffering.listen((isBuffering) {
       if (isBuffering) {
         _stallTimer ??= Timer(stallDuration, () {
-          debugPrint(
-            'LiveTvSourceHandler: Stream stall detected (${stallDuration.inSeconds}s buffering).',
+          developer.log(
+            'Stream stall detected (${stallDuration.inSeconds}s buffering).',
+            name: 'VideoPlayer.LiveTvSourceHandler',
+            level: 800,
           );
           if (onStall != null) {
             onStall();
@@ -168,8 +183,14 @@ class LiveTvSourceHandler {
             _player.seek(target);
           }
         })
-        .catchError((_) {
-          // Stream has no DVR window or didn't expose duration
+        .catchError((e, st) {
+          developer.log(
+            'Live edge seek: stream has no DVR window or duration timed out',
+            name: 'VideoPlayer.LiveTvSourceHandler',
+            error: e,
+            stackTrace: st,
+            level: 500,
+          );
         });
   }
 
@@ -266,64 +287,75 @@ class LiveTvSourceHandler {
       final response = await dio.get(url);
       final location = response.headers.value('location');
       if (location != null && location.isNotEmpty) {
-        debugPrint('LiveTvSourceHandler: Resolved redirect to $location');
+        developer.log(
+          'Resolved redirect to $location',
+          name: 'VideoPlayer.LiveTvSourceHandler',
+        );
         return location;
       }
-    } catch (e) {
-      debugPrint('LiveTvSourceHandler: Error checking redirect: $e');
+    } catch (e, st) {
+      developer.log(
+        'Error checking redirect',
+        name: 'VideoPlayer.LiveTvSourceHandler',
+        error: e,
+        stackTrace: st,
+        level: 800,
+      );
     }
     return url;
   }
 
   Future<String> _resolveDaddyLiveRelinker(String url) async {
     try {
-      final match = RegExp(r'dlhd_(\d+)').firstMatch(url);
+      final match = _dlhdChannelIdRegex.firstMatch(url);
       if (match == null) return url;
       final channelId = match.group(1);
 
-      final dio = Dio(
-        BaseOptions(
-          connectTimeout: const Duration(seconds: 5),
-          receiveTimeout: const Duration(seconds: 5),
-          headers: {
-            'User-Agent':
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          },
-        ),
-      );
+      final commonHeaders = {
+        'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      };
 
       // Step 1: dlhd.st
-      final r1 = await dio.get('https://dlhd.st/watch.php?id=$channelId');
-      final m1 = RegExp(r'iframe src=["\x27]([^"\x27]+)', caseSensitive: false)
-          .firstMatch(r1.data.toString());
+      final r1 = await _relinkerDio.get(
+        'https://dlhd.st/watch.php?id=$channelId',
+        options: Options(headers: commonHeaders),
+      );
+      final m1 = _iframeSrcRegex.firstMatch(r1.data.toString());
       if (m1 == null) return url;
       final ifr1 = m1.group(1)!;
 
       // Step 2: dlive.sx
-      final r2 = await dio.get(
+      final r2 = await _relinkerDio.get(
         ifr1,
-        options: Options(headers: {'Referer': 'https://dlhd.st/'}),
+        options: Options(headers: {...commonHeaders, 'Referer': 'https://dlhd.st/'}),
       );
-      final m2 = RegExp(r'iframe src=["\x27]([^"\x27]+)', caseSensitive: false)
-          .firstMatch(r2.data.toString());
+      final m2 = _iframeSrcRegex.firstMatch(r2.data.toString());
       if (m2 == null) return url;
       final ifr2 = m2.group(1)!;
 
       // Step 3: daddy2.php
       final origin1 = Uri.parse(ifr1).origin;
-      final r3 = await dio.get(
+      final r3 = await _relinkerDio.get(
         ifr2,
-        options: Options(headers: {'Referer': ifr1, 'Origin': origin1}),
+        options: Options(
+          headers: {...commonHeaders, 'Referer': ifr1, 'Origin': origin1},
+        ),
       );
-      final m3 = RegExp(r'source\s*:\s*window\.atob\(["\x27]([^"\x27]+)')
-          .firstMatch(r3.data.toString());
+      final m3 = _daddySourceRegex.firstMatch(r3.data.toString());
       if (m3 == null) return url;
 
       final b64 = m3.group(1)!;
       final streamUrl = utf8.decode(base64.decode(b64));
       return streamUrl;
-    } catch (e) {
-      debugPrint('LiveTvSourceHandler: Error resolving DaddyLive: $e');
+    } catch (e, st) {
+      developer.log(
+        'Error resolving DaddyLive relinker',
+        name: 'VideoPlayer.LiveTvSourceHandler',
+        error: e,
+        stackTrace: st,
+        level: 800,
+      );
     }
     return url;
   }
@@ -355,8 +387,14 @@ class LiveTvSourceHandler {
           return stream;
         }
       }
-    } catch (e) {
-      debugPrint('LiveTvSourceHandler: Error resolving Rai relinker: $e');
+    } catch (e, st) {
+      developer.log(
+        'Error resolving Rai relinker',
+        name: 'VideoPlayer.LiveTvSourceHandler',
+        error: e,
+        stackTrace: st,
+        level: 800,
+      );
     }
     return url;
   }
@@ -383,8 +421,14 @@ class LiveTvSourceHandler {
       if (streamingUrl != null && streamingUrl.toString().isNotEmpty) {
         return streamingUrl.toString();
       }
-    } catch (e) {
-      debugPrint('LiveTvSourceHandler: Error resolving Sky relinker: $e');
+    } catch (e, st) {
+      developer.log(
+        'Error resolving Sky relinker',
+        name: 'VideoPlayer.LiveTvSourceHandler',
+        error: e,
+        stackTrace: st,
+        level: 800,
+      );
     }
     return url;
   }

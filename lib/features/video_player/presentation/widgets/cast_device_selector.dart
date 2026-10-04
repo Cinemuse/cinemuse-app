@@ -58,7 +58,7 @@ class _CastDeviceSelectorState extends State<CastDeviceSelector> {
                 AppLocalizations.of(
                   context,
                 )!.castError(snapshot.error.toString()),
-                style: const TextStyle(color: Colors.red),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
               );
             }
 

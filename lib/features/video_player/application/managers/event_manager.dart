@@ -1,10 +1,14 @@
 import 'dart:async';
-import 'package:cinemuse_app/features/video_player/application/managers/base_manager.dart';
+import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 /// Centralized manager for player event subscriptions and state bridging.
-class EventManager extends BaseManager {
+class EventManager {
+  final Ref ref;
+  final Player player;
   final List<StreamSubscription> _subscriptions = [];
 
   // Callbacks to notify Controller of state changes
@@ -14,8 +18,8 @@ class EventManager extends BaseManager {
   final Function(String?) onFormatDetected;
 
   EventManager({
-    required super.ref,
-    required super.player,
+    required this.ref,
+    required this.player,
     required this.onStateChanged,
     required this.onError,
     required this.onCompleted,
@@ -28,9 +32,23 @@ class EventManager extends BaseManager {
     _subscriptions.add(
       player.stream.playing.listen((playing) {
         if (playing) {
-          WakelockPlus.enable().catchError((_) {});
+          WakelockPlus.enable().catchError((e, st) {
+            developer.log(
+              'Failed to enable wakelock',
+              name: 'VideoPlayer.EventManager',
+              error: e,
+              stackTrace: st,
+            );
+          });
         } else {
-          WakelockPlus.disable().catchError((_) {});
+          WakelockPlus.disable().catchError((e, st) {
+            developer.log(
+              'Failed to disable wakelock',
+              name: 'VideoPlayer.EventManager',
+              error: e,
+              stackTrace: st,
+            );
+          });
         }
         onStateChanged();
       }),
@@ -59,7 +77,11 @@ class EventManager extends BaseManager {
 
     _subscriptions.add(
       player.stream.error.listen((error) {
-        debugPrint('EventManager: Player Error: $error');
+        developer.log(
+          'Player Error: $error',
+          name: 'VideoPlayer.EventManager',
+          level: 900,
+        );
         onError(error);
       }),
     );
@@ -67,7 +89,10 @@ class EventManager extends BaseManager {
     _subscriptions.add(
       player.stream.completed.listen((completed) {
         if (completed) {
-          debugPrint('EventManager: Playback Completed');
+          developer.log(
+            'Playback Completed',
+            name: 'VideoPlayer.EventManager',
+          );
           onCompleted();
         }
       }),
@@ -88,15 +113,26 @@ class EventManager extends BaseManager {
       if (format is String) {
         onFormatDetected(format);
       }
-    } catch (_) {
-      // Property might not be available on all platforms/states
+    } catch (e, st) {
+      developer.log(
+        'Format probe unavailable on current platform/state',
+        name: 'VideoPlayer.EventManager',
+        error: e,
+        stackTrace: st,
+        level: 500,
+      );
     }
   }
 
-  @override
   void dispose() {
-    WakelockPlus.disable().catchError((_) {});
+    WakelockPlus.disable().catchError((e, st) {
+      developer.log(
+        'Failed to disable wakelock during dispose',
+        name: 'VideoPlayer.EventManager',
+        error: e,
+        stackTrace: st,
+      );
+    });
     _cancelSubscriptions();
-    super.dispose();
   }
 }

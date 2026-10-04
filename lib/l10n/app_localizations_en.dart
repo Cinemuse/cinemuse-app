@@ -636,6 +636,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playerSelectAudio => 'Audio Tracks';
 
   @override
+  String get playerTrackOff => 'Off / Disable';
+
+  @override
+  String get playerTrackNoAudio => 'No Audio / Mute';
+
+  @override
+  String get playerInternalTracks => 'INTERNAL TRACKS';
+
+  @override
+  String get playerAudioTracks => 'AUDIO TRACKS';
+
+  @override
+  String get playerExternalTracks => 'EXTERNAL TRACKS';
+
+  @override
+  String get playerNoExternalSubtitles => 'No external subtitles found.';
+
+  @override
+  String get playerFailedLoadSubtitle => 'Failed to load external subtitle.';
+
+  @override
+  String playerSubtitlesCount(int count) {
+    return '$count subtitles';
+  }
+
+  @override
   String get playerResolving => 'Resolving stream...';
 
   @override
@@ -712,6 +738,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playerFiles => 'Files';
+
+  @override
+  String playerFilesCount(int count) {
+    return '$count files available';
+  }
+
+  @override
+  String playerProviderFailed(String time) {
+    return 'Failed ($time)';
+  }
+
+  @override
+  String playerProviderResults(int count, String time) {
+    return '$count results ($time)';
+  }
+
+  @override
+  String get playerSkipToPlayback => 'Skip to playback';
 
   @override
   String get playerSelectFile => 'Select File';
@@ -2052,5 +2096,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String liveTvMinutesRemaining(int minutes) {
     return '${minutes}m remaining';
+  }
+
+  @override
+  String get playerCached => 'CACHED';
+
+  @override
+  String get castDefaultDevice => 'Chromecast';
+
+  @override
+  String playerErrorPrefix(String error) {
+    return 'Error: $error';
   }
 }

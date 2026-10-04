@@ -1,14 +1,28 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:cast/cast.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:cinemuse_app/core/utils/mime_resolver.dart';
-import 'package:cinemuse_app/features/video_player/application/handlers/cast_constants.dart';
+/// Internal protocol constants for CastHandler.
+class CastConstants {
+  static const String defaultAppId = 'CC1AD845';
+  static const int metadataGeneric = 0;
+  static const int metadataMovie = 1;
+  static const int metadataTvShow = 2;
+  static const int metadataMusicTrack = 3;
+  static const int metadataPhoto = 4;
+  static const String streamTypeBuffered = 'BUFFERED';
+  static const String streamTypeLive = 'LIVE';
+  static const String nsReceiver = 'urn:x-cast:com.google.cast.receiver';
+  static const String nsMedia = 'urn:x-cast:com.google.cast.media';
+  static const String nsConnection = 'urn:x-cast:com.google.cast.tp.connection';
+  static const String nsHeartbeat = 'urn:x-cast:com.google.cast.tp.heartbeat';
+}
 
 class CastHandler {
   CastSession? _castSession;
@@ -20,6 +34,7 @@ class CastHandler {
   Completer<void>? _appLaunchCompleter;
   Timer? _statusTimer;
   Timer? _heartbeatTimer;
+  StreamSubscription<dynamic>? _messageSubscription;
   bool _isPlaying = false;
   Duration _currentPosition = Duration.zero;
   Duration _duration = Duration.zero;
@@ -45,11 +60,15 @@ class CastHandler {
       _castSession = await CastSessionManager().startSession(device);
       _mediaSessionId = null; // Reset for new session
 
-      _castSession!.messageStream.listen((message) {
+      _messageSubscription?.cancel();
+      _messageSubscription = _castSession!.messageStream.listen((message) {
         // Unnecessary type check removed (message is always Map)
 
         if (message['type'] == 'MEDIA_STATUS') {
-          debugPrint('CastHandler: Received MEDIA_STATUS: $message');
+          developer.log(
+            'Received MEDIA_STATUS: $message',
+            name: 'VideoPlayer.CastHandler',
+          );
           final statusList = message['status'] as List?;
           if (statusList != null && statusList.isNotEmpty) {
             final Map<String, dynamic> status = statusList[0];
@@ -58,8 +77,9 @@ class CastHandler {
             final mediaSessionId = status['mediaSessionId'];
             if (mediaSessionId != null && _mediaSessionId != mediaSessionId) {
               _mediaSessionId = mediaSessionId;
-              debugPrint(
-                'CastHandler: Media Session ID established/updated: $_mediaSessionId',
+              developer.log(
+                'Media Session ID established/updated: $_mediaSessionId',
+                name: 'VideoPlayer.CastHandler',
               );
             }
 
@@ -88,15 +108,19 @@ class CastHandler {
             onStatusSync?.call(_isPlaying, _currentPosition, _duration);
           }
         } else if (message['type'] == 'RECEIVER_STATUS') {
-          debugPrint('CastHandler: Received RECEIVER_STATUS: $message');
+          developer.log(
+            'Received RECEIVER_STATUS: $message',
+            name: 'VideoPlayer.CastHandler',
+          );
           final status = message['status'];
           if (status != null && status['applications'] != null) {
             final apps = status['applications'] as List;
             for (final app in apps) {
               if (app['appId'] == CastConstants.defaultAppId) {
                 _appSessionId = app['sessionId'];
-                debugPrint(
-                  'CastHandler: Captured Application Session ID: $_appSessionId',
+                developer.log(
+                  'Captured Application Session ID: $_appSessionId',
+                  name: 'VideoPlayer.CastHandler',
                 );
 
                 // Resolve the launch completer if it's waiting
@@ -111,8 +135,9 @@ class CastHandler {
       });
 
       // 1. Launch the default media receiver
-      debugPrint(
-        'CastHandler: Launching Default Media Receiver (${CastConstants.defaultAppId})',
+      developer.log(
+        'Launching Default Media Receiver (${CastConstants.defaultAppId})',
+        name: 'VideoPlayer.CastHandler',
       );
       _appLaunchCompleter = Completer<void>();
 
@@ -125,8 +150,10 @@ class CastHandler {
       // 2. Wait for the receiver app to start (max 10 seconds)
       await _appLaunchCompleter!.future.timeout(
         const Duration(seconds: 10),
-        onTimeout: () => debugPrint(
-          'CastHandler: Warning: App launch timeout, proceeding anyway...',
+        onTimeout: () => developer.log(
+          'Warning: App launch timeout, proceeding anyway...',
+          name: 'VideoPlayer.CastHandler',
+          level: 800,
         ),
       );
 
@@ -145,13 +172,17 @@ class CastHandler {
       onStreamResolved(resolvedStream);
 
       // Determine contentType: Engine Probed > HTTP Sniffing > URL Resolver
-      debugPrint('CastHandler: Resolving MIME type for $urlToCasting');
+      developer.log(
+        'Resolving MIME type for $urlToCasting',
+        name: 'VideoPlayer.CastHandler',
+      );
 
       String contentType;
 
       if (detectedMimeType != null) {
-        debugPrint(
-          'CastHandler: Using Engine-detected MIME: $detectedMimeType',
+        developer.log(
+          'Using Engine-detected MIME: $detectedMimeType',
+          name: 'VideoPlayer.CastHandler',
         );
         contentType = detectedMimeType;
       } else {
@@ -160,8 +191,9 @@ class CastHandler {
           urlToCasting,
           sniffedType ?? resolvedStream.mimeType,
         );
-        debugPrint(
-          'CastHandler: Final resolved MIME: $contentType (Sniffed: $sniffedType, Resolution: ${resolvedStream.mimeType})',
+        developer.log(
+          'Final resolved MIME: $contentType (Sniffed: $sniffedType, Resolution: ${resolvedStream.mimeType})',
+          name: 'VideoPlayer.CastHandler',
         );
       }
 
@@ -191,8 +223,9 @@ class CastHandler {
         if (episode != null) mediaMetadata['episode'] = episode;
       }
 
-      debugPrint(
-        'CastHandler: Sending LOAD command for $urlToCasting ($contentType)',
+      developer.log(
+        'Sending LOAD command for $urlToCasting ($contentType)',
+        name: 'VideoPlayer.CastHandler',
       );
 
       _castSession!.sendMessage(CastConstants.nsMedia, {
@@ -208,7 +241,10 @@ class CastHandler {
         },
       });
 
-      debugPrint('CastHandler: Casting started to ${device.name}');
+      developer.log(
+        'Casting started to ${device.name}',
+        name: 'VideoPlayer.CastHandler',
+      );
 
       // 4. Proactively request status to confirm session ID if not received yet
       _requestStatus();
@@ -219,8 +255,14 @@ class CastHandler {
         const Duration(seconds: 5),
         (_) => _requestStatus(),
       );
-    } catch (e) {
-      debugPrint('CastHandler: Error starting cast: $e');
+    } catch (e, st) {
+      developer.log(
+        'Error starting cast',
+        name: 'VideoPlayer.CastHandler',
+        error: e,
+        stackTrace: st,
+        level: 900,
+      );
       stopCasting();
       rethrow;
     }
@@ -228,7 +270,7 @@ class CastHandler {
 
   void pause() {
     if (_castSession == null || _mediaSessionId == null) return;
-    debugPrint('CastHandler: Pausing playback');
+    developer.log('Pausing playback', name: 'VideoPlayer.CastHandler');
     _castSession!.sendMessage(CastConstants.nsMedia, {
       'type': 'PAUSE',
       'mediaSessionId': _mediaSessionId,
@@ -238,7 +280,7 @@ class CastHandler {
 
   void play() {
     if (_castSession == null || _mediaSessionId == null) return;
-    debugPrint('CastHandler: Resuming playback');
+    developer.log('Resuming playback', name: 'VideoPlayer.CastHandler');
     _castSession!.sendMessage(CastConstants.nsMedia, {
       'type': 'PLAY',
       'mediaSessionId': _mediaSessionId,
@@ -248,7 +290,10 @@ class CastHandler {
 
   void seek(Duration position) {
     if (_castSession == null || _mediaSessionId == null) return;
-    debugPrint('CastHandler: Seeking to ${position.inSeconds}s');
+    developer.log(
+      'Seeking to ${position.inSeconds}s',
+      name: 'VideoPlayer.CastHandler',
+    );
     _castSession!.sendMessage(CastConstants.nsMedia, {
       'type': 'SEEK',
       'mediaSessionId': _mediaSessionId,
@@ -273,7 +318,10 @@ class CastHandler {
     _statusTimer = null;
 
     if (_castSession != null) {
-      debugPrint('CastHandler: Stopping media and application session');
+      developer.log(
+        'Stopping media and application session',
+        name: 'VideoPlayer.CastHandler',
+      );
       try {
         // 1. Try to stop media playback context
         if (_mediaSessionId != null) {
@@ -295,16 +343,27 @@ class CastHandler {
 
         // Short delay to let messages flush before nulling the session
         await Future.delayed(const Duration(milliseconds: 1000));
-      } catch (e) {
-        debugPrint('CastHandler: Error sending stop commands: $e');
+      } catch (e, st) {
+        developer.log(
+          'Error sending stop commands',
+          name: 'VideoPlayer.CastHandler',
+          error: e,
+          stackTrace: st,
+          level: 800,
+        );
       }
     }
 
-    debugPrint('CastHandler: Disconnecting session and notifying exit');
+    developer.log(
+      'Disconnecting session and notifying exit',
+      name: 'VideoPlayer.CastHandler',
+    );
     _statusTimer?.cancel();
     _statusTimer = null;
     _heartbeatTimer?.cancel();
     _heartbeatTimer = null;
+    _messageSubscription?.cancel();
+    _messageSubscription = null;
 
     _castSession = null;
     _mediaSessionId = null;
@@ -347,12 +406,21 @@ class CastHandler {
 
       final contentType = response.headers.value('content-type');
       if (contentType != null) {
-        debugPrint('CastHandler: Sniffed Content-Type: $contentType');
+        developer.log(
+          'Sniffed Content-Type: $contentType',
+          name: 'VideoPlayer.CastHandler',
+        );
         // Clean up charset etc (video/mp4; charset=UTF-8 -> video/mp4)
         return contentType.split(';').first.trim();
       }
-    } catch (e) {
-      debugPrint('CastHandler: Warning: MIME sniffing failed: $e');
+    } catch (e, st) {
+      developer.log(
+        'Warning: MIME sniffing failed',
+        name: 'VideoPlayer.CastHandler',
+        error: e,
+        stackTrace: st,
+        level: 700,
+      );
     }
     return null;
   }
@@ -362,6 +430,8 @@ class CastHandler {
     _statusTimer = null;
     _heartbeatTimer?.cancel();
     _heartbeatTimer = null;
+    _messageSubscription?.cancel();
+    _messageSubscription = null;
     _castSession = null;
   }
 }

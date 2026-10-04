@@ -8,6 +8,7 @@ import 'package:cinemuse_app/features/video_player/presentation/widgets/settings
 import 'package:cinemuse_app/features/video_player/presentation/widgets/video_bottom_bar.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/video_playback_controls.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/settings/main_settings_view.dart';
+import 'package:cinemuse_app/features/video_player/presentation/helpers/playback_control_actions.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/video_top_bar.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -137,14 +138,16 @@ void main() {
         buildTestableWidget(
           VideoPlaybackControls(
             playerState: createDummyPlayerState(),
-            onTogglePlayPause: () => playPauseToggled = true,
-            onSkip: (forward) => skipDirection = forward,
-            onToggleMute: () {},
-            onStopPressed: () => stopTapped = true,
-            isFullscreen: false,
-            onToggleFullscreen: () {},
-            onNextEpisode: () => nextEpisodeTapped = true,
-            onSettingsPressed: () => settingsTapped = true,
+            actions: PlaybackControlActions(
+              onTogglePlayPause: () => playPauseToggled = true,
+              onSkip: (forward) => skipDirection = forward,
+              onToggleMute: () {},
+              onStopPressed: () => stopTapped = true,
+              isFullscreen: false,
+              onToggleFullscreen: () {},
+              onNextEpisode: () => nextEpisodeTapped = true,
+              onSettingsPressed: () => settingsTapped = true,
+            ),
           ),
           mode: DisplayMode.bigPicture,
         ),
@@ -210,14 +213,16 @@ void main() {
               ),
               VideoPlaybackControls(
                 playerState: createDummyPlayerState(),
-                onTogglePlayPause: () {},
-                onSkip: (_) {},
-                onToggleMute: () {},
-                onStopPressed: () {},
-                isFullscreen: false,
-                onToggleFullscreen: () {},
-                onSettingsPressed: () {},
-                seekbarFocusNode: seekbarFocusNode,
+                actions: PlaybackControlActions(
+                  onTogglePlayPause: () {},
+                  onSkip: (_) {},
+                  onToggleMute: () {},
+                  onStopPressed: () {},
+                  isFullscreen: false,
+                  onToggleFullscreen: () {},
+                  onSettingsPressed: () {},
+                  seekbarFocusNode: seekbarFocusNode,
+                ),
               ),
             ],
           ),
@@ -387,18 +392,20 @@ void main() {
         buildTestableWidget(
           VideoBottomBar(
             playerState: createDummyPlayerState(),
+            actions: PlaybackControlActions(
+              onTogglePlayPause: () {},
+              onSkip: (_) {},
+              onToggleMute: () {},
+              onStopPressed: () {},
+              isFullscreen: false,
+              onToggleFullscreen: () {},
+              playPauseFocusNode: playPauseFocusNode,
+              seekbarFocusNode: seekbarFocusNode,
+            ),
             dragging: false,
             onChangeStart: (_) {},
             onChangeEnd: (_) {},
             onChanged: (_) {},
-            onTogglePlayPause: () {},
-            onSkip: (_) {},
-            onToggleMute: () {},
-            onStopPressed: () {},
-            isFullscreen: false,
-            onToggleFullscreen: () {},
-            playPauseFocusNode: playPauseFocusNode,
-            seekbarFocusNode: seekbarFocusNode,
           ),
           mode: DisplayMode.bigPicture,
         ),
@@ -607,6 +614,45 @@ void main() {
       );
     });
 
+    testWidgets('Moving seekbar with spatial navigation skips 30 seconds', (tester) async {
+      final fakeVideoState = FakeVideoState();
+      when(() => mockStream.position).thenAnswer((_) => Stream.value(Duration.zero));
+      when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
+      when(() => mockState.volume).thenReturn(100.0);
+      Duration? seekTarget;
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          CustomVideoControls(
+            videoState: fakeVideoState,
+            playerState: createDummyPlayerState(),
+            params: const PlayerParams('movie-1', 'movie'),
+            onSettingsPressed: () {},
+            onBackPressed: () {},
+            onOverlayRequested: (_) {},
+          ),
+          mode: DisplayMode.bigPicture,
+          onSeek: (pos) => seekTarget = pos,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Navigate Up from Play/Pause to Seekbar
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pumpAndSettle();
+      expect(
+        tester.binding.focusManager.primaryFocus?.debugLabel,
+        equals('SeekbarFocusNode'),
+      );
+
+      // Press Right on seekbar once
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+
+      // Verify that the seek target is 30 seconds
+      expect(seekTarget, equals(const Duration(seconds: 30)));
+    });
+
     testWidgets('Long-pressing Left/Right triggers skip and Up/Down is unused on VOD when controls are hidden', (tester) async {
       final fakeVideoState = FakeVideoState();
       when(() => mockStream.position).thenAnswer((_) => Stream.value(Duration.zero));
@@ -735,6 +781,38 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
       await tester.pumpAndSettle();
       expect(prevChannelZapped, isTrue);
+    });
+
+    testWidgets('Pressing numeric key on Live TV registers digit once in buffer', (tester) async {
+      final fakeVideoState = FakeVideoState();
+      when(() => mockStream.position).thenAnswer((_) => Stream.value(Duration.zero));
+      when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
+      when(() => mockState.volume).thenReturn(50.0);
+      when(() => mockState.playing).thenReturn(true);
+
+      String receivedDigit = '';
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          CustomVideoControls(
+            videoState: fakeVideoState,
+            playerState: createDummyPlayerState(),
+            params: const PlayerParams('livetv_session', 'livetv'),
+            isLive: true,
+            onSettingsPressed: () {},
+            onBackPressed: () {},
+            onOverlayRequested: (_) {},
+            onNumberInput: (d) => receivedDigit += d,
+          ),
+          mode: DisplayMode.bigPicture,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit5);
+      await tester.pumpAndSettle();
+
+      expect(receivedDigit, equals('5'));
     });
   });
 

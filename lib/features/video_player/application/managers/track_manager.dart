@@ -3,7 +3,6 @@ import 'dart:developer' as developer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/video_player/application/language_mapper.dart';
-import 'package:cinemuse_app/features/video_player/application/managers/base_manager.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/core/services/streaming/subtitles/subtitle_service.dart';
 import 'package:cinemuse_app/core/services/streaming/subtitles/external_subtitle.dart';
@@ -21,12 +20,14 @@ final externalSubtitlesProvider =
 /// Reactively listens to [player.stream.tracks] and selects the preferred tracks
 /// whenever the track list changes (e.g., after demuxing or external subtitle injection).
 /// Also handles background fetching of external subtitles and auto-applying the best match.
-class TrackManager extends BaseManager {
+class TrackManager {
+  final Ref ref;
+  final Player player;
   final PlayerParams params;
 
   TrackManager({
-    required super.ref,
-    required super.player,
+    required this.ref,
+    required this.player,
     required this.params,
   }) {
     _tracksSubscription = player.stream.tracks.listen(
@@ -41,11 +42,9 @@ class TrackManager extends BaseManager {
   bool? _isAnime;
   Timer? _autoSelectTimeout;
 
-  @override
   void dispose() {
     _tracksSubscription?.cancel();
     _autoSelectTimeout?.cancel();
-    super.dispose();
   }
 
   // ---------------------------------------------------------------------------

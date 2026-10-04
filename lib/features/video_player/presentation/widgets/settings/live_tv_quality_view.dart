@@ -111,7 +111,7 @@ class LiveTvQualityView extends ConsumerWidget {
       child: DpadFocusable(
         autofocus: autofocus,
         scale: 1.02,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppTheme.radius12,
         onTap: () {
           ref
               .read(playerControllerProvider(params).notifier)
@@ -126,17 +126,17 @@ class LiveTvQualityView extends ConsumerWidget {
               color: isActive
                   ? AppTheme.accent.withValues(alpha: 0.12)
                   : (isHighlighted
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : Colors.white.withValues(alpha: 0.04)),
-              borderRadius: BorderRadius.circular(12),
+                      ? AppTheme.textWhite.withValues(alpha: 0.08)
+                      : AppTheme.textWhite.withValues(alpha: 0.04)),
+              borderRadius: AppTheme.radius12,
               border: Border.all(
                 color: isFocused
-                    ? Colors.white
+                    ? AppTheme.focusRing
                     : (isActive
                         ? AppTheme.accent.withValues(alpha: 0.5)
                         : (isHovered
-                            ? Colors.white.withValues(alpha: 0.2)
-                            : Colors.white.withValues(alpha: 0.08))),
+                            ? AppTheme.textWhite.withValues(alpha: 0.2)
+                            : AppTheme.textWhite.withValues(alpha: 0.08))),
                 width: isFocused ? 2 : 1,
               ),
             ),
@@ -175,24 +175,19 @@ class LiveTvQualityView extends ConsumerWidget {
   }
 
   Widget _buildQualityBadge(StreamQuality quality) {
-    Color color;
-    switch (quality) {
-      case StreamQuality.uhd:
-        color = Colors.amberAccent;
-      case StreamQuality.fhd:
-        color = Colors.blueAccent;
-      case StreamQuality.hd:
-        color = Colors.cyanAccent;
-      case StreamQuality.sd:
-        color = Colors.grey;
-    }
+    final color = switch (quality) {
+      StreamQuality.uhd => AppTheme.badgeFlag,
+      StreamQuality.fhd => AppTheme.badgeResolution,
+      StreamQuality.hd => AppTheme.badgeSize,
+      StreamQuality.sd => AppTheme.textMuted,
+    };
     return SettingsBadge(text: quality.label, color: color);
   }
 
   Widget _buildFormatBadge(String format) {
     return SettingsBadge(
       text: format,
-      color: Colors.purpleAccent.shade100,
+      color: AppTheme.badgeAudio,
     );
   }
 
@@ -210,7 +205,7 @@ class LiveTvQualityView extends ConsumerWidget {
       child: DpadFocusable(
         autofocus: autofocus,
         scale: 1.02,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppTheme.radius12,
         onTap: () {
           ref.read(settingsProvider.notifier).updateSettings({
             'liveTvQuality': quality,
@@ -225,17 +220,17 @@ class LiveTvQualityView extends ConsumerWidget {
               color: isSelected
                   ? AppTheme.accent.withValues(alpha: 0.1)
                   : (isHighlighted
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : Colors.white.withValues(alpha: 0.04)),
-              borderRadius: BorderRadius.circular(12),
+                      ? AppTheme.textWhite.withValues(alpha: 0.08)
+                      : AppTheme.textWhite.withValues(alpha: 0.04)),
+              borderRadius: AppTheme.radius12,
               border: Border.all(
                 color: isFocused
-                    ? Colors.white
+                    ? AppTheme.focusRing
                     : (isSelected
                         ? AppTheme.accent.withValues(alpha: 0.4)
                         : (isHovered
-                            ? Colors.white.withValues(alpha: 0.2)
-                            : Colors.white.withValues(alpha: 0.08))),
+                            ? AppTheme.textWhite.withValues(alpha: 0.2)
+                            : AppTheme.textWhite.withValues(alpha: 0.08))),
                 width: isFocused ? 2 : 1,
               ),
             ),

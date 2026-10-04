@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
@@ -7,6 +8,7 @@ import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 class SubViewHeader extends StatelessWidget {
@@ -33,7 +35,7 @@ class SubViewHeader extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
+            icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textSecondary),
             onPressed: onBack,
             splashRadius: 24,
           ),
@@ -77,23 +79,23 @@ class SettingsTile extends StatelessWidget {
       autofocus: autofocus,
       onTap: onTap,
       scale: 1.02,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: AppTheme.radius12,
       builder: (context, isFocused, isHovered, child) {
         final isHighlighted = isFocused || isHovered;
         return Container(
           decoration: BoxDecoration(
             color: isHighlighted
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isFocused
-                  ? Colors.white
-                  : (isHovered
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.transparent),
-              width: 1.5,
-            ),
+                ? AppTheme.textWhite.withValues(alpha: 0.1)
+                : null,
+            borderRadius: AppTheme.radius12,
+            border: isFocused
+                ? Border.all(color: AppTheme.focusRing, width: 1.5)
+                : (isHovered
+                    ? Border.all(
+                        color: AppTheme.textWhite.withValues(alpha: 0.2),
+                        width: 1.5,
+                      )
+                    : null),
           ),
           child: ListTile(
             contentPadding: EdgeInsets.symmetric(
@@ -104,13 +106,13 @@ class SettingsTile extends StatelessWidget {
               padding: EdgeInsets.all(compact ? 10 : 12),
               decoration: BoxDecoration(
                 color: isHighlighted
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.white.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                    ? AppTheme.textWhite.withValues(alpha: 0.2)
+                    : AppTheme.textWhite.withValues(alpha: 0.08),
+                borderRadius: AppTheme.radius12,
               ),
               child: Icon(
                 icon,
-                color: isHighlighted ? Colors.white : Colors.white70,
+                color: isHighlighted ? AppTheme.textWhite : AppTheme.textSecondary,
                 size: compact ? 20 : 24,
               ),
             ),
@@ -123,7 +125,10 @@ class SettingsTile extends StatelessWidget {
               ),
             ),
             subtitle: subtitle ?? const SizedBox.shrink(),
-            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24),
+            trailing: const Icon(
+              Icons.chevron_right_rounded,
+              color: AppTheme.borderSubtle,
+            ),
             onTap: onTap,
           ),
         );
@@ -293,7 +298,7 @@ class TrackTile extends ConsumerWidget {
       autofocus: autofocus,
       onTap: () => _handleTrackSelection(),
       scale: 1.02,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: AppTheme.radius12,
       builder: (context, isFocused, isHovered, child) {
         final isHighlighted = isFocused || isHovered;
         return Container(
@@ -302,23 +307,23 @@ class TrackTile extends ConsumerWidget {
             color: isSelected
                 ? AppTheme.accent.withValues(alpha: 0.15)
                 : (isHighlighted
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : Colors.white.withValues(alpha: 0.02)),
-            borderRadius: BorderRadius.circular(12),
+                    ? AppTheme.textWhite.withValues(alpha: 0.08)
+                    : AppTheme.textWhite.withValues(alpha: 0.02)),
+            borderRadius: AppTheme.radius12,
             border: Border.all(
               color: isFocused
-                  ? Colors.white
+                  ? AppTheme.focusRing
                   : (isSelected
                       ? AppTheme.accent.withValues(alpha: 0.5)
                       : (isHovered
-                          ? Colors.white.withValues(alpha: 0.2)
-                          : Colors.white.withValues(alpha: 0.05))),
+                          ? AppTheme.textWhite.withValues(alpha: 0.2)
+                          : AppTheme.textWhite.withValues(alpha: 0.05))),
               width: isFocused ? 2 : 1,
             ),
           ),
           child: ListTile(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+            shape: const RoundedRectangleBorder(
+              borderRadius: AppTheme.radius12,
             ),
             title: Text(
               title,
@@ -353,8 +358,14 @@ class TrackTile extends ConsumerWidget {
       } else {
         await player.setAudioTrack(track);
       }
-    } catch (_) {
-      // Ignore "already selected" or stale track errors from MPV
+    } catch (e, st) {
+      developer.log(
+        'Failed to set ${isSubtitle ? "subtitle" : "audio"} track (may be stale or already selected)',
+        name: 'VideoPlayer.SettingsWidgets',
+        error: e,
+        stackTrace: st,
+        level: 500,
+      );
     }
 
     if (onSelected != null) {
@@ -376,7 +387,7 @@ class SettingsBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: AppTheme.radiusSm,
         border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Text(
@@ -419,6 +430,9 @@ class StreamMetadataOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final meta = stream.metadata;
+    final l10n = AppLocalizations.of(context);
+    final cachedLabel = l10n?.playerCached ?? 'CACHED';
+
     if (meta == null) {
       return Text(
         stream.title,
@@ -438,7 +452,7 @@ class StreamMetadataOverview extends StatelessWidget {
           children: [
             if (stream.isCached) ...[
               if (stream.cachedOn.isEmpty)
-                const SettingsBadge(text: 'CACHED', color: Colors.greenAccent)
+                SettingsBadge(text: cachedLabel, color: AppTheme.success)
               else
                 for (final entry in stream.cachedOn.entries)
                   if (entry.value)
@@ -447,21 +461,21 @@ class StreamMetadataOverview extends StatelessWidget {
                           ? 'RD'
                           : entry.key == 'TorBox'
                               ? 'TB'
-                              : 'CACHED',
-                      color: Colors.greenAccent,
+                              : cachedLabel,
+                      color: AppTheme.success,
                     ),
             ],
             if (meta.video.resolution != VideoResolution.unknown)
               SettingsBadge(
                 text: meta.video.resolution.label,
-                color: Colors.blueAccent,
+                color: AppTheme.badgeResolution,
               ),
             if (meta.video.isHDR)
-              const SettingsBadge(text: 'HDR', color: Colors.orangeAccent),
+              const SettingsBadge(text: 'HDR', color: AppTheme.badgeHdr),
             if (meta.video.isDV)
-              const SettingsBadge(text: 'DV', color: Colors.orangeAccent),
+              const SettingsBadge(text: 'DV', color: AppTheme.badgeHdr),
             if (meta.video.is10Bit)
-              const SettingsBadge(text: '10BIT', color: Colors.orangeAccent),
+              const SettingsBadge(text: '10BIT', color: AppTheme.badgeHdr),
           ],
         ),
         const SizedBox(height: 8),
@@ -477,26 +491,26 @@ class StreamMetadataOverview extends StatelessWidget {
             if (meta.size != null)
               SettingsLabel(
                 text: meta.size!,
-                color: Colors.cyanAccent.withValues(alpha: 0.8),
+                color: AppTheme.badgeSize.withValues(alpha: 0.8),
               ),
             ...meta.flags
                 .where((f) => f != ReleaseFlag.none)
                 .map(
                   (f) => SettingsLabel(
                     text: f.label,
-                    color: Colors.amberAccent.withValues(alpha: 0.8),
+                    color: AppTheme.badgeFlag.withValues(alpha: 0.8),
                   ),
                 ),
             ...meta.audio.formats.map(
               (a) => SettingsLabel(
                 text: a.label,
-                color: Colors.deepPurpleAccent.withValues(alpha: 0.8),
+                color: AppTheme.badgeAudio.withValues(alpha: 0.8),
               ),
             ),
             if (meta.languages.isNotEmpty)
               SettingsLabel(
                 text: meta.languages.join(' • '),
-                color: Colors.white70,
+                color: AppTheme.textSecondary,
               ),
           ],
         ),

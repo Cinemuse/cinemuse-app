@@ -637,6 +637,33 @@ class AppLocalizationsIt extends AppLocalizations {
   String get playerSelectAudio => 'Seleziona Traccia Audio';
 
   @override
+  String get playerTrackOff => 'Disattiva';
+
+  @override
+  String get playerTrackNoAudio => 'Nessun audio / Muto';
+
+  @override
+  String get playerInternalTracks => 'TRACCE INTERNE';
+
+  @override
+  String get playerAudioTracks => 'TRACCE AUDIO';
+
+  @override
+  String get playerExternalTracks => 'TRACCE ESTERNE';
+
+  @override
+  String get playerNoExternalSubtitles => 'Nessun sottotitolo esterno trovato.';
+
+  @override
+  String get playerFailedLoadSubtitle =>
+      'Impossibile caricare il sottotitolo esterno.';
+
+  @override
+  String playerSubtitlesCount(int count) {
+    return '$count sottotitoli';
+  }
+
+  @override
   String get playerResolving => 'Risoluzione stream in corso...';
 
   @override
@@ -716,6 +743,24 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get playerFiles => 'File';
+
+  @override
+  String playerFilesCount(int count) {
+    return '$count file disponibili';
+  }
+
+  @override
+  String playerProviderFailed(String time) {
+    return 'Fallito ($time)';
+  }
+
+  @override
+  String playerProviderResults(int count, String time) {
+    return '$count risultati ($time)';
+  }
+
+  @override
+  String get playerSkipToPlayback => 'Passa alla riproduzione';
 
   @override
   String get playerSelectFile => 'Seleziona File';
@@ -2068,5 +2113,16 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String liveTvMinutesRemaining(int minutes) {
     return '${minutes}m rimanenti';
+  }
+
+  @override
+  String get playerCached => 'IN CACHE';
+
+  @override
+  String get castDefaultDevice => 'Chromecast';
+
+  @override
+  String playerErrorPrefix(String error) {
+    return 'Errore: $error';
   }
 }

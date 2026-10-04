@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:cinemuse_app/features/video_player/presentation/helpers/playback_control_actions.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:media_kit/media_kit.dart';
@@ -11,38 +12,12 @@ import 'package:media_kit/media_kit.dart';
 /// Bottom-row playback controls for the VOD video player.
 class VideoPlaybackControls extends ConsumerStatefulWidget {
   final CinemaPlayerState playerState;
-  final VoidCallback onTogglePlayPause;
-  final Function(bool) onSkip;
-  final VoidCallback onToggleMute;
-  final VoidCallback onStopPressed;
-  final bool isFullscreen;
-  final VoidCallback onToggleFullscreen;
-  final VoidCallback? onNextEpisode;
-  final VoidCallback? onSettingsPressed;
-  final FocusNode? playPauseFocusNode;
-  final FocusNode? seekbarFocusNode;
-  final bool isLive;
-  final VoidCallback? onPreviousChannel;
-  final VoidCallback? onNextChannel;
-  final VoidCallback? onOpenChannelGuide;
+  final PlaybackControlActions actions;
 
   const VideoPlaybackControls({
     super.key,
     required this.playerState,
-    required this.onTogglePlayPause,
-    required this.onSkip,
-    required this.onToggleMute,
-    required this.onStopPressed,
-    required this.isFullscreen,
-    required this.onToggleFullscreen,
-    this.onNextEpisode,
-    this.onSettingsPressed,
-    this.playPauseFocusNode,
-    this.seekbarFocusNode,
-    this.isLive = false,
-    this.onPreviousChannel,
-    this.onNextChannel,
-    this.onOpenChannelGuide,
+    required this.actions,
   });
 
   @override
@@ -64,7 +39,7 @@ class _VideoPlaybackControlsState
   FocusNode? _internalPlayPauseFocusNode;
 
   FocusNode get _effectivePlayPauseFocusNode =>
-      widget.playPauseFocusNode ??
+      widget.actions.playPauseFocusNode ??
       (_internalPlayPauseFocusNode ??=
           FocusNode(debugLabel: 'PlayPauseTvButton'));
 
@@ -102,11 +77,11 @@ class _VideoPlaybackControlsState
     final player = widget.playerState.controller.player;
     final l10n = ref.watch(localizationsProvider);
 
-    final hasSettings = widget.onSettingsPressed != null;
-    final hasNext = widget.onNextEpisode != null;
-    final hasGuide = widget.onOpenChannelGuide != null;
+    final hasSettings = widget.actions.onSettingsPressed != null;
+    final hasNext = widget.actions.onNextEpisode != null;
+    final hasGuide = widget.actions.onOpenChannelGuide != null;
 
-    if (widget.isLive) {
+    if (widget.actions.isLive) {
       final rightStartNode = hasGuide
           ? _channelGuideFocusNode
           : (hasSettings ? _settingsFocusNode : _fullscreenFocusNode);
@@ -131,7 +106,7 @@ class _VideoPlaybackControlsState
                 prev: null,
                 next: _effectivePlayPauseFocusNode,
               ),
-              onTap: widget.onPreviousChannel ?? () {},
+              onTap: widget.actions.onPreviousChannel ?? () {},
             ),
             const SizedBox(width: 4),
             _buildPlayPauseButton(player, l10n),
@@ -145,7 +120,7 @@ class _VideoPlaybackControlsState
                 prev: _effectivePlayPauseFocusNode,
                 next: _nextChannelFocusNode,
               ),
-              onTap: widget.onStopPressed,
+              onTap: widget.actions.onStopPressed,
             ),
             const SizedBox(width: 4),
             _buildControlButton(
@@ -157,7 +132,7 @@ class _VideoPlaybackControlsState
                 prev: _stopFocusNode,
                 next: rightStartNode,
               ),
-              onTap: widget.onNextChannel ?? () {},
+              onTap: widget.actions.onNextChannel ?? () {},
             ),
             const Spacer(),
             if (hasGuide) ...[
@@ -170,7 +145,7 @@ class _VideoPlaybackControlsState
                   prev: _nextChannelFocusNode,
                   next: guideNextNode,
                 ),
-                onTap: widget.onOpenChannelGuide!,
+                onTap: widget.actions.onOpenChannelGuide!,
               ),
               const SizedBox(width: 4),
             ],
@@ -184,7 +159,7 @@ class _VideoPlaybackControlsState
                   prev: settingsPrevNode,
                   next: _fullscreenFocusNode,
                 ),
-                onTap: widget.onSettingsPressed!,
+                onTap: widget.actions.onSettingsPressed!,
               ),
               const SizedBox(width: 4),
             ],
@@ -221,7 +196,7 @@ class _VideoPlaybackControlsState
               prev: null,
               next: _effectivePlayPauseFocusNode,
             ),
-            onTap: () => widget.onSkip(false),
+            onTap: () => widget.actions.onSkip(false),
           ),
           const SizedBox(width: 4),
           _buildPlayPauseButton(player, l10n),
@@ -235,7 +210,7 @@ class _VideoPlaybackControlsState
               prev: _effectivePlayPauseFocusNode,
               next: _forwardFocusNode,
             ),
-            onTap: widget.onStopPressed,
+            onTap: widget.actions.onStopPressed,
           ),
           const SizedBox(width: 4),
           _buildControlButton(
@@ -247,7 +222,7 @@ class _VideoPlaybackControlsState
               prev: _stopFocusNode,
               next: forwardNextNode,
             ),
-            onTap: () => widget.onSkip(true),
+            onTap: () => widget.actions.onSkip(true),
           ),
           const Spacer(),
           if (hasSettings) ...[
@@ -260,7 +235,7 @@ class _VideoPlaybackControlsState
                 prev: _forwardFocusNode,
                 next: settingsNextNode,
               ),
-              onTap: widget.onSettingsPressed!,
+              onTap: widget.actions.onSettingsPressed!,
             ),
             const SizedBox(width: 4),
           ],
@@ -274,7 +249,7 @@ class _VideoPlaybackControlsState
                 prev: nextPrevNode,
                 next: _fullscreenFocusNode,
               ),
-              onTap: widget.onNextEpisode!,
+              onTap: widget.actions.onNextEpisode!,
             ),
             const SizedBox(width: 4),
           ],
@@ -293,6 +268,10 @@ class _VideoPlaybackControlsState
       return KeyEventResult.ignored;
     }
 
+    if (event is KeyDownEvent) {
+      widget.actions.onResetHideTimer?.call();
+    }
+
     if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
       if (event is KeyDownEvent && prev != null) {
         prev.requestFocus();
@@ -308,8 +287,8 @@ class _VideoPlaybackControlsState
     }
 
     if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-      if (event is KeyDownEvent && widget.seekbarFocusNode != null) {
-        widget.seekbarFocusNode!.requestFocus();
+      if (event is KeyDownEvent && widget.actions.seekbarFocusNode != null) {
+        widget.actions.seekbarFocusNode!.requestFocus();
       }
       return KeyEventResult.handled;
     }
@@ -318,7 +297,7 @@ class _VideoPlaybackControlsState
   }
 
   Widget _buildPlayPauseButton(Player player, AppLocalizations l10n) {
-    final prevNode = widget.isLive ? _prevChannelFocusNode : _rewindFocusNode;
+    final prevNode = widget.actions.isLive ? _prevChannelFocusNode : _rewindFocusNode;
     final nextNode = _stopFocusNode;
     return StreamBuilder<bool>(
       stream: player.stream.playing,
@@ -337,7 +316,7 @@ class _VideoPlaybackControlsState
             prev: prevNode,
             next: nextNode,
           ),
-          onTap: widget.onTogglePlayPause,
+          onTap: widget.actions.onTogglePlayPause,
         );
       },
     );
@@ -349,10 +328,10 @@ class _VideoPlaybackControlsState
     FocusNode? nextNode,
   }) {
     return _buildControlButton(
-      icon: widget.isFullscreen
+      icon: widget.actions.isFullscreen
           ? Icons.fullscreen_exit_rounded
           : Icons.fullscreen_rounded,
-      tooltip: widget.isFullscreen
+      tooltip: widget.actions.isFullscreen
           ? l10n.playerExitFullscreen
           : l10n.playerFullscreen,
       focusNode: _fullscreenFocusNode,
@@ -363,7 +342,7 @@ class _VideoPlaybackControlsState
         prev: prevNode,
         next: nextNode,
       ),
-      onTap: widget.onToggleFullscreen,
+      onTap: widget.actions.onToggleFullscreen,
     );
   }
 
@@ -395,17 +374,12 @@ class _VideoPlaybackControlsState
               shape: BoxShape.circle,
               color: isFocused
                   ? AppTheme.accent.withValues(alpha: 0.22)
+                  : (isHovered ? AppTheme.surfaceOverlay : null),
+              border: isFocused
+                  ? Border.all(color: AppTheme.accent, width: 1.5)
                   : (isHovered
-                      ? Colors.white.withValues(alpha: 0.12)
-                      : Colors.transparent),
-              border: Border.all(
-                color: isFocused
-                    ? AppTheme.accent
-                    : (isHovered
-                        ? Colors.white.withValues(alpha: 0.3)
-                        : Colors.transparent),
-                width: 1.5,
-              ),
+                      ? Border.all(color: AppTheme.borderSubtle, width: 1.5)
+                      : null),
               boxShadow: isFocused ? AppTheme.shadowNeonSm : null,
             ),
             alignment: Alignment.center,

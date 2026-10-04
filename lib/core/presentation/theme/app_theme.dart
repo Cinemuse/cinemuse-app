@@ -19,6 +19,9 @@ class AppTheme {
   static const Color star = Color(0xFFffc107); // Amber 500
   static const Color starGlow = Color(0x80ffc107);
 
+  static const Color success = Color(0xFF22c55e); // Green 500
+  static const Color successGlow = Color(0x8022c55e);
+
   static const Color surface = Color(0xFF1a0b2e);
   static const Color border = Color(0x33d946ef); // rgba(217, 70, 239, 0.2)
   static const Color borderHover = Color(0x66d946ef); // rgba(217, 70, 239, 0.4)
@@ -26,6 +29,24 @@ class AppTheme {
   static const Color textWhite = Color(0xFFffffff);
   static const Color textSecondary = Color(0xFFe5e7eb); // Gray 200
   static const Color textMuted = Color(0xFF9ca3af); // Gray 400
+
+  static const Color surfaceOverlay = Color(0x8C000000); // 55% black for frosted HUDs
+  static const Color borderSubtle = Color(0x26FFFFFF); // 15% white for glass borders
+
+  // Stream Metadata Badge Tokens
+  static const Color badgeHdr = Color(0xFFf97316); // Orange 500
+  static const Color badgeResolution = Color(0xFF3b82f6); // Blue 500
+  static const Color badgeSize = Color(0xFF06b6d4); // Cyan 500
+  static const Color badgeAudio = Color(0xFF8b5cf6); // Purple 500
+  static const Color badgeFlag = Color(0xFFf59e0b); // Amber 500
+
+  // Standard Border Radii
+  static const BorderRadius radiusSm = BorderRadius.all(Radius.circular(4));
+  static const BorderRadius radiusMd = BorderRadius.all(Radius.circular(8));
+  static const BorderRadius radius12 = BorderRadius.all(Radius.circular(12));
+  static const BorderRadius radiusLg = BorderRadius.all(Radius.circular(16));
+  static const BorderRadius radiusXl = BorderRadius.all(Radius.circular(20));
+  static const BorderRadius radiusFull = BorderRadius.all(Radius.circular(999));
 
   // Focus & Navigation Constants
   static const Color focusRing = Color(0xFFffffff);
