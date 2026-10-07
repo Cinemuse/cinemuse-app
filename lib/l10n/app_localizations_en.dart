@@ -464,6 +464,63 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailsRemoveAll => 'Clear Watch History';
 
   @override
+  String get detailsSelectDate => 'Select Date';
+
+  @override
+  String get detailsConfirm => 'Confirm';
+
+  @override
+  String get detailsMarkEntireSeriesPrompt =>
+      'Mark the entire series as watched?';
+
+  @override
+  String get detailsManageHistorySeriesPrompt =>
+      'Manage your history for this series.';
+
+  @override
+  String get detailsClearAllSeriesLogsSubtitle =>
+      'Clear all logs for all seasons';
+
+  @override
+  String get detailsTrackEpisodeProgress =>
+      'Track your progress for this episode.';
+
+  @override
+  String get detailsMarkRewatch => 'Mark a Rewatch';
+
+  @override
+  String get detailsMarkAsWatched => 'Mark as Watched';
+
+  @override
+  String get detailsSeeAllDatesWatched => 'See all dates you watched this';
+
+  @override
+  String get detailsRemoveOneWatch => 'Remove One Watch';
+
+  @override
+  String get detailsDeleteLatestEntry => 'Delete the latest entry';
+
+  @override
+  String get detailsClearAllEpisodeLogs => 'Clear all logs for this episode';
+
+  @override
+  String get detailsTrackMovieProgress => 'Track your progress for this movie.';
+
+  @override
+  String get detailsClearAllMovieLogs => 'Clear all logs for this movie';
+
+  @override
+  String detailsWatchedOnDate(String date) {
+    return 'Watched on $date';
+  }
+
+  @override
+  String get detailsWatchHistoryLogs => 'Watch History Logs';
+
+  @override
+  String get detailsErrorLoadingHistory => 'Error loading history';
+
+  @override
   String get detailsBudget => 'Budget';
 
   @override
@@ -471,6 +528,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get detailsExternalLinks => 'External Links';
+
+  @override
+  String get detailsOfficialWebsite => 'Official Website';
 
   @override
   String get detailsMedia => 'Media';
@@ -1607,7 +1667,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailsDirector => 'Director';
 
   @override
+  String get detailsCreator => 'Creator';
+
+  @override
+  String get detailsWriter => 'Writer';
+
+  @override
   String get detailsWriters => 'Writers';
+
+  @override
+  String get detailsPeople => 'Cast & Crew';
+
+  @override
+  String get detailsSectionCrew => 'CREW';
+
+  @override
+  String get detailsSectionCast => 'CAST';
 
   @override
   String get detailsTvTimeComments => 'Comments';

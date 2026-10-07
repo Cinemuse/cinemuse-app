@@ -950,6 +950,108 @@ abstract class AppLocalizations {
   /// **'Clear Watch History'**
   String get detailsRemoveAll;
 
+  /// No description provided for @detailsSelectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Date'**
+  String get detailsSelectDate;
+
+  /// No description provided for @detailsConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get detailsConfirm;
+
+  /// No description provided for @detailsMarkEntireSeriesPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark the entire series as watched?'**
+  String get detailsMarkEntireSeriesPrompt;
+
+  /// No description provided for @detailsManageHistorySeriesPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your history for this series.'**
+  String get detailsManageHistorySeriesPrompt;
+
+  /// No description provided for @detailsClearAllSeriesLogsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all logs for all seasons'**
+  String get detailsClearAllSeriesLogsSubtitle;
+
+  /// No description provided for @detailsTrackEpisodeProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Track your progress for this episode.'**
+  String get detailsTrackEpisodeProgress;
+
+  /// No description provided for @detailsMarkRewatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark a Rewatch'**
+  String get detailsMarkRewatch;
+
+  /// No description provided for @detailsMarkAsWatched.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as Watched'**
+  String get detailsMarkAsWatched;
+
+  /// No description provided for @detailsSeeAllDatesWatched.
+  ///
+  /// In en, this message translates to:
+  /// **'See all dates you watched this'**
+  String get detailsSeeAllDatesWatched;
+
+  /// No description provided for @detailsRemoveOneWatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove One Watch'**
+  String get detailsRemoveOneWatch;
+
+  /// No description provided for @detailsDeleteLatestEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the latest entry'**
+  String get detailsDeleteLatestEntry;
+
+  /// No description provided for @detailsClearAllEpisodeLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all logs for this episode'**
+  String get detailsClearAllEpisodeLogs;
+
+  /// No description provided for @detailsTrackMovieProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Track your progress for this movie.'**
+  String get detailsTrackMovieProgress;
+
+  /// No description provided for @detailsClearAllMovieLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all logs for this movie'**
+  String get detailsClearAllMovieLogs;
+
+  /// No description provided for @detailsWatchedOnDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Watched on {date}'**
+  String detailsWatchedOnDate(String date);
+
+  /// No description provided for @detailsWatchHistoryLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch History Logs'**
+  String get detailsWatchHistoryLogs;
+
+  /// No description provided for @detailsErrorLoadingHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading history'**
+  String get detailsErrorLoadingHistory;
+
   /// No description provided for @detailsBudget.
   ///
   /// In en, this message translates to:
@@ -967,6 +1069,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'External Links'**
   String get detailsExternalLinks;
+
+  /// No description provided for @detailsOfficialWebsite.
+  ///
+  /// In en, this message translates to:
+  /// **'Official Website'**
+  String get detailsOfficialWebsite;
 
   /// No description provided for @detailsMedia.
   ///
@@ -3044,11 +3152,41 @@ abstract class AppLocalizations {
   /// **'Director'**
   String get detailsDirector;
 
+  /// No description provided for @detailsCreator.
+  ///
+  /// In en, this message translates to:
+  /// **'Creator'**
+  String get detailsCreator;
+
+  /// No description provided for @detailsWriter.
+  ///
+  /// In en, this message translates to:
+  /// **'Writer'**
+  String get detailsWriter;
+
   /// No description provided for @detailsWriters.
   ///
   /// In en, this message translates to:
   /// **'Writers'**
   String get detailsWriters;
+
+  /// No description provided for @detailsPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'Cast & Crew'**
+  String get detailsPeople;
+
+  /// No description provided for @detailsSectionCrew.
+  ///
+  /// In en, this message translates to:
+  /// **'CREW'**
+  String get detailsSectionCrew;
+
+  /// No description provided for @detailsSectionCast.
+  ///
+  /// In en, this message translates to:
+  /// **'CAST'**
+  String get detailsSectionCast;
 
   /// No description provided for @detailsTvTimeComments.
   ///

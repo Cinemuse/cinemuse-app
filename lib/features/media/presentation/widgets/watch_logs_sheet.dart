@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:intl/intl.dart';
 
@@ -29,6 +30,8 @@ class WatchLogsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+
     // Determine which stream to watch
     final AsyncValue<List<Map<String, dynamic>>> logsAsync;
     if (season != null && episode != null) {
@@ -50,16 +53,16 @@ class WatchLogsSheet extends ConsumerWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                  style: const TextStyle(color: AppTheme.textWhite, fontSize: 18),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Watch History Logs',
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+          Text(
+            l10n.detailsWatchHistoryLogs,
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
           ),
           const SizedBox(height: 24),
           logsAsync.when(
@@ -67,9 +70,14 @@ class WatchLogsSheet extends ConsumerWidget {
               height: 100,
               child: Center(child: CircularProgressIndicator(color: AppTheme.accent)),
             ),
-            error: (err, _) => const SizedBox(
+            error: (err, _) => SizedBox(
               height: 100,
-              child: Center(child: Text('Error loading history', style: TextStyle(color: AppTheme.textMuted))),
+              child: Center(
+                child: Text(
+                  l10n.detailsErrorLoadingHistory,
+                  style: const TextStyle(color: AppTheme.textMuted),
+                ),
+              ),
             ),
             data: (logs) {
               // Filter logs for episode if needed
@@ -79,12 +87,15 @@ class WatchLogsSheet extends ConsumerWidget {
               }
 
               if (filteredLogs.isEmpty) {
-                return const SizedBox(
+                return SizedBox(
                   height: 100,
                   child: Center(
                     child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Text('No watch history found.', style: TextStyle(color: AppTheme.textMuted)),
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        l10n.watchHistoryEmpty,
+                        style: const TextStyle(color: AppTheme.textMuted),
+                      ),
                     ),
                   ),
                 );
@@ -101,7 +112,7 @@ class WatchLogsSheet extends ConsumerWidget {
                     final date = loggedAtStr != null ? DateTime.tryParse(loggedAtStr) : null;
                     final formattedDate = date != null
                         ? DateFormat.yMMMd(Localizations.localeOf(context).languageCode).add_jm().format(date)
-                        : 'Unknown date';
+                        : '—';
 
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
@@ -111,7 +122,7 @@ class WatchLogsSheet extends ConsumerWidget {
                           Icon(Icons.circle, size: 8, color: AppTheme.accent),
                         ],
                       ),
-                      title: Text(formattedDate, style: const TextStyle(color: Colors.white)),
+                      title: Text(formattedDate, style: const TextStyle(color: AppTheme.textWhite)),
                     );
                   },
                 ),

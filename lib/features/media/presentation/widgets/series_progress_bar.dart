@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
+import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -15,7 +16,10 @@ class SeriesProgressBar extends ConsumerWidget {
     final tmdbId = details['id'] as int;
 
     final watchedEpisodesMap = ref.watch(watchedEpisodesMapProvider(tmdbId));
-    final progress = _calculateProgress(watchedEpisodesMap);
+    final progress = ref.watch(seriesDomainServiceProvider).calculateSeriesProgress(
+          details: details,
+          watchedEpisodesMap: watchedEpisodesMap,
+        );
 
     if (progress == null) return const SizedBox.shrink();
 
@@ -57,81 +61,6 @@ class SeriesProgressBar extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-
-  ({int percentage, int watchedCount, int totalCount})? _calculateProgress(
-    Map<String, int> watchedMap,
-  ) {
-    final seasons = details['seasons'] as List?;
-    if (seasons == null) return null;
-
-    int totalEpisodes = 0;
-    int watchedEpisodesCount = 0;
-
-    final now = DateTime.now();
-    final lastAired = details['last_episode_to_air'];
-    final status = details['status'] as String?;
-    final isEnded = status == 'Ended' || status == 'Canceled';
-
-    if (isEnded) {
-      final numberOfEpisodes = details['number_of_episodes'] as int?;
-      if (numberOfEpisodes != null && numberOfEpisodes > 0) {
-        totalEpisodes = numberOfEpisodes;
-      } else {
-        for (var season in seasons) {
-          final seasonNum = season['season_number'] as int? ?? 0;
-          if (seasonNum > 0 && season['episode_count'] != null) {
-            totalEpisodes += (season['episode_count'] as int);
-          }
-        }
-      }
-    } else {
-      for (var season in seasons) {
-        final seasonNum = season['season_number'] as int? ?? 0;
-        if (seasonNum <= 0 || season['episode_count'] == null) continue;
-
-        final episodeCount = season['episode_count'] as int;
-
-        if (lastAired != null) {
-          final lastAiredSeason = lastAired['season_number'] as int? ?? 0;
-          final lastAiredEp = lastAired['episode_number'] as int? ?? 0;
-
-          if (seasonNum < lastAiredSeason) {
-            totalEpisodes += episodeCount;
-          } else if (seasonNum == lastAiredSeason) {
-            if (lastAiredEp > episodeCount) {
-              totalEpisodes += episodeCount;
-            } else {
-              totalEpisodes += lastAiredEp;
-            }
-          }
-        } else {
-          if (season['air_date'] != null) {
-            final airDate = DateTime.tryParse(season['air_date']);
-            if (airDate != null && !airDate.isAfter(now)) {
-              totalEpisodes += episodeCount;
-            }
-          }
-        }
-      }
-    }
-
-    // Only count regular episodes (season > 0), excluding season 0 specials
-    watchedEpisodesCount = watchedMap.entries.where((entry) {
-      final seasonNum = int.tryParse(entry.key.split('-').first) ?? 0;
-      return seasonNum > 0 && entry.value > 0;
-    }).length;
-
-    if (totalEpisodes == 0) return null;
-
-    return (
-      percentage: ((watchedEpisodesCount / totalEpisodes) * 100).round().clamp(
-        0,
-        100,
-      ),
-      watchedCount: watchedEpisodesCount,
-      totalCount: totalEpisodes,
     );
   }
 }

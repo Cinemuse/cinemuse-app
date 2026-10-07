@@ -10,6 +10,7 @@ import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:intl/intl.dart';
 import 'package:cinemuse_app/shared/widgets/skeleton_box.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/carousel_vertical_separator.dart';
 
 // ---------------------------------------------------------------------------
 // Sealed list item model
@@ -178,75 +179,12 @@ class _DayHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = _label(context);
-    final isToday = _isToday();
-    final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
-
-    return Padding(
-      padding: EdgeInsets.only(left: isFirst ? 0 : 8, right: trailingSpacing),
-      child: SizedBox(
-        width: 72,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 2,
-              height: 48,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    isToday ? primary : AppTheme.border,
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: BoxDecoration(
-                color: isToday
-                    ? primary.withValues(alpha: 0.15)
-                    : AppTheme.surface,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: isToday
-                      ? primary.withValues(alpha: 0.5)
-                      : AppTheme.border,
-                ),
-              ),
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium!.copyWith(
-                  color: isToday ? primary : AppTheme.textMuted,
-                  fontSize: 11,
-                  fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
-                  height: 1.3,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              width: 2,
-              height: 48,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    isToday ? primary : AppTheme.border,
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return CarouselVerticalSeparator(
+      label: _label(context),
+      isHighlighted: _isToday(),
+      leadingSpacing: isFirst ? 0 : 8,
+      trailingSpacing: trailingSpacing,
+      width: 72,
     );
   }
 

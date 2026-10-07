@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
+import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/tracking_modals.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/watch_logs_sheet.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +10,7 @@ import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/details_hero.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/episode_carousel_row.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/episode_list.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/series_episodes_section.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/cast_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/videos_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/info_boxes.dart';
@@ -23,7 +23,6 @@ import 'package:cinemuse_app/features/media/domain/comments_repository.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_sheet.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
-import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/details_tab_nav.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/responsive_details_layout.dart';
@@ -34,6 +33,7 @@ import 'package:cinemuse_app/features/media/presentation/widgets/collection_tile
 import 'package:cinemuse_app/features/media/presentation/widgets/media_list_row.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/gallery_box.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/media_info_row.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
@@ -149,82 +149,36 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             .toList();
 
         // Auto-select season based on history
-        ref.listen(mediaWatchHistoryProvider(widget.mediaId), (previous, next) {
-          final nextHistory = next.value;
-          // Only auto-switch if we haven't manually interacted yet?
-          // Actually, this hook runs on init too if we use FireImmediately? No, just listen.
-          // But we are inside build.
-          if (nextHistory != null &&
-              nextHistory.season != null &&
-              nextHistory.season! > 0) {
-            // We only want to set this ONCE when opening the page, not every time history updates
-            // (e.g. while watching an episode and marking it).
-            // But managing a "once" flag inside build with listen is tricky.
-          }
-        });
-
-        // Better approach: Use a flag in State and check in build
-        if (!_hasInitializedSeason &&
-            watchHistory != null &&
-            watchHistory.season != null &&
-            watchHistory.season! > 0) {
-          _hasInitializedSeason = true;
-
-          int targetSeason = watchHistory.season!;
-
-          // Check if this season is fully watched
-          final seasonData = (details['seasons'] as List?)?.firstWhere(
-            (s) => s['season_number'] == targetSeason,
-            orElse: () => null,
-          );
-
-          if (seasonData != null) {
-            final episodeCount = seasonData['episode_count'] as int? ?? 0;
-            final watchedEpisodesMap = ref.read(
-              watchedEpisodesMapProvider(tmdbId),
-            );
-
-            bool isSeasonCompleted = true;
-            if (episodeCount > 0) {
-              for (int i = 1; i <= episodeCount; i++) {
-                if ((watchedEpisodesMap['$targetSeason-$i'] ?? 0) == 0) {
-                  isSeasonCompleted = false;
-                  break;
-                }
-              }
-            } else {
-              isSeasonCompleted = false;
-            }
-
-            if (isSeasonCompleted) {
-              // Check if next season exists
-              final nextSeasonData = (details['seasons'] as List?)?.firstWhere(
-                (s) => s['season_number'] == targetSeason + 1,
-                orElse: () => null,
+        ref.listen<AsyncValue<WatchHistory?>>(
+          mediaWatchHistoryProvider(widget.mediaId),
+          (previous, next) {
+            final nextHistory = next.value;
+            if (!_hasInitializedSeason && nextHistory != null && isTV) {
+              _hasInitializedSeason = true;
+              final targetSeason = controller.resolveInitialSeason(
+                tmdbId: tmdbId,
+                details: details,
+                watchHistory: nextHistory,
               );
-
-              if (nextSeasonData != null) {
-                targetSeason++;
-                // Also ensure this new start episode is in "Continue Watching"
-                // We don't await this to keep UI fast, but we fire it.
-                // We need to know if we should do this? Yes, user requested it.
-                // Check if we are "watching" the first episode of next season?
-                // The repository logic handles the "if not exists" check.
-                ref
-                    .read(mediaDetailsControllerProvider.notifier)
-                    .ensureEpisodeWatching(
-                      tmdbId: tmdbId,
-                      season: targetSeason,
-                      episode: 1,
-                    );
-              }
+              ref
+                  .read(selectedSeasonProvider(widget.mediaId).notifier)
+                  .selectSeason(targetSeason);
             }
-          }
+          },
+        );
 
-          // Schedule update
+        if (!_hasInitializedSeason && watchHistory != null && isTV) {
+          _hasInitializedSeason = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            ref.read(selectedSeasonProvider(widget.mediaId).notifier).state =
-                targetSeason;
+            if (!mounted) return;
+            final targetSeason = controller.resolveInitialSeason(
+              tmdbId: tmdbId,
+              details: details,
+              watchHistory: watchHistory,
+            );
+            ref
+                .read(selectedSeasonProvider(widget.mediaId).notifier)
+                .selectSeason(targetSeason);
           });
         }
 
@@ -454,16 +408,18 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         ),
         const SizedBox(height: 32),
         if (isTV && (details['number_of_seasons'] ?? 0) > 0) ...[
-          _SeriesEpisodesSection(
+          SeriesEpisodesSection(
             mediaId: widget.mediaId,
             details: details,
             mainScrollController: _mainScrollController,
           ),
           const SizedBox(height: 32),
         ],
-        CastRow(credits: details['credits']),
-        const SizedBox(height: 32),
-        VideosRow(videos: details['videos']),
+        CastRow(credits: details['credits'], details: details),
+        if (VideosRow.hasTrailers(details['videos'])) ...[
+          const SizedBox(height: 32),
+          VideosRow(videos: details['videos']),
+        ],
         if (moreLikeThisList.isNotEmpty) ...[
           const SizedBox(height: 32),
           MediaListRow(
@@ -474,14 +430,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           ),
         ],
         const SizedBox(height: 32),
-        CreativeVisionBox(details: details, isSeries: isTV),
-        const SizedBox(height: 32),
-        GalleryBox(details: details),
-        const SizedBox(height: 32),
-        VerdictBox(
-          reviews: details['reviews']?['results'] ?? [],
-          onShowUserReviewModal: () {},
-          onShowReviewsModal: () {},
+        MediaInfoRow(
+          details: details,
+          typeForTmdb: typeForTmdb,
           onShowComments: () =>
               _handleShowComments(context, details, isTV, l10n),
         ),
@@ -491,26 +442,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             title: l10n.detailsCollection,
             icon: LucideIcons.film,
             child: CollectionTile(collection: collection),
-          ),
-        ],
-        const SizedBox(height: 32),
-        ProductionDNA(
-          productionCompanies: details['production_companies'] ?? [],
-          onCompanyClick: _handleDeepSearch,
-        ),
-        const SizedBox(height: 32),
-        ExternalLinks(
-          externalIds: details['external_ids'],
-          title: details['title'] ?? details['name'] ?? '',
-          homepage: details['homepage'],
-          type: typeForTmdb,
-          tmdbId: details['id'],
-        ),
-        if (hasFinances) ...[
-          const SizedBox(height: 32),
-          FinancesBox(
-            budget: details['budget'] as int? ?? 0,
-            revenue: details['revenue'] as int? ?? 0,
           ),
         ],
       ],
@@ -546,7 +477,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             onTabChanged: (tab) => setState(() => _activeTab = tab),
             isTV: isTV,
             numberOfSeasons: details['number_of_seasons'] ?? 0,
-            hasFinances: hasFinances,
+            hasFinances: false,
           ),
           const SizedBox(height: 24),
           _buildMobileTabContent(
@@ -561,16 +492,18 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           ),
         ] else ...[
           if (isTV && (details['number_of_seasons'] ?? 0) > 0) ...[
-            _SeriesEpisodesSection(
+            SeriesEpisodesSection(
               mediaId: widget.mediaId,
               details: details,
               mainScrollController: _mainScrollController,
             ),
             const SizedBox(height: 32),
           ],
-          CastRow(credits: details['credits']),
-          const SizedBox(height: 32),
-          VideosRow(videos: details['videos']),
+          CastRow(credits: details['credits'], details: details),
+          if (VideosRow.hasTrailers(details['videos'])) ...[
+            const SizedBox(height: 32),
+            VideosRow(videos: details['videos']),
+          ],
           if (moreLikeThisList.isNotEmpty) ...[
             const SizedBox(height: 32),
             MediaListRow(
@@ -598,26 +531,14 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     switch (_activeTab) {
       case DetailsTab.episodes:
         return isTV
-            ? _SeriesEpisodesSection(
+            ? SeriesEpisodesSection(
                 mediaId: widget.mediaId,
                 details: details,
                 mainScrollController: _mainScrollController,
               )
             : const SizedBox.shrink();
       case DetailsTab.cast:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CreativeVisionBox(details: details, isSeries: isTV),
-            const SizedBox(height: 24),
-            CastRow(credits: details['credits']),
-            const SizedBox(height: 24),
-            ProductionDNA(
-              productionCompanies: details['production_companies'] ?? [],
-              onCompanyClick: _handleDeepSearch,
-            ),
-          ],
-        );
+        return CastRow(credits: details['credits'], details: details);
       case DetailsTab.reviews:
         return VerdictBox(
           reviews: details['reviews']?['results'] ?? [],
@@ -627,11 +548,14 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
               _handleShowComments(context, details, isTV, l10n),
         );
       case DetailsTab.media:
+        final hasVideos = VideosRow.hasTrailers(details['videos']);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            VideosRow(videos: details['videos']),
-            const SizedBox(height: 24),
+            if (hasVideos) ...[
+              VideosRow(videos: details['videos']),
+              const SizedBox(height: 24),
+            ],
             GalleryBox(details: details),
           ],
         );
@@ -686,8 +610,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CreativeVisionBox(details: details, isSeries: isTV),
-        const SizedBox(height: 24),
         GalleryBox(details: details),
         const SizedBox(height: 24),
         VerdictBox(
@@ -696,18 +618,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           onShowReviewsModal: () {},
           onShowComments: () =>
               _handleShowComments(context, details, isTV, l10n),
-        ),
-        const SizedBox(height: 24),
-        if (hasFinances) ...[
-          FinancesBox(
-            budget: details['budget'] as int? ?? 0,
-            revenue: details['revenue'] as int? ?? 0,
-          ),
-          const SizedBox(height: 24),
-        ],
-        ProductionDNA(
-          productionCompanies: details['production_companies'] ?? [],
-          onCompanyClick: _handleDeepSearch,
         ),
         const SizedBox(height: 24),
         ExternalLinks(
@@ -807,10 +717,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         ),
       ),
     );
-  }
-
-  void _handleDeepSearch(Map<String, dynamic> params) {
-    // Implement search navigation or filtering
   }
 
   void _showAddToList(
@@ -931,29 +837,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
   }
 
   int _calculateReleasedEpisodes(Map<String, dynamic> details) {
-    int total = 0;
-    final seasons = details['seasons'] as List?;
-    if (seasons == null) return 0;
-
-    final now = DateTime.now();
-    final lastAired = details['last_episode_to_air'];
-
-    for (var season in seasons) {
-      final seasonNum = season['season_number'] as int? ?? 0;
-      if (seasonNum > 0 && season['episode_count'] != null) {
-        if (season['air_date'] == null) continue;
-        final airDate = DateTime.tryParse(season['air_date'].toString());
-        if (airDate == null || airDate.isAfter(now)) continue;
-
-        if (lastAired != null && seasonNum == lastAired['season_number']) {
-          total += (lastAired['episode_number'] as int);
-        } else if (lastAired == null ||
-            seasonNum < (lastAired['season_number'] as int)) {
-          total += (season['episode_count'] as int);
-        }
-      }
-    }
-    return total;
+    return ref.read(seriesDomainServiceProvider).calculateReleasedEpisodes(details);
   }
 
   String? _resolveEnglishOrOriginalTitle(Map<String, dynamic> details) {
@@ -961,373 +845,5 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         details['original_title']?.toString() ??
         details['title']?.toString() ??
         details['name']?.toString();
-  }
-}
-
-class _SeriesEpisodesSection extends ConsumerWidget {
-  final String mediaId;
-  final Map<String, dynamic> details;
-  final ScrollController? mainScrollController;
-
-  const _SeriesEpisodesSection({
-    required this.mediaId,
-    required this.details,
-    this.mainScrollController,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
-    final tmdbId = int.parse(mediaId);
-    final selectedSeason = ref.watch(selectedSeasonProvider(mediaId));
-    final seasonDetailsAsync = ref.watch(
-      seasonDetailsProvider((tmdbId: tmdbId, seasonNumber: selectedSeason)),
-    );
-
-    final watchedEpisodesMap = ref.watch(watchedEpisodesMapProvider(tmdbId));
-    final episodeProgressMap = ref
-        .watch(episodeProgressMapProvider(tmdbId))
-        .value;
-    final isMobile = MediaQuery.of(context).size.width < 600;
-    final isBigPicture = ref.watch(isBigPictureProvider);
-
-    if (isBigPicture) {
-      return _buildBigPictureCarousel(
-        context: context,
-        l10n: l10n,
-        selectedSeason: selectedSeason,
-        seasonDetailsAsync: seasonDetailsAsync,
-        watchedEpisodesMap: watchedEpisodesMap,
-        episodeProgressMap: episodeProgressMap,
-      );
-    }
-
-    return BentoBox(
-      title: l10n.detailsEpisodesRegistry,
-      icon: LucideIcons.tv,
-      action: _SeasonSelector(
-        media: details,
-        selectedSeason: selectedSeason,
-        mediaId: mediaId,
-      ),
-      child: ConstrainedBox(
-        constraints: isMobile
-            ? const BoxConstraints(minHeight: 300)
-            : const BoxConstraints(minHeight: 500, maxHeight: 500),
-        child: seasonDetailsAsync.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: AppTheme.accent,
-            ),
-          ),
-          error: (err, _) => Center(
-            child: Text(l10n.detailsErrorLoadingSeason(err.toString())),
-          ),
-          data: (season) {
-            if (season == null) {
-              return Center(child: Text(l10n.detailsSeasonNotFound));
-            }
-            final episodes = season['episodes'] as List? ?? [];
-            final initialIndex = _calculateInitialEpisodeIndex(
-              episodes,
-              selectedSeason,
-              watchedEpisodesMap,
-            );
-
-            return EpisodeList(
-              episodes: episodes,
-              seasonNumber: selectedSeason,
-              media: details,
-              watchedEpisodesCount: watchedEpisodesMap,
-              initialScrollIndex: initialIndex,
-              mainScrollController: mainScrollController,
-              onShowComments: (season, episode) => _showEpisodeComments(
-                context,
-                details,
-                mediaId,
-                season,
-                episode,
-                l10n,
-              ),
-              onEpisodeTap: (s, e, name) => _handleEpisodePlay(
-                context,
-                mediaId,
-                s,
-                e,
-                name,
-                episodeProgressMap?['$s-$e']?.progressSeconds ?? 0,
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBigPictureCarousel({
-    required BuildContext context,
-    required AppLocalizations l10n,
-    required int selectedSeason,
-    required AsyncValue<Map<String, dynamic>?> seasonDetailsAsync,
-    required Map<String, int> watchedEpisodesMap,
-    required Map<String, WatchHistory>? episodeProgressMap,
-  }) {
-    return seasonDetailsAsync.when(
-      loading: () => BentoBox(
-        title: l10n.detailsEpisodes,
-        icon: Icons.tv,
-        action: _SeasonSelector(
-          media: details,
-          selectedSeason: selectedSeason,
-          mediaId: mediaId,
-        ),
-        child: const SizedBox(
-          height: 230,
-          child: Center(
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: AppTheme.accent,
-            ),
-          ),
-        ),
-      ),
-      error: (err, _) => BentoBox(
-        title: l10n.detailsEpisodes,
-        icon: Icons.tv,
-        action: _SeasonSelector(
-          media: details,
-          selectedSeason: selectedSeason,
-          mediaId: mediaId,
-        ),
-        child: SizedBox(
-          height: 230,
-          child: Center(
-            child: Text(l10n.detailsErrorLoadingSeason(err.toString())),
-          ),
-        ),
-      ),
-      data: (season) {
-        if (season == null) {
-          return const SizedBox.shrink();
-        }
-        final episodes = season['episodes'] as List? ?? [];
-        return EpisodeCarouselRow(
-          episodes: episodes,
-          seasonNumber: selectedSeason,
-          mediaId: mediaId,
-          watchedEpisodesCount: watchedEpisodesMap,
-          episodeProgress: episodeProgressMap,
-          seasonSelector: _SeasonSelector(
-            media: details,
-            selectedSeason: selectedSeason,
-            mediaId: mediaId,
-          ),
-          onEpisodeTap: (s, e, name) => _handleEpisodePlay(
-            context,
-            mediaId,
-            s,
-            e,
-            name,
-            episodeProgressMap?['$s-$e']?.progressSeconds ?? 0,
-          ),
-          onShowComments: (s, e) => _showEpisodeComments(
-            context,
-            details,
-            mediaId,
-            s,
-            e,
-            l10n,
-          ),
-        );
-      },
-    );
-  }
-
-  static int _calculateInitialEpisodeIndex(
-    List<dynamic> episodes,
-    int selectedSeason,
-    Map<String, int> watchedEpisodesMap,
-  ) {
-    if (watchedEpisodesMap.isEmpty) return 0;
-    for (int i = 0; i < episodes.length; i++) {
-      final ep = episodes[i];
-      final epNum = ep['episode_number'] as int? ?? 0;
-      final key = '$selectedSeason-$epNum';
-      if ((watchedEpisodesMap[key] ?? 0) == 0) {
-        return i;
-      }
-    }
-    return 0;
-  }
-
-  static void _handleEpisodePlay(
-    BuildContext context,
-    String mediaId,
-    int season,
-    int episode,
-    String name,
-    int progress,
-  ) {
-    Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute(
-        builder: (_) => VideoPlayerScreen(
-          queryId: mediaId,
-          type: 'tv',
-          season: season,
-          episode: episode,
-          episodeTitle: name,
-          startPosition: progress,
-        ),
-      ),
-    );
-  }
-
-  static void _showEpisodeComments(
-    BuildContext context,
-    Map<String, dynamic> details,
-    String mediaId,
-    int season,
-    int episode,
-    AppLocalizations l10n,
-  ) {
-    final int tmdbId = details['id'] is int
-        ? details['id']
-        : int.tryParse(details['id']?.toString() ?? '') ??
-            int.tryParse(mediaId) ??
-            0;
-    if (tmdbId > 0) {
-      showCommentsBottomSheet(
-        context,
-        EpisodeCommentsRequest(
-          tmdbShowId: tmdbId,
-          seasonNumber: season,
-          episodeNumber: episode,
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.detailsTvTimeCommentsNotAvailableSeries,
-          ),
-        ),
-      );
-    }
-  }
-}
-
-class _SeasonSelector extends ConsumerWidget {
-  final Map<String, dynamic> media;
-  final int selectedSeason;
-  final String mediaId;
-
-  const _SeasonSelector({
-    required this.media,
-    required this.selectedSeason,
-    required this.mediaId,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
-    final seasons = (media['seasons'] as List? ?? [])
-        .where((s) => (s['season_number'] as int? ?? 0) > 0)
-        .toList();
-
-    final popupKey = GlobalKey<PopupMenuButtonState<int>>();
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 160),
-      child: PopupMenuButton<int>(
-        key: popupKey,
-        initialValue: selectedSeason,
-        onSelected: (val) =>
-            ref.read(selectedSeasonProvider(mediaId).notifier).state = val,
-        child: DpadFocusable(
-          onTap: () => popupKey.currentState?.showButtonMenu(),
-          borderRadius: BorderRadius.circular(8),
-          builder: (context, isFocused, isHovered, child) {
-            final theme = Theme.of(context);
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isFocused
-                    ? theme.focusColor
-                    : (isHovered
-                        ? theme.hoverColor
-                        : theme.colorScheme.surfaceContainer.withValues(alpha: 0.5)),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: isFocused
-                      ? theme.colorScheme.primary.withValues(alpha: 0.5)
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.1),
-                ),
-              ),
-              child: child,
-            );
-          },
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  l10n.detailsSeasonNumber(selectedSeason),
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.keyboard_arrow_down,
-                size: 14,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-            ],
-          ),
-        ),
-        itemBuilder: (context) => seasons
-            .map(
-              (s) => PopupMenuItem<int>(
-                value: s['season_number'] as int,
-                child: Text(
-                  l10n.detailsSeasonNumber(s['season_number']),
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ),
-            )
-            .toList(),
-      ),
-    );
-  }
-}
-
-class ShimmerDetailsLoading extends StatelessWidget {
-  const ShimmerDetailsLoading({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(height: 400, color: Colors.white10),
-        const SizedBox(height: 24),
-        Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(height: 30, width: 200, color: Colors.white10),
-              const SizedBox(height: 16),
-              Container(height: 100, color: Colors.white10),
-            ],
-          ),
-        ),
-      ],
-    );
   }
 }

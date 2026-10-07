@@ -1,11 +1,13 @@
+import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/cards/episode_thumbnail_card.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episode_thumbnail_card.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// A horizontal carousel row of episodes for a TV series season.
-class EpisodeCarouselRow extends StatelessWidget {
+class EpisodeCarouselRow extends ConsumerWidget {
   final List<dynamic> episodes;
   final int seasonNumber;
   final String mediaId;
@@ -40,8 +42,9 @@ class EpisodeCarouselRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final seriesDomainService = ref.watch(seriesDomainServiceProvider);
 
     if (episodes.isEmpty) {
       return const SizedBox.shrink();
@@ -61,7 +64,12 @@ class EpisodeCarouselRow extends StatelessWidget {
         final epNum = episode['episode_number'] as int? ?? (index + 1);
         final watchCount = watchedEpisodesCount['$seasonNumber-$epNum'] ?? 0;
         final isWatched = watchCount > 0;
-        final resumePercentage = _calculateResumePercentage(epNum);
+        final resumePercentage = seriesDomainService.calculateResumePercentage(
+          seasonNumber: seasonNumber,
+          episodeNumber: epNum,
+          episodeProgress: episodeProgress,
+          watchedData: watchedData,
+        );
 
         return EpisodeThumbnailCard(
           episode: episode,
@@ -81,31 +89,5 @@ class EpisodeCarouselRow extends StatelessWidget {
         );
       },
     );
-  }
-
-  double? _calculateResumePercentage(int epNumber) {
-    final epKey = '$seasonNumber-$epNumber';
-    if (episodeProgress != null && episodeProgress!.containsKey(epKey)) {
-      final history = episodeProgress![epKey]!;
-      if (history.status == WatchStatus.watching &&
-          history.totalDuration != null &&
-          history.totalDuration! > 0) {
-        return history.progressSeconds / history.totalDuration!;
-      }
-    }
-
-    if (watchedData != null) {
-      final lastSeason = watchedData!['season'] as int?;
-      final lastEpisode = watchedData!['episode'] as int?;
-      if (lastSeason == seasonNumber && lastEpisode == epNumber) {
-        final progress = watchedData!['progress_seconds'] as int? ?? 0;
-        final total = watchedData!['total_duration'] as int? ?? 0;
-        if (total > 0) {
-          return progress / total;
-        }
-      }
-    }
-
-    return null;
   }
 }

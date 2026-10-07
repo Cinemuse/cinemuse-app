@@ -57,7 +57,11 @@ class _CommentTileState extends State<CommentTile>
           radius: 16,
           backgroundColor: AppTheme.accent.withValues(alpha: 0.2),
           backgroundImage: author.avatarUrl != null
-              ? CachedNetworkImageProvider(author.avatarUrl!)
+              ? CachedNetworkImageProvider(
+                  author.avatarUrl!,
+                  maxWidth: 64,
+                  maxHeight: 64,
+                )
               : null,
           child: author.avatarUrl == null
               ? Text(
@@ -167,21 +171,21 @@ class _CommentTileState extends State<CommentTile>
         decoration: BoxDecoration(
           color: AppTheme.textWhite.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
+          border: Border.all(color: AppTheme.favorites.withValues(alpha: 0.3)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
               Icons.warning_amber_rounded,
-              color: Colors.redAccent,
+              color: AppTheme.favorites,
               size: 32,
             ),
             const SizedBox(height: 8),
             Text(
               l10n.commentsSpoilerWarning,
               style: const TextStyle(
-                color: Colors.redAccent,
+                color: AppTheme.favorites,
                 fontWeight: FontWeight.bold,
               ),
             ),

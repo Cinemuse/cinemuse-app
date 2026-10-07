@@ -8,6 +8,8 @@ import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 
+import 'package:cinemuse_app/features/media/domain/watch_history.dart';
+
 /// Controller for Media Details logic.
 /// Centralizes actions like tracking, list management, and state updates.
 class MediaDetailsController extends AutoDisposeNotifier<void> {
@@ -17,6 +19,55 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
   WatchHistoryRepository get _repository =>
       ref.read(watchHistoryRepositoryProvider);
   UserListsNotifier get _listsNotifier => ref.read(userListsProvider.notifier);
+
+  /// Resolves the appropriate starting season for a series based on watch history.
+  /// If the current target season is completely watched, advances to the next season
+  /// and marks the next episode as watching in Continue Watching.
+  int resolveInitialSeason({
+    required int tmdbId,
+    required Map<String, dynamic> details,
+    required WatchHistory? watchHistory,
+  }) {
+    if (watchHistory == null || watchHistory.season == null || watchHistory.season! <= 0) {
+      return 1;
+    }
+
+    int targetSeason = watchHistory.season!;
+    final seasonData = (details['seasons'] as List?)?.firstWhere(
+      (s) => s['season_number'] == targetSeason,
+      orElse: () => null,
+    );
+
+    if (seasonData != null) {
+      final episodeCount = seasonData['episode_count'] as int? ?? 0;
+      final watchedEpisodesMap = ref.read(watchedEpisodesMapProvider(tmdbId));
+
+      bool isSeasonCompleted = episodeCount > 0;
+      for (int i = 1; i <= episodeCount; i++) {
+        if ((watchedEpisodesMap['$targetSeason-$i'] ?? 0) == 0) {
+          isSeasonCompleted = false;
+          break;
+        }
+      }
+
+      if (isSeasonCompleted) {
+        final nextSeasonData = (details['seasons'] as List?)?.firstWhere(
+          (s) => s['season_number'] == targetSeason + 1,
+          orElse: () => null,
+        );
+
+        if (nextSeasonData != null) {
+          targetSeason++;
+          ensureEpisodeWatching(
+            tmdbId: tmdbId,
+            season: targetSeason,
+            episode: 1,
+          );
+        }
+      }
+    }
+    return targetSeason;
+  }
 
   /// Toggles favorite status for a media item.
   Future<void> toggleFavorite(MediaItem item) async {

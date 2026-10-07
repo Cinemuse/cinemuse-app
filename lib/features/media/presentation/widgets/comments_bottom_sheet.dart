@@ -124,7 +124,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       return Center(
         child: Text(
           '${l10n.tvTimeCommentsError} (${state.error})',
-          style: const TextStyle(color: Colors.redAccent),
+          style: const TextStyle(color: AppTheme.favorites),
         ),
       );
     }

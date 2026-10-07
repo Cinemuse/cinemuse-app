@@ -1,24 +1,25 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
+import 'package:cinemuse_app/features/media/application/person_domain_service.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/external_links.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/person_filmography_list.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
-import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
+import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-final personDetailsProvider = FutureProvider.family<Map<String, dynamic>?, int>(
-  (ref, id) async {
-    final tmdbService = ref.watch(tmdbServiceProvider);
-    return tmdbService.getPersonDetails(id);
-  },
-);
+final personDetailsProvider =
+    FutureProvider.family<Map<String, dynamic>?, int>((ref, id) async {
+  final tmdbService = ref.watch(tmdbServiceProvider);
+  return tmdbService.getPersonDetails(id);
+});
 
 class PersonDetailsScreen extends ConsumerStatefulWidget {
   final int personId;
@@ -68,7 +69,7 @@ class _PersonDetailsScreenState extends ConsumerState<PersonDetailsScreen> {
   }
 }
 
-class _PersonDetailsContent extends ConsumerWidget {
+class _PersonDetailsContent extends StatelessWidget {
   final Map<String, dynamic> details;
   final Map<String, dynamic> watchHistory;
   final double responsivePadding;
@@ -88,93 +89,28 @@ class _PersonDetailsContent extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final String name = details['name'] ?? 'Unknown';
-    final String? profilePath = details['profile_path'];
-    final String? biography = details['biography'];
-    final String? birthday = details['birthday'];
-    final String? placeOfBirth = details['place_of_birth'];
+    final String name = (details['name'] ?? 'Unknown').toString();
+    final String? profilePath = details['profile_path'] as String?;
+    final String? biography = details['biography'] as String?;
+    final String? birthday = details['birthday'] as String?;
+    final String? placeOfBirth = details['place_of_birth'] as String?;
 
-    // Process Credits
     final cast = details['combined_credits']?['cast'] as List<dynamic>? ?? [];
     final crew = details['combined_credits']?['crew'] as List<dynamic>? ?? [];
 
-    // Seen Stats Calculation
-    int watchedCount = 0;
-    int totalReleased = 0;
-    final now = DateTime.now();
-
-    final allCredits = [...cast, ...crew];
-    final uniqueCreditsMap = <int, Map<String, dynamic>>{};
-
-    for (final item in allCredits) {
-      final id = item['id'] as int;
-      if (!uniqueCreditsMap.containsKey(id)) {
-        uniqueCreditsMap[id] = item;
-
-        final dateStr = item['release_date'] ?? item['first_air_date'];
-        if (dateStr != null && dateStr.isNotEmpty) {
-          final releaseDate = DateTime.tryParse(dateStr);
-          if (releaseDate != null && releaseDate.isBefore(now)) {
-            totalReleased++;
-            if (watchHistory.containsKey(id.toString())) {
-              watchedCount++;
-            }
-          }
-        }
-      }
-    }
-
-    final watchedPercent = totalReleased > 0
-        ? (watchedCount / totalReleased * 100).round()
-        : 0;
-
-    // Known For
-    final knownFor = List<Map<String, dynamic>>.from(cast)
-      ..sort((a, b) => (b['vote_count'] ?? 0).compareTo(a['vote_count'] ?? 0));
-    final topKnownFor = knownFor.take(10).toList();
-
-    // Filmography Processing
-    var filmography = uniqueCreditsMap.values.toList();
-
-    // Sort Date DESC
-    filmography.sort((a, b) {
-      final dateA = a['release_date'] ?? a['first_air_date'] ?? '0000-00-00';
-      final dateB = b['release_date'] ?? b['first_air_date'] ?? '0000-00-00';
-      return dateB.compareTo(dateA);
-    });
-
-    if (!showHidden) {
-      const excludedGenres = {99, 10763, 10764, 10767};
-      const excludedKeywords = [
-        'academy awards',
-        'golden globe',
-        'oscar',
-        'grammy',
-        'emmy',
-        'mtv movie awards',
-        'bafta',
-        'award',
-      ];
-
-      filmography = filmography.where((item) {
-        final genreIds =
-            (item['genre_ids'] as List<dynamic>?)?.cast<int>() ?? [];
-        final hasExcludedGenre = genreIds.any(
-          (id) => excludedGenres.contains(id),
-        );
-
-        final title = (item['title'] ?? item['name'] ?? '')
-            .toString()
-            .toLowerCase();
-        final hasExcludedKeyword = excludedKeywords.any(
-          (kw) => title.contains(kw),
-        );
-
-        return !hasExcludedGenre && !hasExcludedKeyword;
-      }).toList();
-    }
+    final seenStats = PersonDomainService.calculateSeenStats(
+      cast: cast,
+      crew: crew,
+      watchHistory: watchHistory,
+    );
+    final topKnownFor = PersonDomainService.extractTopKnownFor(cast);
+    final filmography = PersonDomainService.processFilmography(
+      cast: cast,
+      crew: crew,
+      showHidden: showHidden,
+    );
 
     return CustomScrollView(
       slivers: [
@@ -200,12 +136,15 @@ class _PersonDetailsContent extends ConsumerWidget {
                       child: AspectRatio(
                         aspectRatio: 2 / 3,
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: AppTheme.radiusLg,
                           child: profilePath != null
                               ? CachedNetworkImage(
-                                  imageUrl:
-                                      TmdbImageHelper.profileUrl(context, profilePath)!,
+                                  imageUrl: TmdbImageHelper.profileUrl(
+                                    context,
+                                    profilePath,
+                                  )!,
                                   fit: BoxFit.cover,
+                                  memCacheWidth: 400,
                                 )
                               : Image.asset(
                                   'assets/cast_placeholder.png',
@@ -226,7 +165,7 @@ class _PersonDetailsContent extends ConsumerWidget {
                                 .copyWith(
                                   fontSize: 48,
                                   fontWeight: FontWeight.w900,
-                                  color: Colors.white,
+                                  color: AppTheme.textWhite,
                                   height: 1.1,
                                 ),
                           ),
@@ -244,7 +183,7 @@ class _PersonDetailsContent extends ConsumerWidget {
                           const SizedBox(height: 24),
 
                           // Seen Progress
-                          if (totalReleased > 0) ...[
+                          if (seenStats.totalReleased > 0) ...[
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -261,7 +200,7 @@ class _PersonDetailsContent extends ConsumerWidget {
                                   text: TextSpan(
                                     children: [
                                       TextSpan(
-                                        text: '$watchedPercent%',
+                                        text: '${seenStats.watchedPercent}%',
                                         style: const TextStyle(
                                           color: AppTheme.accent,
                                           fontWeight: FontWeight.bold,
@@ -269,7 +208,8 @@ class _PersonDetailsContent extends ConsumerWidget {
                                         ),
                                       ),
                                       TextSpan(
-                                        text: ' ($watchedCount/$totalReleased)',
+                                        text:
+                                            ' (${seenStats.watchedCount}/${seenStats.totalReleased})',
                                         style: const TextStyle(
                                           color: AppTheme.textMuted,
                                           fontSize: 12,
@@ -284,12 +224,14 @@ class _PersonDetailsContent extends ConsumerWidget {
                             Container(
                               height: 6,
                               decoration: BoxDecoration(
-                                color: Colors.white10,
+                                color: AppTheme.textWhite.withValues(
+                                  alpha: 0.1,
+                                ),
                                 borderRadius: BorderRadius.circular(3),
                               ),
                               child: FractionallySizedBox(
                                 alignment: Alignment.centerLeft,
-                                widthFactor: watchedPercent / 100,
+                                widthFactor: seenStats.watchedPercent / 100,
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: AppTheme.accent,
@@ -363,10 +305,12 @@ class _PersonDetailsContent extends ConsumerWidget {
                         return SizedBox(
                           width: 160,
                           child: MediaCard(
-                            title: item['title'] ?? item['name'] ?? 'Unknown',
-                            posterPath: item['poster_path'],
+                            title: (item['title'] ?? item['name'] ?? 'Unknown')
+                                .toString(),
+                            posterPath: item['poster_path'] as String?,
                             releaseDate:
-                                item['release_date'] ?? item['first_air_date'],
+                                (item['release_date'] ?? item['first_air_date'])
+                                    ?.toString(),
                             rating: (item['vote_average'] as num?)?.toDouble(),
                             onTap: () => _navigateToMedia(context, item),
                           ),
@@ -394,7 +338,7 @@ class _PersonDetailsContent extends ConsumerWidget {
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: AppTheme.textWhite,
                           ),
                         ),
                       ],
@@ -424,7 +368,7 @@ class _PersonDetailsContent extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                _FilmographyList(
+                PersonFilmographyList(
                   credits: filmography.take(visibleCredits).toList(),
                   onMediaTap: (item) => _navigateToMedia(context, item),
                 ),
@@ -461,7 +405,7 @@ class _PersonDetailsContent extends ConsumerWidget {
                                   color: AppTheme.textWhite.withValues(
                                     alpha: 0.08,
                                   ),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: AppTheme.radius12,
                                   border: Border.all(
                                     color: AppTheme.textWhite.withValues(
                                       alpha: 0.05,
@@ -506,11 +450,14 @@ class _PersonDetailsContent extends ConsumerWidget {
   }
 
   void _navigateToMedia(BuildContext context, Map<String, dynamic> item) {
-    final type = item['media_type'] ?? (item['title'] != null ? 'movie' : 'tv');
+    final type =
+        item['media_type'] ?? (item['title'] != null ? 'movie' : 'tv');
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) =>
-            MediaDetailsScreen(mediaId: item['id'].toString(), mediaType: type),
+        builder: (_) => MediaDetailsScreen(
+          mediaId: item['id'].toString(),
+          mediaType: type.toString(),
+        ),
       ),
     );
   }
@@ -533,191 +480,13 @@ class _InfoRow extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             text,
-            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+            style: const TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 16,
+            ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _FilmographyList extends StatelessWidget {
-  final List<dynamic> credits;
-  final Function(Map<String, dynamic>) onMediaTap;
-
-  const _FilmographyList({required this.credits, required this.onMediaTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: credits.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (context, index) {
-        final item = credits[index];
-        final year = (item['release_date'] ?? item['first_air_date'] ?? '')
-            .toString()
-            .split('-')
-            .first;
-        final title = item['title'] ?? item['name'] ?? 'Unknown';
-        final posterPath = item['poster_path'];
-        final isTv = item['media_type'] == 'tv';
-        final role = item['character'] ?? item['job'] ?? '';
-        final rating = (item['vote_average'] as num?)?.toDouble() ?? 0.0;
-
-        return InkWell(
-          onTap: () => onMediaTap(Map<String, dynamic>.from(item)),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.02),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-            ),
-            child: Row(
-              children: [
-                // Year
-                SizedBox(
-                  width: 50,
-                  child: Text(
-                    year.isEmpty ? '-' : year,
-                    style: const TextStyle(
-                      color: AppTheme.textMuted,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                // Poster Small
-                Container(
-                  width: 48,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(4),
-                    image: posterPath != null
-                        ? DecorationImage(
-                            image: NetworkImage(
-                              TmdbImageHelper.thumbnailUrl(posterPath)!,
-                            ),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                  ),
-                  child: posterPath == null
-                      ? const Icon(
-                          LucideIcons.film,
-                          size: 16,
-                          color: Colors.white10,
-                        )
-                      : null,
-                ),
-                const SizedBox(width: 16),
-                // Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              title,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isTv
-                                  ? Colors.blue.withValues(alpha: 0.1)
-                                  : AppTheme.accent.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
-                                color: (isTv ? Colors.blue : AppTheme.accent)
-                                    .withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Text(
-                              isTv
-                                  ? l10n.personSeries.toUpperCase()
-                                  : l10n.personMovie.toUpperCase(),
-                              style: TextStyle(
-                                color: isTv ? Colors.blue : AppTheme.accent,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        role,
-                        style: const TextStyle(
-                          color: AppTheme.textMuted,
-                          fontSize: 13,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                // Rating
-                if (rating > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: Colors.green.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          LucideIcons.star,
-                          size: 10,
-                          color: Colors.amber,
-                          fill: 1.0,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          rating.toStringAsFixed(1),
-                          style: const TextStyle(
-                            color: Colors.green,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }

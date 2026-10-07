@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/cards/video_card.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/video_card.dart';
 
 class VideosRow extends StatelessWidget {
   final Map<String, dynamic>? videos;
   final String className;
 
   const VideosRow({super.key, this.videos, this.className = ''});
+
+  static bool hasTrailers(Map<String, dynamic>? videos) {
+    final results = videos?['results'] as List?;
+    if (results == null || results.isEmpty) return false;
+    return results.any((v) => v is Map && v['type'] == 'Trailer');
+  }
 
   @override
   Widget build(BuildContext context) {

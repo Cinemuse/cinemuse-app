@@ -1,9 +1,9 @@
 import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/cards/episode_thumbnail_card.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/cards/person_card.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/cards/video_card.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episode_thumbnail_card.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/person_card.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/video_card.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/details_hero.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episode_card.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episode_carousel_row.dart';

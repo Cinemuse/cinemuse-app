@@ -1,6 +1,7 @@
-import 'package:cinemuse_app/features/media/presentation/widgets/series_progress_bar.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/responsive_action_buttons.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/responsive_action_buttons.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/series_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -113,11 +114,13 @@ class DetailsHero extends ConsumerWidget {
         fit: StackFit.expand,
         children: [
           // Backdrop Image
-            if (backdropPath != null && TmdbImageHelper.backdropUrl(context, backdropPath) != null)
-              Image.network(
-                TmdbImageHelper.backdropUrl(context, backdropPath)!,
-                fit: BoxFit.cover,
-              ),
+          if (backdropPath != null &&
+              TmdbImageHelper.backdropUrl(context, backdropPath) != null)
+            CachedNetworkImage(
+              imageUrl: TmdbImageHelper.backdropUrl(context, backdropPath)!,
+              fit: BoxFit.cover,
+              memCacheWidth: 1280,
+            ),
 
           // Gradients
           Container(
@@ -165,7 +168,7 @@ class DetailsHero extends ConsumerWidget {
               left: contentPadding,
               child: AppBackButton(
                 onTap: () => Navigator.of(context).pop(),
-                backgroundColor: Colors.black.withValues(alpha: 0.4),
+                backgroundColor: AppTheme.surfaceOverlay,
               ),
             ),
 
@@ -213,7 +216,7 @@ class DetailsHero extends ConsumerWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 14),
+                          const Icon(Icons.star, color: AppTheme.star, size: 14),
                           const SizedBox(width: 6),
                           Text(
                             voteAverage.toStringAsFixed(1),
@@ -366,9 +369,9 @@ class DetailsHero extends ConsumerWidget {
       case 'Ended':
         return AppTheme.textMuted;
       case 'Canceled':
-        return Colors.redAccent; // Keep red for canceled
+        return AppTheme.favorites; // Keep red for canceled
       case 'Returning Series':
-        return Colors.greenAccent; // Keep green for good status
+        return AppTheme.success; // Keep green for good status
       default:
         return AppTheme.accent;
     }

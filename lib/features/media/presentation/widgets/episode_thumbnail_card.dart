@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episode_actions_helper.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
@@ -99,79 +100,30 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
 
   void _showContextMenu(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final hasProgress = (widget.resumePercentage ?? 0) > 0 && !widget.isWatched;
 
     _refreshCacheState();
 
-    final options = [
-      AppMenuOption(
-        icon: Icons.play_arrow_outlined,
-        label: hasProgress ? l10n.menuResume : l10n.detailsPlay,
-        onTap: () => widget.onEpisodeTap?.call(
-          widget.seasonNumber,
-          _epNumber,
-          _epName,
-        ),
-      ),
-      if (hasProgress)
-        AppMenuOption(
-          icon: Icons.replay,
-          label: l10n.menuRestart,
-          onTap: () => widget.onEpisodeTap?.call(
-            widget.seasonNumber,
-            _epNumber,
-            _epName,
-          ),
-        ),
-      if (_hasCachedStream)
-        AppMenuOption(
-          icon: Icons.cached,
-          label: l10n.menuRemoveCachedProvider,
-          onTap: _clearCache,
-        ),
-      if (widget.isWatched) ...[
-        if (widget.onTrackOptions != null)
-          AppMenuOption(
-            icon: Icons.edit,
-            label: l10n.menuManageWatchHistory,
-            onTap: () =>
-                widget.onTrackOptions!(widget.seasonNumber, _epNumber),
-          ),
-        if (widget.onViewHistory != null)
-          AppMenuOption(
-            icon: Icons.history,
-            label: l10n.watchHistoryTitle,
-            onTap: widget.onViewHistory!,
-          ),
-      ] else ...[
-        AppMenuOption(
-          icon: Icons.remove_red_eye_outlined,
-          label: l10n.menuMarkWatchedNow,
-          onTap: () {
-            final missing = widget.onFindMissingPreceding?.call(
-                  widget.seasonNumber,
-                  _epNumber,
-                ) ??
-                [];
-            if (missing.isNotEmpty && widget.onShowMarkPrecedingModal != null) {
-              widget.onShowMarkPrecedingModal!(
-                widget.seasonNumber,
-                _epNumber,
-                missing,
-              );
-            } else {
-              widget.onMarkWatched?.call(widget.seasonNumber, _epNumber, null);
-            }
-          },
-        ),
-      ],
-      if (widget.onShowComments != null)
-        AppMenuOption(
-          icon: Icons.forum_outlined,
-          label: l10n.detailsTvTimeComments,
-          onTap: widget.onShowComments!,
-        ),
-    ];
+    final options = EpisodeActionsHelper.buildEpisodeMenuOptions(
+      context: context,
+      l10n: l10n,
+      mediaId: widget.mediaId,
+      seasonNumber: widget.seasonNumber,
+      episodeNumber: _epNumber,
+      episodeName: _epName,
+      isWatched: widget.isWatched,
+      resumePercentage: widget.resumePercentage,
+      hasCachedStream: _hasCachedStream,
+      onClearCache: _clearCache,
+      onEpisodeTap: widget.onEpisodeTap,
+      onMarkWatched: widget.onMarkWatched,
+      onTrackOptions: widget.onTrackOptions != null
+          ? (s, e) => widget.onTrackOptions!(s, e)
+          : null,
+      onViewHistory: widget.onViewHistory,
+      onFindMissingPreceding: widget.onFindMissingPreceding,
+      onShowMarkPrecedingModal: widget.onShowMarkPrecedingModal,
+      onShowComments: widget.onShowComments,
+    );
 
     AppMenu.show(
       context: context,
@@ -279,6 +231,7 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
     if (stillPath != null) {
       return CachedNetworkImage(
         imageUrl: TmdbImageHelper.stillUrl(context, stillPath) ?? '',
+        memCacheWidth: 400,
         fit: BoxFit.cover,
         placeholder: (context, url) => Container(color: theme.colorScheme.surfaceContainer),
         errorWidget: (context, url, error) => Container(
@@ -299,15 +252,15 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isFocused ? theme.focusColor : Colors.black45,
+          color: isFocused ? theme.focusColor : AppTheme.surfaceOverlay,
           shape: BoxShape.circle,
           border: Border.all(
-            color: isFocused ? theme.colorScheme.primary : Colors.white30,
+            color: isFocused ? theme.colorScheme.primary : AppTheme.borderSubtle,
           ),
         ),
         child: Icon(
           Icons.play_arrow,
-          color: isFocused ? theme.colorScheme.primary : Colors.white,
+          color: isFocused ? theme.colorScheme.primary : AppTheme.textWhite,
           size: isFocused ? 28 : 22,
         ),
       ),
@@ -324,7 +277,7 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.7),
+              color: AppTheme.surfaceOverlay,
               borderRadius: BorderRadius.circular(4),
               border: Border.all(
                 color: AppTheme.textWhite.withValues(alpha: 0.15),
@@ -348,12 +301,12 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: const BoxDecoration(
-                color: Colors.green,
+                color: AppTheme.success,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.check,
-                color: Colors.white,
+                color: AppTheme.textWhite,
                 size: 12,
               ),
             ),
@@ -379,7 +332,7 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.7),
+                color: AppTheme.surfaceOverlay,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(

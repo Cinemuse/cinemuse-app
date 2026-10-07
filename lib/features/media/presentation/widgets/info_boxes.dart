@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
@@ -101,63 +102,37 @@ class VerdictBox extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (onShowComments != null)
-            MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
+            Tooltip(
+              message: l10n.detailsTvTimeComments,
+              child: HoverScale(
                 onTap: onShowComments,
-                child: HoverScale(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.forum_outlined,
-                        size: 14,
-                        color: AppTheme.accent,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        l10n.detailsTvTimeComments.toUpperCase(),
-                        style: const TextStyle(
-                          color: AppTheme.accent,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ],
+                showFocusRing: true,
+                borderRadius: BorderRadius.circular(8),
+                child: const Padding(
+                  padding: EdgeInsets.all(6.0),
+                  child: Icon(
+                    Icons.forum_outlined,
+                    size: 16,
+                    color: AppTheme.accent,
                   ),
                 ),
               ),
             ),
           if (onShowComments != null && userReview == null)
-            const SizedBox(width: 12),
+            const SizedBox(width: 4),
           if (userReview == null)
-            MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
+            Tooltip(
+              message: l10n.detailsRate,
+              child: HoverScale(
                 onTap: onShowUserReviewModal,
-                child: HoverScale(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.star_outline,
-                        size: 14,
-                        color: AppTheme.accent,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        l10n.detailsRate,
-                        style: const TextStyle(
-                          color: AppTheme.accent,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ],
+                showFocusRing: true,
+                borderRadius: BorderRadius.circular(8),
+                child: const Padding(
+                  padding: EdgeInsets.all(6.0),
+                  child: Icon(
+                    Icons.star_outline,
+                    size: 16,
+                    color: AppTheme.accent,
                   ),
                 ),
               ),
@@ -181,7 +156,7 @@ class VerdictBox extends StatelessWidget {
                   child: Text(
                     featuredReview['author']?[0]?.toUpperCase() ?? '?',
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppTheme.textWhite,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -241,37 +216,28 @@ class VerdictBox extends StatelessWidget {
           if (reviews.length > 1)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: onShowReviewsModal,
-                  child: HoverScale(
-                    child: TextButton(
-                      onPressed: onShowReviewsModal,
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppTheme.accent,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        minimumSize: Size.zero, // Remove default min size
-                        tapTargetSize: MaterialTapTargetSize
-                            .shrinkWrap, // Shrink tap target
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(
-                            color: AppTheme.textWhite.withValues(alpha: 0.1),
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        l10n.detailsReviewsAll.toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
+              child: HoverScale(
+                onTap: onShowReviewsModal,
+                showFocusRing: true,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppTheme.textWhite.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Text(
+                    l10n.detailsReviewsAll.toUpperCase(),
+                    style: const TextStyle(
+                      color: AppTheme.accent,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
                     ),
                   ),
                 ),
@@ -318,7 +284,7 @@ class FinancesBox extends StatelessWidget {
                 ? '\$${(revenue / 1000000).toStringAsFixed(1)}M'
                 : l10n.commonUnknown,
             progress: revenuePercentage.clamp(0.0, 1.0),
-            color: Colors.green,
+            color: AppTheme.success,
           ),
         ],
       ),
@@ -358,16 +324,24 @@ class ProductionDNA extends StatelessWidget {
                 'name': pc['name'],
               }),
               child: logoPath != null
-                  ? Image.network(
-                      TmdbImageHelper.logoUrl(logoPath)!,
+                  ? CachedNetworkImage(
+                      imageUrl: TmdbImageHelper.logoUrl(logoPath) ?? '',
+                      memCacheHeight: 48,
                       height: 24,
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: AppTheme.textWhite.withValues(alpha: 0.5),
                       colorBlendMode: BlendMode.srcIn,
+                      errorWidget: (_, __, ___) => Text(
+                        pc['name']?.toString() ?? '',
+                        style: DesktopTypography.bodySecondary.copyWith(
+                          color: AppTheme.textWhite.withValues(alpha: 0.5),
+                          fontSize: 12,
+                        ),
+                      ),
                     )
                   : Text(
-                      pc['name'],
+                      pc['name']?.toString() ?? '',
                       style: DesktopTypography.bodySecondary.copyWith(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: AppTheme.textWhite.withValues(alpha: 0.5),
                         fontSize: 12,
                       ),
                     ),

@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
@@ -67,11 +68,24 @@ final mediaDetailsProvider =
         if (details != null) {
           // Opportunistically update cache with full details
           final item = MediaItem.fromTmdbDetails(details, type);
-          repo.saveMediaItem(item).catchError((_) {});
+          repo.saveMediaItem(item).catchError((e, stack) {
+            developer.log(
+              'Failed to opportunistically save media item ${args.id} to cache',
+              name: 'detailsProvider',
+              error: e,
+              stackTrace: stack,
+            );
+          });
         }
 
         return details;
-      } catch (_) {
+      } catch (e, stack) {
+        developer.log(
+          'Failed to fetch media details for ${args.id}',
+          name: 'detailsProvider',
+          error: e,
+          stackTrace: stack,
+        );
         return null;
       }
     });
@@ -113,20 +127,20 @@ final collectionModelProvider =
       return MediaCollection.fromTmdbMap(raw);
     });
 
-// Family state provider for the currently selected season number of a specific series
-final selectedSeasonProvider = StateProvider.family<int, String>((
-  ref,
-  mediaId,
-) {
-  // We want to default to the season of the next unwatched episode (or resume point).
-  // But we can't easily access async watchHistory here without potential loops or waiting.
-  // However, we can use `ref.watch(mediaWatchHistoryProvider(mediaId))` BUT that might not be ready.
-  // A better approach: Initialize this provider with 1, but in the UI (MediaDetailsScreen),
-  // use a `useEffect` or `listen` to update this provider once history is loaded.
-  // OR, we can make this provider depend on history? but then it's not a simple StateProvider for UI toggling.
-  // Let's keep it as StateProvider(1) and handle the "initial set" in the Widget.
-  return 1;
-});
+// Notifier for the currently selected season number of a specific series
+class SelectedSeasonNotifier extends AutoDisposeFamilyNotifier<int, String> {
+  @override
+  int build(String arg) => 1;
+
+  void selectSeason(int season) {
+    state = season;
+  }
+}
+
+final selectedSeasonProvider = NotifierProvider.autoDispose
+    .family<SelectedSeasonNotifier, int, String>(
+      SelectedSeasonNotifier.new,
+    );
 
 // Family provider to fetch watch history for a specific media item (Derived from Store)
 final mediaWatchHistoryProvider =
@@ -500,7 +514,13 @@ final isRewatchingProvider = FutureProvider.family<bool, WatchHistory>((ref, his
     final curE = history.episode ?? 0;
 
     return maxS > curS || (maxS == curS && maxE > curE);
-  } catch (_) {
+  } catch (e, stack) {
+    developer.log(
+      'Failed to query max watch log for series ${history.tmdbId}',
+      name: 'isRewatchingProvider',
+      error: e,
+      stackTrace: stack,
+    );
     return false;
   }
 });

@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episode_actions_helper.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
@@ -100,98 +102,28 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
   void _showContextMenu(BuildContext context, {BuildContext? anchorContext}) {
     final l10n = AppLocalizations.of(context)!;
     final epName = widget.episode['name'] ?? 'Episode $_epNumber';
-    final hasProgress = (widget.resumePercentage ?? 0) > 0 && !widget.isWatched;
 
     _refreshCacheState();
 
-    final options = [
-      AppMenuOption(
-        icon: Icons.play_arrow_outlined,
-        label: hasProgress ? l10n.menuResume : l10n.detailsPlay,
-        onTap: () =>
-            widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, epName),
-      ),
-      if (hasProgress)
-        AppMenuOption(
-          icon: Icons.replay,
-          label: l10n.menuRestart,
-          onTap: () =>
-              widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, epName),
-        ),
-      if (_hasCachedStream)
-        AppMenuOption(
-          icon: Icons.cached,
-          label: l10n.menuRemoveCachedProvider,
-          onTap: _clearCache,
-        ),
-      if (widget.isWatched) ...[
-        AppMenuOption(
-          icon: Icons.edit,
-          label: l10n.menuManageWatchHistory,
-          onTap: () => widget.onTrackOptions(widget.seasonNumber, _epNumber),
-        ),
-        if (widget.onViewHistory != null)
-          AppMenuOption(
-            icon: Icons.history,
-            label: l10n.menuViewWatchHistory,
-            onTap: widget.onViewHistory!,
-          ),
-      ] else ...[
-        AppMenuOption(
-          icon: Icons.remove_red_eye_outlined,
-          label: l10n.menuMarkWatchedNow,
-          onTap: () {
-            final missing = widget.onFindMissingPreceding(
-              widget.seasonNumber,
-              _epNumber,
-            );
-            if (missing.isNotEmpty) {
-              widget.onShowMarkPrecedingModal(
-                widget.seasonNumber,
-                _epNumber,
-                missing,
-              );
-            } else {
-              widget.onMarkWatched?.call(widget.seasonNumber, _epNumber, null);
-            }
-          },
-        ),
-        AppMenuOption(
-          icon: Icons.edit_calendar,
-          label: l10n.menuMarkWatchedCustomDate,
-          onTap: () async {
-            final date = await showDatePicker(
-              context: context,
-              initialDate: DateTime.now(),
-              firstDate: DateTime(2000),
-              lastDate: DateTime.now(),
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: const ColorScheme.dark(
-                      primary: AppTheme.accent,
-                      onPrimary: Colors.white,
-                      surface: AppTheme.secondary,
-                      onSurface: Colors.white,
-                    ),
-                  ),
-                  child: child!,
-                );
-              },
-            );
-            if (date != null) {
-              widget.onMarkWatched?.call(widget.seasonNumber, _epNumber, date);
-            }
-          },
-        ),
-      ],
-      if (widget.onShowComments != null)
-        AppMenuOption(
-          icon: Icons.forum_outlined,
-          label: l10n.detailsTvTimeComments,
-          onTap: widget.onShowComments!,
-        ),
-    ];
+    final options = EpisodeActionsHelper.buildEpisodeMenuOptions(
+      context: context,
+      l10n: l10n,
+      mediaId: widget.mediaId,
+      seasonNumber: widget.seasonNumber,
+      episodeNumber: _epNumber,
+      episodeName: epName,
+      isWatched: widget.isWatched,
+      resumePercentage: widget.resumePercentage,
+      hasCachedStream: _hasCachedStream,
+      onClearCache: _clearCache,
+      onEpisodeTap: widget.onEpisodeTap,
+      onMarkWatched: widget.onMarkWatched,
+      onTrackOptions: widget.onTrackOptions,
+      onViewHistory: widget.onViewHistory,
+      onFindMissingPreceding: widget.onFindMissingPreceding,
+      onShowMarkPrecedingModal: widget.onShowMarkPrecedingModal,
+      onShowComments: widget.onShowComments,
+    );
 
     AppMenu.show(
       context: context,
@@ -329,28 +261,35 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
         children: [
           AspectRatio(
             aspectRatio: 16 / 9,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppTheme.secondary,
-                borderRadius: BorderRadius.circular(8),
-                image: stillPath != null
-                    ? DecorationImage(
-                        image: NetworkImage(
-                          TmdbImageHelper.stillUrl(context, stillPath)!,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: stillPath != null
+                  ? CachedNetworkImage(
+                      imageUrl: TmdbImageHelper.stillUrl(context, stillPath) ?? '',
+                      memCacheWidth: 400,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(color: AppTheme.secondary),
+                      errorWidget: (context, url, error) => Container(
+                        color: AppTheme.secondary,
+                        child: const Center(
+                          child: Icon(
+                            Icons.tv,
+                            color: AppTheme.textMuted,
+                            size: 32,
+                          ),
                         ),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
-              child: stillPath == null
-                  ? const Center(
-                      child: Icon(
-                        Icons.tv,
-                        color: AppTheme.textMuted,
-                        size: 32,
                       ),
                     )
-                  : null,
+                  : Container(
+                      color: AppTheme.secondary,
+                      child: const Center(
+                        child: Icon(
+                          Icons.tv,
+                          color: AppTheme.textMuted,
+                          size: 32,
+                        ),
+                      ),
+                    ),
             ),
           ),
 
@@ -394,7 +333,7 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.6),
+                color: AppTheme.surfaceOverlay,
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(
                   color: AppTheme.textWhite.withValues(alpha: 0.1),
@@ -419,7 +358,7 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
+                  color: AppTheme.surfaceOverlay,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(
@@ -709,12 +648,12 @@ class MarkWatchedButton extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: isWatched
-                    ? Colors.green
+                    ? AppTheme.success
                     : AppTheme.textWhite.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isWatched
-                      ? Colors.green
+                      ? AppTheme.success
                       : AppTheme.textWhite.withValues(alpha: 0.1),
                 ),
               ),
@@ -722,14 +661,14 @@ class MarkWatchedButton extends StatelessWidget {
                   ? Text(
                       'x$watchCount',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppTheme.textWhite,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     )
                   : Icon(
                       isWatched ? Icons.check : Icons.remove_red_eye_outlined,
-                      color: isWatched ? Colors.white : AppTheme.textMuted,
+                      color: isWatched ? AppTheme.textWhite : AppTheme.textMuted,
                       size: 20,
                     ),
             ),

@@ -6,6 +6,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
+const Color _kImdbBrandColor = Color(0xFFF5C518);
+const Color _kTmdbBrandColor = Color(0xFF01B4E4);
+
 class ExternalLinks extends StatelessWidget {
   final Map<String, dynamic>? externalIds;
   final String? homepage;
@@ -24,93 +27,173 @@ class ExternalLinks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (externalIds == null && homepage == null) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context)!;
+    final ids = externalIds;
+
+    // Row 1: Themed Brand Buttons (IMDb, TMDB)
+    final brandButtons = <Widget>[];
+
+    final imdbId = ids?['imdb_id'] as String?;
+    if (imdbId != null && imdbId.trim().isNotEmpty) {
+      final category = type == 'person' ? 'name' : 'title';
+      brandButtons.add(
+        _ThemedBrandButton(
+          label: 'IMDb',
+          url: 'https://www.imdb.com/$category/$imdbId',
+          brandColor: _kImdbBrandColor,
+        ),
+      );
+    }
+
+    if (tmdbId > 0) {
+      final tmdbType = type == 'series' ? 'tv' : type;
+      brandButtons.add(
+        _ThemedBrandButton(
+          label: 'TMDB',
+          url: 'https://www.themoviedb.org/$tmdbType/$tmdbId',
+          brandColor: _kTmdbBrandColor,
+        ),
+      );
+    }
+
+    // Row 2: Smaller Square Icon Buttons (social media + official website + wikidata)
+    final squareButtons = <Widget>[];
+
+    if (homepage != null && homepage!.trim().isNotEmpty) {
+      squareButtons.add(
+        _SquareIconButton(
+          icon: Icons.language,
+          url: homepage!,
+          tooltip: l10n.detailsOfficialWebsite,
+        ),
+      );
+    }
+
+    final instagramId = ids?['instagram_id'] as String?;
+    if (instagramId != null && instagramId.trim().isNotEmpty) {
+      squareButtons.add(
+        _SquareIconButton(
+          icon: LucideIcons.instagram,
+          url: 'https://instagram.com/$instagramId',
+          tooltip: 'Instagram',
+        ),
+      );
+    }
+
+    final facebookId = ids?['facebook_id'] as String?;
+    if (facebookId != null && facebookId.trim().isNotEmpty) {
+      squareButtons.add(
+        _SquareIconButton(
+          icon: LucideIcons.facebook,
+          url: 'https://facebook.com/$facebookId',
+          tooltip: 'Facebook',
+        ),
+      );
+    }
+
+    final twitterId = ids?['twitter_id'] as String?;
+    if (twitterId != null && twitterId.trim().isNotEmpty) {
+      squareButtons.add(
+        _SquareIconButton(
+          icon: LucideIcons.twitter,
+          url: 'https://twitter.com/$twitterId',
+          tooltip: 'Twitter',
+        ),
+      );
+    }
+
+    final wikidataId = ids?['wikidata_id'] as String?;
+    if (wikidataId != null && wikidataId.trim().isNotEmpty) {
+      squareButtons.add(
+        _SquareIconButton(
+          icon: LucideIcons.database,
+          url: 'https://www.wikidata.org/wiki/$wikidataId',
+          tooltip: 'Wikidata',
+        ),
+      );
+    }
+
+    if (brandButtons.isEmpty && squareButtons.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return BentoBox(
       title: l10n.detailsExternalLinks.toUpperCase(),
       icon: Icons.link,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (externalIds != null) ...[
+          if (brandButtons.isNotEmpty)
             Wrap(
-              spacing: 16,
-              runSpacing: 12,
-              children: [
-                if (externalIds!['instagram_id'] != null)
-                  _SocialLink(
-                    icon: LucideIcons.instagram,
-                    url:
-                        'https://instagram.com/${externalIds!['instagram_id']}',
-                    label: 'Instagram',
-                  ),
-                if (externalIds!['facebook_id'] != null)
-                  _SocialLink(
-                    icon: LucideIcons.facebook,
-                    url: 'https://facebook.com/${externalIds!['facebook_id']}',
-                    label: 'Facebook',
-                  ),
-                if (homepage != null)
-                  _SocialLink(
-                    icon: Icons.language,
-                    url: homepage!,
-                    label: 'Official Website',
-                  ),
-              ],
+              spacing: 12,
+              runSpacing: 10,
+              children: brandButtons,
             ),
-            const SizedBox(height: 16),
-          ],
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (externalIds!['imdb_id'] != null)
-                _DatabaseLink(
-                  label: 'IMDb',
-                  url: 'https://www.imdb.com/title/${externalIds!['imdb_id']}',
-                ),
-              if (externalIds!['wikidata_id'] != null)
-                _DatabaseLink(
-                  label: 'Wikidata',
-                  url:
-                      'https://www.wikidata.org/wiki/${externalIds!['wikidata_id']}',
-                ),
-              _DatabaseLink(label: 'TMDB', url: 'https://www.themoviedb.org/'),
-            ],
-          ),
+          if (brandButtons.isNotEmpty && squareButtons.isNotEmpty)
+            const SizedBox(height: 12),
+          if (squareButtons.isNotEmpty)
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: squareButtons,
+            ),
         ],
       ),
     );
   }
 }
 
-class _SocialLink extends StatelessWidget {
-  final IconData icon;
-  final String url;
+class _ThemedBrandButton extends StatelessWidget {
   final String label;
+  final String url;
+  final Color brandColor;
 
-  const _SocialLink({
-    required this.icon,
-    required this.url,
+  const _ThemedBrandButton({
     required this.label,
+    required this.url,
+    required this.brandColor,
   });
+
+  Future<void> _handleTap() async {
+    final uri = Uri.tryParse(url);
+    if (uri != null) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => launchUrl(Uri.parse(url)),
-        child: Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: HoverScale(
-            scale: 1.2,
-            child: Icon(
-              icon,
-              color: AppTheme.textWhite.withValues(alpha: 0.6),
-              size: 20,
+    return HoverScale(
+      scale: 1.05,
+      showFocusRing: true,
+      focusRingColor: brandColor,
+      borderRadius: AppTheme.radius12,
+      onTap: _handleTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppTheme.secondary.withValues(alpha: 0.6),
+          borderRadius: AppTheme.radius12,
+          border: Border.all(
+            color: brandColor.withValues(alpha: 0.45),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: brandColor.withValues(alpha: 0.1),
+              blurRadius: 8,
+              spreadRadius: 0,
             ),
+          ],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: brandColor,
+            fontWeight: FontWeight.w900,
+            fontSize: 14,
+            letterSpacing: 0.5,
           ),
         ),
       ),
@@ -118,37 +201,50 @@ class _SocialLink extends StatelessWidget {
   }
 }
 
-class _DatabaseLink extends StatelessWidget {
-  final String label;
+class _SquareIconButton extends StatelessWidget {
+  final IconData icon;
   final String url;
+  final String tooltip;
 
-  const _DatabaseLink({required this.label, required this.url});
+  const _SquareIconButton({
+    required this.icon,
+    required this.url,
+    required this.tooltip,
+  });
+
+  Future<void> _handleTap() async {
+    final uri = Uri.tryParse(url);
+    if (uri != null) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => launchUrl(Uri.parse(url)),
-        child: HoverScale(
-          scale: 1.1,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: AppTheme.secondary.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: AppTheme.textWhite.withValues(alpha: 0.05),
-              ),
+    return Tooltip(
+      message: tooltip,
+      child: HoverScale(
+        scale: 1.1,
+        showFocusRing: true,
+        focusRingColor: AppTheme.accent,
+        borderRadius: AppTheme.radius12,
+        onTap: _handleTap,
+        child: Container(
+          width: 38,
+          height: 38,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppTheme.secondary.withValues(alpha: 0.5),
+            borderRadius: AppTheme.radius12,
+            border: Border.all(
+              color: AppTheme.borderSubtle,
+              width: 1.2,
             ),
-            child: Text(
-              label,
-              style: AppTheme.monoStyle(
-                color: AppTheme.textWhite.withValues(alpha: 0.6),
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: AppTheme.textWhite.withValues(alpha: 0.85),
           ),
         ),
       ),

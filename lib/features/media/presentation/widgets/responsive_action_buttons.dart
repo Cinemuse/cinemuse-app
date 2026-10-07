@@ -552,8 +552,8 @@ class _TrackButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: isFullyWatched
                 ? (isFocused
-                    ? Colors.green.withValues(alpha: 0.3)
-                    : Colors.green.withValues(alpha: 0.15))
+                    ? AppTheme.success.withValues(alpha: 0.3)
+                    : AppTheme.success.withValues(alpha: 0.15))
                 : (isFocused
                     ? Color.alphaBlend(theme.focusColor, baseColor)
                     : (isHovered
@@ -562,7 +562,7 @@ class _TrackButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isFullyWatched
-                  ? Colors.green.withValues(alpha: 0.3)
+                  ? AppTheme.success.withValues(alpha: 0.3)
                   : theme.colorScheme.onSurface.withValues(alpha: 0.05),
               width: 1.0,
             ),
@@ -580,7 +580,7 @@ class _TrackButton extends StatelessWidget {
                 : (isPartiallyWatched
                     ? Icons.check_circle_outline
                     : Icons.add_task),
-            color: isFullyWatched ? Colors.green : AppTheme.textWhite,
+            color: isFullyWatched ? AppTheme.success : AppTheme.textWhite,
             size: 24,
           ),
           const SizedBox(width: 12),
@@ -598,7 +598,7 @@ class _TrackButton extends StatelessWidget {
                       ? l10n.detailsFinishSeries
                       : l10n.detailsTrack),
               style: TextStyle(
-                color: isFullyWatched ? Colors.green : AppTheme.textWhite,
+                color: isFullyWatched ? AppTheme.success : AppTheme.textWhite,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),

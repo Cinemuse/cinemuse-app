@@ -520,7 +520,13 @@ class WatchHistoryRepository {
       final result = logs.map((log) => _mapLogToWatchHistory(log, userId, mediaMap, statusMap)).toList();
       _cachedWatchLogs = result;
       return result;
-    } catch (_) {
+    } catch (e, stack) {
+      developer.log(
+        'Failed to fetch all watch logs, falling back to local history',
+        name: 'WatchHistoryRepository',
+        error: e,
+        stackTrace: stack,
+      );
       return _getLocalHistoryFallback(userId);
     }
   }
@@ -1169,8 +1175,13 @@ class WatchHistoryRepository {
           );
           return;
         }
-      } catch (_) {
-        // Fallback to manual update if fetch fails
+      } catch (e, stack) {
+        developer.log(
+          'Failed to upsert next episode during max watch log update, falling back to manual update',
+          name: 'WatchHistoryRepository',
+          error: e,
+          stackTrace: stack,
+        );
       }
     }
 

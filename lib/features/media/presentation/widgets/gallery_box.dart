@@ -39,16 +39,16 @@ class GalleryBox extends StatelessWidget {
     return BentoBox(
       title: l10n.detailsGallery,
       icon: Icons.image_outlined,
-      action: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          onTap: () => _openGallery(context, 0),
-          child: HoverScale(
-            child: const Icon(
-              Icons.chevron_right,
-              color: AppTheme.accent,
-              size: 20,
-            ),
+      action: HoverScale(
+        onTap: () => _openGallery(context, 0),
+        showFocusRing: true,
+        borderRadius: BorderRadius.circular(8),
+        child: const Padding(
+          padding: EdgeInsets.all(4.0),
+          child: Icon(
+            Icons.chevron_right,
+            color: AppTheme.accent,
+            size: 20,
           ),
         ),
       ),
@@ -106,36 +106,33 @@ class _GalleryPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: HoverScale(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppTheme.secondary.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppTheme.border.withValues(alpha: 0.1),
+    return HoverScale(
+      onTap: onTap,
+      showFocusRing: true,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppTheme.secondary.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.border.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: AppTheme.accent),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppTheme.textWhite,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 16, color: AppTheme.accent),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: AppTheme.textWhite,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );

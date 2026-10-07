@@ -42,6 +42,7 @@ class VideoCard extends StatelessWidget {
                           CachedNetworkImage(
                             imageUrl:
                                 'https://img.youtube.com/vi/$youtubeKey/mqdefault.jpg',
+                            memCacheWidth: 400,
                             fit: BoxFit.cover,
                             placeholder: (context, url) =>
                                 Container(color: theme.colorScheme.surfaceContainer),
@@ -53,19 +54,19 @@ class VideoCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: isFocused
                                   ? theme.focusColor
-                                  : Colors.black45,
+                                  : AppTheme.surfaceOverlay,
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: isFocused
                                     ? theme.colorScheme.primary
-                                    : Colors.white30,
+                                    : AppTheme.borderSubtle,
                               ),
                             ),
                             child: Icon(
                               Icons.play_arrow,
                               color: isFocused
                                   ? theme.colorScheme.primary
-                                  : Colors.white,
+                                  : AppTheme.textWhite,
                               size: isFocused ? 28 : 24,
                             ),
                           ),

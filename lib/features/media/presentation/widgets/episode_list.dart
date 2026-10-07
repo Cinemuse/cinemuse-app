@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
+import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episode_card.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/tracking_modals.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/watch_logs_sheet.dart';
@@ -84,6 +85,7 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
   @override
   Widget build(BuildContext context) {
     final controller = ref.read(mediaDetailsControllerProvider.notifier);
+    final seriesDomainService = ref.watch(seriesDomainServiceProvider);
     final tmdbId = int.parse(widget.media['id'].toString());
     final isMobile = MediaQuery.of(context).size.width < 600;
 
@@ -103,31 +105,12 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
             0;
         final bool isWatched = watchCount > 0;
 
-        double? resumePercentage;
-        final epKey = '${widget.seasonNumber}-$epNumber';
-        if (widget.episodeProgress != null &&
-            widget.episodeProgress!.containsKey(epKey)) {
-          final history = widget.episodeProgress![epKey]!;
-          if (history.status == WatchStatus.watching &&
-              history.totalDuration != null &&
-              history.totalDuration! > 0) {
-            resumePercentage = history.progressSeconds / history.totalDuration!;
-          }
-        }
-
-        if (resumePercentage == null && widget.watchedData != null) {
-          final lastSeason = widget.watchedData!['season'] as int?;
-          final lastEpisode = widget.watchedData!['episode'] as int?;
-
-          if (lastSeason == widget.seasonNumber && lastEpisode == epNumber) {
-            final progress =
-                widget.watchedData!['progress_seconds'] as int? ?? 0;
-            final total = widget.watchedData!['total_duration'] as int? ?? 0;
-            if (total > 0) {
-              resumePercentage = progress / total;
-            }
-          }
-        }
+        final resumePercentage = seriesDomainService.calculateResumePercentage(
+          seasonNumber: widget.seasonNumber,
+          episodeNumber: epNumber is int ? epNumber : (int.tryParse(epNumber?.toString() ?? '') ?? 0),
+          episodeProgress: widget.episodeProgress,
+          watchedData: widget.watchedData,
+        );
 
         return EpisodeCard(
           episode: episode,
@@ -204,25 +187,12 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
     int currentSeason,
     int currentEpisode,
   ) {
-    final List<({int season, int episode})> missing = [];
-    final seasons = widget.media['seasons'] as List? ?? [];
-
-    for (final season in seasons) {
-      final sNum = season['season_number'] as int? ?? 0;
-      if (sNum == 0) continue;
-      if (sNum > currentSeason) break;
-
-      final epCount = season['episode_count'] as int? ?? 0;
-      final maxE = (sNum == currentSeason) ? currentEpisode - 1 : epCount;
-
-      for (int e = 1; e <= maxE; e++) {
-        final key = '$sNum-$e';
-        if ((widget.watchedEpisodesCount?[key] ?? 0) == 0) {
-          missing.add((season: sNum, episode: e));
-        }
-      }
-    }
-    return missing;
+    return ref.read(seriesDomainServiceProvider).findMissingPrecedingEpisodes(
+      currentSeason: currentSeason,
+      currentEpisode: currentEpisode,
+      seasons: widget.media['seasons'] as List? ?? [],
+      watchedEpisodesCount: widget.watchedEpisodesCount,
+    );
   }
 
   void _showMarkPrecedingModal(
@@ -253,7 +223,7 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
                   Expanded(
                     child: Text(
                       l10n.detailsMarkPreviousTitle,
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                      style: const TextStyle(color: AppTheme.textWhite, fontSize: 18),
                     ),
                   ),
                 ],
@@ -270,7 +240,7 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
                 onPressed: () => Navigator.pop(modalContext, true),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.accent,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppTheme.textWhite,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

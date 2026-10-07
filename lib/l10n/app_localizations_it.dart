@@ -464,6 +464,68 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsRemoveAll => 'Cancella cronologia visualizzazioni';
 
   @override
+  String get detailsSelectDate => 'Seleziona data';
+
+  @override
+  String get detailsConfirm => 'Conferma';
+
+  @override
+  String get detailsMarkEntireSeriesPrompt =>
+      'Segnare l\'intera serie come vista?';
+
+  @override
+  String get detailsManageHistorySeriesPrompt =>
+      'Gestisci la cronologia per questa serie.';
+
+  @override
+  String get detailsClearAllSeriesLogsSubtitle =>
+      'Cancella tutti i registri per tutte le stagioni';
+
+  @override
+  String get detailsTrackEpisodeProgress =>
+      'Tieni traccia dei tuoi progressi per questo episodio.';
+
+  @override
+  String get detailsMarkRewatch => 'Segna come rivisto';
+
+  @override
+  String get detailsMarkAsWatched => 'Segna come visto';
+
+  @override
+  String get detailsSeeAllDatesWatched =>
+      'Visualizza tutte le date in cui l\'hai visto';
+
+  @override
+  String get detailsRemoveOneWatch => 'Rimuovi una visione';
+
+  @override
+  String get detailsDeleteLatestEntry => 'Elimina l\'ultima voce';
+
+  @override
+  String get detailsClearAllEpisodeLogs =>
+      'Cancella tutti i registri per questo episodio';
+
+  @override
+  String get detailsTrackMovieProgress =>
+      'Tieni traccia dei tuoi progressi per questo film.';
+
+  @override
+  String get detailsClearAllMovieLogs =>
+      'Cancella tutti i registri per questo film';
+
+  @override
+  String detailsWatchedOnDate(String date) {
+    return 'Visto il $date';
+  }
+
+  @override
+  String get detailsWatchHistoryLogs => 'Registri cronologia visualizzazioni';
+
+  @override
+  String get detailsErrorLoadingHistory =>
+      'Errore durante il caricamento della cronologia';
+
+  @override
   String get detailsBudget => 'Budget';
 
   @override
@@ -471,6 +533,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get detailsExternalLinks => 'Link esterni';
+
+  @override
+  String get detailsOfficialWebsite => 'Sito Ufficiale';
 
   @override
   String get detailsMedia => 'Media';
@@ -1622,7 +1687,22 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsDirector => 'Regista';
 
   @override
+  String get detailsCreator => 'Creatore';
+
+  @override
+  String get detailsWriter => 'Sceneggiatore';
+
+  @override
   String get detailsWriters => 'Sceneggiatori';
+
+  @override
+  String get detailsPeople => 'Cast e Troupe';
+
+  @override
+  String get detailsSectionCrew => 'CREW';
+
+  @override
+  String get detailsSectionCast => 'CAST';
 
   @override
   String get detailsTvTimeComments => 'Commenti';

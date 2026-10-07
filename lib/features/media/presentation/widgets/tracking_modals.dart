@@ -22,6 +22,8 @@ class _ModalContentWithPickerState extends State<_ModalContentWithPicker> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
@@ -37,18 +39,19 @@ class _ModalContentWithPickerState extends State<_ModalContentWithPicker> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.arrow_back),
-                        color: Colors.white,
+                        color: AppTheme.textWhite,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                         onPressed: () => setState(() => _isPickingDate = false),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        'Select Date',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold),
+                      Text(
+                        l10n.detailsSelectDate,
+                        style: const TextStyle(
+                          color: AppTheme.textWhite,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -59,7 +62,7 @@ class _ModalContentWithPickerState extends State<_ModalContentWithPicker> {
                       data: const CupertinoThemeData(
                         textTheme: CupertinoTextThemeData(
                           dateTimePickerTextStyle:
-                              TextStyle(color: Colors.white, fontSize: 20),
+                              TextStyle(color: AppTheme.textWhite, fontSize: 20),
                         ),
                       ),
                       child: CupertinoDatePicker(
@@ -81,9 +84,13 @@ class _ModalContentWithPickerState extends State<_ModalContentWithPicker> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     onPressed: () => setState(() => _isPickingDate = false),
-                    child: const Text('Confirm',
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      l10n.detailsConfirm,
+                      style: const TextStyle(
+                        color: AppTheme.textWhite,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               )
@@ -139,6 +146,7 @@ class SeriesTrackModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isNew = !status.isFullyWatched && !status.isPartiallyWatched;
 
     return AppBottomSheet(
@@ -158,7 +166,7 @@ class SeriesTrackModal extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                      style: const TextStyle(color: AppTheme.textWhite, fontSize: 18),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -167,8 +175,8 @@ class SeriesTrackModal extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 isNew
-                    ? 'Mark the entire series as watched?'
-                    : 'Manage your history for this series.',
+                    ? l10n.detailsMarkEntireSeriesPrompt
+                    : l10n.detailsManageHistorySeriesPrompt,
                 style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
               ),
               const SizedBox(height: 24),
@@ -177,13 +185,14 @@ class SeriesTrackModal extends StatelessWidget {
                     ? Icons.done_all
                     : Icons.replay_circle_filled,
                 label: status.isPartiallyWatched && !status.isFullyWatched
-                    ? AppLocalizations.of(context)!.detailsMarkRemaining
+                    ? l10n.detailsMarkRemaining
                     : (!status.isFullyWatched
-                        ? AppLocalizations.of(context)!.detailsMarkAll
-                        : AppLocalizations.of(context)!.detailsRewatchSeries),
+                        ? l10n.detailsMarkAll
+                        : l10n.detailsRewatchSeries),
                 subtitle: selectedDate == null
-                    ? 'Today'
-                    : 'Watched on ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                    ? l10n.watchHistoryDateToday
+                    : l10n.detailsWatchedOnDate(
+                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'),
                 color: AppTheme.accent,
                 onTap: () {
                   Navigator.pop(context);
@@ -199,9 +208,9 @@ class SeriesTrackModal extends StatelessWidget {
                 const SizedBox(height: 12),
                 _ModalButton(
                   icon: Icons.delete_sweep_outlined,
-                  label: AppLocalizations.of(context)!.detailsRemoveAll,
-                  subtitle: 'Clear all logs for all seasons',
-                  color: Colors.redAccent,
+                  label: l10n.detailsRemoveAll,
+                  subtitle: l10n.detailsClearAllSeriesLogsSubtitle,
+                  color: AppTheme.favorites,
                   onTap: () {
                     Navigator.pop(context);
                     onRemoveAll();
@@ -264,6 +273,8 @@ class TrackOptionsModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return AppBottomSheet(
       padding: EdgeInsets.fromLTRB(
           24, 0, 24, MediaQuery.viewInsetsOf(context).bottom + 24),
@@ -278,23 +289,26 @@ class TrackOptionsModal extends StatelessWidget {
                   const Icon(Icons.history, color: AppTheme.accent, size: 24),
                   const SizedBox(width: 12),
                   Text(
-                    'Episode $episode',
-                    style: const TextStyle(color: Colors.white, fontSize: 20),
+                    l10n.detailsEpisodeNumber(episode),
+                    style: const TextStyle(color: AppTheme.textWhite, fontSize: 20),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Track your progress for this episode.',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+              Text(
+                l10n.detailsTrackEpisodeProgress,
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
               ),
               const SizedBox(height: 24),
               _ModalButton(
                 icon: Icons.replay,
-                label: watchCount > 0 ? 'Mark a Rewatch' : 'Mark as Watched',
+                label: watchCount > 0
+                    ? l10n.detailsMarkRewatch
+                    : l10n.detailsMarkAsWatched,
                 subtitle: selectedDate == null
-                    ? 'Today'
-                    : 'Watched on ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                    ? l10n.watchHistoryDateToday
+                    : l10n.detailsWatchedOnDate(
+                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'),
                 color: AppTheme.accent,
                 onTap: () {
                   Navigator.pop(context);
@@ -306,9 +320,9 @@ class TrackOptionsModal extends StatelessWidget {
                 const SizedBox(height: 12),
                 _ModalButton(
                   icon: Icons.list_alt,
-                  label: 'View Watch History',
-                  subtitle: 'See all dates you watched this',
-                  color: Colors.blueAccent,
+                  label: l10n.menuViewWatchHistory,
+                  subtitle: l10n.detailsSeeAllDatesWatched,
+                  color: AppTheme.badgeResolution,
                   onTap: () {
                     Navigator.pop(context);
                     onViewHistory!();
@@ -319,9 +333,9 @@ class TrackOptionsModal extends StatelessWidget {
                 const SizedBox(height: 12),
                 _ModalButton(
                   icon: Icons.remove_circle_outline,
-                  label: 'Remove One Watch',
-                  subtitle: 'Delete the latest entry',
-                  color: Colors.orangeAccent,
+                  label: l10n.detailsRemoveOneWatch,
+                  subtitle: l10n.detailsDeleteLatestEntry,
+                  color: AppTheme.badgeHdr,
                   onTap: () {
                     Navigator.pop(context);
                     onRemoveOne();
@@ -332,9 +346,9 @@ class TrackOptionsModal extends StatelessWidget {
                 const SizedBox(height: 12),
                 _ModalButton(
                   icon: Icons.delete_outline,
-                  label: AppLocalizations.of(context)!.detailsRemoveAll,
-                  subtitle: 'Clear all logs for this episode',
-                  color: Colors.redAccent,
+                  label: l10n.detailsRemoveAll,
+                  subtitle: l10n.detailsClearAllEpisodeLogs,
+                  color: AppTheme.favorites,
                   onTap: () {
                     Navigator.pop(context);
                     onRemoveAll();
@@ -393,6 +407,8 @@ class MovieTrackModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return AppBottomSheet(
       padding: EdgeInsets.fromLTRB(
           24, 0, 24, MediaQuery.viewInsetsOf(context).bottom + 24),
@@ -409,24 +425,27 @@ class MovieTrackModal extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                      style: const TextStyle(color: AppTheme.textWhite, fontSize: 18),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Manage your history for this movie.',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+              Text(
+                l10n.detailsTrackMovieProgress,
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
               ),
               const SizedBox(height: 24),
               _ModalButton(
                 icon: Icons.replay,
-                label: watchCount > 0 ? 'Mark a Rewatch' : 'Mark as Watched',
+                label: watchCount > 0
+                    ? l10n.detailsMarkRewatch
+                    : l10n.detailsMarkAsWatched,
                 subtitle: selectedDate == null
-                    ? 'Today'
-                    : 'Watched on ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                    ? l10n.watchHistoryDateToday
+                    : l10n.detailsWatchedOnDate(
+                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'),
                 color: AppTheme.accent,
                 onTap: () {
                   Navigator.pop(context);
@@ -438,9 +457,9 @@ class MovieTrackModal extends StatelessWidget {
                 const SizedBox(height: 12),
                 _ModalButton(
                   icon: Icons.list_alt,
-                  label: 'View Watch History',
-                  subtitle: 'See all dates you watched this',
-                  color: Colors.blueAccent,
+                  label: l10n.menuViewWatchHistory,
+                  subtitle: l10n.detailsSeeAllDatesWatched,
+                  color: AppTheme.badgeResolution,
                   onTap: () {
                     Navigator.pop(context);
                     onViewHistory!();
@@ -451,9 +470,9 @@ class MovieTrackModal extends StatelessWidget {
                 const SizedBox(height: 12),
                 _ModalButton(
                   icon: Icons.remove_circle_outline,
-                  label: 'Remove One Watch',
-                  subtitle: 'Delete the latest entry',
-                  color: Colors.orangeAccent,
+                  label: l10n.detailsRemoveOneWatch,
+                  subtitle: l10n.detailsDeleteLatestEntry,
+                  color: AppTheme.badgeHdr,
                   onTap: () {
                     Navigator.pop(context);
                     onRemoveOne();
@@ -464,9 +483,9 @@ class MovieTrackModal extends StatelessWidget {
                 const SizedBox(height: 12),
                 _ModalButton(
                   icon: Icons.delete_outline,
-                  label: AppLocalizations.of(context)!.detailsRemoveAll,
-                  subtitle: 'Clear all logs for this movie',
-                  color: Colors.redAccent,
+                  label: l10n.detailsRemoveAll,
+                  subtitle: l10n.detailsClearAllMovieLogs,
+                  color: AppTheme.favorites,
                   onTap: () {
                     Navigator.pop(context);
                     onRemoveAll();
@@ -500,6 +519,8 @@ class _ModalButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -528,7 +549,7 @@ class _ModalButton extends StatelessWidget {
                   Text(
                     label,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppTheme.textWhite,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -548,7 +569,7 @@ class _ModalButton extends StatelessWidget {
                 icon: const Icon(Icons.calendar_today, size: 18),
                 color: color,
                 onPressed: onSecondaryTap,
-                tooltip: 'Pick Date',
+                tooltip: l10n.detailsSelectDate,
               ),
           ],
         ),

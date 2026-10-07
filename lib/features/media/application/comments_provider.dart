@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/media/data/comments_repository_provider.dart';
 import 'package:cinemuse_app/features/media/domain/comment.dart';
@@ -150,7 +151,13 @@ class CommentsNotifier
         comments: updatedComments,
         availableSources: _allComments.map((c) => c.source).toSet(),
       );
-    } catch (_) {
+    } catch (e, stack) {
+      developer.log(
+        'Failed to load next comments page for $arg',
+        name: 'CommentsNotifier',
+        error: e,
+        stackTrace: stack,
+      );
       state = state.copyWith(isLoadingMore: false);
     }
   }

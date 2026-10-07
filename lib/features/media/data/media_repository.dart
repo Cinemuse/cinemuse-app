@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
-import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -159,8 +158,12 @@ class MediaRepository {
         'updated_at': item.updatedAt.toIso8601String(),
       }).withErrorHandling();
     } catch (e, stackTrace) {
-      debugPrint('MediaRepository: Failed to sync media cache to remote: $e');
-      debugPrint('Stack trace: $stackTrace');
+      developer.log(
+        'Failed to sync media cache to remote for ${item.tmdbId}',
+        name: 'MediaRepository',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
