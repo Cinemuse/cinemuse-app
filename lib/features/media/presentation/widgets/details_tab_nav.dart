@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
-enum DetailsTab { episodes, cast, reviews, media, finances, links, more }
+enum DetailsTab { episodes, cast, media, links, more }
 
 class DetailsTabNav extends StatelessWidget {
   final DetailsTab activeTab;
   final ValueChanged<DetailsTab> onTabChanged;
   final bool isTV;
   final int numberOfSeasons;
-  final bool hasFinances;
 
   const DetailsTabNav({
     super.key,
@@ -17,7 +16,6 @@ class DetailsTabNav extends StatelessWidget {
     required this.onTabChanged,
     required this.isTV,
     required this.numberOfSeasons,
-    required this.hasFinances,
   });
 
   @override
@@ -31,7 +29,6 @@ class DetailsTabNav extends StatelessWidget {
         _TabItem(DetailsTab.episodes, l10n.detailsEpisodes),
       _TabItem(DetailsTab.cast, l10n.detailsCast),
       _TabItem(DetailsTab.media, l10n.detailsMedia),
-      if (hasFinances) _TabItem(DetailsTab.finances, l10n.detailsFinances),
       _TabItem(DetailsTab.links, l10n.detailsLinks),
       _TabItem(DetailsTab.more, l10n.detailsMore),
     ];

@@ -13,7 +13,6 @@ import 'package:cinemuse_app/features/media/presentation/widgets/details_hero.da
 import 'package:cinemuse_app/features/media/presentation/widgets/series_episodes_section.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/cast_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/videos_row.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/info_boxes.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/external_links.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -193,9 +192,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         final movieWatchCount = !isTV
             ? ref.watch(movieWatchCountProvider(tmdbId))
             : 0;
-        final hasFinances =
-            (details['budget'] as int? ?? 0) > 0 ||
-            (details['revenue'] as int? ?? 0) > 0;
 
         final droppedList = ref.watch(droppedListProvider).valueOrNull;
         final isDropped = droppedList?.items.any((i) => i.tmdbId == tmdbId) ?? false;
@@ -315,7 +311,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                         tmdbId: tmdbId,
                         moreLikeThisList: moreLikeThisList,
                         collection: collection,
-                        hasFinances: hasFinances,
                       )
                     : ResponsiveDetailsLayout(
                         mainContent: _buildDesktopOrMobileMainContent(
@@ -325,7 +320,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                           isTV: isTV,
                           typeForTmdb: typeForTmdb,
                           isMobile: isMobile,
-                          hasFinances: hasFinances,
                           collection: collection,
                           moreLikeThisList: moreLikeThisList,
                         ),
@@ -337,7 +331,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                                 details: details,
                                 isTV: isTV,
                                 typeForTmdb: typeForTmdb,
-                                hasFinances: hasFinances,
                                 collection: collection,
                               ),
                       ),
@@ -395,7 +388,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     required int tmdbId,
     required List<MediaItem> moreLikeThisList,
     required dynamic collection,
-    required bool hasFinances,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -455,7 +447,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     required bool isTV,
     required String typeForTmdb,
     required bool isMobile,
-    required bool hasFinances,
     required dynamic collection,
     required List<MediaItem> moreLikeThisList,
   }) {
@@ -477,7 +468,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             onTabChanged: (tab) => setState(() => _activeTab = tab),
             isTV: isTV,
             numberOfSeasons: details['number_of_seasons'] ?? 0,
-            hasFinances: false,
           ),
           const SizedBox(height: 24),
           _buildMobileTabContent(
@@ -486,7 +476,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             details: details,
             isTV: isTV,
             typeForTmdb: typeForTmdb,
-            hasFinances: hasFinances,
             collection: collection,
             moreLikeThisList: moreLikeThisList,
           ),
@@ -524,7 +513,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     required Map<String, dynamic> details,
     required bool isTV,
     required String typeForTmdb,
-    required bool hasFinances,
     required dynamic collection,
     required List<MediaItem> moreLikeThisList,
   }) {
@@ -539,8 +527,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             : const SizedBox.shrink();
       case DetailsTab.cast:
         return CastRow(credits: details['credits'], details: details);
-      case DetailsTab.reviews:
-        return const SizedBox.shrink();
       case DetailsTab.media:
         final hasVideos = VideosRow.hasTrailers(details['videos']);
         return Column(
@@ -552,11 +538,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             ],
             GalleryBox(details: details),
           ],
-        );
-      case DetailsTab.finances:
-        return FinancesBox(
-          budget: details['budget'] as int? ?? 0,
-          revenue: details['revenue'] as int? ?? 0,
         );
       case DetailsTab.links:
         return ExternalLinks(
@@ -598,7 +579,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     required Map<String, dynamic> details,
     required bool isTV,
     required String typeForTmdb,
-    required bool hasFinances,
     required dynamic collection,
   }) {
     return Column(

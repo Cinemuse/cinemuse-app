@@ -110,14 +110,14 @@ void main() {
       await database.upsertListItem(
         CachedListItemsCompanion.insert(
           listId: listId,
-          mediaTmdbId: 101,
+          tmdbId: 101,
           mediaType: 'movie',
         ),
       );
 
       final items = await database.watchListItems(listId).first;
       expect(items.length, 1);
-      expect(items.first.mediaTmdbId, 101);
+      expect(items.first.tmdbId, 101);
     });
 
     test('syncUserLists removes old and adds new', () async {
@@ -142,7 +142,7 @@ void main() {
       final newItems = [
         CachedListItemsCompanion.insert(
           listId: 'new-list',
-          mediaTmdbId: 202,
+          tmdbId: 202,
           mediaType: 'movie',
         ),
       ];
@@ -155,7 +155,7 @@ void main() {
 
       final items = await database.watchListItems('new-list').first;
       expect(items.length, 1);
-      expect(items.first.mediaTmdbId, 202);
+      expect(items.first.tmdbId, 202);
     });
   });
 }
