@@ -30,7 +30,6 @@ class DetailsTabNav extends StatelessWidget {
       if (isTV && numberOfSeasons > 0)
         _TabItem(DetailsTab.episodes, l10n.detailsEpisodes),
       _TabItem(DetailsTab.cast, l10n.detailsCast),
-      _TabItem(DetailsTab.reviews, l10n.detailsReviews),
       _TabItem(DetailsTab.media, l10n.detailsMedia),
       if (hasFinances) _TabItem(DetailsTab.finances, l10n.detailsFinances),
       _TabItem(DetailsTab.links, l10n.detailsLinks),

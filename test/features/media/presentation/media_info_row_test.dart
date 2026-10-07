@@ -1,7 +1,6 @@
 import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/external_links.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/gallery_box.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/info_boxes.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/media_info_row.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -98,21 +97,19 @@ void main() {
 
   group('MediaInfoRow Widget Tests', () {
     testWidgets(
-        'renders 3 columns (Gallery, Reviews, Links) in a single row',
+        'renders 2 columns (Gallery, Links) in a single row',
         (tester) async {
       await tester.pumpWidget(
         buildTestableWidget(
           MediaInfoRow(
             details: sampleDetailsFull,
             typeForTmdb: 'movie',
-            onShowComments: () {},
           ),
         ),
       );
       await tester.pumpAndSettle();
 
       expect(find.byType(GalleryBox), findsOneWidget);
-      expect(find.byType(VerdictBox), findsOneWidget);
       expect(find.byType(ExternalLinks), findsOneWidget);
 
       // Verify that they are inside an IntrinsicHeight Row on widescreen
@@ -122,30 +119,28 @@ void main() {
       );
       expect(rowFinder, findsOneWidget);
 
-      // Verify Row contains all 3 columns
+      // Verify Row contains all 2 columns
       final rowWidget = tester.widget<Row>(rowFinder);
-      expect(rowWidget.children.whereType<Expanded>().length, equals(3));
+      expect(rowWidget.children.whereType<Expanded>().length, equals(2));
     });
 
     testWidgets(
-        'flexes into a 2-column layout (Gallery, Reviews) when links are absent',
+        'flexes into a 1-column layout (Gallery) when links are absent',
         (tester) async {
       await tester.pumpWidget(
         buildTestableWidget(
           MediaInfoRow(
             details: sampleDetailsNoLinks,
             typeForTmdb: 'tv',
-            onShowComments: () {},
           ),
         ),
       );
       await tester.pumpAndSettle();
 
       expect(find.byType(GalleryBox), findsOneWidget);
-      expect(find.byType(VerdictBox), findsOneWidget);
       expect(find.byType(ExternalLinks), findsNothing);
 
-      // Verify Row has exactly 2 Expanded columns
+      // Verify Row has exactly 1 Expanded column
       final rowFinder = find.ancestor(
         of: find.byType(GalleryBox),
         matching: find.byType(Row),
@@ -153,7 +148,7 @@ void main() {
       expect(rowFinder, findsOneWidget);
 
       final rowWidget = tester.widget<Row>(rowFinder);
-      expect(rowWidget.children.whereType<Expanded>().length, equals(2));
+      expect(rowWidget.children.whereType<Expanded>().length, equals(1));
     });
 
     testWidgets(
@@ -164,7 +159,6 @@ void main() {
           MediaInfoRow(
             details: sampleDetailsFull,
             typeForTmdb: 'movie',
-            onShowComments: () {},
           ),
           surfaceSize: const Size(400, 800),
         ),
@@ -172,7 +166,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(GalleryBox), findsOneWidget);
-      expect(find.byType(VerdictBox), findsOneWidget);
       expect(find.byType(ExternalLinks), findsOneWidget);
 
       // Should be inside a Column
@@ -184,29 +177,23 @@ void main() {
     });
 
     testWidgets(
-        'spatial navigation allows D-Pad navigation between Gallery, Reviews, and Links',
+        'spatial navigation allows D-Pad navigation between Gallery and Links',
         (tester) async {
       await tester.pumpWidget(
         buildTestableWidget(
           MediaInfoRow(
             details: sampleDetailsFull,
             typeForTmdb: 'movie',
-            onShowComments: () {},
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      // Find focus nodes in Gallery, Reviews, and Links
+      // Find focus nodes in Gallery and Links
       final galleryFocus = tester.widgetList<Focus>(
         find.descendant(of: find.byType(GalleryBox), matching: find.byType(Focus)),
       );
       expect(galleryFocus, isNotEmpty);
-
-      final verdictFocus = tester.widgetList<Focus>(
-        find.descendant(of: find.byType(VerdictBox), matching: find.byType(Focus)),
-      );
-      expect(verdictFocus, isNotEmpty);
 
       final linksFocus = tester.widgetList<Focus>(
         find.descendant(of: find.byType(ExternalLinks), matching: find.byType(Focus)),
@@ -217,15 +204,6 @@ void main() {
       galleryFocus.first.focusNode?.requestFocus();
       await tester.pumpAndSettle();
       expect(FocusManager.instance.primaryFocus, galleryFocus.first.focusNode);
-
-      // Directional traversal right moves through Gallery items
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-      await tester.pumpAndSettle();
-
-      // Focus on Verdict item directly
-      verdictFocus.first.focusNode?.requestFocus();
-      await tester.pumpAndSettle();
-      expect(FocusManager.instance.primaryFocus, verdictFocus.first.focusNode);
 
       // Focus on Links item directly
       linksFocus.first.focusNode?.requestFocus();

@@ -292,6 +292,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                         details,
                         movieWatchCount,
                       ),
+                onCommentsTap: () =>
+                    _handleShowComments(context, details, isTV, l10n),
                 movieWatchCount: movieWatchCount,
                 contentPadding: responsivePadding,
               ),
@@ -433,8 +435,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         MediaInfoRow(
           details: details,
           typeForTmdb: typeForTmdb,
-          onShowComments: () =>
-              _handleShowComments(context, details, isTV, l10n),
         ),
         if (collection != null) ...[
           const SizedBox(height: 32),
@@ -540,13 +540,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       case DetailsTab.cast:
         return CastRow(credits: details['credits'], details: details);
       case DetailsTab.reviews:
-        return VerdictBox(
-          reviews: details['reviews']?['results'] ?? [],
-          onShowUserReviewModal: () {},
-          onShowReviewsModal: () {},
-          onShowComments: () =>
-              _handleShowComments(context, details, isTV, l10n),
-        );
+        return const SizedBox.shrink();
       case DetailsTab.media:
         final hasVideos = VideosRow.hasTrailers(details['videos']);
         return Column(
@@ -611,14 +605,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GalleryBox(details: details),
-        const SizedBox(height: 24),
-        VerdictBox(
-          reviews: details['reviews']?['results'] ?? [],
-          onShowUserReviewModal: () {},
-          onShowReviewsModal: () {},
-          onShowComments: () =>
-              _handleShowComments(context, details, isTV, l10n),
-        ),
         const SizedBox(height: 24),
         ExternalLinks(
           externalIds: details['external_ids'],

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/external_links.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/gallery_box.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/info_boxes.dart';
 
-/// A responsive row displaying Gallery, Reviews (Verdict), and External Links
+/// A responsive row displaying Gallery and External Links
 /// side-by-side with spatial navigation.
 ///
 /// Automatically flexes into a 2-column or 1-column layout if any section is absent,
@@ -34,9 +33,6 @@ class MediaInfoRow extends StatelessWidget {
     final hasGallery =
         backdrops.isNotEmpty || posters.isNotEmpty || logos.isNotEmpty;
 
-    final reviews = (details['reviews']?['results'] as List?) ?? [];
-    final hasReviews = reviews.isNotEmpty || onShowComments != null;
-
     final externalIds = details['external_ids'];
     final homepage = details['homepage'] as String?;
     final hasLinks = externalIds != null ||
@@ -46,17 +42,6 @@ class MediaInfoRow extends StatelessWidget {
 
     if (hasGallery) {
       columns.add(GalleryBox(details: details));
-    }
-
-    if (hasReviews) {
-      columns.add(
-        VerdictBox(
-          reviews: reviews,
-          onShowUserReviewModal: onShowUserReviewModal ?? () {},
-          onShowReviewsModal: onShowReviewsModal ?? () {},
-          onShowComments: onShowComments,
-        ),
-      );
     }
 
     if (hasLinks) {

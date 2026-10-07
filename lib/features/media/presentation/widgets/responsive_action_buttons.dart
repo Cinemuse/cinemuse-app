@@ -19,6 +19,7 @@ class ResponsiveActionButtons extends ConsumerStatefulWidget {
   final bool isInWatchlist;
   final VoidCallback onListTap;
   final VoidCallback? onTrackTap;
+  final VoidCallback? onCommentsTap;
   final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})?
   seriesWatchStatus;
   final int? movieWatchCount;
@@ -43,6 +44,7 @@ class ResponsiveActionButtons extends ConsumerStatefulWidget {
     required this.isInWatchlist,
     required this.onListTap,
     this.onTrackTap,
+    this.onCommentsTap,
     this.seriesWatchStatus,
     this.movieWatchCount,
     this.mobileBreakpoint = 600.0,
@@ -142,6 +144,12 @@ class _ResponsiveActionButtonsState
                   ),
                 ),
               ],
+              if (widget.onCommentsTap != null) ...[
+                const SizedBox(width: 12),
+                _CommentsButton(
+                  onCommentsTap: widget.onCommentsTap!,
+                ),
+              ],
             ],
           ),
         ],
@@ -165,6 +173,12 @@ class _ResponsiveActionButtonsState
             onTrackTap: widget.onTrackTap!,
             seriesWatchStatus: widget.seriesWatchStatus,
             movieWatchCount: widget.movieWatchCount,
+          ),
+        ],
+        if (widget.onCommentsTap != null) ...[
+          const SizedBox(width: 16),
+          _CommentsButton(
+            onCommentsTap: widget.onCommentsTap!,
           ),
         ],
       ],
@@ -539,6 +553,9 @@ class _TrackButton extends StatelessWidget {
     final minWatchCount =
         seriesWatchStatus?.minWatchCount ?? (movieWatchCount ?? 0);
 
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    final horizontalPadding = isMobile ? 12.0 : 24.0;
+
     return DpadFocusable(
       autoScroll: false,
       onTap: onTrackTap,
@@ -548,7 +565,10 @@ class _TrackButton extends StatelessWidget {
         final theme = Theme.of(context);
         final baseColor = theme.colorScheme.onSurface.withValues(alpha: 0.08);
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: 15,
+          ),
           decoration: BoxDecoration(
             color: isFullyWatched
                 ? (isFocused
@@ -606,6 +626,58 @@ class _TrackButton extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Comments Button
+// ---------------------------------------------------------------------------
+
+class _CommentsButton extends StatelessWidget {
+  final VoidCallback onCommentsTap;
+
+  const _CommentsButton({
+    required this.onCommentsTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final baseColor = theme.colorScheme.onSurface.withValues(alpha: 0.08);
+
+    return Tooltip(
+      message: l10n.detailsTvTimeComments,
+      child: DpadFocusable(
+        autoScroll: false,
+        onTap: onCommentsTap,
+        scale: 1.0,
+        borderRadius: BorderRadius.circular(12),
+        builder: (context, isFocused, isHovered, child) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+            decoration: BoxDecoration(
+              color: isFocused
+                  ? Color.alphaBlend(theme.focusColor, baseColor)
+                  : (isHovered
+                      ? Color.alphaBlend(theme.hoverColor, baseColor)
+                      : baseColor),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                width: 1.0,
+              ),
+            ),
+            child: child,
+          );
+        },
+        child: Icon(
+          Icons.chat_bubble_outline,
+          color: theme.colorScheme.onSurface,
+          size: 24,
+        ),
       ),
     );
   }

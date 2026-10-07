@@ -407,5 +407,39 @@ void main() {
 
       expect(railFocused, isTrue);
     });
+
+    testWidgets('ResponsiveActionButtons renders comment button and triggers onCommentsTap',
+        (tester) async {
+      bool commentsTapped = false;
+      final mediaItem = MediaItem(
+        tmdbId: 123,
+        mediaType: MediaKind.movie,
+        updatedAt: DateTime.now(),
+      );
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          ResponsiveActionButtons(
+            onPlayClick: () {},
+            playButtonLabel: 'Play',
+            mediaItem: mediaItem,
+            isFavorite: false,
+            isInWatchlist: false,
+            onListTap: () {},
+            onTrackTap: () {},
+            onCommentsTap: () => commentsTapped = true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final commentButtonFinder = find.byIcon(Icons.chat_bubble_outline);
+      expect(commentButtonFinder, findsOneWidget);
+
+      await tester.tap(commentButtonFinder);
+      await tester.pumpAndSettle();
+
+      expect(commentsTapped, isTrue);
+    });
   });
 }

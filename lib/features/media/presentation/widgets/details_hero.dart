@@ -27,6 +27,7 @@ class DetailsHero extends ConsumerWidget {
   seriesWatchStatus;
   final VoidCallback onListTap;
   final VoidCallback? onTrackTap;
+  final VoidCallback? onCommentsTap;
   final VoidCallback? onDropClick;
   final VoidCallback? onClearProgress;
   final int? movieWatchCount;
@@ -47,6 +48,7 @@ class DetailsHero extends ConsumerWidget {
     this.seriesWatchStatus,
     required this.onListTap,
     this.onTrackTap,
+    this.onCommentsTap,
     this.onDropClick,
     this.movieWatchCount,
   });
@@ -341,6 +343,7 @@ class DetailsHero extends ConsumerWidget {
                     isInWatchlist: isInWatchlist,
                     onListTap: onListTap,
                     onTrackTap: onTrackTap,
+                    onCommentsTap: onCommentsTap,
                     onDropClick: onDropClick,
                     onClearProgress: onClearProgress,
                     seriesWatchStatus: seriesWatchStatus,
