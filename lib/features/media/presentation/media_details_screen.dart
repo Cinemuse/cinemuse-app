@@ -10,7 +10,7 @@ import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/details_hero.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/series_episodes_section.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_section.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/cast_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/videos_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/external_links.dart';
@@ -387,7 +387,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         ),
         const SizedBox(height: 32),
         if (isTV && (details['number_of_seasons'] ?? 0) > 0) ...[
-          SeriesEpisodesSection(
+          EpisodeSection(
             mediaId: widget.mediaId,
             details: details,
             mainScrollController: _mainScrollController,
@@ -478,7 +478,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     switch (_activeTab) {
       case DetailsTab.episodes:
         return isTV
-            ? SeriesEpisodesSection(
+            ? EpisodeSection(
                 mediaId: widget.mediaId,
                 details: details,
                 mainScrollController: _mainScrollController,

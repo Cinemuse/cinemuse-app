@@ -1,265 +1,87 @@
-import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/episode_card.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/tracking_modals.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/watch_logs_sheet.dart';
+import 'package:cinemuse_app/features/media/domain/episode_item.dart';
+import 'package:cinemuse_app/features/media/domain/watch_history.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_list_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/features/media/domain/watch_history.dart';
-import 'package:flutter/gestures.dart';
 
-class EpisodeList extends ConsumerStatefulWidget {
-  final List<dynamic> episodes;
+/// Vertical list of episodes for mobile TV series presentation.
+class EpisodeList extends ConsumerWidget {
+  final List<EpisodeItem> episodes;
   final int seasonNumber;
-  final Map<String, dynamic> media;
-  final Map<String, dynamic>? watchedData;
+  final String mediaId;
   final Map<String, int>? watchedEpisodesCount;
   final Map<String, WatchHistory>? episodeProgress;
   final void Function(int season, int episode, String name, {bool restart})? onEpisodeTap;
-  final int? initialScrollIndex;
   final void Function(int season, int episode)? onShowComments;
-  final ScrollController? mainScrollController;
+  final Function(int season, int episode, DateTime? date)? onMarkWatched;
+  final Function(int season, int episode)? onTrackOptions;
+  final List<({int season, int episode})> Function(int season, int episode)? onFindMissingPreceding;
+  final Function(int season, int episode, List<({int season, int episode})> missing)? onShowMarkPrecedingModal;
+  final Function(int season, int episode)? onViewHistory;
 
   const EpisodeList({
     super.key,
     required this.episodes,
     required this.seasonNumber,
-    required this.media,
-    this.watchedData,
+    required this.mediaId,
     this.watchedEpisodesCount,
     this.episodeProgress,
     this.onEpisodeTap,
-    this.initialScrollIndex,
     this.onShowComments,
-    this.mainScrollController,
+    this.onMarkWatched,
+    this.onTrackOptions,
+    this.onFindMissingPreceding,
+    this.onShowMarkPrecedingModal,
+    this.onViewHistory,
   });
 
   @override
-  ConsumerState<EpisodeList> createState() => _EpisodeListState();
-}
-
-class _EpisodeListState extends ConsumerState<EpisodeList> {
-  late ScrollController _scrollController;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-    _tryScroll(widget.initialScrollIndex);
-  }
-
-  @override
-  void didUpdateWidget(covariant EpisodeList oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.seasonNumber != oldWidget.seasonNumber) {
-      // Season changed, reset and try scroll
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(0);
-      }
-      _tryScroll(widget.initialScrollIndex);
-    }
-  }
-
-  void _tryScroll(int? index) {
-    if (index != null && index > 0) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          final offset = index * 140.0; // Estimated item height
-          _scrollController.jumpTo(
-            offset.clamp(0.0, _scrollController.position.maxScrollExtent),
-          );
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = ref.read(mediaDetailsControllerProvider.notifier);
+  Widget build(BuildContext context, WidgetRef ref) {
     final seriesDomainService = ref.watch(seriesDomainServiceProvider);
-    final tmdbId = int.parse(widget.media['id'].toString());
-    final isMobile = MediaQuery.of(context).size.width < 600;
 
-    Widget listView = ListView.separated(
-      controller: isMobile ? null : _scrollController,
-      shrinkWrap: isMobile,
-      physics: isMobile ? const NeverScrollableScrollPhysics() : null,
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 16),
-      itemCount: widget.episodes.length,
+      itemCount: episodes.length,
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
-        final episode = widget.episodes[index];
-        final epNumber = episode['episode_number'];
+        final episode = episodes[index];
+        final epNumber = episode.episodeNumber;
 
         final watchCount =
-            widget.watchedEpisodesCount?['${widget.seasonNumber}-$epNumber'] ??
-            0;
+            watchedEpisodesCount?['$seasonNumber-$epNumber'] ?? 0;
         final bool isWatched = watchCount > 0;
 
         final resumePercentage = seriesDomainService.calculateResumePercentage(
-          seasonNumber: widget.seasonNumber,
-          episodeNumber: epNumber is int ? epNumber : (int.tryParse(epNumber?.toString() ?? '') ?? 0),
-          episodeProgress: widget.episodeProgress,
-          watchedData: widget.watchedData,
+          seasonNumber: seasonNumber,
+          episodeNumber: epNumber,
+          episodeProgress: episodeProgress,
         );
 
-        return EpisodeCard(
+        return EpisodeListCard(
           episode: episode,
-          seasonNumber: widget.seasonNumber,
-          media: widget.media,
-          mediaId: widget.media['id']?.toString() ?? '',
+          seasonNumber: seasonNumber,
+          mediaId: mediaId,
           isWatched: isWatched,
           watchCount: watchCount,
           resumePercentage: resumePercentage,
-          onEpisodeTap: widget.onEpisodeTap,
-          onShowComments: widget.onShowComments != null
-              ? () =>
-                    widget.onShowComments!(widget.seasonNumber, epNumber)
+          onEpisodeTap: onEpisodeTap,
+          onShowComments: onShowComments != null
+              ? () => onShowComments!(seasonNumber, epNumber)
               : null,
-          onMarkWatched: (s, e, date) => controller.logEpisodeWatch(
-            tmdbId: tmdbId,
-            season: s,
-            episode: e,
-            loggedAt: date,
-          ),
-          onTrackOptions: (s, e) =>
-              _showTrackOptions(context, controller, tmdbId, s, e, watchCount),
-          onFindMissingPreceding: _findMissingPreceding,
+          onMarkWatched: onMarkWatched,
+          onTrackOptions: (s, e) => onTrackOptions?.call(s, e),
+          onFindMissingPreceding: (s, e) =>
+              onFindMissingPreceding?.call(s, e) ?? [],
           onShowMarkPrecedingModal: (s, e, m) =>
-              _showMarkPrecedingModal(context, controller, tmdbId, s, e, m),
-          onViewHistory: () => WatchLogsSheet.show(
-            context,
-            tmdbId,
-            'Episode $epNumber',
-            season: widget.seasonNumber,
-            episode: epNumber,
-          ),
+              onShowMarkPrecedingModal?.call(s, e, m),
+          onViewHistory: onViewHistory != null
+              ? () => onViewHistory!(seasonNumber, epNumber)
+              : null,
         );
       },
-    );
-
-    if (!isMobile) {
-      void handleScrollDelta(double delta) {
-        final target = _scrollController.position;
-        if ((delta > 0 && target.pixels >= target.maxScrollExtent) ||
-            (delta < 0 && target.pixels <= target.minScrollExtent)) {
-          final parent = widget.mainScrollController;
-          if (parent != null && parent.hasClients) {
-            parent.jumpTo(
-              (parent.position.pixels + delta).clamp(
-                parent.position.minScrollExtent,
-                parent.position.maxScrollExtent,
-              ),
-            );
-          }
-        }
-      }
-
-      return Listener(
-        behavior: HitTestBehavior.opaque,
-        onPointerSignal: (PointerSignalEvent pointerSignal) {
-          if (pointerSignal is PointerScrollEvent) {
-            handleScrollDelta(pointerSignal.scrollDelta.dy);
-          }
-        },
-        onPointerPanZoomUpdate: (PointerPanZoomUpdateEvent event) {
-          handleScrollDelta(
-            event.panDelta.dy * -1,
-          ); // panDelta is typically negative for scroll down? Wait, trackpad panDelta is positive for panning down the page? Actually, we'll just test the sign. Usually we scroll by subtracting panDelta.
-        },
-        child: listView,
-      );
-    }
-
-    return listView;
-  }
-
-  List<({int season, int episode})> _findMissingPreceding(
-    int currentSeason,
-    int currentEpisode,
-  ) {
-    return ref.read(seriesDomainServiceProvider).findMissingPrecedingEpisodes(
-      currentSeason: currentSeason,
-      currentEpisode: currentEpisode,
-      seasons: widget.media['seasons'] as List? ?? [],
-      watchedEpisodesCount: widget.watchedEpisodesCount,
-    );
-  }
-
-  void _showMarkPrecedingModal(
-    BuildContext context,
-    MediaDetailsController controller,
-    int tmdbId,
-    int season,
-    int episode,
-    List<({int season, int episode})> missing,
-  ) {
-    MarkPrecedingModal.show(
-      context,
-      missingCount: missing.length,
-    ).then((markAll) {
-      if (markAll == null) return;
-      if (markAll) {
-        final allToMark = [
-          ...missing,
-          (season: season, episode: episode),
-        ];
-        controller.logMultipleEpisodes(
-          tmdbId: tmdbId,
-          episodes: allToMark,
-        );
-      } else {
-        controller.logEpisodeWatch(
-          tmdbId: tmdbId,
-          season: season,
-          episode: episode,
-        );
-      }
-    });
-  }
-
-  void _showTrackOptions(
-    BuildContext context,
-    MediaDetailsController controller,
-    int tmdbId,
-    int season,
-    int episode,
-    int watchCount,
-  ) {
-    TrackOptionsModal.show(
-      context: context,
-      season: season,
-      episode: episode,
-      watchCount: watchCount,
-      onRewatch: (date) => controller.logEpisodeWatch(
-        tmdbId: tmdbId,
-        season: season,
-        episode: episode,
-        loggedAt: date,
-      ),
-      onRemoveOne: () => controller.deleteLatestEpisodeLog(
-        tmdbId: tmdbId,
-        season: season,
-        episode: episode,
-      ),
-      onRemoveAll: () => controller.deleteAllEpisodeLogs(
-        tmdbId: tmdbId,
-        season: season,
-        episode: episode,
-      ),
-      onViewHistory: () => WatchLogsSheet.show(
-        context,
-        tmdbId,
-        'Episode $episode',
-        season: season,
-        episode: episode,
-      ),
     );
   }
 }

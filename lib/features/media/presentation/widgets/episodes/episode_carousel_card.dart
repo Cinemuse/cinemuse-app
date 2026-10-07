@@ -2,8 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/episode_actions_helper.dart';
+import 'package:cinemuse_app/features/media/domain/episode_item.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_menu.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
@@ -12,8 +14,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
 /// A landscape 16:9 episode card designed for horizontal carousels.
-class EpisodeThumbnailCard extends ConsumerStatefulWidget {
-  final Map<String, dynamic> episode;
+class EpisodeCarouselCard extends ConsumerStatefulWidget {
+  final EpisodeItem episode;
   final int seasonNumber;
   final String mediaId;
   final bool isWatched;
@@ -30,7 +32,7 @@ class EpisodeThumbnailCard extends ConsumerStatefulWidget {
   final VoidCallback? onShowComments;
   final VoidCallback? onViewHistory;
 
-  const EpisodeThumbnailCard({
+  const EpisodeCarouselCard({
     super.key,
     required this.episode,
     required this.seasonNumber,
@@ -49,15 +51,18 @@ class EpisodeThumbnailCard extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<EpisodeThumbnailCard> createState() =>
-      _EpisodeThumbnailCardState();
+  ConsumerState<EpisodeCarouselCard> createState() =>
+      _EpisodeCarouselCardState();
 }
 
-class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
+class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
   bool _hasCachedStream = false;
 
-  int get _epNumber => widget.episode['episode_number'] as int? ?? 1;
-  String get _epName => widget.episode['name'] ?? 'Episode $_epNumber';
+  int get _epNumber => widget.episode.episodeNumber;
+  String get _epName {
+    final l10n = AppLocalizations.of(context)!;
+    return widget.episode.getTitle(l10n.detailsEpisodeFallback(_epNumber));
+  }
 
   @override
   void initState() {
@@ -89,12 +94,11 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
       episode: _epNumber,
     );
     setState(() => _hasCachedStream = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l10n.menuRemoveCachedProvider),
-        duration: const Duration(seconds: 2),
-        backgroundColor: AppTheme.secondary,
-      ),
+    AppSnackBar.show(
+      context,
+      message: l10n.menuRemoveCachedProvider,
+      duration: const Duration(seconds: 2),
+      backgroundColor: AppTheme.secondary,
     );
   }
 
@@ -103,7 +107,7 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
 
     _refreshCacheState();
 
-    final options = EpisodeActionsHelper.buildEpisodeMenuOptions(
+    final options = EpisodeMenu.buildEpisodeMenuOptions(
       context: context,
       l10n: l10n,
       mediaId: widget.mediaId,
@@ -127,7 +131,7 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
 
     AppMenu.show(
       context: context,
-      title: 'S${widget.seasonNumber} E$_epNumber • $_epName',
+      title: l10n.detailsEpisodeWithSeason(widget.seasonNumber, _epNumber, _epName),
       options: options,
     );
   }
@@ -135,8 +139,8 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final stillPath = widget.episode['still_path'];
-    final runtime = widget.episode['runtime'];
+    final stillPath = widget.episode.stillPath;
+    final runtime = widget.episode.runtime;
     final formattedAirDate = _formatAirDate(context);
 
     return DpadFocusable(
@@ -181,9 +185,7 @@ class _EpisodeThumbnailCardState extends ConsumerState<EpisodeThumbnailCard> {
   }
 
   String? _formatAirDate(BuildContext context) {
-    final airDateStr = widget.episode['air_date']?.toString();
-    if (airDateStr == null) return null;
-    final airDate = DateTime.tryParse(airDateStr);
+    final airDate = widget.episode.airDate;
     if (airDate == null) return null;
     return DateFormat.yMMMd(
       Localizations.localeOf(context).languageCode,

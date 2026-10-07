@@ -124,6 +124,20 @@
   "detailsErrorLoading": "Error loading details: {error}",
   "detailsDecryptingMetadata": "Decrypting metadata...",
   "detailsEpisodesRegistry": "Episodes Registry",
+  "detailsEpisodeFallback": "Episode {number}",
+  "@detailsEpisodeFallback": {
+    "placeholders": {
+      "number": { "type": "int" }
+    }
+  },
+  "detailsEpisodeWithSeason": "S{season} E{episode} • {name}",
+  "@detailsEpisodeWithSeason": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "episode": { "type": "int" },
+      "name": { "type": "String" }
+    }
+  },
   "detailsMarkSeasonWatched": "Mark season as watched",
   "detailsSeasonLabel": "Season",
   "detailsSeasonNumber": "Season {num}",

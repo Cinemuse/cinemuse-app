@@ -1,12 +1,13 @@
 import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/features/media/domain/episode_item.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/episode_thumbnail_card.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_carousel_card.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/person_card.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/video_card.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/details_hero.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/episode_card.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/episode_carousel_row.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_list_card.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_carousel_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/responsive_action_buttons.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -119,21 +120,21 @@ void main() {
       expect(playClicked, isTrue);
     });
 
-    testWidgets('EpisodeCard is focusable and activates via D-Pad Enter',
+    testWidgets('EpisodeListCard is focusable and activates via D-Pad Enter',
         (tester) async {
       bool episodeTapped = false;
-      final episode = {
-        'episode_number': 1,
-        'name': 'Pilot',
-        'overview': 'The pilot episode.',
-      };
+      final episode = EpisodeItem(
+        episodeNumber: 1,
+        seasonNumber: 1,
+        name: 'Pilot',
+        overview: 'The pilot episode.',
+      );
 
       await tester.pumpWidget(
         buildTestableWidget(
-          EpisodeCard(
+          EpisodeListCard(
             episode: episode,
             seasonNumber: 1,
-            media: const {'id': '123'},
             mediaId: '123',
             isWatched: false,
             watchCount: 0,
@@ -147,7 +148,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final focusWidget = tester.widget<Focus>(
-        find.descendant(of: find.byType(EpisodeCard), matching: find.byType(Focus)).first,
+        find.descendant(of: find.byType(EpisodeListCard), matching: find.byType(Focus)).first,
       );
       focusWidget.focusNode?.requestFocus();
       await tester.pumpAndSettle();
@@ -213,19 +214,20 @@ void main() {
     });
 
     testWidgets(
-        'EpisodeThumbnailCard is focusable with DpadFocusable and activates via Enter',
+        'EpisodeCarouselCard is focusable with DpadFocusable and activates via Enter',
         (tester) async {
       bool episodeTapped = false;
-      final episode = {
-        'episode_number': 3,
-        'name': 'The Great Escape',
-        'air_date': '2024-05-12',
-        'runtime': 52,
-      };
+      final episode = EpisodeItem(
+        episodeNumber: 3,
+        seasonNumber: 2,
+        name: 'The Great Escape',
+        airDate: DateTime.parse('2024-05-12'),
+        runtime: 52,
+      );
 
       await tester.pumpWidget(
         buildTestableWidget(
-          EpisodeThumbnailCard(
+          EpisodeCarouselCard(
             episode: episode,
             seasonNumber: 2,
             mediaId: '456',
@@ -241,7 +243,7 @@ void main() {
 
       final focusWidget = tester.widget<Focus>(
         find.descendant(
-          of: find.byType(EpisodeThumbnailCard),
+          of: find.byType(EpisodeCarouselCard),
           matching: find.byType(Focus),
         ).first,
       );
@@ -258,8 +260,8 @@ void main() {
         'EpisodeCarouselRow renders horizontal episodes with season selector header',
         (tester) async {
       final episodes = [
-        {'episode_number': 1, 'name': 'Episode 1'},
-        {'episode_number': 2, 'name': 'Episode 2'},
+        EpisodeItem(episodeNumber: 1, seasonNumber: 1, name: 'Episode 1'),
+        EpisodeItem(episodeNumber: 2, seasonNumber: 1, name: 'Episode 2'),
       ];
 
       await tester.pumpWidget(
@@ -277,7 +279,7 @@ void main() {
       expect(find.text('Season 1 Selector'), findsOneWidget);
       expect(find.text('1. Episode 1'), findsOneWidget);
       expect(find.text('2. Episode 2'), findsOneWidget);
-      expect(find.byType(EpisodeThumbnailCard), findsNWidgets(2));
+      expect(find.byType(EpisodeCarouselCard), findsNWidgets(2));
     });
 
     testWidgets(
@@ -322,8 +324,8 @@ void main() {
         (tester) async {
       bool railFocused = false;
       final episodes = [
-        {'episode_number': 1, 'name': 'Episode 1'},
-        {'episode_number': 2, 'name': 'Episode 2'},
+        EpisodeItem(episodeNumber: 1, seasonNumber: 1, name: 'Episode 1'),
+        EpisodeItem(episodeNumber: 2, seasonNumber: 1, name: 'Episode 2'),
       ];
 
       await tester.pumpWidget(
@@ -343,7 +345,7 @@ void main() {
       // Focus the second card (index 1)
       final focusWidgets = tester.widgetList<Focus>(
         find.descendant(
-          of: find.byType(EpisodeThumbnailCard),
+          of: find.byType(EpisodeCarouselCard),
           matching: find.byType(Focus),
         ),
       ).toList();
@@ -370,8 +372,8 @@ void main() {
         (tester) async {
       bool railFocused = false;
       final episodes = [
-        {'episode_number': 1, 'name': 'Episode 1'},
-        {'episode_number': 2, 'name': 'Episode 2'},
+        EpisodeItem(episodeNumber: 1, seasonNumber: 1, name: 'Episode 1'),
+        EpisodeItem(episodeNumber: 2, seasonNumber: 1, name: 'Episode 2'),
       ];
 
       await tester.pumpWidget(
@@ -390,7 +392,7 @@ void main() {
 
       final focusWidgets = tester.widgetList<Focus>(
         find.descendant(
-          of: find.byType(EpisodeThumbnailCard),
+          of: find.byType(EpisodeCarouselCard),
           matching: find.byType(Focus),
         ),
       ).toList();

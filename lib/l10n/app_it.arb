@@ -119,6 +119,8 @@
   "detailsErrorLoading": "Errore caricamento dettagli: {error}",
   "detailsDecryptingMetadata": "Decrittazione metadati...",
   "detailsEpisodesRegistry": "Registro Episodi",
+  "detailsEpisodeFallback": "Episodio {number}",
+  "detailsEpisodeWithSeason": "S{season} E{episode} • {name}",
   "detailsMarkSeasonWatched": "Segna stagione come vista",
   "detailsSeasonLabel": "Stagione",
   "detailsSeasonNumber": "Stagione {num}",

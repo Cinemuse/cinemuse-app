@@ -1,9 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/episode_actions_helper.dart';
+import 'package:cinemuse_app/features/media/domain/episode_item.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_menu.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
@@ -12,10 +14,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
-class EpisodeCard extends ConsumerStatefulWidget {
-  final Map<String, dynamic> episode;
+class EpisodeListCard extends ConsumerStatefulWidget {
+  final EpisodeItem episode;
   final int seasonNumber;
-  final Map<String, dynamic> media;
 
   /// TMDB ID string used for cache key lookup.
   final String mediaId;
@@ -32,11 +33,10 @@ class EpisodeCard extends ConsumerStatefulWidget {
   final VoidCallback? onShowComments;
   final VoidCallback? onViewHistory;
 
-  const EpisodeCard({
+  const EpisodeListCard({
     super.key,
     required this.episode,
     required this.seasonNumber,
-    required this.media,
     required this.mediaId,
     required this.isWatched,
     required this.watchCount,
@@ -51,15 +51,15 @@ class EpisodeCard extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<EpisodeCard> createState() => _EpisodeCardState();
+  ConsumerState<EpisodeListCard> createState() => _EpisodeListCardState();
 }
 
-class _EpisodeCardState extends ConsumerState<EpisodeCard> {
+class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
   bool _isExpanded = false;
   bool _hasCachedStream = false;
   Offset? _tapPosition;
 
-  int get _epNumber => widget.episode['episode_number'] as int;
+  int get _epNumber => widget.episode.episodeNumber;
 
   @override
   void initState() {
@@ -90,22 +90,22 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
       episode: _epNumber,
     );
     setState(() => _hasCachedStream = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l10n.menuRemoveCachedProvider),
-        duration: const Duration(seconds: 2),
-        backgroundColor: AppTheme.secondary,
-      ),
+    AppSnackBar.show(
+      context,
+      message: l10n.menuRemoveCachedProvider,
+      duration: const Duration(seconds: 2),
+      backgroundColor: AppTheme.secondary,
     );
   }
 
   void _showContextMenu(BuildContext context, {BuildContext? anchorContext}) {
     final l10n = AppLocalizations.of(context)!;
-    final epName = widget.episode['name'] ?? 'Episode $_epNumber';
+    final fallbackName = l10n.detailsEpisodeFallback(_epNumber);
+    final epName = widget.episode.getTitle(fallbackName);
 
     _refreshCacheState();
 
-    final options = EpisodeActionsHelper.buildEpisodeMenuOptions(
+    final options = EpisodeMenu.buildEpisodeMenuOptions(
       context: context,
       l10n: l10n,
       mediaId: widget.mediaId,
@@ -128,7 +128,7 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
     AppMenu.show(
       context: context,
       options: options,
-      title: epName,
+      title: l10n.detailsEpisodeWithSeason(widget.seasonNumber, _epNumber, epName),
       anchorContext: anchorContext,
       position: _tapPosition,
     );
@@ -137,14 +137,12 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final name = widget.episode['name'] ?? 'Episode $_epNumber';
-    final overview = widget.episode['overview'] ?? '';
-    final stillPath = widget.episode['still_path'];
-    final runtime = widget.episode['runtime'];
-    final airDateStr = widget.episode['air_date']?.toString();
-    final DateTime? airDate = airDateStr != null
-        ? DateTime.tryParse(airDateStr)
-        : null;
+    final fallbackName = l10n.detailsEpisodeFallback(_epNumber);
+    final name = widget.episode.getTitle(fallbackName);
+    final overview = widget.episode.overview ?? '';
+    final stillPath = widget.episode.stillPath;
+    final runtime = widget.episode.runtime;
+    final airDate = widget.episode.airDate;
     final formattedAirDate = airDate != null
         ? DateFormat.yMMMd(
             Localizations.localeOf(context).languageCode,
@@ -605,8 +603,6 @@ class _EpisodeCardState extends ConsumerState<EpisodeCard> {
                 }
               }
             },
-            onLongPress:
-                () {}, // Empty to prevent default behavior, or just remove if we modify the widget
           ),
         ],
       ),

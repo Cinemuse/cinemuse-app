@@ -3,8 +3,8 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
 
-class EpisodeActionsHelper {
-  const EpisodeActionsHelper._();
+class EpisodeMenu {
+  const EpisodeMenu._();
 
   static Future<DateTime?> selectWatchDate(BuildContext context) {
     return showDatePicker(

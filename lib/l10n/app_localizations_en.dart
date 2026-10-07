@@ -388,6 +388,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailsEpisodesRegistry => 'Episodes Registry';
 
   @override
+  String detailsEpisodeFallback(int number) {
+    return 'Episode $number';
+  }
+
+  @override
+  String detailsEpisodeWithSeason(int season, int episode, String name) {
+    return 'S$season E$episode • $name';
+  }
+
+  @override
   String get detailsMarkSeasonWatched => 'Mark season as watched';
 
   @override

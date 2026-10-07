@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
+import 'package:cinemuse_app/features/media/domain/episode_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/episode_thumbnail_card.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_carousel_card.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
 import 'package:flutter/material.dart';
@@ -8,12 +9,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// A horizontal carousel row of episodes for a TV series season.
 class EpisodeCarouselRow extends ConsumerWidget {
-  final List<dynamic> episodes;
+  final List<EpisodeItem> episodes;
   final int seasonNumber;
   final String mediaId;
   final Map<String, int> watchedEpisodesCount;
   final Map<String, WatchHistory>? episodeProgress;
-  final Map<String, dynamic>? watchedData;
   final Widget? seasonSelector;
   final void Function(int season, int episode, String name, {bool restart})? onEpisodeTap;
   final Function(int season, int episode, DateTime? date)? onMarkWatched;
@@ -23,6 +23,7 @@ class EpisodeCarouselRow extends ConsumerWidget {
   final Function(int season, int episode, List<({int season, int episode})> missing)?
   onShowMarkPrecedingModal;
   final void Function(int season, int episode)? onShowComments;
+  final Function(int season, int episode)? onViewHistory;
 
   const EpisodeCarouselRow({
     super.key,
@@ -31,7 +32,6 @@ class EpisodeCarouselRow extends ConsumerWidget {
     required this.mediaId,
     this.watchedEpisodesCount = const {},
     this.episodeProgress,
-    this.watchedData,
     this.seasonSelector,
     this.onEpisodeTap,
     this.onMarkWatched,
@@ -39,6 +39,7 @@ class EpisodeCarouselRow extends ConsumerWidget {
     this.onFindMissingPreceding,
     this.onShowMarkPrecedingModal,
     this.onShowComments,
+    this.onViewHistory,
   });
 
   @override
@@ -61,17 +62,16 @@ class EpisodeCarouselRow extends ConsumerWidget {
       separatorBuilder: (context, index) => const SizedBox(width: 16),
       itemBuilder: (context, index) {
         final episode = episodes[index];
-        final epNum = episode['episode_number'] as int? ?? (index + 1);
+        final epNum = episode.episodeNumber;
         final watchCount = watchedEpisodesCount['$seasonNumber-$epNum'] ?? 0;
         final isWatched = watchCount > 0;
         final resumePercentage = seriesDomainService.calculateResumePercentage(
           seasonNumber: seasonNumber,
           episodeNumber: epNum,
           episodeProgress: episodeProgress,
-          watchedData: watchedData,
         );
 
-        return EpisodeThumbnailCard(
+        return EpisodeCarouselCard(
           episode: episode,
           seasonNumber: seasonNumber,
           mediaId: mediaId,
@@ -85,6 +85,9 @@ class EpisodeCarouselRow extends ConsumerWidget {
           onShowMarkPrecedingModal: onShowMarkPrecedingModal,
           onShowComments: onShowComments != null
               ? () => onShowComments!(seasonNumber, epNum)
+              : null,
+          onViewHistory: onViewHistory != null
+              ? () => onViewHistory!(seasonNumber, epNum)
               : null,
         );
       },

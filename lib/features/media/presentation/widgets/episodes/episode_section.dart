@@ -1,28 +1,30 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
-import 'package:cinemuse_app/features/media/domain/comments_repository.dart';
-import 'package:cinemuse_app/features/media/domain/watch_history.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/comments_bottom_sheet.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/episode_carousel_row.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/episode_list.dart';
 import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
+import 'package:cinemuse_app/features/media/domain/comments_repository.dart';
+import 'package:cinemuse_app/features/media/domain/episode_item.dart';
+import 'package:cinemuse_app/features/media/domain/watch_history.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/comments_bottom_sheet.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_carousel_row.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_list.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/tracking_modals.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/watch_logs_sheet.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
-class SeriesEpisodesSection extends ConsumerWidget {
+class EpisodeSection extends ConsumerWidget {
   final String mediaId;
   final Map<String, dynamic> details;
   final ScrollController? mainScrollController;
 
-  const SeriesEpisodesSection({
+  const EpisodeSection({
     super.key,
     required this.mediaId,
     required this.details,
@@ -42,33 +44,110 @@ class SeriesEpisodesSection extends ConsumerWidget {
     final episodeProgressMap = ref
         .watch(episodeProgressMapProvider(tmdbId))
         .value;
+    final controller = ref.read(mediaDetailsControllerProvider.notifier);
+    final rawSeasons = details['seasons'] as List? ?? [];
+    final seasonSummaries = rawSeasons
+        .whereType<Map>()
+        .map((s) => SeasonSummary.fromTmdbMap(Map<String, dynamic>.from(s)))
+        .where((s) => s.seasonNumber > 0)
+        .toList();
     final isMobile = MediaQuery.of(context).size.width < 600;
 
+    void onEpisodeTap(int s, int e, String name, {bool restart = false}) => _handleEpisodePlay(
+      context,
+      mediaId,
+      s,
+      e,
+      name,
+      episodeProgressMap?['$s-$e']?.progressSeconds ?? 0,
+      restart: restart,
+    );
+
+    void onMarkWatched(int season, int ep, DateTime? date) => controller.logEpisodeWatch(
+      tmdbId: tmdbId,
+      season: season,
+      episode: ep,
+      loggedAt: date,
+    );
+
+    void onTrackOptions(int season, int ep) => showTrackOptions(
+      context: context,
+      controller: controller,
+      tmdbId: tmdbId,
+      season: season,
+      episode: ep,
+      watchCount: watchedEpisodesMap['$season-$ep'] ?? 0,
+    );
+
+    List<({int season, int episode})> onFindMissingPreceding(int season, int ep) =>
+        findMissingPrecedingEpisodes(
+          ref: ref,
+          seasons: rawSeasons,
+          watchedEpisodesCount: watchedEpisodesMap,
+          currentSeason: season,
+          currentEpisode: ep,
+        );
+
+    void onShowMarkPrecedingModal(
+      int season,
+      int ep,
+      List<({int season, int episode})> missing,
+    ) =>
+        showMarkPrecedingModal(
+          context: context,
+          controller: controller,
+          tmdbId: tmdbId,
+          season: season,
+          episode: ep,
+          missing: missing,
+        );
+
+    void onViewHistory(int season, int ep) => WatchLogsSheet.show(
+      context,
+      tmdbId,
+      l10n.detailsEpisodeFallback(ep),
+      season: season,
+      episode: ep,
+    );
+
+    void onShowComments(int s, int e) => _showEpisodeComments(
+      context,
+      tmdbId,
+      s,
+      e,
+      l10n,
+    );
+
+    final seasonSelectorWidget = SeasonSelector(
+      seasons: seasonSummaries,
+      selectedSeason: selectedSeason,
+      mediaId: mediaId,
+    );
+
     if (!isMobile) {
-      return _buildBigPictureCarousel(
-        context: context,
-        ref: ref,
+      return _buildWidescreenCarousel(
         l10n: l10n,
         selectedSeason: selectedSeason,
         seasonDetailsAsync: seasonDetailsAsync,
         watchedEpisodesMap: watchedEpisodesMap,
         episodeProgressMap: episodeProgressMap,
-        tmdbId: tmdbId,
+        seasonSelector: seasonSelectorWidget,
+        onEpisodeTap: onEpisodeTap,
+        onMarkWatched: onMarkWatched,
+        onTrackOptions: onTrackOptions,
+        onFindMissingPreceding: onFindMissingPreceding,
+        onShowMarkPrecedingModal: onShowMarkPrecedingModal,
+        onViewHistory: onViewHistory,
+        onShowComments: onShowComments,
       );
     }
 
     return BentoBox(
       title: l10n.detailsEpisodesRegistry,
       icon: LucideIcons.tv,
-      action: SeasonSelector(
-        media: details,
-        selectedSeason: selectedSeason,
-        mediaId: mediaId,
-      ),
+      action: seasonSelectorWidget,
       child: ConstrainedBox(
-        constraints: isMobile
-            ? const BoxConstraints(minHeight: 300)
-            : const BoxConstraints(minHeight: 500, maxHeight: 500),
+        constraints: const BoxConstraints(minHeight: 300),
         child: seasonDetailsAsync.when(
           loading: () => const Center(
             child: CircularProgressIndicator(
@@ -83,37 +162,28 @@ class SeriesEpisodesSection extends ConsumerWidget {
             if (season == null) {
               return Center(child: Text(l10n.detailsSeasonNotFound));
             }
-            final episodes = season['episodes'] as List? ?? [];
-            final initialIndex = _calculateInitialEpisodeIndex(
-              episodes,
-              selectedSeason,
-              watchedEpisodesMap,
-            );
+            final rawEpisodes = season['episodes'] as List? ?? [];
+            final episodes = rawEpisodes
+                .whereType<Map>()
+                .map((e) => EpisodeItem.fromTmdbMap(
+                      Map<String, dynamic>.from(e),
+                      seasonNumber: selectedSeason,
+                    ))
+                .toList();
 
             return EpisodeList(
               episodes: episodes,
               seasonNumber: selectedSeason,
-              media: details,
+              mediaId: mediaId,
               watchedEpisodesCount: watchedEpisodesMap,
-              initialScrollIndex: initialIndex,
-              mainScrollController: mainScrollController,
-              onShowComments: (season, episode) => _showEpisodeComments(
-                context,
-                details,
-                mediaId,
-                season,
-                episode,
-                l10n,
-              ),
-              onEpisodeTap: (s, e, name, {bool restart = false}) => _handleEpisodePlay(
-                context,
-                mediaId,
-                s,
-                e,
-                name,
-                episodeProgressMap?['$s-$e']?.progressSeconds ?? 0,
-                restart: restart,
-              ),
+              episodeProgress: episodeProgressMap,
+              onEpisodeTap: onEpisodeTap,
+              onMarkWatched: onMarkWatched,
+              onTrackOptions: onTrackOptions,
+              onFindMissingPreceding: onFindMissingPreceding,
+              onShowMarkPrecedingModal: onShowMarkPrecedingModal,
+              onViewHistory: onViewHistory,
+              onShowComments: onShowComments,
             );
           },
         ),
@@ -121,28 +191,26 @@ class SeriesEpisodesSection extends ConsumerWidget {
     );
   }
 
-  Widget _buildBigPictureCarousel({
-    required BuildContext context,
-    required WidgetRef ref,
+  Widget _buildWidescreenCarousel({
     required AppLocalizations l10n,
     required int selectedSeason,
     required AsyncValue<Map<String, dynamic>?> seasonDetailsAsync,
     required Map<String, int> watchedEpisodesMap,
     required Map<String, WatchHistory>? episodeProgressMap,
-    required int tmdbId,
+    required Widget seasonSelector,
+    required void Function(int s, int e, String name, {bool restart}) onEpisodeTap,
+    required void Function(int season, int ep, DateTime? date) onMarkWatched,
+    required void Function(int season, int ep) onTrackOptions,
+    required List<({int season, int episode})> Function(int season, int ep) onFindMissingPreceding,
+    required void Function(int season, int ep, List<({int season, int episode})> missing) onShowMarkPrecedingModal,
+    required void Function(int season, int ep) onViewHistory,
+    required void Function(int s, int e) onShowComments,
   }) {
-    final controller = ref.read(mediaDetailsControllerProvider.notifier);
-    final seasons = details['seasons'] as List? ?? [];
-
     return seasonDetailsAsync.when(
       loading: () => BentoBox(
         title: l10n.detailsEpisodes,
         icon: Icons.tv,
-        action: SeasonSelector(
-          media: details,
-          selectedSeason: selectedSeason,
-          mediaId: mediaId,
-        ),
+        action: seasonSelector,
         child: const SizedBox(
           height: 230,
           child: Center(
@@ -156,11 +224,7 @@ class SeriesEpisodesSection extends ConsumerWidget {
       error: (err, _) => BentoBox(
         title: l10n.detailsEpisodes,
         icon: Icons.tv,
-        action: SeasonSelector(
-          media: details,
-          selectedSeason: selectedSeason,
-          mediaId: mediaId,
-        ),
+        action: seasonSelector,
         child: SizedBox(
           height: 230,
           child: Center(
@@ -172,89 +236,32 @@ class SeriesEpisodesSection extends ConsumerWidget {
         if (season == null) {
           return const SizedBox.shrink();
         }
-        final episodes = season['episodes'] as List? ?? [];
+        final rawEpisodes = season['episodes'] as List? ?? [];
+        final episodes = rawEpisodes
+            .whereType<Map>()
+            .map((e) => EpisodeItem.fromTmdbMap(
+                  Map<String, dynamic>.from(e),
+                  seasonNumber: selectedSeason,
+                ))
+            .toList();
+
         return EpisodeCarouselRow(
           episodes: episodes,
           seasonNumber: selectedSeason,
           mediaId: mediaId,
           watchedEpisodesCount: watchedEpisodesMap,
           episodeProgress: episodeProgressMap,
-          seasonSelector: SeasonSelector(
-            media: details,
-            selectedSeason: selectedSeason,
-            mediaId: mediaId,
-          ),
-          onEpisodeTap: (s, e, name, {bool restart = false}) => _handleEpisodePlay(
-            context,
-            mediaId,
-            s,
-            e,
-            name,
-            episodeProgressMap?['$s-$e']?.progressSeconds ?? 0,
-            restart: restart,
-          ),
-          onMarkWatched: (season, ep, date) {
-            controller.logEpisodeWatch(
-              tmdbId: tmdbId,
-              season: season,
-              episode: ep,
-              loggedAt: date,
-            );
-          },
-          onTrackOptions: (season, ep) {
-            final watchCount = watchedEpisodesMap['$season-$ep'] ?? 0;
-            showTrackOptions(
-              context: context,
-              controller: controller,
-              tmdbId: tmdbId,
-              season: season,
-              episode: ep,
-              watchCount: watchCount,
-            );
-          },
-          onFindMissingPreceding: (season, ep) => findMissingPrecedingEpisodes(
-            ref: ref,
-            seasons: seasons,
-            watchedEpisodesCount: watchedEpisodesMap,
-            currentSeason: season,
-            currentEpisode: ep,
-          ),
-          onShowMarkPrecedingModal: (season, ep, missing) => showMarkPrecedingModal(
-            context: context,
-            controller: controller,
-            tmdbId: tmdbId,
-            season: season,
-            episode: ep,
-            missing: missing,
-          ),
-          onShowComments: (s, e) => _showEpisodeComments(
-            context,
-            details,
-            mediaId,
-            s,
-            e,
-            l10n,
-          ),
+          seasonSelector: seasonSelector,
+          onEpisodeTap: onEpisodeTap,
+          onMarkWatched: onMarkWatched,
+          onTrackOptions: onTrackOptions,
+          onFindMissingPreceding: onFindMissingPreceding,
+          onShowMarkPrecedingModal: onShowMarkPrecedingModal,
+          onViewHistory: onViewHistory,
+          onShowComments: onShowComments,
         );
       },
     );
-  }
-
-  static int _calculateInitialEpisodeIndex(
-    List<dynamic> episodes,
-    int selectedSeason,
-    Map<String, int> watchedEpisodesMap,
-  ) {
-    if (watchedEpisodesMap.isEmpty) return 0;
-    for (int i = 0; i < episodes.length; i++) {
-      final ep = episodes[i];
-      final epNum = ep['episode_number'] as int? ?? 0;
-      final key = '$selectedSeason-$epNum';
-      if ((watchedEpisodesMap[key] ?? 0) == 0) {
-        return i;
-      }
-    }
-    return 0;
   }
 
   static void _handleEpisodePlay(
@@ -368,17 +375,11 @@ class SeriesEpisodesSection extends ConsumerWidget {
 
   static void _showEpisodeComments(
     BuildContext context,
-    Map<String, dynamic> details,
-    String mediaId,
+    int tmdbId,
     int season,
     int episode,
     AppLocalizations l10n,
   ) {
-    final int tmdbId = details['id'] is int
-        ? details['id']
-        : int.tryParse(details['id']?.toString() ?? '') ??
-            int.tryParse(mediaId) ??
-            0;
     if (tmdbId > 0) {
       showCommentsBottomSheet(
         context,
@@ -389,25 +390,22 @@ class SeriesEpisodesSection extends ConsumerWidget {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.detailsTvTimeCommentsNotAvailableSeries,
-          ),
-        ),
+      AppSnackBar.show(
+        context,
+        message: l10n.detailsTvTimeCommentsNotAvailableSeries,
       );
     }
   }
 }
 
 class SeasonSelector extends ConsumerWidget {
-  final Map<String, dynamic> media;
+  final List<SeasonSummary> seasons;
   final int selectedSeason;
   final String mediaId;
 
   const SeasonSelector({
     super.key,
-    required this.media,
+    required this.seasons,
     required this.selectedSeason,
     required this.mediaId,
   });
@@ -416,10 +414,6 @@ class SeasonSelector extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final seasons = (media['seasons'] as List? ?? [])
-        .where((s) => (s['season_number'] as int? ?? 0) > 0)
-        .toList();
-
     final popupKey = GlobalKey<PopupMenuButtonState<int>>();
 
     return ConstrainedBox(
@@ -477,9 +471,9 @@ class SeasonSelector extends ConsumerWidget {
         itemBuilder: (context) => seasons
             .map(
               (s) => PopupMenuItem<int>(
-                value: s['season_number'] as int,
+                value: s.seasonNumber,
                 child: Text(
-                  l10n.detailsSeasonNumber(s['season_number']),
+                  l10n.detailsSeasonNumber(s.seasonNumber),
                   style: const TextStyle(fontSize: 13),
                 ),
               ),

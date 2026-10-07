@@ -806,6 +806,18 @@ abstract class AppLocalizations {
   /// **'Episodes Registry'**
   String get detailsEpisodesRegistry;
 
+  /// No description provided for @detailsEpisodeFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Episode {number}'**
+  String detailsEpisodeFallback(int number);
+
+  /// No description provided for @detailsEpisodeWithSeason.
+  ///
+  /// In en, this message translates to:
+  /// **'S{season} E{episode} • {name}'**
+  String detailsEpisodeWithSeason(int season, int episode, String name);
+
   /// No description provided for @detailsMarkSeasonWatched.
   ///
   /// In en, this message translates to:
