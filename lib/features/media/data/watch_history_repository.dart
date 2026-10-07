@@ -304,23 +304,6 @@ class WatchHistoryRepository {
     invalidateWatchLogsCache();
   }
 
-  Future<void> markAsCompleted({
-    required String userId,
-    required MediaItem media,
-    required int durationWatched,
-    DateTime? loggedAt,
-  }) async {
-    final now = (loggedAt ?? DateTime.now()).toIso8601String();
-
-    await _client.from('watch_logs').insert({
-      'user_id': userId,
-      'tmdb_id': media.tmdbId,
-      'media_type': media.mediaType.name,
-      'logged_at': now,
-      'duration_watched_seconds': durationWatched,
-    }).withErrorHandling();
-  }
-
   Future<WatchHistory?> getHistoryItem(String userId, String tmdbId) async {
     if (int.tryParse(tmdbId) == null) {
       return null;
@@ -481,22 +464,6 @@ class WatchHistoryRepository {
     return watchHistory(
       userId,
     ).map((list) => list.where((e) => e.tmdbId == tmdbId).toList());
-  }
-
-  // Get all watch logs for a specific series
-  Future<List<Map<String, dynamic>>> getSeriesWatchLogs(
-    String userId,
-    int tmdbId,
-  ) async {
-    final response = await _client
-        .from('watch_logs')
-        .select('season, episode, logged_at')
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId)
-        .eq('media_type', 'tv')
-        .order('logged_at', ascending: false);
-
-    return List<Map<String, dynamic>>.from(response);
   }
 
   /// Fetches all watch log entries for a user, enriched with media metadata.

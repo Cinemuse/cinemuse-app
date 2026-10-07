@@ -577,3 +577,84 @@ class _ModalButton extends StatelessWidget {
     );
   }
 }
+
+class MarkPrecedingModal {
+  static Future<bool?> show(
+    BuildContext context, {
+    required int missingCount,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    return AppBottomSheet.show<bool>(
+      context: context,
+      constraints: const BoxConstraints(maxWidth: 400),
+      child: AppBottomSheet(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          0,
+          24,
+          MediaQuery.viewInsetsOf(context).bottom + 24,
+        ),
+        child: Builder(
+          builder: (modalContext) => Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.playlist_add_check,
+                    color: AppTheme.accent,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      l10n.detailsMarkPreviousTitle,
+                      style: const TextStyle(
+                        color: AppTheme.textWhite,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l10n.detailsMarkPreviousDesc(missingCount.toString()),
+                style: const TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(modalContext, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accent,
+                  foregroundColor: AppTheme.textWhite,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  l10n.detailsMarkAll,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => Navigator.pop(modalContext, false),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.textMuted,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: Text(l10n.detailsOnlyThisOne),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

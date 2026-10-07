@@ -24,7 +24,6 @@ import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_s
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/details_tab_nav.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/responsive_details_layout.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/shared/widgets/offline_banner.dart';
 import 'package:cinemuse_app/shared/widgets/offline_placeholder.dart';
@@ -270,7 +269,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                   typeForTmdb,
                   restart: true,
                 ),
-                onDeepSearch: (params) => {},
                 onListTap: () =>
                     _showAddToList(context, tmdbId, typeForTmdb, details),
                 onTrackTap: isTV
@@ -301,8 +299,17 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                 vertical: isBigPicture ? 16 : (isMobile ? 24 : 48),
               ),
               sliver: SliverToBoxAdapter(
-                child: isBigPicture
-                    ? _buildBigPictureLayout(
+                child: isMobile
+                    ? _buildMobileLayout(
+                        context: context,
+                        l10n: l10n,
+                        details: details,
+                        isTV: isTV,
+                        typeForTmdb: typeForTmdb,
+                        collection: collection,
+                        moreLikeThisList: moreLikeThisList,
+                      )
+                    : _buildWidescreenLayout(
                         context: context,
                         l10n: l10n,
                         details: details,
@@ -311,28 +318,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                         tmdbId: tmdbId,
                         moreLikeThisList: moreLikeThisList,
                         collection: collection,
-                      )
-                    : ResponsiveDetailsLayout(
-                        mainContent: _buildDesktopOrMobileMainContent(
-                          context: context,
-                          l10n: l10n,
-                          details: details,
-                          isTV: isTV,
-                          typeForTmdb: typeForTmdb,
-                          isMobile: isMobile,
-                          collection: collection,
-                          moreLikeThisList: moreLikeThisList,
-                        ),
-                        sidebar: isMobile
-                            ? const SizedBox.shrink()
-                            : _buildDesktopSidebar(
-                                context: context,
-                                l10n: l10n,
-                                details: details,
-                                isTV: isTV,
-                                typeForTmdb: typeForTmdb,
-                                collection: collection,
-                              ),
                       ),
               ),
             ),
@@ -379,7 +364,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     );
   }
 
-  Widget _buildBigPictureLayout({
+  Widget _buildWidescreenLayout({
     required BuildContext context,
     required AppLocalizations l10n,
     required Map<String, dynamic> details,
@@ -440,13 +425,12 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     );
   }
 
-  Widget _buildDesktopOrMobileMainContent({
+  Widget _buildMobileLayout({
     required BuildContext context,
     required AppLocalizations l10n,
     required Map<String, dynamic> details,
     required bool isTV,
     required String typeForTmdb,
-    required bool isMobile,
     required dynamic collection,
     required List<MediaItem> moreLikeThisList,
   }) {
@@ -461,48 +445,23 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             style: DesktopTypography.bodyPrimary,
           ),
         ),
-        SizedBox(height: isMobile ? 24 : 32),
-        if (isMobile) ...[
-          DetailsTabNav(
-            activeTab: _activeTab!,
-            onTabChanged: (tab) => setState(() => _activeTab = tab),
-            isTV: isTV,
-            numberOfSeasons: details['number_of_seasons'] ?? 0,
-          ),
-          const SizedBox(height: 24),
-          _buildMobileTabContent(
-            context: context,
-            l10n: l10n,
-            details: details,
-            isTV: isTV,
-            typeForTmdb: typeForTmdb,
-            collection: collection,
-            moreLikeThisList: moreLikeThisList,
-          ),
-        ] else ...[
-          if (isTV && (details['number_of_seasons'] ?? 0) > 0) ...[
-            SeriesEpisodesSection(
-              mediaId: widget.mediaId,
-              details: details,
-              mainScrollController: _mainScrollController,
-            ),
-            const SizedBox(height: 32),
-          ],
-          CastRow(credits: details['credits'], details: details),
-          if (VideosRow.hasTrailers(details['videos'])) ...[
-            const SizedBox(height: 32),
-            VideosRow(videos: details['videos']),
-          ],
-          if (moreLikeThisList.isNotEmpty) ...[
-            const SizedBox(height: 32),
-            MediaListRow(
-              title: l10n.detailsMoreLikeThis,
-              icon: LucideIcons.sparkles,
-              items: moreLikeThisList,
-              theme: CarouselTheme.bentoBox,
-            ),
-          ],
-        ],
+        const SizedBox(height: 24),
+        DetailsTabNav(
+          activeTab: _activeTab!,
+          onTabChanged: (tab) => setState(() => _activeTab = tab),
+          isTV: isTV,
+          numberOfSeasons: details['number_of_seasons'] ?? 0,
+        ),
+        const SizedBox(height: 24),
+        _buildMobileTabContent(
+          context: context,
+          l10n: l10n,
+          details: details,
+          isTV: isTV,
+          typeForTmdb: typeForTmdb,
+          collection: collection,
+          moreLikeThisList: moreLikeThisList,
+        ),
       ],
     );
   }
@@ -542,7 +501,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       case DetailsTab.links:
         return ExternalLinks(
           externalIds: details['external_ids'],
-          title: details['title'] ?? details['name'] ?? '',
           homepage: details['homepage'],
           type: typeForTmdb,
           tmdbId: details['id'],
@@ -571,38 +529,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       case null:
         return const SizedBox.shrink();
     }
-  }
-
-  Widget _buildDesktopSidebar({
-    required BuildContext context,
-    required AppLocalizations l10n,
-    required Map<String, dynamic> details,
-    required bool isTV,
-    required String typeForTmdb,
-    required dynamic collection,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GalleryBox(details: details),
-        const SizedBox(height: 24),
-        ExternalLinks(
-          externalIds: details['external_ids'],
-          title: details['title'] ?? details['name'] ?? '',
-          homepage: details['homepage'],
-          type: typeForTmdb,
-          tmdbId: details['id'],
-        ),
-        if (collection != null) ...[
-          const SizedBox(height: 24),
-          BentoBox(
-            title: l10n.detailsCollection,
-            icon: LucideIcons.film,
-            child: CollectionTile(collection: collection),
-          ),
-        ],
-      ],
-    );
   }
 
   void _handleShowComments(

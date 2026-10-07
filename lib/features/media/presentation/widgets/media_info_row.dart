@@ -10,18 +10,12 @@ import 'package:cinemuse_app/features/media/presentation/widgets/gallery_box.dar
 class MediaInfoRow extends StatelessWidget {
   final Map<String, dynamic> details;
   final String typeForTmdb;
-  final VoidCallback? onShowComments;
-  final VoidCallback? onShowReviewsModal;
-  final VoidCallback? onShowUserReviewModal;
   final double spacing;
 
   const MediaInfoRow({
     super.key,
     required this.details,
     required this.typeForTmdb,
-    this.onShowComments,
-    this.onShowReviewsModal,
-    this.onShowUserReviewModal,
     this.spacing = 24.0,
   });
 
@@ -48,7 +42,6 @@ class MediaInfoRow extends StatelessWidget {
       columns.add(
         ExternalLinks(
           externalIds: details['external_ids'],
-          title: details['title'] ?? details['name'] ?? '',
           homepage: details['homepage'],
           type: typeForTmdb,
           tmdbId: details['id'] is int

@@ -22,7 +22,7 @@ class EpisodeCard extends ConsumerStatefulWidget {
   final bool isWatched;
   final int watchCount;
   final double? resumePercentage;
-  final Function(int, int, String)? onEpisodeTap;
+  final void Function(int season, int episode, String name, {bool restart})? onEpisodeTap;
   final Function(int, int, DateTime?)? onMarkWatched;
   final Function(int, int) onTrackOptions;
   final List<({int season, int episode})> Function(int, int)

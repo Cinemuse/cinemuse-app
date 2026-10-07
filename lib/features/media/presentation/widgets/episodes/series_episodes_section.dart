@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/domain/comments_repository.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/comments_bottom_sheet.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episode_carousel_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episode_list.dart';
+import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
+import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/tracking_modals.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/watch_logs_sheet.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
@@ -40,16 +43,17 @@ class SeriesEpisodesSection extends ConsumerWidget {
         .watch(episodeProgressMapProvider(tmdbId))
         .value;
     final isMobile = MediaQuery.of(context).size.width < 600;
-    final isBigPicture = ref.watch(isBigPictureProvider);
 
-    if (isBigPicture) {
+    if (!isMobile) {
       return _buildBigPictureCarousel(
         context: context,
+        ref: ref,
         l10n: l10n,
         selectedSeason: selectedSeason,
         seasonDetailsAsync: seasonDetailsAsync,
         watchedEpisodesMap: watchedEpisodesMap,
         episodeProgressMap: episodeProgressMap,
+        tmdbId: tmdbId,
       );
     }
 
@@ -101,13 +105,14 @@ class SeriesEpisodesSection extends ConsumerWidget {
                 episode,
                 l10n,
               ),
-              onEpisodeTap: (s, e, name) => _handleEpisodePlay(
+              onEpisodeTap: (s, e, name, {bool restart = false}) => _handleEpisodePlay(
                 context,
                 mediaId,
                 s,
                 e,
                 name,
                 episodeProgressMap?['$s-$e']?.progressSeconds ?? 0,
+                restart: restart,
               ),
             );
           },
@@ -118,12 +123,17 @@ class SeriesEpisodesSection extends ConsumerWidget {
 
   Widget _buildBigPictureCarousel({
     required BuildContext context,
+    required WidgetRef ref,
     required AppLocalizations l10n,
     required int selectedSeason,
     required AsyncValue<Map<String, dynamic>?> seasonDetailsAsync,
     required Map<String, int> watchedEpisodesMap,
     required Map<String, WatchHistory>? episodeProgressMap,
+    required int tmdbId,
   }) {
+    final controller = ref.read(mediaDetailsControllerProvider.notifier);
+    final seasons = details['seasons'] as List? ?? [];
+
     return seasonDetailsAsync.when(
       loading: () => BentoBox(
         title: l10n.detailsEpisodes,
@@ -174,13 +184,48 @@ class SeriesEpisodesSection extends ConsumerWidget {
             selectedSeason: selectedSeason,
             mediaId: mediaId,
           ),
-          onEpisodeTap: (s, e, name) => _handleEpisodePlay(
+          onEpisodeTap: (s, e, name, {bool restart = false}) => _handleEpisodePlay(
             context,
             mediaId,
             s,
             e,
             name,
             episodeProgressMap?['$s-$e']?.progressSeconds ?? 0,
+            restart: restart,
+          ),
+          onMarkWatched: (season, ep, date) {
+            controller.logEpisodeWatch(
+              tmdbId: tmdbId,
+              season: season,
+              episode: ep,
+              loggedAt: date,
+            );
+          },
+          onTrackOptions: (season, ep) {
+            final watchCount = watchedEpisodesMap['$season-$ep'] ?? 0;
+            showTrackOptions(
+              context: context,
+              controller: controller,
+              tmdbId: tmdbId,
+              season: season,
+              episode: ep,
+              watchCount: watchCount,
+            );
+          },
+          onFindMissingPreceding: (season, ep) => findMissingPrecedingEpisodes(
+            ref: ref,
+            seasons: seasons,
+            watchedEpisodesCount: watchedEpisodesMap,
+            currentSeason: season,
+            currentEpisode: ep,
+          ),
+          onShowMarkPrecedingModal: (season, ep, missing) => showMarkPrecedingModal(
+            context: context,
+            controller: controller,
+            tmdbId: tmdbId,
+            season: season,
+            episode: ep,
+            missing: missing,
           ),
           onShowComments: (s, e) => _showEpisodeComments(
             context,
@@ -218,8 +263,9 @@ class SeriesEpisodesSection extends ConsumerWidget {
     int season,
     int episode,
     String name,
-    int progress,
-  ) {
+    int progress, {
+    bool restart = false,
+  }) {
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (_) => VideoPlayerScreen(
@@ -228,8 +274,94 @@ class SeriesEpisodesSection extends ConsumerWidget {
           season: season,
           episode: episode,
           episodeTitle: name,
-          startPosition: progress,
+          startPosition: restart ? 0 : progress,
         ),
+      ),
+    );
+  }
+
+  static List<({int season, int episode})> findMissingPrecedingEpisodes({
+    required WidgetRef ref,
+    required List<dynamic> seasons,
+    required Map<String, int> watchedEpisodesCount,
+    required int currentSeason,
+    required int currentEpisode,
+  }) {
+    return ref.read(seriesDomainServiceProvider).findMissingPrecedingEpisodes(
+      currentSeason: currentSeason,
+      currentEpisode: currentEpisode,
+      seasons: seasons,
+      watchedEpisodesCount: watchedEpisodesCount,
+    );
+  }
+
+  static void showMarkPrecedingModal({
+    required BuildContext context,
+    required MediaDetailsController controller,
+    required int tmdbId,
+    required int season,
+    required int episode,
+    required List<({int season, int episode})> missing,
+  }) {
+    MarkPrecedingModal.show(
+      context,
+      missingCount: missing.length,
+    ).then((markAll) {
+      if (markAll == null) return;
+      if (markAll) {
+        final allToMark = [
+          ...missing,
+          (season: season, episode: episode),
+        ];
+        controller.logMultipleEpisodes(
+          tmdbId: tmdbId,
+          episodes: allToMark,
+        );
+      } else {
+        controller.logEpisodeWatch(
+          tmdbId: tmdbId,
+          season: season,
+          episode: episode,
+        );
+      }
+    });
+  }
+
+  static void showTrackOptions({
+    required BuildContext context,
+    required MediaDetailsController controller,
+    required int tmdbId,
+    required int season,
+    required int episode,
+    required int watchCount,
+  }) {
+    TrackOptionsModal.show(
+      context: context,
+      season: season,
+      episode: episode,
+      watchCount: watchCount,
+      onRewatch: (date) => controller.logEpisodeWatch(
+        tmdbId: tmdbId,
+        season: season,
+        episode: episode,
+        loggedAt: date,
+      ),
+      onRemoveOne: () => controller.deleteLatestEpisodeLog(
+        tmdbId: tmdbId,
+        season: season,
+        episode: episode,
+      ),
+      onRemoveAll: () => controller.deleteAllEpisodeLogs(
+        tmdbId: tmdbId,
+        season: season,
+        episode: episode,
+      ),
+      onViewHistory: () => WatchLogsSheet.show(
+        context,
+        tmdbId,
+        'Episode $episode',
+        season: season,
+        episode: episode,
       ),
     );
   }

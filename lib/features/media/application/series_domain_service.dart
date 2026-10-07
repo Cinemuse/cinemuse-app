@@ -7,15 +7,7 @@ class NextEpisodeInfo {
   final String? title;
 
   NextEpisodeInfo({required this.season, required this.episode, this.title});
-
-  Map<String, dynamic> toJson() => {
-    'season': season,
-    'episode': episode,
-    'title': title,
-  };
 }
-
-enum SeriesProgressState { watchingNext, caughtUp, finished }
 
 final seriesDomainServiceProvider = Provider((ref) => SeriesDomainService());
 

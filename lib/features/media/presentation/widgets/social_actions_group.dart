@@ -74,7 +74,6 @@ class _SocialIcon extends StatefulWidget {
   final IconData icon;
   final Color? color;
   final VoidCallback onTap;
-  final bool showArrow = false;
 
   const _SocialIcon({
     required this.icon,
@@ -129,9 +128,7 @@ class _SocialIconState extends State<_SocialIcon>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     // Use 600px breakpoint to match mobile layout switching
-    final horizontalPadding = screenWidth < 600
-        ? 12.0
-        : (widget.showArrow ? 12.0 : 18.0);
+    final horizontalPadding = screenWidth < 600 ? 12.0 : 18.0;
 
     IconData effectiveIcon = widget.icon;
     if (_isOptimisticActive != null) {
@@ -217,14 +214,6 @@ class _SocialIconState extends State<_SocialIcon>
                   ),
                 ),
               ),
-              if (widget.showArrow) ...[
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.keyboard_arrow_down,
-                  color: effectiveColor.withValues(alpha: 0.5),
-                  size: 14,
-                ),
-              ],
             ],
           ),
         ),

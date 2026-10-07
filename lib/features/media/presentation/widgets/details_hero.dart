@@ -5,7 +5,6 @@ import 'package:cinemuse_app/features/media/presentation/widgets/series_progress
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:cinemuse_app/core/application/display_mode_provider.dart';
@@ -18,7 +17,6 @@ class DetailsHero extends ConsumerWidget {
   final Map<String, dynamic>? resumeData;
   final VoidCallback onPlayClick;
   final VoidCallback? onRestartClick;
-  final Function(Map<String, dynamic>) onDeepSearch;
   final double contentPadding;
   final bool isFavorite;
   final bool isInWatchlist;
@@ -40,7 +38,6 @@ class DetailsHero extends ConsumerWidget {
     required this.onPlayClick,
     this.onRestartClick,
     this.onClearProgress,
-    required this.onDeepSearch,
     this.contentPadding = 24.0,
     this.isFavorite = false,
     this.isInWatchlist = false,
@@ -279,36 +276,23 @@ class DetailsHero extends ConsumerWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: genres.map<Widget>((g) {
-                      return MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          onTap: () => onDeepSearch({
-                            'type': 'genre',
-                            'id': g['id'],
-                            'name': g['name'],
-                          }),
-                          child: HoverScale(
-                            scale: 1.1,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                g['name'],
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurface.withValues(
-                                    alpha: 0.6,
-                                  ),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          g['name'],
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(
+                              alpha: 0.6,
                             ),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       );

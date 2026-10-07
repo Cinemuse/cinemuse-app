@@ -5,11 +5,8 @@ import 'package:cinemuse_app/features/media/presentation/widgets/tracking_modals
 import 'package:cinemuse_app/features/media/presentation/widgets/watch_logs_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
-import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/gestures.dart';
-import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 
 class EpisodeList extends ConsumerStatefulWidget {
   final List<dynamic> episodes;
@@ -18,7 +15,7 @@ class EpisodeList extends ConsumerStatefulWidget {
   final Map<String, dynamic>? watchedData;
   final Map<String, int>? watchedEpisodesCount;
   final Map<String, WatchHistory>? episodeProgress;
-  final Function(int season, int episode, String name)? onEpisodeTap;
+  final void Function(int season, int episode, String name, {bool restart})? onEpisodeTap;
   final int? initialScrollIndex;
   final void Function(int season, int episode)? onShowComments;
   final ScrollController? mainScrollController;
@@ -203,67 +200,12 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
     int episode,
     List<({int season, int episode})> missing,
   ) {
-    final l10n = AppLocalizations.of(context)!;
-    AppBottomSheet.show<bool>(
-      context: context,
-      constraints: const BoxConstraints(maxWidth: 400),
-      child: AppBottomSheet(
-        padding: EdgeInsets.fromLTRB(
-            24, 0, 24, MediaQuery.viewInsetsOf(context).bottom + 24),
-        child: Builder(
-          builder: (modalContext) => Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.playlist_add_check,
-                      color: AppTheme.accent, size: 24),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      l10n.detailsMarkPreviousTitle,
-                      style: const TextStyle(color: AppTheme.textWhite, fontSize: 18),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                l10n.detailsMarkPreviousDesc(
-                  missing.length.toString(),
-                ),
-                style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(modalContext, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accent,
-                  foregroundColor: AppTheme.textWhite,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(l10n.detailsMarkAll,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () => Navigator.pop(modalContext, false),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.textMuted,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: Text(l10n.detailsOnlyThisOne),
-              ),
-            ],
-          ),
-        ),
-      ),
+    MarkPrecedingModal.show(
+      context,
+      missingCount: missing.length,
     ).then((markAll) {
-      if (markAll == true) {
+      if (markAll == null) return;
+      if (markAll) {
         final allToMark = [
           ...missing,
           (season: season, episode: episode),
@@ -273,7 +215,6 @@ class _EpisodeListState extends ConsumerState<EpisodeList> {
           episodes: allToMark,
         );
       } else {
-        // markAll is false or null (dismissed)
         controller.logEpisodeWatch(
           tmdbId: tmdbId,
           season: season,

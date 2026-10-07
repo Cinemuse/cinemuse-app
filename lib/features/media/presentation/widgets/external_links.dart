@@ -12,7 +12,6 @@ const Color _kTmdbBrandColor = Color(0xFF01B4E4);
 class ExternalLinks extends StatelessWidget {
   final Map<String, dynamic>? externalIds;
   final String? homepage;
-  final String title;
   final String type;
   final int tmdbId;
 
@@ -20,7 +19,6 @@ class ExternalLinks extends StatelessWidget {
     super.key,
     this.externalIds,
     this.homepage,
-    required this.title,
     required this.type,
     required this.tmdbId,
   });

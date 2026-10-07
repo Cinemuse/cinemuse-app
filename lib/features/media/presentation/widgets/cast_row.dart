@@ -34,13 +34,11 @@ class _PersonItem extends _PeopleRowItem {
 class CastRow extends StatelessWidget {
   final Map<String, dynamic>? credits;
   final Map<String, dynamic>? details;
-  final String className;
 
   const CastRow({
     super.key,
     this.credits,
     this.details,
-    this.className = '',
   });
 
   @override

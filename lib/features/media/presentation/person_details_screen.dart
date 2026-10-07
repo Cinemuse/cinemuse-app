@@ -253,7 +253,6 @@ class _PersonDetailsContent extends StatelessWidget {
 
                           ExternalLinks(
                             externalIds: details['external_ids'],
-                            title: name,
                             homepage: details['homepage'],
                             type: 'person',
                             tmdbId: details['id'],

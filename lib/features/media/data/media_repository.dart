@@ -26,11 +26,6 @@ class MediaRepository {
 
   MediaRepository(this._db, this._tmdbService, this._supabase);
 
-  /// Default TTL for cached items: 7 days
-  static const Duration defaultTTL = Duration(days: 7);
-
-  /// Highly accessed items (trending) TTL: 24 hours
-  static const Duration trendingTTL = Duration(hours: 24);
 
   Future<MediaItem?> getMediaItem(int tmdbId, MediaKind type) async {
     final key = '${type.name}-$tmdbId';
@@ -167,10 +162,6 @@ class MediaRepository {
     }
   }
 
-  /// Alias for compatibility
-  Future<void> ensureMediaCached(MediaItem item) async {
-    await saveMediaItem(item);
-  }
 
   /// Map Drift data to Domain model
   MediaItem mapToMediaItem(CachedMediaItem data) {

@@ -15,7 +15,7 @@ class EpisodeCarouselRow extends ConsumerWidget {
   final Map<String, WatchHistory>? episodeProgress;
   final Map<String, dynamic>? watchedData;
   final Widget? seasonSelector;
-  final Function(int season, int episode, String name)? onEpisodeTap;
+  final void Function(int season, int episode, String name, {bool restart})? onEpisodeTap;
   final Function(int season, int episode, DateTime? date)? onMarkWatched;
   final Function(int season, int episode)? onTrackOptions;
   final List<({int season, int episode})> Function(int season, int episode)?

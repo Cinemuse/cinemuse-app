@@ -20,7 +20,7 @@ class EpisodeThumbnailCard extends ConsumerStatefulWidget {
   final int watchCount;
   final double? resumePercentage;
   final VoidCallback? onTap;
-  final Function(int season, int episode, String name)? onEpisodeTap;
+  final void Function(int season, int episode, String name, {bool restart})? onEpisodeTap;
   final Function(int season, int episode, DateTime? date)? onMarkWatched;
   final Function(int season, int episode)? onTrackOptions;
   final List<({int season, int episode})> Function(int season, int episode)?

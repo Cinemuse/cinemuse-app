@@ -39,7 +39,7 @@ class EpisodeActionsHelper {
     required double? resumePercentage,
     required bool hasCachedStream,
     required VoidCallback onClearCache,
-    Function(int season, int episode, String name)? onEpisodeTap,
+    void Function(int season, int episode, String name, {bool restart})? onEpisodeTap,
     Function(int season, int episode, DateTime? date)? onMarkWatched,
     Function(int season, int episode)? onTrackOptions,
     VoidCallback? onViewHistory,
@@ -53,13 +53,13 @@ class EpisodeActionsHelper {
       AppMenuOption(
         icon: Icons.play_arrow_outlined,
         label: hasProgress ? l10n.menuResume : l10n.detailsPlay,
-        onTap: () => onEpisodeTap?.call(seasonNumber, episodeNumber, episodeName),
+        onTap: () => onEpisodeTap?.call(seasonNumber, episodeNumber, episodeName, restart: false),
       ),
       if (hasProgress)
         AppMenuOption(
           icon: Icons.replay,
           label: l10n.menuRestart,
-          onTap: () => onEpisodeTap?.call(seasonNumber, episodeNumber, episodeName),
+          onTap: () => onEpisodeTap?.call(seasonNumber, episodeNumber, episodeName, restart: true),
         ),
       if (hasCachedStream)
         AppMenuOption(

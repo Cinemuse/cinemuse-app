@@ -6,9 +6,8 @@ import 'package:cinemuse_app/features/media/presentation/widgets/video_card.dart
 
 class VideosRow extends StatelessWidget {
   final Map<String, dynamic>? videos;
-  final String className;
 
-  const VideosRow({super.key, this.videos, this.className = ''});
+  const VideosRow({super.key, this.videos});
 
   static bool hasTrailers(Map<String, dynamic>? videos) {
     final results = videos?['results'] as List?;
