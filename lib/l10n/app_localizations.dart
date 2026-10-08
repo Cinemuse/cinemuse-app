@@ -830,6 +830,30 @@ abstract class AppLocalizations {
   /// **'Season'**
   String get detailsSeasonLabel;
 
+  /// No description provided for @detailsSeasonsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 Season} other{{count} Seasons}}'**
+  String detailsSeasonsCount(int count);
+
+  /// No description provided for @detailsEpisodesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 Episode} other{{count} Episodes}}'**
+  String detailsEpisodesCount(int count);
+
+  /// No description provided for @detailsEpisodeRuntime.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m/ep'**
+  String detailsEpisodeRuntime(int minutes);
+
+  /// No description provided for @detailsPlaySeasonEpisode.
+  ///
+  /// In en, this message translates to:
+  /// **'Play S{season} E{episode}'**
+  String detailsPlaySeasonEpisode(int season, int episode);
+
   /// No description provided for @detailsSeasonNumber.
   ///
   /// In en, this message translates to:

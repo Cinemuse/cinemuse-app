@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/details_hero.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/hero/details_hero.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_section.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/cast_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/videos_row.dart';
@@ -222,7 +222,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                 details: details,
                 isFavorite: isFavorite,
                 isInWatchlist: isInWatchlist,
-                isDropped: isDropped,
                 onDropClick: (watchHistory != null && !isDropped && !watchHistory.isCompleted)
                     ? () async {
                         final user = ref.read(authProvider).value;

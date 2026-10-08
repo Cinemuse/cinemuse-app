@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/responsive_action_buttons.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/series_progress_bar.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/hero/responsive_action_buttons.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/hero/series_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -20,7 +20,6 @@ class DetailsHero extends ConsumerWidget {
   final double contentPadding;
   final bool isFavorite;
   final bool isInWatchlist;
-  final bool isDropped;
   final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})?
   seriesWatchStatus;
   final VoidCallback onListTap;
@@ -41,7 +40,6 @@ class DetailsHero extends ConsumerWidget {
     this.contentPadding = 24.0,
     this.isFavorite = false,
     this.isInWatchlist = false,
-    this.isDropped = false,
     this.seriesWatchStatus,
     required this.onListTap,
     this.onTrackTap,
@@ -53,7 +51,7 @@ class DetailsHero extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final isBigPicture = ref.watch(isBigPictureProvider);
+    final isWidescreen = ref.watch(isBigPictureProvider);
     final type =
         media['type'] ?? (details['title'] != null ? 'movie' : 'series');
     final titleIt = MediaItem.extractTitleFromTmdb(details, 'it');
@@ -102,7 +100,7 @@ class DetailsHero extends ConsumerWidget {
       updatedAt: DateTime.now(),
     );
 
-    final heroHeight = isBigPicture
+    final heroHeight = isWidescreen
         ? MediaQuery.of(context).size.height * 0.8
         : MediaQuery.of(context).size.height * 0.7;
 
@@ -159,7 +157,7 @@ class DetailsHero extends ConsumerWidget {
             ),
           ),
 
-          if (!isBigPicture)
+          if (!isWidescreen)
             Positioned(
               top: MediaQuery.of(context).padding.top > 0
                   ? MediaQuery.of(context).padding.top + 16
@@ -177,7 +175,7 @@ class DetailsHero extends ConsumerWidget {
               contentPadding,
               0,
               contentPadding,
-              isBigPicture ? 16 : 48,
+              isWidescreen ? 16 : 48,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,7 +204,7 @@ class DetailsHero extends ConsumerWidget {
                       Text(
                         type == 'movie'
                             ? '${(runtime / 60).floor()}h ${runtime % 60}m'
-                            : '${runtime}m/ep',
+                            : l10n.detailsEpisodeRuntime(runtime as int),
                         style: DesktopTypography.captionMeta,
                       ),
                     ],
@@ -238,7 +236,9 @@ class DetailsHero extends ConsumerWidget {
                     spacing: 12,
                     children: [
                       Text(
-                        '${details['number_of_seasons'] ?? 0} ${l10n.detailsSeasonLabel}${details['number_of_seasons'] != 1 ? 's' : ''}',
+                        l10n.detailsSeasonsCount(
+                          details['number_of_seasons'] as int? ?? 0,
+                        ),
                         style: TextStyle(
                           color: AppTheme.textWhite.withValues(alpha: 0.6),
                           fontSize: 13,
@@ -246,7 +246,9 @@ class DetailsHero extends ConsumerWidget {
                       ),
                       const _DotSeparator(),
                       Text(
-                        '${details['number_of_episodes'] ?? 0} ${l10n.detailsEpisodes}',
+                        l10n.detailsEpisodesCount(
+                          details['number_of_episodes'] as int? ?? 0,
+                        ),
                         style: TextStyle(
                           color: AppTheme.textWhite.withValues(alpha: 0.6),
                           fontSize: 13,
@@ -373,12 +375,14 @@ class DetailsHero extends ConsumerWidget {
       if (resumeData['type'] == 'tv') {
         // AppLocalizations generates arguments alphabetically: (episode, season)
         final progress = resumeData['progress'] as int? ?? 0;
+        final season = resumeData['season'] as int? ?? 1;
+        final episode = resumeData['episode'] as int? ?? 1;
         final label = progress > 0
             ? l10n.detailsResumeEpisode(
-                resumeData['episode'],
-                resumeData['season'],
+                episode,
+                season,
               )
-            : "${l10n.detailsPlay} S${resumeData['season']} E${resumeData['episode']}";
+            : l10n.detailsPlaySeasonEpisode(episode, season);
         return label;
       }
       return l10n.detailsResume;
@@ -386,7 +390,7 @@ class DetailsHero extends ConsumerWidget {
 
     // If no resume data, check if it's a series to show "Play S1 E1" (or localized Play)
     if (type == 'series' || type == 'tv') {
-      return "${l10n.detailsPlay} S1 E1";
+      return l10n.detailsPlaySeasonEpisode(1, 1);
     }
 
     return l10n.detailsPlayNow;

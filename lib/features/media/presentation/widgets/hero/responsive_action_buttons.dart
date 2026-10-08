@@ -2,9 +2,10 @@ import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
-import 'package:cinemuse_app/features/media/presentation/widgets/social_actions_group.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/hero/social_actions_group.dart';
 import 'package:cinemuse_app/features/navigation/nav_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -96,13 +97,7 @@ class _ResponsiveActionButtonsState
       episode: widget.episode,
     );
     setState(() => _hasCachedStream = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l10n.menuRemoveCachedProvider),
-        duration: const Duration(seconds: 2),
-        backgroundColor: AppTheme.secondary,
-      ),
-    );
+    AppSnackBar.show(context, message: l10n.menuRemoveCachedProvider);
   }
 
   /// Whether the dropdown has any options to show
@@ -206,8 +201,8 @@ class _ResponsiveActionButtonsState
   }
 
   void _handleExitLeft() {
-    final isBigPicture = ref.read(isBigPictureProvider);
-    if (isBigPicture) {
+    final isWidescreen = ref.read(isBigPictureProvider);
+    if (isWidescreen) {
       final focusRail = ref.read(tvRailFocusActionProvider);
       focusRail?.call();
     }

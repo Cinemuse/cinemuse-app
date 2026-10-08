@@ -140,6 +140,31 @@
   },
   "detailsMarkSeasonWatched": "Mark season as watched",
   "detailsSeasonLabel": "Season",
+  "detailsSeasonsCount": "{count, plural, =1{1 Season} other{{count} Seasons}}",
+  "@detailsSeasonsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsEpisodesCount": "{count, plural, =1{1 Episode} other{{count} Episodes}}",
+  "@detailsEpisodesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsEpisodeRuntime": "{minutes}m/ep",
+  "@detailsEpisodeRuntime": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "detailsPlaySeasonEpisode": "Play S{season} E{episode}",
+  "@detailsPlaySeasonEpisode": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "episode": { "type": "int" }
+    }
+  },
   "detailsSeasonNumber": "Season {num}",
   "detailsSynopsis": "Synopsis",
   "detailsResumeEpisode": "Resume S{season} E{episode}",

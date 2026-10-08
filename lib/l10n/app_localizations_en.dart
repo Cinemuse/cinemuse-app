@@ -404,6 +404,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailsSeasonLabel => 'Season';
 
   @override
+  String detailsSeasonsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Seasons',
+      one: '1 Season',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String detailsEpisodesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Episodes',
+      one: '1 Episode',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String detailsEpisodeRuntime(int minutes) {
+    return '${minutes}m/ep';
+  }
+
+  @override
+  String detailsPlaySeasonEpisode(int season, int episode) {
+    return 'Play S$season E$episode';
+  }
+
+  @override
   String detailsSeasonNumber(Object num) {
     return 'Season $num';
   }
