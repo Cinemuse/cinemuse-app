@@ -1,27 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/video_card.dart';
 
 class VideosRow extends StatelessWidget {
-  final Map<String, dynamic>? videos;
+  final List<MediaVideo>? videos;
+  final Map<String, dynamic>? rawVideos;
 
-  const VideosRow({super.key, this.videos});
+  const VideosRow({
+    super.key,
+    this.videos,
+    this.rawVideos,
+  });
 
-  static bool hasTrailers(Map<String, dynamic>? videos) {
-    final results = videos?['results'] as List?;
-    if (results == null || results.isEmpty) return false;
-    return results.any((v) => v is Map && v['type'] == 'Trailer');
+  static bool hasTrailers(dynamic videoSource) {
+    if (videoSource is List<MediaVideo>) {
+      return videoSource.any((v) => v.isYouTubeTrailer);
+    }
+    if (videoSource is Map<String, dynamic>) {
+      final results = videoSource['results'] as List?;
+      if (results == null || results.isEmpty) return false;
+      return results.any((v) => v is Map && v['type'] == 'Trailer');
+    }
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
-    final trailers =
-        (videos?['results'] as List?)
-            ?.where((v) => v['type'] == 'Trailer')
-            .toList() ??
-        [];
+    final List<MediaVideo> trailers;
+    if (videos != null) {
+      trailers = videos!.where((v) => v.isYouTubeTrailer).toList();
+    } else if (rawVideos != null) {
+      final rawList = (rawVideos!['results'] as List?) ?? [];
+      trailers = rawList
+          .whereType<Map>()
+          .map((v) => MediaVideo.fromTmdbMap(Map<String, dynamic>.from(v)))
+          .where((v) => v.isYouTubeTrailer)
+          .toList();
+    } else {
+      trailers = const [];
+    }
 
     if (trailers.isEmpty) return const SizedBox.shrink();
 
@@ -37,8 +57,8 @@ class VideosRow extends StatelessWidget {
           .zero, // BentoBox already provides padding, avoid double padding
       itemBuilder: (context, index) {
         final trailer = trailers[index];
-        final key = trailer['key'];
-        final name = trailer['name'] ?? '';
+        final key = trailer.key;
+        final name = trailer.name;
 
         return Padding(
           padding: const EdgeInsets.only(right: 16.0),

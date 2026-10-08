@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
@@ -10,6 +11,7 @@ const Color _kImdbBrandColor = Color(0xFFF5C518);
 const Color _kTmdbBrandColor = Color(0xFF01B4E4);
 
 class ExternalLinks extends StatelessWidget {
+  final ExternalIds? ids;
   final Map<String, dynamic>? externalIds;
   final String? homepage;
   final String type;
@@ -17,6 +19,7 @@ class ExternalLinks extends StatelessWidget {
 
   const ExternalLinks({
     super.key,
+    this.ids,
     this.externalIds,
     this.homepage,
     required this.type,
@@ -26,12 +29,12 @@ class ExternalLinks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final ids = externalIds;
+    final resolvedIds = ids ?? (externalIds != null ? ExternalIds.fromTmdbMap(externalIds!) : null);
 
     // Row 1: Themed Brand Buttons (IMDb, TMDB)
     final brandButtons = <Widget>[];
 
-    final imdbId = ids?['imdb_id'] as String?;
+    final imdbId = resolvedIds?.imdbId;
     if (imdbId != null && imdbId.trim().isNotEmpty) {
       final category = type == 'person' ? 'name' : 'title';
       brandButtons.add(
@@ -67,7 +70,7 @@ class ExternalLinks extends StatelessWidget {
       );
     }
 
-    final instagramId = ids?['instagram_id'] as String?;
+    final instagramId = resolvedIds?.instagramId;
     if (instagramId != null && instagramId.trim().isNotEmpty) {
       squareButtons.add(
         _SquareIconButton(
@@ -78,7 +81,7 @@ class ExternalLinks extends StatelessWidget {
       );
     }
 
-    final facebookId = ids?['facebook_id'] as String?;
+    final facebookId = resolvedIds?.facebookId;
     if (facebookId != null && facebookId.trim().isNotEmpty) {
       squareButtons.add(
         _SquareIconButton(
@@ -89,7 +92,7 @@ class ExternalLinks extends StatelessWidget {
       );
     }
 
-    final twitterId = ids?['twitter_id'] as String?;
+    final twitterId = resolvedIds?.twitterId;
     if (twitterId != null && twitterId.trim().isNotEmpty) {
       squareButtons.add(
         _SquareIconButton(
@@ -100,7 +103,7 @@ class ExternalLinks extends StatelessWidget {
       );
     }
 
-    final wikidataId = ids?['wikidata_id'] as String?;
+    final wikidataId = resolvedIds?.wikidataId;
     if (wikidataId != null && wikidataId.trim().isNotEmpty) {
       squareButtons.add(
         _SquareIconButton(

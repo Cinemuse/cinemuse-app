@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/presentation/person_details_screen.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/person_card.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -32,11 +33,17 @@ class _PersonItem extends _PeopleRowItem {
 }
 
 class CastRow extends StatelessWidget {
+  final List<CastMember>? cast;
+  final List<CrewMember>? crew;
+  final List<CrewMember>? creators;
   final Map<String, dynamic>? credits;
   final Map<String, dynamic>? details;
 
   const CastRow({
     super.key,
+    this.cast,
+    this.crew,
+    this.creators,
     this.credits,
     this.details,
   });
@@ -44,58 +51,86 @@ class CastRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final resolvedCredits = credits ?? (details?['credits'] as Map<String, dynamic>?);
-    final crew = (resolvedCredits?['crew'] as List?) ?? [];
-    final cast = (resolvedCredits?['cast'] as List?)?.take(15).toList() ?? [];
+
+    // Resolve Cast
+    final List<CastMember> resolvedCast;
+    if (cast != null) {
+      resolvedCast = cast!.take(15).toList();
+    } else {
+      final resolvedCredits = credits ?? (details?['credits'] as Map<String, dynamic>?);
+      final rawCast = (resolvedCredits?['cast'] as List?)?.take(15) ?? [];
+      resolvedCast = rawCast
+          .whereType<Map>()
+          .map((c) => CastMember.fromTmdbMap(Map<String, dynamic>.from(c)))
+          .toList();
+    }
+
+    // Resolve Crew
+    final List<CrewMember> resolvedCrew;
+    if (crew != null) {
+      resolvedCrew = crew!;
+    } else {
+      final resolvedCredits = credits ?? (details?['credits'] as Map<String, dynamic>?);
+      final rawCrew = (resolvedCredits?['crew'] as List?) ?? [];
+      resolvedCrew = rawCrew
+          .whereType<Map>()
+          .map((c) => CrewMember.fromTmdbMap(Map<String, dynamic>.from(c)))
+          .toList();
+    }
+
+    // Resolve Creators
+    final List<CrewMember> resolvedCreators;
+    if (creators != null) {
+      resolvedCreators = creators!;
+    } else {
+      final rawCreators = (details?['created_by'] as List?) ?? [];
+      resolvedCreators = rawCreators
+          .whereType<Map>()
+          .map((c) => CrewMember.fromTmdbMap(Map<String, dynamic>.from(c)))
+          .toList();
+    }
 
     // 1. Extract Creative Team (Directors, Creators, Lead Writers)
-    final directors = crew.where((c) => c is Map && c['job'] == 'Director').toList();
-    final creators = (details?['created_by'] as List?) ?? [];
-    final writers = crew
-        .where((c) => c is Map && c['department'] == 'Writing')
-        .take(3)
-        .toList();
+    final directors = resolvedCrew.where((c) => c.job == 'Director').toList();
+    final writers = resolvedCrew.where((c) => c.department == 'Writing').take(3).toList();
 
-    final creativeMembers = <Map<String, dynamic>>[];
+    final creativeMembers = <({int id, String? profilePath, String name, String role})>[];
     final seenIds = <int>{};
 
-    for (final creator in creators) {
-      if (creator is Map) {
-        final id = creator['id'] as int?;
-        if (id != null && seenIds.add(id)) {
-          creativeMembers.add({
-            ...Map<String, dynamic>.from(creator),
-            'role': l10n.detailsCreator,
-          });
-        }
+    for (final creator in resolvedCreators) {
+      if (seenIds.add(creator.id)) {
+        creativeMembers.add((
+          id: creator.id,
+          profilePath: creator.profilePath,
+          name: creator.name.isNotEmpty ? creator.name : 'Unknown',
+          role: l10n.detailsCreator,
+        ));
       }
     }
 
     for (final director in directors) {
-      if (director is Map) {
-        final id = director['id'] as int?;
-        if (id != null && seenIds.add(id)) {
-          creativeMembers.add({
-            ...Map<String, dynamic>.from(director),
-            'role': l10n.detailsDirector,
-          });
-        }
+      if (seenIds.add(director.id)) {
+        creativeMembers.add((
+          id: director.id,
+          profilePath: director.profilePath,
+          name: director.name.isNotEmpty ? director.name : 'Unknown',
+          role: l10n.detailsDirector,
+        ));
       }
     }
 
     for (final writer in writers) {
-      if (writer is Map) {
-        final id = writer['id'] as int?;
-        if (id != null && seenIds.add(id)) {
-          creativeMembers.add({
-            ...Map<String, dynamic>.from(writer),
-            'role': writer['job'] ?? l10n.detailsWriter,
-          });
-        }
+      if (seenIds.add(writer.id)) {
+        creativeMembers.add((
+          id: writer.id,
+          profilePath: writer.profilePath,
+          name: writer.name.isNotEmpty ? writer.name : 'Unknown',
+          role: writer.job ?? l10n.detailsWriter,
+        ));
       }
     }
 
-    if (cast.isEmpty && creativeMembers.isEmpty) {
+    if (resolvedCast.isEmpty && creativeMembers.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -107,30 +142,28 @@ class CastRow extends StatelessWidget {
       for (final member in creativeMembers) {
         items.add(
           _PersonItem(
-            id: member['id'] as int?,
-            profilePath: member['profile_path'] as String?,
-            name: (member['name'] ?? 'Unknown').toString(),
-            subtitle: (member['role'] ?? '').toString(),
+            id: member.id,
+            profilePath: member.profilePath,
+            name: member.name,
+            subtitle: member.role,
           ),
         );
       }
     }
 
-    if (cast.isNotEmpty) {
+    if (resolvedCast.isNotEmpty) {
       if (creativeMembers.isNotEmpty) {
         items.add(_DividerItem(label: l10n.detailsSectionCast, isHighlighted: true));
       }
-      for (final member in cast) {
-        if (member is Map) {
-          items.add(
-            _PersonItem(
-              id: member['id'] as int?,
-              profilePath: member['profile_path'] as String?,
-              name: (member['name'] ?? 'Unknown').toString(),
-              subtitle: (member['character'] ?? '').toString(),
-            ),
-          );
-        }
+      for (final member in resolvedCast) {
+        items.add(
+          _PersonItem(
+            id: member.id,
+            profilePath: member.profilePath,
+            name: member.name.isNotEmpty ? member.name : 'Unknown',
+            subtitle: (member.character ?? '').toString(),
+          ),
+        );
       }
     }
 

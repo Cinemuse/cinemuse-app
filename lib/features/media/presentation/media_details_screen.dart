@@ -80,7 +80,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     final l10n = AppLocalizations.of(context)!;
     final typeForTmdb = widget.mediaType == 'series' ? 'tv' : widget.mediaType;
     final detailsAsync = ref.watch(
-      mediaDetailsProvider((id: widget.mediaId, type: typeForTmdb)),
+      typedMediaDetailsProvider((id: widget.mediaId, type: typeForTmdb)),
     );
     final controller = ref.read(mediaDetailsControllerProvider.notifier);
     final responsivePadding = AppTheme.getResponsiveHorizontalPadding(context);
@@ -107,8 +107,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           ),
         );
       },
-      data: (details) {
-        if (details == null) {
+      data: (mediaItem) {
+        if (mediaItem == null) {
           if (isOffline) {
             return OfflinePlaceholder(
               onRetry: () => ref.invalidate(connectivityProvider),
@@ -122,7 +122,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           );
         }
 
-        final tmdbId = int.parse(widget.mediaId);
+        final rawDetails = mediaItem.rawTmdbData ?? {};
+        final tmdbId = mediaItem.tmdbId;
         final isTV = typeForTmdb == 'tv';
 
         // Track list status
@@ -139,9 +140,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             .watch(mediaWatchHistoryProvider(widget.mediaId))
             .value;
 
-        final collection = details['belongs_to_collection'];
+        final collection = mediaItem.collection;
         final recommendations =
-            details['recommendations']?['results'] as List? ?? [];
+            rawDetails['recommendations']?['results'] as List? ?? [];
         final moreLikeThisList = recommendations
             .map((item) => MediaItem.fromTmdbMap(Map<String, dynamic>.from(item as Map)))
             .toList();
@@ -155,7 +156,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
               _hasInitializedSeason = true;
               final targetSeason = controller.resolveInitialSeason(
                 tmdbId: tmdbId,
-                details: details,
+                details: rawDetails,
                 watchHistory: nextHistory,
               );
               ref
@@ -171,7 +172,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             if (!mounted) return;
             final targetSeason = controller.resolveInitialSeason(
               tmdbId: tmdbId,
-              details: details,
+              details: rawDetails,
               watchHistory: watchHistory,
             );
             ref
@@ -184,7 +185,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             ? ref.watch(
                 seriesWatchStatusProvider((
                   tmdbId: tmdbId,
-                  totalEpisodes: _calculateReleasedEpisodes(details),
+                  totalEpisodes: _calculateReleasedEpisodes(rawDetails),
                 )),
               )
             : null;
@@ -218,8 +219,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
               ),
             SliverToBoxAdapter(
               child: DetailsHero(
+                mediaItem: mediaItem,
                 media: {'id': widget.mediaId, 'type': typeForTmdb},
-                details: details,
+                details: rawDetails,
                 isFavorite: isFavorite,
                 isInWatchlist: isInWatchlist,
                 onDropClick: (watchHistory != null && !isDropped && !watchHistory.isCompleted)
@@ -269,24 +271,24 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                   restart: true,
                 ),
                 onListTap: () =>
-                    _showAddToList(context, tmdbId, typeForTmdb, details),
+                    _showAddToList(context, tmdbId, typeForTmdb, rawDetails),
                 onTrackTap: isTV
                     ? () => _showSeriesTrackModal(
                         context,
                         controller,
                         tmdbId,
-                        details,
+                        rawDetails,
                         seriesWatchStatus,
                       )
                     : () => _showMovieTrackModal(
                         context,
                         controller,
                         tmdbId,
-                        details,
+                        rawDetails,
                         movieWatchCount,
                       ),
                 onCommentsTap: () =>
-                    _handleShowComments(context, details, isTV, l10n),
+                    _handleShowComments(context, rawDetails, isTV, l10n),
                 movieWatchCount: movieWatchCount,
                 contentPadding: responsivePadding,
               ),
@@ -302,7 +304,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                     ? _buildMobileLayout(
                         context: context,
                         l10n: l10n,
-                        details: details,
+                        mediaItem: mediaItem,
+                        details: rawDetails,
                         isTV: isTV,
                         typeForTmdb: typeForTmdb,
                         collection: collection,
@@ -311,7 +314,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                     : _buildWidescreenLayout(
                         context: context,
                         l10n: l10n,
-                        details: details,
+                        mediaItem: mediaItem,
+                        details: rawDetails,
                         isTV: isTV,
                         typeForTmdb: typeForTmdb,
                         tmdbId: tmdbId,
@@ -366,12 +370,13 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
   Widget _buildWidescreenLayout({
     required BuildContext context,
     required AppLocalizations l10n,
+    required MediaItem mediaItem,
     required Map<String, dynamic> details,
     required bool isTV,
     required String typeForTmdb,
     required int tmdbId,
     required List<MediaItem> moreLikeThisList,
-    required dynamic collection,
+    required MediaCollection? collection,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,12 +385,12 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           title: l10n.detailsSynopsis,
           icon: LucideIcons.terminal,
           child: Text(
-            details['overview'] ?? '',
+            mediaItem.overview ?? details['overview'] ?? '',
             style: DesktopTypography.bodyPrimary,
           ),
         ),
         const SizedBox(height: 32),
-        if (isTV && (details['number_of_seasons'] ?? 0) > 0) ...[
+        if (isTV && (mediaItem.numberOfSeasons ?? details['number_of_seasons'] ?? 0) > 0) ...[
           EpisodeSection(
             mediaId: widget.mediaId,
             details: details,
@@ -393,10 +398,14 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           ),
           const SizedBox(height: 32),
         ],
-        CastRow(credits: details['credits'], details: details),
-        if (VideosRow.hasTrailers(details['videos'])) ...[
+        CastRow(
+          cast: mediaItem.cast,
+          crew: mediaItem.crew,
+          creators: mediaItem.creators,
+        ),
+        if (VideosRow.hasTrailers(mediaItem.videos)) ...[
           const SizedBox(height: 32),
-          VideosRow(videos: details['videos']),
+          VideosRow(videos: mediaItem.videos),
         ],
         if (moreLikeThisList.isNotEmpty) ...[
           const SizedBox(height: 32),
@@ -409,6 +418,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         ],
         const SizedBox(height: 32),
         MediaInfoRow(
+          mediaItem: mediaItem,
           details: details,
           typeForTmdb: typeForTmdb,
         ),
@@ -427,10 +437,11 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
   Widget _buildMobileLayout({
     required BuildContext context,
     required AppLocalizations l10n,
+    required MediaItem mediaItem,
     required Map<String, dynamic> details,
     required bool isTV,
     required String typeForTmdb,
-    required dynamic collection,
+    required MediaCollection? collection,
     required List<MediaItem> moreLikeThisList,
   }) {
     return Column(
@@ -440,7 +451,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           title: l10n.detailsSynopsis,
           icon: LucideIcons.terminal,
           child: Text(
-            details['overview'] ?? '',
+            mediaItem.overview ?? details['overview'] ?? '',
             style: DesktopTypography.bodyPrimary,
           ),
         ),
@@ -449,12 +460,13 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           activeTab: _activeTab!,
           onTabChanged: (tab) => setState(() => _activeTab = tab),
           isTV: isTV,
-          numberOfSeasons: details['number_of_seasons'] ?? 0,
+          numberOfSeasons: mediaItem.numberOfSeasons ?? details['number_of_seasons'] ?? 0,
         ),
         const SizedBox(height: 24),
         _buildMobileTabContent(
           context: context,
           l10n: l10n,
+          mediaItem: mediaItem,
           details: details,
           isTV: isTV,
           typeForTmdb: typeForTmdb,
@@ -468,10 +480,11 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
   Widget _buildMobileTabContent({
     required BuildContext context,
     required AppLocalizations l10n,
+    required MediaItem mediaItem,
     required Map<String, dynamic> details,
     required bool isTV,
     required String typeForTmdb,
-    required dynamic collection,
+    required MediaCollection? collection,
     required List<MediaItem> moreLikeThisList,
   }) {
     switch (_activeTab) {
@@ -484,25 +497,30 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
               )
             : const SizedBox.shrink();
       case DetailsTab.cast:
-        return CastRow(credits: details['credits'], details: details);
+        return CastRow(
+          cast: mediaItem.cast,
+          crew: mediaItem.crew,
+          creators: mediaItem.creators,
+        );
       case DetailsTab.media:
-        final hasVideos = VideosRow.hasTrailers(details['videos']);
+        final hasVideos = VideosRow.hasTrailers(mediaItem.videos);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (hasVideos) ...[
-              VideosRow(videos: details['videos']),
+              VideosRow(videos: mediaItem.videos),
               const SizedBox(height: 24),
             ],
-            GalleryBox(details: details),
+            GalleryBox(images: mediaItem.images, details: details),
           ],
         );
       case DetailsTab.links:
         return ExternalLinks(
+          ids: mediaItem.externalIds,
           externalIds: details['external_ids'],
-          homepage: details['homepage'],
+          homepage: mediaItem.homepage ?? details['homepage'],
           type: typeForTmdb,
-          tmdbId: details['id'],
+          tmdbId: mediaItem.tmdbId,
         );
       case DetailsTab.more:
         return Column(

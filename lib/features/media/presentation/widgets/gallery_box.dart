@@ -5,21 +5,38 @@ import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/gallery_bottom_sheet.dart';
 
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+
 class GalleryBox extends StatelessWidget {
+  final MediaImages? images;
   final Map<String, dynamic>? details;
 
-  const GalleryBox({super.key, this.details});
+  const GalleryBox({super.key, this.images, this.details});
+
+  List<String> _getBackdrops() {
+    if (images != null) return images!.backdrops;
+    final list = (details?['images']?['backdrops'] as List?) ?? [];
+    return list.map((item) => item is Map ? (item['file_path'] as String? ?? '') : item.toString()).where((s) => s.isNotEmpty).toList();
+  }
+
+  List<String> _getPosters() {
+    if (images != null) return images!.posters;
+    final list = (details?['images']?['posters'] as List?) ?? [];
+    return list.map((item) => item is Map ? (item['file_path'] as String? ?? '') : item.toString()).where((s) => s.isNotEmpty).toList();
+  }
+
+  List<String> _getLogos() {
+    if (images != null) return images!.logos;
+    final list = (details?['images']?['logos'] as List?) ?? [];
+    return list.map((item) => item is Map ? (item['file_path'] as String? ?? '') : item.toString()).where((s) => s.isNotEmpty).toList();
+  }
 
   void _openGallery(BuildContext context, int initialTabIndex) {
-    final backdrops = (details?['images']?['backdrops'] as List?) ?? [];
-    final posters = (details?['images']?['posters'] as List?) ?? [];
-    final logos = (details?['images']?['logos'] as List?) ?? [];
-
     GalleryBottomSheet.show(
       context: context,
-      backdrops: backdrops,
-      posters: posters,
-      logos: logos,
+      backdrops: _getBackdrops(),
+      posters: _getPosters(),
+      logos: _getLogos(),
       initialTabIndex: initialTabIndex,
     );
   }
@@ -28,9 +45,9 @@ class GalleryBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    final backdrops = (details?['images']?['backdrops'] as List?) ?? [];
-    final posters = (details?['images']?['posters'] as List?) ?? [];
-    final logos = (details?['images']?['logos'] as List?) ?? [];
+    final backdrops = _getBackdrops();
+    final posters = _getPosters();
+    final logos = _getLogos();
 
     if (backdrops.isEmpty && posters.isEmpty && logos.isEmpty) {
       return const SizedBox.shrink();

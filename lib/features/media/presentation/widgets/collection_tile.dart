@@ -8,12 +8,18 @@ import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_sheet.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class CollectionTile extends ConsumerStatefulWidget {
-  final Map<String, dynamic> collection;
+  final MediaCollection? collection;
+  final Map<String, dynamic>? rawCollection;
 
-  const CollectionTile({super.key, required this.collection});
+  const CollectionTile({
+    super.key,
+    this.collection,
+    this.rawCollection,
+  });
 
   @override
   ConsumerState<CollectionTile> createState() => _CollectionTileState();
@@ -22,8 +28,25 @@ class CollectionTile extends ConsumerStatefulWidget {
 class _CollectionTileState extends ConsumerState<CollectionTile> {
   bool _isLoading = false;
 
+  int get _collectionId {
+    if (widget.collection != null) return widget.collection!.id;
+    return (widget.rawCollection?['id'] as num?)?.toInt() ?? 0;
+  }
+
+  String _getTitle(AppLocalizations l10n) {
+    if (widget.collection != null) {
+      return widget.collection!.name.isNotEmpty
+          ? widget.collection!.name
+          : l10n.collectionTitleFallback;
+    }
+    return widget.rawCollection?['name'] as String? ?? l10n.collectionTitleFallback;
+  }
+
+  String? get _backdropPath =>
+      widget.collection?.backdropPath ?? widget.rawCollection?['backdrop_path'];
+
   void _openCollection(BuildContext context, WidgetRef ref) async {
-    if (_isLoading) return;
+    if (_isLoading || _collectionId == 0) return;
 
     final l10n = AppLocalizations.of(context)!;
 
@@ -31,9 +54,8 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
       _isLoading = true;
     });
 
-    final collectionId = widget.collection['id'] as int;
-    final collectionData = await ref.read(
-      collectionDetailsProvider(collectionId).future,
+    final model = await ref.read(
+      collectionModelProvider(_collectionId).future,
     );
 
     if (!context.mounted) return;
@@ -42,24 +64,10 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
       _isLoading = false;
     });
 
-    if (collectionData != null) {
-      final parts = collectionData['parts'] as List<dynamic>? ?? [];
-
-      final listItems = parts.map((part) {
-        final itemMap = part as Map<String, dynamic>;
-        final mediaItem = MediaItem(
-          tmdbId: itemMap['id'] as int,
-          mediaType: MediaKind.movie, // Collections are only for movies
-          titleEn: itemMap['title'] ?? itemMap['name'] ?? l10n.commonUnknown,
-          posterPath: itemMap['poster_path'],
-          backdropPath: itemMap['backdrop_path'],
-          releaseDate: DateTime.tryParse(itemMap['release_date'] ?? ''),
-          voteAverage: (itemMap['vote_average'] as num?)?.toDouble(),
-          updatedAt: DateTime.now(),
-        );
-
+    if (model != null) {
+      final listItems = model.parts.map((mediaItem) {
         return UserListItem(
-          listId: 'collection_$collectionId',
+          listId: 'collection_$_collectionId',
           addedAt: DateTime.now(),
           tmdbId: mediaItem.tmdbId,
           mediaType: mediaItem.mediaType,
@@ -69,12 +77,9 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
       }).toList();
 
       final userList = UserList(
-        id: 'collection_$collectionId',
-        name:
-            collectionData['name'] ??
-            widget.collection['name'] ??
-            l10n.collectionTitleFallback,
-        description: collectionData['overview'],
+        id: 'collection_$_collectionId',
+        name: model.name.isNotEmpty ? model.name : _getTitle(l10n),
+        description: model.overview,
         type: ListType.custom,
         items: listItems,
         createdAt: DateTime.now(),
@@ -83,17 +88,15 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
 
       ListDetailsSheet.show(context, list: userList);
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.detailsFailedLoadCollection)));
+      AppSnackBar.show(context, message: l10n.detailsFailedLoadCollection);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final title = widget.collection['name'] ?? l10n.collectionTitleFallback;
-    final backdropPath = widget.collection['backdrop_path'];
+    final title = _getTitle(l10n);
+    final backdropPath = _backdropPath;
 
     return GestureDetector(
       onTap: () => _openCollection(context, ref),

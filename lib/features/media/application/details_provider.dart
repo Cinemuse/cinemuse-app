@@ -90,6 +90,17 @@ final mediaDetailsProvider =
       }
     });
 
+/// Strongly-typed provider emitting the rich [MediaItem] with full details (cast, crew, videos, etc.)
+final typedMediaDetailsProvider =
+    FutureProvider.family<MediaItem?, ({String id, String type})>((
+      ref,
+      args,
+    ) async {
+      final raw = await ref.watch(mediaDetailsProvider(args).future);
+      if (raw == null) return null;
+      return MediaItem.fromTmdbDetails(raw, MediaItem.fromString(args.type));
+    });
+
 // Family provider to fetch season details
 final seasonDetailsProvider =
     FutureProvider.family<

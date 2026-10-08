@@ -12,8 +12,9 @@ import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 
 class DetailsHero extends ConsumerWidget {
-  final Map<String, dynamic> media;
-  final Map<String, dynamic> details;
+  final MediaItem? mediaItem;
+  final Map<String, dynamic>? media;
+  final Map<String, dynamic>? details;
   final Map<String, dynamic>? resumeData;
   final VoidCallback onPlayClick;
   final VoidCallback? onRestartClick;
@@ -31,8 +32,9 @@ class DetailsHero extends ConsumerWidget {
 
   const DetailsHero({
     super.key,
-    required this.media,
-    required this.details,
+    this.mediaItem,
+    this.media,
+    this.details,
     this.resumeData,
     required this.onPlayClick,
     this.onRestartClick,
@@ -52,22 +54,40 @@ class DetailsHero extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final isWidescreen = ref.watch(isBigPictureProvider);
-    final type =
-        media['type'] ?? (details['title'] != null ? 'movie' : 'series');
-    final titleIt = MediaItem.extractTitleFromTmdb(details, 'it');
-    final titleEn =
-        MediaItem.extractTitleFromTmdb(details, 'en') ?? media['title'] ?? '';
-    final String title = titleEn;
-    final tagline = details['tagline'];
-    final backdropPath = details['backdrop_path'] ?? media['backdrop_path'];
-    final voteAverage = details['vote_average'] as num?;
-    final releaseDateStr =
-        (details['release_date'] ??
-                details['first_air_date'] ??
-                media['release_date'] ??
-                '')
-            .toString();
-    final DateTime? releaseDate = DateTime.tryParse(releaseDateStr);
+
+    final resolvedItem = mediaItem ??
+        (media != null && details != null
+            ? MediaItem.fromTmdbDetails(
+                details!,
+                MediaItem.fromString(media!['type']?.toString() ?? 'movie'),
+              )
+            : null);
+
+    final type = resolvedItem?.mediaType.name ??
+        media?['type'] ??
+        (details?['title'] != null ? 'movie' : 'series');
+
+    final String title = resolvedItem?.titleEn ??
+        MediaItem.extractTitleFromTmdb(details ?? {}, 'en') ??
+        media?['title'] ??
+        '';
+
+    final tagline = resolvedItem?.tagline ?? details?['tagline'];
+    final backdropPath = resolvedItem?.backdropPath ??
+        details?['backdrop_path'] ??
+        media?['backdrop_path'];
+    final voteAverage = resolvedItem?.voteAverage ??
+        (details?['vote_average'] as num?)?.toDouble();
+
+    final DateTime? releaseDate = resolvedItem?.releaseDate ??
+        DateTime.tryParse(
+          (details?['release_date'] ??
+                  details?['first_air_date'] ??
+                  media?['release_date'] ??
+                  '')
+              .toString(),
+        );
+
     String formattedDate = '';
     if (releaseDate != null) {
       try {
@@ -75,30 +95,38 @@ class DetailsHero extends ConsumerWidget {
           Localizations.localeOf(context).languageCode,
         ).format(releaseDate);
       } catch (e) {
-        // Fallback to default locale if current locale fails
         formattedDate = DateFormat.yMMMd().format(releaseDate);
       }
     }
-    final genres = (details['genres'] as List?) ?? [];
 
-    final runtime = type == 'movie'
-        ? details['runtime']
-        : (details['episode_run_time'] as List?)?.firstOrNull ??
-              details['runtime'];
+    final genres = resolvedItem?.genreList ??
+        ((details?['genres'] as List?)
+                ?.whereType<Map>()
+                .map((g) => MediaGenre.fromTmdbMap(Map<String, dynamic>.from(g)))
+                .toList() ??
+            []);
 
-    final mediaItem = MediaItem(
-      tmdbId: int.parse(media['id'].toString()),
-      mediaType: MediaItem.fromString(type),
-      titleIt: titleIt,
-      titleEn: titleEn,
-      posterPath: details['poster_path'],
-      backdropPath: details['backdrop_path'],
-      voteAverage: voteAverage?.toDouble(),
-      releaseDate: DateTime.tryParse(
-        details['release_date'] ?? details['first_air_date'] ?? '',
-      ),
-      updatedAt: DateTime.now(),
-    );
+    final int? runtime;
+    if (resolvedItem?.runtimeMinutes != null) {
+      runtime = resolvedItem!.runtimeMinutes;
+    } else if (type == 'movie') {
+      runtime = details?['runtime'] as int?;
+    } else {
+      runtime = ((details?['episode_run_time'] as List?)?.firstOrNull ?? details?['runtime']) as int?;
+    }
+
+    final effectiveMediaItem = resolvedItem ??
+        MediaItem(
+          tmdbId: int.tryParse(media?['id']?.toString() ?? '0') ?? 0,
+          mediaType: MediaItem.fromString(type),
+          titleIt: MediaItem.extractTitleFromTmdb(details ?? {}, 'it'),
+          titleEn: title,
+          posterPath: details?['poster_path'],
+          backdropPath: details?['backdrop_path'],
+          voteAverage: voteAverage,
+          releaseDate: releaseDate,
+          updatedAt: DateTime.now(),
+        );
 
     final heroHeight = isWidescreen
         ? MediaQuery.of(context).size.height * 0.8
@@ -204,7 +232,7 @@ class DetailsHero extends ConsumerWidget {
                       Text(
                         type == 'movie'
                             ? '${(runtime / 60).floor()}h ${runtime % 60}m'
-                            : l10n.detailsEpisodeRuntime(runtime as int),
+                            : l10n.detailsEpisodeRuntime(runtime),
                         style: DesktopTypography.captionMeta,
                       ),
                     ],
@@ -229,47 +257,12 @@ class DetailsHero extends ConsumerWidget {
                 ),
 
                 // Series Info Row
-                if (type == 'series' || type == 'tv') ...[
-                  const SizedBox(height: 8),
-                  Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 12,
-                    children: [
-                      Text(
-                        l10n.detailsSeasonsCount(
-                          details['number_of_seasons'] as int? ?? 0,
-                        ),
-                        style: TextStyle(
-                          color: AppTheme.textWhite.withValues(alpha: 0.6),
-                          fontSize: 13,
-                        ),
-                      ),
-                      const _DotSeparator(),
-                      Text(
-                        l10n.detailsEpisodesCount(
-                          details['number_of_episodes'] as int? ?? 0,
-                        ),
-                        style: TextStyle(
-                          color: AppTheme.textWhite.withValues(alpha: 0.6),
-                          fontSize: 13,
-                        ),
-                      ),
-                      if (details['status'] != null) ...[
-                        const _DotSeparator(),
-                        Text(
-                          details['status'] == 'Returning Series'
-                              ? l10n.seriesStatusOngoing
-                              : details['status'],
-                          style: TextStyle(
-                            color: _getStatusColor(details['status']),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ],
+                if (type == 'series' || type == 'tv')
+                  _buildSeriesInfoRow(
+                    l10n: l10n,
+                    resolvedItem: resolvedItem,
+                    details: details,
                   ),
-                ],
 
                 // Genres
                 if (genres.isNotEmpty) ...[
@@ -288,7 +281,7 @@ class DetailsHero extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          g['name'],
+                          g.name,
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onSurface.withValues(
                               alpha: 0.6,
@@ -324,7 +317,7 @@ class DetailsHero extends ConsumerWidget {
                     onPlayClick: onPlayClick,
                     onRestartClick: onRestartClick,
                     playButtonLabel: _getPlayButtonLabel(l10n, type, resumeData),
-                    mediaItem: mediaItem,
+                    mediaItem: effectiveMediaItem,
                     isFavorite: isFavorite,
                     isInWatchlist: isInWatchlist,
                     onListTap: onListTap,
@@ -335,7 +328,7 @@ class DetailsHero extends ConsumerWidget {
                     seriesWatchStatus: seriesWatchStatus,
                     movieWatchCount: movieWatchCount,
                     hasResumeProgress: (resumeData?['progress'] as int? ?? 0) > 0,
-                    mediaId: media['id']?.toString() ?? '',
+                    mediaId: resolvedItem?.tmdbId.toString() ?? media?['id']?.toString() ?? '',
                     mediaType: type == 'series' ? 'tv' : type,
                     season: resumeData?['season'] as int?,
                     episode: resumeData?['episode'] as int?,
@@ -343,11 +336,61 @@ class DetailsHero extends ConsumerWidget {
                 ),
 
                 // Series Progress Bar (extracted)
-                if (type == 'series' || type == 'tv')
-                  SeriesProgressBar(details: details),
+                if ((type == 'series' || type == 'tv') && details != null)
+                  SeriesProgressBar(details: details!),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSeriesInfoRow({
+    required AppLocalizations l10n,
+    required MediaItem? resolvedItem,
+    required Map<String, dynamic>? details,
+  }) {
+    final numSeasons = resolvedItem?.numberOfSeasons ??
+        (details?['number_of_seasons'] as int? ?? 0);
+    final numEpisodes = resolvedItem?.numberOfEpisodes ??
+        (details?['number_of_episodes'] as int? ?? 0);
+    final statusStr = resolvedItem?.status ?? (details?['status'] as String?);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 12,
+        children: [
+          Text(
+            l10n.detailsSeasonsCount(numSeasons),
+            style: TextStyle(
+              color: AppTheme.textWhite.withValues(alpha: 0.6),
+              fontSize: 13,
+            ),
+          ),
+          const _DotSeparator(),
+          Text(
+            l10n.detailsEpisodesCount(numEpisodes),
+            style: TextStyle(
+              color: AppTheme.textWhite.withValues(alpha: 0.6),
+              fontSize: 13,
+            ),
+          ),
+          if (statusStr != null) ...[
+            const _DotSeparator(),
+            Text(
+              statusStr == 'Returning Series'
+                  ? l10n.seriesStatusOngoing
+                  : statusStr,
+              style: TextStyle(
+                color: _getStatusColor(statusStr),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ],
       ),
     );
