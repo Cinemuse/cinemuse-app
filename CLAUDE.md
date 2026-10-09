@@ -1,6 +1,6 @@
 # Cinemuse app
 
-Flutter app (Dart ^3.11, Flutter 3.41.0 pinned via FVM in `.fvmrc`).
+Flutter app (Dart ^3.11, Flutter 3.41.0 pinned via FVM in `.fvmrc`). Platforms: Android, Windows, Linux only (no iOS, macOS, Web).
 Riverpod for state, Supabase backend, Drift local database, Dio for HTTP, media_kit for playback. Languages: English + Italian.
 
 ## Structure
