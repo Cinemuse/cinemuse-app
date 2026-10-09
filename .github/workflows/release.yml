@@ -7,8 +7,13 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Nothing is built or released unless format, analyze and tests pass
+  checks:
+    uses: ./.github/workflows/ci.yml
+
   build-windows-android:
     name: Build Android & Windows
+    needs: checks
     runs-on: windows-latest
     permissions:
       contents: write
@@ -95,6 +100,7 @@ jobs:
 
   build-linux:
     name: Build Linux (.tar.gz & .deb)
+    needs: checks
     runs-on: ubuntu-latest
 
     steps:

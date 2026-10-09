@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  # Lets release.yml run these checks before building
+  workflow_call:
+
+# A newer push to the same branch cancels the older, still-running check
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Format, analyze, test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          # Keep in sync with .fvmrc and release.yml
+          flutter-version: '3.41.0'
+          cache: true
+
+      # pubspec.yaml lists .env as an asset. Checks don't need real secrets.
+      - name: Create empty .env
+        run: touch .env
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed lib test integration_test test_driver scripts
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
