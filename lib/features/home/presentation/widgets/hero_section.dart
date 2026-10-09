@@ -123,8 +123,9 @@ class _HeroSectionState extends ConsumerState<HeroSection>
   }
 
   void _advanceToNextPage() {
-    if (!mounted || widget.items.length <= 1 || !_pageController.hasClients)
+    if (!mounted || widget.items.length <= 1 || !_pageController.hasClients) {
       return;
+    }
     final nextPage = (_pageController.page?.round() ?? _currentIndex) + 1;
     _pageController.animateToPage(
       nextPage,
@@ -134,8 +135,9 @@ class _HeroSectionState extends ConsumerState<HeroSection>
   }
 
   void _goToPreviousPage() {
-    if (!mounted || widget.items.length <= 1 || !_pageController.hasClients)
+    if (!mounted || widget.items.length <= 1 || !_pageController.hasClients) {
       return;
+    }
     final prevPage = (_pageController.page?.round() ?? _currentIndex) - 1;
     _pageController.animateToPage(
       prevPage,

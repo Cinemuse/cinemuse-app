@@ -72,7 +72,6 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       late WidgetRef testRef;
-      var contentFocused = false;
 
       await tester.pumpWidget(
         ProviderScope(

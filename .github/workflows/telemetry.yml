@@ -22,10 +22,6 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
         
-      - name: Run Sport Telemetry Script
-        continue-on-error: true
-        run: dart run scripts/telemetry/sport_telemetry.dart
-        
       - name: Run VixSrc Telemetry Script
         continue-on-error: true
         run: dart run scripts/telemetry/vixsrc_telemetry.dart
@@ -33,11 +29,6 @@ jobs:
       - name: Run AnimeUnity Telemetry Script
         continue-on-error: true
         run: dart run scripts/telemetry/animeunity_telemetry.dart
-        
-      - name: Run TVTime Telemetry Script
-        continue-on-error: true
-        run: dart run scripts/telemetry/tvtime_telemetry.dart
-        
       - name: Upload Telemetry Report Artifacts
         if: always() # Upload the artifacts even if a script failed
         uses: actions/upload-artifact@v4

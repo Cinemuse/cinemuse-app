@@ -285,18 +285,21 @@ void main() {
                     // index 3: Event 2 (focusable)
                     itemCount: 4,
                     itemBuilder: (context, index) {
-                      if (index == 0)
+                      if (index == 0) {
                         return const SizedBox(width: 72, child: Text('TODAY'));
-                      if (index == 1)
+                      }
+                      if (index == 1) {
                         return const SizedBox(
                           width: 150,
                           child: DpadFocusable(child: Text('Event 1')),
                         );
-                      if (index == 2)
+                      }
+                      if (index == 2) {
                         return const SizedBox(
                           width: 72,
                           child: Text('TOMORROW'),
                         );
+                      }
                       return const SizedBox(
                         width: 150,
                         child: DpadFocusable(child: Text('Event 2')),

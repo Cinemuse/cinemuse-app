@@ -74,7 +74,7 @@ Future<void> main() {
       // ignore: avoid_print
       print('PERFORMANCE RESULTS');
       // ignore: avoid_print
-      print('${'=' * 60}');
+      print('=' * 60);
       for (final entry in summaries.entries) {
         final metrics = entry.value as Map<String, dynamic>;
         // ignore: avoid_print

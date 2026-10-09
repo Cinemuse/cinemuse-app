@@ -4,7 +4,6 @@ import 'package:cinemuse_app/features/media/presentation/widgets/gallery_box.dar
 import 'package:cinemuse_app/features/media/presentation/widgets/media_info_row.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
