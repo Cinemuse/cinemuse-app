@@ -32,6 +32,7 @@ CI (`.github/workflows/ci.yml`) runs format check + `flutter analyze` + `flutter
 
 - Conventional Commits: `type(area): description`, lowercase, imperative, under ~72 chars. Types and examples are in `.gitmessage`.
 - Pushing directly to `main` is allowed. Never force push or delete `main` (protected by a ruleset).
+- Never add a `Co-Authored-By: Claude` line (or any other Claude attribution) to commit messages.
 - When a piece of work is ready to commit, Claude runs `git add` on exactly those files (never `git add -A` or `.`), shows `git status`, then gives the user a ready-to-paste `git commit -m "..."` command. The user runs the commit and the push themselves. Before staging, check the files for secrets.
 
 ## Supabase MCP (read-only)
