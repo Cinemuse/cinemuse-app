@@ -2,7 +2,6 @@
 .idea/
 .vscode/
 *.class
-*.lock
 *.log
 *.pyc
 *.swp
