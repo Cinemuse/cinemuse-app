@@ -52,6 +52,12 @@ Migrations live in `supabase/migrations/` (baseline: `20261009215049_remote_sche
 
 Don't change the live schema by hand in the dashboard: it makes git and the database drift apart.
 
+Edge functions (`supabase/functions/`: `sync-agenda`, `live-tv-resolver`):
+- Deploy one at a time: `supabase functions deploy <name> --use-api`. `config.toml` keeps `verify_jwt = false` for both (same as production).
+- Secrets (e.g. `TMDB_API_KEY`) are set with `supabase secrets set`, never hard-coded.
+- `sync-agenda` replies `success: true` even when TMDB calls fail. To test it, check `upcoming_agenda_cache.updated_at`.
+- Gotcha: `trigger_sync_agenda()` and the cron job hard-code the **production** function URL, so writing `watch_history`/`list_items` rows in the **local** DB calls the real edge function (backlog: BE-06 Vault).
+
 ## Don't
 
 - Don't read or follow `../.agents/` (old rules).
