@@ -273,14 +273,13 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       isFullOrStandalone: isFullOrStandalone,
       numberBuffer: buffer,
       onTogglePlayPause: _togglePlayPause,
-      onSkip: (forward, {showControls = true}) =>
-          _performRealSkip(forward, showControls: showControls),
+      onSkip: _performRealSkip,
       onToggleMute: _toggleMute,
       onToggleFullscreen: _toggleFullscreen,
       onBack: _handleBack,
       onShowControls: _showControls,
       onHideControls: _hideControls,
-      onFocusPlayPause: () => _playPauseFocusNode.requestFocus(),
+      onFocusPlayPause: _playPauseFocusNode.requestFocus,
       onHover: _onHover,
       onNumberInput: _handleNumberInput,
       onConfirmNumber: _confirmNumberInput,
@@ -355,7 +354,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   Widget _buildBottomBar(bool isLive) {
     final actions = PlaybackControlActions(
       onTogglePlayPause: _togglePlayPause,
-      onSkip: (forward) => _performRealSkip(forward),
+      onSkip: _performRealSkip,
       onToggleMute: _toggleMute,
       onStopPressed: _handleBack,
       isFullscreen: _isFullScreen,

@@ -179,7 +179,7 @@ class OptimisticSeriesLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
           throw error;
         })
         .map((list) => list.map(WatchLog.fromJson).toList())
-        .map((logs) => _applyOptimisticUpdates(logs));
+        .map(_applyOptimisticUpdates);
   }
 
   void addOptimisticUpdate(int season, int episode, bool isWatched) {
@@ -362,7 +362,7 @@ class OptimisticMovieLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
           throw error;
         })
         .map((list) => list.map(WatchLog.fromJson).toList())
-        .map((logs) => _applyOptimisticUpdates(logs));
+        .map(_applyOptimisticUpdates);
   }
 
   String _normalizeTimestamp(DateTime date) {
@@ -433,7 +433,7 @@ class OptimisticMovieLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
         .toSet();
 
     // 1. Self-Cleaning: Prune confirmed entries
-    _optimisticAdditions.removeWhere((key) => serverKeys.contains(key));
+    _optimisticAdditions.removeWhere(serverKeys.contains);
     _optimisticRemovals.removeWhere((key) => !serverKeys.contains(key));
 
     final updatedLogs = List<WatchLog>.from(currentLogs);

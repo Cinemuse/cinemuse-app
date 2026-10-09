@@ -759,7 +759,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
           ),
           if (_searchQuery.isNotEmpty)
             GestureDetector(
-              onTap: () => _searchController.clear(),
+              onTap: _searchController.clear,
               child: const MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: Padding(

@@ -33,7 +33,7 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
 
   String? get _backdropPath => widget.collection.backdropPath;
 
-  void _openCollection(BuildContext context, WidgetRef ref) async {
+  Future<void> _openCollection(BuildContext context, WidgetRef ref) async {
     if (_isLoading || _collectionId == 0) return;
 
     final l10n = AppLocalizations.of(context)!;

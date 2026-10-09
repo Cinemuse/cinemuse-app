@@ -388,7 +388,7 @@ class UnifiedStreamResolver {
           uniqueMap[dedupeKey] = c;
         }
       }
-      var candidates = uniqueMap.values.toList();
+      final candidates = uniqueMap.values.toList();
 
       // Save to cache before finalization (availability check and ranking)
       _searchCache[cacheKey] = _CachedSearch(

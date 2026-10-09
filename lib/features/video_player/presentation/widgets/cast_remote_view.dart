@@ -95,7 +95,7 @@ class CastRemoteView extends ConsumerWidget {
                           Icons.cast_connected,
                           color: AppTheme.accent,
                         ),
-                        onPressed: () => notifier.stopCasting(),
+                        onPressed: notifier.stopCasting,
                       ),
                     ],
                   ),
@@ -291,7 +291,7 @@ class CastRemoteView extends ConsumerWidget {
                     label: Text(
                       AppLocalizations.of(context)!.commonStopCasting,
                     ),
-                    onPressed: () => notifier.stopCasting(),
+                    onPressed: notifier.stopCasting,
                   ),
                 ),
               ],
@@ -304,8 +304,8 @@ class CastRemoteView extends ConsumerWidget {
 
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, "0");
-    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
-    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    final String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    final String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
     if (duration.inHours > 0) {
       return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
     }

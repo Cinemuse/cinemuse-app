@@ -40,9 +40,8 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        ref.read(livePlayerFocusActionProvider.notifier).state = () {
-          _playerFocusNode.requestFocus();
-        };
+        ref.read(livePlayerFocusActionProvider.notifier).state =
+            _playerFocusNode.requestFocus;
         ref
             .read(pageContentFocusActionsProvider.notifier)
             .update(
@@ -114,9 +113,10 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
 
     // Reset timer — auto-tune after 1.5s of no input
     _numberInputTimer?.cancel();
-    _numberInputTimer = Timer(const Duration(milliseconds: 1500), () {
-      _confirmNumberInput();
-    });
+    _numberInputTimer = Timer(
+      const Duration(milliseconds: 1500),
+      _confirmNumberInput,
+    );
   }
 
   void _confirmNumberInput() {

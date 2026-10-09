@@ -33,12 +33,12 @@ class RetryInterceptor extends Interceptor {
 
   @override
   Future onError(DioException err, ErrorInterceptorHandler handler) async {
-    var requestOptions = err.requestOptions;
+    final requestOptions = err.requestOptions;
 
     // Check if we should retry
     int retryCount = requestOptions.extra['retry_count'] ?? 0;
 
-    bool shouldRetry =
+    final bool shouldRetry =
         retryCount < maxRetries &&
         (err.type == DioExceptionType.connectionTimeout ||
             err.type == DioExceptionType.receiveTimeout ||

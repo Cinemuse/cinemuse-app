@@ -90,7 +90,7 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
           final file = File(savePath);
           if (!savePath.startsWith('content://')) {
             try {
-              if (!await file.exists() || (await file.length()) == 0) {
+              if (!file.existsSync() || file.lengthSync() == 0) {
                 await file.writeAsBytes(bytes);
               }
             } catch (e, stack) {

@@ -131,7 +131,7 @@ class YouTubeSourceHandler {
 
   Future<String?> _prepareAudioIfNecessary(YouTubeStreamQuality stream) async {
     if (stream.needsAudio) {
-      return await downloadAudioToTempFile();
+      return downloadAudioToTempFile();
     }
     return null;
   }

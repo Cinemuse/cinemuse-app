@@ -193,7 +193,7 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
           : l10n.playerTrackNoAudio,
       color: AppTheme.textMuted,
       onBack: widget.onBack,
-      onSelected: () => _notifyManualSelection(),
+      onSelected: _notifyManualSelection,
       autofocus: autofocus || isSelected,
     );
   }
@@ -254,7 +254,7 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
                   isSelected: isSelected,
                   isSubtitle: widget.isSubtitle,
                   onBack: widget.onBack,
-                  onSelected: () => _notifyManualSelection(),
+                  onSelected: _notifyManualSelection,
                   autofocus: shouldAutofocus,
                 );
               }).toList(),

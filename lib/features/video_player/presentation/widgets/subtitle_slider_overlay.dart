@@ -43,7 +43,7 @@ class SubtitleSliderOverlay extends ConsumerWidget {
         title = l10n.playerSubtitleSync;
         control = _SyncButtonControl(
           value: state.subtitleDelay,
-          onChanged: (val) => controller.updateSubtitleDelay(val),
+          onChanged: controller.updateSubtitleDelay,
         );
         onReset = () => controller.updateSubtitleDelay(0.0);
         break;

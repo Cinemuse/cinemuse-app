@@ -36,7 +36,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
     final lists = state.value ?? [];
 
     // Find the specific list of this type
-    var targetList = lists.firstWhere(
+    final targetList = lists.firstWhere(
       (l) => l.type == type,
       orElse: () => throw Exception(
         'System list $type not found. Ensure it exists in DB.',

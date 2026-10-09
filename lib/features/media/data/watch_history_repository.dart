@@ -348,7 +348,7 @@ class WatchHistoryRepository {
         );
       });
 
-      return await Future.wait(futures);
+      return Future.wait(futures);
     });
   }
 

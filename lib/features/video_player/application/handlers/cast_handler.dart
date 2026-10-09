@@ -187,7 +187,7 @@ class CastHandler {
         );
         contentType = detectedMimeType;
       } else {
-        String? sniffedType = await _sniffMimeType(urlToCasting);
+        final String? sniffedType = await _sniffMimeType(urlToCasting);
         contentType = MimeResolver.resolve(
           urlToCasting,
           sniffedType ?? resolvedStream.mimeType,

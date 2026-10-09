@@ -248,8 +248,11 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
     final curBuild = int.tryParse(currentBuild) ?? 0;
 
     // First compare semantic version names
-    List<int> latestParts = latestName.split('.').map(int.parse).toList();
-    List<int> currentParts = currentName.split('.').map(int.parse).toList();
+    final List<int> latestParts = latestName.split('.').map(int.parse).toList();
+    final List<int> currentParts = currentName
+        .split('.')
+        .map(int.parse)
+        .toList();
 
     for (var i = 0; i < latestParts.length; i++) {
       if (i >= currentParts.length) return true;

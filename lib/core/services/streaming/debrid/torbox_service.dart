@@ -142,7 +142,7 @@ class TorBoxService implements BaseDebridService {
     }
 
     // Fallback: check mylist if torrent was already added
-    return await _findExistingTorrentId(infoHash);
+    return _findExistingTorrentId(infoHash);
   }
 
   Future<int?> _findExistingTorrentId(String infoHash) async {

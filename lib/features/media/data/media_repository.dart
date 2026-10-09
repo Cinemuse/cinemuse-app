@@ -86,9 +86,7 @@ class MediaRepository {
           .toList();
       final localResults = await _db.getMediaItems(filters);
 
-      return localResults
-          .map<MediaItem>((data) => mapToMediaItem(data))
-          .toList();
+      return localResults.map<MediaItem>(mapToMediaItem).toList();
     } catch (e, s) {
       developer.log(
         'Failed to fetch batch media items from Drift database',

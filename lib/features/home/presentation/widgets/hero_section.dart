@@ -209,7 +209,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
         ? widget.items.length * _infiniteMultiplier
         : widget.items.length;
 
-    Widget carousel = SizedBox(
+    final Widget carousel = SizedBox(
       height: heroHeight,
       width: double.infinity,
       child: Stack(

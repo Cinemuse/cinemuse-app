@@ -269,17 +269,17 @@ class LiveTvSourceHandler {
 
   Future<String> _resolveIfDynamicRelinker(String url) async {
     if (url.contains('mediapolis.rai.it/relinker')) {
-      return await _resolveRaiRelinker(url);
+      return _resolveRaiRelinker(url);
     }
     if (url.contains('apid.sky.it/vdp/v1/getLivestream')) {
-      return await _resolveSkyRelinker(url);
+      return _resolveSkyRelinker(url);
     }
     if (url.contains('dlhd_') || url.contains('live-tv-resolver/stream')) {
-      return await _resolveDaddyLiveRelinker(url);
+      return _resolveDaddyLiveRelinker(url);
     }
     if (url.contains('/live/') &&
         (url.contains('.ts') || url.contains('.m3u8'))) {
-      return await _resolveHttpRedirect(url);
+      return _resolveHttpRedirect(url);
     }
     return url;
   }

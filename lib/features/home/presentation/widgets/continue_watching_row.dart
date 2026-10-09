@@ -71,7 +71,7 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
     });
   }
 
-  void _onClearProgress(WatchHistory item) async {
+  Future<void> _onClearProgress(WatchHistory item) async {
     final tmdbId = item.tmdbId;
     final authState = ref.read(authProvider);
     final repository = ref.read(watchHistoryRepositoryProvider);

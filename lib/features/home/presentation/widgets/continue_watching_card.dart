@@ -72,7 +72,7 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
         }
         return _buildSkeleton();
       },
-      loading: () => _buildSkeleton(),
+      loading: _buildSkeleton,
       error: (_, __) => _buildCard(context, ref, localMedia, appLanguage),
     );
   }

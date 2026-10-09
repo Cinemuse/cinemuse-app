@@ -172,7 +172,7 @@ class TmdbService {
     final results = List<Map<String, dynamic>>.from(res.data['results']);
     return results
         .where((item) => item['media_type'] != 'person')
-        .map((item) => MediaItem.fromTmdbMap(item))
+        .map(MediaItem.fromTmdbMap)
         .toList();
   }
 

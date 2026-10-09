@@ -29,7 +29,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 
 final playerControllerProvider = StateNotifierProvider.family
     .autoDispose<PlayerController, AsyncValue<CinemaPlayerState>, PlayerParams>(
-      (ref, params) => PlayerController(ref, params),
+      PlayerController.new,
     );
 
 /// High-level presentation controller facade for video playback.
@@ -165,7 +165,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
           state = AsyncValue.data(newState);
         }
       },
-      onError: (err, st) => _handleInitializationError(err, st),
+      onError: _handleInitializationError,
     );
 
     if (resolvedParams.type == 'livetv') {

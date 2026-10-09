@@ -41,9 +41,8 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        ref.read(topNavbarFocusActionProvider.notifier).state = () {
-          _focusActiveItem();
-        };
+        ref.read(topNavbarFocusActionProvider.notifier).state =
+            _focusActiveItem;
       }
     });
   }
@@ -553,7 +552,7 @@ class _AppWindowButtonsState extends State<AppWindowButtons>
       children: [
         _WindowButton(
           type: _WindowButtonType.minimize,
-          onTap: () => windowManager.minimize(),
+          onTap: windowManager.minimize,
         ),
         _WindowButton(
           type: _isMaximized
@@ -569,7 +568,7 @@ class _AppWindowButtonsState extends State<AppWindowButtons>
         ),
         _WindowButton(
           type: _WindowButtonType.close,
-          onTap: () => windowManager.close(),
+          onTap: windowManager.close,
         ),
       ],
     );

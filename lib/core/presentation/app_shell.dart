@@ -96,7 +96,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             content: ErrorToast(
               message: next.message,
               type: next.type,
-              onDismiss: () => scaffoldMessenger.hideCurrentSnackBar(),
+              onDismiss: scaffoldMessenger.hideCurrentSnackBar,
             ),
             backgroundColor: Colors.transparent,
             elevation: 0,

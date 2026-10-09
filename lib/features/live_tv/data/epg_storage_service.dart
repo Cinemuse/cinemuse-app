@@ -23,7 +23,7 @@ class EpgStorageService {
   }) async {
     try {
       final file = await _getCacheFile();
-      if (!await file.exists()) return null;
+      if (!file.existsSync()) return null;
 
       final content = await file.readAsString();
       if (content.isEmpty) return null;
@@ -85,7 +85,7 @@ class EpgStorageService {
   Future<void> clearCache() async {
     try {
       final file = await _getCacheFile();
-      if (await file.exists()) {
+      if (file.existsSync()) {
         await file.delete();
       }
     } catch (e, s) {

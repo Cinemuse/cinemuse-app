@@ -301,7 +301,7 @@ class TrackTile extends ConsumerWidget {
 
     return DpadFocusable(
       autofocus: autofocus,
-      onTap: () => _handleTrackSelection(),
+      onTap: _handleTrackSelection,
       scale: 1.02,
       borderRadius: AppTheme.radius12,
       builder: (context, isFocused, isHovered, child) {

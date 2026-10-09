@@ -31,7 +31,7 @@ class CustomPlaylistsNotifier extends StateNotifier<List<LiveTvPlaylist>> {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = prefs.getStringList(_key) ?? [];
     try {
-      state = jsonList.map((str) => LiveTvPlaylist.decode(str)).toList();
+      state = jsonList.map(LiveTvPlaylist.decode).toList();
     } catch (_) {
       state = [];
     }

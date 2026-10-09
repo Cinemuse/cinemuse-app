@@ -112,9 +112,7 @@ class PersonDomainService {
         );
 
         final title = item.title.toLowerCase();
-        final hasExcludedKeyword = excludedKeywords.any(
-          (kw) => title.contains(kw),
-        );
+        final hasExcludedKeyword = excludedKeywords.any(title.contains);
 
         return !hasExcludedGenre && !hasExcludedKeyword;
       }).toList();
