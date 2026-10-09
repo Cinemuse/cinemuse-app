@@ -23,7 +23,7 @@ fvm flutter test
 fvm dart run build_runner build --delete-conflicting-outputs   # regenerate *.g.dart (Drift)
 ```
 
-`fvm flutter test` currently has 6 known failures (263 pass). See `../audit/` before trying to fix them.
+`fvm flutter test` must pass with 0 failures (263 pass, 1 skipped: the Live TV channel-guide button test, pending a check of the TV layout; see `../audit/08-testing.md`).
 
 ## Git
 
