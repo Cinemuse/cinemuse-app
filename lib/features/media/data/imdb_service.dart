@@ -29,10 +29,14 @@ class ImdbService {
     if (cleanId.isEmpty) return const [];
 
     final formattedId = cleanId.startsWith('tt') ? cleanId : 'tt$cleanId';
-    final previousCursor = page > 1 ? _pageCursors['$formattedId:p${page - 1}'] : null;
+    final previousCursor = page > 1
+        ? _pageCursors['$formattedId:p${page - 1}']
+        : null;
 
     final isPaginated = previousCursor != null && previousCursor.isNotEmpty;
-    final query = isPaginated ? _reviewsGraphQLQueryAfter : _reviewsGraphQLQueryInitial;
+    final query = isPaginated
+        ? _reviewsGraphQLQueryAfter
+        : _reviewsGraphQLQueryInitial;
     final variables = <String, dynamic>{
       'titleId': formattedId,
       'first': limit,
@@ -42,10 +46,7 @@ class ImdbService {
     try {
       final response = await _dio.post<dynamic>(
         _endpoint,
-        data: {
-          'query': query,
-          'variables': variables,
-        },
+        data: {'query': query, 'variables': variables},
         options: Options(headers: _defaultHeaders),
       );
 
@@ -82,7 +83,10 @@ class ImdbService {
       final comments = edges
           .whereType<Map<String, dynamic>>()
           .map(_mapGraphQLNodeToComment)
-          .where((c) => c.text.isNotEmpty || (c.title != null && c.title!.isNotEmpty))
+          .where(
+            (c) =>
+                c.text.isNotEmpty || (c.title != null && c.title!.isNotEmpty),
+          )
           .toList();
 
       developer.log(
@@ -105,7 +109,8 @@ class ImdbService {
   Comment _mapGraphQLNodeToComment(Map<String, dynamic> json) {
     final node = json['node'] as Map<String, dynamic>? ?? {};
     final id = node['id']?.toString() ?? '';
-    final authorName = (node['author']?['nickName']?.toString() ?? 'IMDb User').trim();
+    final authorName = (node['author']?['nickName']?.toString() ?? 'IMDb User')
+        .trim();
     final summary = (node['summary']?['originalText']?.toString() ?? '').trim();
 
     final textObj = node['text']?['originalText'];

@@ -110,16 +110,16 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       _setupProgressTracking();
 
       if (resolvedParams.type == 'youtube') {
-        await _initializationCoordinator
-            .handleYouTubeInitialization(resolvedParams);
+        await _initializationCoordinator.handleYouTubeInitialization(
+          resolvedParams,
+        );
         return;
       } else if (resolvedParams.type == 'livetv') {
         await _initializationCoordinator.handleLiveTvInitialization(params);
         return;
       }
 
-      await _initializationCoordinator
-          .handleVodInitialization(resolvedParams);
+      await _initializationCoordinator.handleVodInitialization(resolvedParams);
     } catch (e, st) {
       _handleInitializationError(e, st);
     }
@@ -263,8 +263,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   Future<void> changeSource(
     StreamCandidate candidate, {
     bool isManual = true,
-  }) =>
-      _sourceCoordinator.changeSource(candidate, isManual: isManual);
+  }) => _sourceCoordinator.changeSource(candidate, isManual: isManual);
 
   Future<void> changeFile(int fileId) => _sourceCoordinator.changeFile(fileId);
 
@@ -276,9 +275,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
   void clearNotification() {
     if (mounted && state.valueOrNull != null) {
-      state = AsyncValue.data(
-        state.valueOrNull!.copyWith(notification: null),
-      );
+      state = AsyncValue.data(state.valueOrNull!.copyWith(notification: null));
     }
   }
 

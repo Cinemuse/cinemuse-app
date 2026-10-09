@@ -23,7 +23,8 @@ class PlayerChannelInputCoordinator {
       onCustomNextChannel();
       return;
     }
-    final channels = ref.read(filteredChannelsProvider).valueOrNull ??
+    final channels =
+        ref.read(filteredChannelsProvider).valueOrNull ??
         ref.read(channelsProvider).valueOrNull ??
         [];
     if (channels.isEmpty) return;
@@ -43,15 +44,17 @@ class PlayerChannelInputCoordinator {
       onCustomPreviousChannel();
       return;
     }
-    final channels = ref.read(filteredChannelsProvider).valueOrNull ??
+    final channels =
+        ref.read(filteredChannelsProvider).valueOrNull ??
         ref.read(channelsProvider).valueOrNull ??
         [];
     if (channels.isEmpty) return;
 
     final current = currentChannel ?? ref.read(selectedChannelProvider);
     final idx = channels.indexWhere((c) => c.uniqueId == current?.uniqueId);
-    final prevIdx =
-        idx == -1 ? 0 : (idx - 1 + channels.length) % channels.length;
+    final prevIdx = idx == -1
+        ? 0
+        : (idx - 1 + channels.length) % channels.length;
     ref.read(selectedChannelProvider.notifier).state = channels[prevIdx];
   }
 

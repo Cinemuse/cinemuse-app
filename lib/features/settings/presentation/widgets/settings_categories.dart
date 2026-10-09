@@ -92,9 +92,11 @@ class CustomizationSettings extends ConsumerWidget {
                   trailing: SettingToggle(
                     value: isBigPicture,
                     onChanged: (val) {
-                      ref.read(displayModeProvider.notifier).setMode(
-                        val ? DisplayMode.bigPicture : DisplayMode.standard,
-                      );
+                      ref
+                          .read(displayModeProvider.notifier)
+                          .setMode(
+                            val ? DisplayMode.bigPicture : DisplayMode.standard,
+                          );
                     },
                   ),
                 ),

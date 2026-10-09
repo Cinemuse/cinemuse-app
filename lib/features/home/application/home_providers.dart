@@ -19,29 +19,24 @@ final sportScheduleProvider = FutureProvider<List<SportTvEvent>>((ref) async {
   return events;
 });
 
-final trendingProvider = FutureProvider<List<MediaItem>>((
-  ref,
-) async {
+final trendingProvider = FutureProvider<List<MediaItem>>((ref) async {
   final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getTrending();
 });
 
-final popularMoviesProvider = FutureProvider<List<MediaItem>>((
-  ref,
-) async {
+final popularMoviesProvider = FutureProvider<List<MediaItem>>((ref) async {
   final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getPopularMovies();
 });
 
-final popularSeriesProvider = FutureProvider<List<MediaItem>>((
-  ref,
-) async {
+final popularSeriesProvider = FutureProvider<List<MediaItem>>((ref) async {
   final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getPopularSeries();
 });
 
-final continueWatchingProvider =
-    Provider<AsyncValue<List<WatchHistory>>>((ref) {
+final continueWatchingProvider = Provider<AsyncValue<List<WatchHistory>>>((
+  ref,
+) {
   final historyMapAsync = ref.watch(watchHistoryStoreProvider);
 
   return historyMapAsync.whenData((historyMap) {

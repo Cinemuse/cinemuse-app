@@ -7,10 +7,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 class SeekFeedbackHud extends StatelessWidget {
   final int seekAmount;
 
-  const SeekFeedbackHud({
-    super.key,
-    required this.seekAmount,
-  });
+  const SeekFeedbackHud({super.key, required this.seekAmount});
 
   @override
   Widget build(BuildContext context) {
@@ -25,10 +22,7 @@ class SeekFeedbackHud extends StatelessWidget {
           duration: const Duration(milliseconds: 160),
           curve: Curves.easeOutCubic,
           builder: (context, scale, child) {
-            return Transform.scale(
-              scale: scale,
-              child: child,
-            );
+            return Transform.scale(scale: scale, child: child);
           },
           child: ClipRRect(
             borderRadius: AppTheme.radiusXl,
@@ -42,10 +36,7 @@ class SeekFeedbackHud extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceOverlay,
                   borderRadius: AppTheme.radiusXl,
-                  border: Border.all(
-                    color: AppTheme.borderSubtle,
-                    width: 1,
-                  ),
+                  border: Border.all(color: AppTheme.borderSubtle, width: 1),
                   boxShadow: AppTheme.shadowNeonSm,
                 ),
                 child: Row(
@@ -60,7 +51,11 @@ class SeekFeedbackHud extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      isForward ? '+$seekAmount' 's' : '$seekAmount' 's',
+                      isForward
+                          ? '+$seekAmount'
+                                's'
+                          : '$seekAmount'
+                                's',
                       style: const TextStyle(
                         color: AppTheme.textWhite,
                         fontSize: 16,

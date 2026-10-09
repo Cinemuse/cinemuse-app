@@ -53,22 +53,24 @@ class EpisodeSection extends ConsumerWidget {
         .toList();
     final isMobile = MediaQuery.of(context).size.width < 600;
 
-    void onEpisodeTap(int s, int e, String name, {bool restart = false}) => _handleEpisodePlay(
-      context,
-      mediaId,
-      s,
-      e,
-      name,
-      episodeProgressMap?['$s-$e']?.progressSeconds ?? 0,
-      restart: restart,
-    );
+    void onEpisodeTap(int s, int e, String name, {bool restart = false}) =>
+        _handleEpisodePlay(
+          context,
+          mediaId,
+          s,
+          e,
+          name,
+          episodeProgressMap?['$s-$e']?.progressSeconds ?? 0,
+          restart: restart,
+        );
 
-    void onMarkWatched(int season, int ep, DateTime? date) => controller.logEpisodeWatch(
-      tmdbId: tmdbId,
-      season: season,
-      episode: ep,
-      loggedAt: date,
-    );
+    void onMarkWatched(int season, int ep, DateTime? date) =>
+        controller.logEpisodeWatch(
+          tmdbId: tmdbId,
+          season: season,
+          episode: ep,
+          loggedAt: date,
+        );
 
     void onTrackOptions(int season, int ep) => showTrackOptions(
       context: context,
@@ -79,28 +81,29 @@ class EpisodeSection extends ConsumerWidget {
       watchCount: watchedEpisodesMap['$season-$ep'] ?? 0,
     );
 
-    List<({int season, int episode})> onFindMissingPreceding(int season, int ep) =>
-        findMissingPrecedingEpisodes(
-          ref: ref,
-          seasons: rawSeasons,
-          watchedEpisodesCount: watchedEpisodesMap,
-          currentSeason: season,
-          currentEpisode: ep,
-        );
+    List<({int season, int episode})> onFindMissingPreceding(
+      int season,
+      int ep,
+    ) => findMissingPrecedingEpisodes(
+      ref: ref,
+      seasons: rawSeasons,
+      watchedEpisodesCount: watchedEpisodesMap,
+      currentSeason: season,
+      currentEpisode: ep,
+    );
 
     void onShowMarkPrecedingModal(
       int season,
       int ep,
       List<({int season, int episode})> missing,
-    ) =>
-        showMarkPrecedingModal(
-          context: context,
-          controller: controller,
-          tmdbId: tmdbId,
-          season: season,
-          episode: ep,
-          missing: missing,
-        );
+    ) => showMarkPrecedingModal(
+      context: context,
+      controller: controller,
+      tmdbId: tmdbId,
+      season: season,
+      episode: ep,
+      missing: missing,
+    );
 
     void onViewHistory(int season, int ep) => WatchLogsSheet.show(
       context,
@@ -110,13 +113,8 @@ class EpisodeSection extends ConsumerWidget {
       episode: ep,
     );
 
-    void onShowComments(int s, int e) => _showEpisodeComments(
-      context,
-      tmdbId,
-      s,
-      e,
-      l10n,
-    );
+    void onShowComments(int s, int e) =>
+        _showEpisodeComments(context, tmdbId, s, e, l10n);
 
     final seasonSelectorWidget = SeasonSelector(
       seasons: seasonSummaries,
@@ -165,10 +163,12 @@ class EpisodeSection extends ConsumerWidget {
             final rawEpisodes = season['episodes'] as List? ?? [];
             final episodes = rawEpisodes
                 .whereType<Map>()
-                .map((e) => EpisodeItem.fromTmdbMap(
-                      Map<String, dynamic>.from(e),
-                      seasonNumber: selectedSeason,
-                    ))
+                .map(
+                  (e) => EpisodeItem.fromTmdbMap(
+                    Map<String, dynamic>.from(e),
+                    seasonNumber: selectedSeason,
+                  ),
+                )
                 .toList();
 
             return EpisodeList(
@@ -198,11 +198,18 @@ class EpisodeSection extends ConsumerWidget {
     required Map<String, int> watchedEpisodesMap,
     required Map<String, WatchHistory>? episodeProgressMap,
     required Widget seasonSelector,
-    required void Function(int s, int e, String name, {bool restart}) onEpisodeTap,
+    required void Function(int s, int e, String name, {bool restart})
+    onEpisodeTap,
     required void Function(int season, int ep, DateTime? date) onMarkWatched,
     required void Function(int season, int ep) onTrackOptions,
-    required List<({int season, int episode})> Function(int season, int ep) onFindMissingPreceding,
-    required void Function(int season, int ep, List<({int season, int episode})> missing) onShowMarkPrecedingModal,
+    required List<({int season, int episode})> Function(int season, int ep)
+    onFindMissingPreceding,
+    required void Function(
+      int season,
+      int ep,
+      List<({int season, int episode})> missing,
+    )
+    onShowMarkPrecedingModal,
     required void Function(int season, int ep) onViewHistory,
     required void Function(int s, int e) onShowComments,
   }) {
@@ -239,10 +246,12 @@ class EpisodeSection extends ConsumerWidget {
         final rawEpisodes = season['episodes'] as List? ?? [];
         final episodes = rawEpisodes
             .whereType<Map>()
-            .map((e) => EpisodeItem.fromTmdbMap(
-                  Map<String, dynamic>.from(e),
-                  seasonNumber: selectedSeason,
-                ))
+            .map(
+              (e) => EpisodeItem.fromTmdbMap(
+                Map<String, dynamic>.from(e),
+                seasonNumber: selectedSeason,
+              ),
+            )
             .toList();
 
         return EpisodeCarouselRow(
@@ -294,12 +303,14 @@ class EpisodeSection extends ConsumerWidget {
     required int currentSeason,
     required int currentEpisode,
   }) {
-    return ref.read(seriesDomainServiceProvider).findMissingPrecedingEpisodes(
-      currentSeason: currentSeason,
-      currentEpisode: currentEpisode,
-      seasons: seasons,
-      watchedEpisodesCount: watchedEpisodesCount,
-    );
+    return ref
+        .read(seriesDomainServiceProvider)
+        .findMissingPrecedingEpisodes(
+          currentSeason: currentSeason,
+          currentEpisode: currentEpisode,
+          seasons: seasons,
+          watchedEpisodesCount: watchedEpisodesCount,
+        );
   }
 
   static void showMarkPrecedingModal({
@@ -310,20 +321,13 @@ class EpisodeSection extends ConsumerWidget {
     required int episode,
     required List<({int season, int episode})> missing,
   }) {
-    MarkPrecedingModal.show(
-      context,
-      missingCount: missing.length,
-    ).then((markAll) {
+    MarkPrecedingModal.show(context, missingCount: missing.length).then((
+      markAll,
+    ) {
       if (markAll == null) return;
       if (markAll) {
-        final allToMark = [
-          ...missing,
-          (season: season, episode: episode),
-        ];
-        controller.logMultipleEpisodes(
-          tmdbId: tmdbId,
-          episodes: allToMark,
-        );
+        final allToMark = [...missing, (season: season, episode: episode)];
+        controller.logMultipleEpisodes(tmdbId: tmdbId, episodes: allToMark);
       } else {
         controller.logEpisodeWatch(
           tmdbId: tmdbId,
@@ -421,8 +425,9 @@ class SeasonSelector extends ConsumerWidget {
       child: PopupMenuButton<int>(
         key: popupKey,
         initialValue: selectedSeason,
-        onSelected: (val) =>
-            ref.read(selectedSeasonProvider(mediaId).notifier).selectSeason(val),
+        onSelected: (val) => ref
+            .read(selectedSeasonProvider(mediaId).notifier)
+            .selectSeason(val),
         child: DpadFocusable(
           onTap: () => popupKey.currentState?.showButtonMenu(),
           borderRadius: AppTheme.radiusMd,
@@ -433,8 +438,10 @@ class SeasonSelector extends ConsumerWidget {
                 color: isFocused
                     ? theme.focusColor
                     : (isHovered
-                        ? theme.hoverColor
-                        : theme.colorScheme.surfaceContainer.withValues(alpha: 0.5)),
+                          ? theme.hoverColor
+                          : theme.colorScheme.surfaceContainer.withValues(
+                              alpha: 0.5,
+                            )),
                 borderRadius: AppTheme.radiusMd,
                 border: Border.all(
                   color: isFocused

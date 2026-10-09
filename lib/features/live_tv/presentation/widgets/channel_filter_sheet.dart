@@ -47,22 +47,23 @@ class _FilterSheetContentState extends ConsumerState<_FilterSheetContent> {
 
   List<String> _deriveGroups(AsyncValue<List<Channel>> channelsAsync) {
     return channelsAsync.whenOrNull(
-      data: (channels) {
-        final groups = channels
-            .map((ch) => ch.group)
-            .where((g) => g != null && g.isNotEmpty)
-            .cast<String>()
-            .toSet()
-            .toList();
-        groups.sort();
+          data: (channels) {
+            final groups = channels
+                .map((ch) => ch.group)
+                .where((g) => g != null && g.isNotEmpty)
+                .cast<String>()
+                .toSet()
+                .toList();
+            groups.sort();
 
-        if (groups.contains('DTT')) {
-          groups.remove('DTT');
-          groups.insert(0, 'DTT');
-        }
-        return groups;
-      },
-    ) ?? [];
+            if (groups.contains('DTT')) {
+              groups.remove('DTT');
+              groups.insert(0, 'DTT');
+            }
+            return groups;
+          },
+        ) ??
+        [];
   }
 
   @override
@@ -203,9 +204,7 @@ class _FilterSheetContentState extends ConsumerState<_FilterSheetContent> {
       ),
       loading: () => const Padding(
         padding: EdgeInsets.all(32.0),
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
+        child: Center(child: CircularProgressIndicator()),
       ),
       error: (_, __) => const SizedBox.shrink(),
     );
@@ -269,10 +268,7 @@ class _FilterListItem extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: isSelected
               ? AppTheme.accent.withValues(alpha: 0.12)

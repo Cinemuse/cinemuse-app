@@ -65,7 +65,9 @@ class LiveTvQualityView extends ConsumerWidget {
               ],
               _buildSectionHeader(l10n.playerPreferredQuality),
               const SizedBox(height: 8),
-              ...StreamQuality.values.reversed.toList().asMap().entries.map((entry) {
+              ...StreamQuality.values.reversed.toList().asMap().entries.map((
+                entry,
+              ) {
                 final index = entry.key;
                 final q = entry.value;
                 return _buildQualityTile(
@@ -73,7 +75,8 @@ class LiveTvQualityView extends ConsumerWidget {
                   quality: q,
                   icon: _getQualityIcon(q),
                   current: currentQuality,
-                  autofocus: links.isEmpty && (q == currentQuality || index == 0),
+                  autofocus:
+                      links.isEmpty && (q == currentQuality || index == 0),
                 );
               }),
               const SizedBox(height: 24),
@@ -126,17 +129,17 @@ class LiveTvQualityView extends ConsumerWidget {
               color: isActive
                   ? AppTheme.accent.withValues(alpha: 0.12)
                   : (isHighlighted
-                      ? AppTheme.textWhite.withValues(alpha: 0.08)
-                      : AppTheme.textWhite.withValues(alpha: 0.04)),
+                        ? AppTheme.textWhite.withValues(alpha: 0.08)
+                        : AppTheme.textWhite.withValues(alpha: 0.04)),
               borderRadius: AppTheme.radius12,
               border: Border.all(
                 color: isFocused
                     ? AppTheme.focusRing
                     : (isActive
-                        ? AppTheme.accent.withValues(alpha: 0.5)
-                        : (isHovered
-                            ? AppTheme.textWhite.withValues(alpha: 0.2)
-                            : AppTheme.textWhite.withValues(alpha: 0.08))),
+                          ? AppTheme.accent.withValues(alpha: 0.5)
+                          : (isHovered
+                                ? AppTheme.textWhite.withValues(alpha: 0.2)
+                                : AppTheme.textWhite.withValues(alpha: 0.08))),
                 width: isFocused ? 2 : 1,
               ),
             ),
@@ -154,8 +157,7 @@ class LiveTvQualityView extends ConsumerWidget {
                           ? AppTheme.accent
                           : AppTheme.textWhite.withValues(alpha: 0.9),
                       fontSize: 14,
-                      fontWeight:
-                          isActive ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -185,10 +187,7 @@ class LiveTvQualityView extends ConsumerWidget {
   }
 
   Widget _buildFormatBadge(String format) {
-    return SettingsBadge(
-      text: format,
-      color: AppTheme.badgeAudio,
-    );
+    return SettingsBadge(text: format, color: AppTheme.badgeAudio);
   }
 
   Widget _buildQualityTile({
@@ -220,17 +219,17 @@ class LiveTvQualityView extends ConsumerWidget {
               color: isSelected
                   ? AppTheme.accent.withValues(alpha: 0.1)
                   : (isHighlighted
-                      ? AppTheme.textWhite.withValues(alpha: 0.08)
-                      : AppTheme.textWhite.withValues(alpha: 0.04)),
+                        ? AppTheme.textWhite.withValues(alpha: 0.08)
+                        : AppTheme.textWhite.withValues(alpha: 0.04)),
               borderRadius: AppTheme.radius12,
               border: Border.all(
                 color: isFocused
                     ? AppTheme.focusRing
                     : (isSelected
-                        ? AppTheme.accent.withValues(alpha: 0.4)
-                        : (isHovered
-                            ? AppTheme.textWhite.withValues(alpha: 0.2)
-                            : AppTheme.textWhite.withValues(alpha: 0.08))),
+                          ? AppTheme.accent.withValues(alpha: 0.4)
+                          : (isHovered
+                                ? AppTheme.textWhite.withValues(alpha: 0.2)
+                                : AppTheme.textWhite.withValues(alpha: 0.08))),
                 width: isFocused ? 2 : 1,
               ),
             ),
@@ -250,8 +249,9 @@ class LiveTvQualityView extends ConsumerWidget {
                           ? AppTheme.accent
                           : AppTheme.textWhite.withValues(alpha: 0.9),
                       fontSize: 14,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                     ),
                   ),
                 ),

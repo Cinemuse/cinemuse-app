@@ -106,10 +106,7 @@ class PlayerSeekCoordinator {
     onUpdate();
   }
 
-  void onSeekChanged({
-    required double value,
-    required VoidCallback onUpdate,
-  }) {
+  void onSeekChanged({required double value, required VoidCallback onUpdate}) {
     _virtualPosition = Duration(seconds: value.toInt());
     onUpdate();
   }

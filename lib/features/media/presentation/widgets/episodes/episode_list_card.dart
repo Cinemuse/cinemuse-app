@@ -23,7 +23,8 @@ class EpisodeListCard extends ConsumerStatefulWidget {
   final bool isWatched;
   final int watchCount;
   final double? resumePercentage;
-  final void Function(int season, int episode, String name, {bool restart})? onEpisodeTap;
+  final void Function(int season, int episode, String name, {bool restart})?
+  onEpisodeTap;
   final Function(int, int, DateTime?)? onMarkWatched;
   final Function(int, int) onTrackOptions;
   final List<({int season, int episode})> Function(int, int)
@@ -128,7 +129,11 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
     AppMenu.show(
       context: context,
       options: options,
-      title: l10n.detailsEpisodeWithSeason(widget.seasonNumber, _epNumber, epName),
+      title: l10n.detailsEpisodeWithSeason(
+        widget.seasonNumber,
+        _epNumber,
+        epName,
+      ),
       anchorContext: anchorContext,
       position: _tapPosition,
     );
@@ -167,8 +172,12 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
                 color: isFocused
                     ? theme.focusColor
                     : (isHovered
-                        ? theme.colorScheme.surfaceContainer.withValues(alpha: 0.7)
-                        : theme.colorScheme.surfaceContainer.withValues(alpha: 0.5)),
+                          ? theme.colorScheme.surfaceContainer.withValues(
+                              alpha: 0.7,
+                            )
+                          : theme.colorScheme.surfaceContainer.withValues(
+                              alpha: 0.5,
+                            )),
                 borderRadius: AppTheme.radiusLg,
               ),
               clipBehavior: Clip.antiAlias,
@@ -220,13 +229,7 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
             : Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildEpisodeStill(
-                    context,
-                    l10n,
-                    stillPath,
-                    runtime,
-                    160,
-                  ),
+                  _buildEpisodeStill(context, l10n, stillPath, runtime, 160),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -263,10 +266,12 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
               borderRadius: AppTheme.radiusMd,
               child: stillPath != null
                   ? CachedNetworkImage(
-                      imageUrl: TmdbImageHelper.stillUrl(context, stillPath) ?? '',
+                      imageUrl:
+                          TmdbImageHelper.stillUrl(context, stillPath) ?? '',
                       memCacheWidth: 400,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(color: AppTheme.secondary),
+                      placeholder: (context, url) =>
+                          Container(color: AppTheme.secondary),
                       errorWidget: (context, url, error) => Container(
                         color: AppTheme.secondary,
                         child: const Center(
@@ -664,7 +669,9 @@ class MarkWatchedButton extends StatelessWidget {
                     )
                   : Icon(
                       isWatched ? Icons.check : Icons.remove_red_eye_outlined,
-                      color: isWatched ? AppTheme.textWhite : AppTheme.textMuted,
+                      color: isWatched
+                          ? AppTheme.textWhite
+                          : AppTheme.textMuted,
                       size: 20,
                     ),
             ),

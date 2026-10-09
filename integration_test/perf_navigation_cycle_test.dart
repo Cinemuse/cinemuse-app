@@ -31,17 +31,14 @@ void main() {
     // Let the initial home screen fully settle
     await tester.pump(const Duration(seconds: 2));
 
-    await binding.traceAction(
-      () async {
-        for (var cycle = 0; cycle < 5; cycle++) {
-          // Home (0) → Explore (1) → Live TV (2) → Profile (3) → Home (0)
-          for (final tabIndex in [1, 2, 3, 0]) {
-            container.read(navIndexProvider.notifier).state = tabIndex;
-            await tester.pumpAndSettle(const Duration(milliseconds: 500));
-          }
+    await binding.traceAction(() async {
+      for (var cycle = 0; cycle < 5; cycle++) {
+        // Home (0) → Explore (1) → Live TV (2) → Profile (3) → Home (0)
+        for (final tabIndex in [1, 2, 3, 0]) {
+          container.read(navIndexProvider.notifier).state = tabIndex;
+          await tester.pumpAndSettle(const Duration(milliseconds: 500));
         }
-      },
-      reportKey: 'tab_navigation_cycle',
-    );
+      }
+    }, reportKey: 'tab_navigation_cycle');
   });
 }

@@ -1,13 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// Identifies the upstream source/platform of a comment or review.
-enum CommentSource {
-  serializd,
-  letterboxd,
-  tmdb,
-  imdb,
-  cinemuse,
-}
+enum CommentSource { serializd, letterboxd, tmdb, imdb, cinemuse }
 
 /// Represents the author of a comment or review.
 class CommentAuthor extends Equatable {

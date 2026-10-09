@@ -76,9 +76,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   void _openSettings(GlobalKey<NavigatorState> shellNavigatorKey) {
     shellNavigatorKey.currentState?.push(
-      MaterialPageRoute(
-        builder: (_) => const SettingsScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const SettingsScreen()),
     );
   }
 
@@ -172,7 +170,8 @@ class _AppShellState extends ConsumerState<AppShell> {
     required int currentIndex,
     required GlobalKey<NavigatorState> shellNavigatorKey,
   }) {
-    final isLiveTvFullWindow = currentIndex == 2 &&
+    final isLiveTvFullWindow =
+        currentIndex == 2 &&
         ref.watch(liveTvViewModeProvider) == LiveTvViewMode.fullWindow;
 
     return Stack(
@@ -185,16 +184,13 @@ class _AppShellState extends ConsumerState<AppShell> {
                 onTap: (index) =>
                     _onDestinationSelected(index, shellNavigatorKey),
                 onSettingsTap: () => _openSettings(shellNavigatorKey),
-                onLogoutTap: () =>
-                    ref.read(authProvider.notifier).signOut(),
+                onLogoutTap: () => ref.read(authProvider.notifier).signOut(),
                 onSearchTap: () => SearchOverlay.show(
                   context,
                   navigator: shellNavigatorKey.currentState,
                 ),
               ),
-            Expanded(
-              child: _buildNavigator(shellNavigatorKey),
-            ),
+            Expanded(child: _buildNavigator(shellNavigatorKey)),
           ],
         ),
         const Positioned.fill(child: UpdateOverlay()),
@@ -211,10 +207,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           builder: (context) => Consumer(
             builder: (context, ref, child) {
               final index = ref.watch(navIndexProvider);
-              return IndexedStack(
-                index: index,
-                children: _screens,
-              );
+              return IndexedStack(index: index, children: _screens);
             },
           ),
         );

@@ -30,8 +30,12 @@ class AppTheme {
   static const Color textSecondary = Color(0xFFe5e7eb); // Gray 200
   static const Color textMuted = Color(0xFF9ca3af); // Gray 400
 
-  static const Color surfaceOverlay = Color(0x8C000000); // 55% black for frosted HUDs
-  static const Color borderSubtle = Color(0x26FFFFFF); // 15% white for glass borders
+  static const Color surfaceOverlay = Color(
+    0x8C000000,
+  ); // 55% black for frosted HUDs
+  static const Color borderSubtle = Color(
+    0x26FFFFFF,
+  ); // 15% white for glass borders
 
   // Stream Metadata Badge Tokens
   static const Color badgeHdr = Color(0xFFf97316); // Orange 500
@@ -52,11 +56,7 @@ class AppTheme {
   static const Color focusRing = Color(0xFFffffff);
   static const Color focusRingAccent = Color(0xFFffffff);
   static const List<BoxShadow> shadowFocusGlow = [
-    BoxShadow(
-      color: Color(0x33ffffff),
-      blurRadius: 12,
-      spreadRadius: 1,
-    ),
+    BoxShadow(color: Color(0x33ffffff), blurRadius: 12, spreadRadius: 1),
   ];
 
   // Shadows

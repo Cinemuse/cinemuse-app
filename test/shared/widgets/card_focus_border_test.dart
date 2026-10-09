@@ -5,13 +5,13 @@ import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 void main() {
-  testWidgets('CardFocusBorder renders inactive border when unfocused', (tester) async {
+  testWidgets('CardFocusBorder renders inactive border when unfocused', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.darkTheme,
-        home: const Scaffold(
-          body: CardFocusBorder(),
-        ),
+        home: const Scaffold(body: CardFocusBorder()),
       ),
     );
 
@@ -27,44 +27,47 @@ void main() {
     expect(decoration.boxShadow, isNull);
   });
 
-  testWidgets('CardFocusBorder renders high-contrast focus border and glow when focused via DpadFocusable', (tester) async {
-    final focusNode = FocusNode();
+  testWidgets(
+    'CardFocusBorder renders high-contrast focus border and glow when focused via DpadFocusable',
+    (tester) async {
+      final focusNode = FocusNode();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.darkTheme,
-        home: Scaffold(
-          body: DpadFocusable(
-            focusNode: focusNode,
-            autofocus: true,
-            child: const CardFocusBorder(),
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.darkTheme,
+          home: Scaffold(
+            body: DpadFocusable(
+              focusNode: focusNode,
+              autofocus: true,
+              child: const CardFocusBorder(),
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(focusNode.hasFocus, isTrue);
+      expect(focusNode.hasFocus, isTrue);
 
-    final containerFinder = find.byType(AnimatedContainer);
-    expect(containerFinder, findsOneWidget);
+      final containerFinder = find.byType(AnimatedContainer);
+      expect(containerFinder, findsOneWidget);
 
-    final container = tester.widget<AnimatedContainer>(containerFinder);
-    final decoration = container.decoration as BoxDecoration;
-    final border = decoration.border as Border;
+      final container = tester.widget<AnimatedContainer>(containerFinder);
+      final decoration = container.decoration as BoxDecoration;
+      final border = decoration.border as Border;
 
-    expect(border.top.color, equals(AppTheme.accent));
-    expect(border.top.width, equals(2.0));
-    expect(decoration.boxShadow, isNull);
-  });
+      expect(border.top.color, equals(AppTheme.accent));
+      expect(border.top.width, equals(2.0));
+      expect(decoration.boxShadow, isNull);
+    },
+  );
 
-  testWidgets('CardFocusBorder renders hover border when hovered', (tester) async {
+  testWidgets('CardFocusBorder renders hover border when hovered', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.darkTheme,
-        home: const Scaffold(
-          body: CardFocusBorder(isHovered: true),
-        ),
+        home: const Scaffold(body: CardFocusBorder(isHovered: true)),
       ),
     );
 

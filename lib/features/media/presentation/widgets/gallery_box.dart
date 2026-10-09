@@ -16,19 +16,40 @@ class GalleryBox extends StatelessWidget {
   List<String> _getBackdrops() {
     if (images != null) return images!.backdrops;
     final list = (details?['images']?['backdrops'] as List?) ?? [];
-    return list.map((item) => item is Map ? (item['file_path'] as String? ?? '') : item.toString()).where((s) => s.isNotEmpty).toList();
+    return list
+        .map(
+          (item) => item is Map
+              ? (item['file_path'] as String? ?? '')
+              : item.toString(),
+        )
+        .where((s) => s.isNotEmpty)
+        .toList();
   }
 
   List<String> _getPosters() {
     if (images != null) return images!.posters;
     final list = (details?['images']?['posters'] as List?) ?? [];
-    return list.map((item) => item is Map ? (item['file_path'] as String? ?? '') : item.toString()).where((s) => s.isNotEmpty).toList();
+    return list
+        .map(
+          (item) => item is Map
+              ? (item['file_path'] as String? ?? '')
+              : item.toString(),
+        )
+        .where((s) => s.isNotEmpty)
+        .toList();
   }
 
   List<String> _getLogos() {
     if (images != null) return images!.logos;
     final list = (details?['images']?['logos'] as List?) ?? [];
-    return list.map((item) => item is Map ? (item['file_path'] as String? ?? '') : item.toString()).where((s) => s.isNotEmpty).toList();
+    return list
+        .map(
+          (item) => item is Map
+              ? (item['file_path'] as String? ?? '')
+              : item.toString(),
+        )
+        .where((s) => s.isNotEmpty)
+        .toList();
   }
 
   void _openGallery(BuildContext context, int initialTabIndex) {
@@ -62,11 +83,7 @@ class GalleryBox extends StatelessWidget {
         borderRadius: AppTheme.radiusMd,
         child: const Padding(
           padding: EdgeInsets.all(4.0),
-          child: Icon(
-            Icons.chevron_right,
-            color: AppTheme.accent,
-            size: 20,
-          ),
+          child: Icon(Icons.chevron_right, color: AppTheme.accent, size: 20),
         ),
       ),
       child: Column(
@@ -74,10 +91,7 @@ class GalleryBox extends StatelessWidget {
         children: [
           Text(
             l10n.detailsGallerySubtitle,
-            style: const TextStyle(
-              color: AppTheme.textMuted,
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -132,9 +146,7 @@ class _GalleryPill extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppTheme.secondary.withValues(alpha: 0.5),
           borderRadius: AppTheme.radius12,
-          border: Border.all(
-            color: AppTheme.border.withValues(alpha: 0.1),
-          ),
+          border: Border.all(color: AppTheme.border.withValues(alpha: 0.1)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

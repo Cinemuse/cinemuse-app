@@ -86,10 +86,7 @@ class PlayPauseOverlay extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.95),
                 size: 64,
                 shadows: const [
-                  BoxShadow(
-                    color: Colors.black54,
-                    blurRadius: 18,
-                  ),
+                  BoxShadow(color: Colors.black54, blurRadius: 18),
                 ],
               ),
             );

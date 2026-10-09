@@ -44,10 +44,12 @@ class VideoCard extends StatelessWidget {
                                 'https://img.youtube.com/vi/$youtubeKey/mqdefault.jpg',
                             memCacheWidth: 400,
                             fit: BoxFit.cover,
-                            placeholder: (context, url) =>
-                                Container(color: theme.colorScheme.surfaceContainer),
-                            errorWidget: (context, url, error) =>
-                                Container(color: theme.colorScheme.surfaceContainer),
+                            placeholder: (context, url) => Container(
+                              color: theme.colorScheme.surfaceContainer,
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: theme.colorScheme.surfaceContainer,
+                            ),
                           ),
                           Container(
                             padding: const EdgeInsets.all(8),

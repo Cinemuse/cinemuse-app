@@ -196,8 +196,9 @@ class TorBoxService implements BaseDebridService {
 
     return rawFiles
         .where((f) {
-          final path = (f['name'] as String? ?? f['short_name'] as String? ?? '')
-              .toLowerCase();
+          final path =
+              (f['name'] as String? ?? f['short_name'] as String? ?? '')
+                  .toLowerCase();
           return path.endsWith('.mp4') ||
               path.endsWith('.mkv') ||
               path.endsWith('.avi') ||

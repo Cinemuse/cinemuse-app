@@ -57,7 +57,8 @@ class WatchHistoryFilterSheet extends StatefulWidget {
   }
 
   @override
-  State<WatchHistoryFilterSheet> createState() => _WatchHistoryFilterSheetState();
+  State<WatchHistoryFilterSheet> createState() =>
+      _WatchHistoryFilterSheetState();
 }
 
 class _WatchHistoryFilterSheetState extends State<WatchHistoryFilterSheet> {
@@ -79,7 +80,8 @@ class _WatchHistoryFilterSheetState extends State<WatchHistoryFilterSheet> {
     return _selectedType != null ||
         _selectedStatus != null ||
         _selectedSortOption != HistorySortOption.recentlyWatched ||
-        (widget.isTimelineMode && _selectedGranularity != TimelineGranularity.daily);
+        (widget.isTimelineMode &&
+            _selectedGranularity != TimelineGranularity.daily);
   }
 
   void _resetFilters() {
@@ -255,22 +257,28 @@ class _WatchHistoryFilterSheetState extends State<WatchHistoryFilterSheet> {
         _buildSelectableChip(
           label: l10n.watchHistorySortRecent,
           isSelected: _selectedSortOption == HistorySortOption.recentlyWatched,
-          onTap: () => setState(() => _selectedSortOption = HistorySortOption.recentlyWatched),
+          onTap: () => setState(
+            () => _selectedSortOption = HistorySortOption.recentlyWatched,
+          ),
         ),
         _buildSelectableChip(
           label: l10n.searchNewestReleases,
           isSelected: _selectedSortOption == HistorySortOption.releaseDate,
-          onTap: () => setState(() => _selectedSortOption = HistorySortOption.releaseDate),
+          onTap: () => setState(
+            () => _selectedSortOption = HistorySortOption.releaseDate,
+          ),
         ),
         _buildSelectableChip(
           label: l10n.searchHighestRated,
           isSelected: _selectedSortOption == HistorySortOption.rating,
-          onTap: () => setState(() => _selectedSortOption = HistorySortOption.rating),
+          onTap: () =>
+              setState(() => _selectedSortOption = HistorySortOption.rating),
         ),
         _buildSelectableChip(
           label: l10n.watchHistorySortTitle,
           isSelected: _selectedSortOption == HistorySortOption.title,
-          onTap: () => setState(() => _selectedSortOption = HistorySortOption.title),
+          onTap: () =>
+              setState(() => _selectedSortOption = HistorySortOption.title),
         ),
       ],
     );
@@ -284,17 +292,21 @@ class _WatchHistoryFilterSheetState extends State<WatchHistoryFilterSheet> {
         _buildSelectableChip(
           label: l10n.watchHistoryGranularityDaily,
           isSelected: _selectedGranularity == TimelineGranularity.daily,
-          onTap: () => setState(() => _selectedGranularity = TimelineGranularity.daily),
+          onTap: () =>
+              setState(() => _selectedGranularity = TimelineGranularity.daily),
         ),
         _buildSelectableChip(
           label: l10n.watchHistoryGranularityMonthly,
           isSelected: _selectedGranularity == TimelineGranularity.monthly,
-          onTap: () => setState(() => _selectedGranularity = TimelineGranularity.monthly),
+          onTap: () => setState(
+            () => _selectedGranularity = TimelineGranularity.monthly,
+          ),
         ),
         _buildSelectableChip(
           label: l10n.watchHistoryGranularityYearly,
           isSelected: _selectedGranularity == TimelineGranularity.yearly,
-          onTap: () => setState(() => _selectedGranularity = TimelineGranularity.yearly),
+          onTap: () =>
+              setState(() => _selectedGranularity = TimelineGranularity.yearly),
         ),
       ],
     );
@@ -353,10 +365,7 @@ class _WatchHistoryFilterSheetState extends State<WatchHistoryFilterSheet> {
         ),
         child: Text(
           l10n.watchHistoryApplyFilters,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
       ),
     );

@@ -32,14 +32,16 @@ class _ProfileHubState extends ConsumerState<ProfileHub>
     _tabController = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        ref.read(pageContentFocusActionsProvider.notifier).update(
-          (map) => {
-            ...map,
-            3: () {
-              _tabBarFocusNode.requestFocus();
-            },
-          },
-        );
+        ref
+            .read(pageContentFocusActionsProvider.notifier)
+            .update(
+              (map) => {
+                ...map,
+                3: () {
+                  _tabBarFocusNode.requestFocus();
+                },
+              },
+            );
       }
     });
   }
@@ -66,7 +68,9 @@ class _ProfileHubState extends ConsumerState<ProfileHub>
           final user = ref.read(authProvider).value;
           if (user != null) {
             await Future.wait([
-              ref.read(watchHistoryRepositoryProvider).syncWatchHistory(user.id),
+              ref
+                  .read(watchHistoryRepositoryProvider)
+                  .syncWatchHistory(user.id),
               ref.read(listsRepositoryProvider).syncUserLists(user.id),
             ]).catchError((_) => []);
           }
@@ -76,92 +80,96 @@ class _ProfileHubState extends ConsumerState<ProfileHub>
         child: NestedScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  if (isOffline) ...[
-                    SizedBox(height: 40),
-                    OfflineBanner(
-                      onRetry: () => ref.invalidate(connectivityProvider),
-                    ),
-                    const SizedBox(height: 16),
-                  ] else ...[
-                    SizedBox(height: 60),
-                  ],
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppTheme.getResponsiveHorizontalPadding(
-                        context,
+            return [
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    if (isOffline) ...[
+                      SizedBox(height: 40),
+                      OfflineBanner(
+                        onRetry: () => ref.invalidate(connectivityProvider),
+                      ),
+                      const SizedBox(height: 16),
+                    ] else ...[
+                      SizedBox(height: 60),
+                    ],
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppTheme.getResponsiveHorizontalPadding(
+                          context,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          const ProfileHero(),
+                          const SizedBox(height: 24),
+                          // Navigation Tabs
+                          Focus(
+                            focusNode: _tabBarFocusNode,
+                            onKeyEvent: (node, event) {
+                              if (event is! KeyDownEvent &&
+                                  event is! KeyRepeatEvent) {
+                                return KeyEventResult.ignored;
+                              }
+                              if (event.logicalKey ==
+                                  LogicalKeyboardKey.arrowUp) {
+                                final focusNavbar = ref.read(
+                                  topNavbarFocusActionProvider,
+                                );
+                                if (focusNavbar != null) {
+                                  focusNavbar();
+                                  return KeyEventResult.handled;
+                                }
+                              }
+                              return KeyEventResult.ignored;
+                            },
+                            child: TabBar(
+                              controller: _tabController,
+                              isScrollable: true,
+                              indicatorColor: AppTheme.accent,
+                              indicatorWeight: 2,
+                              labelColor: Colors.white,
+                              unselectedLabelColor: Colors.grey,
+                              labelStyle: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                              unselectedLabelStyle: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                              dividerColor: Colors.transparent,
+                              tabAlignment: TabAlignment.start,
+                              tabs: [
+                                Tab(text: l10n.profileOverview),
+                                Tab(text: l10n.profileCollections),
+                                Tab(text: l10n.profileActivity),
+                              ],
+                            ),
+                          ),
+                          const Divider(height: 1, color: Colors.white24),
+                        ],
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        const ProfileHero(),
-                        const SizedBox(height: 24),
-                        // Navigation Tabs
-                        Focus(
-                          focusNode: _tabBarFocusNode,
-                          onKeyEvent: (node, event) {
-                            if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
-                              return KeyEventResult.ignored;
-                            }
-                            if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-                              final focusNavbar = ref.read(topNavbarFocusActionProvider);
-                              if (focusNavbar != null) {
-                                focusNavbar();
-                                return KeyEventResult.handled;
-                              }
-                            }
-                            return KeyEventResult.ignored;
-                          },
-                          child: TabBar(
-                            controller: _tabController,
-                            isScrollable: true,
-                            indicatorColor: AppTheme.accent,
-                            indicatorWeight: 2,
-                            labelColor: Colors.white,
-                            unselectedLabelColor: Colors.grey,
-                            labelStyle: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                            unselectedLabelStyle: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                            dividerColor: Colors.transparent,
-                            tabAlignment: TabAlignment.start,
-                            tabs: [
-                              Tab(text: l10n.profileOverview),
-                              Tab(text: l10n.profileCollections),
-                              Tab(text: l10n.profileActivity),
-                            ],
-                          ),
-                        ),
-                        const Divider(height: 1, color: Colors.white24),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ];
-        },
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            const ProfileOverview(),
-            const ProfileCollections(),
-            Center(
-              child: Text(
-                l10n.profileActivityComingSoon,
-                style: const TextStyle(color: Colors.grey),
+            ];
+          },
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              const ProfileOverview(),
+              const ProfileCollections(),
+              Center(
+                child: Text(
+                  l10n.profileActivityComingSoon,
+                  style: const TextStyle(color: Colors.grey),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

@@ -8,10 +8,7 @@ import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_
 class LiveTvChannelDrawer extends ConsumerWidget {
   final VoidCallback onClose;
 
-  const LiveTvChannelDrawer({
-    super.key,
-    required this.onClose,
-  });
+  const LiveTvChannelDrawer({super.key, required this.onClose});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -34,10 +31,7 @@ class LiveTvChannelDrawer extends ConsumerWidget {
           child: RepaintBoundary(
             child: FocusScope(
               autofocus: true,
-              child: ChannelListPanel(
-                isOverlay: true,
-                onClose: onClose,
-              ),
+              child: ChannelListPanel(isOverlay: true, onClose: onClose),
             ),
           ),
         ),

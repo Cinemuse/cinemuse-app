@@ -8,6 +8,7 @@ import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dar
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:cinemuse_app/core/utils/mime_resolver.dart';
+
 /// Internal protocol constants for CastHandler.
 class CastConstants {
   static const String defaultAppId = 'CC1AD845';

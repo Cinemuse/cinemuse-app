@@ -74,8 +74,12 @@ class CustomVideoControls extends ConsumerStatefulWidget {
 }
 
 class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
-  final FocusNode _rootFocusNode = FocusNode(debugLabel: 'CustomVideoControlsRoot');
-  final FocusNode _playPauseFocusNode = FocusNode(debugLabel: 'PlayPauseTvButton');
+  final FocusNode _rootFocusNode = FocusNode(
+    debugLabel: 'CustomVideoControlsRoot',
+  );
+  final FocusNode _playPauseFocusNode = FocusNode(
+    debugLabel: 'PlayPauseTvButton',
+  );
   final FocusNode _seekbarFocusNode = FocusNode(debugLabel: 'SeekbarFocusNode');
 
   bool _visible = true;
@@ -103,8 +107,11 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
 
   void _initFullscreenState() {
     if (mounted) {
-      setState(() => _isFullScreen =
-          PlayerWindowCoordinator.isFullscreenSafe(widget.videoState));
+      setState(
+        () => _isFullScreen = PlayerWindowCoordinator.isFullscreenSafe(
+          widget.videoState,
+        ),
+      );
     }
   }
 
@@ -204,8 +211,9 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       PlayerWindowCoordinator.isFullscreenSafe(widget.videoState);
 
   Future<void> _toggleFullscreen() async {
-    final isNowFullscreen =
-        await PlayerWindowCoordinator.toggleFullscreen(widget.videoState);
+    final isNowFullscreen = await PlayerWindowCoordinator.toggleFullscreen(
+      widget.videoState,
+    );
     if (mounted) setState(() => _isFullScreen = isNowFullscreen);
   }
 
@@ -218,16 +226,16 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   }
 
   void _zapNextChannel() => _channelCoordinator.zapNextChannel(
-        ref: ref,
-        currentChannel: widget.channel,
-        onCustomNextChannel: widget.onNextChannel,
-      );
+    ref: ref,
+    currentChannel: widget.channel,
+    onCustomNextChannel: widget.onNextChannel,
+  );
 
   void _zapPreviousChannel() => _channelCoordinator.zapPreviousChannel(
-        ref: ref,
-        currentChannel: widget.channel,
-        onCustomPreviousChannel: widget.onPreviousChannel,
-      );
+    ref: ref,
+    currentChannel: widget.channel,
+    onCustomPreviousChannel: widget.onPreviousChannel,
+  );
 
   void _handleNumberInput(String digit) =>
       _channelCoordinator.handleNumberInput(
@@ -238,15 +246,16 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       );
 
   void _confirmNumberInput() => _channelCoordinator.confirmNumberInput(
-        ref: ref,
-        onCustomConfirmNumber: widget.onConfirmNumber,
-      );
+    ref: ref,
+    onCustomConfirmNumber: widget.onConfirmNumber,
+  );
 
   KeyEventResult _handleKeyEvent(KeyEvent event) {
     final isLive = widget.isLive || widget.params.type == 'livetv';
     final isOverlayOpen = ref.read(liveTvChannelOverlayProvider);
     final isBigPicture = ref.read(isBigPictureProvider);
-    final isFullOrStandalone = widget.isFullWindow ||
+    final isFullOrStandalone =
+        widget.isFullWindow ||
         widget.params.type == 'livetv' ||
         ref.read(liveTvViewModeProvider) == LiveTvViewMode.fullWindow ||
         _isFullScreen;
@@ -286,8 +295,9 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   void _performRealSkip(bool forward, {bool showControls = true}) {
     _seekCoordinator.performRealSkip(
       player: widget.playerState.controller.player,
-      onSeek: (target) =>
-          ref.read(playerControllerProvider(widget.params).notifier).seek(target),
+      onSeek: (target) => ref
+          .read(playerControllerProvider(widget.params).notifier)
+          .seek(target),
       forward: forward,
       onUpdate: () {
         if (mounted) setState(() {});
@@ -298,26 +308,27 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   }
 
   void _onSeekStart(double value) => _seekCoordinator.onSeekStart(
-        value: value,
-        onCancelHideTimer: () => _hideTimer?.cancel(),
-        onUpdate: () => mounted ? setState(() {}) : null,
-      );
+    value: value,
+    onCancelHideTimer: () => _hideTimer?.cancel(),
+    onUpdate: () => mounted ? setState(() {}) : null,
+  );
 
   void _onSeekEnd(double value) => _seekCoordinator.onSeekEnd(
-        value: value,
-        onSeek: (target) =>
-            ref.read(playerControllerProvider(widget.params).notifier).seek(target),
-        onStartHideTimer: _startHideTimer,
-        onUpdate: () => mounted ? setState(() {}) : null,
-      );
+    value: value,
+    onSeek: (target) =>
+        ref.read(playerControllerProvider(widget.params).notifier).seek(target),
+    onStartHideTimer: _startHideTimer,
+    onUpdate: () => mounted ? setState(() {}) : null,
+  );
 
   void _onSeekChanged(double value) => _seekCoordinator.onSeekChanged(
-        value: value,
-        onUpdate: () => mounted ? setState(() {}) : null,
-      );
+    value: value,
+    onUpdate: () => mounted ? setState(() {}) : null,
+  );
 
   Widget _buildTopBar(bool isLive, bool isBigPicture) {
-    final isDesktopNonFullscreen = !_isFullScreen &&
+    final isDesktopNonFullscreen =
+        !_isFullScreen &&
         (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
 
     final topBar = VideoTopBar(
@@ -423,9 +434,9 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       _gestureCoordinator.onDoubleTapDown(details);
 
   void _onDoubleTap() => _gestureCoordinator.onDoubleTap(
-        screenWidth: MediaQuery.of(context).size.width,
-        onSkip: _performRealSkip,
-      );
+    screenWidth: MediaQuery.of(context).size.width,
+    onSkip: _performRealSkip,
+  );
 
   void _closeChannelOverlay() {
     ref.read(liveTvChannelOverlayProvider.notifier).state = false;
@@ -481,22 +492,22 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                     children: [
                       _buildTopBar(isLive, isBigPicture),
 
-                    // Buffering / play-pause center overlay
-                    BufferingIndicator(player: player),
-                    PlayPauseOverlay(
-                      player: player,
-                      visible: _visible,
-                      onTogglePlayPause: _togglePlayPause,
-                      onSkip: _performRealSkip,
-                      seekAmount: _seekCoordinator.seekAmount,
-                      showSeekIndicator: _seekCoordinator.showSeekIndicator,
-                    ),
+                      // Buffering / play-pause center overlay
+                      BufferingIndicator(player: player),
+                      PlayPauseOverlay(
+                        player: player,
+                        visible: _visible,
+                        onTogglePlayPause: _togglePlayPause,
+                        onSkip: _performRealSkip,
+                        seekAmount: _seekCoordinator.seekAmount,
+                        showSeekIndicator: _seekCoordinator.showSeekIndicator,
+                      ),
 
-                    _buildBottomBar(isLive),
-                  ],
+                      _buildBottomBar(isLive),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
               // Number input OSD (always visible, above controls)
               Consumer(

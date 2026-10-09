@@ -30,11 +30,7 @@ class VodSourceHandler {
   final TmdbService _tmdbService;
   final Player _player;
 
-  VodSourceHandler(
-    this._resolver,
-    this._tmdbService,
-    this._player,
-  );
+  VodSourceHandler(this._resolver, this._tmdbService, this._player);
 
   Future<VodInitializationResult> initialize(
     PlayerParams params, {
@@ -82,7 +78,9 @@ class VodSourceHandler {
       params.type,
     );
     final kind = params.type == 'movie' ? MediaKind.movie : MediaKind.tv;
-    final item = details != null ? MediaItem.fromTmdbDetails(details, kind) : null;
+    final item = details != null
+        ? MediaItem.fromTmdbDetails(details, kind)
+        : null;
     onFetched(item, details);
     return (item: item, raw: details);
   }

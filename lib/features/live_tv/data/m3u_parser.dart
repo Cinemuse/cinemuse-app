@@ -9,7 +9,8 @@ class M3uParser {
     for (var i = 0; i < lines.length && i < 15; i++) {
       final line = lines[i].trim();
       if (line.startsWith('#EXTM3U')) {
-        final urlTvg = _extractAttribute(line, 'url-tvg') ??
+        final urlTvg =
+            _extractAttribute(line, 'url-tvg') ??
             _extractAttribute(line, 'x-tvg-url');
         if (urlTvg != null && urlTvg.trim().isNotEmpty) {
           return urlTvg.trim();
@@ -44,7 +45,8 @@ class M3uParser {
         currentProvider = _extractAttribute(line, 'provider');
         currentQuality = _extractAttribute(line, 'quality');
         currentName = _extractChannelName(line);
-        final chnoStr = _extractAttribute(line, 'tvg-chno') ??
+        final chnoStr =
+            _extractAttribute(line, 'tvg-chno') ??
             _extractAttribute(line, 'tvg-num') ??
             _extractAttribute(line, 'channel-id');
         currentChno = int.tryParse(chnoStr ?? '');
@@ -110,7 +112,11 @@ class M3uParser {
     return 'name:${name.trim().toLowerCase()}';
   }
 
-  static StreamQuality _parseQuality(String? qualityAttr, String name, String url) {
+  static StreamQuality _parseQuality(
+    String? qualityAttr,
+    String name,
+    String url,
+  ) {
     if (qualityAttr != null && qualityAttr.trim().isNotEmpty) {
       final q = qualityAttr.trim().toUpperCase();
       if (q == '4K' || q == 'UHD') return StreamQuality.uhd;
@@ -131,7 +137,9 @@ class M3uParser {
     if (upperName.contains('FHD') || upperName.contains('1080')) {
       return StreamQuality.fhd;
     }
-    if (upperName.contains('HD') || upperName.contains('720') || upperUrl.contains('.TS')) {
+    if (upperName.contains('HD') ||
+        upperName.contains('720') ||
+        upperUrl.contains('.TS')) {
       return StreamQuality.hd;
     }
     return StreamQuality.sd;

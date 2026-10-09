@@ -143,11 +143,7 @@ class PlayerHistoryManager {
 
     final nextEpResult = ref
         .read(seriesDomainServiceProvider)
-        .getNextEpisode(
-          seriesDetails!,
-          params.season!,
-          params.episode!,
-        );
+        .getNextEpisode(seriesDetails!, params.season!, params.episode!);
 
     if (!nextEpResult.isAired) return null;
 

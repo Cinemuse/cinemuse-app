@@ -38,10 +38,7 @@ class CardFocusBorder extends StatelessWidget {
     final Border border;
 
     if (effectiveFocused) {
-      border = Border.all(
-        color: primaryColor,
-        width: 2.0,
-      );
+      border = Border.all(color: primaryColor, width: 2.0);
     } else if (effectiveHovered) {
       border = Border.all(
         color: primaryColor.withValues(alpha: 0.5),
@@ -58,10 +55,7 @@ class CardFocusBorder extends StatelessWidget {
       child: AnimatedContainer(
         duration: duration,
         curve: curve,
-        decoration: BoxDecoration(
-          borderRadius: borderRadius,
-          border: border,
-        ),
+        decoration: BoxDecoration(borderRadius: borderRadius, border: border),
       ),
     );
   }

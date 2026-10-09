@@ -57,14 +57,19 @@ class AppMenu {
               children: [
                 if (title != null)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 16, left: 24, right: 24),
+                    padding: const EdgeInsets.only(
+                      bottom: 16,
+                      left: 24,
+                      right: 24,
+                    ),
                     child: Text(
                       title,
-                      style: Theme.of(localContext).textTheme.bodyMedium!.copyWith(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                      style: Theme.of(localContext).textTheme.bodyMedium!
+                          .copyWith(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                     ),
                   ),
                 ...options.map(
@@ -77,12 +82,13 @@ class AppMenu {
                     ),
                     title: Text(
                       option.label,
-                      style: Theme.of(localContext).textTheme.bodyMedium!.copyWith(
-                        color: option.isDestructive
-                            ? AppTheme.favorites
-                            : Colors.white,
-                        fontSize: 16,
-                      ),
+                      style: Theme.of(localContext).textTheme.bodyMedium!
+                          .copyWith(
+                            color: option.isDestructive
+                                ? AppTheme.favorites
+                                : Colors.white,
+                            fontSize: 16,
+                          ),
                     ),
                     onTap: () {
                       Navigator.pop(localContext);

@@ -46,7 +46,10 @@ class PersonCard extends StatelessWidget {
                         borderRadius: AppTheme.radiusLg,
                         child: CachedNetworkImage(
                           imageUrl: profilePath != null
-                              ? TmdbImageHelper.profileUrl(context, profilePath)!
+                              ? TmdbImageHelper.profileUrl(
+                                  context,
+                                  profilePath,
+                                )!
                               : '',
                           fit: BoxFit.cover,
                           memCacheWidth: 270,

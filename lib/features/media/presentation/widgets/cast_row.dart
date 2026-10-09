@@ -37,12 +37,7 @@ class CastRow extends StatelessWidget {
   final List<CrewMember>? crew;
   final List<CrewMember>? creators;
 
-  const CastRow({
-    super.key,
-    this.cast,
-    this.crew,
-    this.creators,
-  });
+  const CastRow({super.key, this.cast, this.crew, this.creators});
 
   @override
   Widget build(BuildContext context) {
@@ -54,9 +49,13 @@ class CastRow extends StatelessWidget {
 
     // 1. Extract Creative Team (Directors, Creators, Lead Writers)
     final directors = resolvedCrew.where((c) => c.job == 'Director').toList();
-    final writers = resolvedCrew.where((c) => c.department == 'Writing').take(3).toList();
+    final writers = resolvedCrew
+        .where((c) => c.department == 'Writing')
+        .take(3)
+        .toList();
 
-    final creativeMembers = <({int id, String? profilePath, String name, String role})>[];
+    final creativeMembers =
+        <({int id, String? profilePath, String name, String role})>[];
     final seenIds = <int>{};
 
     for (final creator in resolvedCreators) {
@@ -100,7 +99,9 @@ class CastRow extends StatelessWidget {
     final items = <_PeopleRowItem>[];
 
     if (creativeMembers.isNotEmpty) {
-      items.add(_DividerItem(label: l10n.detailsSectionCrew, isHighlighted: true));
+      items.add(
+        _DividerItem(label: l10n.detailsSectionCrew, isHighlighted: true),
+      );
       for (final member in creativeMembers) {
         items.add(
           _PersonItem(
@@ -115,7 +116,9 @@ class CastRow extends StatelessWidget {
 
     if (resolvedCast.isNotEmpty) {
       if (creativeMembers.isNotEmpty) {
-        items.add(_DividerItem(label: l10n.detailsSectionCast, isHighlighted: true));
+        items.add(
+          _DividerItem(label: l10n.detailsSectionCast, isHighlighted: true),
+        );
       }
       for (final member in resolvedCast) {
         items.add(
@@ -129,7 +132,9 @@ class CastRow extends StatelessWidget {
       }
     }
 
-    final rowTitle = creativeMembers.isNotEmpty ? l10n.detailsPeople : l10n.detailsCast;
+    final rowTitle = creativeMembers.isNotEmpty
+        ? l10n.detailsPeople
+        : l10n.detailsCast;
 
     return GenericCarouselRow(
       title: rowTitle,
@@ -163,7 +168,8 @@ class CastRow extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => PersonDetailsScreen(personId: person.id!),
+                    builder: (context) =>
+                        PersonDetailsScreen(personId: person.id!),
                   ),
                 );
               }

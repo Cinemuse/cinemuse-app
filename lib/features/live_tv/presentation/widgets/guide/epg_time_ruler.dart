@@ -30,17 +30,14 @@ class EpgTimeRuler extends StatelessWidget {
       width: totalWidth,
       decoration: BoxDecoration(
         color: const Color(0xFF120B20),
-        border: Border(
-          bottom: BorderSide(color: AppTheme.border, width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: AppTheme.border, width: 1)),
       ),
       child: Stack(
         children: [
           // 30-minute interval slots
           Row(
             children: List.generate(totalSlots, (index) {
-              final slotTime =
-                  windowStart.add(Duration(minutes: index * 30));
+              final slotTime = windowStart.add(Duration(minutes: index * 30));
               final isHour = slotTime.minute == 0;
               final isMidnight = isHour && slotTime.hour == 0;
 
@@ -80,8 +77,7 @@ class EpgTimeRuler extends StatelessWidget {
                             ? AppTheme.textWhite
                             : AppTheme.textMuted.withValues(alpha: 0.8),
                         fontSize: isHour ? 13 : 12,
-                        fontWeight:
-                            isHour ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isHour ? FontWeight.w700 : FontWeight.w500,
                         fontFamily: 'Outfit',
                       ),
                     ),
@@ -97,10 +93,7 @@ class EpgTimeRuler extends StatelessWidget {
               left: nowOffset! - 22,
               top: 8,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppTheme.accent,
                   borderRadius: BorderRadius.circular(4),

@@ -97,63 +97,66 @@ void main() {
       expect(top[1].id, 3);
     });
 
-    test('processFilmography deduplicates, sorts by date desc, and filters hidden items', () {
-      final cast = [
-        PersonCredit(
-          id: 1,
-          mediaType: MediaKind.movie,
-          title: 'Old Movie',
-          releaseDate: DateTime(2010, 1, 1),
-          genreIds: const [18],
-        ),
-        PersonCredit(
-          id: 2,
-          mediaType: MediaKind.movie,
-          title: 'New Movie',
-          releaseDate: DateTime(2024, 1, 1),
-          genreIds: const [28],
-        ),
-        PersonCredit(
-          id: 3,
-          mediaType: MediaKind.movie,
-          title: 'The 90th Academy Awards',
-          releaseDate: DateTime(2018, 3, 4),
-          genreIds: const [10763],
-        ),
-      ];
-      final crew = [
-        PersonCredit(
-          // Duplicate of 2
-          id: 2,
-          mediaType: MediaKind.movie,
-          title: 'New Movie',
-          releaseDate: DateTime(2024, 1, 1),
-          genreIds: const [28],
-        ),
-      ];
+    test(
+      'processFilmography deduplicates, sorts by date desc, and filters hidden items',
+      () {
+        final cast = [
+          PersonCredit(
+            id: 1,
+            mediaType: MediaKind.movie,
+            title: 'Old Movie',
+            releaseDate: DateTime(2010, 1, 1),
+            genreIds: const [18],
+          ),
+          PersonCredit(
+            id: 2,
+            mediaType: MediaKind.movie,
+            title: 'New Movie',
+            releaseDate: DateTime(2024, 1, 1),
+            genreIds: const [28],
+          ),
+          PersonCredit(
+            id: 3,
+            mediaType: MediaKind.movie,
+            title: 'The 90th Academy Awards',
+            releaseDate: DateTime(2018, 3, 4),
+            genreIds: const [10763],
+          ),
+        ];
+        final crew = [
+          PersonCredit(
+            // Duplicate of 2
+            id: 2,
+            mediaType: MediaKind.movie,
+            title: 'New Movie',
+            releaseDate: DateTime(2024, 1, 1),
+            genreIds: const [28],
+          ),
+        ];
 
-      // When hidden items are filtered (showHidden == false)
-      final filtered = PersonDomainService.processFilmography(
-        cast: cast,
-        crew: crew,
-        showHidden: false,
-      );
+        // When hidden items are filtered (showHidden == false)
+        final filtered = PersonDomainService.processFilmography(
+          cast: cast,
+          crew: crew,
+          showHidden: false,
+        );
 
-      expect(filtered.length, 2);
-      expect(filtered[0].id, 2); // 2024
-      expect(filtered[1].id, 1); // 2010
+        expect(filtered.length, 2);
+        expect(filtered[0].id, 2); // 2024
+        expect(filtered[1].id, 1); // 2010
 
-      // When hidden items are shown (showHidden == true)
-      final all = PersonDomainService.processFilmography(
-        cast: cast,
-        crew: crew,
-        showHidden: true,
-      );
+        // When hidden items are shown (showHidden == true)
+        final all = PersonDomainService.processFilmography(
+          cast: cast,
+          crew: crew,
+          showHidden: true,
+        );
 
-      expect(all.length, 3);
-      expect(all[0].id, 2);
-      expect(all[1].id, 3);
-      expect(all[2].id, 1);
-    });
+        expect(all.length, 3);
+        expect(all[0].id, 2);
+        expect(all[1].id, 3);
+        expect(all[2].id, 1);
+      },
+    );
   });
 }

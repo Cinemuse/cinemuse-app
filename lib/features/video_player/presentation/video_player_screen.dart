@@ -251,7 +251,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                           params: params,
                           channel: widget.type == 'livetv'
                               ? (ref.watch(selectedChannelProvider) ??
-                                  widget.channel)
+                                    widget.channel)
                               : null,
                           isLive: widget.type == 'livetv',
                           isFullWindow: true,
@@ -264,7 +264,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                               ? () async {
                                   // Explicitly pause the player to prevent overlapping audio during transition
                                   await state.controller.player.pause();
-                                  
+
                                   // Ensure the current episode is marked as completed if threshold is met
                                   // and cleanup any stale watching entries before navigating
                                   await ref
@@ -384,4 +384,3 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     );
   }
 }
-

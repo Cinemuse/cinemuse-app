@@ -19,7 +19,7 @@ class LiveTvRepository {
   final EpgStorageService _epgStorage;
 
   LiveTvRepository(this._dio, {EpgStorageService? epgStorage})
-      : _epgStorage = epgStorage ?? EpgStorageService();
+    : _epgStorage = epgStorage ?? EpgStorageService();
 
   /// Fetches the channel list, filtering to only playable channels.
   Future<List<Channel>> fetchChannels({
@@ -135,7 +135,8 @@ class LiveTvRepository {
           name: (entry['name'] as String?) ?? 'Unknown',
           logo: (entry['logo'] as String?) ?? '',
           links: streamLinks,
-          group: (entry['group'] ?? entry['category']) as String? ?? fallbackGroup,
+          group:
+              (entry['group'] ?? entry['category']) as String? ?? fallbackGroup,
           provider: entry['provider'] as String?,
           subProvider: entry['sub_provider'] as String?,
           epgId: entry['epg_id'] as String?,

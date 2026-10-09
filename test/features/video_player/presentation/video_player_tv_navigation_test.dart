@@ -20,13 +20,19 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockPlayer extends Mock implements Player {}
+
 class MockPlayerStream extends Mock implements PlayerStream {}
+
 class MockPlayerState extends Mock implements PlayerState {}
+
 class MockVideoController extends Mock implements VideoController {}
+
 class FakeVideoState extends Fake implements VideoState {
   @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) => 'FakeVideoState';
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
+      'FakeVideoState';
 }
+
 class FakeAudioTrack extends Fake implements AudioTrack {}
 
 class FakeSettingsNotifier extends StateNotifier<UserSettings>
@@ -74,7 +80,9 @@ void main() {
 
     when(() => mockPlayer.stream).thenReturn(mockStream);
     when(() => mockPlayer.state).thenReturn(mockState);
-    when(() => mockStream.playing).thenAnswer((_) => playingStreamController.stream);
+    when(
+      () => mockStream.playing,
+    ).thenAnswer((_) => playingStreamController.stream);
     when(() => mockStream.buffering).thenAnswer((_) => const Stream.empty());
     when(() => mockStream.volume).thenAnswer((_) => const Stream.empty());
     when(() => mockState.playing).thenReturn(false);
@@ -127,7 +135,9 @@ void main() {
   }
 
   group('VideoPlaybackControls TV Layout Tests', () {
-    testWidgets('Renders inline row layout in Big Picture mode', (tester) async {
+    testWidgets('Renders inline row layout in Big Picture mode', (
+      tester,
+    ) async {
       var stopTapped = false;
       var playPauseToggled = false;
       var skipDirection = false;
@@ -200,7 +210,9 @@ void main() {
       expect(skipDirection, isTrue);
     });
 
-    testWidgets('D-Pad directional traversal steps through inline controls', (tester) async {
+    testWidgets('D-Pad directional traversal steps through inline controls', (
+      tester,
+    ) async {
       final seekbarFocusNode = FocusNode(debugLabel: 'TestSeekbar');
 
       await tester.pumpWidget(
@@ -327,33 +339,42 @@ void main() {
   });
 
   group('Video Settings Widgets D-Pad Tests', () {
-    testWidgets('SettingsTile receives focus with autofocus and invokes onTap', (tester) async {
-      var tapped = false;
+    testWidgets(
+      'SettingsTile receives focus with autofocus and invokes onTap',
+      (tester) async {
+        var tapped = false;
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          SettingsTile(
-            icon: Icons.tune,
-            title: 'Quality',
-            autofocus: true,
-            onTap: () => tapped = true,
+        await tester.pumpWidget(
+          buildTestableWidget(
+            SettingsTile(
+              icon: Icons.tune,
+              title: 'Quality',
+              autofocus: true,
+              onTap: () => tapped = true,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Verify autofocus
-      expect(tester.binding.focusManager.primaryFocus, isNotNull);
+        // Verify autofocus
+        expect(tester.binding.focusManager.primaryFocus, isNotNull);
 
-      // Press Enter/Select
-      await tester.sendKeyEvent(LogicalKeyboardKey.select);
-      await tester.pumpAndSettle();
-      expect(tapped, isTrue);
-    });
+        // Press Enter/Select
+        await tester.sendKeyEvent(LogicalKeyboardKey.select);
+        await tester.pumpAndSettle();
+        expect(tapped, isTrue);
+      },
+    );
 
-    testWidgets('TrackTile activates and calls setAudioTrack and onBack', (tester) async {
+    testWidgets('TrackTile activates and calls setAudioTrack and onBack', (
+      tester,
+    ) async {
       var backCalled = false;
-      final dummyTrack = AudioTrack.uri('file://dummy', title: 'English', language: 'en');
+      final dummyTrack = AudioTrack.uri(
+        'file://dummy',
+        title: 'English',
+        language: 'en',
+      );
 
       when(() => mockPlayer.setAudioTrack(any())).thenAnswer((_) async {});
 
@@ -382,241 +403,260 @@ void main() {
       expect(backCalled, isTrue);
     });
 
-    testWidgets('VideoBottomBar in Big Picture mode provides focusable Slider and wires playPauseFocusNode', (tester) async {
-      final playPauseFocusNode = FocusNode(debugLabel: 'TestPlayPause');
-      final seekbarFocusNode = FocusNode(debugLabel: 'TestSeekbar');
-      when(() => mockStream.position).thenAnswer((_) => Stream.value(Duration.zero));
-      when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
+    testWidgets(
+      'VideoBottomBar in Big Picture mode provides focusable Slider and wires playPauseFocusNode',
+      (tester) async {
+        final playPauseFocusNode = FocusNode(debugLabel: 'TestPlayPause');
+        final seekbarFocusNode = FocusNode(debugLabel: 'TestSeekbar');
+        when(
+          () => mockStream.position,
+        ).thenAnswer((_) => Stream.value(Duration.zero));
+        when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          VideoBottomBar(
-            playerState: createDummyPlayerState(),
-            actions: PlaybackControlActions(
-              onTogglePlayPause: () {},
-              onSkip: (_) {},
-              onToggleMute: () {},
-              onStopPressed: () {},
-              isFullscreen: false,
-              onToggleFullscreen: () {},
-              playPauseFocusNode: playPauseFocusNode,
-              seekbarFocusNode: seekbarFocusNode,
+        await tester.pumpWidget(
+          buildTestableWidget(
+            VideoBottomBar(
+              playerState: createDummyPlayerState(),
+              actions: PlaybackControlActions(
+                onTogglePlayPause: () {},
+                onSkip: (_) {},
+                onToggleMute: () {},
+                onStopPressed: () {},
+                isFullscreen: false,
+                onToggleFullscreen: () {},
+                playPauseFocusNode: playPauseFocusNode,
+                seekbarFocusNode: seekbarFocusNode,
+              ),
+              dragging: false,
+              onChangeStart: (_) {},
+              onChangeEnd: (_) {},
+              onChanged: (_) {},
             ),
-            dragging: false,
-            onChangeStart: (_) {},
-            onChangeEnd: (_) {},
-            onChanged: (_) {},
+            mode: DisplayMode.bigPicture,
           ),
-          mode: DisplayMode.bigPicture,
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Slider is present and focusable
-      final sliderFinder = find.byType(Slider);
-      expect(sliderFinder, findsOneWidget);
+        // Slider is present and focusable
+        final sliderFinder = find.byType(Slider);
+        expect(sliderFinder, findsOneWidget);
 
-      seekbarFocusNode.requestFocus();
-      await tester.pumpAndSettle();
-      expect(seekbarFocusNode.hasFocus, isTrue);
+        seekbarFocusNode.requestFocus();
+        await tester.pumpAndSettle();
+        expect(seekbarFocusNode.hasFocus, isTrue);
 
-      // Request focus on playPauseFocusNode
-      playPauseFocusNode.requestFocus();
-      await tester.pumpAndSettle();
+        // Request focus on playPauseFocusNode
+        playPauseFocusNode.requestFocus();
+        await tester.pumpAndSettle();
 
-      expect(playPauseFocusNode.hasFocus, isTrue);
-      playPauseFocusNode.dispose();
-      seekbarFocusNode.dispose();
-    });
+        expect(playPauseFocusNode.hasFocus, isTrue);
+        playPauseFocusNode.dispose();
+        seekbarFocusNode.dispose();
+      },
+    );
   });
 
   group('CustomVideoControls TV Navigation Tests', () {
-    testWidgets('Automatically focuses Play/Pause and navigates inline controls with arrow keys', (tester) async {
-      final fakeVideoState = FakeVideoState();
-      when(() => mockStream.position).thenAnswer((_) => Stream.value(Duration.zero));
-      when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
-      when(() => mockState.volume).thenReturn(100.0);
+    testWidgets(
+      'Automatically focuses Play/Pause and navigates inline controls with arrow keys',
+      (tester) async {
+        final fakeVideoState = FakeVideoState();
+        when(
+          () => mockStream.position,
+        ).thenAnswer((_) => Stream.value(Duration.zero));
+        when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
+        when(() => mockState.volume).thenReturn(100.0);
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          CustomVideoControls(
-            videoState: fakeVideoState,
-            playerState: createDummyPlayerState(),
-            params: const PlayerParams('movie-1', 'movie'),
-            onSettingsPressed: () {},
-            onBackPressed: () {},
-            onOverlayRequested: (_) {},
+        await tester.pumpWidget(
+          buildTestableWidget(
+            CustomVideoControls(
+              videoState: fakeVideoState,
+              playerState: createDummyPlayerState(),
+              params: const PlayerParams('movie-1', 'movie'),
+              onSettingsPressed: () {},
+              onBackPressed: () {},
+              onOverlayRequested: (_) {},
+            ),
+            mode: DisplayMode.bigPicture,
           ),
-          mode: DisplayMode.bigPicture,
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // In Big Picture mode, Play/Pause gets initial focus
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('PlayPauseTvButton'),
-      );
+        // In Big Picture mode, Play/Pause gets initial focus
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('PlayPauseTvButton'),
+        );
 
-      // Navigate Left to Rewind 10s
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
-      await tester.pumpAndSettle();
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('RewindTvButton'),
-      );
+        // Navigate Left to Rewind 10s
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+        await tester.pumpAndSettle();
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('RewindTvButton'),
+        );
 
-      // Navigate Right back to Play/Pause
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-      await tester.pumpAndSettle();
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('PlayPauseTvButton'),
-      );
+        // Navigate Right back to Play/Pause
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pumpAndSettle();
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('PlayPauseTvButton'),
+        );
 
-      // Navigate Right to Stop
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-      await tester.pumpAndSettle();
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('StopTvButton'),
-      );
+        // Navigate Right to Stop
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pumpAndSettle();
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('StopTvButton'),
+        );
 
-      // Navigate Right to Forward 10s
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-      await tester.pumpAndSettle();
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('ForwardTvButton'),
-      );
+        // Navigate Right to Forward 10s
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pumpAndSettle();
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('ForwardTvButton'),
+        );
 
-      // Navigate Right to Settings
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-      await tester.pumpAndSettle();
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('SettingsTvButton'),
-      );
+        // Navigate Right to Settings
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pumpAndSettle();
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('SettingsTvButton'),
+        );
 
-      // Navigate Right to Fullscreen
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-      await tester.pumpAndSettle();
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('FullscreenTvButton'),
-      );
+        // Navigate Right to Fullscreen
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pumpAndSettle();
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('FullscreenTvButton'),
+        );
 
-      // Navigate Left back to Settings
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
-      await tester.pumpAndSettle();
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('SettingsTvButton'),
-      );
+        // Navigate Left back to Settings
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+        await tester.pumpAndSettle();
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('SettingsTvButton'),
+        );
 
-      // Navigate Left to Forward 10s
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
-      await tester.pumpAndSettle();
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('ForwardTvButton'),
-      );
+        // Navigate Left to Forward 10s
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+        await tester.pumpAndSettle();
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('ForwardTvButton'),
+        );
 
-      // Navigate Left to Stop
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
-      await tester.pumpAndSettle();
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('StopTvButton'),
-      );
+        // Navigate Left to Stop
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+        await tester.pumpAndSettle();
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('StopTvButton'),
+        );
 
-      // Navigate Left back to Play/Pause
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
-      await tester.pumpAndSettle();
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('PlayPauseTvButton'),
-      );
+        // Navigate Left back to Play/Pause
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+        await tester.pumpAndSettle();
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('PlayPauseTvButton'),
+        );
 
-      // Navigate Up from controls to seekbar
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
-      await tester.pumpAndSettle();
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('SeekbarFocusNode'),
-      );
+        // Navigate Up from controls to seekbar
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pumpAndSettle();
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('SeekbarFocusNode'),
+        );
 
-      // Navigate Down from seekbar back to Play/Pause
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-      await tester.pumpAndSettle();
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('PlayPauseTvButton'),
-      );
-    });
+        // Navigate Down from seekbar back to Play/Pause
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.pumpAndSettle();
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('PlayPauseTvButton'),
+        );
+      },
+    );
 
-    testWidgets('Long-pressing keys on seekbar keeps focus on seekbar and does not drop to control row', (tester) async {
-      final fakeVideoState = FakeVideoState();
-      when(() => mockStream.position).thenAnswer((_) => Stream.value(Duration.zero));
-      when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
-      when(() => mockState.volume).thenReturn(100.0);
-      when(() => mockPlayer.seek(any())).thenAnswer((_) async {});
+    testWidgets(
+      'Long-pressing keys on seekbar keeps focus on seekbar and does not drop to control row',
+      (tester) async {
+        final fakeVideoState = FakeVideoState();
+        when(
+          () => mockStream.position,
+        ).thenAnswer((_) => Stream.value(Duration.zero));
+        when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
+        when(() => mockState.volume).thenReturn(100.0);
+        when(() => mockPlayer.seek(any())).thenAnswer((_) async {});
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          CustomVideoControls(
-            videoState: fakeVideoState,
-            playerState: createDummyPlayerState(),
-            params: const PlayerParams('movie-1', 'movie'),
-            onSettingsPressed: () {},
-            onBackPressed: () {},
-            onOverlayRequested: (_) {},
+        await tester.pumpWidget(
+          buildTestableWidget(
+            CustomVideoControls(
+              videoState: fakeVideoState,
+              playerState: createDummyPlayerState(),
+              params: const PlayerParams('movie-1', 'movie'),
+              onSettingsPressed: () {},
+              onBackPressed: () {},
+              onOverlayRequested: (_) {},
+            ),
+            mode: DisplayMode.bigPicture,
           ),
-          mode: DisplayMode.bigPicture,
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Navigate Up from Play/Pause to Seekbar
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
-      await tester.pumpAndSettle();
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('SeekbarFocusNode'),
-      );
+        // Navigate Up from Play/Pause to Seekbar
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pumpAndSettle();
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('SeekbarFocusNode'),
+        );
 
-      // Simulate long-pressing Right on seekbar (KeyDown followed by repeated KeyRepeatEvent)
-      await tester.sendKeyDownEvent(
-        LogicalKeyboardKey.arrowRight,
-        physicalKey: PhysicalKeyboardKey.arrowRight,
-      );
-      await tester.pump(const Duration(milliseconds: 50));
-      await tester.sendKeyRepeatEvent(
-        LogicalKeyboardKey.arrowRight,
-        physicalKey: PhysicalKeyboardKey.arrowRight,
-      );
-      await tester.pump(const Duration(milliseconds: 120));
-      await tester.sendKeyRepeatEvent(
-        LogicalKeyboardKey.arrowRight,
-        physicalKey: PhysicalKeyboardKey.arrowRight,
-      );
-      await tester.pump(const Duration(milliseconds: 120));
-      await tester.sendKeyUpEvent(
-        LogicalKeyboardKey.arrowRight,
-        physicalKey: PhysicalKeyboardKey.arrowRight,
-      );
-      await tester.pumpAndSettle();
+        // Simulate long-pressing Right on seekbar (KeyDown followed by repeated KeyRepeatEvent)
+        await tester.sendKeyDownEvent(
+          LogicalKeyboardKey.arrowRight,
+          physicalKey: PhysicalKeyboardKey.arrowRight,
+        );
+        await tester.pump(const Duration(milliseconds: 50));
+        await tester.sendKeyRepeatEvent(
+          LogicalKeyboardKey.arrowRight,
+          physicalKey: PhysicalKeyboardKey.arrowRight,
+        );
+        await tester.pump(const Duration(milliseconds: 120));
+        await tester.sendKeyRepeatEvent(
+          LogicalKeyboardKey.arrowRight,
+          physicalKey: PhysicalKeyboardKey.arrowRight,
+        );
+        await tester.pump(const Duration(milliseconds: 120));
+        await tester.sendKeyUpEvent(
+          LogicalKeyboardKey.arrowRight,
+          physicalKey: PhysicalKeyboardKey.arrowRight,
+        );
+        await tester.pumpAndSettle();
 
-      // Focus MUST remain on Seekbar and NOT jump down to controls!
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('SeekbarFocusNode'),
-      );
-    });
+        // Focus MUST remain on Seekbar and NOT jump down to controls!
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('SeekbarFocusNode'),
+        );
+      },
+    );
 
-    testWidgets('Moving seekbar with spatial navigation skips 30 seconds', (tester) async {
+    testWidgets('Moving seekbar with spatial navigation skips 30 seconds', (
+      tester,
+    ) async {
       final fakeVideoState = FakeVideoState();
-      when(() => mockStream.position).thenAnswer((_) => Stream.value(Duration.zero));
+      when(
+        () => mockStream.position,
+      ).thenAnswer((_) => Stream.value(Duration.zero));
       when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
       when(() => mockState.volume).thenReturn(100.0);
       Duration? seekTarget;
@@ -653,171 +693,188 @@ void main() {
       expect(seekTarget, equals(const Duration(seconds: 30)));
     });
 
-    testWidgets('Long-pressing Left/Right triggers skip and Up/Down is unused on VOD when controls are hidden', (tester) async {
-      final fakeVideoState = FakeVideoState();
-      when(() => mockStream.position).thenAnswer((_) => Stream.value(Duration.zero));
-      when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
-      when(() => mockState.volume).thenReturn(50.0);
-      when(() => mockState.playing).thenReturn(true);
-      when(() => mockPlayer.setVolume(any())).thenAnswer((_) async {});
+    testWidgets(
+      'Long-pressing Left/Right triggers skip and Up/Down is unused on VOD when controls are hidden',
+      (tester) async {
+        final fakeVideoState = FakeVideoState();
+        when(
+          () => mockStream.position,
+        ).thenAnswer((_) => Stream.value(Duration.zero));
+        when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
+        when(() => mockState.volume).thenReturn(50.0);
+        when(() => mockState.playing).thenReturn(true);
+        when(() => mockPlayer.setVolume(any())).thenAnswer((_) async {});
 
-      Duration? seekTarget;
+        Duration? seekTarget;
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          CustomVideoControls(
-            videoState: fakeVideoState,
-            playerState: createDummyPlayerState(),
-            params: const PlayerParams('movie-1', 'movie'),
-            onSettingsPressed: () {},
-            onBackPressed: () {},
-            onOverlayRequested: (_) {},
+        await tester.pumpWidget(
+          buildTestableWidget(
+            CustomVideoControls(
+              videoState: fakeVideoState,
+              playerState: createDummyPlayerState(),
+              params: const PlayerParams('movie-1', 'movie'),
+              onSettingsPressed: () {},
+              onBackPressed: () {},
+              onOverlayRequested: (_) {},
+            ),
+            mode: DisplayMode.bigPicture,
+            onSeek: (pos) => seekTarget = pos,
           ),
-          mode: DisplayMode.bigPicture,
-          onSeek: (pos) => seekTarget = pos,
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Controls start visible. Fast forward 5 seconds to let the hide timer expire
-      await tester.pump(const Duration(seconds: 5));
-      await tester.pumpAndSettle();
+        // Controls start visible. Fast forward 5 seconds to let the hide timer expire
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
 
-      // Verify controls are hidden via opacity
-      final animatedOpacity = tester.widget<AnimatedOpacity>(
-        find.byType(AnimatedOpacity).first,
-      );
-      expect(animatedOpacity.opacity, equals(0.0));
-      expect(
-        tester.binding.focusManager.primaryFocus?.debugLabel,
-        equals('CustomVideoControlsRoot'),
-      );
+        // Verify controls are hidden via opacity
+        final animatedOpacity = tester.widget<AnimatedOpacity>(
+          find.byType(AnimatedOpacity).first,
+        );
+        expect(animatedOpacity.opacity, equals(0.0));
+        expect(
+          tester.binding.focusManager.primaryFocus?.debugLabel,
+          equals('CustomVideoControlsRoot'),
+        );
 
-      // Long press arrowRight (KeyDown + repeated KeyRepeatEvent)
-      await tester.sendKeyDownEvent(
-        LogicalKeyboardKey.arrowRight,
-        physicalKey: PhysicalKeyboardKey.arrowRight,
-      );
-      await tester.pump(const Duration(milliseconds: 50));
-      await tester.sendKeyRepeatEvent(
-        LogicalKeyboardKey.arrowRight,
-        physicalKey: PhysicalKeyboardKey.arrowRight,
-      );
-      await tester.pump(const Duration(milliseconds: 120));
-      await tester.sendKeyRepeatEvent(
-        LogicalKeyboardKey.arrowRight,
-        physicalKey: PhysicalKeyboardKey.arrowRight,
-      );
-      await tester.pump(const Duration(milliseconds: 120));
-      await tester.sendKeyUpEvent(
-        LogicalKeyboardKey.arrowRight,
-        physicalKey: PhysicalKeyboardKey.arrowRight,
-      );
-      await tester.pumpAndSettle();
+        // Long press arrowRight (KeyDown + repeated KeyRepeatEvent)
+        await tester.sendKeyDownEvent(
+          LogicalKeyboardKey.arrowRight,
+          physicalKey: PhysicalKeyboardKey.arrowRight,
+        );
+        await tester.pump(const Duration(milliseconds: 50));
+        await tester.sendKeyRepeatEvent(
+          LogicalKeyboardKey.arrowRight,
+          physicalKey: PhysicalKeyboardKey.arrowRight,
+        );
+        await tester.pump(const Duration(milliseconds: 120));
+        await tester.sendKeyRepeatEvent(
+          LogicalKeyboardKey.arrowRight,
+          physicalKey: PhysicalKeyboardKey.arrowRight,
+        );
+        await tester.pump(const Duration(milliseconds: 120));
+        await tester.sendKeyUpEvent(
+          LogicalKeyboardKey.arrowRight,
+          physicalKey: PhysicalKeyboardKey.arrowRight,
+        );
+        await tester.pumpAndSettle();
 
-      // Verify seek was called for skip
-      expect(seekTarget, isNotNull);
+        // Verify seek was called for skip
+        expect(seekTarget, isNotNull);
 
-      // Press arrowUp: Volume adjustment removed on VOD
-      await tester.sendKeyDownEvent(
-        LogicalKeyboardKey.arrowUp,
-        physicalKey: PhysicalKeyboardKey.arrowUp,
-      );
-      await tester.pump(const Duration(milliseconds: 50));
-      await tester.sendKeyUpEvent(
-        LogicalKeyboardKey.arrowUp,
-        physicalKey: PhysicalKeyboardKey.arrowUp,
-      );
-      await tester.pumpAndSettle();
+        // Press arrowUp: Volume adjustment removed on VOD
+        await tester.sendKeyDownEvent(
+          LogicalKeyboardKey.arrowUp,
+          physicalKey: PhysicalKeyboardKey.arrowUp,
+        );
+        await tester.pump(const Duration(milliseconds: 50));
+        await tester.sendKeyUpEvent(
+          LogicalKeyboardKey.arrowUp,
+          physicalKey: PhysicalKeyboardKey.arrowUp,
+        );
+        await tester.pumpAndSettle();
 
-      // Volume should NOT have been adjusted
-      verifyNever(() => mockPlayer.setVolume(any()));
-    });
+        // Volume should NOT have been adjusted
+        verifyNever(() => mockPlayer.setVolume(any()));
+      },
+    );
 
-    testWidgets('Up/Down keys zap channels on Live TV when controls are hidden', (tester) async {
-      final fakeVideoState = FakeVideoState();
-      when(() => mockStream.position).thenAnswer((_) => Stream.value(Duration.zero));
-      when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
-      when(() => mockState.volume).thenReturn(50.0);
-      when(() => mockState.playing).thenReturn(true);
+    testWidgets(
+      'Up/Down keys zap channels on Live TV when controls are hidden',
+      (tester) async {
+        final fakeVideoState = FakeVideoState();
+        when(
+          () => mockStream.position,
+        ).thenAnswer((_) => Stream.value(Duration.zero));
+        when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
+        when(() => mockState.volume).thenReturn(50.0);
+        when(() => mockState.playing).thenReturn(true);
 
-      bool nextChannelZapped = false;
-      bool prevChannelZapped = false;
+        bool nextChannelZapped = false;
+        bool prevChannelZapped = false;
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          CustomVideoControls(
-            videoState: fakeVideoState,
-            playerState: createDummyPlayerState(),
-            params: const PlayerParams('livetv_session', 'livetv'),
-            isLive: true,
-            onSettingsPressed: () {},
-            onBackPressed: () {},
-            onOverlayRequested: (_) {},
-            onNextChannel: () => nextChannelZapped = true,
-            onPreviousChannel: () => prevChannelZapped = true,
+        await tester.pumpWidget(
+          buildTestableWidget(
+            CustomVideoControls(
+              videoState: fakeVideoState,
+              playerState: createDummyPlayerState(),
+              params: const PlayerParams('livetv_session', 'livetv'),
+              isLive: true,
+              onSettingsPressed: () {},
+              onBackPressed: () {},
+              onOverlayRequested: (_) {},
+              onNextChannel: () => nextChannelZapped = true,
+              onPreviousChannel: () => prevChannelZapped = true,
+            ),
+            mode: DisplayMode.bigPicture,
           ),
-          mode: DisplayMode.bigPicture,
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Wait 5 seconds to let hide timer expire
-      await tester.pump(const Duration(seconds: 5));
-      await tester.pumpAndSettle();
+        // Wait 5 seconds to let hide timer expire
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
 
-      // Verify controls are hidden
-      final animatedOpacity = tester.widget<AnimatedOpacity>(
-        find.byType(AnimatedOpacity).first,
-      );
-      expect(animatedOpacity.opacity, equals(0.0));
+        // Verify controls are hidden
+        final animatedOpacity = tester.widget<AnimatedOpacity>(
+          find.byType(AnimatedOpacity).first,
+        );
+        expect(animatedOpacity.opacity, equals(0.0));
 
-      // Press ArrowDown to zap next channel
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-      await tester.pumpAndSettle();
-      expect(nextChannelZapped, isTrue);
+        // Press ArrowDown to zap next channel
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.pumpAndSettle();
+        expect(nextChannelZapped, isTrue);
 
-      // Press ArrowUp to zap previous channel
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
-      await tester.pumpAndSettle();
-      expect(prevChannelZapped, isTrue);
-    });
+        // Press ArrowUp to zap previous channel
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pumpAndSettle();
+        expect(prevChannelZapped, isTrue);
+      },
+    );
 
-    testWidgets('Pressing numeric key on Live TV registers digit once in buffer', (tester) async {
-      final fakeVideoState = FakeVideoState();
-      when(() => mockStream.position).thenAnswer((_) => Stream.value(Duration.zero));
-      when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
-      when(() => mockState.volume).thenReturn(50.0);
-      when(() => mockState.playing).thenReturn(true);
+    testWidgets(
+      'Pressing numeric key on Live TV registers digit once in buffer',
+      (tester) async {
+        final fakeVideoState = FakeVideoState();
+        when(
+          () => mockStream.position,
+        ).thenAnswer((_) => Stream.value(Duration.zero));
+        when(() => mockState.duration).thenReturn(const Duration(minutes: 90));
+        when(() => mockState.volume).thenReturn(50.0);
+        when(() => mockState.playing).thenReturn(true);
 
-      String receivedDigit = '';
+        String receivedDigit = '';
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          CustomVideoControls(
-            videoState: fakeVideoState,
-            playerState: createDummyPlayerState(),
-            params: const PlayerParams('livetv_session', 'livetv'),
-            isLive: true,
-            onSettingsPressed: () {},
-            onBackPressed: () {},
-            onOverlayRequested: (_) {},
-            onNumberInput: (d) => receivedDigit += d,
+        await tester.pumpWidget(
+          buildTestableWidget(
+            CustomVideoControls(
+              videoState: fakeVideoState,
+              playerState: createDummyPlayerState(),
+              params: const PlayerParams('livetv_session', 'livetv'),
+              isLive: true,
+              onSettingsPressed: () {},
+              onBackPressed: () {},
+              onOverlayRequested: (_) {},
+              onNumberInput: (d) => receivedDigit += d,
+            ),
+            mode: DisplayMode.bigPicture,
           ),
-          mode: DisplayMode.bigPicture,
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      await tester.sendKeyEvent(LogicalKeyboardKey.digit5);
-      await tester.pumpAndSettle();
+        await tester.sendKeyEvent(LogicalKeyboardKey.digit5);
+        await tester.pumpAndSettle();
 
-      expect(receivedDigit, equals('5'));
-    });
+        expect(receivedDigit, equals('5'));
+      },
+    );
   });
 
   group('VideoTopBar TV Tests', () {
-    testWidgets('Hides Cast and Settings icons in Big Picture mode', (tester) async {
+    testWidgets('Hides Cast and Settings icons in Big Picture mode', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         buildTestableWidget(
           VideoTopBar(
@@ -837,7 +894,9 @@ void main() {
       expect(find.byIcon(Icons.arrow_back), findsNothing);
     });
 
-    testWidgets('Shows Cast and Settings icons in Desktop mode', (tester) async {
+    testWidgets('Shows Cast and Settings icons in Desktop mode', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         buildTestableWidget(
           VideoTopBar(
@@ -859,38 +918,41 @@ void main() {
   });
 
   group('MainSettingsView TV Navigation Tests', () {
-    testWidgets('Autofocuses Quality and navigates items with D-Pad arrow keys', (tester) async {
-      await tester.pumpWidget(
-        buildTestableWidget(
-          MainSettingsView(
-            state: createDummyPlayerState(),
-            onNavigate: (_) {},
+    testWidgets(
+      'Autofocuses Quality and navigates items with D-Pad arrow keys',
+      (tester) async {
+        await tester.pumpWidget(
+          buildTestableWidget(
+            MainSettingsView(
+              state: createDummyPlayerState(),
+              onNavigate: (_) {},
+            ),
+            mode: DisplayMode.bigPicture,
           ),
-          mode: DisplayMode.bigPicture,
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Source (playerQuality) tile has initial focus
-      expect(find.text('Source'), findsOneWidget);
-      expect(find.text('Audio'), findsOneWidget);
-      expect(find.text('Subtitles'), findsOneWidget);
+        // Source (playerQuality) tile has initial focus
+        expect(find.text('Source'), findsOneWidget);
+        expect(find.text('Audio'), findsOneWidget);
+        expect(find.text('Subtitles'), findsOneWidget);
 
-      // Navigate down to Audio
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-      await tester.pumpAndSettle();
+        // Navigate down to Audio
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.pumpAndSettle();
 
-      // Navigate down to Subtitles
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-      await tester.pumpAndSettle();
+        // Navigate down to Subtitles
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.pumpAndSettle();
 
-      // Navigate up to Audio
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
-      await tester.pumpAndSettle();
+        // Navigate up to Audio
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pumpAndSettle();
 
-      // Navigate up to Quality
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
-      await tester.pumpAndSettle();
-    });
+        // Navigate up to Quality
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pumpAndSettle();
+      },
+    );
   });
 }

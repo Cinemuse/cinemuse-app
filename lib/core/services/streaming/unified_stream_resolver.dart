@@ -114,8 +114,8 @@ final unifiedStreamResolverProvider = Provider((ref) {
 
   final preferredName =
       userSettings.preferredDebridProvider.toLowerCase() == 'torbox'
-          ? 'TorBox'
-          : 'Real-Debrid';
+      ? 'TorBox'
+      : 'Real-Debrid';
 
   final debridService = debridServices.isNotEmpty
       ? CompositeDebridService(debridServices, preferredProvider: preferredName)
@@ -399,10 +399,7 @@ class UnifiedStreamResolver {
 
       final finalized = await _finalizeResults(candidates, context: context);
 
-      return StreamSearchResult(
-        candidates: finalized,
-        isAnime: isAnime,
-      );
+      return StreamSearchResult(candidates: finalized, isAnime: isAnime);
     } catch (e) {
       if (e is StreamingException) rethrow;
       throw StreamResolutionFailedException(e.toString());
@@ -432,7 +429,9 @@ class UnifiedStreamResolver {
         );
 
         if (_debridService is CompositeDebridService) {
-          final detailed = await _debridService.checkDetailedAvailability(hashes);
+          final detailed = await _debridService.checkDetailedAvailability(
+            hashes,
+          );
 
           results = results.map((c) {
             final providers = detailed[c.infoHash.toLowerCase()];

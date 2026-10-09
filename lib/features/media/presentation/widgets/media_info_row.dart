@@ -25,19 +25,25 @@ class MediaInfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final images = mediaItem?.images;
-    final backdrops = images?.backdrops ?? (details?['images']?['backdrops'] as List?) ?? [];
-    final posters = images?.posters ?? (details?['images']?['posters'] as List?) ?? [];
-    final logos = images?.logos ?? (details?['images']?['logos'] as List?) ?? [];
+    final backdrops =
+        images?.backdrops ?? (details?['images']?['backdrops'] as List?) ?? [];
+    final posters =
+        images?.posters ?? (details?['images']?['posters'] as List?) ?? [];
+    final logos =
+        images?.logos ?? (details?['images']?['logos'] as List?) ?? [];
     final hasGallery =
         backdrops.isNotEmpty || posters.isNotEmpty || logos.isNotEmpty;
 
-    final extIds = mediaItem?.externalIds ??
+    final extIds =
+        mediaItem?.externalIds ??
         (details?['external_ids'] != null
-            ? ExternalIds.fromTmdbMap(Map<String, dynamic>.from(details!['external_ids']))
+            ? ExternalIds.fromTmdbMap(
+                Map<String, dynamic>.from(details!['external_ids']),
+              )
             : null);
     final homepage = mediaItem?.homepage ?? (details?['homepage'] as String?);
-    final hasLinks = extIds != null ||
-        (homepage != null && homepage.trim().isNotEmpty);
+    final hasLinks =
+        extIds != null || (homepage != null && homepage.trim().isNotEmpty);
 
     final columns = <Widget>[];
 
@@ -46,7 +52,8 @@ class MediaInfoRow extends StatelessWidget {
     }
 
     if (hasLinks) {
-      final tmdbId = mediaItem?.tmdbId ??
+      final tmdbId =
+          mediaItem?.tmdbId ??
           (details?['id'] is int
               ? details!['id'] as int
               : int.tryParse(details?['id']?.toString() ?? '') ?? 0);

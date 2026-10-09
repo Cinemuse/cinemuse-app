@@ -31,7 +31,9 @@ class CompositeDebridService implements BaseDebridService {
     if (hashes.isEmpty || !isEnabled) return {};
 
     final detailed = await checkDetailedAvailability(hashes);
-    return detailed.map((hash, providers) => MapEntry(hash, providers.isNotEmpty));
+    return detailed.map(
+      (hash, providers) => MapEntry(hash, providers.isNotEmpty),
+    );
   }
 
   /// Returns a map of infoHash (lowercase) to the set of provider names that have it cached.
@@ -103,7 +105,9 @@ class CompositeDebridService implements BaseDebridService {
     return null;
   }
 
-  List<BaseDebridService> _orderServicesForCandidate(StreamCandidate candidate) {
+  List<BaseDebridService> _orderServicesForCandidate(
+    StreamCandidate candidate,
+  ) {
     final cachedServices = <BaseDebridService>[];
     final otherServices = <BaseDebridService>[];
 

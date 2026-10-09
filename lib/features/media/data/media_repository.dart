@@ -26,7 +26,6 @@ class MediaRepository {
 
   MediaRepository(this._db, this._tmdbService, this._supabase);
 
-
   Future<MediaItem?> getMediaItem(int tmdbId, MediaKind type) async {
     final key = '${type.name}-$tmdbId';
 
@@ -161,7 +160,6 @@ class MediaRepository {
       );
     }
   }
-
 
   /// Map Drift data to Domain model
   MediaItem mapToMediaItem(CachedMediaItem data) {

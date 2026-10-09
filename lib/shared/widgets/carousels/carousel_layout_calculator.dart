@@ -6,10 +6,7 @@ class CarouselDimensions {
   final double itemWidth;
   final double height;
 
-  const CarouselDimensions({
-    required this.itemWidth,
-    required this.height,
-  });
+  const CarouselDimensions({required this.itemWidth, required this.height});
 
   @override
   bool operator ==(Object other) =>
@@ -74,9 +71,11 @@ class CarouselLayoutCalculator {
       );
     }
 
-    final effectivePadding = padding ?? const EdgeInsets.symmetric(horizontal: 16);
+    final effectivePadding =
+        padding ?? const EdgeInsets.symmetric(horizontal: 16);
     final gapCount = visibleCards.floor();
-    final availableWidth = screenWidth - effectivePadding.left - (gapCount * spacing);
+    final availableWidth =
+        screenWidth - effectivePadding.left - (gapCount * spacing);
     final itemWidth = (availableWidth / visibleCards).clamp(60.0, 300.0);
 
     // Poster image aspect ratio is 0.7:
@@ -85,10 +84,7 @@ class CarouselLayoutCalculator {
     const metadataHeight = 60.0;
     final totalHeight = (itemWidth / 0.7) + metadataHeight;
 
-    return CarouselDimensions(
-      itemWidth: itemWidth,
-      height: totalHeight,
-    );
+    return CarouselDimensions(itemWidth: itemWidth, height: totalHeight);
   }
 
   /// Calculates responsive dimensions using a [BuildContext].
@@ -101,7 +97,8 @@ class CarouselLayoutCalculator {
     double? customDesktopHeight,
   }) {
     final screenWidth = MediaQuery.sizeOf(context).width;
-    final effectivePadding = padding ??
+    final effectivePadding =
+        padding ??
         EdgeInsets.symmetric(
           horizontal: AppTheme.getResponsiveHorizontalPadding(context),
         );
@@ -133,19 +130,18 @@ class CarouselLayoutCalculator {
       );
     }
 
-    final effectivePadding = padding ?? const EdgeInsets.symmetric(horizontal: 16);
+    final effectivePadding =
+        padding ?? const EdgeInsets.symmetric(horizontal: 16);
     final gapCount = visibleCards.floor();
-    final availableWidth = screenWidth - effectivePadding.left - (gapCount * spacing);
+    final availableWidth =
+        screenWidth - effectivePadding.left - (gapCount * spacing);
     final itemWidth = (availableWidth / visibleCards).clamp(120.0, 500.0);
 
     // 16:9 aspect ratio for backdrop thumbnail + metadata
     const metadataHeight = 60.0;
     final totalHeight = (itemWidth * (9 / 16)) + metadataHeight;
 
-    return CarouselDimensions(
-      itemWidth: itemWidth,
-      height: totalHeight,
-    );
+    return CarouselDimensions(itemWidth: itemWidth, height: totalHeight);
   }
 
   /// Calculates responsive backdrop dimensions using a [BuildContext].
@@ -158,7 +154,8 @@ class CarouselLayoutCalculator {
     double? customDesktopHeight,
   }) {
     final screenWidth = MediaQuery.sizeOf(context).width;
-    final effectivePadding = padding ??
+    final effectivePadding =
+        padding ??
         EdgeInsets.symmetric(
           horizontal: AppTheme.getResponsiveHorizontalPadding(context),
         );

@@ -31,7 +31,11 @@ class FakeFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
   PostgrestFilterBuilder<T> limit(int count, {String? referencedTable}) => this;
 
   @override
-  PostgrestFilterBuilder<T> range(int from, int to, {String? referencedTable}) => this;
+  PostgrestFilterBuilder<T> range(
+    int from,
+    int to, {
+    String? referencedTable,
+  }) => this;
 
   @override
   PostgrestTransformBuilder<T> order(
@@ -50,12 +54,17 @@ class FakeFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
   }
 }
 
-class FakeTransformBuilder<T> extends Fake implements PostgrestTransformBuilder<T> {
+class FakeTransformBuilder<T> extends Fake
+    implements PostgrestTransformBuilder<T> {
   final T _value;
   FakeTransformBuilder(this._value);
 
   @override
-  PostgrestTransformBuilder<T> range(int from, int to, {String? referencedTable}) => this;
+  PostgrestTransformBuilder<T> range(
+    int from,
+    int to, {
+    String? referencedTable,
+  }) => this;
 
   @override
   Future<R> then<R>(
@@ -223,62 +232,72 @@ void main() {
       expect(history.any((h) => h.tmdbId == 42), isFalse);
     });
 
-    test('clearProgress for TV peek (0 completed episodes) deletes from database', () async {
-      when(() => mockSupabase.from('watch_logs')).thenAnswer((_) => FakeQueryBuilder([]));
+    test(
+      'clearProgress for TV peek (0 completed episodes) deletes from database',
+      () async {
+        when(
+          () => mockSupabase.from('watch_logs'),
+        ).thenAnswer((_) => FakeQueryBuilder([]));
 
-      await database.upsertWatchHistory(
-        LocalWatchHistoriesCompanion.insert(
+        await database.upsertWatchHistory(
+          LocalWatchHistoriesCompanion.insert(
+            userId: userId,
+            tmdbId: 101,
+            mediaType: 'tv',
+            season: const Value(1),
+            episode: const Value(1),
+            status: 'watching',
+            progressSeconds: const Value(180),
+            lastWatchedAt: DateTime.now(),
+          ),
+        );
+
+        await repository.clearProgress(
           userId: userId,
           tmdbId: 101,
           mediaType: 'tv',
-          season: const Value(1),
-          episode: const Value(1),
-          status: 'watching',
-          progressSeconds: const Value(180),
-          lastWatchedAt: DateTime.now(),
-        ),
-      );
+        );
 
-      await repository.clearProgress(
-        userId: userId,
-        tmdbId: 101,
-        mediaType: 'tv',
-      );
+        final history = await database.getWatchHistory(userId);
+        expect(history.any((h) => h.tmdbId == 101), isFalse);
+      },
+    );
 
-      final history = await database.getWatchHistory(userId);
-      expect(history.any((h) => h.tmdbId == 101), isFalse);
-    });
+    test(
+      'clearProgress for TV with completed episodes resets progress to 0',
+      () async {
+        when(() => mockSupabase.from('watch_logs')).thenAnswer(
+          (_) => FakeQueryBuilder([
+            {'id': 1, 'season': 1, 'episode': 1},
+          ]),
+        );
 
-    test('clearProgress for TV with completed episodes resets progress to 0', () async {
-      when(() => mockSupabase.from('watch_logs')).thenAnswer(
-        (_) => FakeQueryBuilder([{'id': 1, 'season': 1, 'episode': 1}]),
-      );
+        await database.upsertWatchHistory(
+          LocalWatchHistoriesCompanion.insert(
+            userId: userId,
+            tmdbId: 202,
+            mediaType: 'tv',
+            season: const Value(1),
+            episode: const Value(2),
+            status: 'watching',
+            progressSeconds: const Value(500),
+            lastWatchedAt: DateTime.now(),
+          ),
+        );
 
-      await database.upsertWatchHistory(
-        LocalWatchHistoriesCompanion.insert(
+        await repository.clearProgress(
           userId: userId,
           tmdbId: 202,
           mediaType: 'tv',
-          season: const Value(1),
-          episode: const Value(2),
-          status: 'watching',
-          progressSeconds: const Value(500),
-          lastWatchedAt: DateTime.now(),
-        ),
-      );
+        );
 
-      await repository.clearProgress(
-        userId: userId,
-        tmdbId: 202,
-        mediaType: 'tv',
-      );
-
-      final history = await database.getWatchHistory(userId);
-      final item = history.firstWhere((h) => h.tmdbId == 202);
-      expect(item.progressSeconds, 0);
-      expect(item.season, 1);
-      expect(item.episode, 2);
-    });
+        final history = await database.getWatchHistory(userId);
+        final item = history.firstWhere((h) => h.tmdbId == 202);
+        expect(item.progressSeconds, 0);
+        expect(item.season, 1);
+        expect(item.episode, 2);
+      },
+    );
 
     test('removeFromDropped deletes item from database', () async {
       await database.upsertWatchHistory(
@@ -297,109 +316,118 @@ void main() {
       expect(history.any((h) => h.tmdbId == 303), isFalse);
     });
 
-    test('getAllWatchLogs fetches watch logs and maps to WatchHistory with metadata', () async {
-      final logsData = [
-        {
-          'tmdb_id': 100,
-          'media_type': 'tv',
-          'season': 1,
-          'episode': 1,
-          'logged_at': '2026-09-14T10:00:00.000Z',
-          'duration_watched_seconds': 2400,
-        },
-        {
-          'tmdb_id': 100,
-          'media_type': 'tv',
-          'season': 1,
-          'episode': 2,
-          'logged_at': '2026-09-14T11:00:00.000Z',
-          'duration_watched_seconds': 2400,
-        },
-      ];
+    test(
+      'getAllWatchLogs fetches watch logs and maps to WatchHistory with metadata',
+      () async {
+        final logsData = [
+          {
+            'tmdb_id': 100,
+            'media_type': 'tv',
+            'season': 1,
+            'episode': 1,
+            'logged_at': '2026-09-14T10:00:00.000Z',
+            'duration_watched_seconds': 2400,
+          },
+          {
+            'tmdb_id': 100,
+            'media_type': 'tv',
+            'season': 1,
+            'episode': 2,
+            'logged_at': '2026-09-14T11:00:00.000Z',
+            'duration_watched_seconds': 2400,
+          },
+        ];
 
-      when(() => mockSupabase.from('watch_logs')).thenAnswer(
-        (_) => FakeQueryBuilder(logsData),
-      );
+        when(
+          () => mockSupabase.from('watch_logs'),
+        ).thenAnswer((_) => FakeQueryBuilder(logsData));
 
-      await database.upsertMediaItem(
-        CachedMediaItemsCompanion.insert(
-          tmdbId: 100,
-          mediaType: 'tv',
-          titleEn: const Value('Test Series'),
-          updatedAt: DateTime.now(),
-        ),
-      );
+        await database.upsertMediaItem(
+          CachedMediaItemsCompanion.insert(
+            tmdbId: 100,
+            mediaType: 'tv',
+            titleEn: const Value('Test Series'),
+            updatedAt: DateTime.now(),
+          ),
+        );
 
-      final result = await repository.getAllWatchLogs(userId);
+        final result = await repository.getAllWatchLogs(userId);
 
-      expect(result.length, 2);
-      expect(result.first.tmdbId, 100);
-      expect(result.first.mediaType, MediaKind.tv);
-      expect(result.first.season, 1);
-      expect(result.first.episode, 1);
-      expect(result.first.media?.titleEn, 'Test Series');
-      expect(result.last.episode, 2);
+        expect(result.length, 2);
+        expect(result.first.tmdbId, 100);
+        expect(result.first.mediaType, MediaKind.tv);
+        expect(result.first.season, 1);
+        expect(result.first.episode, 1);
+        expect(result.first.media?.titleEn, 'Test Series');
+        expect(result.last.episode, 2);
 
-      // Verify cached call returns same reference without hitting Supabase again
-      final cachedResult = await repository.getAllWatchLogs(userId);
-      expect(identical(result, cachedResult), isTrue);
+        // Verify cached call returns same reference without hitting Supabase again
+        final cachedResult = await repository.getAllWatchLogs(userId);
+        expect(identical(result, cachedResult), isTrue);
 
-      // Invalidate cache and verify fresh call
-      repository.invalidateWatchLogsCache();
-      final freshResult = await repository.getAllWatchLogs(userId);
-      expect(freshResult.length, 2);
-    });
+        // Invalidate cache and verify fresh call
+        repository.invalidateWatchLogsCache();
+        final freshResult = await repository.getAllWatchLogs(userId);
+        expect(freshResult.length, 2);
+      },
+    );
 
-    test('getAllWatchLogs applies watching and dropped status from watch history', () async {
-      final logsData = [
-        {
-          'tmdb_id': 200,
-          'media_type': 'tv',
-          'season': 1,
-          'episode': 1,
-          'logged_at': '2026-09-14T10:00:00.000Z',
-          'duration_watched_seconds': 1800,
-        },
-        {
-          'tmdb_id': 300,
-          'media_type': 'movie',
-          'season': null,
-          'episode': null,
-          'logged_at': '2026-09-14T11:00:00.000Z',
-          'duration_watched_seconds': 5400,
-        },
-      ];
+    test(
+      'getAllWatchLogs applies watching and dropped status from watch history',
+      () async {
+        final logsData = [
+          {
+            'tmdb_id': 200,
+            'media_type': 'tv',
+            'season': 1,
+            'episode': 1,
+            'logged_at': '2026-09-14T10:00:00.000Z',
+            'duration_watched_seconds': 1800,
+          },
+          {
+            'tmdb_id': 300,
+            'media_type': 'movie',
+            'season': null,
+            'episode': null,
+            'logged_at': '2026-09-14T11:00:00.000Z',
+            'duration_watched_seconds': 5400,
+          },
+        ];
 
-      when(() => mockSupabase.from('watch_logs')).thenAnswer(
-        (_) => FakeQueryBuilder(logsData),
-      );
+        when(
+          () => mockSupabase.from('watch_logs'),
+        ).thenAnswer((_) => FakeQueryBuilder(logsData));
 
-      await database.upsertWatchHistory(
-        LocalWatchHistoriesCompanion.insert(
-          userId: userId,
-          tmdbId: 200,
-          mediaType: 'tv',
-          status: 'dropped',
-          lastWatchedAt: DateTime.now(),
-        ),
-      );
-      await database.upsertWatchHistory(
-        LocalWatchHistoriesCompanion.insert(
-          userId: userId,
-          tmdbId: 300,
-          mediaType: 'movie',
-          status: 'watching',
-          lastWatchedAt: DateTime.now(),
-        ),
-      );
+        await database.upsertWatchHistory(
+          LocalWatchHistoriesCompanion.insert(
+            userId: userId,
+            tmdbId: 200,
+            mediaType: 'tv',
+            status: 'dropped',
+            lastWatchedAt: DateTime.now(),
+          ),
+        );
+        await database.upsertWatchHistory(
+          LocalWatchHistoriesCompanion.insert(
+            userId: userId,
+            tmdbId: 300,
+            mediaType: 'movie',
+            status: 'watching',
+            lastWatchedAt: DateTime.now(),
+          ),
+        );
 
-      final result = await repository.getAllWatchLogs(userId, forceRefresh: true);
+        final result = await repository.getAllWatchLogs(
+          userId,
+          forceRefresh: true,
+        );
 
-      expect(result.length, 2);
-      expect(result.first.tmdbId, 200);
-      expect(result.first.status, WatchStatus.dropped);
-      expect(result.last.tmdbId, 300);
-      expect(result.last.status, WatchStatus.watching);
-    });
+        expect(result.length, 2);
+        expect(result.first.tmdbId, 200);
+        expect(result.first.status, WatchStatus.dropped);
+        expect(result.last.tmdbId, 300);
+        expect(result.last.status, WatchStatus.watching);
+      },
+    );
   });
 }

@@ -106,7 +106,10 @@ class _HeroSectionState extends ConsumerState<HeroSection>
   void _startAutoPlayTimer() {
     if (!_isAutoPlayEnabled || widget.items.length <= 1) return;
     _autoPlayTimer?.cancel();
-    _autoPlayTimer = Timer.periodic(_autoPlayDuration, (_) => _advanceToNextPage());
+    _autoPlayTimer = Timer.periodic(
+      _autoPlayDuration,
+      (_) => _advanceToNextPage(),
+    );
   }
 
   void _stopAutoPlayTimer() {
@@ -120,7 +123,8 @@ class _HeroSectionState extends ConsumerState<HeroSection>
   }
 
   void _advanceToNextPage() {
-    if (!mounted || widget.items.length <= 1 || !_pageController.hasClients) return;
+    if (!mounted || widget.items.length <= 1 || !_pageController.hasClients)
+      return;
     final nextPage = (_pageController.page?.round() ?? _currentIndex) + 1;
     _pageController.animateToPage(
       nextPage,
@@ -130,7 +134,8 @@ class _HeroSectionState extends ConsumerState<HeroSection>
   }
 
   void _goToPreviousPage() {
-    if (!mounted || widget.items.length <= 1 || !_pageController.hasClients) return;
+    if (!mounted || widget.items.length <= 1 || !_pageController.hasClients)
+      return;
     final prevPage = (_pageController.page?.round() ?? _currentIndex) - 1;
     _pageController.animateToPage(
       prevPage,
@@ -233,7 +238,12 @@ class _HeroSectionState extends ConsumerState<HeroSection>
             Positioned(
               right: AppTheme.getResponsiveHorizontalPadding(context),
               bottom: isMobile ? 48 : 84,
-              child: _buildControlsRow(l10n, widget.items.length, isMobile, isWidescreen),
+              child: _buildControlsRow(
+                l10n,
+                widget.items.length,
+                isMobile,
+                isWidescreen,
+              ),
             ),
         ],
       ),
@@ -524,7 +534,9 @@ class _HeroSectionState extends ConsumerState<HeroSection>
           Text(
             l10n.homeMoreInfo,
             style: TextStyle(
-              color: _isHeroFocused ? AppTheme.textWhite : AppTheme.textSecondary,
+              color: _isHeroFocused
+                  ? AppTheme.textWhite
+                  : AppTheme.textSecondary,
               fontSize: 15,
               fontWeight: _isHeroFocused ? FontWeight.bold : FontWeight.w500,
               letterSpacing: 0.5,
@@ -551,9 +563,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
       decoration: BoxDecoration(
         color: primary.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: primary.withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: primary.withValues(alpha: 0.5)),
       ),
       child: Text(
         l10n.commonFeatured,
@@ -594,12 +604,12 @@ class _HeroSectionState extends ConsumerState<HeroSection>
         maxLines: 3,
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-              color: AppTheme.textSecondary,
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              height: 1.5,
-              letterSpacing: 0.0,
-            ),
+          color: AppTheme.textSecondary,
+          fontSize: 18,
+          fontWeight: FontWeight.w500,
+          height: 1.5,
+          letterSpacing: 0.0,
+        ),
       ),
     );
   }
@@ -652,8 +662,8 @@ class _HeroSectionState extends ConsumerState<HeroSection>
                     color: isFocused
                         ? theme.focusColor
                         : (isHovered
-                            ? theme.hoverColor
-                            : AppTheme.accent.withValues(alpha: 0.12)),
+                              ? theme.hoverColor
+                              : AppTheme.accent.withValues(alpha: 0.12)),
                     border: Border.all(
                       color: isHighlighted
                           ? primary.withValues(alpha: 0.5)

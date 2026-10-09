@@ -43,19 +43,21 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
         ref.read(livePlayerFocusActionProvider.notifier).state = () {
           _playerFocusNode.requestFocus();
         };
-        ref.read(pageContentFocusActionsProvider.notifier).update(
-          (map) => {
-            ...map,
-            2: () {
-              final isMobile = MediaQuery.of(context).size.width < 600;
-              if (isMobile) {
-                _playerFocusNode.requestFocus();
-              } else {
-                _guideFocusNode.requestFocus();
-              }
-            },
-          },
-        );
+        ref
+            .read(pageContentFocusActionsProvider.notifier)
+            .update(
+              (map) => {
+                ...map,
+                2: () {
+                  final isMobile = MediaQuery.of(context).size.width < 600;
+                  if (isMobile) {
+                    _playerFocusNode.requestFocus();
+                  } else {
+                    _guideFocusNode.requestFocus();
+                  }
+                },
+              },
+            );
       }
     });
   }

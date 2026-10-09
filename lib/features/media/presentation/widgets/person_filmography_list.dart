@@ -118,14 +118,17 @@ class PersonFilmographyList extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: isTv
-                                  ? AppTheme.badgeResolution.withValues(alpha: 0.1)
+                                  ? AppTheme.badgeResolution.withValues(
+                                      alpha: 0.1,
+                                    )
                                   : AppTheme.accent.withValues(alpha: 0.1),
                               borderRadius: AppTheme.radiusSm,
                               border: Border.all(
-                                color: (isTv
-                                        ? AppTheme.badgeResolution
-                                        : AppTheme.accent)
-                                    .withValues(alpha: 0.2),
+                                color:
+                                    (isTv
+                                            ? AppTheme.badgeResolution
+                                            : AppTheme.accent)
+                                        .withValues(alpha: 0.2),
                               ),
                             ),
                             child: Text(

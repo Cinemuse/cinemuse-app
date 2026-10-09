@@ -106,8 +106,8 @@ class CustomEpgUrlNotifier extends StateNotifier<String?> {
 
 final customEpgUrlProvider =
     StateNotifierProvider<CustomEpgUrlNotifier, String?>((ref) {
-  return CustomEpgUrlNotifier();
-});
+      return CustomEpgUrlNotifier();
+    });
 
 /// Currently active EPG URL (custom URL if configured, otherwise unified default).
 final activeEpgUrlProvider = Provider<String>((ref) {
@@ -142,8 +142,9 @@ final channelsProvider = FutureProvider<List<Channel>>((ref) async {
 });
 
 /// Full EPG data keyed by channel identifier → programs.
-final epgDataProvider =
-    FutureProvider<Map<String, List<EpgProgram>>>((ref) async {
+final epgDataProvider = FutureProvider<Map<String, List<EpgProgram>>>((
+  ref,
+) async {
   final repo = ref.watch(liveTvRepositoryProvider);
   final epgUrl = ref.watch(activeEpgUrlProvider);
   return repo.fetchEpg(url: epgUrl);
@@ -178,10 +179,9 @@ class ChannelFilter {
 
   String? get selectedGroup => _selectedGroup ?? selectedCategories.firstOrNull;
 
-  Set<String> get effectiveCategories =>
-      selectedCategories.isNotEmpty
-          ? selectedCategories
-          : (_selectedGroup != null ? {_selectedGroup} : const {});
+  Set<String> get effectiveCategories => selectedCategories.isNotEmpty
+      ? selectedCategories
+      : (_selectedGroup != null ? {_selectedGroup} : const {});
 
   bool get isActive => selectedCategories.isNotEmpty || _selectedGroup != null;
 
@@ -194,9 +194,7 @@ class ChannelFilter {
     return ChannelFilter(
       groupMode: groupMode ?? this.groupMode,
       selectedCategories: selectedCategories ?? this.selectedCategories,
-      selectedGroup: selectedGroup != null
-          ? selectedGroup()
-          : _selectedGroup,
+      selectedGroup: selectedGroup != null ? selectedGroup() : _selectedGroup,
       selectedSubProvider: selectedSubProvider != null
           ? selectedSubProvider()
           : this.selectedSubProvider,
@@ -265,8 +263,8 @@ class ChannelFilterNotifier extends StateNotifier<ChannelFilter> {
 /// The current filter state (set via the filter sheet).
 final channelFilterProvider =
     StateNotifierProvider<ChannelFilterNotifier, ChannelFilter>(
-  (ref) => ChannelFilterNotifier(),
-);
+      (ref) => ChannelFilterNotifier(),
+    );
 
 /// The currently selected / playing channel.
 final selectedChannelProvider = StateProvider<Channel?>((ref) => null);
@@ -284,8 +282,9 @@ enum LiveTvViewMode {
 }
 
 /// Current viewing mode for Live TV.
-final liveTvViewModeProvider =
-    StateProvider<LiveTvViewMode>((ref) => LiveTvViewMode.split);
+final liveTvViewModeProvider = StateProvider<LiveTvViewMode>(
+  (ref) => LiveTvViewMode.split,
+);
 
 /// Whether the slide-in channel list overlay is currently open in full-window or OS fullscreen mode.
 final liveTvChannelOverlayProvider = StateProvider<bool>((ref) => false);
@@ -294,8 +293,9 @@ final liveTvChannelOverlayProvider = StateProvider<bool>((ref) => false);
 final liveTvOverlayScrollOffsetProvider = StateProvider<double?>((ref) => null);
 
 /// Action to focus the live preview player from the channel list via D-Pad Right.
-final livePlayerFocusActionProvider =
-    StateProvider<void Function()?>((ref) => null);
+final livePlayerFocusActionProvider = StateProvider<void Function()?>(
+  (ref) => null,
+);
 
 // ---------------------------------------------------------------------------
 // Favorites
@@ -539,13 +539,17 @@ final nextProgramProvider = Provider.family<EpgProgram?, Channel>((
 });
 
 /// Full schedule for a given channel.
-final channelScheduleProvider =
-    Provider.family<List<EpgProgram>, Channel>((ref, channel) {
+final channelScheduleProvider = Provider.family<List<EpgProgram>, Channel>((
+  ref,
+  channel,
+) {
   final asyncEpg = ref.watch(epgDataProvider);
   final epgData = asyncEpg.valueOrNull;
   if (epgData == null || epgData.isEmpty) return const [];
 
-  return ref.watch(liveTvRepositoryProvider).getChannelSchedule(channel, epgData);
+  return ref
+      .watch(liveTvRepositoryProvider)
+      .getChannelSchedule(channel, epgData);
 });
 
 // ---------------------------------------------------------------------------

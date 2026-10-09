@@ -441,11 +441,11 @@ class _OverlayButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isPrimary ? AppTheme.accent : AppTheme.surfaceOverlay,
+          backgroundColor: isPrimary
+              ? AppTheme.accent
+              : AppTheme.surfaceOverlay,
           foregroundColor: isPrimary ? AppTheme.primary : AppTheme.textWhite,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppTheme.radiusMd,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusMd),
           elevation: 0,
         ),
         child: Text(

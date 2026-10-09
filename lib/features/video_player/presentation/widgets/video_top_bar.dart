@@ -51,7 +51,10 @@ class VideoTopBar extends ConsumerWidget {
         children: [
           if (onBackPressed != null && !isBigPicture) ...[
             IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textWhite),
+              icon: const Icon(
+                Icons.arrow_back_rounded,
+                color: AppTheme.textWhite,
+              ),
               tooltip: l10n.commonGoBack,
               onPressed: onBackPressed,
             ),
@@ -167,7 +170,8 @@ class VideoTopBar extends ConsumerWidget {
                         ),
                       ],
                     ),
-                  ] else if (channel?.group != null && channel!.group!.isNotEmpty) ...[
+                  ] else if (channel?.group != null &&
+                      channel!.group!.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
                       channel!.group!,

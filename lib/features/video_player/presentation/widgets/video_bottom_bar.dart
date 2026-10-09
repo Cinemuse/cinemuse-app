@@ -56,7 +56,8 @@ class VideoBottomBar extends ConsumerWidget {
               stream: player.stream.position,
               builder: (context, snapshot) {
                 final rawDuration = player.state.duration;
-                final position = virtualPosition ?? snapshot.data ?? Duration.zero;
+                final position =
+                    virtualPosition ?? snapshot.data ?? Duration.zero;
 
                 if (actions.isLive) {
                   return LiveTvSeekbar(
@@ -91,10 +92,7 @@ class VideoBottomBar extends ConsumerWidget {
           ),
 
           // Bottom Controls Row
-          VideoPlaybackControls(
-            playerState: playerState,
-            actions: actions,
-          ),
+          VideoPlaybackControls(playerState: playerState, actions: actions),
         ],
       ),
     );

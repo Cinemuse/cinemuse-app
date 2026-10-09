@@ -12,12 +12,19 @@ class EpisodeList extends ConsumerWidget {
   final String mediaId;
   final Map<String, int>? watchedEpisodesCount;
   final Map<String, WatchHistory>? episodeProgress;
-  final void Function(int season, int episode, String name, {bool restart})? onEpisodeTap;
+  final void Function(int season, int episode, String name, {bool restart})?
+  onEpisodeTap;
   final void Function(int season, int episode)? onShowComments;
   final Function(int season, int episode, DateTime? date)? onMarkWatched;
   final Function(int season, int episode)? onTrackOptions;
-  final List<({int season, int episode})> Function(int season, int episode)? onFindMissingPreceding;
-  final Function(int season, int episode, List<({int season, int episode})> missing)? onShowMarkPrecedingModal;
+  final List<({int season, int episode})> Function(int season, int episode)?
+  onFindMissingPreceding;
+  final Function(
+    int season,
+    int episode,
+    List<({int season, int episode})> missing,
+  )?
+  onShowMarkPrecedingModal;
   final Function(int season, int episode)? onViewHistory;
 
   const EpisodeList({

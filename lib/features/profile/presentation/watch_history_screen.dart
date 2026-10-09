@@ -15,23 +15,11 @@ import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/watch_history_filter_sheet.dart';
 
-enum HistoryViewMode {
-  grid,
-  timeline,
-}
+enum HistoryViewMode { grid, timeline }
 
-enum TimelineGranularity {
-  daily,
-  monthly,
-  yearly,
-}
+enum TimelineGranularity { daily, monthly, yearly }
 
-enum HistorySortOption {
-  recentlyWatched,
-  releaseDate,
-  rating,
-  title,
-}
+enum HistorySortOption { recentlyWatched, releaseDate, rating, title }
 
 class WatchHistoryScreen extends ConsumerStatefulWidget {
   final MediaKind? initialType;
@@ -119,7 +107,10 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     } else {
       if (_visibleSectionCount < _cachedTimelineSections.length) {
         setState(() {
-          _visibleSectionCount = (_visibleSectionCount + 30).clamp(0, _cachedTimelineSections.length);
+          _visibleSectionCount = (_visibleSectionCount + 30).clamp(
+            0,
+            _cachedTimelineSections.length,
+          );
         });
       }
     }
@@ -131,7 +122,8 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     final appLanguage = ref.watch(settingsProvider).appLanguage;
     final historyAsync = ref.watch(watchLogsProvider);
     final localHistoryAsync = ref.watch(watchHistoryStreamProvider);
-    final stats = ref.watch(profileStatsProvider).valueOrNull ?? ProfileStats.empty();
+    final stats =
+        ref.watch(profileStatsProvider).valueOrNull ?? ProfileStats.empty();
     final horizontalPadding = AppTheme.getResponsiveHorizontalPadding(context);
 
     return Scaffold(
@@ -211,7 +203,9 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
             tmdbId: log.tmdbId,
             mediaType: log.mediaType,
             status: local.status ?? log.status ?? WatchStatus.completed,
-            progressSeconds: log.progressSeconds > 0 ? log.progressSeconds : local.progressSeconds,
+            progressSeconds: log.progressSeconds > 0
+                ? log.progressSeconds
+                : local.progressSeconds,
             totalDuration: log.totalDuration ?? local.totalDuration,
             watchCount: log.watchCount,
             lastWatchedAt: log.lastWatchedAt,
@@ -230,7 +224,8 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
       final key = '${local.mediaType.name}-${local.tmdbId}';
       if (!loggedMediaKeys.contains(key)) {
         joined.add(local);
-      } else if (local.status == WatchStatus.watching && local.progressSeconds > 0) {
+      } else if (local.status == WatchStatus.watching &&
+          local.progressSeconds > 0) {
         final hasActiveEntry = joined.any(
           (j) =>
               j.tmdbId == local.tmdbId &&
@@ -263,15 +258,24 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     final totalUniqueMap = <int, WatchHistory>{};
     for (final item in allHistory.where((h) => h.media != null)) {
       final existing = totalUniqueMap[item.tmdbId];
-      if (existing == null || item.lastWatchedAt.isAfter(existing.lastWatchedAt)) {
+      if (existing == null ||
+          item.lastWatchedAt.isAfter(existing.lastWatchedAt)) {
         totalUniqueMap[item.tmdbId] = item;
       }
     }
-    final fallbackMovies = totalUniqueMap.values.where((h) => h.mediaType == MediaKind.movie).length;
-    final fallbackSeries = totalUniqueMap.values.where((h) => h.mediaType == MediaKind.tv).length;
+    final fallbackMovies = totalUniqueMap.values
+        .where((h) => h.mediaType == MediaKind.movie)
+        .length;
+    final fallbackSeries = totalUniqueMap.values
+        .where((h) => h.mediaType == MediaKind.tv)
+        .length;
 
-    final totalMovies = stats.totalMovies > 0 ? stats.totalMovies : fallbackMovies;
-    final totalSeries = stats.totalSeries > 0 ? stats.totalSeries : fallbackSeries;
+    final totalMovies = stats.totalMovies > 0
+        ? stats.totalMovies
+        : fallbackMovies;
+    final totalSeries = stats.totalSeries > 0
+        ? stats.totalSeries
+        : fallbackSeries;
     final totalCount = totalMovies + totalSeries;
 
     // 2. Filtered unique titles
@@ -280,8 +284,12 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
       filteredUniqueMap[item.tmdbId] = item;
     }
     final filteredItemsList = filteredUniqueMap.values.toList();
-    final filteredMovies = filteredItemsList.where((h) => h.mediaType == MediaKind.movie).length;
-    final filteredSeries = filteredItemsList.where((h) => h.mediaType == MediaKind.tv).length;
+    final filteredMovies = filteredItemsList
+        .where((h) => h.mediaType == MediaKind.movie)
+        .length;
+    final filteredSeries = filteredItemsList
+        .where((h) => h.mediaType == MediaKind.tv)
+        .length;
     final filteredTotalTitles = filteredMovies + filteredSeries;
 
     // 3. For series: calculate distinct seasons and total episode logs in the filtered scope
@@ -294,7 +302,8 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
       episodesCount++;
     }
 
-    final hasRefiningFilter = _selectedStatus != null || _searchQuery.isNotEmpty;
+    final hasRefiningFilter =
+        _selectedStatus != null || _searchQuery.isNotEmpty;
     final effectiveSeasons = (!hasRefiningFilter && stats.totalSeasons > 0)
         ? stats.totalSeasons
         : seasonsSet.length;
@@ -331,7 +340,9 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
         onRefresh: () async {
           final userId = ref.read(userIdProvider);
           if (userId != null) {
-            await ref.read(watchHistoryRepositoryProvider).syncWatchHistory(userId);
+            await ref
+                .read(watchHistoryRepositoryProvider)
+                .syncWatchHistory(userId);
           }
           ref.invalidate(watchLogsProvider);
           await ref.read(watchLogsProvider.future);
@@ -372,7 +383,9 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
                     const spacing = 10.0;
                     final crossAxisCount = isMobile
                         ? 3
-                        : ((availableWidth + spacing) / (140 + spacing)).floor().clamp(3, 8);
+                        : ((availableWidth + spacing) / (140 + spacing))
+                              .floor()
+                              .clamp(3, 8);
                     return SliverGrid(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: crossAxisCount,
@@ -381,7 +394,12 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
                         mainAxisSpacing: spacing,
                       ),
                       delegate: SliverChildBuilderDelegate(
-                        (context, index) => _buildGridItem(context, gridItems[index], appLanguage, l10n),
+                        (context, index) => _buildGridItem(
+                          context,
+                          gridItems[index],
+                          appLanguage,
+                          l10n,
+                        ),
                         childCount: gridItems.length,
                       ),
                     );
@@ -402,7 +420,11 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     );
   }
 
-  Widget _buildDesktopHeader(BuildContext context, AppLocalizations l10n, String subtitle) {
+  Widget _buildDesktopHeader(
+    BuildContext context,
+    AppLocalizations l10n,
+    String subtitle,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -461,14 +483,21 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     );
   }
 
-  Widget _buildMobileHeader(BuildContext context, AppLocalizations l10n, String subtitle) {
+  Widget _buildMobileHeader(
+    BuildContext context,
+    AppLocalizations l10n,
+    String subtitle,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            AppBackButton(onTap: () => Navigator.of(context).pop(), padding: 10),
+            AppBackButton(
+              onTap: () => Navigator.of(context).pop(),
+              padding: 10,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -524,13 +553,18 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     if (_selectedType != null) count++;
     if (_selectedStatus != null) count++;
     if (_sortOption != HistorySortOption.recentlyWatched) count++;
-    if (_viewMode == HistoryViewMode.timeline && _granularity != TimelineGranularity.daily) {
+    if (_viewMode == HistoryViewMode.timeline &&
+        _granularity != TimelineGranularity.daily) {
       count++;
     }
     return count;
   }
 
-  Widget _buildMobileFilterButton(BuildContext context, AppLocalizations l10n, int activeCount) {
+  Widget _buildMobileFilterButton(
+    BuildContext context,
+    AppLocalizations l10n,
+    int activeCount,
+  ) {
     final hasActive = activeCount > 0;
     return Material(
       color: Colors.transparent,
@@ -542,10 +576,14 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
           height: 40,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: hasActive ? AppTheme.accent.withValues(alpha: 0.15) : AppTheme.surface,
+            color: hasActive
+                ? AppTheme.accent.withValues(alpha: 0.15)
+                : AppTheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: hasActive ? AppTheme.accent : Colors.white.withValues(alpha: 0.1),
+              color: hasActive
+                  ? AppTheme.accent
+                  : Colors.white.withValues(alpha: 0.1),
               width: hasActive ? 1.2 : 1.0,
             ),
           ),
@@ -569,7 +607,10 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
               if (hasActive) ...[
                 const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.accent,
                     borderRadius: BorderRadius.circular(10),
@@ -627,12 +668,16 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
       return l10n.watchHistorySubtitle(0);
     }
 
-    final hasRefiningFilter = _selectedStatus != null || _searchQuery.isNotEmpty;
+    final hasRefiningFilter =
+        _selectedStatus != null || _searchQuery.isNotEmpty;
 
     // 1. Only movies selected
     if (_selectedType == MediaKind.movie) {
       if (hasRefiningFilter) {
-        return l10n.watchHistoryFilteredMoviesCount(filteredMovies, totalMovies);
+        return l10n.watchHistoryFilteredMoviesCount(
+          filteredMovies,
+          totalMovies,
+        );
       }
       return l10n.watchHistoryMoviesCount(totalMovies);
     }
@@ -697,7 +742,10 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
               cursorColor: AppTheme.accent,
               decoration: InputDecoration(
                 hintText: l10n.watchHistorySearchPlaceholder,
-                hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                hintStyle: const TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 13,
+                ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -716,7 +764,11 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
                 cursor: SystemMouseCursors.click,
                 child: Padding(
                   padding: EdgeInsets.all(4),
-                  child: Icon(Icons.close_rounded, color: AppTheme.textMuted, size: 16),
+                  child: Icon(
+                    Icons.close_rounded,
+                    color: AppTheme.textMuted,
+                    size: 16,
+                  ),
                 ),
               ),
             ),
@@ -881,7 +933,11 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
           borderRadius: BorderRadius.circular(12),
           icon: const Padding(
             padding: EdgeInsets.only(left: 6),
-            child: Icon(Icons.arrow_drop_down, color: AppTheme.textMuted, size: 20),
+            child: Icon(
+              Icons.arrow_drop_down,
+              color: AppTheme.textMuted,
+              size: 20,
+            ),
           ),
           style: const TextStyle(
             color: Colors.white,
@@ -902,7 +958,11 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.access_time_rounded, size: 15, color: AppTheme.textMuted),
+                  const Icon(
+                    Icons.access_time_rounded,
+                    size: 15,
+                    color: AppTheme.textMuted,
+                  ),
                   const SizedBox(width: 6),
                   Text(l10n.watchHistorySortRecent),
                 ],
@@ -913,7 +973,11 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.calendar_today_rounded, size: 14, color: AppTheme.textMuted),
+                  const Icon(
+                    Icons.calendar_today_rounded,
+                    size: 14,
+                    color: AppTheme.textMuted,
+                  ),
                   const SizedBox(width: 6),
                   Text(l10n.searchNewestReleases),
                 ],
@@ -924,7 +988,11 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.star_outline_rounded, size: 15, color: AppTheme.textMuted),
+                  const Icon(
+                    Icons.star_outline_rounded,
+                    size: 15,
+                    color: AppTheme.textMuted,
+                  ),
                   const SizedBox(width: 6),
                   Text(l10n.searchHighestRated),
                 ],
@@ -935,7 +1003,11 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.sort_by_alpha_rounded, size: 15, color: AppTheme.textMuted),
+                  const Icon(
+                    Icons.sort_by_alpha_rounded,
+                    size: 15,
+                    color: AppTheme.textMuted,
+                  ),
                   const SizedBox(width: 6),
                   Text(l10n.watchHistorySortTitle),
                 ],
@@ -962,7 +1034,8 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     final rating = media?.voteAverage;
 
     // Calculate progress fraction if not completed
-    final double? progress = (item.totalDuration != null &&
+    final double? progress =
+        (item.totalDuration != null &&
             item.totalDuration! > 0 &&
             item.status != WatchStatus.completed &&
             item.progressSeconds > 0)
@@ -974,13 +1047,13 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     final String? infoText = !isTimeline
         ? null
         : (customInfoText ??
-            ((item.mediaType == MediaKind.tv &&
-                    item.season != null &&
-                    item.episode != null &&
-                    item.season! > 0 &&
-                    item.episode! > 0)
-                ? 'S${item.season} E${item.episode}'
-                : null));
+              ((item.mediaType == MediaKind.tv &&
+                      item.season != null &&
+                      item.episode != null &&
+                      item.season! > 0 &&
+                      item.episode! > 0)
+                  ? 'S${item.season} E${item.episode}'
+                  : null));
 
     return MediaCard(
       title: title,
@@ -1041,7 +1114,10 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     );
   }
 
-  List<WatchHistory> _filterAndSortItems(List<WatchHistory> source, String appLanguage) {
+  List<WatchHistory> _filterAndSortItems(
+    List<WatchHistory> source,
+    String appLanguage,
+  ) {
     if (identical(_lastRawList, source) &&
         _lastType == _selectedType &&
         _lastStatus == _selectedStatus &&
@@ -1066,7 +1142,10 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     return computed;
   }
 
-  List<WatchHistory> _computeFilterAndSortItems(List<WatchHistory> source, String appLanguage) {
+  List<WatchHistory> _computeFilterAndSortItems(
+    List<WatchHistory> source,
+    String appLanguage,
+  ) {
     // 1. Filter out entries without media object
     var list = source.where((h) => h.media != null).toList();
 
@@ -1083,7 +1162,8 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     // 4. Filter by search query
     if (_searchQuery.isNotEmpty) {
       list = list.where((h) {
-        final title = (h.media?.getLocalizedTitle(appLanguage) ?? '').toLowerCase();
+        final title = (h.media?.getLocalizedTitle(appLanguage) ?? '')
+            .toLowerCase();
         return title.contains(_searchQuery);
       }).toList();
     }
@@ -1095,7 +1175,8 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
       final uniqueMap = <int, WatchHistory>{};
       for (final item in list) {
         final existing = uniqueMap[item.tmdbId];
-        if (existing == null || item.lastWatchedAt.isAfter(existing.lastWatchedAt)) {
+        if (existing == null ||
+            item.lastWatchedAt.isAfter(existing.lastWatchedAt)) {
           uniqueMap[item.tmdbId] = item;
         }
       }
@@ -1226,13 +1307,18 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     return SliverLayoutBuilder(
       builder: (context, constraints) {
         final crossAxisExtent = constraints.crossAxisExtent;
-        final availableWidth = (crossAxisExtent - (horizontalPadding * 2)).clamp(100.0, double.infinity);
+        final availableWidth = (crossAxisExtent - (horizontalPadding * 2))
+            .clamp(100.0, double.infinity);
         final isMobile = availableWidth < 600;
         const spacing = 10.0;
         final crossAxisCount = isMobile
             ? 3
-            : ((availableWidth + spacing) / (140 + spacing)).floor().clamp(3, 8);
-        final cardWidth = (availableWidth - (crossAxisCount - 1) * spacing) / crossAxisCount;
+            : ((availableWidth + spacing) / (140 + spacing)).floor().clamp(
+                3,
+                8,
+              );
+        final cardWidth =
+            (availableWidth - (crossAxisCount - 1) * spacing) / crossAxisCount;
         final cardHeight = cardWidth / 0.54;
 
         final visibleSections = sections.take(_visibleSectionCount).toList();
@@ -1242,11 +1328,17 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
         final cardRowHeight = cardHeight + 16.0;
 
         return SliverPadding(
-          padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 32),
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            0,
+            horizontalPadding,
+            32,
+          ),
           sliver: SliverVariedExtentList.builder(
             itemCount: rows.length,
-            itemExtentBuilder: (index, _) =>
-                rows[index] is _TimelineHeaderItem ? headerHeight : cardRowHeight,
+            itemExtentBuilder: (index, _) => rows[index] is _TimelineHeaderItem
+                ? headerHeight
+                : cardRowHeight,
             itemBuilder: (context, index) {
               final row = rows[index];
               if (row is _TimelineHeaderItem) {
@@ -1254,7 +1346,11 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
                   height: headerHeight,
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: _buildTimelineSectionHeader(row.title, row.totalCount, l10n),
+                    child: _buildTimelineSectionHeader(
+                      row.title,
+                      row.totalCount,
+                      l10n,
+                    ),
                   ),
                 );
               } else if (row is _TimelineCardRowItem) {
@@ -1280,8 +1376,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
                             ),
                           ),
                         ],
-                        if (row.decks.length < crossAxisCount)
-                          const Spacer(),
+                        if (row.decks.length < crossAxisCount) const Spacer(),
                       ],
                     ),
                   ),
@@ -1362,11 +1457,13 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
 
       if (topItem.mediaType == MediaKind.tv && list.length > 1) {
         final label = _buildSeriesDeckLabel(list, l10n);
-        decks.add(_DeckEntry(
-          item: topItem,
-          stackCount: list.length,
-          customInfoText: label,
-        ));
+        decks.add(
+          _DeckEntry(
+            item: topItem,
+            stackCount: list.length,
+            customInfoText: label,
+          ),
+        );
       } else {
         decks.add(_DeckEntry(item: topItem));
       }
@@ -1376,9 +1473,18 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
   }
 
   /// Builds a concise episode/season range label, supporting multi-season binge watching
-  String? _buildSeriesDeckLabel(List<WatchHistory> list, AppLocalizations l10n) {
+  String? _buildSeriesDeckLabel(
+    List<WatchHistory> list,
+    AppLocalizations l10n,
+  ) {
     final valid = list
-        .where((e) => e.season != null && e.season! > 0 && e.episode != null && e.episode! > 0)
+        .where(
+          (e) =>
+              e.season != null &&
+              e.season! > 0 &&
+              e.episode != null &&
+              e.episode! > 0,
+        )
         .toList();
 
     if (valid.isEmpty) return null;
@@ -1390,11 +1496,22 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
 
     final seasons = seasonMap.keys.toList()..sort();
     if (seasons.length == 1) {
-      return _buildSingleSeasonLabel(seasons.first, seasonMap[seasons.first]!, list.length, l10n);
+      return _buildSingleSeasonLabel(
+        seasons.first,
+        seasonMap[seasons.first]!,
+        list.length,
+        l10n,
+      );
     }
 
     if (seasons.length == 2) {
-      return _buildTwoSeasonLabel(seasons[0], seasonMap[seasons[0]]!, seasons[1], seasonMap[seasons[1]]!, l10n);
+      return _buildTwoSeasonLabel(
+        seasons[0],
+        seasonMap[seasons[0]]!,
+        seasons[1],
+        seasonMap[seasons[1]]!,
+        l10n,
+      );
     }
 
     return l10n.watchHistorySeasonRange(seasons.first, seasons.last);
@@ -1422,7 +1539,12 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
   ) {
     final sorted1 = eps1.toList()..sort();
     final sorted2 = eps2.toList()..sort();
-    return l10n.watchHistoryMultiSeasonRange(season1, sorted1.first, season2, sorted2.last);
+    return l10n.watchHistoryMultiSeasonRange(
+      season1,
+      sorted1.first,
+      season2,
+      sorted2.last,
+    );
   }
 
   Widget _buildTimelineSectionHeader(
@@ -1457,9 +1579,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
           decoration: BoxDecoration(
             color: AppTheme.accent.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: AppTheme.accent.withValues(alpha: 0.25),
-            ),
+            border: Border.all(color: AppTheme.accent.withValues(alpha: 0.25)),
           ),
           child: Text(
             l10n.watchHistorySubtitle(visibleCount),
@@ -1516,7 +1636,8 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
             groupTitle = l10n.watchHistoryDateYesterday;
           } else if (itemDate.isAfter(sevenDaysAgo)) {
             groupTitle = l10n.watchHistoryDateThisWeek;
-          } else if (itemDate.isAfter(startOfMonth) || itemDate == startOfMonth) {
+          } else if (itemDate.isAfter(startOfMonth) ||
+              itemDate == startOfMonth) {
             groupTitle = l10n.watchHistoryDateThisMonth;
           } else {
             groupTitle = DateFormat.yMMMMd(appLanguage).format(date);
@@ -1546,31 +1667,21 @@ class _DeckEntry {
   final int? stackCount;
   final String? customInfoText;
 
-  const _DeckEntry({
-    required this.item,
-    this.stackCount,
-    this.customInfoText,
-  });
+  const _DeckEntry({required this.item, this.stackCount, this.customInfoText});
 }
 
 class _TimelineGroup {
   final String title;
   final List<WatchHistory> items;
 
-  const _TimelineGroup({
-    required this.title,
-    required this.items,
-  });
+  const _TimelineGroup({required this.title, required this.items});
 }
 
 class _TimelineSection {
   final String title;
   final List<_DeckEntry> decks;
 
-  const _TimelineSection({
-    required this.title,
-    required this.decks,
-  });
+  const _TimelineSection({required this.title, required this.decks});
 }
 
 abstract class _TimelineRowItem {}

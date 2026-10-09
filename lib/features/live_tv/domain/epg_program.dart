@@ -69,4 +69,3 @@ class EpgProgram {
     if (imageUrl != null) 'image': imageUrl,
   };
 }
-

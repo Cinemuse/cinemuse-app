@@ -23,10 +23,13 @@ class LiveTvInitializationResult {
 
 class LiveTvSourceHandler {
   static final RegExp _dlhdChannelIdRegex = RegExp(r'dlhd_(\d+)');
-  static final RegExp _iframeSrcRegex =
-      RegExp(r'iframe src=["\x27]([^"\x27]+)', caseSensitive: false);
-  static final RegExp _daddySourceRegex =
-      RegExp(r'source\s*:\s*window\.atob\(["\x27]([^"\x27]+)');
+  static final RegExp _iframeSrcRegex = RegExp(
+    r'iframe src=["\x27]([^"\x27]+)',
+    caseSensitive: false,
+  );
+  static final RegExp _daddySourceRegex = RegExp(
+    r'source\s*:\s*window\.atob\(["\x27]([^"\x27]+)',
+  );
 
   static final Dio _relinkerDio = Dio(
     BaseOptions(
@@ -92,7 +95,8 @@ class LiveTvSourceHandler {
     // 1. Optimize Player properties for Live TV
     _optimizeForLiveStreaming(settings, isPremium);
 
-    final isTilescale = url.contains('tilescale.com') ||
+    final isTilescale =
+        url.contains('tilescale.com') ||
         url.contains('freebcloud') ||
         url.contains('phantom') ||
         url.contains('dlhd');
@@ -106,8 +110,10 @@ class LiveTvSourceHandler {
     final headers = {
       'User-Agent': userAgent,
       'Accept': '*/*',
-      if (url.contains('phantemlis.top')) 'Referer': 'https://hamis.romponalis.st/',
-      if (url.contains('phantemlis.top')) 'Origin': 'https://hamis.romponalis.st',
+      if (url.contains('phantemlis.top'))
+        'Referer': 'https://hamis.romponalis.st/',
+      if (url.contains('phantemlis.top'))
+        'Origin': 'https://hamis.romponalis.st',
       if (isTilescale) 'Referer': 'https://tilescale.com/',
     };
 
@@ -218,13 +224,19 @@ class LiveTvSourceHandler {
 
       // 3. Conditional Format & Reconnection
       if (isPremium) {
-        platform.setProperty('force-seekable', 'no'); // Prevents stalls on raw TS
+        platform.setProperty(
+          'force-seekable',
+          'no',
+        ); // Prevents stalls on raw TS
       } else {
         platform.setProperty('demuxer-lavf-o', 'live_start_index=-3');
         platform.setProperty('force-seekable', 'yes');
       }
 
-      platform.setProperty('stream-lavf-o', 'reconnect_streamed=1,reconnect_delay_max=2');
+      platform.setProperty(
+        'stream-lavf-o',
+        'reconnect_streamed=1,reconnect_delay_max=2',
+      );
       platform.setProperty('http-reconnect', 'yes');
       platform.setProperty('reconnect-on-network-error', 'yes');
       platform.setProperty('reconnect-on-http-error', 'all');
@@ -265,7 +277,8 @@ class LiveTvSourceHandler {
     if (url.contains('dlhd_') || url.contains('live-tv-resolver/stream')) {
       return await _resolveDaddyLiveRelinker(url);
     }
-    if (url.contains('/live/') && (url.contains('.ts') || url.contains('.m3u8'))) {
+    if (url.contains('/live/') &&
+        (url.contains('.ts') || url.contains('.m3u8'))) {
       return await _resolveHttpRedirect(url);
     }
     return url;
@@ -279,9 +292,7 @@ class LiveTvSourceHandler {
           receiveTimeout: const Duration(seconds: 4),
           followRedirects: false,
           validateStatus: (status) => status != null && status < 400,
-          headers: {
-            'User-Agent': 'VLC/3.0.18 LibVLC/3.0.18',
-          },
+          headers: {'User-Agent': 'VLC/3.0.18 LibVLC/3.0.18'},
         ),
       );
       final response = await dio.get(url);
@@ -328,7 +339,9 @@ class LiveTvSourceHandler {
       // Step 2: dlive.sx
       final r2 = await _relinkerDio.get(
         ifr1,
-        options: Options(headers: {...commonHeaders, 'Referer': 'https://dlhd.st/'}),
+        options: Options(
+          headers: {...commonHeaders, 'Referer': 'https://dlhd.st/'},
+        ),
       );
       final m2 = _iframeSrcRegex.firstMatch(r2.data.toString());
       if (m2 == null) return url;

@@ -35,7 +35,10 @@ class SubViewHeader extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textSecondary),
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: AppTheme.textSecondary,
+            ),
             onPressed: onBack,
             splashRadius: 24,
           ),
@@ -91,11 +94,11 @@ class SettingsTile extends StatelessWidget {
             border: isFocused
                 ? Border.all(color: AppTheme.focusRing, width: 1.5)
                 : (isHovered
-                    ? Border.all(
-                        color: AppTheme.textWhite.withValues(alpha: 0.2),
-                        width: 1.5,
-                      )
-                    : null),
+                      ? Border.all(
+                          color: AppTheme.textWhite.withValues(alpha: 0.2),
+                          width: 1.5,
+                        )
+                      : null),
           ),
           child: ListTile(
             contentPadding: EdgeInsets.symmetric(
@@ -112,7 +115,9 @@ class SettingsTile extends StatelessWidget {
               ),
               child: Icon(
                 icon,
-                color: isHighlighted ? AppTheme.textWhite : AppTheme.textSecondary,
+                color: isHighlighted
+                    ? AppTheme.textWhite
+                    : AppTheme.textSecondary,
                 size: compact ? 20 : 24,
               ),
             ),
@@ -307,17 +312,17 @@ class TrackTile extends ConsumerWidget {
             color: isSelected
                 ? AppTheme.accent.withValues(alpha: 0.15)
                 : (isHighlighted
-                    ? AppTheme.textWhite.withValues(alpha: 0.08)
-                    : AppTheme.textWhite.withValues(alpha: 0.02)),
+                      ? AppTheme.textWhite.withValues(alpha: 0.08)
+                      : AppTheme.textWhite.withValues(alpha: 0.02)),
             borderRadius: AppTheme.radius12,
             border: Border.all(
               color: isFocused
                   ? AppTheme.focusRing
                   : (isSelected
-                      ? AppTheme.accent.withValues(alpha: 0.5)
-                      : (isHovered
-                          ? AppTheme.textWhite.withValues(alpha: 0.2)
-                          : AppTheme.textWhite.withValues(alpha: 0.05))),
+                        ? AppTheme.accent.withValues(alpha: 0.5)
+                        : (isHovered
+                              ? AppTheme.textWhite.withValues(alpha: 0.2)
+                              : AppTheme.textWhite.withValues(alpha: 0.05))),
               width: isFocused ? 2 : 1,
             ),
           ),
@@ -460,8 +465,8 @@ class StreamMetadataOverview extends StatelessWidget {
                       text: entry.key == 'Real-Debrid'
                           ? 'RD'
                           : entry.key == 'TorBox'
-                              ? 'TB'
-                              : cachedLabel,
+                          ? 'TB'
+                          : cachedLabel,
                       color: AppTheme.success,
                     ),
             ],

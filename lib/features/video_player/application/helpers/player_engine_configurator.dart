@@ -9,10 +9,7 @@ class PlayerEngineBundle {
   final Player player;
   final VideoController controller;
 
-  const PlayerEngineBundle({
-    required this.player,
-    required this.controller,
-  });
+  const PlayerEngineBundle({required this.player, required this.controller});
 }
 
 /// Encapsulates creation and low-level MPV engine configuration

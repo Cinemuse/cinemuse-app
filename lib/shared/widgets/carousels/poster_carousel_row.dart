@@ -29,7 +29,8 @@ class PosterCarouselRow extends StatelessWidget {
     this.padding,
     this.controller,
     this.onHeaderTap,
-    this.visibleCards = CarouselLayoutCalculator.defaultPosterMobileVisibleCards,
+    this.visibleCards =
+        CarouselLayoutCalculator.defaultPosterMobileVisibleCards,
   });
 
   static EdgeInsets defaultPaddingForTheme(

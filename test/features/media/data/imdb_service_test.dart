@@ -19,7 +19,10 @@ void main() {
     test('returns empty list if imdbId is empty', () async {
       final result = await imdbService.fetchReviews(imdbId: '');
       expect(result, isEmpty);
-      verifyNever(() => mockDio.post<Map<String, dynamic>>(any(), data: any(named: 'data')));
+      verifyNever(
+        () =>
+            mockDio.post<Map<String, dynamic>>(any(), data: any(named: 'data')),
+      );
     });
 
     test('successfully parses GraphQL reviews', () async {
@@ -38,16 +41,17 @@ void main() {
                     'summary': {'originalText': 'Masterpiece &amp; must see'},
                     'text': {
                       'originalText': {
-                        'plaidHtml': 'A truly incredible journey.<br><br>Highly recommended!'
-                      }
+                        'plaidHtml':
+                            'A truly incredible journey.<br><br>Highly recommended!',
+                      },
                     },
                     'helpfulness': {'upVotes': 150, 'downVotes': 10},
-                  }
-                }
-              ]
-            }
-          }
-        }
+                  },
+                },
+              ],
+            },
+          },
+        },
       };
 
       when(
@@ -60,7 +64,9 @@ void main() {
         (_) async => Response(
           data: mockResponse,
           statusCode: 200,
-          requestOptions: RequestOptions(path: 'https://caching.graphql.imdb.com/'),
+          requestOptions: RequestOptions(
+            path: 'https://caching.graphql.imdb.com/',
+          ),
         ),
       );
 
@@ -92,12 +98,12 @@ void main() {
                     'authorRating': 10,
                     'summary': {'originalText': 'Review 1'},
                     'text': {'originalText': 'Body 1'},
-                  }
-                }
-              ]
-            }
-          }
-        }
+                  },
+                },
+              ],
+            },
+          },
+        },
       };
 
       final mockPage2 = {
@@ -113,18 +119,21 @@ void main() {
                     'authorRating': 8,
                     'summary': {'originalText': 'Review 2'},
                     'text': {'originalText': 'Body 2'},
-                  }
-                }
-              ]
-            }
-          }
-        }
+                  },
+                },
+              ],
+            },
+          },
+        },
       };
 
       when(
         () => mockDio.post<dynamic>(
           any(),
-          data: any(named: 'data', that: containsPair('query', contains(r'$first: Int!'))),
+          data: any(
+            named: 'data',
+            that: containsPair('query', contains(r'$first: Int!')),
+          ),
           options: any(named: 'options'),
         ),
       ).thenAnswer(
@@ -138,7 +147,10 @@ void main() {
       when(
         () => mockDio.post<dynamic>(
           any(),
-          data: any(named: 'data', that: containsPair('query', contains(r'$after: ID!'))),
+          data: any(
+            named: 'data',
+            that: containsPair('query', contains(r'$after: ID!')),
+          ),
           options: any(named: 'options'),
         ),
       ).thenAnswer(
@@ -149,12 +161,18 @@ void main() {
         ),
       );
 
-      final page1Reviews = await imdbService.fetchReviews(imdbId: 'tt0816692', page: 1);
+      final page1Reviews = await imdbService.fetchReviews(
+        imdbId: 'tt0816692',
+        page: 1,
+      );
       expect(page1Reviews.length, 1);
       expect(page1Reviews.first.id, 'imdb_p1');
       expect(page1Reviews.first.rating, 5.0); // 10 / 2 = 5.0
 
-      final page2Reviews = await imdbService.fetchReviews(imdbId: 'tt0816692', page: 2);
+      final page2Reviews = await imdbService.fetchReviews(
+        imdbId: 'tt0816692',
+        page: 2,
+      );
       expect(page2Reviews.length, 1);
       expect(page2Reviews.first.id, 'imdb_p2');
       expect(page2Reviews.first.rating, 4.0); // 8 / 2 = 4.0

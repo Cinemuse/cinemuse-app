@@ -70,10 +70,22 @@ class LanguageMapper {
     if (preferredLang.isEmpty) return false;
 
     final (title, language) = switch (track) {
-      AudioTrack t => ((t.title ?? '').toLowerCase(), (t.language ?? '').toLowerCase()),
-      SubtitleTrack t => ((t.title ?? '').toLowerCase(), (t.language ?? '').toLowerCase()),
-      VideoTrack t => ((t.title ?? '').toLowerCase(), (t.language ?? '').toLowerCase()),
-      _ => ((track?.title as String? ?? '').toLowerCase(), (track?.language as String? ?? '').toLowerCase()),
+      AudioTrack t => (
+        (t.title ?? '').toLowerCase(),
+        (t.language ?? '').toLowerCase(),
+      ),
+      SubtitleTrack t => (
+        (t.title ?? '').toLowerCase(),
+        (t.language ?? '').toLowerCase(),
+      ),
+      VideoTrack t => (
+        (t.title ?? '').toLowerCase(),
+        (t.language ?? '').toLowerCase(),
+      ),
+      _ => (
+        (track?.title as String? ?? '').toLowerCase(),
+        (track?.language as String? ?? '').toLowerCase(),
+      ),
     };
 
     final normalizedPref = preferredLang.trim().toLowerCase();

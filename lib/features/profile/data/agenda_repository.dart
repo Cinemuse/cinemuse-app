@@ -61,7 +61,7 @@ class AgendaRepository {
     if (followedIds.isEmpty) return [];
 
     final events = <AgendaEvent>[];
-    
+
     // Only fetch movies that are upcoming or released within the last 30 days
     final cutoff = DateTime.now().subtract(const Duration(days: 30));
     final cutoffStr =
@@ -70,9 +70,12 @@ class AgendaRepository {
     // Chunk queries to avoid URL length issues or limits
     final allIds = followedIds.toList();
     final allRows = <Map<String, dynamic>>[];
-    
+
     for (var i = 0; i < allIds.length; i += 100) {
-      final chunk = allIds.sublist(i, i + 100 > allIds.length ? allIds.length : i + 100);
+      final chunk = allIds.sublist(
+        i,
+        i + 100 > allIds.length ? allIds.length : i + 100,
+      );
       final cacheRes = await _supabase
           .from('upcoming_agenda_cache')
           .select()
@@ -121,9 +124,12 @@ class AgendaRepository {
     // Fetch from denormalized cache table
     final allIds = followedIds.toList();
     final allRows = <Map<String, dynamic>>[];
-    
+
     for (var i = 0; i < allIds.length; i += 100) {
-      final chunk = allIds.sublist(i, i + 100 > allIds.length ? allIds.length : i + 100);
+      final chunk = allIds.sublist(
+        i,
+        i + 100 > allIds.length ? allIds.length : i + 100,
+      );
       final cacheRes = await _supabase
           .from('upcoming_agenda_cache')
           .select()
@@ -134,22 +140,28 @@ class AgendaRepository {
     }
 
     final now = DateTime.now();
-    final todayStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    final todayStr =
+        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
 
     for (final row in allRows) {
       final seriesId = row['tmdb_id'] as int;
       final eventData = row['event_data'] as Map<String, dynamic>;
-      
+
       final episodes = eventData['episodes'] as List? ?? [eventData];
 
-      final startDate = DateTime(now.year, now.month, now.day)
-          .subtract(const Duration(days: 30));
+      final startDate = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(const Duration(days: 30));
 
       Map<String, dynamic>? verifiedLastAired;
 
       for (final ep in episodes) {
         final airDateStr = ep['air_date'] as String?;
-        if (airDateStr != null && airDateStr.isNotEmpty && airDateStr.compareTo(todayStr) <= 0) {
+        if (airDateStr != null &&
+            airDateStr.isNotEmpty &&
+            airDateStr.compareTo(todayStr) <= 0) {
           verifiedLastAired = ep;
         }
 
@@ -165,7 +177,9 @@ class AgendaRepository {
         } else {
           try {
             final airDate = DateTime.parse(airDateStr);
-            if (airDate.isAfter(startDate.subtract(const Duration(seconds: 1)))) {
+            if (airDate.isAfter(
+              startDate.subtract(const Duration(seconds: 1)),
+            )) {
               events.add(
                 AgendaEvent.fromEpisode(
                   seriesId: seriesId,
@@ -196,25 +210,25 @@ class AgendaRepository {
           final eHistory = historyItem['episode'] as int? ?? 0;
           final lastS = verifiedLastAired['season_number'] as int? ?? 0;
           final lastE = verifiedLastAired['episode_number'] as int? ?? 0;
-          
+
           if (lastS > sHistory || (lastS == sHistory && lastE > eHistory)) {
-             // We can safely update watch_history here
-             final watchingEntry = {
-                'user_id': userId,
-                'tmdb_id': seriesId,
-                'media_type': 'tv',
-                'season': lastS,
-                'episode': lastE,
-                'status': 'watching',
-                'progress_seconds': 0,
-                'total_duration': 0,
-                'last_watched_at': DateTime.now().toUtc().toIso8601String(),
-             };
-             
-             // Fire and forget the update
-             _supabase.from('watch_history').upsert(watchingEntry).then((_) {
-                _watchHistoryRepo.syncWatchHistory(userId);
-             });
+            // We can safely update watch_history here
+            final watchingEntry = {
+              'user_id': userId,
+              'tmdb_id': seriesId,
+              'media_type': 'tv',
+              'season': lastS,
+              'episode': lastE,
+              'status': 'watching',
+              'progress_seconds': 0,
+              'total_duration': 0,
+              'last_watched_at': DateTime.now().toUtc().toIso8601String(),
+            };
+
+            // Fire and forget the update
+            _supabase.from('watch_history').upsert(watchingEntry).then((_) {
+              _watchHistoryRepo.syncWatchHistory(userId);
+            });
           }
         }
       }

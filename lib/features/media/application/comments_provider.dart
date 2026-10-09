@@ -4,18 +4,9 @@ import 'package:cinemuse_app/features/media/data/comments_repository_provider.da
 import 'package:cinemuse_app/features/media/domain/comment.dart';
 import 'package:cinemuse_app/features/media/domain/comments_repository.dart';
 
-enum CommentSortType {
-  mostLiked,
-  recent,
-  highestRating,
-}
+enum CommentSortType { mostLiked, recent, highestRating }
 
-enum CommentSourceFilter {
-  all,
-  serializd,
-  letterboxd,
-  imdb,
-}
+enum CommentSourceFilter { all, serializd, letterboxd, imdb }
 
 class CommentsState {
   final bool isLoading;
@@ -100,10 +91,7 @@ class CommentsNotifier
       _allComments = combined;
       _currentPage = p2.isNotEmpty ? 2 : 1;
       _applySortAndFilter();
-      state = state.copyWith(
-        hasMore: p2.isNotEmpty,
-        currentPage: _currentPage,
-      );
+      state = state.copyWith(hasMore: p2.isNotEmpty, currentPage: _currentPage);
     } catch (e, stack) {
       developer.log(
         'Failed to load initial comments for $arg',
@@ -148,7 +136,8 @@ class CommentsNotifier
 
       // Filter and sort ONLY the newly fetched batch so existing items above the viewport are undisturbed
       final filteredFresh = _filterAndSortBatch(freshBatch);
-      final updatedComments = List<Comment>.from(state.comments)..addAll(filteredFresh);
+      final updatedComments = List<Comment>.from(state.comments)
+        ..addAll(filteredFresh);
 
       state = state.copyWith(
         isLoadingMore: false,

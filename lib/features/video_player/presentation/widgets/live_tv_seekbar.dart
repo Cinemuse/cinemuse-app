@@ -48,8 +48,11 @@ class _LiveTvSeekbarState extends State<LiveTvSeekbar> {
     const stepSeconds = 30;
     final duration = widget.player.state.duration;
     final currentPos = widget.position;
-    final newSec = (currentPos.inSeconds + (forward ? stepSeconds : -stepSeconds))
-        .clamp(0, duration.inSeconds);
+    final newSec =
+        (currentPos.inSeconds + (forward ? stepSeconds : -stepSeconds)).clamp(
+          0,
+          duration.inSeconds,
+        );
 
     widget.onChangeStart(newSec.toDouble());
     widget.onChanged(newSec.toDouble());
@@ -72,10 +75,9 @@ class _LiveTvSeekbarState extends State<LiveTvSeekbar> {
     final l10n = AppLocalizations.of(context)!;
     final secondsBehindLive =
         -(widget.rawDuration.inSeconds - widget.position.inSeconds).toDouble();
-    final uiTotalSeconds =
-        ((widget.rawDuration.inSeconds / 60).ceil() * 60)
-            .toDouble()
-            .clamp(60.0, 7200.0);
+    final uiTotalSeconds = ((widget.rawDuration.inSeconds / 60).ceil() * 60)
+        .toDouble()
+        .clamp(60.0, 7200.0);
     final safeMin = -uiTotalSeconds;
     final isAtLive = !widget.dragging && secondsBehindLive >= -30;
 
@@ -89,8 +91,10 @@ class _LiveTvSeekbarState extends State<LiveTvSeekbar> {
                   setState(() {
                     _hoverX = event.localPosition.dx;
                     _isHoveringSeekbar = true;
-                    final percent =
-                        (_hoverX! / constraints.maxWidth).clamp(0.0, 1.0);
+                    final percent = (_hoverX! / constraints.maxWidth).clamp(
+                      0.0,
+                      1.0,
+                    );
                     final hoverOffsetSeconds =
                         ((1.0 - percent) * uiTotalSeconds).toInt();
                     _hoverDuration = Duration(seconds: hoverOffsetSeconds);
@@ -184,7 +188,8 @@ class _LiveTvSeekbarState extends State<LiveTvSeekbar> {
                               -widget.rawDuration.inSeconds.toDouble(),
                               0.0,
                             );
-                            final target = widget.rawDuration +
+                            final target =
+                                widget.rawDuration +
                                 Duration(seconds: clampedOffset.toInt());
                             widget.onChangeStart(target.inSeconds.toDouble());
                           },
@@ -193,7 +198,8 @@ class _LiveTvSeekbarState extends State<LiveTvSeekbar> {
                               -widget.rawDuration.inSeconds.toDouble(),
                               0.0,
                             );
-                            final target = widget.rawDuration +
+                            final target =
+                                widget.rawDuration +
                                 Duration(seconds: clampedOffset.toInt());
                             widget.onChanged(target.inSeconds.toDouble());
                           },
@@ -202,7 +208,8 @@ class _LiveTvSeekbarState extends State<LiveTvSeekbar> {
                               -widget.rawDuration.inSeconds.toDouble(),
                               0.0,
                             );
-                            final target = widget.rawDuration +
+                            final target =
+                                widget.rawDuration +
                                 Duration(seconds: clampedOffset.toInt());
                             widget.onChangeEnd(target.inSeconds.toDouble());
                           },
@@ -261,10 +268,7 @@ class _LiveTvSeekbarState extends State<LiveTvSeekbar> {
                 },
           borderRadius: AppTheme.radiusMd,
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 6,
-              vertical: 2,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

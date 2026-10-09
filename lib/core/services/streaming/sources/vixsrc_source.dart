@@ -67,10 +67,7 @@ class VixSrcSource extends BaseSource {
       final response = await _dio.get(
         embedUrl,
         options: Options(
-          headers: {
-            'Referer': '$_baseUrl$path',
-            'User-Agent': _userAgent,
-          },
+          headers: {'Referer': '$_baseUrl$path', 'User-Agent': _userAgent},
           sendTimeout: _requestTimeout,
           receiveTimeout: _requestTimeout,
         ),
@@ -124,10 +121,7 @@ class VixSrcSource extends BaseSource {
         final playlistResponse = await _dio.get(
           playlistUrl,
           options: Options(
-            headers: {
-              'Referer': '$_baseUrl$path',
-              'User-Agent': _userAgent,
-            },
+            headers: {'Referer': '$_baseUrl$path', 'User-Agent': _userAgent},
             sendTimeout: _requestTimeout,
             receiveTimeout: _requestTimeout,
           ),
@@ -216,11 +210,7 @@ class VixSrcSource extends BaseSource {
         } else {
           otherSubtitleLines.add(line);
           if (uri.isNotEmpty) {
-            onDemandSubtitles.add({
-              'name': name,
-              'language': lang,
-              'uri': uri,
-            });
+            onDemandSubtitles.add({'name': name, 'language': lang, 'uri': uri});
           }
         }
       } else {

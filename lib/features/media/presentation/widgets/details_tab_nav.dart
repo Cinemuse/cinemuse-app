@@ -49,7 +49,9 @@ class DetailsTabNav extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 0),
-          child: Row(children: tabs.map((tab) => _buildTab(context, tab)).toList()),
+          child: Row(
+            children: tabs.map((tab) => _buildTab(context, tab)).toList(),
+          ),
         ),
       ),
     );
@@ -76,7 +78,9 @@ class DetailsTabNav extends StatelessWidget {
               bottom: BorderSide(
                 color: isActive
                     ? theme.colorScheme.primary
-                    : (isFocused ? theme.colorScheme.primary.withValues(alpha: 0.5) : Colors.transparent),
+                    : (isFocused
+                          ? theme.colorScheme.primary.withValues(alpha: 0.5)
+                          : Colors.transparent),
                 width: 2,
               ),
             ),

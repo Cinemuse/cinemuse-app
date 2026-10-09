@@ -55,7 +55,10 @@ class CastRemoteView extends ConsumerWidget {
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back, color: AppTheme.textWhite),
+                        icon: const Icon(
+                          Icons.arrow_back,
+                          color: AppTheme.textWhite,
+                        ),
                         onPressed: onBackPressed,
                       ),
                       const SizedBox(width: 8),
@@ -75,7 +78,10 @@ class CastRemoteView extends ConsumerWidget {
                             Text(
                               AppLocalizations.of(context)!.castCastingTo(
                                 playerState.selectedCastDevice?.name ??
-                                    (AppLocalizations.of(context)?.castDefaultDevice ?? 'Chromecast'),
+                                    (AppLocalizations.of(
+                                          context,
+                                        )?.castDefaultDevice ??
+                                        'Chromecast'),
                               ),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: AppTheme.textSecondary,
@@ -226,7 +232,10 @@ class CastRemoteView extends ConsumerWidget {
                     children: [
                       IconButton(
                         iconSize: 40,
-                        icon: const Icon(Icons.replay_10, color: AppTheme.textWhite),
+                        icon: const Icon(
+                          Icons.replay_10,
+                          color: AppTheme.textWhite,
+                        ),
                         onPressed: () {
                           notifier.seek(
                             playerState.remotePosition -
@@ -256,7 +265,10 @@ class CastRemoteView extends ConsumerWidget {
                       ),
                       IconButton(
                         iconSize: 40,
-                        icon: const Icon(Icons.forward_10, color: AppTheme.textWhite),
+                        icon: const Icon(
+                          Icons.forward_10,
+                          color: AppTheme.textWhite,
+                        ),
                         onPressed: () {
                           notifier.seek(
                             playerState.remotePosition +

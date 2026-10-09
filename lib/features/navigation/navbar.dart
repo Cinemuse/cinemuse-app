@@ -63,7 +63,11 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
     }
   }
 
-  KeyEventResult _handlePillKeyEvent(int index, FocusNode node, KeyEvent event) {
+  KeyEventResult _handlePillKeyEvent(
+    int index,
+    FocusNode node,
+    KeyEvent event,
+  ) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
@@ -103,7 +107,8 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
       return KeyEventResult.handled;
     }
 
-    final isActivationKey = event.logicalKey == LogicalKeyboardKey.enter ||
+    final isActivationKey =
+        event.logicalKey == LogicalKeyboardKey.enter ||
         event.logicalKey == LogicalKeyboardKey.numpadEnter ||
         event.logicalKey == LogicalKeyboardKey.select ||
         event.logicalKey == LogicalKeyboardKey.space ||
@@ -187,7 +192,9 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
                       if (isDesktop && MediaQuery.of(context).size.width >= 600)
                         Container(
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.surface.withValues(alpha: 0.5),
+                            color: theme.colorScheme.surface.withValues(
+                              alpha: 0.5,
+                            ),
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
                               color: Colors.white.withValues(alpha: 0.1),
@@ -255,8 +262,9 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
                                 focusNode: _pillFocusNodes[5],
                                 onKeyEvent: (node, event) =>
                                     _handlePillKeyEvent(5, node, event),
-                                onFocusChange: (focused) =>
-                                    setState(() => _isSettingsFocused = focused),
+                                onFocusChange: (focused) => setState(
+                                  () => _isSettingsFocused = focused,
+                                ),
                                 child: Theme(
                                   data: Theme.of(context).copyWith(
                                     popupMenuTheme: PopupMenuThemeData(
@@ -267,9 +275,8 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                         side: BorderSide(
-                                          color: theme.colorScheme.onSurface.withValues(
-                                            alpha: 0.1,
-                                          ),
+                                          color: theme.colorScheme.onSurface
+                                              .withValues(alpha: 0.1),
                                         ),
                                       ),
                                     ),
@@ -299,9 +306,8 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
                                             Icon(
                                               Icons.settings_outlined,
                                               size: 18,
-                                              color: theme.colorScheme.onSurface.withValues(
-                                                alpha: 0.7,
-                                              ),
+                                              color: theme.colorScheme.onSurface
+                                                  .withValues(alpha: 0.7),
                                             ),
                                             const SizedBox(width: 8),
                                             Text(l10n.settingsTitle),
@@ -334,14 +340,16 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
                                     child: Material(
                                       color: Colors.transparent,
                                       child: InkWell(
-                                        onTap: () => _settingsMenuKey.currentState
+                                        onTap: () => _settingsMenuKey
+                                            .currentState
                                             ?.showButtonMenu(),
                                         mouseCursor: SystemMouseCursors.click,
                                         borderRadius: BorderRadius.circular(20),
                                         hoverColor: theme.hoverColor,
                                         child: AnimatedContainer(
-                                          duration:
-                                              const Duration(milliseconds: 150),
+                                          duration: const Duration(
+                                            milliseconds: 150,
+                                          ),
                                           padding: const EdgeInsets.all(8),
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
@@ -353,7 +361,8 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
                                             Icons.person_rounded,
                                             color: _isSettingsFocused
                                                 ? theme.colorScheme.onSurface
-                                                : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                                                : theme.colorScheme.onSurface
+                                                      .withValues(alpha: 0.7),
                                             size: 20,
                                           ),
                                         ),
@@ -415,11 +424,15 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
                         data: Theme.of(context).copyWith(
                           popupMenuTheme: PopupMenuThemeData(
                             color: theme.colorScheme.surface,
-                            textStyle: TextStyle(color: theme.colorScheme.onSurface),
+                            textStyle: TextStyle(
+                              color: theme.colorScheme.onSurface,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                               side: BorderSide(
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.1,
+                                ),
                               ),
                             ),
                           ),
@@ -446,17 +459,16 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
                               height: 48, // Slightly larger for touch
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.settings_outlined,
-                                      size: 20,
-                                      color: theme.colorScheme.onSurface.withValues(
-                                        alpha: 0.7,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(l10n.settingsTitle),
-                                  ],
+                                children: [
+                                  Icon(
+                                    Icons.settings_outlined,
+                                    size: 20,
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.7),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(l10n.settingsTitle),
+                                ],
                               ),
                             ),
                             PopupMenuItem(
@@ -499,7 +511,8 @@ class AppWindowButtons extends StatefulWidget {
   State<AppWindowButtons> createState() => _AppWindowButtonsState();
 }
 
-class _AppWindowButtonsState extends State<AppWindowButtons> with WindowListener {
+class _AppWindowButtonsState extends State<AppWindowButtons>
+    with WindowListener {
   bool _isMaximized = false;
 
   @override
@@ -707,9 +720,7 @@ class _NavItemState extends State<_NavItem> {
             decoration: BoxDecoration(
               color: widget.isSelected
                   ? theme.colorScheme.primary.withValues(alpha: 0.25)
-                  : (_isFocused
-                      ? theme.focusColor
-                      : Colors.transparent),
+                  : (_isFocused ? theme.focusColor : Colors.transparent),
               borderRadius: effectiveRadius,
               border: Border.all(
                 color: widget.isSelected
@@ -779,9 +790,7 @@ class _IconActionState extends State<_IconAction> {
             padding: const EdgeInsets.all(8.0),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: _isFocused
-                  ? theme.focusColor
-                  : Colors.transparent,
+              color: _isFocused ? theme.focusColor : Colors.transparent,
             ),
             child: Icon(
               widget.icon,

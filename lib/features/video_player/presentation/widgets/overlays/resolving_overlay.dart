@@ -26,8 +26,8 @@ class ResolvingOverlay extends StatelessWidget {
     final maxElapsedSeconds = state.providerStatuses.isEmpty
         ? 0
         : state.providerStatuses
-            .map((s) => s.timeElapsed.inSeconds)
-            .reduce((a, b) => a > b ? a : b);
+              .map((s) => s.timeElapsed.inSeconds)
+              .reduce((a, b) => a > b ? a : b);
     return maxElapsedSeconds >= 15;
   }
 

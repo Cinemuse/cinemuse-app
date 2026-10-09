@@ -3,12 +3,13 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 
-typedef DpadFocusableBuilder = Widget Function(
-  BuildContext context,
-  bool isFocused,
-  bool isHovered,
-  Widget child,
-);
+typedef DpadFocusableBuilder =
+    Widget Function(
+      BuildContext context,
+      bool isFocused,
+      bool isHovered,
+      Widget child,
+    );
 
 /// A reusable interactive wrapper that equips its child with:
 /// - D-Pad & keyboard navigation (Up/Down/Left/Right directional focus)
@@ -68,7 +69,8 @@ class DpadFocusable extends StatefulWidget {
 
 class _DpadFocusableState extends State<DpadFocusable> {
   FocusNode? _internalFocusNode;
-  FocusNode get _effectiveFocusNode => widget.focusNode ?? (_internalFocusNode ??= FocusNode());
+  FocusNode get _effectiveFocusNode =>
+      widget.focusNode ?? (_internalFocusNode ??= FocusNode());
 
   bool _isFocused = false;
   bool _isHovered = false;
@@ -138,7 +140,8 @@ class _DpadFocusableState extends State<DpadFocusable> {
 
           final bool isComfortablyVisible = minComfortable <= maxComfortable
               ? (current >= minComfortable && current <= maxComfortable)
-              : (current >= revealTrailing.offset && current <= revealLeading.offset);
+              : (current >= revealTrailing.offset &&
+                    current <= revealLeading.offset);
 
           if (!isComfortablyVisible) {
             // Only scroll the carousel when the item is actually off-screen or clipped
@@ -168,7 +171,8 @@ class _DpadFocusableState extends State<DpadFocusable> {
       }
 
       // 2. Outer vertical scrollable (e.g. Page scrollable for HomeScreen Column)
-      final parentScrollableState = scrollable?.context.findAncestorStateOfType<ScrollableState>();
+      final parentScrollableState = scrollable?.context
+          .findAncestorStateOfType<ScrollableState>();
       if (parentScrollableState != null &&
           parentScrollableState.position.hasPixels &&
           parentScrollableState.position.axis == Axis.vertical) {
@@ -178,8 +182,14 @@ class _DpadFocusableState extends State<DpadFocusable> {
           final vViewport = RenderAbstractViewport.maybeOf(rowRenderObject);
           if (vViewport != null) {
             final current = vPosition.pixels;
-            final revealLeading = vViewport.getOffsetToReveal(rowRenderObject, 0.0);
-            final revealTrailing = vViewport.getOffsetToReveal(rowRenderObject, 1.0);
+            final revealLeading = vViewport.getOffsetToReveal(
+              rowRenderObject,
+              0.0,
+            );
+            final revealTrailing = vViewport.getOffsetToReveal(
+              rowRenderObject,
+              1.0,
+            );
 
             const vMargin = 32.0;
             final minComfortable = revealTrailing.offset + vMargin;
@@ -187,7 +197,8 @@ class _DpadFocusableState extends State<DpadFocusable> {
 
             final bool isRowVisible = minComfortable <= maxComfortable
                 ? (current >= minComfortable && current <= maxComfortable)
-                : (current >= revealTrailing.offset && current <= revealLeading.offset);
+                : (current >= revealTrailing.offset &&
+                      current <= revealLeading.offset);
 
             if (!isRowVisible) {
               double targetOffset;
@@ -235,7 +246,8 @@ class _DpadFocusableState extends State<DpadFocusable> {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
     // Primary Activation Keys: Enter, NumpadEnter, Select, Space, GameButtonA
-    final isActivationKey = event.logicalKey == LogicalKeyboardKey.enter ||
+    final isActivationKey =
+        event.logicalKey == LogicalKeyboardKey.enter ||
         event.logicalKey == LogicalKeyboardKey.numpadEnter ||
         event.logicalKey == LogicalKeyboardKey.select ||
         event.logicalKey == LogicalKeyboardKey.space ||
@@ -250,7 +262,8 @@ class _DpadFocusableState extends State<DpadFocusable> {
     }
 
     // Secondary / Context Menu Keys: ContextMenu, GameButtonX, GameButtonY
-    final isContextKey = event.logicalKey == LogicalKeyboardKey.contextMenu ||
+    final isContextKey =
+        event.logicalKey == LogicalKeyboardKey.contextMenu ||
         event.logicalKey == LogicalKeyboardKey.gameButtonX ||
         event.logicalKey == LogicalKeyboardKey.gameButtonY;
 
@@ -311,7 +324,9 @@ class _DpadFocusableState extends State<DpadFocusable> {
       autofocus: widget.autofocus,
       onKeyEvent: _handleKeyEvent,
       child: MouseRegion(
-        cursor: widget.onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        cursor: widget.onTap != null
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
         onEnter: (_) => _handleHoverChanged(true),
         onExit: (_) => _handleHoverChanged(false),
         child: GestureDetector(

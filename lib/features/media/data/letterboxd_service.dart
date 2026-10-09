@@ -10,8 +10,7 @@ class LetterboxdService {
   static const Map<String, String> _defaultHeaders = {
     'User-Agent':
         'Mozilla/5.0 (compatible; Bingbot/2.0; +http://www.bing.com/bingbot.htm)',
-    'Accept':
-        'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'en-US,en;q=0.9',
     'Referer': 'https://letterboxd.com/',
   };
@@ -51,15 +50,14 @@ class LetterboxdService {
     final cacheKey = tmdbId != null && tmdbId > 0
         ? 'tmdb:$tmdbId'
         : (imdbId != null && imdbId.isNotEmpty
-            ? 'imdb:$imdbId'
-            : 'title:${title ?? ""}:$year');
+              ? 'imdb:$imdbId'
+              : 'title:${title ?? ""}:$year');
 
     String? resolvedSlug = _slugCache[cacheKey];
 
     // 1. Resolve canonical slug deterministically from IDs if not cached
     if (resolvedSlug == null) {
-      resolvedSlug =
-          await _resolveSlugFromIds(tmdbId: tmdbId, imdbId: imdbId);
+      resolvedSlug = await _resolveSlugFromIds(tmdbId: tmdbId, imdbId: imdbId);
 
       // 2. If IDs could not resolve, fall back to title & year candidate matching
       if (resolvedSlug == null && title != null && title.isNotEmpty) {
@@ -151,8 +149,9 @@ class LetterboxdService {
 
   static int? _extractYearFromHtml(String html) {
     final doc = html_parser.parse(html);
-    final ogTitle =
-        doc.querySelector('meta[property="og:title"]')?.attributes['content'];
+    final ogTitle = doc
+        .querySelector('meta[property="og:title"]')
+        ?.attributes['content'];
     if (ogTitle != null) {
       final match = RegExp(r'\((\d{4})\)').firstMatch(ogTitle);
       if (match != null) {
@@ -241,9 +240,13 @@ class LetterboxdService {
 
   Comment? _parseArticle(Element article) {
     // 1. Check for spoiler flags across article and children
-    bool isSpoiler = article.classes.contains('has-spoilers') ||
+    bool isSpoiler =
+        article.classes.contains('has-spoilers') ||
         article.classes.contains('-has-spoilers') ||
-        article.querySelector('.has-spoilers, .contains-spoilers, .hidden-spoilers, .-spoilers') != null ||
+        article.querySelector(
+              '.has-spoilers, .contains-spoilers, .hidden-spoilers, .-spoilers',
+            ) !=
+            null ||
         article.attributes['data-contains-spoilers'] == 'true';
 
     // 2. Extract review body element
@@ -251,7 +254,9 @@ class LetterboxdService {
     if (bodyEl == null) return null;
 
     // Check if the review has a dedicated hidden spoilers container
-    final hiddenSpoilersEl = bodyEl.querySelector('.hidden-spoilers, .collapsed-text, .expanded-text');
+    final hiddenSpoilersEl = bodyEl.querySelector(
+      '.hidden-spoilers, .collapsed-text, .expanded-text',
+    );
     String rawText;
 
     if (hiddenSpoilersEl != null) {
@@ -259,7 +264,9 @@ class LetterboxdService {
       rawText = hiddenSpoilersEl.text.trim();
     } else {
       // Remove any inline spoiler prompt elements before reading text
-      final spoilerPrompt = bodyEl.querySelector('p.-spoilers, .view-date-link.-spoilers, .js-reveal');
+      final spoilerPrompt = bodyEl.querySelector(
+        'p.-spoilers, .view-date-link.-spoilers, .js-reveal',
+      );
       if (spoilerPrompt != null) {
         isSpoiler = true;
         spoilerPrompt.remove();
@@ -269,12 +276,20 @@ class LetterboxdService {
 
     // Clean up any remaining Letterboxd boilerplate text
     rawText = rawText
-        .replaceAll(RegExp(r'This review may contain spoilers\.?', caseSensitive: false), '')
-        .replaceAll(RegExp(r'I can handle the truth\.?', caseSensitive: false), '')
+        .replaceAll(
+          RegExp(r'This review may contain spoilers\.?', caseSensitive: false),
+          '',
+        )
+        .replaceAll(
+          RegExp(r'I can handle the truth\.?', caseSensitive: false),
+          '',
+        )
         .trim();
 
     if (rawText.isEmpty && !isSpoiler) return null;
-    final text = rawText.isNotEmpty ? rawText : 'This review contains spoilers.';
+    final text = rawText.isNotEmpty
+        ? rawText
+        : 'This review contains spoilers.';
 
     final authorEl = article.querySelector('.displayname, .owner');
     final authorName = authorEl?.text.trim() ?? 'Letterboxd User';
@@ -282,13 +297,18 @@ class LetterboxdService {
     final avatarImg = article.querySelector('.avatar img');
     final avatarUrl = avatarImg?.attributes['src'];
 
-    final ratingEl = article.querySelector('.inline-rating svg, .inline-rating');
-    final ratingLabel = ratingEl?.attributes['aria-label'] ??
+    final ratingEl = article.querySelector(
+      '.inline-rating svg, .inline-rating',
+    );
+    final ratingLabel =
+        ratingEl?.attributes['aria-label'] ??
         ratingEl?.querySelector('title')?.text ??
         '';
     final rating = _parseStarRating(ratingLabel);
 
-    final likeEl = article.querySelector('.like-link-target, [data-component-class="LikeComponent"]');
+    final likeEl = article.querySelector(
+      '.like-link-target, [data-component-class="LikeComponent"]',
+    );
     final likeCount = int.tryParse(likeEl?.attributes['data-count'] ?? '') ?? 0;
 
     final commentCountEl = article.querySelector('a.metadata .label');
@@ -298,7 +318,10 @@ class LetterboxdService {
     final dateStr = timeEl?.attributes['datetime'];
     final createdAt = dateStr != null ? DateTime.tryParse(dateStr) : null;
 
-    final id = article.querySelector('[data-likeable-identifier]')?.attributes['data-likeable-identifier'] ??
+    final id =
+        article
+            .querySelector('[data-likeable-identifier]')
+            ?.attributes['data-likeable-identifier'] ??
         '$authorName-${createdAt?.millisecondsSinceEpoch ?? text.hashCode}';
 
     return Comment(

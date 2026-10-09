@@ -124,10 +124,10 @@ class _ChannelItemTile extends StatelessWidget {
             color: isFocused
                 ? Colors.white.withValues(alpha: 0.16)
                 : (isHovered
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : (isSelected
-                        ? AppTheme.accent.withValues(alpha: 0.12)
-                        : const Color(0xFF0F081C))),
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : (isSelected
+                            ? AppTheme.accent.withValues(alpha: 0.12)
+                            : const Color(0xFF0F081C))),
             border: Border(
               right: BorderSide(
                 color: isFocused ? AppTheme.accent : AppTheme.border,
@@ -187,8 +187,7 @@ class _ChannelItemTile extends StatelessWidget {
                         ? Colors.white
                         : AppTheme.textWhite.withValues(alpha: 0.9),
                     fontSize: 13,
-                    fontWeight:
-                        isSelected ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     letterSpacing: 0.2,
                   ),
                   maxLines: 2,
@@ -199,11 +198,7 @@ class _ChannelItemTile extends StatelessWidget {
               // Favorite indicator
               if (isFavorite) ...[
                 const SizedBox(width: 4),
-                const Icon(
-                  Icons.star_rounded,
-                  color: Colors.amber,
-                  size: 16,
-                ),
+                const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
               ],
             ],
           ),
@@ -214,8 +209,9 @@ class _ChannelItemTile extends StatelessWidget {
   }
 
   Widget _buildFallbackIcon() {
-    final initial =
-        channel.name.isNotEmpty ? channel.name[0].toUpperCase() : 'TV';
+    final initial = channel.name.isNotEmpty
+        ? channel.name[0].toUpperCase()
+        : 'TV';
     return Text(
       initial,
       style: const TextStyle(

@@ -63,9 +63,7 @@ void main() {
       child: const MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          body: SearchOverlay(),
-        ),
+        home: Scaffold(body: SearchOverlay()),
       ),
     );
   }
@@ -234,7 +232,9 @@ void main() {
     expect(find.text('Interstellar'), findsOneWidget);
   });
 
-  testWidgets('ArrowRight navigates across columns in GridView', (tester) async {
+  testWidgets('ArrowRight navigates across columns in GridView', (
+    tester,
+  ) async {
     final searchState = SearchState(
       query: 'Matrix',
       status: SearchStatus.loaded,
@@ -258,7 +258,9 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.pumpAndSettle();
     expect(
-      FocusManager.instance.primaryFocus?.context?.findAncestorWidgetOfExactType<MediaCard>()?.title,
+      FocusManager.instance.primaryFocus?.context
+          ?.findAncestorWidgetOfExactType<MediaCard>()
+          ?.title,
       equals('Matrix 0'),
     );
 
@@ -266,7 +268,9 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pumpAndSettle();
     expect(
-      FocusManager.instance.primaryFocus?.context?.findAncestorWidgetOfExactType<MediaCard>()?.title,
+      FocusManager.instance.primaryFocus?.context
+          ?.findAncestorWidgetOfExactType<MediaCard>()
+          ?.title,
       equals('Matrix 1'),
     );
 
@@ -274,7 +278,9 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pumpAndSettle();
     expect(
-      FocusManager.instance.primaryFocus?.context?.findAncestorWidgetOfExactType<MediaCard>()?.title,
+      FocusManager.instance.primaryFocus?.context
+          ?.findAncestorWidgetOfExactType<MediaCard>()
+          ?.title,
       equals('Matrix 2'),
     );
 
@@ -282,7 +288,9 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pumpAndSettle();
     expect(
-      FocusManager.instance.primaryFocus?.context?.findAncestorWidgetOfExactType<MediaCard>()?.title,
+      FocusManager.instance.primaryFocus?.context
+          ?.findAncestorWidgetOfExactType<MediaCard>()
+          ?.title,
       equals('Matrix 3'),
     );
   });

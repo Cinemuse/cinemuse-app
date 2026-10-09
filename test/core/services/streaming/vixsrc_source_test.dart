@@ -104,8 +104,9 @@ void main() {
       expect(savedManifest, isNot(contains('LANGUAGE="ara"')));
 
       // Verify unprobed subtitles are preserved as on-demand subtitles
-      final onDemand = candidate.metadata?.custom?['onDemandSubtitles']
-          as List<Map<String, String>>?;
+      final onDemand =
+          candidate.metadata?.custom?['onDemandSubtitles']
+              as List<Map<String, String>>?;
       expect(onDemand, isNotNull);
       expect(onDemand!.any((s) => s['language'] == 'ara'), isTrue);
     });

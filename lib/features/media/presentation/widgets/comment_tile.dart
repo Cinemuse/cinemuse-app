@@ -38,7 +38,10 @@ class _CommentTileState extends State<CommentTile>
         children: [
           _buildHeader(comment),
           const SizedBox(height: 12),
-          if (isSpoiler) _buildSpoilerOverlay(context) else _buildContent(comment),
+          if (isSpoiler)
+            _buildSpoilerOverlay(context)
+          else
+            _buildContent(comment),
           if (!isSpoiler) ...[
             const SizedBox(height: 12),
             _buildFooter(comment),
@@ -65,7 +68,9 @@ class _CommentTileState extends State<CommentTile>
               : null,
           child: author.avatarUrl == null
               ? Text(
-                  author.username.isNotEmpty ? author.username[0].toUpperCase() : '?',
+                  author.username.isNotEmpty
+                      ? author.username[0].toUpperCase()
+                      : '?',
                   style: const TextStyle(
                     color: AppTheme.accent,
                     fontWeight: FontWeight.bold,
@@ -105,7 +110,9 @@ class _CommentTileState extends State<CommentTile>
   }
 
   Widget _buildRatingBadge(double rating) {
-    final formattedRating = rating % 1 == 0 ? rating.toInt().toString() : rating.toStringAsFixed(1);
+    final formattedRating = rating % 1 == 0
+        ? rating.toInt().toString()
+        : rating.toStringAsFixed(1);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -213,7 +220,11 @@ class _CommentTileState extends State<CommentTile>
         ),
         if (comment.replyCount > 0) ...[
           const SizedBox(width: 16),
-          const Icon(Icons.chat_bubble_outline_rounded, size: 14, color: AppTheme.textMuted),
+          const Icon(
+            Icons.chat_bubble_outline_rounded,
+            size: 14,
+            color: AppTheme.textMuted,
+          ),
           const SizedBox(width: 4),
           Text(
             l10n.tvTimeReplies(comment.replyCount),

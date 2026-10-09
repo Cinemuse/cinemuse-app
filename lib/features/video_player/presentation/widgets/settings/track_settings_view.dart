@@ -66,8 +66,13 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
     // Include on-demand stream subtitles (e.g. from VixSrc) among internal tracks
     final allInternalTracks = <dynamic>[...regularTracks];
     if (widget.isSubtitle) {
-      final onDemandList = currentState.currentStream?.candidate.metadata
-          ?.custom?['onDemandSubtitles'] as List<dynamic>?;
+      final onDemandList =
+          currentState
+                  .currentStream
+                  ?.candidate
+                  .metadata
+                  ?.custom?['onDemandSubtitles']
+              as List<dynamic>?;
       if (onDemandList != null) {
         for (final item in onDemandList) {
           if (item is Map) {
@@ -183,8 +188,9 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
       track: noTrack,
       isSelected: isSelected,
       isSubtitle: widget.isSubtitle,
-      customTitle:
-          widget.isSubtitle ? l10n.playerTrackOff : l10n.playerTrackNoAudio,
+      customTitle: widget.isSubtitle
+          ? l10n.playerTrackOff
+          : l10n.playerTrackNoAudio,
       color: AppTheme.textMuted,
       onBack: widget.onBack,
       onSelected: () => _notifyManualSelection(),
@@ -201,8 +207,9 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
     AppLocalizations l10n, {
     bool hasSelectionPrior = false,
   }) {
-    final internalTracksHeader =
-        widget.isSubtitle ? l10n.playerInternalTracks : l10n.playerAudioTracks;
+    final internalTracksHeader = widget.isSubtitle
+        ? l10n.playerInternalTracks
+        : l10n.playerAudioTracks;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -223,7 +230,8 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
               children: tracks.asMap().entries.map((entry) {
                 final index = entry.key;
                 final track = entry.value;
-                bool isSelected = selectedTrack.id == track.id ||
+                bool isSelected =
+                    selectedTrack.id == track.id ||
                     (selectedTrack.title != null &&
                         track.title != null &&
                         selectedTrack.title == track.title);
@@ -236,7 +244,8 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
                   foundAutoMatch = true;
                 }
 
-                final shouldAutofocus = isSelected ||
+                final shouldAutofocus =
+                    isSelected ||
                     (!hasSelectionPrior && !hasMatchInList && index == 0);
 
                 return TrackTile(

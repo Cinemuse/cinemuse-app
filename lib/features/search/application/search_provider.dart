@@ -135,7 +135,9 @@ class SearchNotifier extends StateNotifier<SearchState> {
   }
 
   Future<void> loadMore() async {
-    if (_isLoadingMore || !state.hasMore || state.status != SearchStatus.loaded) {
+    if (_isLoadingMore ||
+        !state.hasMore ||
+        state.status != SearchStatus.loaded) {
       return;
     }
 

@@ -59,52 +59,55 @@ void main() {
       expect(seasonId, isNull);
     });
 
-    test('fetchEpisodeReviews includes required query params and headers', () async {
-      when(
-        () => mockDio.get<Map<String, dynamic>>(
-          'https://serializd.onrender.com/api/show/1399/reviewspage_v3',
-          queryParameters: any(named: 'queryParameters'),
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer(
-        (_) async => Response(
-          requestOptions: RequestOptions(path: ''),
-          statusCode: 200,
-          data: {
-            'reviews': [
-              {
-                'id': 101,
-                'author': 'Tester',
-                'reviewText': 'Great episode!',
-                'rating': 4.5,
-              }
-            ],
-          },
-        ),
-      );
+    test(
+      'fetchEpisodeReviews includes required query params and headers',
+      () async {
+        when(
+          () => mockDio.get<Map<String, dynamic>>(
+            'https://serializd.onrender.com/api/show/1399/reviewspage_v3',
+            queryParameters: any(named: 'queryParameters'),
+            options: any(named: 'options'),
+          ),
+        ).thenAnswer(
+          (_) async => Response(
+            requestOptions: RequestOptions(path: ''),
+            statusCode: 200,
+            data: {
+              'reviews': [
+                {
+                  'id': 101,
+                  'author': 'Tester',
+                  'reviewText': 'Great episode!',
+                  'rating': 4.5,
+                },
+              ],
+            },
+          ),
+        );
 
-      final result = await service.fetchEpisodeReviews(
-        showId: 1399,
-        seasonNumber: 1,
-        episodeNumber: 1,
-        seasonId: 12345,
-      );
+        final result = await service.fetchEpisodeReviews(
+          showId: 1399,
+          seasonNumber: 1,
+          episodeNumber: 1,
+          seasonId: 12345,
+        );
 
-      expect(result['reviews'], isNotEmpty);
-      verify(
-        () => mockDio.get<Map<String, dynamic>>(
-          'https://serializd.onrender.com/api/show/1399/reviewspage_v3',
-          queryParameters: {
-            'sort_by': 'like_desc',
-            'episode_number': 1,
-            'include_episode_reviews': true,
-            'season_id': 12345,
-            'page': 1,
-          },
-          options: any(named: 'options'),
-        ),
-      ).called(1);
-    });
+        expect(result['reviews'], isNotEmpty);
+        verify(
+          () => mockDio.get<Map<String, dynamic>>(
+            'https://serializd.onrender.com/api/show/1399/reviewspage_v3',
+            queryParameters: {
+              'sort_by': 'like_desc',
+              'episode_number': 1,
+              'include_episode_reviews': true,
+              'season_id': 12345,
+              'page': 1,
+            },
+            options: any(named: 'options'),
+          ),
+        ).called(1);
+      },
+    );
 
     test('fetchReviewComments returns list of comments', () async {
       when(
@@ -118,11 +121,7 @@ void main() {
           statusCode: 200,
           data: {
             'reviewComments': [
-              {
-                'id': 1,
-                'author': 'User2',
-                'commentText': 'Agreed!',
-              }
+              {'id': 1, 'author': 'User2', 'commentText': 'Agreed!'},
             ],
           },
         ),

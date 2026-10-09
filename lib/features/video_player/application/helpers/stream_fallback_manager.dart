@@ -111,10 +111,7 @@ class StreamFallbackManager {
 
       final duration = await player.stream.duration
           .firstWhere((d) => d.inSeconds > 0)
-          .timeout(
-            const Duration(seconds: 5),
-            onTimeout: () => Duration.zero,
-          );
+          .timeout(const Duration(seconds: 5), onTimeout: () => Duration.zero);
 
       if (duration > Duration.zero) {
         final seekTo = lastPosition < duration ? lastPosition : Duration.zero;

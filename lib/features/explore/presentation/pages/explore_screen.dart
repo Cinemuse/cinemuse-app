@@ -28,7 +28,9 @@ class ExploreScreen extends ConsumerStatefulWidget {
 
 class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   final ScrollController _scrollController = ScrollController();
-  final FocusNode _mediaTypeFocusNode = FocusNode(debugLabel: 'ExploreMediaType');
+  final FocusNode _mediaTypeFocusNode = FocusNode(
+    debugLabel: 'ExploreMediaType',
+  );
 
   @override
   void initState() {
@@ -36,21 +38,24 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        ref.read(pageContentFocusActionsProvider.notifier).update(
-          (map) => {
-            ...map,
-            1: () {
-              if (_scrollController.hasClients && _scrollController.offset > 0) {
-                _scrollController.animateTo(
-                  0,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOutCubic,
-                );
-              }
-              _mediaTypeFocusNode.requestFocus();
-            },
-          },
-        );
+        ref
+            .read(pageContentFocusActionsProvider.notifier)
+            .update(
+              (map) => {
+                ...map,
+                1: () {
+                  if (_scrollController.hasClients &&
+                      _scrollController.offset > 0) {
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutCubic,
+                    );
+                  }
+                  _mediaTypeFocusNode.requestFocus();
+                },
+              },
+            );
       }
     });
   }
@@ -101,7 +106,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
           final user = ref.read(authProvider).value;
           if (user != null) {
             await Future.wait([
-              ref.read(watchHistoryRepositoryProvider).syncWatchHistory(user.id),
+              ref
+                  .read(watchHistoryRepositoryProvider)
+                  .syncWatchHistory(user.id),
               ref.read(listsRepositoryProvider).syncUserLists(user.id),
             ]).catchError((_) => []);
           }
@@ -112,97 +119,58 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           controller: _scrollController,
           slivers: [
-          // Header & Top Filter Bar
-          SliverToBoxAdapter(
-            child: RepaintBoundary(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  20,
-                  horizontalPadding,
-                  24,
-                ),
-                child: Column(
-                  children: [
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isNarrow = constraints.maxWidth < 700;
+            // Header & Top Filter Bar
+            SliverToBoxAdapter(
+              child: RepaintBoundary(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    20,
+                    horizontalPadding,
+                    24,
+                  ),
+                  child: Column(
+                    children: [
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isNarrow = constraints.maxWidth < 700;
 
-                        return SizedBox(
-                          width: double.infinity,
-                          child: isNarrow
-                              ? Column(
-                                  children: [
-                                    MediaTypeSelector(
-                                      selectedType: mediaType,
-                                      movieFocusNode: mediaType == MediaType.movie ? _mediaTypeFocusNode : null,
-                                      tvFocusNode: mediaType == MediaType.tv ? _mediaTypeFocusNode : null,
-                                      personFocusNode: mediaType == MediaType.person ? _mediaTypeFocusNode : null,
-                                      onTypeChanged: (type) {
-                                        ref
-                                                .read(
-                                                  exploreMediaTypeProvider
-                                                      .notifier,
-                                                )
-                                                .state =
-                                            type;
-                                        ref
-                                            .read(
-                                              exploreResultsProvider.notifier,
-                                            )
-                                            .reset();
-                                      },
-                                    ),
-                                    if (mediaType != MediaType.person) ...[
-                                      const SizedBox(height: 16),
-                                      _FilterToggleButton(
-                                        onTap: () {
-                                          AppBottomSheet.show(
-                                            context: context,
-                                            child: const AppBottomSheet(
-                                              child: SingleChildScrollView(
-                                                child: Padding(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: 24.0,
-                                                  ),
-                                                  child: ExploreFilterPanel(),
-                                                ),
-                                              ),
-                                            ),
-                                          );
+                          return SizedBox(
+                            width: double.infinity,
+                            child: isNarrow
+                                ? Column(
+                                    children: [
+                                      MediaTypeSelector(
+                                        selectedType: mediaType,
+                                        movieFocusNode:
+                                            mediaType == MediaType.movie
+                                            ? _mediaTypeFocusNode
+                                            : null,
+                                        tvFocusNode: mediaType == MediaType.tv
+                                            ? _mediaTypeFocusNode
+                                            : null,
+                                        personFocusNode:
+                                            mediaType == MediaType.person
+                                            ? _mediaTypeFocusNode
+                                            : null,
+                                        onTypeChanged: (type) {
+                                          ref
+                                                  .read(
+                                                    exploreMediaTypeProvider
+                                                        .notifier,
+                                                  )
+                                                  .state =
+                                              type;
+                                          ref
+                                              .read(
+                                                exploreResultsProvider.notifier,
+                                              )
+                                              .reset();
                                         },
-                                        label: l10n.searchFilterAction,
                                       ),
-                                    ],
-                                  ],
-                                )
-                              : Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    MediaTypeSelector(
-                                      selectedType: mediaType,
-                                      movieFocusNode: mediaType == MediaType.movie ? _mediaTypeFocusNode : null,
-                                      tvFocusNode: mediaType == MediaType.tv ? _mediaTypeFocusNode : null,
-                                      personFocusNode: mediaType == MediaType.person ? _mediaTypeFocusNode : null,
-                                      onTypeChanged: (type) {
-                                        ref
-                                                .read(
-                                                  exploreMediaTypeProvider
-                                                      .notifier,
-                                                )
-                                                .state =
-                                            type;
-                                        ref
-                                            .read(
-                                              exploreResultsProvider.notifier,
-                                            )
-                                            .reset();
-                                      },
-                                    ),
-                                    if (mediaType != MediaType.person)
-                                      Positioned(
-                                        right: 0,
-                                        child: _FilterToggleButton(
+                                      if (mediaType != MediaType.person) ...[
+                                        const SizedBox(height: 16),
+                                        _FilterToggleButton(
                                           onTap: () {
                                             AppBottomSheet.show(
                                               context: context,
@@ -221,88 +189,164 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                                           },
                                           label: l10n.searchFilterAction,
                                         ),
+                                      ],
+                                    ],
+                                  )
+                                : Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      MediaTypeSelector(
+                                        selectedType: mediaType,
+                                        movieFocusNode:
+                                            mediaType == MediaType.movie
+                                            ? _mediaTypeFocusNode
+                                            : null,
+                                        tvFocusNode: mediaType == MediaType.tv
+                                            ? _mediaTypeFocusNode
+                                            : null,
+                                        personFocusNode:
+                                            mediaType == MediaType.person
+                                            ? _mediaTypeFocusNode
+                                            : null,
+                                        onTypeChanged: (type) {
+                                          ref
+                                                  .read(
+                                                    exploreMediaTypeProvider
+                                                        .notifier,
+                                                  )
+                                                  .state =
+                                              type;
+                                          ref
+                                              .read(
+                                                exploreResultsProvider.notifier,
+                                              )
+                                              .reset();
+                                        },
                                       ),
-                                  ],
-                                ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    ActiveFiltersList(
-                      filters: filters,
-                      onChanged: (newFilters) {
-                        ref.read(exploreFiltersProvider.notifier).state =
-                            newFilters;
-                        ref.read(exploreResultsProvider.notifier).reset();
-                      },
-                      onClear: () {
-                        ref.invalidate(exploreFiltersProvider);
-                        ref.read(exploreResultsProvider.notifier).reset();
-                      },
-                    ),
-                  ],
+                                      if (mediaType != MediaType.person)
+                                        Positioned(
+                                          right: 0,
+                                          child: _FilterToggleButton(
+                                            onTap: () {
+                                              AppBottomSheet.show(
+                                                context: context,
+                                                child: const AppBottomSheet(
+                                                  child: SingleChildScrollView(
+                                                    child: Padding(
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal: 24.0,
+                                                          ),
+                                                      child:
+                                                          ExploreFilterPanel(),
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            label: l10n.searchFilterAction,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      ActiveFiltersList(
+                        filters: filters,
+                        onChanged: (newFilters) {
+                          ref.read(exploreFiltersProvider.notifier).state =
+                              newFilters;
+                          ref.read(exploreResultsProvider.notifier).reset();
+                        },
+                        onClear: () {
+                          ref.invalidate(exploreFiltersProvider);
+                          ref.read(exploreResultsProvider.notifier).reset();
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // Results Grid
-          resultsAsync.when(
-            data: (results) {
-              if (results.isEmpty) {
-                return SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: horizontalPadding,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            l10n.searchNoResultsTitle,
-                            style: const TextStyle(
-                              color: AppTheme.textWhite,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+            // Results Grid
+            resultsAsync.when(
+              data: (results) {
+                if (results.isEmpty) {
+                  return SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: horizontalPadding,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              l10n.searchNoResultsTitle,
+                              style: const TextStyle(
+                                color: AppTheme.textWhite,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            l10n.searchTryAdjusting,
-                            style: const TextStyle(color: AppTheme.textMuted),
-                          ),
-                        ],
+                            const SizedBox(height: 8),
+                            Text(
+                              l10n.searchTryAdjusting,
+                              style: const TextStyle(color: AppTheme.textMuted),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                    vertical: 0,
                   ),
-                );
-              }
+                  sliver: SliverLayoutBuilder(
+                    builder: (context, constraints) {
+                      const double itemWidth = 200;
+                      const double spacing = 12;
 
-              return SliverPadding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding,
-                  vertical: 0,
-                ),
-                sliver: SliverLayoutBuilder(
-                  builder: (context, constraints) {
-                    const double itemWidth = 200;
-                    const double spacing = 12;
+                      // crossAxisExtent is the width available for the grid
+                      final crossAxisCount =
+                          ((constraints.crossAxisExtent + spacing) /
+                                  (itemWidth + spacing))
+                              .floor()
+                              .clamp(2, 12);
 
-                    // crossAxisExtent is the width available for the grid
-                    final crossAxisCount =
-                        ((constraints.crossAxisExtent + spacing) /
-                                (itemWidth + spacing))
-                            .floor()
-                            .clamp(2, 12);
+                      // "Full Row" logic: only show full rows
+                      final displayCount =
+                          (results.length ~/ crossAxisCount) * crossAxisCount;
 
-                    // "Full Row" logic: only show full rows
-                    final displayCount =
-                        (results.length ~/ crossAxisCount) * crossAxisCount;
+                      if (displayCount == 0 && results.isNotEmpty) {
+                        // If we can't even fill one row, show what we have so it's not empty
+                        return SliverGrid(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: crossAxisCount,
+                                mainAxisSpacing: 16,
+                                crossAxisSpacing: spacing,
+                                childAspectRatio: 0.56,
+                              ),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => _buildMediaCard(
+                              context,
+                              results[index],
+                              mediaType,
+                            ),
+                            childCount: results.length,
+                          ),
+                        );
+                      }
 
-                    if (displayCount == 0 && results.isNotEmpty) {
-                      // If we can't even fill one row, show what we have so it's not empty
                       return SliverGrid(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
@@ -316,76 +360,65 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                             results[index],
                             mediaType,
                           ),
-                          childCount: results.length,
+                          childCount: displayCount,
                         ),
                       );
-                    }
-
-                    return SliverGrid(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: spacing,
-                        childAspectRatio: 0.56,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) =>
-                            _buildMediaCard(context, results[index], mediaType),
-                        childCount: displayCount,
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
-            loading: () => SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  child: const CircularProgressIndicator(
-                    color: AppTheme.accent,
+                    },
+                  ),
+                );
+              },
+              loading: () => SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
+                    child: const CircularProgressIndicator(
+                      color: AppTheme.accent,
+                    ),
                   ),
                 ),
               ),
-            ),
-            error: (err, stack) => SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  child: Text(
-                    '${l10n.commonError}: $err',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+              error: (err, stack) => SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
+                    child: Text(
+                      '${l10n.commonError}: $err',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          // Loading more indicator
-          if (resultsAsync.isLoading &&
-              resultsAsync.hasValue &&
-              resultsAsync.value!.isNotEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  24,
-                  horizontalPadding,
-                  24,
-                ),
-                child: const Center(
-                  child: CircularProgressIndicator(color: AppTheme.accent),
+            // Loading more indicator
+            if (resultsAsync.isLoading &&
+                resultsAsync.hasValue &&
+                resultsAsync.value!.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    24,
+                    horizontalPadding,
+                    24,
+                  ),
+                  child: const Center(
+                    child: CircularProgressIndicator(color: AppTheme.accent),
+                  ),
                 ),
               ),
-            ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
-        ],
-      ),
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          ],
+        ),
       ),
     );
   }

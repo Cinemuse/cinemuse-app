@@ -41,7 +41,11 @@ class CommentsRepositoryImpl implements CommentsRepository {
     final futures = <Future<List<Comment>>>[];
 
     if (request.mediaType == MediaKind.tv) {
-      futures.add(_safeFetch(() => _fetchSerializdShowReviews(request.tmdbId, page: page)));
+      futures.add(
+        _safeFetch(
+          () => _fetchSerializdShowReviews(request.tmdbId, page: page),
+        ),
+      );
     } else if (request.mediaType == MediaKind.movie) {
       futures.add(
         _safeFetch(
@@ -57,7 +61,9 @@ class CommentsRepositoryImpl implements CommentsRepository {
     }
 
     // Fetch IMDb reviews for top-level media
-    futures.add(_safeFetch(() => _fetchTopLevelImdbReviews(request, page: page)));
+    futures.add(
+      _safeFetch(() => _fetchTopLevelImdbReviews(request, page: page)),
+    );
 
     final results = await Future.wait(futures);
     return _interleaveComments(results);
@@ -68,7 +74,8 @@ class CommentsRepositoryImpl implements CommentsRepository {
     int page = 1,
   }) async {
     // Only fetch first batch or paginated from IMDb
-    final imdbId = request.imdbId ??
+    final imdbId =
+        request.imdbId ??
         await _tmdbService.getImdbId(
           request.tmdbId,
           request.mediaType == MediaKind.movie ? 'movie' : 'tv',
@@ -76,11 +83,7 @@ class CommentsRepositoryImpl implements CommentsRepository {
 
     if (imdbId == null || imdbId.isEmpty) return const [];
 
-    return _imdbService.fetchReviews(
-      imdbId: imdbId,
-      limit: 10,
-      page: page,
-    );
+    return _imdbService.fetchReviews(imdbId: imdbId, limit: 10, page: page);
   }
 
   Future<List<Comment>> _fetchEpisodeComments(
@@ -108,7 +111,8 @@ class CommentsRepositoryImpl implements CommentsRepository {
       page: page,
     );
 
-    final rawReviews = (data['reviews'] ?? data['items']) as List<dynamic>? ?? [];
+    final rawReviews =
+        (data['reviews'] ?? data['items']) as List<dynamic>? ?? [];
 
     return rawReviews
         .whereType<Map<String, dynamic>>()
@@ -120,7 +124,8 @@ class CommentsRepositoryImpl implements CommentsRepository {
     EpisodeCommentsRequest request, {
     int page = 1,
   }) async {
-    final episodeImdbId = request.imdbId ??
+    final episodeImdbId =
+        request.imdbId ??
         await _tmdbService.getEpisodeImdbId(
           request.tmdbShowId,
           request.seasonNumber,
@@ -167,7 +172,8 @@ class CommentsRepositoryImpl implements CommentsRepository {
       showId: showId,
       page: page,
     );
-    final rawReviews = (data['reviews'] ?? data['items']) as List<dynamic>? ?? [];
+    final rawReviews =
+        (data['reviews'] ?? data['items']) as List<dynamic>? ?? [];
 
     return rawReviews
         .whereType<Map<String, dynamic>>()
@@ -187,7 +193,9 @@ class CommentsRepositoryImpl implements CommentsRepository {
     return [];
   }
 
-  Future<List<Comment>> _safeFetch(Future<List<Comment>> Function() fetcher) async {
+  Future<List<Comment>> _safeFetch(
+    Future<List<Comment>> Function() fetcher,
+  ) async {
     try {
       return await fetcher();
     } catch (e, stack) {
@@ -216,7 +224,9 @@ class CommentsRepositoryImpl implements CommentsRepository {
       author: author,
       text: (json['reviewText']?.toString() ?? '').trim(),
       rating: _parseRating(json['rating']),
-      createdAt: _parseDate(json['dateAdded']?.toString() ?? json['backdate']?.toString()),
+      createdAt: _parseDate(
+        json['dateAdded']?.toString() ?? json['backdate']?.toString(),
+      ),
       likeCount: _parseInt(json['likeCount'] ?? json['numLikes']),
       replyCount: _parseInt(json['numComments']),
       isSpoiler: json['containsSpoiler'] == true,

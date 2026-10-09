@@ -47,8 +47,9 @@ class SportScheduleScraper {
           if (cells.isNotEmpty) {
             final time = cells[0].text.trim();
             final descRaw = cells.length > 1 ? cleanText(cells[1].text) : '';
-            final channelsRaw =
-                cells.length > 2 ? cleanText(cells[2].text) : '';
+            final channelsRaw = cells.length > 2
+                ? cleanText(cells[2].text)
+                : '';
             final sportName = cells.length > 1
                 ? (cells[1].querySelector('strong')?.text.trim() ?? '')
                 : '';

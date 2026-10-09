@@ -21,17 +21,23 @@ import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/live_tv
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class MockLivePlayer extends Mock implements Player {}
+
 class MockLivePlayerStream extends Mock implements PlayerStream {}
+
 class MockLivePlayerState extends Mock implements PlayerState {}
+
 class MockLiveVideoController extends Mock implements mkv.VideoController {}
+
 class FakeLiveVideoState extends Fake implements mkv.VideoState {
   @override
   bool isFullscreen() => false;
   @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) => 'FakeLiveVideoState';
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
+      'FakeLiveVideoState';
 }
 
-class FakeLivePlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>>
+class FakeLivePlayerController
+    extends StateNotifier<AsyncValue<CinemaPlayerState>>
     implements PlayerController {
   FakeLivePlayerController() : super(const AsyncValue.loading());
 
@@ -99,7 +105,9 @@ void main() {
       expect(find.text('FHD'), findsOneWidget);
     });
 
-    testWidgets('renders favorite star when isFavorite is true', (tester) async {
+    testWidgets('renders favorite star when isFavorite is true', (
+      tester,
+    ) async {
       final channel = createMockChannel();
       await tester.pumpWidget(
         buildTestWidget(
@@ -116,7 +124,9 @@ void main() {
       expect(find.byIcon(Icons.star_rounded), findsOneWidget);
     });
 
-    testWidgets('triggers onTap on tap and on Enter key when focused', (tester) async {
+    testWidgets('triggers onTap on tap and on Enter key when focused', (
+      tester,
+    ) async {
       int tapCount = 0;
       final channel = createMockChannel();
       final focusNode = FocusNode();
@@ -151,13 +161,13 @@ void main() {
   });
 
   group('ChannelListPanel Split vs Overlay Presentation Tests', () {
-    testWidgets('renders standard split mode without overlay header', (tester) async {
+    testWidgets('renders standard split mode without overlay header', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         buildTestWidget(
           child: const ChannelListPanel(isOverlay: false),
-          overrides: [
-            channelsProvider.overrideWith((ref) => Future.value([])),
-          ],
+          overrides: [channelsProvider.overrideWith((ref) => Future.value([]))],
         ),
       );
       await tester.pump();
@@ -166,7 +176,9 @@ void main() {
       expect(find.byIcon(Icons.close_rounded), findsNothing);
     });
 
-    testWidgets('renders overlay mode with header and Close button', (tester) async {
+    testWidgets('renders overlay mode with header and Close button', (
+      tester,
+    ) async {
       bool closed = false;
       await tester.pumpWidget(
         buildTestWidget(
@@ -174,9 +186,7 @@ void main() {
             isOverlay: true,
             onClose: () => closed = true,
           ),
-          overrides: [
-            channelsProvider.overrideWith((ref) => Future.value([])),
-          ],
+          overrides: [channelsProvider.overrideWith((ref) => Future.value([]))],
         ),
       );
       await tester.pump();
@@ -189,47 +199,58 @@ void main() {
   });
 
   group('LiveTvViewMode and D-Pad Navigation Integration', () {
-    testWidgets('tapping already selected channel in split mode expands to fullWindow', (tester) async {
-      final channel = createMockChannel();
-      final container = ProviderContainer(
-        overrides: [
-          channelsProvider.overrideWith((ref) => Future.value([channel])),
-        ],
-      );
-      addTearDown(container.dispose);
+    testWidgets(
+      'tapping already selected channel in split mode expands to fullWindow',
+      (tester) async {
+        final channel = createMockChannel();
+        final container = ProviderContainer(
+          overrides: [
+            channelsProvider.overrideWith((ref) => Future.value([channel])),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      // Set current channel as selected
-      container.read(selectedChannelProvider.notifier).state = channel;
-      expect(container.read(liveTvViewModeProvider), LiveTvViewMode.split);
+        // Set current channel as selected
+        container.read(selectedChannelProvider.notifier).state = channel;
+        expect(container.read(liveTvViewModeProvider), LiveTvViewMode.split);
 
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(body: ChannelListPanel(isOverlay: false)),
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(body: ChannelListPanel(isOverlay: false)),
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Tap the already selected channel
-      await tester.tap(find.text(channel.name));
-      await tester.pump();
+        // Tap the already selected channel
+        await tester.tap(find.text(channel.name));
+        await tester.pump();
 
-      // Should have switched to fullWindow
-      expect(container.read(liveTvViewModeProvider), LiveTvViewMode.fullWindow);
-    });
+        // Should have switched to fullWindow
+        expect(
+          container.read(liveTvViewModeProvider),
+          LiveTvViewMode.fullWindow,
+        );
+      },
+    );
 
-    testWidgets('ArrowLeft in split mode invokes tvRailFocusActionProvider', (tester) async {
+    testWidgets('ArrowLeft in split mode invokes tvRailFocusActionProvider', (
+      tester,
+    ) async {
       final channel = createMockChannel();
       bool railFocused = false;
 
       final container = ProviderContainer(
         overrides: [
           channelsProvider.overrideWith((ref) => Future.value([channel])),
-          tvRailFocusActionProvider.overrideWith((ref) => () => railFocused = true),
+          tvRailFocusActionProvider.overrideWith(
+            (ref) =>
+                () => railFocused = true,
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -260,41 +281,47 @@ void main() {
       expect(railFocused, isTrue);
     });
 
-    testWidgets('ArrowRight in split mode invokes livePlayerFocusActionProvider', (tester) async {
-      final channel = createMockChannel();
-      bool playerFocused = false;
+    testWidgets(
+      'ArrowRight in split mode invokes livePlayerFocusActionProvider',
+      (tester) async {
+        final channel = createMockChannel();
+        bool playerFocused = false;
 
-      final container = ProviderContainer(
-        overrides: [
-          channelsProvider.overrideWith((ref) => Future.value([channel])),
-          livePlayerFocusActionProvider.overrideWith((ref) => () => playerFocused = true),
-        ],
-      );
-      addTearDown(container.dispose);
+        final container = ProviderContainer(
+          overrides: [
+            channelsProvider.overrideWith((ref) => Future.value([channel])),
+            livePlayerFocusActionProvider.overrideWith(
+              (ref) =>
+                  () => playerFocused = true,
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(body: ChannelListPanel(isOverlay: false)),
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(body: ChannelListPanel(isOverlay: false)),
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Focus the channel tile
-      final tileFinder = find.byType(ChannelListTile);
-      await tester.tap(tileFinder);
-      await tester.pump();
+        // Focus the channel tile
+        final tileFinder = find.byType(ChannelListTile);
+        await tester.tap(tileFinder);
+        await tester.pump();
 
-      // Send ArrowRight
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-      await tester.pump();
+        // Send ArrowRight
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pump();
 
-      expect(playerFocused, isTrue);
-    });
+        expect(playerFocused, isTrue);
+      },
+    );
 
     testWidgets('ArrowLeft in overlay mode invokes onClose', (tester) async {
       final channel = createMockChannel();
@@ -374,7 +401,9 @@ void main() {
       expect(overlayClosed, isTrue);
     });
 
-    testWidgets('does not render category filter chips in overlay mode', (tester) async {
+    testWidgets('does not render category filter chips in overlay mode', (
+      tester,
+    ) async {
       final channel = createMockChannel();
 
       final container = ProviderContainer(
@@ -391,10 +420,7 @@ void main() {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
-              body: ChannelListPanel(
-                isOverlay: true,
-                onClose: () {},
-              ),
+              body: ChannelListPanel(isOverlay: true, onClose: () {}),
             ),
           ),
         ),
@@ -424,8 +450,12 @@ void main() {
 
       when(() => mockPlayer.stream).thenReturn(mockStream);
       when(() => mockPlayer.state).thenReturn(mockState);
-      when(() => mockStream.playing).thenAnswer((_) => playingStreamController.stream);
-      when(() => mockStream.position).thenAnswer((_) => positionStreamController.stream);
+      when(
+        () => mockStream.playing,
+      ).thenAnswer((_) => playingStreamController.stream);
+      when(
+        () => mockStream.position,
+      ).thenAnswer((_) => positionStreamController.stream);
       when(() => mockStream.buffering).thenAnswer((_) => const Stream.empty());
       when(() => mockState.playing).thenReturn(true);
       when(() => mockState.buffering).thenReturn(false);
@@ -449,97 +479,106 @@ void main() {
       );
     }
 
-    testWidgets('renders Big Picture centered TV buttons when isBigPicture is true', (tester) async {
-      final channel = createMockChannel();
-      final playerState = createTestPlayerState();
+    testWidgets(
+      'renders Big Picture centered TV buttons when isBigPicture is true',
+      (tester) async {
+        final channel = createMockChannel();
+        final playerState = createTestPlayerState();
 
-      await tester.pumpWidget(
-        buildTestWidget(
-          overrides: [
-            isBigPictureProvider.overrideWith((ref) => true),
-          ],
-          child: CustomVideoControls(
-            playerState: playerState,
-            channel: channel,
-            videoState: FakeLiveVideoState(),
-            params: const PlayerParams('livetv_session', 'livetv'),
-            isLive: true,
-            onSettingsPressed: () {},
+        await tester.pumpWidget(
+          buildTestWidget(
+            overrides: [isBigPictureProvider.overrideWith((ref) => true)],
+            child: CustomVideoControls(
+              playerState: playerState,
+              channel: channel,
+              videoState: FakeLiveVideoState(),
+              params: const PlayerParams('livetv_session', 'livetv'),
+              isLive: true,
+              onSettingsPressed: () {},
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Live TV buttons: Stop button is present to exit player
-      expect(find.byIcon(Icons.skip_previous_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
-      expect(find.byIcon(Icons.close_rounded), findsNothing);
-      expect(find.byIcon(Icons.skip_next_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.fullscreen_rounded), findsOneWidget);
-      expect(find.byType(Slider), findsOneWidget);
-      expect(find.text('Test Channel'), findsOneWidget);
-      expect(find.text('LIVE'), findsWidgets);
-    });
+        // Live TV buttons: Stop button is present to exit player
+        expect(find.byIcon(Icons.skip_previous_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
+        expect(find.byIcon(Icons.close_rounded), findsNothing);
+        expect(find.byIcon(Icons.skip_next_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.fullscreen_rounded), findsOneWidget);
+        expect(find.byType(Slider), findsOneWidget);
+        expect(find.text('Test Channel'), findsOneWidget);
+        expect(find.text('LIVE'), findsWidgets);
+      },
+    );
 
-    testWidgets('hides settings in top bar and shows tune icon in TV row when isBigPicture is true', (tester) async {
-      final channel = createMockChannel();
-      final playerState = createTestPlayerState();
+    testWidgets(
+      'hides settings in top bar and shows tune icon in TV row when isBigPicture is true',
+      (tester) async {
+        final channel = createMockChannel();
+        final playerState = createTestPlayerState();
 
-      await tester.pumpWidget(
-        buildTestWidget(
-          overrides: [
-            isBigPictureProvider.overrideWith((ref) => true),
-          ],
-          child: CustomVideoControls(
-            playerState: playerState,
-            channel: channel,
-            videoState: FakeLiveVideoState(),
-            params: const PlayerParams('livetv_session', 'livetv'),
-            isLive: true,
-            onSettingsPressed: () {},
+        await tester.pumpWidget(
+          buildTestWidget(
+            overrides: [isBigPictureProvider.overrideWith((ref) => true)],
+            child: CustomVideoControls(
+              playerState: playerState,
+              channel: channel,
+              videoState: FakeLiveVideoState(),
+              params: const PlayerParams('livetv_session', 'livetv'),
+              isLive: true,
+              onSettingsPressed: () {},
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Settings cog is NOT in top bar
-      expect(find.byIcon(Icons.settings), findsNothing);
-      // Tune icon IS in bottom TV row
-      expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
-    });
+        // Settings cog is NOT in top bar
+        expect(find.byIcon(Icons.settings), findsNothing);
+        // Tune icon IS in bottom TV row
+        expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
+      },
+    );
 
-    testWidgets('renders channels drawer button in TV row when onOpenChannelGuide is provided', (tester) async {
-      final channel = createMockChannel();
-      final playerState = createTestPlayerState();
+    testWidgets(
+      'renders channels drawer button in TV row when onOpenChannelGuide is provided',
+      (tester) async {
+        final channel = createMockChannel();
+        final playerState = createTestPlayerState();
 
-      await tester.pumpWidget(
-        buildTestWidget(
-          overrides: [
-            isBigPictureProvider.overrideWith((ref) => true),
-            liveTvViewModeProvider.overrideWith((ref) => LiveTvViewMode.fullWindow),
-          ],
-          child: CustomVideoControls(
-            playerState: playerState,
-            channel: channel,
-            videoState: FakeLiveVideoState(),
-            params: const PlayerParams('livetv_session', 'livetv'),
-            isLive: true,
-            onSettingsPressed: () {},
-            onOpenChannelGuide: () {},
+        await tester.pumpWidget(
+          buildTestWidget(
+            overrides: [
+              isBigPictureProvider.overrideWith((ref) => true),
+              liveTvViewModeProvider.overrideWith(
+                (ref) => LiveTvViewMode.fullWindow,
+              ),
+            ],
+            child: CustomVideoControls(
+              playerState: playerState,
+              channel: channel,
+              videoState: FakeLiveVideoState(),
+              params: const PlayerParams('livetv_session', 'livetv'),
+              isLive: true,
+              onSettingsPressed: () {},
+              onOpenChannelGuide: () {},
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Channel guide button is shown
-      expect(find.byIcon(Icons.list_rounded), findsOneWidget);
-    });
+        // Channel guide button is shown
+        expect(find.byIcon(Icons.list_rounded), findsOneWidget);
+      },
+    );
   });
 
   group('Channel Guide Browser & VideoPlayerScreen Navigation Tests', () {
-    testWidgets('tapping channel with onChannelSelected invokes callback', (tester) async {
+    testWidgets('tapping channel with onChannelSelected invokes callback', (
+      tester,
+    ) async {
       final channel = createMockChannel(name: 'Canale 5 HD', lcn: 5);
       Channel? selectedChannel;
 
@@ -563,67 +602,75 @@ void main() {
       expect(selectedChannel!.uniqueId, equals(channel.uniqueId));
     });
 
-    testWidgets('renders empty state with Manage Playlists button when no channels exist', (tester) async {
-      await tester.pumpWidget(
-        buildTestWidget(
-          overrides: [
-            channelsProvider.overrideWith((ref) => Future.value([])),
-          ],
-          child: const ChannelListPanel(isOverlay: false),
-        ),
-      );
-      await tester.pumpAndSettle();
+    testWidgets(
+      'renders empty state with Manage Playlists button when no channels exist',
+      (tester) async {
+        await tester.pumpWidget(
+          buildTestWidget(
+            overrides: [
+              channelsProvider.overrideWith((ref) => Future.value([])),
+            ],
+            child: const ChannelListPanel(isOverlay: false),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.tv_off_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.playlist_add_rounded), findsOneWidget);
-      expect(find.text('Manage Playlists'), findsOneWidget);
-    });
+        expect(find.byIcon(Icons.tv_off_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.playlist_add_rounded), findsOneWidget);
+        expect(find.text('Manage Playlists'), findsOneWidget);
+      },
+    );
   });
 
   group('Top Navbar to LiveTvScreen Navigation Integration', () {
-    testWidgets('pageContentFocusActionsProvider[2] focuses LiveTvGuideScreen from navbar', (tester) async {
-      tester.view.physicalSize = const Size(1280, 720);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+    testWidgets(
+      'pageContentFocusActionsProvider[2] focuses LiveTvGuideScreen from navbar',
+      (tester) async {
+        tester.view.physicalSize = const Size(1280, 720);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
 
-      final channel = createMockChannel(name: 'Rai 1 HD', lcn: 1);
-      final container = ProviderContainer(
-        overrides: [
-          channelsProvider.overrideWith((ref) => Future.value([channel])),
-          epgDataProvider.overrideWith((ref) => Future.value({})),
-        ],
-      );
-      addTearDown(container.dispose);
+        final channel = createMockChannel(name: 'Rai 1 HD', lcn: 1);
+        final container = ProviderContainer(
+          overrides: [
+            channelsProvider.overrideWith((ref) => Future.value([channel])),
+            epgDataProvider.overrideWith((ref) => Future.value({})),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(body: LiveTvScreen()),
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(body: LiveTvScreen()),
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Retrieve registered action for Live TV tab (index 2)
-      final actions = container.read(pageContentFocusActionsProvider);
-      expect(actions[2], isNotNull);
+        // Retrieve registered action for Live TV tab (index 2)
+        final actions = container.read(pageContentFocusActionsProvider);
+        expect(actions[2], isNotNull);
 
-      // Invoke action (as AppNavbar does on ArrowDown)
-      actions[2]!();
-      await tester.pumpAndSettle();
+        // Invoke action (as AppNavbar does on ArrowDown)
+        actions[2]!();
+        await tester.pumpAndSettle();
 
-      // Focus should be in LiveTvGuideScreen on the "All" tab button
-      expect(find.byType(LiveTvGuideScreen), findsOneWidget);
-      expect(find.text('All'), findsWidgets);
-    });
+        // Focus should be in LiveTvGuideScreen on the "All" tab button
+        expect(find.byType(LiveTvGuideScreen), findsOneWidget);
+        expect(find.text('All'), findsWidgets);
+      },
+    );
 
-    testWidgets('ArrowUp on All tab invokes topNavbarFocusActionProvider', (tester) async {
+    testWidgets('ArrowUp on All tab invokes topNavbarFocusActionProvider', (
+      tester,
+    ) async {
       final channel = createMockChannel(name: 'Rai 1 HD', lcn: 1);
       bool navbarFocused = false;
 
@@ -648,9 +695,7 @@ void main() {
           child: MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: LiveTvGuideScreen(focusNode: focusNode),
-            ),
+            home: Scaffold(body: LiveTvGuideScreen(focusNode: focusNode)),
           ),
         ),
       );

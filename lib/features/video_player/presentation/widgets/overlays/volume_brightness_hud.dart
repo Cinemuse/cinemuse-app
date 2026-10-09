@@ -39,10 +39,7 @@ class VolumeBrightnessHud extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceOverlay,
                   borderRadius: AppTheme.radiusXl,
-                  border: Border.all(
-                    color: AppTheme.borderSubtle,
-                    width: 1,
-                  ),
+                  border: Border.all(color: AppTheme.borderSubtle, width: 1),
                   boxShadow: AppTheme.shadowNeonSm,
                 ),
                 child: Row(
@@ -52,8 +49,8 @@ class VolumeBrightnessHud extends StatelessWidget {
                       isBrightness
                           ? Icons.brightness_6_rounded
                           : (indicatorValue <= 0
-                              ? Icons.volume_off_rounded
-                              : Icons.volume_up_rounded),
+                                ? Icons.volume_off_rounded
+                                : Icons.volume_up_rounded),
                       color: AppTheme.textWhite,
                       size: 18,
                     ),

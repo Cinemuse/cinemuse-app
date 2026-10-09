@@ -125,10 +125,8 @@ class _PlayerSettingsBottomSheetState
                       alignment: Alignment.topCenter,
                       children: <Widget>[
                         ...previousChildren.map(
-                          (child) => ExcludeFocus(
-                            excluding: true,
-                            child: child,
-                          ),
+                          (child) =>
+                              ExcludeFocus(excluding: true, child: child),
                         ),
                         if (currentChild != null) currentChild,
                       ],

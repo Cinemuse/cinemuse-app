@@ -114,8 +114,10 @@ class _WatchHistoryTimelineTileState
   }
 
   Widget _buildPoster(BuildContext context) {
-    final posterUrl =
-        TmdbImageHelper.posterUrl(context, widget.item.media?.posterPath);
+    final posterUrl = TmdbImageHelper.posterUrl(
+      context,
+      widget.item.media?.posterPath,
+    );
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -152,13 +154,20 @@ class _WatchHistoryTimelineTileState
                 )
               else
                 const Center(
-                  child: Icon(Icons.movie_rounded, color: Colors.white24, size: 28),
+                  child: Icon(
+                    Icons.movie_rounded,
+                    color: Colors.white24,
+                    size: 28,
+                  ),
                 ),
               Positioned(
                 top: 4,
                 left: 4,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.75),
                     borderRadius: BorderRadius.circular(4),
@@ -183,8 +192,8 @@ class _WatchHistoryTimelineTileState
 
   Widget _buildDetails(BuildContext context, AppLocalizations l10n) {
     final media = widget.item.media;
-    final title = media?.getLocalizedTitle(widget.appLanguage) ??
-        l10n.commonUnknown;
+    final title =
+        media?.getLocalizedTitle(widget.appLanguage) ?? l10n.commonUnknown;
     final isTv = widget.item.mediaType == MediaKind.tv;
     final season = widget.item.season;
     final episode = widget.item.episode;
@@ -213,7 +222,11 @@ class _WatchHistoryTimelineTileState
           ],
         ),
         const SizedBox(height: 4),
-        if (isTv && season != null && episode != null && season > 0 && episode > 0)
+        if (isTv &&
+            season != null &&
+            episode != null &&
+            season > 0 &&
+            episode > 0)
           Text(
             l10n.watchHistorySeasonEpisode(season, episode),
             style: const TextStyle(
@@ -228,7 +241,10 @@ class _WatchHistoryTimelineTileState
               if (media?.releaseDate != null)
                 Text(
                   '${media!.releaseDate!.year}',
-                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 12,
+                  ),
                 ),
               if (media?.voteAverage != null && media!.voteAverage! > 0) ...[
                 const SizedBox(width: 8),
@@ -236,15 +252,15 @@ class _WatchHistoryTimelineTileState
                 const SizedBox(width: 3),
                 Text(
                   media.voteAverage!.toStringAsFixed(1),
-                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ],
           ),
-        if (_hasProgress) ...[
-          const SizedBox(height: 8),
-          _buildProgressBar(),
-        ],
+        if (_hasProgress) ...[const SizedBox(height: 8), _buildProgressBar()],
       ],
     );
   }
@@ -252,7 +268,9 @@ class _WatchHistoryTimelineTileState
   bool get _hasProgress {
     final total = widget.item.totalDuration ?? 0;
     final progress = widget.item.progressSeconds;
-    return progress > 0 && total > 0 && widget.item.status != WatchStatus.completed;
+    return progress > 0 &&
+        total > 0 &&
+        widget.item.status != WatchStatus.completed;
   }
 
   Widget _buildProgressBar() {
@@ -356,13 +374,18 @@ class _WatchHistoryTimelineTileState
     final isCompleted = widget.item.status == WatchStatus.completed;
 
     return Row(
-      mainAxisAlignment:
-          isMobile ? MainAxisAlignment.spaceBetween : MainAxisAlignment.end,
+      mainAxisAlignment: isMobile
+          ? MainAxisAlignment.spaceBetween
+          : MainAxisAlignment.end,
       children: [
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.access_time_rounded, size: 12, color: AppTheme.textMuted),
+            const Icon(
+              Icons.access_time_rounded,
+              size: 12,
+              color: AppTheme.textMuted,
+            ),
             const SizedBox(width: 4),
             Text(
               timestamp,
@@ -426,18 +449,22 @@ class _WatchHistoryTimelineTileState
   void _showContextMenu(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final media = widget.item.media;
-    final title = media?.getLocalizedTitle(widget.appLanguage) ??
+    final title =
+        media?.getLocalizedTitle(widget.appLanguage) ??
         widget.item.tmdbId.toString();
 
-    final isWatchlisted = ref
+    final isWatchlisted =
+        ref
             .read(userListsProvider)
             .valueOrNull
             ?.where((l) => l.type == ListType.watchlist)
             .firstOrNull
             ?.items
-            .any((i) =>
-                i.tmdbId == widget.item.tmdbId &&
-                i.mediaType == widget.item.mediaType) ??
+            .any(
+              (i) =>
+                  i.tmdbId == widget.item.tmdbId &&
+                  i.mediaType == widget.item.mediaType,
+            ) ??
         false;
 
     final options = [
@@ -476,7 +503,9 @@ class _WatchHistoryTimelineTileState
         onTap: () {
           final user = ref.read(authProvider).value;
           if (user != null) {
-            ref.read(watchHistoryRepositoryProvider).clearProgress(
+            ref
+                .read(watchHistoryRepositoryProvider)
+                .clearProgress(
                   userId: user.id,
                   tmdbId: widget.item.tmdbId,
                   mediaType: widget.item.mediaType.name,

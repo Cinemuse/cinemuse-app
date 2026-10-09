@@ -9,7 +9,6 @@ import 'package:cinemuse_app/core/data/database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 final listsRepositoryProvider = Provider<ListsRepository>((ref) {
   return ListsRepository(supabase, ref.watch(appDatabaseProvider));
 });
@@ -73,7 +72,10 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
         tmdbId: media.tmdbId,
         mediaType: media.mediaType.name,
         meta: {
-          'title': media.getLocalizedTitle('en') ?? media.getLocalizedTitle('it') ?? 'Unknown',
+          'title':
+              media.getLocalizedTitle('en') ??
+              media.getLocalizedTitle('it') ??
+              'Unknown',
           'poster_path': media.posterPath,
           'backdrop_path': media.backdropPath,
           'rating': media.voteAverage,
@@ -130,7 +132,10 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
       tmdbId: media.tmdbId,
       mediaType: media.mediaType.name,
       meta: {
-        'title': media.getLocalizedTitle('en') ?? media.getLocalizedTitle('it') ?? 'Unknown',
+        'title':
+            media.getLocalizedTitle('en') ??
+            media.getLocalizedTitle('it') ??
+            'Unknown',
         'poster_path': media.posterPath,
         'backdrop_path': media.backdropPath,
         'rating': media.voteAverage,
@@ -204,13 +209,18 @@ final droppedListProvider = FutureProvider<UserList?>((ref) async {
       tmdbId: history.tmdbId,
       addedAt: history.lastWatchedAt,
       media: media,
-      meta: media != null ? {
-        'title': media.getLocalizedTitle('en') ?? media.getLocalizedTitle('it') ?? 'Unknown',
-        'poster_path': media.posterPath,
-        'backdrop_path': media.backdropPath,
-        'rating': media.voteAverage,
-        'year': media.releaseDate?.year,
-      } : {},
+      meta: media != null
+          ? {
+              'title':
+                  media.getLocalizedTitle('en') ??
+                  media.getLocalizedTitle('it') ??
+                  'Unknown',
+              'poster_path': media.posterPath,
+              'backdrop_path': media.backdropPath,
+              'rating': media.voteAverage,
+              'year': media.releaseDate?.year,
+            }
+          : {},
     );
   }).toList();
 
@@ -257,6 +267,5 @@ class PinnedListIdsNotifier extends StateNotifier<Set<String>> {
 
 final pinnedListIdsProvider =
     StateNotifierProvider<PinnedListIdsNotifier, Set<String>>((ref) {
-  return PinnedListIdsNotifier();
-});
-
+      return PinnedListIdsNotifier();
+    });

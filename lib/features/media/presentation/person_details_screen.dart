@@ -17,8 +17,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-final personDetailsProvider =
-    FutureProvider.family<PersonDetails?, int>((ref, id) async {
+final personDetailsProvider = FutureProvider.family<PersonDetails?, int>((
+  ref,
+  id,
+) async {
   final tmdbService = ref.watch(tmdbServiceProvider);
   final map = await tmdbService.getPersonDetails(id);
   if (map == null) return null;
@@ -51,7 +53,8 @@ class _PersonDetailsScreenState extends ConsumerState<PersonDetailsScreen> {
       data: (details) {
         if (details == null) return Center(child: Text(l10n.commonError));
 
-        final watchHistory = watchHistoryAsync.value ?? const <String, WatchHistory>{};
+        final watchHistory =
+            watchHistoryAsync.value ?? const <String, WatchHistory>{};
         return _PersonDetailsContent(
           details: details,
           watchHistory: watchHistory,
@@ -478,10 +481,7 @@ class _InfoRow extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             text,
-            style: const TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 16,
-            ),
+            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 16),
           ),
         ],
       ),

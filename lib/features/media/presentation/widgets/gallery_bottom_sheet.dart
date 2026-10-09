@@ -61,10 +61,8 @@ class GalleryBottomSheet extends StatelessWidget {
       PageRouteBuilder(
         opaque: false,
         barrierColor: AppTheme.primary.withValues(alpha: 0.95),
-        pageBuilder: (context, _, __) => FullscreenImageViewer(
-          imageUrls: urls,
-          initialIndex: initialIndex,
-        ),
+        pageBuilder: (context, _, __) =>
+            FullscreenImageViewer(imageUrls: urls, initialIndex: initialIndex),
       ),
     );
   }
@@ -247,10 +245,7 @@ class GalleryBottomSheet extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             l10n.detailsNoImages,
-            style: const TextStyle(
-              color: AppTheme.textMuted,
-              fontSize: 14,
-            ),
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
           ),
         ],
       ),

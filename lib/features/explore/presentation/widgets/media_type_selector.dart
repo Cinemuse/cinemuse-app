@@ -24,7 +24,11 @@ class MediaTypeSelector extends ConsumerWidget {
     this.personFocusNode,
   });
 
-  KeyEventResult _handleKeyEvent(WidgetRef ref, FocusNode node, KeyEvent event) {
+  KeyEventResult _handleKeyEvent(
+    WidgetRef ref,
+    FocusNode node,
+    KeyEvent event,
+  ) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
@@ -123,8 +127,8 @@ class _TypeButton extends StatelessWidget {
             color: isSelected
                 ? Colors.white
                 : (isFocused
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : Colors.white.withValues(alpha: 0.02)),
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : Colors.white.withValues(alpha: 0.02)),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: isFocused ? Colors.white : Colors.transparent,

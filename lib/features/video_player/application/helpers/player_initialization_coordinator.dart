@@ -160,8 +160,9 @@ class PlayerInitializationCoordinator {
   ) async {
     if (vodResult.mediaItem != null) {
       _mediaItem = vodResult.mediaItem;
-      _rawSeriesDetails =
-          resolvedParams.type == 'tv' ? vodResult.mediaDetails : null;
+      _rawSeriesDetails = resolvedParams.type == 'tv'
+          ? vodResult.mediaDetails
+          : null;
     }
 
     if (isMounted()) {
@@ -227,10 +228,7 @@ class PlayerInitializationCoordinator {
     if (startPos != null && startPos > 0) {
       player.stream.duration
           .firstWhere((d) => d.inSeconds > 0)
-          .timeout(
-            const Duration(seconds: 4),
-            onTimeout: () => Duration.zero,
-          )
+          .timeout(const Duration(seconds: 4), onTimeout: () => Duration.zero)
           .then((_) {
             player.seek(Duration(seconds: startPos));
           })

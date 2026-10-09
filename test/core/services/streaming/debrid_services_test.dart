@@ -57,78 +57,81 @@ void main() {
       expect(result['hash3'], isTrue);
     });
 
-    test('resolve successfully adds torrent and requests download link', () async {
-      final candidate = StreamCandidate(
-        kind: StreamSourceKind.vod,
-        title: 'Inception 1080p',
-        infoHash: 'hash123',
-        magnet: 'magnet:?xt=urn:btih:hash123&dn=Inception',
-        provider: 'AnimeTosho',
-      );
+    test(
+      'resolve successfully adds torrent and requests download link',
+      () async {
+        final candidate = StreamCandidate(
+          kind: StreamSourceKind.vod,
+          title: 'Inception 1080p',
+          infoHash: 'hash123',
+          magnet: 'magnet:?xt=urn:btih:hash123&dn=Inception',
+          provider: 'AnimeTosho',
+        );
 
-      when(
-        () => mockDio.post(
-          'https://api.torbox.app/v1/api/torrents/createtorrent',
-          data: any(named: 'data'),
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer(
-        (_) async => Response(
-          requestOptions: RequestOptions(path: ''),
-          data: {
-            'success': true,
-            'data': {'torrent_id': 42},
-          },
-        ),
-      );
-
-      when(
-        () => mockDio.get(
-          'https://api.torbox.app/v1/api/torrents/mylist',
-          queryParameters: {'id': 42},
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer(
-        (_) async => Response(
-          requestOptions: RequestOptions(path: ''),
-          data: {
-            'success': true,
-            'data': {
-              'id': 42,
-              'name': 'Inception.1080p.mkv',
-              'files': [
-                {'id': 1, 'name': 'Inception.1080p.mkv', 'size': 2000000000},
-              ],
+        when(
+          () => mockDio.post(
+            'https://api.torbox.app/v1/api/torrents/createtorrent',
+            data: any(named: 'data'),
+            options: any(named: 'options'),
+          ),
+        ).thenAnswer(
+          (_) async => Response(
+            requestOptions: RequestOptions(path: ''),
+            data: {
+              'success': true,
+              'data': {'torrent_id': 42},
             },
-          },
-        ),
-      );
+          ),
+        );
 
-      when(
-        () => mockDio.get(
-          'https://api.torbox.app/v1/api/torrents/requestdl',
-          queryParameters: any(named: 'queryParameters'),
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer(
-        (_) async => Response(
-          requestOptions: RequestOptions(path: ''),
-          data: {
-            'success': true,
-            'data': 'https://cdn.torbox.app/download/inception.mkv',
-          },
-        ),
-      );
+        when(
+          () => mockDio.get(
+            'https://api.torbox.app/v1/api/torrents/mylist',
+            queryParameters: {'id': 42},
+            options: any(named: 'options'),
+          ),
+        ).thenAnswer(
+          (_) async => Response(
+            requestOptions: RequestOptions(path: ''),
+            data: {
+              'success': true,
+              'data': {
+                'id': 42,
+                'name': 'Inception.1080p.mkv',
+                'files': [
+                  {'id': 1, 'name': 'Inception.1080p.mkv', 'size': 2000000000},
+                ],
+              },
+            },
+          ),
+        );
 
-      final resolved = await torBoxService.resolve(candidate);
-      expect(resolved, isNotNull);
-      expect(
-        resolved!.url,
-        equals('https://cdn.torbox.app/download/inception.mkv'),
-      );
-      expect(resolved.provider, equals('TorBox'));
-      expect(resolved.activeFileId, equals(1));
-    });
+        when(
+          () => mockDio.get(
+            'https://api.torbox.app/v1/api/torrents/requestdl',
+            queryParameters: any(named: 'queryParameters'),
+            options: any(named: 'options'),
+          ),
+        ).thenAnswer(
+          (_) async => Response(
+            requestOptions: RequestOptions(path: ''),
+            data: {
+              'success': true,
+              'data': 'https://cdn.torbox.app/download/inception.mkv',
+            },
+          ),
+        );
+
+        final resolved = await torBoxService.resolve(candidate);
+        expect(resolved, isNotNull);
+        expect(
+          resolved!.url,
+          equals('https://cdn.torbox.app/download/inception.mkv'),
+        );
+        expect(resolved.provider, equals('TorBox'));
+        expect(resolved.activeFileId, equals(1));
+      },
+    );
   });
 
   group('CompositeDebridService Tests', () {
@@ -166,42 +169,45 @@ void main() {
       expect(detailed['hash2'], isNot(contains('Real-Debrid')));
     });
 
-    test('resolve fails over to secondary provider when preferred provider fails', () async {
-      final candidate = StreamCandidate(
-        kind: StreamSourceKind.vod,
-        title: 'Dune Part Two',
-        infoHash: 'dune_hash',
-        magnet: 'magnet:?xt=urn:btih:dune_hash',
-        provider: 'Torrentio',
-        cachedOn: {'Real-Debrid': true, 'TorBox': true},
-      );
+    test(
+      'resolve fails over to secondary provider when preferred provider fails',
+      () async {
+        final candidate = StreamCandidate(
+          kind: StreamSourceKind.vod,
+          title: 'Dune Part Two',
+          infoHash: 'dune_hash',
+          magnet: 'magnet:?xt=urn:btih:dune_hash',
+          provider: 'Torrentio',
+          cachedOn: {'Real-Debrid': true, 'TorBox': true},
+        );
 
-      // Service A (Real-Debrid) fails/rejects due to copyright or error
-      when(
-        () => serviceA.resolve(candidate),
-      ).thenThrow(Exception('Copyright takedown / 403'));
+        // Service A (Real-Debrid) fails/rejects due to copyright or error
+        when(
+          () => serviceA.resolve(candidate),
+        ).thenThrow(Exception('Copyright takedown / 403'));
 
-      // Service B (TorBox) succeeds
-      final fallbackStream = ResolvedStream(
-        url: 'https://cdn.torbox.app/dune.mkv',
-        provider: 'TorBox',
-        candidate: candidate,
-      );
-      when(
-        () => serviceB.resolve(candidate),
-      ).thenAnswer((_) async => fallbackStream);
+        // Service B (TorBox) succeeds
+        final fallbackStream = ResolvedStream(
+          url: 'https://cdn.torbox.app/dune.mkv',
+          provider: 'TorBox',
+          candidate: candidate,
+        );
+        when(
+          () => serviceB.resolve(candidate),
+        ).thenAnswer((_) async => fallbackStream);
 
-      final composite = CompositeDebridService(
-        [serviceA, serviceB],
-        preferredProvider: 'Real-Debrid',
-      );
+        final composite = CompositeDebridService([
+          serviceA,
+          serviceB,
+        ], preferredProvider: 'Real-Debrid');
 
-      final result = await composite.resolve(candidate);
-      expect(result, isNotNull);
-      expect(result!.url, equals('https://cdn.torbox.app/dune.mkv'));
-      expect(result.provider, equals('TorBox'));
-      verify(() => serviceA.resolve(candidate)).called(1);
-      verify(() => serviceB.resolve(candidate)).called(1);
-    });
+        final result = await composite.resolve(candidate);
+        expect(result, isNotNull);
+        expect(result!.url, equals('https://cdn.torbox.app/dune.mkv'));
+        expect(result.provider, equals('TorBox'));
+        verify(() => serviceA.resolve(candidate)).called(1);
+        verify(() => serviceB.resolve(candidate)).called(1);
+      },
+    );
   });
 }

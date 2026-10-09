@@ -159,7 +159,8 @@ class ProfileOverview extends ConsumerWidget {
                                     .map((h) => h.media)
                                     .whereType<MediaItem>()
                                     .toList(),
-                                onHeaderTap: () => openWatchHistory(MediaKind.movie),
+                                onHeaderTap: () =>
+                                    openWatchHistory(MediaKind.movie),
                               ),
                               const SizedBox(height: 24),
                               buildRecentRow(
@@ -170,7 +171,8 @@ class ProfileOverview extends ConsumerWidget {
                                     .map((h) => h.media)
                                     .whereType<MediaItem>()
                                     .toList(),
-                                onHeaderTap: () => openWatchHistory(MediaKind.tv),
+                                onHeaderTap: () =>
+                                    openWatchHistory(MediaKind.tv),
                               ),
                             ],
                           ),

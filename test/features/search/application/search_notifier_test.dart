@@ -22,9 +22,7 @@ void main() {
       mockTmdbService = MockTmdbService();
 
       container = ProviderContainer(
-        overrides: [
-          tmdbServiceProvider.overrideWithValue(mockTmdbService),
-        ],
+        overrides: [tmdbServiceProvider.overrideWithValue(mockTmdbService)],
       );
     });
 
@@ -48,10 +46,16 @@ void main() {
       await notifier.addToHistory('new search');
 
       final state = container.read(searchProvider);
-      expect(state.searchHistory, equals(['new search', 'initial 1', 'initial 2']));
+      expect(
+        state.searchHistory,
+        equals(['new search', 'initial 1', 'initial 2']),
+      );
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getStringList('global_search_history'), equals(['new search', 'initial 1', 'initial 2']));
+      expect(
+        prefs.getStringList('global_search_history'),
+        equals(['new search', 'initial 1', 'initial 2']),
+      );
     });
 
     test('addToHistory removes duplicates and moves them to top', () async {
@@ -64,7 +68,10 @@ void main() {
       expect(state.searchHistory, equals(['initial 2', 'initial 1']));
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getStringList('global_search_history'), equals(['initial 2', 'initial 1']));
+      expect(
+        prefs.getStringList('global_search_history'),
+        equals(['initial 2', 'initial 1']),
+      );
     });
 
     test('addToHistory limits search history length to 20', () async {
@@ -91,7 +98,10 @@ void main() {
       expect(state.searchHistory, equals(['initial 2']));
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getStringList('global_search_history'), equals(['initial 2']));
+      expect(
+        prefs.getStringList('global_search_history'),
+        equals(['initial 2']),
+      );
     });
 
     test('clearHistory removes all queries from history', () async {

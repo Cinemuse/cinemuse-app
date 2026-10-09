@@ -152,11 +152,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
               ],
             ),
             if (widget.event.channels.isNotEmpty)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: _buildContextMenuButton(),
-              ),
+              Positioned(top: 8, right: 8, child: _buildContextMenuButton()),
           ],
         ),
       ),
@@ -186,11 +182,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
                     _buildPlaceholder(context),
               ),
             ),
-            Positioned(
-              top: 8,
-              left: 8,
-              child: _buildTimeBadge(theme),
-            ),
+            Positioned(top: 8, left: 8, child: _buildTimeBadge(theme)),
             if (widget.event.channels.isNotEmpty)
               Positioned(
                 bottom: 8,

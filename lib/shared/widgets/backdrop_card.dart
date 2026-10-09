@@ -75,7 +75,8 @@ class _BackdropCardState extends State<BackdropCard> {
           label: l10n.menuRestart,
           onTap: widget.onRestart!,
         ),
-      if (widget.onClearProgress != null && (widget.progress != null && widget.progress! > 0))
+      if (widget.onClearProgress != null &&
+          (widget.progress != null && widget.progress! > 0))
         AppMenuOption(
           icon: Icons.history_toggle_off_outlined,
           label: l10n.menuClearProgress,
@@ -140,7 +141,10 @@ class _BackdropCardState extends State<BackdropCard> {
   Widget build(BuildContext context) {
     final String? effectiveImagePath = widget.backdropPath ?? widget.posterPath;
 
-    final imageUrl = TmdbImageHelper.backdropCardUrl(context, effectiveImagePath);
+    final imageUrl = TmdbImageHelper.backdropCardUrl(
+      context,
+      effectiveImagePath,
+    );
 
     return DpadFocusable(
       onTap: widget.onTap,
@@ -155,209 +159,189 @@ class _BackdropCardState extends State<BackdropCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-                      // Backdrop Image
-                      AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: AppTheme.surface,
-                            boxShadow: AppTheme.shadowCard,
+            // Backdrop Image
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: AppTheme.surface,
+                  boxShadow: AppTheme.shadowCard,
+                ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Image
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: imageUrl != null
+                          ? CachedNetworkImage(
+                              imageUrl: imageUrl,
+                              fit: BoxFit.cover,
+                              memCacheWidth: 280, // Target width
+                              color: Colors.black.withValues(alpha: 0.2),
+                              colorBlendMode: BlendMode.darken,
+                              errorWidget: (context, url, error) =>
+                                  _buildPlaceholder(),
+                            )
+                          : _buildPlaceholder(),
+                    ),
+
+                    // Subtle Static Bottom Vignette
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.center,
+                          colors: [Color(0x73000000), Colors.transparent],
+                          stops: [0.0, 0.4],
+                        ),
+                      ),
+                    ),
+
+                    // Play Icon
+                    Builder(
+                      builder: (context) {
+                        final isHighlighted =
+                            DpadFocusScope.maybeOf(context)?.isHighlighted ??
+                            false;
+                        final theme = Theme.of(context);
+                        return Center(
+                          child: AnimatedScale(
+                            scale: isHighlighted ? 1.1 : 1.0,
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(
+                              Icons.play_circle_outline,
+                              color: isHighlighted
+                                  ? theme.colorScheme.primary
+                                  : Colors.white.withValues(alpha: 0.8),
+                              size: 48,
+                            ),
                           ),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              // Image
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: imageUrl != null
-                                    ? CachedNetworkImage(
-                                        imageUrl: imageUrl,
-                                        fit: BoxFit.cover,
-                                        memCacheWidth: 280, // Target width
-                                        color: Colors.black.withValues(
-                                          alpha: 0.2,
-                                        ),
-                                        colorBlendMode: BlendMode.darken,
-                                        errorWidget: (context, url, error) =>
-                                            _buildPlaceholder(),
-                                      )
-                                    : _buildPlaceholder(),
-                              ),
+                        );
+                      },
+                    ),
 
-                              // Subtle Static Bottom Vignette
-                              const DecoratedBox(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.all(
-                                    Radius.circular(8),
-                                  ),
-                                  gradient: LinearGradient(
-                                    begin: Alignment.bottomCenter,
-                                    end: Alignment.center,
-                                    colors: [
-                                      Color(0x73000000),
-                                      Colors.transparent,
-                                    ],
-                                    stops: [0.0, 0.4],
-                                  ),
-                                ),
-                              ),
-
-                              // Play Icon
-                              Builder(
-                                builder: (context) {
-                                  final isHighlighted =
-                                      DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
-                                  final theme = Theme.of(context);
-                                  return Center(
-                                    child: AnimatedScale(
-                                      scale: isHighlighted ? 1.1 : 1.0,
-                                      duration: const Duration(milliseconds: 200),
-                                      child: Icon(
-                                        Icons.play_circle_outline,
-                                        color: isHighlighted
-                                            ? theme.colorScheme.primary
-                                            : Colors.white.withValues(alpha: 0.8),
-                                        size: 48,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-
-                              // Info Badge
-                              if (widget.infoText != null)
-                                Positioned(
-                                  top: 8,
-                                  left: 8,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.6,
-                                      ),
-                                      borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      widget.infoText!,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                              // Progress Bar
-                              if (widget.progress != null)
-                                Positioned(
-                                  bottom: 0,
-                                  left: 0,
-                                  right: 0,
-                                  child: LinearProgressIndicator(
-                                    value: widget.progress,
-                                    backgroundColor: Colors.white.withValues(
-                                      alpha: 0.2,
-                                    ),
-                                    valueColor:
-                                        const AlwaysStoppedAnimation<Color>(
-                                          Colors.redAccent,
-                                        ),
-                                    minHeight: 4,
-                                  ),
-                                ),
-
-                              // Border Overlay
-                              const CardFocusBorder(),
-                            ],
+                    // Info Badge
+                    if (widget.infoText != null)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          child: Text(
+                            widget.infoText!,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      // Title + Options Row
-                      Builder(
-                        builder: (context) {
-                          final isHighlighted =
-                              DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
-                          final theme = Theme.of(context);
 
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  widget.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.bodyMedium!.copyWith(
-                                    color: isHighlighted
-                                        ? theme.colorScheme.primary
-                                        : Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
+                    // Progress Bar
+                    if (widget.progress != null)
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: LinearProgressIndicator(
+                          value: widget.progress,
+                          backgroundColor: Colors.white.withValues(alpha: 0.2),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Colors.redAccent,
+                          ),
+                          minHeight: 4,
+                        ),
+                      ),
+
+                    // Border Overlay
+                    const CardFocusBorder(),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Title + Options Row
+            Builder(
+              builder: (context) {
+                final isHighlighted =
+                    DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
+                final theme = Theme.of(context);
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        widget.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium!.copyWith(
+                          color: isHighlighted
+                              ? theme.colorScheme.primary
+                              : Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final isBigPicture = ref.watch(isBigPictureProvider);
+                        if (isBigPicture) {
+                          return const SizedBox.shrink();
+                        }
+                        final isMobile =
+                            MediaQuery.of(context).size.width < 600;
+                        return AnimatedOpacity(
+                          opacity: (isHighlighted || isMobile) ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 200),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              canRequestFocus: false,
+                              excludeFromSemantics: true,
+                              onTap: () => _showContextActions(context),
+                              mouseCursor: SystemMouseCursors.click,
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                key: _menuKey,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 2,
+                                ),
+                                child: const Icon(
+                                  Icons.more_vert,
+                                  color: Colors.white60,
+                                  size: 18,
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              Consumer(
-                                builder: (context, ref, _) {
-                                  final isBigPicture =
-                                      ref.watch(isBigPictureProvider);
-                                  if (isBigPicture) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  final isMobile =
-                                      MediaQuery.of(context).size.width < 600;
-                                  return AnimatedOpacity(
-                                    opacity:
-                                        (isHighlighted || isMobile) ? 1.0 : 0.0,
-                                    duration:
-                                        const Duration(milliseconds: 200),
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        canRequestFocus: false,
-                                        excludeFromSemantics: true,
-                                        onTap: () =>
-                                            _showContextActions(context),
-                                        mouseCursor:
-                                            SystemMouseCursors.click,
-                                        borderRadius:
-                                            BorderRadius.circular(12),
-                                        child: Container(
-                                          key: _menuKey,
-                                          padding:
-                                              const EdgeInsets.symmetric(
-                                            horizontal: 4,
-                                            vertical: 2,
-                                          ),
-                                          child: const Icon(
-                                            Icons.more_vert,
-                                            color: Colors.white60,
-                                            size: 18,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              );
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildPlaceholder() {

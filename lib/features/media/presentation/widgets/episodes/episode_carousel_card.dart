@@ -22,12 +22,17 @@ class EpisodeCarouselCard extends ConsumerStatefulWidget {
   final int watchCount;
   final double? resumePercentage;
   final VoidCallback? onTap;
-  final void Function(int season, int episode, String name, {bool restart})? onEpisodeTap;
+  final void Function(int season, int episode, String name, {bool restart})?
+  onEpisodeTap;
   final Function(int season, int episode, DateTime? date)? onMarkWatched;
   final Function(int season, int episode)? onTrackOptions;
   final List<({int season, int episode})> Function(int season, int episode)?
   onFindMissingPreceding;
-  final Function(int season, int episode, List<({int season, int episode})> missing)?
+  final Function(
+    int season,
+    int episode,
+    List<({int season, int episode})> missing,
+  )?
   onShowMarkPrecedingModal;
   final VoidCallback? onShowComments;
   final VoidCallback? onViewHistory;
@@ -131,7 +136,11 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
 
     AppMenu.show(
       context: context,
-      title: l10n.detailsEpisodeWithSeason(widget.seasonNumber, _epNumber, _epName),
+      title: l10n.detailsEpisodeWithSeason(
+        widget.seasonNumber,
+        _epNumber,
+        _epName,
+      ),
       options: options,
     );
   }
@@ -148,11 +157,7 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
         if (widget.onTap != null) {
           widget.onTap!();
         } else {
-          widget.onEpisodeTap?.call(
-            widget.seasonNumber,
-            _epNumber,
-            _epName,
-          );
+          widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, _epName);
         }
       },
       onLongPress: () => _showContextMenu(context),
@@ -235,16 +240,25 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
         imageUrl: TmdbImageHelper.stillUrl(context, stillPath) ?? '',
         memCacheWidth: 400,
         fit: BoxFit.cover,
-        placeholder: (context, url) => Container(color: theme.colorScheme.surfaceContainer),
+        placeholder: (context, url) =>
+            Container(color: theme.colorScheme.surfaceContainer),
         errorWidget: (context, url, error) => Container(
           color: theme.colorScheme.surfaceContainer,
-          child: Icon(Icons.tv, color: theme.colorScheme.onSurface.withValues(alpha: 0.5), size: 32),
+          child: Icon(
+            Icons.tv,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            size: 32,
+          ),
         ),
       );
     }
     return Container(
       color: theme.colorScheme.surfaceContainer,
-      child: Icon(Icons.tv, color: theme.colorScheme.onSurface.withValues(alpha: 0.5), size: 32),
+      child: Icon(
+        Icons.tv,
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+        size: 32,
+      ),
     );
   }
 
@@ -257,7 +271,9 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
           color: isFocused ? theme.focusColor : AppTheme.surfaceOverlay,
           shape: BoxShape.circle,
           border: Border.all(
-            color: isFocused ? theme.colorScheme.primary : AppTheme.borderSubtle,
+            color: isFocused
+                ? theme.colorScheme.primary
+                : AppTheme.borderSubtle,
           ),
         ),
         child: Icon(
@@ -367,15 +383,17 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
         alignment: Alignment.centerLeft,
         child: FractionallySizedBox(
           widthFactor: widget.resumePercentage!.clamp(0.0, 1.0),
-          child: Container(
-            color: AppTheme.accent,
-          ),
+          child: Container(color: AppTheme.accent),
         ),
       ),
     );
   }
 
-  Widget _buildMetaInfo(BuildContext context, String? formattedAirDate, bool isFocused) {
+  Widget _buildMetaInfo(
+    BuildContext context,
+    String? formattedAirDate,
+    bool isFocused,
+  ) {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

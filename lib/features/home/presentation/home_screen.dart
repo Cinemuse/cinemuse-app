@@ -38,21 +38,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        ref.read(pageContentFocusActionsProvider.notifier).update(
-          (map) => {
-            ...map,
-            0: () {
-              if (_scrollController.hasClients && _scrollController.offset > 0) {
-                _scrollController.animateTo(
-                  0,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOutCubic,
-                );
-              }
-              _heroFocusNode.requestFocus();
-            },
-          },
-        );
+        ref
+            .read(pageContentFocusActionsProvider.notifier)
+            .update(
+              (map) => {
+                ...map,
+                0: () {
+                  if (_scrollController.hasClients &&
+                      _scrollController.offset > 0) {
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutCubic,
+                    );
+                  }
+                  _heroFocusNode.requestFocus();
+                },
+              },
+            );
       }
     });
   }
@@ -63,6 +66,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _heroFocusNode.dispose();
     super.dispose();
   }
+
   void _showListDetails(BuildContext context, UserList list) {
     final isSystemList =
         list.type == ListType.watchlist || list.type == ListType.favorites;
@@ -108,8 +112,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final isOffline = ref.watch(
-      connectivityProvider
-          .select((c) => c.valueOrNull == ConnectivityResult.none),
+      connectivityProvider.select(
+        (c) => c.valueOrNull == ConnectivityResult.none,
+      ),
     );
     final isMobile = MediaQuery.sizeOf(context).width < 600;
     final theme = Theme.of(context);
@@ -123,7 +128,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           final user = ref.read(authProvider).value;
           if (user != null) {
             await Future.wait([
-              ref.read(watchHistoryRepositoryProvider).syncWatchHistory(user.id),
+              ref
+                  .read(watchHistoryRepositoryProvider)
+                  .syncWatchHistory(user.id),
               ref.read(listsRepositoryProvider).syncUserLists(user.id),
             ]).catchError((e, st) {
               developer.log(
@@ -173,14 +180,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Continue Watching
-                    const RepaintBoundary(
-                      child: ContinueWatchingRow(),
-                    ),
+                    const RepaintBoundary(child: ContinueWatchingRow()),
 
                     // Sports Schedule
-                    const RepaintBoundary(
-                      child: SportScheduleRow(),
-                    ),
+                    const RepaintBoundary(child: SportScheduleRow()),
 
                     // Pinned Lists & Collections
                     _PinnedListsSection(onShowListDetails: _showListDetails),
@@ -217,10 +220,8 @@ class _HomeHeroSection extends ConsumerWidget {
 
     return RepaintBoundary(
       child: trendingAsync.when(
-        data: (data) => HeroSection(
-          items: data.take(5).toList(),
-          focusNode: focusNode,
-        ),
+        data: (data) =>
+            HeroSection(items: data.take(5).toList(), focusNode: focusNode),
         loading: () => SizedBox(
           height: HeroSection.getHeroHeight(context),
           child: const Center(child: CircularProgressIndicator()),
@@ -326,8 +327,9 @@ class _PinnedListsSection extends ConsumerWidget {
               children: [
                 const SizedBox(height: 10),
                 ...pinnedLists.map((list) {
-                  final mediaItems =
-                      list.items.map((item) => item.toMediaItem()).toList();
+                  final mediaItems = list.items
+                      .map((item) => item.toMediaItem())
+                      .toList();
 
                   final title = switch (list.type) {
                     ListType.watchlist => l10n.listWatchLater,
@@ -389,14 +391,16 @@ class _PinnedCollectionRow extends ConsumerWidget {
               asyncData: AsyncValue.data(collection.parts),
               onHeaderTap: () {
                 final listItems = collection.parts
-                    .map((mediaItem) => UserListItem(
-                          listId: collectionId,
-                          addedAt: DateTime.now(),
-                          tmdbId: mediaItem.tmdbId,
-                          mediaType: mediaItem.mediaType,
-                          media: mediaItem,
-                          meta: const {},
-                        ))
+                    .map(
+                      (mediaItem) => UserListItem(
+                        listId: collectionId,
+                        addedAt: DateTime.now(),
+                        tmdbId: mediaItem.tmdbId,
+                        mediaType: mediaItem.mediaType,
+                        media: mediaItem,
+                        meta: const {},
+                      ),
+                    )
                     .toList();
                 final userList = UserList(
                   id: collectionId,

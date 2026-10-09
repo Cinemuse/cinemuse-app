@@ -134,7 +134,8 @@ class ProfileCollections extends ConsumerWidget {
                         if (watchlistCard != null && favoritesCard != null)
                           const SizedBox(height: 16),
                         if (favoritesCard != null) favoritesCard,
-                        if ((watchlistCard != null || favoritesCard != null) && droppedCard != null)
+                        if ((watchlistCard != null || favoritesCard != null) &&
+                            droppedCard != null)
                           const SizedBox(height: 16),
                         if (droppedCard != null) droppedCard,
                       ],
@@ -143,13 +144,17 @@ class ProfileCollections extends ConsumerWidget {
 
                   return Row(
                     children: [
-                      if (watchlistCard != null) Expanded(flex: 4, child: watchlistCard),
+                      if (watchlistCard != null)
+                        Expanded(flex: 4, child: watchlistCard),
                       if (watchlistCard != null && favoritesCard != null)
                         const SizedBox(width: 24),
-                      if (favoritesCard != null) Expanded(flex: 4, child: favoritesCard),
-                      if ((watchlistCard != null || favoritesCard != null) && droppedCard != null)
+                      if (favoritesCard != null)
+                        Expanded(flex: 4, child: favoritesCard),
+                      if ((watchlistCard != null || favoritesCard != null) &&
+                          droppedCard != null)
                         const SizedBox(width: 24),
-                      if (droppedCard != null) Expanded(flex: 3, child: droppedCard),
+                      if (droppedCard != null)
+                        Expanded(flex: 3, child: droppedCard),
                     ],
                   );
                 },

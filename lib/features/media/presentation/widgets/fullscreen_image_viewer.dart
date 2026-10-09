@@ -60,7 +60,9 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
     final l10n = AppLocalizations.of(context)!;
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final uri = Uri.parse(url);
-    final fileName = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : 'image.jpg';
+    final fileName = uri.pathSegments.isNotEmpty
+        ? uri.pathSegments.last
+        : 'image.jpg';
 
     try {
       final response = await Dio().get<List<int>>(
@@ -74,7 +76,10 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
       }
 
       String? savePath;
-      if (Platform.isWindows || Platform.isAndroid || Platform.isMacOS || Platform.isLinux) {
+      if (Platform.isWindows ||
+          Platform.isAndroid ||
+          Platform.isMacOS ||
+          Platform.isLinux) {
         savePath = await FilePicker.saveFile(
           dialogTitle: l10n.detailsGalleryDownload,
           fileName: fileName,
@@ -234,12 +239,19 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
                 children: [
                   // Back Button
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: AppTheme.textWhite, size: 28),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: AppTheme.textWhite,
+                      size: 28,
+                    ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   // Indicator: e.g. "3 / 15"
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.surfaceOverlay,
                       borderRadius: AppTheme.radiusLg,
@@ -267,9 +279,14 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
                           ),
                         )
                       : IconButton(
-                          icon: const Icon(Icons.download, color: AppTheme.textWhite, size: 28),
+                          icon: const Icon(
+                            Icons.download,
+                            color: AppTheme.textWhite,
+                            size: 28,
+                          ),
                           tooltip: l10n.detailsGalleryDownload,
-                          onPressed: () => _downloadImage(widget.imageUrls[_currentIndex]),
+                          onPressed: () =>
+                              _downloadImage(widget.imageUrls[_currentIndex]),
                         ),
                 ],
               ),
@@ -285,10 +302,7 @@ class _NavigationArrow extends StatefulWidget {
   final bool isLeft;
   final VoidCallback? onTap;
 
-  const _NavigationArrow({
-    required this.isLeft,
-    required this.onTap,
-  });
+  const _NavigationArrow({required this.isLeft, required this.onTap});
 
   @override
   State<_NavigationArrow> createState() => _NavigationArrowState();
@@ -300,7 +314,9 @@ class _NavigationArrowState extends State<_NavigationArrow> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final tooltipMessage = widget.isLeft ? l10n.detailsGalleryPrevious : l10n.detailsGalleryNext;
+    final tooltipMessage = widget.isLeft
+        ? l10n.detailsGalleryPrevious
+        : l10n.detailsGalleryNext;
     final isEnabled = widget.onTap != null;
     final showHoverEffects = isEnabled && _isHovered;
 
@@ -308,23 +324,23 @@ class _NavigationArrowState extends State<_NavigationArrow> {
     final backgroundColor = showHoverEffects
         ? AppTheme.accent.withValues(alpha: 0.25)
         : (isEnabled
-            ? AppTheme.primary.withValues(alpha: 0.6)
-            : AppTheme.primary.withValues(alpha: 0.2));
+              ? AppTheme.primary.withValues(alpha: 0.6)
+              : AppTheme.primary.withValues(alpha: 0.2));
     final borderColor = showHoverEffects
         ? AppTheme.accent
         : (isEnabled
-            ? AppTheme.textWhite.withValues(alpha: 0.15)
-            : AppTheme.textWhite.withValues(alpha: 0.05));
+              ? AppTheme.textWhite.withValues(alpha: 0.15)
+              : AppTheme.textWhite.withValues(alpha: 0.05));
     final iconColor = showHoverEffects
         ? AppTheme.accent
         : (isEnabled
-            ? AppTheme.textWhite
-            : AppTheme.textWhite.withValues(alpha: 0.25));
+              ? AppTheme.textWhite
+              : AppTheme.textWhite.withValues(alpha: 0.25));
     final shadowColor = showHoverEffects
         ? AppTheme.accent.withValues(alpha: 0.2)
         : (isEnabled
-            ? AppTheme.primary.withValues(alpha: 0.4)
-            : Colors.transparent);
+              ? AppTheme.primary.withValues(alpha: 0.4)
+              : Colors.transparent);
     final blurRadius = showHoverEffects ? 16.0 : (isEnabled ? 12.0 : 0.0);
     final spreadRadius = showHoverEffects ? 3.0 : (isEnabled ? 2.0 : 0.0);
 
@@ -344,8 +360,12 @@ class _NavigationArrowState extends State<_NavigationArrow> {
               onTap: widget.onTap,
               borderRadius: AppTheme.radiusFull,
               hoverColor: Colors.transparent,
-              splashColor: isEnabled ? AppTheme.accent.withValues(alpha: 0.3) : null,
-              highlightColor: isEnabled ? AppTheme.accent.withValues(alpha: 0.2) : null,
+              splashColor: isEnabled
+                  ? AppTheme.accent.withValues(alpha: 0.3)
+                  : null,
+              highlightColor: isEnabled
+                  ? AppTheme.accent.withValues(alpha: 0.2)
+                  : null,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 width: 56,
@@ -353,10 +373,7 @@ class _NavigationArrowState extends State<_NavigationArrow> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: backgroundColor,
-                  border: Border.all(
-                    color: borderColor,
-                    width: 1.5,
-                  ),
+                  border: Border.all(color: borderColor, width: 1.5),
                   boxShadow: [
                     BoxShadow(
                       color: shadowColor,
@@ -426,7 +443,9 @@ class _ZoomableImageState extends State<_ZoomableImage> {
     } else {
       final position = _doubleTapDetails!.localPosition;
       _transformationController.value = Matrix4.identity()
-        ..translateByVector3(Vector3(-position.dx * 1.5, -position.dy * 1.5, 0.0))
+        ..translateByVector3(
+          Vector3(-position.dx * 1.5, -position.dy * 1.5, 0.0),
+        )
         ..scaleByVector3(Vector3(2.5, 2.5, 1.0));
     }
   }
@@ -447,9 +466,7 @@ class _ZoomableImageState extends State<_ZoomableImage> {
               child: SizedBox(
                 width: 36,
                 height: 36,
-                child: CircularProgressIndicator(
-                  color: AppTheme.accent,
-                ),
+                child: CircularProgressIndicator(color: AppTheme.accent),
               ),
             ),
             errorWidget: (context, url, error) => Center(

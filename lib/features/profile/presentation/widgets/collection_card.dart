@@ -115,8 +115,10 @@ class CollectionCard extends StatelessWidget {
                             ),
                             child: posterPath != null
                                 ? CachedNetworkImage(
-                                    imageUrl:
-                                        TmdbImageHelper.posterUrl(context, posterPath)!,
+                                    imageUrl: TmdbImageHelper.posterUrl(
+                                      context,
+                                      posterPath,
+                                    )!,
                                     fit: BoxFit.cover,
                                     width: double.infinity,
                                     height: double.infinity,

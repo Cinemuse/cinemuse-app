@@ -61,7 +61,8 @@ class SerializdService {
     String? cursor,
     int page = 1,
   }) async {
-    final resolvedSeasonId = seasonId ?? await resolveSeasonId(showId, seasonNumber);
+    final resolvedSeasonId =
+        seasonId ?? await resolveSeasonId(showId, seasonNumber);
 
     final queryParams = <String, dynamic>{
       'sort_by': sortBy,
@@ -104,10 +105,7 @@ class SerializdService {
     String? cursor,
     int page = 1,
   }) async {
-    final queryParams = <String, dynamic>{
-      'sort_by': sortBy,
-      'page': page,
-    };
+    final queryParams = <String, dynamic>{'sort_by': sortBy, 'page': page};
 
     if (cursor != null && cursor.isNotEmpty) {
       queryParams['cursor'] = cursor;
@@ -133,7 +131,9 @@ class SerializdService {
   }
 
   /// Fetches threaded comments/replies for a specific review [reviewId].
-  Future<List<Map<String, dynamic>>> fetchReviewComments(String reviewId) async {
+  Future<List<Map<String, dynamic>>> fetchReviewComments(
+    String reviewId,
+  ) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '$_baseUrl/review/$reviewId/comments',

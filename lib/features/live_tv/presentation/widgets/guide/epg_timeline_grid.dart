@@ -199,7 +199,8 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
     }
     targetProg ??= programs.last;
 
-    final key = '${channel.uniqueId}_${targetProg.name}_${targetProg.startTime.millisecondsSinceEpoch}';
+    final key =
+        '${channel.uniqueId}_${targetProg.name}_${targetProg.startTime.millisecondsSinceEpoch}';
     final node = _getProgramFocusNode(key);
     node.requestFocus();
   }
@@ -318,7 +319,12 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
                 onChannelTap: widget.onChannelSelected,
                 onChannelFocus: (ch) {
                   final progs = _getProgramsForChannel(ch);
-                  final current = progs.isNotEmpty ? progs.firstWhere((p) => p.isLive, orElse: () => progs.first) : null;
+                  final current = progs.isNotEmpty
+                      ? progs.firstWhere(
+                          (p) => p.isLive,
+                          orElse: () => progs.first,
+                        )
+                      : null;
                   widget.onProgramFocused?.call(ch, current);
                 },
                 onToggleFavorite: widget.onToggleFavorite,
@@ -347,7 +353,11 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
                               child: SizedBox(
                                 height: _rowHeight,
                                 width: _totalWidth,
-                                child: _buildChannelProgramRow(index, channel, l10n),
+                                child: _buildChannelProgramRow(
+                                  index,
+                                  channel,
+                                  l10n,
+                                ),
                               ),
                             );
                           },
@@ -366,7 +376,9 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
                                   color: AppTheme.accent,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppTheme.accent.withValues(alpha: 0.6),
+                                      color: AppTheme.accent.withValues(
+                                        alpha: 0.6,
+                                      ),
                                       blurRadius: 4,
                                       spreadRadius: 1,
                                     ),
@@ -402,11 +414,7 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.tv_rounded,
-            size: 16,
-            color: AppTheme.accent,
-          ),
+          const Icon(Icons.tv_rounded, size: 16, color: AppTheme.accent),
           const SizedBox(width: 8),
           Text(
             l10n.liveTvChannels.toUpperCase(),
@@ -424,7 +432,11 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
   }
 
   /// Builds the horizontal list of program blocks for a single channel.
-  Widget _buildChannelProgramRow(int rowIndex, Channel channel, AppLocalizations l10n) {
+  Widget _buildChannelProgramRow(
+    int rowIndex,
+    Channel channel,
+    AppLocalizations l10n,
+  ) {
     final programs = _getProgramsForChannel(channel);
 
     if (programs.isEmpty) {
@@ -447,16 +459,18 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
         final gapMinutes = prog.startTime.difference(cursor).inMinutes;
         if (gapMinutes > 0) {
           final gapWidth = gapMinutes * _pixelsPerMinute;
-          slices.add(_buildGapBlock(
-            rowIndex,
-            channel,
-            gapWidth,
-            accumulatedOffset,
-            isFirstBlock,
-            cursor,
-            prog.startTime,
-            l10n,
-          ));
+          slices.add(
+            _buildGapBlock(
+              rowIndex,
+              channel,
+              gapWidth,
+              accumulatedOffset,
+              isFirstBlock,
+              cursor,
+              prog.startTime,
+              l10n,
+            ),
+          );
           accumulatedOffset += gapWidth;
           isFirstBlock = false;
         }
@@ -466,15 +480,17 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
       final sliceStart = prog.startTime.isBefore(_windowStart)
           ? _windowStart
           : prog.startTime;
-      final sliceEnd =
-          prog.endTime.isAfter(_windowEnd) ? _windowEnd : prog.endTime;
+      final sliceEnd = prog.endTime.isAfter(_windowEnd)
+          ? _windowEnd
+          : prog.endTime;
       final sliceMinutes = sliceEnd.difference(sliceStart).inMinutes;
 
       if (sliceMinutes > 0) {
         final sliceWidth = sliceMinutes * _pixelsPerMinute;
         final startOffset = accumulatedOffset;
         final isFirst = isFirstBlock;
-        final key = '${channel.uniqueId}_${prog.name}_${prog.startTime.millisecondsSinceEpoch}';
+        final key =
+            '${channel.uniqueId}_${prog.name}_${prog.startTime.millisecondsSinceEpoch}';
 
         slices.add(
           EpgProgramBlock(
@@ -516,16 +532,18 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
       final trailingMinutes = _windowEnd.difference(cursor).inMinutes;
       if (trailingMinutes > 0) {
         final trailingWidth = trailingMinutes * _pixelsPerMinute;
-        slices.add(_buildGapBlock(
-          rowIndex,
-          channel,
-          trailingWidth,
-          accumulatedOffset,
-          isFirstBlock,
-          cursor,
-          _windowEnd,
-          l10n,
-        ));
+        slices.add(
+          _buildGapBlock(
+            rowIndex,
+            channel,
+            trailingWidth,
+            accumulatedOffset,
+            isFirstBlock,
+            cursor,
+            _windowEnd,
+            l10n,
+          ),
+        );
       }
     }
 
@@ -554,7 +572,11 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
     return _normalizedEpg[channel.name.toLowerCase().trim()] ?? const [];
   }
 
-  Widget _buildNoEpgPlaceholder(int rowIndex, Channel channel, AppLocalizations l10n) {
+  Widget _buildNoEpgPlaceholder(
+    int rowIndex,
+    Channel channel,
+    AppLocalizations l10n,
+  ) {
     final key = '${channel.uniqueId}_no_epg';
     return Container(
       width: _totalWidth,

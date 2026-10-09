@@ -24,79 +24,87 @@ void main() {
     expect(tapped, isTrue);
   });
 
-  testWidgets('DpadFocusable activates via Enter, Select, Space, and Gamepad A', (tester) async {
-    int activations = 0;
-    final focusNode = FocusNode();
+  testWidgets(
+    'DpadFocusable activates via Enter, Select, Space, and Gamepad A',
+    (tester) async {
+      int activations = 0;
+      final focusNode = FocusNode();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: DpadFocusable(
-            focusNode: focusNode,
-            autofocus: true,
-            onTap: () => activations++,
-            child: const Text('Focus Target'),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DpadFocusable(
+              focusNode: focusNode,
+              autofocus: true,
+              onTap: () => activations++,
+              child: const Text('Focus Target'),
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(focusNode.hasFocus, isTrue);
+      expect(focusNode.hasFocus, isTrue);
 
-    // Test Enter
-    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    await tester.pumpAndSettle();
-    expect(activations, equals(1));
+      // Test Enter
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(activations, equals(1));
 
-    // Test Select (standard TV D-Pad center)
-    await tester.sendKeyEvent(LogicalKeyboardKey.select);
-    await tester.pumpAndSettle();
-    expect(activations, equals(2));
+      // Test Select (standard TV D-Pad center)
+      await tester.sendKeyEvent(LogicalKeyboardKey.select);
+      await tester.pumpAndSettle();
+      expect(activations, equals(2));
 
-    // Test Space
-    await tester.sendKeyEvent(LogicalKeyboardKey.space);
-    await tester.pumpAndSettle();
-    expect(activations, equals(3));
+      // Test Space
+      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      await tester.pumpAndSettle();
+      expect(activations, equals(3));
 
-    // Test GameButtonA
-    await tester.sendKeyEvent(LogicalKeyboardKey.gameButtonA);
-    await tester.pumpAndSettle();
-    expect(activations, equals(4));
+      // Test GameButtonA
+      await tester.sendKeyEvent(LogicalKeyboardKey.gameButtonA);
+      await tester.pumpAndSettle();
+      expect(activations, equals(4));
 
-    focusNode.dispose();
-  });
+      focusNode.dispose();
+    },
+  );
 
-  testWidgets('DpadFocusable triggers onLongPress via ContextMenu and GameButtonX', (tester) async {
-    int contextTriggers = 0;
-    final focusNode = FocusNode();
+  testWidgets(
+    'DpadFocusable triggers onLongPress via ContextMenu and GameButtonX',
+    (tester) async {
+      int contextTriggers = 0;
+      final focusNode = FocusNode();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: DpadFocusable(
-            focusNode: focusNode,
-            autofocus: true,
-            onLongPress: () => contextTriggers++,
-            child: const Text('Target'),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DpadFocusable(
+              focusNode: focusNode,
+              autofocus: true,
+              onLongPress: () => contextTriggers++,
+              child: const Text('Target'),
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
-    await tester.pumpAndSettle();
-    expect(contextTriggers, equals(1));
+      await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
+      await tester.pumpAndSettle();
+      expect(contextTriggers, equals(1));
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.gameButtonX);
-    await tester.pumpAndSettle();
-    expect(contextTriggers, equals(2));
+      await tester.sendKeyEvent(LogicalKeyboardKey.gameButtonX);
+      await tester.pumpAndSettle();
+      expect(contextTriggers, equals(2));
 
-    focusNode.dispose();
-  });
+      focusNode.dispose();
+    },
+  );
 
-  testWidgets('DpadFocusable reports focus change and displays focus ring', (tester) async {
+  testWidgets('DpadFocusable reports focus change and displays focus ring', (
+    tester,
+  ) async {
     bool focusState = false;
     final focusNode = FocusNode();
 

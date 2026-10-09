@@ -8,10 +8,7 @@ import 'package:cinemuse_app/features/media/presentation/widgets/video_card.dart
 class VideosRow extends StatelessWidget {
   final List<MediaVideo>? videos;
 
-  const VideosRow({
-    super.key,
-    this.videos,
-  });
+  const VideosRow({super.key, this.videos});
 
   static bool hasTrailers(List<MediaVideo>? videos) {
     if (videos == null) return false;

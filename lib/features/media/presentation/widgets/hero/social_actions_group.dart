@@ -29,7 +29,9 @@ class SocialActionsGroup extends ConsumerWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
         borderRadius: AppTheme.radius12,
-        border: Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.05)),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+        ),
       ),
       child: Row(
         mainAxisSize: isExpanded ? MainAxisSize.max : MainAxisSize.min,
@@ -37,7 +39,9 @@ class SocialActionsGroup extends ConsumerWidget {
           _buildIcon(
             _SocialIcon(
               icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: isFavorite ? AppTheme.favorites : theme.colorScheme.onSurface,
+              color: isFavorite
+                  ? AppTheme.favorites
+                  : theme.colorScheme.onSurface,
               onTap: () => ref
                   .read(mediaDetailsControllerProvider.notifier)
                   .toggleFavorite(mediaItem),
@@ -47,7 +51,9 @@ class SocialActionsGroup extends ConsumerWidget {
           _buildIcon(
             _SocialIcon(
               icon: isInWatchlist ? Icons.bookmark : Icons.bookmark_border,
-              color: isInWatchlist ? AppTheme.watchlist : theme.colorScheme.onSurface,
+              color: isInWatchlist
+                  ? AppTheme.watchlist
+                  : theme.colorScheme.onSurface,
               onTap: () => ref
                   .read(mediaDetailsControllerProvider.notifier)
                   .toggleWatchlist(mediaItem),
@@ -55,10 +61,7 @@ class SocialActionsGroup extends ConsumerWidget {
           ),
           const _VerticalDivider(),
           _buildIcon(
-            _SocialIcon(
-              icon: Icons.format_list_bulleted,
-              onTap: onListTap,
-            ),
+            _SocialIcon(icon: Icons.format_list_bulleted, onTap: onListTap),
           ),
         ],
       ),
@@ -75,11 +78,7 @@ class _SocialIcon extends StatefulWidget {
   final Color? color;
   final VoidCallback onTap;
 
-  const _SocialIcon({
-    required this.icon,
-    this.color,
-    required this.onTap,
-  });
+  const _SocialIcon({required this.icon, this.color, required this.onTap});
 
   @override
   State<_SocialIcon> createState() => _SocialIconState();
@@ -179,9 +178,7 @@ class _SocialIconState extends State<_SocialIcon>
           decoration: BoxDecoration(
             color: isFocused
                 ? theme.focusColor
-                : (isHovered
-                    ? theme.hoverColor
-                    : Colors.transparent),
+                : (isHovered ? theme.hoverColor : Colors.transparent),
             borderRadius: AppTheme.radiusMd,
           ),
           child: child,

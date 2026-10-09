@@ -358,11 +358,13 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
                           color: isFocused
                               ? theme.focusColor
                               : (isHovered
-                                  ? theme.hoverColor
-                                  : Colors.white.withValues(alpha: 0.07)),
+                                    ? theme.hoverColor
+                                    : Colors.white.withValues(alpha: 0.07)),
                           border: Border.all(
                             color: isHighlighted
-                                ? theme.colorScheme.primary.withValues(alpha: 0.5)
+                                ? theme.colorScheme.primary.withValues(
+                                    alpha: 0.5,
+                                  )
                                 : Colors.white.withValues(alpha: 0.14),
                             width: 1.0,
                           ),
@@ -381,8 +383,9 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
                               ? Theme.of(context).colorScheme.primary
                               : Colors.white60,
                           fontSize: 13,
-                          fontWeight:
-                              isFocused ? FontWeight.w700 : FontWeight.w600,
+                          fontWeight: isFocused
+                              ? FontWeight.w700
+                              : FontWeight.w600,
                           letterSpacing: 0.2,
                         ),
                         textAlign: TextAlign.center,
@@ -413,9 +416,7 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
     if (widget.itemCount == 0) return const SizedBox.shrink();
 
     final padding = overridePadding ?? widget.padding;
-    final effectivePadding = padding.copyWith(
-      bottom: padding.bottom + 16,
-    );
+    final effectivePadding = padding.copyWith(bottom: padding.bottom + 16);
 
     final count = totalCount > 0 ? totalCount : widget.itemCount;
 
@@ -470,10 +471,7 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
           left: padding.left,
           right: padding.right,
         ),
-        child: Focus(
-          focusNode: _rowFocusNode,
-          child: list,
-        ),
+        child: Focus(focusNode: _rowFocusNode, child: list),
       ),
     );
   }
@@ -658,7 +656,9 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
                                   children: [
                                     Text(
                                       widget.title ?? '',
-                                      style: Theme.of(context).textTheme.bodyMedium!
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium!
                                           .copyWith(
                                             color: Colors.white,
                                             fontSize: 20,
@@ -695,10 +695,7 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
                 ],
               ),
             ),
-            _buildList(
-              hasSeeAllCard: hasSeeAllCard,
-              totalCount: totalCount,
-            ),
+            _buildList(hasSeeAllCard: hasSeeAllCard, totalCount: totalCount),
           ],
         );
         break;

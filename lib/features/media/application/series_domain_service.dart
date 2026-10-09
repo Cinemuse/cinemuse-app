@@ -100,7 +100,8 @@ class SeriesDomainService {
   }
 
   /// Calculates percentage and episode watch counts for a series.
-  ({int percentage, int watchedCount, int totalCount})? calculateSeriesProgress({
+  ({int percentage, int watchedCount, int totalCount})?
+  calculateSeriesProgress({
     Map<String, dynamic>? details,
     Map<String, dynamic>? seriesDetails,
     Map<String, int>? watchedEpisodesMap,
@@ -170,7 +171,10 @@ class SeriesDomainService {
     if (totalEpisodes == 0) return null;
 
     return (
-      percentage: ((watchedEpisodesCount / totalEpisodes) * 100).round().clamp(0, 100),
+      percentage: ((watchedEpisodesCount / totalEpisodes) * 100).round().clamp(
+        0,
+        100,
+      ),
       watchedCount: watchedEpisodesCount,
       totalCount: totalEpisodes,
     );

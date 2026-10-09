@@ -140,8 +140,9 @@ class _PerfTestApp extends ConsumerWidget {
         actions: <Type, Action<Intent>>{
           BackIntent: CallbackAction<BackIntent>(
             onInvoke: (intent) {
-              final shellNavigator =
-                  ref.read(shellNavigatorKeyProvider).currentState;
+              final shellNavigator = ref
+                  .read(shellNavigatorKeyProvider)
+                  .currentState;
               if (shellNavigator != null && shellNavigator.canPop()) {
                 shellNavigator.pop();
               }
@@ -165,8 +166,7 @@ class _PerfTestApp extends ConsumerWidget {
             final connectivity = ref.watch(connectivityProvider);
             return connectivity.when(
               data: (_) => ExcludeSemantics(child: child ?? const SizedBox()),
-              loading: () =>
-                  ExcludeSemantics(child: child ?? const SizedBox()),
+              loading: () => ExcludeSemantics(child: child ?? const SizedBox()),
               error: (_, __) =>
                   ExcludeSemantics(child: child ?? const SizedBox()),
             );

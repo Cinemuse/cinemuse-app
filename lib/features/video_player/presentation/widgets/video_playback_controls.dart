@@ -25,8 +25,7 @@ class VideoPlaybackControls extends ConsumerStatefulWidget {
       _VideoPlaybackControlsState();
 }
 
-class _VideoPlaybackControlsState
-    extends ConsumerState<VideoPlaybackControls> {
+class _VideoPlaybackControlsState extends ConsumerState<VideoPlaybackControls> {
   late final FocusNode _stopFocusNode;
   late final FocusNode _rewindFocusNode;
   late final FocusNode _forwardFocusNode;
@@ -40,8 +39,9 @@ class _VideoPlaybackControlsState
 
   FocusNode get _effectivePlayPauseFocusNode =>
       widget.actions.playPauseFocusNode ??
-      (_internalPlayPauseFocusNode ??=
-          FocusNode(debugLabel: 'PlayPauseTvButton'));
+      (_internalPlayPauseFocusNode ??= FocusNode(
+        debugLabel: 'PlayPauseTvButton',
+      ));
 
   @override
   void initState() {
@@ -85,10 +85,12 @@ class _VideoPlaybackControlsState
       final rightStartNode = hasGuide
           ? _channelGuideFocusNode
           : (hasSettings ? _settingsFocusNode : _fullscreenFocusNode);
-      final guideNextNode =
-          hasSettings ? _settingsFocusNode : _fullscreenFocusNode;
-      final settingsPrevNode =
-          hasGuide ? _channelGuideFocusNode : _nextChannelFocusNode;
+      final guideNextNode = hasSettings
+          ? _settingsFocusNode
+          : _fullscreenFocusNode;
+      final settingsPrevNode = hasGuide
+          ? _channelGuideFocusNode
+          : _nextChannelFocusNode;
       final fullscreenPrevNode = hasSettings
           ? _settingsFocusNode
           : (hasGuide ? _channelGuideFocusNode : _nextChannelFocusNode);
@@ -127,11 +129,8 @@ class _VideoPlaybackControlsState
               icon: Icons.skip_next_rounded,
               tooltip: l10n.playerNextChannel,
               focusNode: _nextChannelFocusNode,
-              onKeyEvent: (node, event) => _handleKey(
-                event,
-                prev: _stopFocusNode,
-                next: rightStartNode,
-              ),
+              onKeyEvent: (node, event) =>
+                  _handleKey(event, prev: _stopFocusNode, next: rightStartNode),
               onTap: widget.actions.onNextChannel ?? () {},
             ),
             const Spacer(),
@@ -163,10 +162,7 @@ class _VideoPlaybackControlsState
               ),
               const SizedBox(width: 4),
             ],
-            _buildFullscreenButton(
-              l10n,
-              fullscreenPrevNode,
-            ),
+            _buildFullscreenButton(l10n, fullscreenPrevNode),
           ],
         ),
       );
@@ -175,10 +171,10 @@ class _VideoPlaybackControlsState
     final forwardNextNode = hasSettings
         ? _settingsFocusNode
         : (hasNext ? _nextEpisodeFocusNode : _fullscreenFocusNode);
-    final settingsNextNode =
-        hasNext ? _nextEpisodeFocusNode : _fullscreenFocusNode;
-    final nextPrevNode =
-        hasSettings ? _settingsFocusNode : _forwardFocusNode;
+    final settingsNextNode = hasNext
+        ? _nextEpisodeFocusNode
+        : _fullscreenFocusNode;
+    final nextPrevNode = hasSettings ? _settingsFocusNode : _forwardFocusNode;
     final fullscreenPrevNode = hasNext
         ? _nextEpisodeFocusNode
         : (hasSettings ? _settingsFocusNode : _forwardFocusNode);
@@ -217,11 +213,8 @@ class _VideoPlaybackControlsState
             icon: Icons.forward_10_rounded,
             tooltip: l10n.playerSkipForward,
             focusNode: _forwardFocusNode,
-            onKeyEvent: (node, event) => _handleKey(
-              event,
-              prev: _stopFocusNode,
-              next: forwardNextNode,
-            ),
+            onKeyEvent: (node, event) =>
+                _handleKey(event, prev: _stopFocusNode, next: forwardNextNode),
             onTap: () => widget.actions.onSkip(true),
           ),
           const Spacer(),
@@ -297,7 +290,9 @@ class _VideoPlaybackControlsState
   }
 
   Widget _buildPlayPauseButton(Player player, AppLocalizations l10n) {
-    final prevNode = widget.actions.isLive ? _prevChannelFocusNode : _rewindFocusNode;
+    final prevNode = widget.actions.isLive
+        ? _prevChannelFocusNode
+        : _rewindFocusNode;
     final nextNode = _stopFocusNode;
     return StreamBuilder<bool>(
       stream: player.stream.playing,
@@ -311,11 +306,8 @@ class _VideoPlaybackControlsState
           autofocus: true,
           iconSize: 28,
           buttonSize: 42,
-          onKeyEvent: (node, event) => _handleKey(
-            event,
-            prev: prevNode,
-            next: nextNode,
-          ),
+          onKeyEvent: (node, event) =>
+              _handleKey(event, prev: prevNode, next: nextNode),
           onTap: widget.actions.onTogglePlayPause,
         );
       },
@@ -337,11 +329,8 @@ class _VideoPlaybackControlsState
       focusNode: _fullscreenFocusNode,
       iconSize: 26,
       buttonSize: 40,
-      onKeyEvent: (node, event) => _handleKey(
-        event,
-        prev: prevNode,
-        next: nextNode,
-      ),
+      onKeyEvent: (node, event) =>
+          _handleKey(event, prev: prevNode, next: nextNode),
       onTap: widget.actions.onToggleFullscreen,
     );
   }
@@ -378,8 +367,8 @@ class _VideoPlaybackControlsState
               border: isFocused
                   ? Border.all(color: AppTheme.accent, width: 1.5)
                   : (isHovered
-                      ? Border.all(color: AppTheme.borderSubtle, width: 1.5)
-                      : null),
+                        ? Border.all(color: AppTheme.borderSubtle, width: 1.5)
+                        : null),
               boxShadow: isFocused ? AppTheme.shadowNeonSm : null,
             ),
             alignment: Alignment.center,

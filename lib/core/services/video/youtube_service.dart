@@ -81,9 +81,7 @@ class YoutubeService {
         final res = int.tryParse(qLabel.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
         final label = '${res}p ${res >= 720 ? "(HD)" : "(SD)"}';
 
-        final existingIdx = streams.indexWhere(
-          (e) => e.res == res && !e.isHls,
-        );
+        final existingIdx = streams.indexWhere((e) => e.res == res && !e.isHls);
 
         if (existingIdx == -1) {
           developer.log(

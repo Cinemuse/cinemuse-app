@@ -66,8 +66,7 @@ class EpgStorageService {
       final serializedData = <String, dynamic>{};
 
       for (final entry in epgData.entries) {
-        serializedData[entry.key] =
-            entry.value.map((p) => p.toJson()).toList();
+        serializedData[entry.key] = entry.value.map((p) => p.toJson()).toList();
       }
 
       final payload = {

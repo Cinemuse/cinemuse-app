@@ -12,7 +12,9 @@ void main() {
   group('EpgParser', () {
     test('parses JSON format matching Cinemuse edge function', () {
       final now = DateTime.now();
-      final startMs = now.subtract(const Duration(minutes: 15)).millisecondsSinceEpoch;
+      final startMs = now
+          .subtract(const Duration(minutes: 15))
+          .millisecondsSinceEpoch;
       final endMs = now.add(const Duration(minutes: 45)).millisecondsSinceEpoch;
 
       final jsonPayload = {
@@ -34,7 +36,7 @@ void main() {
             'startTime': {'unix': startMs},
             'endTime': {'unix': endMs},
             'image': null,
-          }
+          },
         ],
       };
 
@@ -73,7 +75,10 @@ void main() {
       expect(parsed['rai1']!.length, 2);
       expect(parsed['rai1']![0].name, 'TG1 13:00');
       expect(parsed['rai1']![0].subtitle, 'Notiziario');
-      expect(parsed['rai1']![0].description, 'Il notiziario del primo canale Rai.');
+      expect(
+        parsed['rai1']![0].description,
+        'Il notiziario del primo canale Rai.',
+      );
       expect(parsed['rai1']![0].imageUrl, 'https://img.rai.it/tg1.jpg');
       expect(parsed['rai1']![1].name, 'Linea Verde');
     });
@@ -85,8 +90,8 @@ void main() {
             'name': 'TG5',
             'startTime': {'unix': 1700000000000},
             'endTime': {'unix': 1700003600000},
-          }
-        ]
+          },
+        ],
       });
 
       final uncompressedBytes = utf8.encode(jsonStr);
@@ -146,12 +151,20 @@ void main() {
       expect(programs.first.name, 'Affari Tuoi');
     });
 
-    test('matches stripped domain epgId (e.g. SPORTITALIA.ch to sportitalia)', () {
-      final ch = Channel(lcn: 60, name: 'Sportitalia', logo: '', epgId: 'SPORTITALIA.ch');
-      final programs = EpgChannelMatcher.findPrograms(ch, epgData);
-      expect(programs.length, 1);
-      expect(programs.first.name, 'SI Live 24');
-    });
+    test(
+      'matches stripped domain epgId (e.g. SPORTITALIA.ch to sportitalia)',
+      () {
+        final ch = Channel(
+          lcn: 60,
+          name: 'Sportitalia',
+          logo: '',
+          epgId: 'SPORTITALIA.ch',
+        );
+        final programs = EpgChannelMatcher.findPrograms(ch, epgData);
+        expect(programs.length, 1);
+        expect(programs.first.name, 'SI Live 24');
+      },
+    );
 
     test('matches by LCN fallback when epgId is missing', () {
       // LCN 210 maps to Eurosport 1 (dlhd_878)
@@ -174,13 +187,15 @@ void main() {
 
   group('M3uParser.extractEpgUrl', () {
     test('extracts url-tvg from header', () {
-      const m3u = '#EXTM3U url-tvg="https://example.com/epg.xml.gz" x-tvg-url="https://example.com/epg.xml.gz"\n#EXTINF:-1,Channel 1\nhttp://stream';
+      const m3u =
+          '#EXTM3U url-tvg="https://example.com/epg.xml.gz" x-tvg-url="https://example.com/epg.xml.gz"\n#EXTINF:-1,Channel 1\nhttp://stream';
       final url = M3uParser.extractEpgUrl(m3u);
       expect(url, 'https://example.com/epg.xml.gz');
     });
 
     test('extracts x-tvg-url when url-tvg is absent', () {
-      const m3u = '#EXTM3U x-tvg-url="https://example.com/tvguide.json"\n#EXTINF:-1,Channel 1\nhttp://stream';
+      const m3u =
+          '#EXTM3U x-tvg-url="https://example.com/tvguide.json"\n#EXTINF:-1,Channel 1\nhttp://stream';
       final url = M3uParser.extractEpgUrl(m3u);
       expect(url, 'https://example.com/tvguide.json');
     });

@@ -32,6 +32,7 @@ class MediaItem {
   final MediaImages? images;
   final MediaCollection? collection;
   final ExternalIds? externalIds;
+
   /// Optional raw TMDB JSON map retained for backwards compatibility
   /// while legacy sub-widgets are incrementally migrated.
   final Map<String, dynamic>? rawTmdbData;
@@ -459,7 +460,8 @@ class MediaVideo {
     required this.type,
   });
 
-  bool get isYouTubeTrailer => site.toLowerCase() == 'youtube' && type.toLowerCase() == 'trailer';
+  bool get isYouTubeTrailer =>
+      site.toLowerCase() == 'youtube' && type.toLowerCase() == 'trailer';
 
   factory MediaVideo.fromTmdbMap(Map<String, dynamic> map) {
     return MediaVideo(

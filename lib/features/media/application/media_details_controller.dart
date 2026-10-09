@@ -29,7 +29,9 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     required Map<String, dynamic> details,
     required WatchHistory? watchHistory,
   }) {
-    if (watchHistory == null || watchHistory.season == null || watchHistory.season! <= 0) {
+    if (watchHistory == null ||
+        watchHistory.season == null ||
+        watchHistory.season! <= 0) {
       return 1;
     }
 

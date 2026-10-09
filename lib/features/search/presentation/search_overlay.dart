@@ -59,14 +59,18 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
     debugLabel: 'SearchOverlayInput',
     onKeyEvent: _handleTextFieldKeyEvent,
   );
-  final FocusNode _backButtonFocusNode =
-      FocusNode(debugLabel: 'SearchOverlayBackButton');
-  final FocusNode _clearButtonFocusNode =
-      FocusNode(debugLabel: 'SearchOverlayClearButton');
-  final FocusNode _clearHistoryFocusNode =
-      FocusNode(debugLabel: 'SearchOverlayClearHistory');
-  final FocusNode _firstContentFocusNode =
-      FocusNode(debugLabel: 'SearchOverlayFirstContent');
+  final FocusNode _backButtonFocusNode = FocusNode(
+    debugLabel: 'SearchOverlayBackButton',
+  );
+  final FocusNode _clearButtonFocusNode = FocusNode(
+    debugLabel: 'SearchOverlayClearButton',
+  );
+  final FocusNode _clearHistoryFocusNode = FocusNode(
+    debugLabel: 'SearchOverlayClearHistory',
+  );
+  final FocusNode _firstContentFocusNode = FocusNode(
+    debugLabel: 'SearchOverlayFirstContent',
+  );
 
   @override
   void initState() {
@@ -285,7 +289,9 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.5),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.5,
+                                      ),
                                       blurRadius: 10,
                                     ),
                                   ],
@@ -308,38 +314,45 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
                                         children: [
                                           DpadFocusable(
                                             focusNode: _backButtonFocusNode,
-                                            borderRadius:
-                                                BorderRadius.circular(20),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
                                             onTap: _handleClose,
-                                            builder: (
-                                              context,
-                                              isFocused,
-                                              isHovered,
-                                              child,
-                                            ) {
-                                              return DecoratedBox(
-                                                decoration: BoxDecoration(
-                                                  color: (isFocused || isHovered)
-                                                      ? Colors.white.withValues(
-                                                          alpha: 0.12,
-                                                        )
-                                                      : Colors.transparent,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: child,
-                                              );
-                                            },
+                                            builder:
+                                                (
+                                                  context,
+                                                  isFocused,
+                                                  isHovered,
+                                                  child,
+                                                ) {
+                                                  return DecoratedBox(
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          (isFocused ||
+                                                              isHovered)
+                                                          ? Colors.white
+                                                                .withValues(
+                                                                  alpha: 0.12,
+                                                                )
+                                                          : Colors.transparent,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: child,
+                                                  );
+                                                },
                                             onKeyEvent: (node, event) {
                                               if (event is! KeyDownEvent) {
                                                 return KeyEventResult.ignored;
                                               }
                                               if (event.logicalKey ==
-                                                  LogicalKeyboardKey.arrowRight) {
+                                                  LogicalKeyboardKey
+                                                      .arrowRight) {
                                                 _focusNode.requestFocus();
                                                 return KeyEventResult.handled;
                                               }
                                               if (event.logicalKey ==
-                                                  LogicalKeyboardKey.arrowDown) {
+                                                  LogicalKeyboardKey
+                                                      .arrowDown) {
                                                 _focusFirstContentItem();
                                                 return KeyEventResult.handled;
                                               }
@@ -402,10 +415,8 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
                                                   fontWeight: FontWeight.w300,
                                                 ),
                                                 border: InputBorder.none,
-                                                enabledBorder:
-                                                    InputBorder.none,
-                                                focusedBorder:
-                                                    InputBorder.none,
+                                                enabledBorder: InputBorder.none,
+                                                focusedBorder: InputBorder.none,
                                                 filled: false,
                                                 contentPadding: EdgeInsets.zero,
                                                 hoverColor: Colors.transparent,
@@ -424,24 +435,29 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
                                               focusNode: _clearButtonFocusNode,
                                               borderRadius:
                                                   BorderRadius.circular(20),
-                                              builder: (
-                                                context,
-                                                isFocused,
-                                                isHovered,
-                                                child,
-                                              ) {
-                                                return DecoratedBox(
-                                                  decoration: BoxDecoration(
-                                                    color: (isFocused || isHovered)
-                                                        ? Colors.white.withValues(
-                                                            alpha: 0.12,
-                                                          )
-                                                        : Colors.transparent,
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  child: child,
-                                                );
-                                              },
+                                              builder:
+                                                  (
+                                                    context,
+                                                    isFocused,
+                                                    isHovered,
+                                                    child,
+                                                  ) {
+                                                    return DecoratedBox(
+                                                      decoration: BoxDecoration(
+                                                        color:
+                                                            (isFocused ||
+                                                                isHovered)
+                                                            ? Colors.white
+                                                                  .withValues(
+                                                                    alpha: 0.12,
+                                                                  )
+                                                            : Colors
+                                                                  .transparent,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: child,
+                                                    );
+                                                  },
                                               onTap: () {
                                                 _searchController.clear();
                                                 ref
@@ -475,8 +491,9 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
                                                   cursor:
                                                       SystemMouseCursors.click,
                                                   child: Padding(
-                                                    padding:
-                                                        EdgeInsets.all(8.0),
+                                                    padding: EdgeInsets.all(
+                                                      8.0,
+                                                    ),
                                                     child: Icon(
                                                       LucideIcons.x,
                                                       color: AppTheme.textWhite,
@@ -495,9 +512,9 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
                                                 height: 20,
                                                 child:
                                                     CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  color: AppTheme.accent,
-                                                ),
+                                                      strokeWidth: 2,
+                                                      color: AppTheme.accent,
+                                                    ),
                                               ),
                                             ),
                                         ],
@@ -511,7 +528,9 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
                                         ),
                                         constraints: BoxConstraints(
                                           maxHeight:
-                                              MediaQuery.of(context).size.height *
+                                              MediaQuery.of(
+                                                context,
+                                              ).size.height *
                                               0.7,
                                           minHeight: 200,
                                         ),

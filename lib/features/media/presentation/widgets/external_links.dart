@@ -124,19 +124,11 @@ class ExternalLinks extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (brandButtons.isNotEmpty)
-            Wrap(
-              spacing: 12,
-              runSpacing: 10,
-              children: brandButtons,
-            ),
+            Wrap(spacing: 12, runSpacing: 10, children: brandButtons),
           if (brandButtons.isNotEmpty && squareButtons.isNotEmpty)
             const SizedBox(height: 12),
           if (squareButtons.isNotEmpty)
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: squareButtons,
-            ),
+            Wrap(spacing: 10, runSpacing: 10, children: squareButtons),
         ],
       ),
     );
@@ -235,10 +227,7 @@ class _SquareIconButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppTheme.secondary.withValues(alpha: 0.5),
             borderRadius: AppTheme.radius12,
-            border: Border.all(
-              color: AppTheme.borderSubtle,
-              width: 1.2,
-            ),
+            border: Border.all(color: AppTheme.borderSubtle, width: 1.2),
           ),
           child: Icon(
             icon,

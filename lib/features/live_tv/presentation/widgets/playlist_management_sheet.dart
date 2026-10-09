@@ -67,9 +67,7 @@ class PlaylistManagementSheet extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               const Flexible(
-                child: SingleChildScrollView(
-                  child: PlaylistListSection(),
-                ),
+                child: SingleChildScrollView(child: PlaylistListSection()),
               ),
             ],
           ),
@@ -617,8 +615,10 @@ class _EpgSection extends ConsumerWidget {
               Row(
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: isCustom
                           ? Colors.amber.withValues(alpha: 0.15)
@@ -804,4 +804,3 @@ class _ConfigureEpgDialogState extends State<_ConfigureEpgDialog> {
     );
   }
 }
-

@@ -50,16 +50,10 @@ class ChannelListPanel extends ConsumerWidget {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFA0F0518),
-                    Color(0xF71A0B2E),
-                  ],
+                  colors: [Color(0xFA0F0518), Color(0xF71A0B2E)],
                 ),
                 border: Border(
-                  right: BorderSide(
-                    color: AppTheme.border,
-                    width: 1,
-                  ),
+                  right: BorderSide(color: AppTheme.border, width: 1),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -120,8 +114,10 @@ class ChannelListPanel extends ConsumerWidget {
 
   Widget _buildOverlayHeader(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final channelsCount =
-        ref.watch(filteredChannelsProvider).valueOrNull?.length;
+    final channelsCount = ref
+        .watch(filteredChannelsProvider)
+        .valueOrNull
+        ?.length;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 12, 10),
@@ -132,10 +128,7 @@ class ChannelListPanel extends ConsumerWidget {
             decoration: BoxDecoration(
               color: AppTheme.accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppTheme.border,
-                width: 1,
-              ),
+              border: Border.all(color: AppTheme.border, width: 1),
             ),
             child: const Icon(
               Icons.tv_rounded,
@@ -161,10 +154,7 @@ class ChannelListPanel extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: AppTheme.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: AppTheme.border,
-                  width: 0.8,
-                ),
+                border: Border.all(color: AppTheme.border, width: 0.8),
               ),
               child: Text(
                 '$channelsCount',
@@ -227,22 +217,24 @@ class _CategoryChipsRow extends ConsumerWidget {
     final filter = ref.watch(channelFilterProvider);
     final l10n = AppLocalizations.of(context)!;
 
-    final groups = channelsAsync.whenOrNull(
-      data: (channels) {
-        final g = channels
-            .map((ch) => ch.group)
-            .where((g) => g != null && g.isNotEmpty)
-            .cast<String>()
-            .toSet()
-            .toList();
-        g.sort();
-        if (g.contains('DTT')) {
-          g.remove('DTT');
-          g.insert(0, 'DTT');
-        }
-        return g;
-      },
-    ) ?? [];
+    final groups =
+        channelsAsync.whenOrNull(
+          data: (channels) {
+            final g = channels
+                .map((ch) => ch.group)
+                .where((g) => g != null && g.isNotEmpty)
+                .cast<String>()
+                .toSet()
+                .toList();
+            g.sort();
+            if (g.contains('DTT')) {
+              g.remove('DTT');
+              g.insert(0, 'DTT');
+            }
+            return g;
+          },
+        ) ??
+        [];
 
     if (groups.isEmpty) return const SizedBox.shrink();
 
@@ -317,20 +309,20 @@ class _CategoryChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected
                 ? (isFocused
-                    ? AppTheme.accent
-                    : AppTheme.accent.withValues(alpha: 0.22))
+                      ? AppTheme.accent
+                      : AppTheme.accent.withValues(alpha: 0.22))
                 : (isFocused
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : (isHovered
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : Colors.white.withValues(alpha: 0.04))),
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : (isHovered
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.white.withValues(alpha: 0.04))),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: isFocused
                   ? Colors.white
                   : (isSelected
-                      ? AppTheme.accent.withValues(alpha: 0.6)
-                      : Colors.white.withValues(alpha: 0.08)),
+                        ? AppTheme.accent.withValues(alpha: 0.6)
+                        : Colors.white.withValues(alpha: 0.08)),
               width: isFocused ? 1.5 : 1.0,
             ),
           ),
@@ -340,8 +332,8 @@ class _CategoryChip extends StatelessWidget {
               color: isSelected && isFocused
                   ? Colors.white
                   : (isSelected || highlighted
-                      ? Colors.white
-                      : AppTheme.textMuted),
+                        ? Colors.white
+                        : AppTheme.textMuted),
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             ),
@@ -361,10 +353,7 @@ class _SearchRow extends ConsumerStatefulWidget {
   final bool isOverlay;
   final VoidCallback? onClose;
 
-  const _SearchRow({
-    this.isOverlay = false,
-    this.onClose,
-  });
+  const _SearchRow({this.isOverlay = false, this.onClose});
 
   @override
   ConsumerState<_SearchRow> createState() => _SearchRowState();
@@ -499,10 +488,7 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
           },
           decoration: InputDecoration(
             hintText: l10n.liveTvSearchPlaceholder,
-            hintStyle: const TextStyle(
-              color: Colors.white30,
-              fontSize: 13,
-            ),
+            hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
             prefixIcon: const Icon(
               Icons.search,
               size: 18,
@@ -895,9 +881,8 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
 
         return _buildSectionedList(sections, selectedChannel);
       },
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: Colors.white),
-      ),
+      loading: () =>
+          const Center(child: CircularProgressIndicator(color: Colors.white)),
       error: (_, __) => const SizedBox.shrink(),
     );
   }

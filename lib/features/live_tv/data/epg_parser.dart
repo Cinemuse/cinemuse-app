@@ -102,9 +102,21 @@ class EpgParser {
     final startRegex = RegExp(r'start="([^"]+)"', caseSensitive: false);
     final stopRegex = RegExp(r'stop="([^"]+)"', caseSensitive: false);
     final channelRegex = RegExp(r'channel="([^"]+)"', caseSensitive: false);
-    final titleRegex = RegExp(r'<title[^>]*>(.*?)</title>', caseSensitive: false, dotAll: true);
-    final subTitleRegex = RegExp(r'<sub-title[^>]*>(.*?)</sub-title>', caseSensitive: false, dotAll: true);
-    final descRegex = RegExp(r'<desc[^>]*>(.*?)</desc>', caseSensitive: false, dotAll: true);
+    final titleRegex = RegExp(
+      r'<title[^>]*>(.*?)</title>',
+      caseSensitive: false,
+      dotAll: true,
+    );
+    final subTitleRegex = RegExp(
+      r'<sub-title[^>]*>(.*?)</sub-title>',
+      caseSensitive: false,
+      dotAll: true,
+    );
+    final descRegex = RegExp(
+      r'<desc[^>]*>(.*?)</desc>',
+      caseSensitive: false,
+      dotAll: true,
+    );
     final iconRegex = RegExp(r'<icon[^>]+src="([^"]+)"', caseSensitive: false);
 
     for (final match in programmeRegex.allMatches(xmlContent)) {
@@ -125,7 +137,9 @@ class EpgParser {
       if (rawTitle == null || rawTitle.trim().isEmpty) continue;
 
       final title = _unescapeXml(rawTitle.trim());
-      final subtitle = _cleanOptionalString(subTitleRegex.firstMatch(inner)?.group(1));
+      final subtitle = _cleanOptionalString(
+        subTitleRegex.firstMatch(inner)?.group(1),
+      );
       final desc = _cleanOptionalString(descRegex.firstMatch(inner)?.group(1));
       final iconUrl = iconRegex.firstMatch(inner)?.group(1)?.trim();
 

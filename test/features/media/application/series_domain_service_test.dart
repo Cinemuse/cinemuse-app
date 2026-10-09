@@ -11,86 +11,79 @@ void main() {
       service = SeriesDomainService();
     });
 
-    test('calculateReleasedEpisodes counts only released episodes across regular seasons', () {
-      final details = {
-        'seasons': [
-          {
-            'season_number': 0, // Specials should be skipped
-            'episode_count': 5,
-            'air_date': '2020-01-01',
-          },
-          {
-            'season_number': 1,
-            'episode_count': 10,
-            'air_date': '2020-01-01',
-          },
-          {
-            'season_number': 2,
-            'episode_count': 8,
-            'air_date': '2021-01-01',
-          },
-        ],
-        'last_episode_to_air': {
-          'season_number': 2,
-          'episode_number': 4,
-        },
-      };
+    test(
+      'calculateReleasedEpisodes counts only released episodes across regular seasons',
+      () {
+        final details = {
+          'seasons': [
+            {
+              'season_number': 0, // Specials should be skipped
+              'episode_count': 5,
+              'air_date': '2020-01-01',
+            },
+            {'season_number': 1, 'episode_count': 10, 'air_date': '2020-01-01'},
+            {'season_number': 2, 'episode_count': 8, 'air_date': '2021-01-01'},
+          ],
+          'last_episode_to_air': {'season_number': 2, 'episode_number': 4},
+        };
 
-      final count = service.calculateReleasedEpisodes(details);
+        final count = service.calculateReleasedEpisodes(details);
 
-      // Season 1 has 10 released. Season 2 has 4 aired. Total = 14.
-      expect(count, 14);
-    });
+        // Season 1 has 10 released. Season 2 has 4 aired. Total = 14.
+        expect(count, 14);
+      },
+    );
 
-    test('calculateSeriesProgress computes status and progress ratio accurately', () {
-      final details = {
-        'number_of_episodes': 10,
-        'status': 'Ended',
-        'seasons': [
-          {
-            'season_number': 1,
-            'episode_count': 10,
-          },
-        ],
-      };
+    test(
+      'calculateSeriesProgress computes status and progress ratio accurately',
+      () {
+        final details = {
+          'number_of_episodes': 10,
+          'status': 'Ended',
+          'seasons': [
+            {'season_number': 1, 'episode_count': 10},
+          ],
+        };
 
-      // 5 episodes watched
-      final watchedEpisodesMap = {
-        for (var i = 1; i <= 5; i++) '1-$i': 1,
-      };
+        // 5 episodes watched
+        final watchedEpisodesMap = {for (var i = 1; i <= 5; i++) '1-$i': 1};
 
-      final progress = service.calculateSeriesProgress(
-        details: details,
-        watchedEpisodesMap: watchedEpisodesMap,
-      );
+        final progress = service.calculateSeriesProgress(
+          details: details,
+          watchedEpisodesMap: watchedEpisodesMap,
+        );
 
-      expect(progress, isNotNull);
-      expect(progress!.totalCount, 10);
-      expect(progress.watchedCount, 5);
-      expect(progress.percentage, 50);
-    });
+        expect(progress, isNotNull);
+        expect(progress!.totalCount, 10);
+        expect(progress.watchedCount, 5);
+        expect(progress.percentage, 50);
+      },
+    );
 
-    test('calculateResumePercentage parses duration and position correctly with WatchHistory', () {
-      final history = WatchHistory(
-        userId: 'user_1',
-        tmdbId: 123,
-        mediaType: MediaKind.tv,
-        season: 1,
-        episode: 2,
-        progressSeconds: 1500,
-        totalDuration: 6000,
-        status: WatchStatus.watching,
-        lastWatchedAt: DateTime.now(),
-      );
+    test(
+      'calculateResumePercentage parses duration and position correctly with WatchHistory',
+      () {
+        final history = WatchHistory(
+          userId: 'user_1',
+          tmdbId: 123,
+          mediaType: MediaKind.tv,
+          season: 1,
+          episode: 2,
+          progressSeconds: 1500,
+          totalDuration: 6000,
+          status: WatchStatus.watching,
+          lastWatchedAt: DateTime.now(),
+        );
 
-      final percent = service.calculateResumePercentage(
-        seasonNumber: 1,
-        episodeNumber: 2,
-        episodeProgress: {'1-2': history},
-      );
+        final percent = service.calculateResumePercentage(
+          seasonNumber: 1,
+          episodeNumber: 2,
+          episodeProgress: {'1-2': history},
+        );
 
-      expect(percent, 0.25);
-    });
+        expect(percent, 0.25);
+      },
+    );
 
     test('calculateResumePercentage parses map data correctly', () {
       final percent = service.calculateResumePercentage(
@@ -108,30 +101,30 @@ void main() {
       expect(percent, 0.25);
     });
 
-    test('findMissingPrecedingEpisodes detects unwatched preceding episodes', () {
-      final seasons = [
-        {'season_number': 1, 'episode_count': 4},
-      ];
+    test(
+      'findMissingPrecedingEpisodes detects unwatched preceding episodes',
+      () {
+        final seasons = [
+          {'season_number': 1, 'episode_count': 4},
+        ];
 
-      // Only episode 1 and 4 watched
-      final watchedEpisodesCount = {
-        '1-1': 1,
-        '1-4': 1,
-      };
+        // Only episode 1 and 4 watched
+        final watchedEpisodesCount = {'1-1': 1, '1-4': 1};
 
-      final missing = service.findMissingPrecedingEpisodes(
-        seasons: seasons,
-        currentSeason: 1,
-        currentEpisode: 4,
-        watchedEpisodesCount: watchedEpisodesCount,
-      );
+        final missing = service.findMissingPrecedingEpisodes(
+          seasons: seasons,
+          currentSeason: 1,
+          currentEpisode: 4,
+          watchedEpisodesCount: watchedEpisodesCount,
+        );
 
-      // Episodes 2 and 3 should be missing
-      expect(missing.length, 2);
-      expect(missing[0].season, 1);
-      expect(missing[0].episode, 2);
-      expect(missing[1].season, 1);
-      expect(missing[1].episode, 3);
-    });
+        // Episodes 2 and 3 should be missing
+        expect(missing.length, 2);
+        expect(missing[0].season, 1);
+        expect(missing[0].episode, 2);
+        expect(missing[1].season, 1);
+        expect(missing[1].episode, 3);
+      },
+    );
   });
 }

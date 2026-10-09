@@ -37,10 +37,14 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
         MediaQuery.of(context).orientation == Orientation.landscape;
 
     // Sort files alphabetically by filename
-    final sortedFiles = (currentState.currentStream?.files ?? [])
-        .map(StreamFileInfo.fromMap)
-        .toList()
-      ..sort((a, b) => a.filename.toLowerCase().compareTo(b.filename.toLowerCase()));
+    final sortedFiles =
+        (currentState.currentStream?.files ?? [])
+            .map(StreamFileInfo.fromMap)
+            .toList()
+          ..sort(
+            (a, b) =>
+                a.filename.toLowerCase().compareTo(b.filename.toLowerCase()),
+          );
 
     return Stack(
       children: [
@@ -100,7 +104,11 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                       ),
                                       Text(
                                         l10n.playerFilesCount(
-                                          currentState.currentStream?.files.length ?? 0,
+                                          currentState
+                                                  .currentStream
+                                                  ?.files
+                                                  .length ??
+                                              0,
                                         ),
                                         style: TextStyle(
                                           color: AppTheme.textMuted.withAlpha(
@@ -248,24 +256,26 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                       final isSelected =
                           currentState.currentStream?.candidate.uniqueId ==
                           stream.uniqueId;
-                      final hasSelectedInList = currentState.availableStreams.any(
-                        (s) =>
-                            currentState.currentStream?.candidate.uniqueId ==
-                            s.uniqueId,
-                      );
+                      final hasSelectedInList = currentState.availableStreams
+                          .any(
+                            (s) =>
+                                currentState
+                                    .currentStream
+                                    ?.candidate
+                                    .uniqueId ==
+                                s.uniqueId,
+                          );
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
                         child: DpadFocusable(
-                          autofocus: isSelected ||
-                              (index == 0 && !hasSelectedInList),
+                          autofocus:
+                              isSelected || (index == 0 && !hasSelectedInList),
                           scale: 1.02,
                           borderRadius: AppTheme.radiusLg,
                           onTap: () {
                             ref
-                                .read(
-                                  playerControllerProvider(params).notifier,
-                                )
+                                .read(playerControllerProvider(params).notifier)
                                 .changeSource(stream);
                           },
                           builder: (context, isFocused, isHovered, child) {
@@ -276,27 +286,27 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                 color: isSelected
                                     ? AppTheme.accent.withValues(alpha: 0.1)
                                     : (isHighlighted
-                                        ? AppTheme.textWhite.withValues(
-                                            alpha: 0.08,
-                                          )
-                                        : AppTheme.textWhite.withValues(
-                                            alpha: 0.03,
-                                          )),
+                                          ? AppTheme.textWhite.withValues(
+                                              alpha: 0.08,
+                                            )
+                                          : AppTheme.textWhite.withValues(
+                                              alpha: 0.03,
+                                            )),
                                 borderRadius: AppTheme.radiusLg,
                                 border: Border.all(
                                   color: isFocused
                                       ? AppTheme.textWhite
                                       : (isSelected
-                                          ? AppTheme.accent.withValues(
-                                              alpha: 0.5,
-                                            )
-                                          : (isHovered
-                                              ? AppTheme.textWhite.withValues(
-                                                  alpha: 0.2,
-                                                )
-                                              : AppTheme.textWhite.withValues(
-                                                  alpha: 0.05,
-                                                ))),
+                                            ? AppTheme.accent.withValues(
+                                                alpha: 0.5,
+                                              )
+                                            : (isHovered
+                                                  ? AppTheme.textWhite
+                                                        .withValues(alpha: 0.2)
+                                                  : AppTheme.textWhite
+                                                        .withValues(
+                                                          alpha: 0.05,
+                                                        ))),
                                   width: isFocused ? 2 : 1,
                                 ),
                               ),
@@ -357,9 +367,9 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.scrim.withValues(
-                  alpha: 0.7,
-                ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.scrim.withValues(alpha: 0.7),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(24),
                 ),
@@ -401,15 +411,15 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.error.withValues(
-                  alpha: 0.9,
-                ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.error.withValues(alpha: 0.9),
                 borderRadius: AppTheme.radius12,
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.scrim.withValues(
-                      alpha: 0.3,
-                    ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.scrim.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),

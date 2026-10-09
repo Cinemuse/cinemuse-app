@@ -274,11 +274,15 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                         ),
                         if (isOverflowing)
                           GestureDetector(
-                            onTap: () => setState(() => _isDescExpanded = !_isDescExpanded),
+                            onTap: () => setState(
+                              () => _isDescExpanded = !_isDescExpanded,
+                            ),
                             child: Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Text(
-                                _isDescExpanded ? l10n.detailsShowLess : l10n.detailsReadMore,
+                                _isDescExpanded
+                                    ? l10n.detailsShowLess
+                                    : l10n.detailsReadMore,
                                 style: const TextStyle(
                                   color: AppTheme.accent,
                                   fontSize: 12,
@@ -312,7 +316,8 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
       currentList = droppedListState.valueOrNull ?? widget.list;
     } else {
       final userListsState = ref.watch(userListsProvider);
-      currentList = userListsState.valueOrNull?.firstWhere(
+      currentList =
+          userListsState.valueOrNull?.firstWhere(
             (l) => l.id == widget.list.id,
             orElse: () => widget.list,
           ) ??
@@ -386,13 +391,18 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                       )
                     else ...[
                       IconButton(
-                        tooltip: ref.watch(pinnedListIdsProvider).contains(currentList.id)
+                        tooltip:
+                            ref
+                                .watch(pinnedListIdsProvider)
+                                .contains(currentList.id)
                             ? l10n.listUnpinFromHome
                             : l10n.listPinToHome,
                         onPressed: () {
                           final pinnedIds = ref.read(pinnedListIdsProvider);
                           final isPinned = pinnedIds.contains(currentList.id);
-                          ref.read(pinnedListIdsProvider.notifier).togglePin(currentList.id);
+                          ref
+                              .read(pinnedListIdsProvider.notifier)
+                              .togglePin(currentList.id);
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -408,7 +418,10 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                         },
                         icon: Icon(
                           LucideIcons.pin,
-                          color: ref.watch(pinnedListIdsProvider).contains(currentList.id)
+                          color:
+                              ref
+                                  .watch(pinnedListIdsProvider)
+                                  .contains(currentList.id)
                               ? AppTheme.accent
                               : Colors.white54,
                           size: 22,
@@ -423,19 +436,37 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                               onItemSelected: (media) {
                                 final mediaItem = MediaItem.fromTmdbMap(media);
                                 if (currentList.type == ListType.custom) {
-                                  ref.read(userListsProvider.notifier).addItemToCustomList(
-                                    currentList.id,
-                                    mediaItem,
-                                  );
-                                } else if (currentList.type == ListType.watchlist) {
+                                  ref
+                                      .read(userListsProvider.notifier)
+                                      .addItemToCustomList(
+                                        currentList.id,
+                                        mediaItem,
+                                      );
+                                } else if (currentList.type ==
+                                    ListType.watchlist) {
                                   // Ensure it's added
-                                  if (!ref.read(userListsProvider.notifier).isInWatchlist(mediaItem.tmdbId, mediaItem.mediaType)) {
-                                    ref.read(userListsProvider.notifier).toggleWatchlist(mediaItem);
+                                  if (!ref
+                                      .read(userListsProvider.notifier)
+                                      .isInWatchlist(
+                                        mediaItem.tmdbId,
+                                        mediaItem.mediaType,
+                                      )) {
+                                    ref
+                                        .read(userListsProvider.notifier)
+                                        .toggleWatchlist(mediaItem);
                                   }
-                                } else if (currentList.type == ListType.favorites) {
+                                } else if (currentList.type ==
+                                    ListType.favorites) {
                                   // Ensure it's added
-                                  if (!ref.read(userListsProvider.notifier).isFavorite(mediaItem.tmdbId, mediaItem.mediaType)) {
-                                    ref.read(userListsProvider.notifier).toggleFavorite(mediaItem);
+                                  if (!ref
+                                      .read(userListsProvider.notifier)
+                                      .isFavorite(
+                                        mediaItem.tmdbId,
+                                        mediaItem.mediaType,
+                                      )) {
+                                    ref
+                                        .read(userListsProvider.notifier)
+                                        .toggleFavorite(mediaItem);
                                   }
                                 }
                               },
@@ -566,7 +597,8 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                           horizontalPadding,
                           verticalPadding,
                           horizontalPadding,
-                          verticalPadding + MediaQuery.paddingOf(context).bottom,
+                          verticalPadding +
+                              MediaQuery.paddingOf(context).bottom,
                         ),
                         gridDelegate: isMobile
                             ? SliverGridDelegateWithFixedCrossAxisCount(
@@ -675,7 +707,11 @@ class _ListMediaCard extends ConsumerWidget {
                 if (user != null) {
                   await ref
                       .read(watchHistoryRepositoryProvider)
-                      .removeFromDropped(user.id, item.tmdbId, item.mediaType.name);
+                      .removeFromDropped(
+                        user.id,
+                        item.tmdbId,
+                        item.mediaType.name,
+                      );
                   ref.invalidate(droppedListProvider);
                   ref.invalidate(continueWatchingProvider);
                 }
@@ -689,7 +725,9 @@ class _ListMediaCard extends ConsumerWidget {
           ? () async {
               final user = ref.read(authProvider).value;
               if (user != null) {
-                await ref.read(watchHistoryRepositoryProvider).restoreToContinueWatching(user.id, item.tmdbId);
+                await ref
+                    .read(watchHistoryRepositoryProvider)
+                    .restoreToContinueWatching(user.id, item.tmdbId);
                 // Also invalidate the dropped items provider to refresh UI
                 ref.invalidate(droppedListProvider);
                 ref.invalidate(continueWatchingProvider);

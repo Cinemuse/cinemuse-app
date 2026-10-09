@@ -62,7 +62,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_mainScrollController.hasClients && _mainScrollController.offset > 0) {
+      if (_mainScrollController.hasClients &&
+          _mainScrollController.offset > 0) {
         _mainScrollController.jumpTo(0.0);
       }
     });
@@ -144,7 +145,10 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         final recommendations =
             rawDetails['recommendations']?['results'] as List? ?? [];
         final moreLikeThisList = recommendations
-            .map((item) => MediaItem.fromTmdbMap(Map<String, dynamic>.from(item as Map)))
+            .map(
+              (item) =>
+                  MediaItem.fromTmdbMap(Map<String, dynamic>.from(item as Map)),
+            )
             .toList();
 
         // Auto-select season based on history
@@ -194,7 +198,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             : 0;
 
         final droppedList = ref.watch(droppedListProvider).valueOrNull;
-        final isDropped = droppedList?.items.any((i) => i.tmdbId == tmdbId) ?? false;
+        final isDropped =
+            droppedList?.items.any((i) => i.tmdbId == tmdbId) ?? false;
 
         // Set default tab if not set
         _activeTab ??= isTV ? DetailsTab.episodes : DetailsTab.cast;
@@ -224,26 +229,33 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                 details: rawDetails,
                 isFavorite: isFavorite,
                 isInWatchlist: isInWatchlist,
-                onDropClick: (watchHistory != null && !isDropped && !watchHistory.isCompleted)
+                onDropClick:
+                    (watchHistory != null &&
+                        !isDropped &&
+                        !watchHistory.isCompleted)
                     ? () async {
                         final user = ref.read(authProvider).value;
                         if (user != null) {
-                          await ref.read(watchHistoryRepositoryProvider)
+                          await ref
+                              .read(watchHistoryRepositoryProvider)
                               .dropFromContinueWatching(user.id, tmdbId);
                           ref.invalidate(droppedListProvider);
                           ref.invalidate(continueWatchingProvider);
                         }
                       }
                     : null,
-                onClearProgress: (watchHistory != null && watchHistory.progressSeconds > 0)
+                onClearProgress:
+                    (watchHistory != null && watchHistory.progressSeconds > 0)
                     ? () async {
                         final user = ref.read(authProvider).value;
                         if (user != null) {
-                          await ref.read(watchHistoryRepositoryProvider).clearProgress(
-                            userId: user.id,
-                            tmdbId: tmdbId,
-                            mediaType: typeForTmdb,
-                          );
+                          await ref
+                              .read(watchHistoryRepositoryProvider)
+                              .clearProgress(
+                                userId: user.id,
+                                tmdbId: tmdbId,
+                                mediaType: typeForTmdb,
+                              );
                           ref.invalidate(continueWatchingProvider);
                         }
                       }
@@ -353,12 +365,16 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             final user = ref.read(authProvider).value;
             if (user != null) {
               await Future.wait([
-                ref.read(watchHistoryRepositoryProvider).syncWatchHistory(user.id),
+                ref
+                    .read(watchHistoryRepositoryProvider)
+                    .syncWatchHistory(user.id),
                 ref.read(listsRepositoryProvider).syncUserLists(user.id),
               ]).catchError((_) => []);
             }
 
-            ref.invalidate(mediaDetailsProvider((id: widget.mediaId, type: typeForTmdb)));
+            ref.invalidate(
+              mediaDetailsProvider((id: widget.mediaId, type: typeForTmdb)),
+            );
             ref.invalidate(mediaWatchHistoryProvider(widget.mediaId));
           },
           child: bodyContent,
@@ -390,7 +406,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           ),
         ),
         const SizedBox(height: 32),
-        if (isTV && (mediaItem.numberOfSeasons ?? details['number_of_seasons'] ?? 0) > 0) ...[
+        if (isTV &&
+            (mediaItem.numberOfSeasons ?? details['number_of_seasons'] ?? 0) >
+                0) ...[
           EpisodeSection(
             mediaId: widget.mediaId,
             details: details,
@@ -460,7 +478,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           activeTab: _activeTab!,
           onTabChanged: (tab) => setState(() => _activeTab = tab),
           isTV: isTV,
-          numberOfSeasons: mediaItem.numberOfSeasons ?? details['number_of_seasons'] ?? 0,
+          numberOfSeasons:
+              mediaItem.numberOfSeasons ?? details['number_of_seasons'] ?? 0,
         ),
         const SizedBox(height: 24),
         _buildMobileTabContent(
@@ -575,11 +594,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.detailsTvTimeCommentsNotAvailable,
-          ),
-        ),
+        SnackBar(content: Text(l10n.detailsTvTimeCommentsNotAvailable)),
       );
     }
   }
@@ -602,14 +617,18 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     final tmdbId = int.tryParse(widget.mediaId);
     if (tmdbId != null) {
       final droppedList = ref.read(droppedListProvider).valueOrNull;
-      final isDropped = droppedList?.items.any((i) => i.tmdbId == tmdbId) ?? false;
+      final isDropped =
+          droppedList?.items.any((i) => i.tmdbId == tmdbId) ?? false;
       if (isDropped) {
         final user = ref.read(authProvider).value;
         if (user != null) {
-          ref.read(watchHistoryRepositoryProvider).restoreToContinueWatching(user.id, tmdbId).then((_) {
-            ref.invalidate(droppedListProvider);
-            ref.invalidate(continueWatchingProvider);
-          });
+          ref
+              .read(watchHistoryRepositoryProvider)
+              .restoreToContinueWatching(user.id, tmdbId)
+              .then((_) {
+                ref.invalidate(droppedListProvider);
+                ref.invalidate(continueWatchingProvider);
+              });
         }
       }
     }
@@ -692,11 +711,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           controller.logMovieWatch(tmdbId: tmdbId, loggedAt: date),
       onRemoveOne: () => controller.deleteLatestMovieLog(tmdbId: tmdbId),
       onRemoveAll: () => controller.deleteAllMovieLogs(tmdbId: tmdbId),
-      onViewHistory: () => WatchLogsSheet.show(
-        context,
-        tmdbId,
-        title,
-      ),
+      onViewHistory: () => WatchLogsSheet.show(context, tmdbId, title),
     );
   }
 
@@ -745,7 +760,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
   }
 
   int _calculateReleasedEpisodes(Map<String, dynamic> details) {
-    return ref.read(seriesDomainServiceProvider).calculateReleasedEpisodes(details);
+    return ref
+        .read(seriesDomainServiceProvider)
+        .calculateReleasedEpisodes(details);
   }
 
   String? _resolveEnglishOrOriginalTitle(Map<String, dynamic> details) {

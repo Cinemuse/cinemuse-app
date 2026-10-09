@@ -35,39 +35,42 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    test('toggleCategory adds and removes categories and updates cache', () async {
-      final notifier = ChannelFilterNotifier();
+    test(
+      'toggleCategory adds and removes categories and updates cache',
+      () async {
+        final notifier = ChannelFilterNotifier();
 
-      // Initially empty
-      expect(notifier.state.isActive, isFalse);
+        // Initially empty
+        expect(notifier.state.isActive, isFalse);
 
-      // Toggle 'Cinema' on
-      await notifier.toggleCategory('Cinema');
-      expect(notifier.state.isActive, isTrue);
-      expect(notifier.state.effectiveCategories, {'Cinema'});
+        // Toggle 'Cinema' on
+        await notifier.toggleCategory('Cinema');
+        expect(notifier.state.isActive, isTrue);
+        expect(notifier.state.effectiveCategories, {'Cinema'});
 
-      // Check SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getStringList('live_tv_selected_categories'), ['Cinema']);
+        // Check SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getStringList('live_tv_selected_categories'), ['Cinema']);
 
-      // Toggle 'Sport' on (multiselect)
-      await notifier.toggleCategory('Sport');
-      expect(notifier.state.effectiveCategories, {'Cinema', 'Sport'});
-      expect(
-        prefs.getStringList('live_tv_selected_categories'),
-        unorderedEquals(['Cinema', 'Sport']),
-      );
+        // Toggle 'Sport' on (multiselect)
+        await notifier.toggleCategory('Sport');
+        expect(notifier.state.effectiveCategories, {'Cinema', 'Sport'});
+        expect(
+          prefs.getStringList('live_tv_selected_categories'),
+          unorderedEquals(['Cinema', 'Sport']),
+        );
 
-      // Toggle 'Cinema' off
-      await notifier.toggleCategory('Cinema');
-      expect(notifier.state.effectiveCategories, {'Sport'});
-      expect(prefs.getStringList('live_tv_selected_categories'), ['Sport']);
+        // Toggle 'Cinema' off
+        await notifier.toggleCategory('Cinema');
+        expect(notifier.state.effectiveCategories, {'Sport'});
+        expect(prefs.getStringList('live_tv_selected_categories'), ['Sport']);
 
-      // Toggle 'Sport' off
-      await notifier.toggleCategory('Sport');
-      expect(notifier.state.isActive, isFalse);
-      expect(prefs.getStringList('live_tv_selected_categories'), isNull);
-    });
+        // Toggle 'Sport' off
+        await notifier.toggleCategory('Sport');
+        expect(notifier.state.isActive, isFalse);
+        expect(prefs.getStringList('live_tv_selected_categories'), isNull);
+      },
+    );
 
     test('selectAll / clear resets filter and clears cache', () async {
       SharedPreferences.setMockInitialValues({
@@ -108,7 +111,10 @@ void main() {
       }).toList();
 
       expect(filtered.length, 2);
-      expect(filtered.map((c) => c.name), containsAll(['Sky Cinema', 'Sky Sport']));
+      expect(
+        filtered.map((c) => c.name),
+        containsAll(['Sky Cinema', 'Sky Sport']),
+      );
       expect(filtered.map((c) => c.name), isNot(contains('Rai 1')));
     });
 
@@ -116,41 +122,56 @@ void main() {
       const filter = ChannelFilter();
       final filtered = !filter.isActive
           ? channels
-          : channels.where((ch) => filter.effectiveCategories.contains(ch.group)).toList();
+          : channels
+                .where((ch) => filter.effectiveCategories.contains(ch.group))
+                .toList();
 
       expect(filtered.length, 4);
     });
 
-    test('category sections remain grouped and titled when filter is active', () {
-      const filter = ChannelFilter(selectedCategories: {'Cinema'});
-      final filtered = channels.where((ch) => filter.effectiveCategories.contains(ch.group)).toList();
+    test(
+      'category sections remain grouped and titled when filter is active',
+      () {
+        const filter = ChannelFilter(selectedCategories: {'Cinema'});
+        final filtered = channels
+            .where((ch) => filter.effectiveCategories.contains(ch.group))
+            .toList();
 
-      final grouped = <String, List<Channel>>{};
-      for (final ch in filtered) {
-        final key = ch.group?.isNotEmpty == true ? ch.group! : 'Other';
-        (grouped[key] ??= []).add(ch);
-      }
-      final sections = grouped.keys
-          .map((k) => ChannelSection(title: k, channels: grouped[k]!))
-          .toList();
+        final grouped = <String, List<Channel>>{};
+        for (final ch in filtered) {
+          final key = ch.group?.isNotEmpty == true ? ch.group! : 'Other';
+          (grouped[key] ??= []).add(ch);
+        }
+        final sections = grouped.keys
+            .map((k) => ChannelSection(title: k, channels: grouped[k]!))
+            .toList();
 
-      expect(sections.length, 1);
-      expect(sections.first.title, 'Cinema');
-      expect(sections.first.title.isNotEmpty, isTrue);
-    });
+        expect(sections.length, 1);
+        expect(sections.first.title, 'Cinema');
+        expect(sections.first.title.isNotEmpty, isTrue);
+      },
+    );
 
-    test('inactive category filter produces a flat single section with empty title', () {
-      const filter = ChannelFilter();
-      final isFlat = !filter.isActive;
-      expect(isFlat, isTrue);
+    test(
+      'inactive category filter produces a flat single section with empty title',
+      () {
+        const filter = ChannelFilter();
+        final isFlat = !filter.isActive;
+        expect(isFlat, isTrue);
 
-      final sections = isFlat
-          ? [ChannelSection(title: '', channels: channels)]
-          : <ChannelSection>[];
+        final sections = isFlat
+            ? [ChannelSection(title: '', channels: channels)]
+            : <ChannelSection>[];
 
-      expect(sections.length, 1);
-      expect(sections.first.title, isEmpty);
-      expect(sections.first.channels.map((c) => c.lcn).toList(), [1, 2, 3, 4]);
-    });
+        expect(sections.length, 1);
+        expect(sections.first.title, isEmpty);
+        expect(sections.first.channels.map((c) => c.lcn).toList(), [
+          1,
+          2,
+          3,
+          4,
+        ]);
+      },
+    );
   });
 }

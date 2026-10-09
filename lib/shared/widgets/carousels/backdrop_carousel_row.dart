@@ -31,7 +31,8 @@ class BackdropCarouselRow extends StatelessWidget {
     this.controller,
     this.spacing = 16.0,
     this.onHeaderTap,
-    this.visibleCards = CarouselLayoutCalculator.defaultBackdropMobileVisibleCards,
+    this.visibleCards =
+        CarouselLayoutCalculator.defaultBackdropMobileVisibleCards,
   });
 
   static EdgeInsets defaultPaddingForTheme(

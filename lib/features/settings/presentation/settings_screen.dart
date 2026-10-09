@@ -187,7 +187,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const SizedBox(width: 16),
                 Text(
                   categories.firstWhere(
-                      (c) => c['id'] == _activeCategory)['label'] as String,
+                        (c) => c['id'] == _activeCategory,
+                      )['label']
+                      as String,
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -218,11 +220,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           constraints: const BoxConstraints(maxWidth: 1200),
           child: isMobile
               ? (_showMobileContent
-                  ? Container(
-                      color: AppTheme.surface.withValues(alpha: 0.8),
-                      child: contentWidget,
-                    )
-                  : buildSidebar())
+                    ? Container(
+                        color: AppTheme.surface.withValues(alpha: 0.8),
+                        child: contentWidget,
+                      )
+                    : buildSidebar())
               : Container(
                   margin: const EdgeInsets.all(24),
                   decoration: BoxDecoration(

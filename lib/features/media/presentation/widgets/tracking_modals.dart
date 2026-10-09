@@ -6,8 +6,11 @@ import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 
 class _ModalContentWithPicker extends StatefulWidget {
   final Widget Function(
-      BuildContext context, DateTime? selectedDate, VoidCallback onPickDate)
-      builder;
+    BuildContext context,
+    DateTime? selectedDate,
+    VoidCallback onPickDate,
+  )
+  builder;
 
   const _ModalContentWithPicker({required this.builder});
 
@@ -61,8 +64,10 @@ class _ModalContentWithPickerState extends State<_ModalContentWithPicker> {
                     child: CupertinoTheme(
                       data: const CupertinoThemeData(
                         textTheme: CupertinoTextThemeData(
-                          dateTimePickerTextStyle:
-                              TextStyle(color: AppTheme.textWhite, fontSize: 20),
+                          dateTimePickerTextStyle: TextStyle(
+                            color: AppTheme.textWhite,
+                            fontSize: 20,
+                          ),
                         ),
                       ),
                       child: CupertinoDatePicker(
@@ -80,7 +85,8 @@ class _ModalContentWithPickerState extends State<_ModalContentWithPicker> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.accent,
                       shape: const RoundedRectangleBorder(
-                          borderRadius: AppTheme.radius12),
+                        borderRadius: AppTheme.radius12,
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     onPressed: () => setState(() => _isPickingDate = false),
@@ -96,8 +102,11 @@ class _ModalContentWithPickerState extends State<_ModalContentWithPicker> {
               )
             : KeyedSubtree(
                 key: const ValueKey('main_content'),
-                child: widget.builder(context, _selectedDate,
-                    () => setState(() => _isPickingDate = true)),
+                child: widget.builder(
+                  context,
+                  _selectedDate,
+                  () => setState(() => _isPickingDate = true),
+                ),
               ),
       ),
     );
@@ -108,7 +117,7 @@ class _ModalContentWithPickerState extends State<_ModalContentWithPicker> {
 class SeriesTrackModal extends StatelessWidget {
   final String title;
   final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})
-      status;
+  status;
   final Function(DateTime? date) onMarkRemaining;
   final Function(DateTime? date) onMarkAll;
   final VoidCallback onRemoveAll;
@@ -126,7 +135,7 @@ class SeriesTrackModal extends StatelessWidget {
     required BuildContext context,
     required String title,
     required ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})
-        status,
+    status,
     required Function(DateTime? date) onMarkRemaining,
     required Function(DateTime? date) onMarkAll,
     required VoidCallback onRemoveAll,
@@ -151,7 +160,11 @@ class SeriesTrackModal extends StatelessWidget {
 
     return AppBottomSheet(
       padding: EdgeInsets.fromLTRB(
-          24, 0, 24, MediaQuery.viewInsetsOf(context).bottom + 24),
+        24,
+        0,
+        24,
+        MediaQuery.viewInsetsOf(context).bottom + 24,
+      ),
       child: _ModalContentWithPicker(
         builder: (context, selectedDate, onPickDate) {
           return Column(
@@ -160,13 +173,19 @@ class SeriesTrackModal extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.playlist_add_check,
-                      color: AppTheme.accent, size: 24),
+                  const Icon(
+                    Icons.playlist_add_check,
+                    color: AppTheme.accent,
+                    size: 24,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       title,
-                      style: const TextStyle(color: AppTheme.textWhite, fontSize: 18),
+                      style: const TextStyle(
+                        color: AppTheme.textWhite,
+                        fontSize: 18,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -187,12 +206,13 @@ class SeriesTrackModal extends StatelessWidget {
                 label: status.isPartiallyWatched && !status.isFullyWatched
                     ? l10n.detailsMarkRemaining
                     : (!status.isFullyWatched
-                        ? l10n.detailsMarkAll
-                        : l10n.detailsRewatchSeries),
+                          ? l10n.detailsMarkAll
+                          : l10n.detailsRewatchSeries),
                 subtitle: selectedDate == null
                     ? l10n.watchHistoryDateToday
                     : l10n.detailsWatchedOnDate(
-                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'),
+                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                      ),
                 color: AppTheme.accent,
                 onTap: () {
                   Navigator.pop(context);
@@ -277,7 +297,11 @@ class TrackOptionsModal extends StatelessWidget {
 
     return AppBottomSheet(
       padding: EdgeInsets.fromLTRB(
-          24, 0, 24, MediaQuery.viewInsetsOf(context).bottom + 24),
+        24,
+        0,
+        24,
+        MediaQuery.viewInsetsOf(context).bottom + 24,
+      ),
       child: _ModalContentWithPicker(
         builder: (context, selectedDate, onPickDate) {
           return Column(
@@ -290,7 +314,10 @@ class TrackOptionsModal extends StatelessWidget {
                   const SizedBox(width: 12),
                   Text(
                     l10n.detailsEpisodeNumber(episode),
-                    style: const TextStyle(color: AppTheme.textWhite, fontSize: 20),
+                    style: const TextStyle(
+                      color: AppTheme.textWhite,
+                      fontSize: 20,
+                    ),
                   ),
                 ],
               ),
@@ -308,7 +335,8 @@ class TrackOptionsModal extends StatelessWidget {
                 subtitle: selectedDate == null
                     ? l10n.watchHistoryDateToday
                     : l10n.detailsWatchedOnDate(
-                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'),
+                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                      ),
                 color: AppTheme.accent,
                 onTap: () {
                   Navigator.pop(context);
@@ -411,7 +439,11 @@ class MovieTrackModal extends StatelessWidget {
 
     return AppBottomSheet(
       padding: EdgeInsets.fromLTRB(
-          24, 0, 24, MediaQuery.viewInsetsOf(context).bottom + 24),
+        24,
+        0,
+        24,
+        MediaQuery.viewInsetsOf(context).bottom + 24,
+      ),
       child: _ModalContentWithPicker(
         builder: (context, selectedDate, onPickDate) {
           return Column(
@@ -425,7 +457,10 @@ class MovieTrackModal extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: const TextStyle(color: AppTheme.textWhite, fontSize: 18),
+                      style: const TextStyle(
+                        color: AppTheme.textWhite,
+                        fontSize: 18,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -445,7 +480,8 @@ class MovieTrackModal extends StatelessWidget {
                 subtitle: selectedDate == null
                     ? l10n.watchHistoryDateToday
                     : l10n.detailsWatchedOnDate(
-                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'),
+                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                      ),
                 color: AppTheme.accent,
                 onTap: () {
                   Navigator.pop(context);
@@ -579,10 +615,7 @@ class _ModalButton extends StatelessWidget {
 }
 
 class MarkPrecedingModal {
-  static Future<bool?> show(
-    BuildContext context, {
-    required int missingCount,
-  }) {
+  static Future<bool?> show(BuildContext context, {required int missingCount}) {
     final l10n = AppLocalizations.of(context)!;
     return AppBottomSheet.show<bool>(
       context: context,
@@ -621,10 +654,7 @@ class MarkPrecedingModal {
               const SizedBox(height: 12),
               Text(
                 l10n.detailsMarkPreviousDesc(missingCount.toString()),
-                style: const TextStyle(
-                  color: AppTheme.textMuted,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
               ),
               const SizedBox(height: 24),
               ElevatedButton(

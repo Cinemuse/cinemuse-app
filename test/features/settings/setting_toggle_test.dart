@@ -33,7 +33,9 @@ void main() {
     expect(value, isTrue);
   });
 
-  testWidgets('SettingToggle can be activated via D-Pad Enter and Select', (tester) async {
+  testWidgets('SettingToggle can be activated via D-Pad Enter and Select', (
+    tester,
+  ) async {
     bool value = false;
     final focusNode = FocusNode();
 

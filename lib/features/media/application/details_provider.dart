@@ -24,7 +24,8 @@ final mediaItemProvider =
       // 1. Check local cache (Memory/Drift)
       final cached = await repo.getMediaItem(args.id, args.type);
       final title = cached?.titleEn?.trim();
-      final hasCompleteTitle = title != null &&
+      final hasCompleteTitle =
+          title != null &&
           title.isNotEmpty &&
           title != 'Unknown' &&
           title != '...';
@@ -128,15 +129,14 @@ final collectionDetailsProvider =
     });
 
 // Family provider to fetch strongly-typed collection domain model
-final collectionModelProvider =
-    FutureProvider.family<MediaCollection?, int>((
-      ref,
-      collectionId,
-    ) async {
-      final raw = await ref.watch(collectionDetailsProvider(collectionId).future);
-      if (raw == null) return null;
-      return MediaCollection.fromTmdbMap(raw);
-    });
+final collectionModelProvider = FutureProvider.family<MediaCollection?, int>((
+  ref,
+  collectionId,
+) async {
+  final raw = await ref.watch(collectionDetailsProvider(collectionId).future);
+  if (raw == null) return null;
+  return MediaCollection.fromTmdbMap(raw);
+});
 
 // Notifier for the currently selected season number of a specific series
 class SelectedSeasonNotifier extends AutoDisposeFamilyNotifier<int, String> {
@@ -149,9 +149,7 @@ class SelectedSeasonNotifier extends AutoDisposeFamilyNotifier<int, String> {
 }
 
 final selectedSeasonProvider = NotifierProvider.autoDispose
-    .family<SelectedSeasonNotifier, int, String>(
-      SelectedSeasonNotifier.new,
-    );
+    .family<SelectedSeasonNotifier, int, String>(SelectedSeasonNotifier.new);
 
 // Family provider to fetch watch history for a specific media item (Derived from Store)
 final mediaWatchHistoryProvider =
@@ -161,8 +159,7 @@ final mediaWatchHistoryProvider =
     });
 
 // StateNotifier for managing series logs with optimistic updates
-class OptimisticSeriesLogs
-    extends FamilyStreamNotifier<List<WatchLog>, int> {
+class OptimisticSeriesLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
   // Key: "season-episode" -> true (added), false (removed)
   final Map<String, bool> _optimisticUpdates = {};
 
@@ -202,9 +199,7 @@ class OptimisticSeriesLogs
     ref.invalidateSelf();
   }
 
-  List<WatchLog> _applyOptimisticUpdates(
-    List<WatchLog> currentLogs,
-  ) {
+  List<WatchLog> _applyOptimisticUpdates(List<WatchLog> currentLogs) {
     // 0. Build current server state map
     final Set<String> serverKeys = currentLogs
         .map((l) => '${l.season}-${l.episode}')
@@ -251,13 +246,11 @@ class OptimisticSeriesLogs
 
 // Provider for the optimistic logs
 final seriesWatchLogsProvider =
-    StreamNotifierProvider.family<
-      OptimisticSeriesLogs,
-      List<WatchLog>,
-      int
-    >(() {
-      return OptimisticSeriesLogs();
-    });
+    StreamNotifierProvider.family<OptimisticSeriesLogs, List<WatchLog>, int>(
+      () {
+        return OptimisticSeriesLogs();
+      },
+    );
 
 // Helper provider to get a map of "season-episode" -> watch_count for the series
 final watchedEpisodesMapProvider = Provider.family<Map<String, int>, int>((
@@ -347,8 +340,7 @@ final episodeProgressMapProvider =
     });
 
 // StateNotifier for managing movie logs with optimistic updates
-class OptimisticMovieLogs
-    extends FamilyStreamNotifier<List<WatchLog>, int> {
+class OptimisticMovieLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
   // Sets of normalized "logged_at" strings to manage additions and removals
   final Set<String> _optimisticAdditions = {};
   final Set<String> _optimisticRemovals = {};
@@ -399,9 +391,7 @@ class OptimisticMovieLogs
       if (logs.isEmpty) return;
 
       final sorted = List<WatchLog>.from(logs)
-        ..sort(
-          (a, b) => b.loggedAt.compareTo(a.loggedAt),
-        );
+        ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
 
       final latest = sorted.first;
       final normalized = _normalizeTimestamp(latest.loggedAt);
@@ -435,9 +425,7 @@ class OptimisticMovieLogs
     });
   }
 
-  List<WatchLog> _applyOptimisticUpdates(
-    List<WatchLog> currentLogs,
-  ) {
+  List<WatchLog> _applyOptimisticUpdates(List<WatchLog> currentLogs) {
     if (_clearAll) return [];
 
     final Set<String> serverKeys = currentLogs
@@ -480,11 +468,7 @@ class OptimisticMovieLogs
 
 // Provider for the optimistic movie logs
 final movieWatchLogsProvider =
-    StreamNotifierProvider.family<
-      OptimisticMovieLogs,
-      List<WatchLog>,
-      int
-    >(() {
+    StreamNotifierProvider.family<OptimisticMovieLogs, List<WatchLog>, int>(() {
       return OptimisticMovieLogs();
     });
 
@@ -495,7 +479,10 @@ final movieWatchCountProvider = Provider.family<int, int>((ref, tmdbId) {
 });
 
 // Helper provider to determine if a user is actively rewatching
-final isRewatchingProvider = FutureProvider.family<bool, WatchHistory>((ref, history) async {
+final isRewatchingProvider = FutureProvider.family<bool, WatchHistory>((
+  ref,
+  history,
+) async {
   if (history.mediaType == MediaKind.movie) {
     // If it's a movie and there are logs, it's a rewatch
     final count = ref.watch(movieWatchCountProvider(history.tmdbId));

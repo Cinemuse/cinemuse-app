@@ -197,9 +197,7 @@ class PlayerSourceCoordinator {
       return;
     }
 
-    onStateChanged(
-      current.copyWith(isResolving: true, error: null),
-    );
+    onStateChanged(current.copyWith(isResolving: true, error: null));
 
     try {
       final resolvedStream = await resolver.resolveStream(
@@ -374,9 +372,7 @@ class PlayerSourceCoordinator {
 
     final message = ref.read(localizationsProvider).playerTryingNextSource;
     if (isMounted() && getCurrentState() != null) {
-      onStateChanged(
-        getCurrentState()!.copyWith(notification: message),
-      );
+      onStateChanged(getCurrentState()!.copyWith(notification: message));
     }
 
     changeSource(nextCandidate, isManual: false);

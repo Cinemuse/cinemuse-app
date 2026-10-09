@@ -198,9 +198,9 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                     trailing: DropdownButton<String>(
                       value:
                           settings.preferredDebridProvider.toLowerCase() ==
-                                  'torbox'
-                              ? 'torbox'
-                              : 'realdebrid',
+                              'torbox'
+                          ? 'torbox'
+                          : 'realdebrid',
                       dropdownColor: AppTheme.surface,
                       underline: const SizedBox(),
                       items: const [
@@ -221,9 +221,9 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                       ],
                       onChanged: (val) {
                         if (val != null) {
-                          ref
-                              .read(settingsProvider.notifier)
-                              .updateSettings({'preferredDebridProvider': val});
+                          ref.read(settingsProvider.notifier).updateSettings({
+                            'preferredDebridProvider': val,
+                          });
                         }
                       },
                     ),

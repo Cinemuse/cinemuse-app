@@ -67,8 +67,8 @@ class DisplayModeNotifier extends StateNotifier<DisplayMode> {
 
 final displayModeProvider =
     StateNotifierProvider<DisplayModeNotifier, DisplayMode>((ref) {
-  return DisplayModeNotifier();
-});
+      return DisplayModeNotifier();
+    });
 
 final isBigPictureProvider = Provider<bool>((ref) {
   return ref.watch(displayModeProvider) == DisplayMode.bigPicture;

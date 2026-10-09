@@ -94,8 +94,9 @@ class MediaRow extends ConsumerWidget {
 
     final mediaItems = list;
 
-    final appLanguage =
-        ref.watch(settingsProvider.select((s) => s.appLanguage));
+    final appLanguage = ref.watch(
+      settingsProvider.select((s) => s.appLanguage),
+    );
 
     final cards = mediaItems.map((item) {
       return MediaCard(
@@ -166,10 +167,9 @@ class MediaRow extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Icon(
                   Icons.chevron_right,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ],
             ],

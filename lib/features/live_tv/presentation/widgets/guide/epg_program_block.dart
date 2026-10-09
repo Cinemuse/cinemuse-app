@@ -56,19 +56,19 @@ class EpgProgramBlock extends StatelessWidget {
                 color: isFocused
                     ? AppTheme.accent.withValues(alpha: 0.28)
                     : (isHovered
-                        ? Colors.white.withValues(alpha: 0.12)
-                        : (isLive
-                            ? const Color(0xFF1E1136)
-                            : const Color(0xFF140C24))),
+                          ? Colors.white.withValues(alpha: 0.12)
+                          : (isLive
+                                ? const Color(0xFF1E1136)
+                                : const Color(0xFF140C24))),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: isFocused
                       ? AppTheme.accent
                       : (isHovered
-                          ? Colors.white.withValues(alpha: 0.3)
-                          : (isLive
-                              ? AppTheme.accent.withValues(alpha: 0.4)
-                              : Colors.white.withValues(alpha: 0.07))),
+                            ? Colors.white.withValues(alpha: 0.3)
+                            : (isLive
+                                  ? AppTheme.accent.withValues(alpha: 0.4)
+                                  : Colors.white.withValues(alpha: 0.07))),
                   width: isFocused ? 1.5 : 1.0,
                 ),
                 boxShadow: isFocused ? AppTheme.shadowFocusGlow : null,
@@ -100,8 +100,10 @@ class EpgProgramBlock extends StatelessWidget {
                                   color: isHighlighted
                                       ? Colors.white
                                       : (isLive
-                                          ? AppTheme.textWhite
-                                          : AppTheme.textWhite.withValues(alpha: 0.85)),
+                                            ? AppTheme.textWhite
+                                            : AppTheme.textWhite.withValues(
+                                                alpha: 0.85,
+                                              )),
                                   fontSize: 12,
                                   fontWeight: isLive || isHighlighted
                                       ? FontWeight.w700

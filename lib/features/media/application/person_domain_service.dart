@@ -12,9 +12,9 @@ class PersonSeenStats {
   });
 
   const PersonSeenStats.empty()
-      : watchedCount = 0,
-        totalReleased = 0,
-        watchedPercent = 0;
+    : watchedCount = 0,
+      totalReleased = 0,
+      watchedPercent = 0;
 }
 
 /// Domain service handling person credits, stats, and filmography filtering.

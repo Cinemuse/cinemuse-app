@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 
 void main() {
-  testWidgets('HoverScale responds to tap and keyboard activation', (tester) async {
+  testWidgets('HoverScale responds to tap and keyboard activation', (
+    tester,
+  ) async {
     int taps = 0;
     final focusNode = FocusNode();
 
@@ -52,7 +54,9 @@ void main() {
     await tester.pumpAndSettle();
 
     // Initially scale is 1.0
-    AnimatedScale scaleWidget = tester.widget<AnimatedScale>(find.byType(AnimatedScale));
+    AnimatedScale scaleWidget = tester.widget<AnimatedScale>(
+      find.byType(AnimatedScale),
+    );
     expect(scaleWidget.scale, equals(1.0));
 
     // Gain focus

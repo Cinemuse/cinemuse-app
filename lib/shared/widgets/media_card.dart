@@ -201,10 +201,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
       top: 6,
       right: 6,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 6,
-          vertical: 3,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(6),
@@ -267,270 +264,268 @@ class _MediaCardState extends ConsumerState<MediaCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-                // Poster Image (with optional stacked deck layers behind)
-                Expanded(
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      // Back Layer 2 (Bottom card in deck)
-                      if (widget.stackCount != null && widget.stackCount! > 2)
-                        Positioned.fill(
-                          child: Transform.translate(
-                            offset: const Offset(5.0, -5.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                color: const Color(0xFF16171B),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.08),
-                                  width: 1,
-                                ),
-                              ),
+            // Poster Image (with optional stacked deck layers behind)
+            Expanded(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Back Layer 2 (Bottom card in deck)
+                  if (widget.stackCount != null && widget.stackCount! > 2)
+                    Positioned.fill(
+                      child: Transform.translate(
+                        offset: const Offset(5.0, -5.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: const Color(0xFF16171B),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.08),
+                              width: 1,
                             ),
                           ),
                         ),
+                      ),
+                    ),
 
-                      // Back Layer 1 (Middle card in deck)
-                      if (widget.stackCount != null && widget.stackCount! > 1)
-                        Positioned.fill(
-                          child: Transform.translate(
-                            offset: const Offset(-4.0, -3.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                color: const Color(0xFF22242A),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.12),
-                                  width: 1,
-                                ),
-                              ),
+                  // Back Layer 1 (Middle card in deck)
+                  if (widget.stackCount != null && widget.stackCount! > 1)
+                    Positioned.fill(
+                      child: Transform.translate(
+                        offset: const Offset(-4.0, -3.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: const Color(0xFF22242A),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              width: 1,
                             ),
                           ),
                         ),
+                      ),
+                    ),
 
-                      // Main Top Card
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
+                  // Main Top Card
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: AppTheme.surface,
+                      boxShadow: AppTheme.shadowCard,
+                    ),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Image Content (Clipped)
+                        ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          color: AppTheme.surface,
-                          boxShadow: AppTheme.shadowCard,
-                        ),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            // Image Content (Clipped)
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  if (imageUrl != null)
-                                    CachedNetworkImage(
-                                      imageUrl: imageUrl,
-                                      fit: BoxFit.cover,
-                                      memCacheWidth: 260,
-                                      fadeInDuration: const Duration(milliseconds: 120),
-                                      placeholderFadeInDuration: Duration.zero,
-                                      placeholder: (context, url) => Container(
-                                        color: AppTheme.surface,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              if (imageUrl != null)
+                                CachedNetworkImage(
+                                  imageUrl: imageUrl,
+                                  fit: BoxFit.cover,
+                                  memCacheWidth: 260,
+                                  fadeInDuration: const Duration(
+                                    milliseconds: 120,
+                                  ),
+                                  placeholderFadeInDuration: Duration.zero,
+                                  placeholder: (context, url) =>
+                                      Container(color: AppTheme.surface),
+                                  errorWidget: (context, url, error) =>
+                                      const Center(
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          color: Colors.white24,
+                                        ),
                                       ),
-                                      errorWidget: (context, url, error) =>
-                                          const Center(
-                                            child: Icon(
-                                              Icons.broken_image,
-                                              color: Colors.white24,
-                                            ),
-                                          ),
-                                    )
-                                  else
-                                    const Center(
-                                      child: Icon(
-                                        Icons.movie,
-                                        color: Colors.white24,
-                                        size: 48,
+                                )
+                              else
+                                const Center(
+                                  child: Icon(
+                                    Icons.movie,
+                                    color: Colors.white24,
+                                    size: 48,
+                                  ),
+                                ),
+
+                              // Subtle Static Bottom Vignette
+                              const DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.center,
+                                    colors: [
+                                      Color(0x73000000),
+                                      Colors.transparent,
+                                    ],
+                                    stops: [0.0, 0.4],
+                                  ),
+                                ),
+                              ),
+
+                              // Hover Gradient Overlay
+                              Builder(
+                                builder: (context) {
+                                  final isHighlighted =
+                                      DpadFocusScope.maybeOf(
+                                        context,
+                                      )?.isHighlighted ??
+                                      false;
+                                  return AnimatedOpacity(
+                                    opacity: isHighlighted ? 1.0 : 0.0,
+                                    duration: const Duration(milliseconds: 300),
+                                    child: const DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.bottomCenter,
+                                          end: Alignment.center,
+                                          colors: [
+                                            Colors.black87,
+                                            Colors.transparent,
+                                          ],
+                                        ),
                                       ),
                                     ),
+                                  );
+                                },
+                              ),
 
-                                  // Subtle Static Bottom Vignette
-                                  const DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.bottomCenter,
-                                        end: Alignment.center,
-                                        colors: [
-                                          Color(0x73000000),
-                                          Colors.transparent,
-                                        ],
-                                        stops: [0.0, 0.4],
-                                      ),
+                              // Optional Playback Progress Bar
+                              if (widget.progress != null &&
+                                  widget.progress! > 0)
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 0,
+                                  child: ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(
+                                      bottom: Radius.circular(8),
                                     ),
-                                  ),
-
-                                  // Hover Gradient Overlay
-                                  Builder(
-                                    builder: (context) {
-                                      final isHighlighted =
-                                          DpadFocusScope.maybeOf(context)
-                                              ?.isHighlighted ??
-                                          false;
-                                      return AnimatedOpacity(
-                                        opacity: isHighlighted ? 1.0 : 0.0,
-                                        duration:
-                                            const Duration(milliseconds: 300),
-                                        child: const DecoratedBox(
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              begin: Alignment.bottomCenter,
-                                              end: Alignment.center,
-                                              colors: [
-                                                Colors.black87,
-                                                Colors.transparent,
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-
-                                  // Optional Playback Progress Bar
-                                  if (widget.progress != null &&
-                                      widget.progress! > 0)
-                                    Positioned(
-                                      left: 0,
-                                      right: 0,
-                                      bottom: 0,
-                                      child: ClipRRect(
-                                        borderRadius:
-                                            const BorderRadius.vertical(
-                                          bottom: Radius.circular(8),
-                                        ),
-                                        child: LinearProgressIndicator(
-                                          value: widget.progress!.clamp(0.0, 1.0),
-                                          minHeight: 3.5,
-                                          backgroundColor: Colors.white24,
-                                          valueColor:
-                                              const AlwaysStoppedAnimation<Color>(
+                                    child: LinearProgressIndicator(
+                                      value: widget.progress!.clamp(0.0, 1.0),
+                                      minHeight: 3.5,
+                                      backgroundColor: Colors.white24,
+                                      valueColor:
+                                          const AlwaysStoppedAnimation<Color>(
                                             AppTheme.accent,
                                           ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-
-                            // Border Overlay (On Top)
-                            const CardFocusBorder(),
-
-                            // Unified Stack & Episode Overlay Badge (Top-Right)
-                            if (_buildOverlayBadge() != null)
-                              _buildOverlayBadge()!,
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Title + Options Row
-                Builder(
-                  builder: (context) {
-                    final isHighlighted =
-                        DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
-                    final theme = Theme.of(context);
-
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: PremiumHoverText(
-                            text: widget.title,
-                            style: theme.textTheme.bodyMedium!.copyWith(
-                              color: isHighlighted
-                                  ? theme.colorScheme.primary
-                                  : Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                        Consumer(
-                          builder: (context, ref, child) {
-                            final isBigPicture =
-                                ref.watch(isBigPictureProvider);
-                            if (isBigPicture) return const SizedBox.shrink();
-                            final isMobile =
-                                MediaQuery.of(context).size.width < 600;
-                            return AnimatedOpacity(
-                              opacity: (isHighlighted || isMobile) ? 1.0 : 0.0,
-                              duration: const Duration(milliseconds: 200),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  canRequestFocus: false,
-                                  excludeFromSemantics: true,
-                                  onTap: () => _showContextActions(context),
-                                  mouseCursor: SystemMouseCursors.click,
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    key: _menuKey,
-                                    padding: const EdgeInsets.only(
-                                      left: 4,
-                                      top: 2,
-                                      bottom: 2,
-                                    ),
-                                    child: const Icon(
-                                      Icons.more_vert,
-                                      color: Colors.white60,
-                                      size: 16,
                                     ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 2),
-                // MetadataRow
-                Row(
-                  children: [
-                    if (widget.rating != null && widget.rating! > 0) ...[
-                      const Icon(Icons.star, size: 12, color: AppTheme.star),
-                      const SizedBox(width: 4),
-                      Text(
-                        widget.rating!.toStringAsFixed(1),
-                        style: const TextStyle(
-                          color: AppTheme.textMuted,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                    if (widget.rating != null &&
-                        widget.rating! > 0 &&
-                        year.isNotEmpty)
-                      const SizedBox(width: 6),
-                    if (year.isNotEmpty)
-                      Flexible(
-                        child: Text(
-                          year,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 12,
+                            ],
                           ),
                         ),
+
+                        // Border Overlay (On Top)
+                        const CardFocusBorder(),
+
+                        // Unified Stack & Episode Overlay Badge (Top-Right)
+                        if (_buildOverlayBadge() != null) _buildOverlayBadge()!,
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Title + Options Row
+            Builder(
+              builder: (context) {
+                final isHighlighted =
+                    DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
+                final theme = Theme.of(context);
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: PremiumHoverText(
+                        text: widget.title,
+                        style: theme.textTheme.bodyMedium!.copyWith(
+                          color: isHighlighted
+                              ? theme.colorScheme.primary
+                              : Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
                       ),
+                    ),
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final isBigPicture = ref.watch(isBigPictureProvider);
+                        if (isBigPicture) return const SizedBox.shrink();
+                        final isMobile =
+                            MediaQuery.of(context).size.width < 600;
+                        return AnimatedOpacity(
+                          opacity: (isHighlighted || isMobile) ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 200),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              canRequestFocus: false,
+                              excludeFromSemantics: true,
+                              onTap: () => _showContextActions(context),
+                              mouseCursor: SystemMouseCursors.click,
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                key: _menuKey,
+                                padding: const EdgeInsets.only(
+                                  left: 4,
+                                  top: 2,
+                                  bottom: 2,
+                                ),
+                                child: const Icon(
+                                  Icons.more_vert,
+                                  color: Colors.white60,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ],
-                ),
+                );
+              },
+            ),
+            const SizedBox(height: 2),
+            // MetadataRow
+            Row(
+              children: [
+                if (widget.rating != null && widget.rating! > 0) ...[
+                  const Icon(Icons.star, size: 12, color: AppTheme.star),
+                  const SizedBox(width: 4),
+                  Text(
+                    widget.rating!.toStringAsFixed(1),
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+                if (widget.rating != null &&
+                    widget.rating! > 0 &&
+                    year.isNotEmpty)
+                  const SizedBox(width: 6),
+                if (year.isNotEmpty)
+                  Flexible(
+                    child: Text(
+                      year,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
               ],
             ),
-          ),
-        );
+          ],
+        ),
+      ),
+    );
   }
 }

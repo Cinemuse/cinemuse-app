@@ -89,10 +89,7 @@ class EventManager {
     _subscriptions.add(
       player.stream.completed.listen((completed) {
         if (completed) {
-          developer.log(
-            'Playback Completed',
-            name: 'VideoPlayer.EventManager',
-          );
+          developer.log('Playback Completed', name: 'VideoPlayer.EventManager');
           onCompleted();
         }
       }),

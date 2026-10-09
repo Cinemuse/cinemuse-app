@@ -141,9 +141,7 @@ class _ResponsiveActionButtonsState
               ],
               if (widget.onCommentsTap != null) ...[
                 const SizedBox(width: 12),
-                _CommentsButton(
-                  onCommentsTap: widget.onCommentsTap!,
-                ),
+                _CommentsButton(onCommentsTap: widget.onCommentsTap!),
               ],
             ],
           ),
@@ -172,9 +170,7 @@ class _ResponsiveActionButtonsState
         ],
         if (widget.onCommentsTap != null) ...[
           const SizedBox(width: 16),
-          _CommentsButton(
-            onCommentsTap: widget.onCommentsTap!,
-          ),
+          _CommentsButton(onCommentsTap: widget.onCommentsTap!),
         ],
       ],
     );
@@ -299,7 +295,9 @@ class _SplitPlayButton extends StatelessWidget {
       elevation: 10,
       shape: RoundedRectangleBorder(
         borderRadius: AppTheme.radius12,
-        side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
+        side: BorderSide(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+        ),
       ),
       offset: const Offset(0, 48),
       itemBuilder: (_) => dropdownItems.asMap().entries.map((entry) {
@@ -541,13 +539,13 @@ class _TrackButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: isFullyWatched
                 ? (isFocused
-                    ? AppTheme.success.withValues(alpha: 0.3)
-                    : AppTheme.success.withValues(alpha: 0.15))
+                      ? AppTheme.success.withValues(alpha: 0.3)
+                      : AppTheme.success.withValues(alpha: 0.15))
                 : (isFocused
-                    ? Color.alphaBlend(theme.focusColor, baseColor)
-                    : (isHovered
-                        ? Color.alphaBlend(theme.hoverColor, baseColor)
-                        : baseColor)),
+                      ? Color.alphaBlend(theme.focusColor, baseColor)
+                      : (isHovered
+                            ? Color.alphaBlend(theme.hoverColor, baseColor)
+                            : baseColor)),
             borderRadius: AppTheme.radius12,
             border: Border.all(
               color: isFullyWatched
@@ -567,8 +565,8 @@ class _TrackButton extends StatelessWidget {
             isFullyWatched
                 ? Icons.check_circle
                 : (isPartiallyWatched
-                    ? Icons.check_circle_outline
-                    : Icons.add_task),
+                      ? Icons.check_circle_outline
+                      : Icons.add_task),
             color: isFullyWatched ? AppTheme.success : AppTheme.textWhite,
             size: 24,
           ),
@@ -577,15 +575,15 @@ class _TrackButton extends StatelessWidget {
             child: Text(
               isFullyWatched
                   ? (isMovie
-                      ? (minWatchCount > 1
-                          ? l10n.detailsWatchedCount(minWatchCount)
-                          : l10n.detailsWatched)
-                      : (minWatchCount > 1
-                          ? l10n.detailsUpToDateCount(minWatchCount)
-                          : l10n.detailsUpToDate))
+                        ? (minWatchCount > 1
+                              ? l10n.detailsWatchedCount(minWatchCount)
+                              : l10n.detailsWatched)
+                        : (minWatchCount > 1
+                              ? l10n.detailsUpToDateCount(minWatchCount)
+                              : l10n.detailsUpToDate))
                   : (isPartiallyWatched
-                      ? l10n.detailsFinishSeries
-                      : l10n.detailsTrack),
+                        ? l10n.detailsFinishSeries
+                        : l10n.detailsTrack),
               style: TextStyle(
                 color: isFullyWatched ? AppTheme.success : AppTheme.textWhite,
                 fontSize: 16,
@@ -607,9 +605,7 @@ class _TrackButton extends StatelessWidget {
 class _CommentsButton extends StatelessWidget {
   final VoidCallback onCommentsTap;
 
-  const _CommentsButton({
-    required this.onCommentsTap,
-  });
+  const _CommentsButton({required this.onCommentsTap});
 
   @override
   Widget build(BuildContext context) {
@@ -631,8 +627,8 @@ class _CommentsButton extends StatelessWidget {
               color: isFocused
                   ? Color.alphaBlend(theme.focusColor, baseColor)
                   : (isHovered
-                      ? Color.alphaBlend(theme.hoverColor, baseColor)
-                      : baseColor),
+                        ? Color.alphaBlend(theme.hoverColor, baseColor)
+                        : baseColor),
               borderRadius: AppTheme.radius12,
               border: Border.all(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.05),

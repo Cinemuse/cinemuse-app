@@ -39,12 +39,19 @@ class EpisodeMenu {
     required double? resumePercentage,
     required bool hasCachedStream,
     required VoidCallback onClearCache,
-    void Function(int season, int episode, String name, {bool restart})? onEpisodeTap,
+    void Function(int season, int episode, String name, {bool restart})?
+    onEpisodeTap,
     Function(int season, int episode, DateTime? date)? onMarkWatched,
     Function(int season, int episode)? onTrackOptions,
     VoidCallback? onViewHistory,
-    List<({int season, int episode})> Function(int season, int episode)? onFindMissingPreceding,
-    Function(int season, int episode, List<({int season, int episode})> missing)? onShowMarkPrecedingModal,
+    List<({int season, int episode})> Function(int season, int episode)?
+    onFindMissingPreceding,
+    Function(
+      int season,
+      int episode,
+      List<({int season, int episode})> missing,
+    )?
+    onShowMarkPrecedingModal,
     VoidCallback? onShowComments,
   }) {
     final hasProgress = (resumePercentage ?? 0) > 0 && !isWatched;
@@ -53,13 +60,23 @@ class EpisodeMenu {
       AppMenuOption(
         icon: Icons.play_arrow_outlined,
         label: hasProgress ? l10n.menuResume : l10n.detailsPlay,
-        onTap: () => onEpisodeTap?.call(seasonNumber, episodeNumber, episodeName, restart: false),
+        onTap: () => onEpisodeTap?.call(
+          seasonNumber,
+          episodeNumber,
+          episodeName,
+          restart: false,
+        ),
       ),
       if (hasProgress)
         AppMenuOption(
           icon: Icons.replay,
           label: l10n.menuRestart,
-          onTap: () => onEpisodeTap?.call(seasonNumber, episodeNumber, episodeName, restart: true),
+          onTap: () => onEpisodeTap?.call(
+            seasonNumber,
+            episodeNumber,
+            episodeName,
+            restart: true,
+          ),
         ),
       if (hasCachedStream)
         AppMenuOption(
@@ -85,7 +102,8 @@ class EpisodeMenu {
           icon: Icons.remove_red_eye_outlined,
           label: l10n.menuMarkWatchedNow,
           onTap: () {
-            final missing = onFindMissingPreceding?.call(seasonNumber, episodeNumber) ?? [];
+            final missing =
+                onFindMissingPreceding?.call(seasonNumber, episodeNumber) ?? [];
             if (missing.isNotEmpty && onShowMarkPrecedingModal != null) {
               onShowMarkPrecedingModal(seasonNumber, episodeNumber, missing);
             } else {

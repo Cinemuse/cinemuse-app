@@ -265,7 +265,10 @@ class LiveTvPlaybackCoordinator {
     }
   }
 
-  StreamLink? _selectPreferredLink(Channel channel, StreamQuality preferredQuality) {
+  StreamLink? _selectPreferredLink(
+    Channel channel,
+    StreamQuality preferredQuality,
+  ) {
     if (channel.links.isEmpty) return null;
 
     final qualityLinks = channel.links

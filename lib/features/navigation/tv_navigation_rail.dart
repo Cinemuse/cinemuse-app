@@ -265,14 +265,14 @@ class TvNavigationRailState extends State<TvNavigationRail> {
             color: isItemFocused
                 ? AppTheme.accent.withValues(alpha: 0.25)
                 : isSelected
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : Colors.transparent,
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.transparent,
             border: Border.all(
               color: isItemFocused
                   ? AppTheme.accent
                   : isSelected
-                      ? Colors.white.withValues(alpha: 0.15)
-                      : Colors.transparent,
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : Colors.transparent,
               width: isItemFocused ? 2 : 1,
             ),
             boxShadow: isItemFocused ? AppTheme.shadowFocusGlow : null,
@@ -286,8 +286,8 @@ class TvNavigationRailState extends State<TvNavigationRail> {
                 color: isItemFocused
                     ? Colors.white
                     : isSelected
-                        ? AppTheme.accent
-                        : AppTheme.textMuted,
+                    ? AppTheme.accent
+                    : AppTheme.textMuted,
               ),
               ClipRect(
                 child: AnimatedContainer(
@@ -308,8 +308,8 @@ class TvNavigationRailState extends State<TvNavigationRail> {
                           color: isItemFocused
                               ? Colors.white
                               : isSelected
-                                  ? Colors.white
-                                  : AppTheme.textMuted,
+                              ? Colors.white
+                              : AppTheme.textMuted,
                           fontWeight: isItemFocused || isSelected
                               ? FontWeight.bold
                               : FontWeight.w500,

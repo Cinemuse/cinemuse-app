@@ -21,11 +21,22 @@ class WatchLogsSheet extends ConsumerWidget {
     this.episode,
   });
 
-  static Future<void> show(BuildContext context, int tmdbId, String title, {int? season, int? episode}) {
+  static Future<void> show(
+    BuildContext context,
+    int tmdbId,
+    String title, {
+    int? season,
+    int? episode,
+  }) {
     return AppBottomSheet.show(
       context: context,
       constraints: const BoxConstraints(maxWidth: 400),
-      child: WatchLogsSheet(tmdbId: tmdbId, title: title, season: season, episode: episode),
+      child: WatchLogsSheet(
+        tmdbId: tmdbId,
+        title: title,
+        season: season,
+        episode: episode,
+      ),
     );
   }
 
@@ -42,7 +53,12 @@ class WatchLogsSheet extends ConsumerWidget {
     }
 
     return AppBottomSheet(
-      padding: EdgeInsets.fromLTRB(24, 0, 24, MediaQuery.viewInsetsOf(context).bottom + 24),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        0,
+        24,
+        MediaQuery.viewInsetsOf(context).bottom + 24,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -54,7 +70,10 @@ class WatchLogsSheet extends ConsumerWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(color: AppTheme.textWhite, fontSize: 18),
+                  style: const TextStyle(
+                    color: AppTheme.textWhite,
+                    fontSize: 18,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -69,7 +88,9 @@ class WatchLogsSheet extends ConsumerWidget {
           logsAsync.when(
             loading: () => const SizedBox(
               height: 100,
-              child: Center(child: CircularProgressIndicator(color: AppTheme.accent)),
+              child: Center(
+                child: CircularProgressIndicator(color: AppTheme.accent),
+              ),
             ),
             error: (err, _) => SizedBox(
               height: 100,
@@ -84,7 +105,9 @@ class WatchLogsSheet extends ConsumerWidget {
               // Filter logs for episode if needed
               var filteredLogs = logs;
               if (season != null && episode != null) {
-                filteredLogs = logs.where((l) => l.season == season && l.episode == episode).toList();
+                filteredLogs = logs
+                    .where((l) => l.season == season && l.episode == episode)
+                    .toList();
               }
 
               if (filteredLogs.isEmpty) {
@@ -121,7 +144,10 @@ class WatchLogsSheet extends ConsumerWidget {
                           Icon(Icons.circle, size: 8, color: AppTheme.accent),
                         ],
                       ),
-                      title: Text(formattedDate, style: const TextStyle(color: AppTheme.textWhite)),
+                      title: Text(
+                        formattedDate,
+                        style: const TextStyle(color: AppTheme.textWhite),
+                      ),
                     );
                   },
                 ),

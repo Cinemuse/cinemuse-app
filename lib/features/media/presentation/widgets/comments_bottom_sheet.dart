@@ -63,17 +63,16 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
             children: [
               const SizedBox(height: 8), // Extra space after handle
               if (isMobile) ...[
-                Text(l10n.detailsTvTimeComments, style: DesktopTypography.sectionHeader),
+                Text(
+                  l10n.detailsTvTimeComments,
+                  style: DesktopTypography.sectionHeader,
+                ),
                 if (!state.isLoading && state.hasAnyComments) ...[
                   const SizedBox(height: 16),
                   Row(
                     children: [
                       Expanded(
-                        child: _buildSourceFilterMenu(
-                          context,
-                          state,
-                          isMobile,
-                        ),
+                        child: _buildSourceFilterMenu(context, state, isMobile),
                       ),
                       const SizedBox(width: 8),
                       Expanded(child: _buildSortMenu(context, state, isMobile)),
@@ -109,10 +108,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     );
   }
 
-  Widget _buildContent(
-    BuildContext context,
-    CommentsState state,
-  ) {
+  Widget _buildContent(BuildContext context, CommentsState state) {
     final l10n = AppLocalizations.of(context)!;
 
     if (state.isLoading) {
@@ -155,10 +151,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
           );
         }
         final comment = comments[index];
-        return CommentTile(
-          key: ValueKey(comment.id),
-          comment: comment,
-        );
+        return CommentTile(key: ValueKey(comment.id), comment: comment);
       },
     );
   }
@@ -199,11 +192,17 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
         }
       },
       itemBuilder: (context) {
-        final isTv = widget.request is EpisodeCommentsRequest ||
+        final isTv =
+            widget.request is EpisodeCommentsRequest ||
             (widget.request is MediaReviewsRequest &&
-                (widget.request as MediaReviewsRequest).mediaType == MediaKind.tv);
-        final hasSerializd = state.availableSources.contains(CommentSource.serializd);
-        final hasLetterboxd = state.availableSources.contains(CommentSource.letterboxd);
+                (widget.request as MediaReviewsRequest).mediaType ==
+                    MediaKind.tv);
+        final hasSerializd = state.availableSources.contains(
+          CommentSource.serializd,
+        );
+        final hasLetterboxd = state.availableSources.contains(
+          CommentSource.letterboxd,
+        );
 
         return [
           _buildPopupMenuItem(
@@ -259,9 +258,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       position: PopupMenuPosition.under,
       shape: const RoundedRectangleBorder(borderRadius: AppTheme.radius12),
       onSelected: (val) {
-        ref
-            .read(commentsProvider(widget.request).notifier)
-            .setSortType(val);
+        ref.read(commentsProvider(widget.request).notifier).setSortType(val);
         if (_scrollController.hasClients) {
           _scrollController.jumpTo(0);
         }

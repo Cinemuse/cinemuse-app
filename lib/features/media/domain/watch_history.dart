@@ -155,8 +155,8 @@ class WatchLog {
       season: (json['season'] as num?)?.toInt(),
       episode: (json['episode'] as num?)?.toInt(),
       loggedAt: loggedAt,
-      durationWatchedSeconds:
-          (json['duration_watched_seconds'] as num?)?.toInt(),
+      durationWatchedSeconds: (json['duration_watched_seconds'] as num?)
+          ?.toInt(),
       isOptimistic: json['is_optimistic'] == true,
     );
   }

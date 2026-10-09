@@ -10,12 +10,7 @@ import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/epg_det
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/epg_timeline_grid.dart';
 
 Channel createMockChannel({int lcn = 1, String name = 'Rai 1 HD'}) {
-  return Channel(
-    lcn: lcn,
-    name: name,
-    logo: 'rai1.png',
-    group: 'National',
-  );
+  return Channel(lcn: lcn, name: name, logo: 'rai1.png', group: 'National');
 }
 
 EpgProgram createMockProgram({
@@ -29,7 +24,9 @@ EpgProgram createMockProgram({
     name: name,
     startTime: startTime ?? now.subtract(const Duration(minutes: 15)),
     endTime: endTime ?? now.add(const Duration(minutes: 30)),
-    description: description ?? 'Telegiornale delle ore 20:00 con le principali notizie.',
+    description:
+        description ??
+        'Telegiornale delle ore 20:00 con le principali notizie.',
   );
 }
 
@@ -49,7 +46,9 @@ Widget buildTestWidget({
 
 void main() {
   group('EpgDetailsBanner Widget Tests', () {
-    testWidgets('renders channel name, program title, time and synopsis', (tester) async {
+    testWidgets('renders channel name, program title, time and synopsis', (
+      tester,
+    ) async {
       final channel = createMockChannel();
       final program = createMockProgram();
 
@@ -71,7 +70,9 @@ void main() {
       expect(find.text('LIVE'), findsOneWidget);
     });
 
-    testWidgets('triggers onWatch when Watch Channel button is tapped', (tester) async {
+    testWidgets('triggers onWatch when Watch Channel button is tapped', (
+      tester,
+    ) async {
       final channel = createMockChannel();
       final program = createMockProgram();
       var watched = false;
@@ -95,7 +96,9 @@ void main() {
   });
 
   group('LiveTvGuideScreen Integration Tests', () {
-    testWidgets('renders full timeline grid with channels and search bar', (tester) async {
+    testWidgets('renders full timeline grid with channels and search bar', (
+      tester,
+    ) async {
       final channel1 = createMockChannel(lcn: 1, name: 'Rai 1 HD');
       final channel2 = createMockChannel(lcn: 2, name: 'Rai 2 HD');
       final program1 = createMockProgram(name: 'TG1 Sera');
@@ -111,7 +114,9 @@ void main() {
       await tester.pumpWidget(
         buildTestWidget(
           overrides: [
-            channelsProvider.overrideWith((ref) => Future.value([channel1, channel2])),
+            channelsProvider.overrideWith(
+              (ref) => Future.value([channel1, channel2]),
+            ),
             epgDataProvider.overrideWith((ref) => Future.value(epgMap)),
           ],
           child: LiveTvGuideScreen(
@@ -144,7 +149,9 @@ void main() {
       expect(selectedChannel?.name, equals('Rai 1 HD'));
     });
 
-    testWidgets('renders empty state when channel list is empty', (tester) async {
+    testWidgets('renders empty state when channel list is empty', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         buildTestWidget(
           overrides: [
@@ -160,29 +167,32 @@ void main() {
       expect(find.text('Manage Playlists'), findsOneWidget);
     });
 
-    testWidgets('virtualizes channel list and program rows with ListView.builder', (tester) async {
-      final channels = List.generate(
-        30,
-        (i) => createMockChannel(lcn: i + 1, name: 'Channel ${i + 1}'),
-      );
+    testWidgets(
+      'virtualizes channel list and program rows with ListView.builder',
+      (tester) async {
+        final channels = List.generate(
+          30,
+          (i) => createMockChannel(lcn: i + 1, name: 'Channel ${i + 1}'),
+        );
 
-      await tester.pumpWidget(
-        buildTestWidget(
-          overrides: [
-            channelsProvider.overrideWith((ref) => Future.value(channels)),
-            epgDataProvider.overrideWith((ref) => Future.value({})),
-          ],
-          child: const LiveTvGuideScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          buildTestWidget(
+            overrides: [
+              channelsProvider.overrideWith((ref) => Future.value(channels)),
+              epgDataProvider.overrideWith((ref) => Future.value({})),
+            ],
+            child: const LiveTvGuideScreen(),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // First few channels are rendered
-      expect(find.text('Channel 1'), findsWidgets);
-      expect(find.text('Channel 2'), findsWidgets);
+        // First few channels are rendered
+        expect(find.text('Channel 1'), findsWidgets);
+        expect(find.text('Channel 2'), findsWidgets);
 
-      // Distant channel 30 is virtualized (not in widget tree until scrolled)
-      expect(find.text('Channel 30'), findsNothing);
-    });
+        // Distant channel 30 is virtualized (not in widget tree until scrolled)
+        expect(find.text('Channel 30'), findsNothing);
+      },
+    );
   });
 }

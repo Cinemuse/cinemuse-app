@@ -17,11 +17,7 @@ class LiveTvGuideScreen extends ConsumerStatefulWidget {
   final FocusNode? focusNode;
   final void Function(Channel channel)? onChannelSelected;
 
-  const LiveTvGuideScreen({
-    super.key,
-    this.focusNode,
-    this.onChannelSelected,
-  });
+  const LiveTvGuideScreen({super.key, this.focusNode, this.onChannelSelected});
 
   @override
   ConsumerState<LiveTvGuideScreen> createState() => _LiveTvGuideScreenState();
@@ -71,12 +67,14 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
 
     // Initial fallback channel and program if none focused yet
     final effectiveChannel = _focusedChannel ?? selectedChannel;
-    final effectiveProgram = _focusedProgram ??
+    final effectiveProgram =
+        _focusedProgram ??
         (effectiveChannel != null
             ? ref.watch(currentProgramProvider(effectiveChannel))
             : null);
 
-    final isFav = effectiveChannel != null &&
+    final isFav =
+        effectiveChannel != null &&
         favoriteIds.contains(effectiveChannel.uniqueId);
 
     return Scaffold(
@@ -95,13 +93,15 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
             channel: effectiveChannel,
             program: effectiveProgram,
             isFavorite: isFav,
-            onWatch: effectiveChannel != null && widget.onChannelSelected != null
+            onWatch:
+                effectiveChannel != null && widget.onChannelSelected != null
                 ? () => widget.onChannelSelected!(effectiveChannel)
                 : null,
             onToggleFavorite: effectiveChannel != null
                 ? () {
-                    final notifier =
-                        ref.read(favoriteChannelIdsProvider.notifier);
+                    final notifier = ref.read(
+                      favoriteChannelIdsProvider.notifier,
+                    );
                     notifier.toggle(effectiveChannel.uniqueId);
                   }
                 : null,
@@ -128,7 +128,9 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                   onProgramFocused: _onProgramFocused,
                   onChannelSelected: widget.onChannelSelected,
                   onToggleFavorite: (ch) {
-                    ref.read(favoriteChannelIdsProvider.notifier).toggle(ch.uniqueId);
+                    ref
+                        .read(favoriteChannelIdsProvider.notifier)
+                        .toggle(ch.uniqueId);
                   },
                 );
               },
@@ -175,9 +177,7 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       decoration: BoxDecoration(
         color: const Color(0xFF0F081C),
-        border: Border(
-          bottom: BorderSide(color: AppTheme.border, width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: AppTheme.border, width: 1)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -193,13 +193,17 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                       if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
                         node.nextFocus();
                         return KeyEventResult.handled;
-                      } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-                        final focusNavbar = ref.read(topNavbarFocusActionProvider);
+                      } else if (event.logicalKey ==
+                          LogicalKeyboardKey.arrowUp) {
+                        final focusNavbar = ref.read(
+                          topNavbarFocusActionProvider,
+                        );
                         if (focusNavbar != null) {
                           focusNavbar();
                           return KeyEventResult.handled;
                         }
-                      } else if (event.logicalKey == LogicalKeyboardKey.escape) {
+                      } else if (event.logicalKey ==
+                          LogicalKeyboardKey.escape) {
                         node.unfocus();
                         return KeyEventResult.handled;
                       }
@@ -217,52 +221,55 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                     ),
                     child: TextField(
                       controller: _searchController,
-                    onChanged: (val) {
-                      ref.read(channelSearchQueryProvider.notifier).state = val;
-                    },
-                    decoration: InputDecoration(
-                      hintText: l10n.liveTvSearchPlaceholder,
-                      hintStyle: const TextStyle(
-                        color: Colors.white30,
-                        fontSize: 13,
+                      onChanged: (val) {
+                        ref.read(channelSearchQueryProvider.notifier).state =
+                            val;
+                      },
+                      decoration: InputDecoration(
+                        hintText: l10n.liveTvSearchPlaceholder,
+                        hintStyle: const TextStyle(
+                          color: Colors.white30,
+                          fontSize: 13,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          size: 18,
+                          color: Colors.white38,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 9),
+                        suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _searchController,
+                          builder: (context, value, child) {
+                            return value.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(
+                                      Icons.close_rounded,
+                                      size: 16,
+                                      color: Colors.white38,
+                                    ),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      ref
+                                              .read(
+                                                channelSearchQueryProvider
+                                                    .notifier,
+                                              )
+                                              .state =
+                                          '';
+                                    },
+                                  )
+                                : const SizedBox.shrink();
+                          },
+                        ),
                       ),
-                      prefixIcon: const Icon(
-                        Icons.search_rounded,
-                        size: 18,
-                        color: Colors.white38,
-                      ),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 9),
-                      suffixIcon: ValueListenableBuilder<TextEditingValue>(
-                        valueListenable: _searchController,
-                        builder: (context, value, child) {
-                          return value.text.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(
-                                    Icons.close_rounded,
-                                    size: 16,
-                                    color: Colors.white38,
-                                  ),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    ref
-                                        .read(
-                                          channelSearchQueryProvider.notifier,
-                                        )
-                                        .state = '';
-                                  },
-                                )
-                              : const SizedBox.shrink();
-                        },
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
                     ),
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
 
               // Filter Tabs (All / Favorites / Recents)
               _buildTabButton(
@@ -319,8 +326,8 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                       color: isFocused
                           ? AppTheme.accent.withValues(alpha: 0.25)
                           : (isHovered
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : Colors.white.withValues(alpha: 0.04)),
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.white.withValues(alpha: 0.04)),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: isFocused
@@ -378,8 +385,8 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                       color: isFocused
                           ? AppTheme.accent.withValues(alpha: 0.25)
                           : (isHovered
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : Colors.white.withValues(alpha: 0.04)),
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.white.withValues(alpha: 0.04)),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: isFocused
@@ -411,7 +418,9 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                 separatorBuilder: (_, __) => const SizedBox(width: 6),
                 itemBuilder: (context, index) {
                   final isAll = index == 0;
-                  final title = isAll ? l10n.liveTvAllChannels : categories[index - 1];
+                  final title = isAll
+                      ? l10n.liveTvAllChannels
+                      : categories[index - 1];
                   final isSelected = isAll
                       ? selectedCategories.isEmpty
                       : selectedCategories.contains(title);
@@ -468,15 +477,17 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
             color: isSelected
                 ? AppTheme.accent.withValues(alpha: 0.2)
                 : (isFocused
-                    ? Colors.white.withValues(alpha: 0.12)
-                    : (isHovered
-                        ? Colors.white.withValues(alpha: 0.06)
-                        : Colors.white.withValues(alpha: 0.03))),
+                      ? Colors.white.withValues(alpha: 0.12)
+                      : (isHovered
+                            ? Colors.white.withValues(alpha: 0.06)
+                            : Colors.white.withValues(alpha: 0.03))),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isSelected
                   ? AppTheme.accent
-                  : (isFocused ? Colors.white : Colors.white.withValues(alpha: 0.08)),
+                  : (isFocused
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.08)),
               width: 1,
             ),
           ),
@@ -521,17 +532,17 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
             color: isSelected
                 ? AppTheme.accent
                 : (isFocused
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : (isHovered
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : Colors.white.withValues(alpha: 0.04))),
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : (isHovered
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.white.withValues(alpha: 0.04))),
             borderRadius: BorderRadius.circular(15),
             border: Border.all(
               color: isFocused
                   ? Colors.white
                   : (isSelected
-                      ? AppTheme.accent
-                      : Colors.white.withValues(alpha: 0.08)),
+                        ? AppTheme.accent
+                        : Colors.white.withValues(alpha: 0.08)),
             ),
           ),
           child: Text(
@@ -593,7 +604,10 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accent,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),

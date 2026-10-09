@@ -42,22 +42,22 @@ Future<void> main() {
 
         // Collect key metrics for the combined summary
         summaries[entry.key] = {
-          'average_frame_build_time_millis':
-              summary.computeAverageFrameBuildTimeMillis(),
-          'worst_frame_build_time_millis':
-              summary.computeWorstFrameBuildTimeMillis(),
-          '99th_percentile_frame_build_time_millis':
-              summary.computePercentileFrameBuildTimeMillis(99),
-          '90th_percentile_frame_build_time_millis':
-              summary.computePercentileFrameBuildTimeMillis(90),
-          'average_frame_rasterizer_time_millis':
-              summary.computeAverageFrameRasterizerTimeMillis(),
-          'worst_frame_rasterizer_time_millis':
-              summary.computeWorstFrameRasterizerTimeMillis(),
-          'missed_frame_build_budget_count':
-              summary.computeMissedFrameBuildBudgetCount(),
-          'missed_frame_rasterizer_budget_count':
-              summary.computeMissedFrameRasterizerBudgetCount(),
+          'average_frame_build_time_millis': summary
+              .computeAverageFrameBuildTimeMillis(),
+          'worst_frame_build_time_millis': summary
+              .computeWorstFrameBuildTimeMillis(),
+          '99th_percentile_frame_build_time_millis': summary
+              .computePercentileFrameBuildTimeMillis(99),
+          '90th_percentile_frame_build_time_millis': summary
+              .computePercentileFrameBuildTimeMillis(90),
+          'average_frame_rasterizer_time_millis': summary
+              .computeAverageFrameRasterizerTimeMillis(),
+          'worst_frame_rasterizer_time_millis': summary
+              .computeWorstFrameRasterizerTimeMillis(),
+          'missed_frame_build_budget_count': summary
+              .computeMissedFrameBuildBudgetCount(),
+          'missed_frame_rasterizer_budget_count': summary
+              .computeMissedFrameRasterizerBudgetCount(),
           'frame_count': summary.countFrames(),
         };
       }

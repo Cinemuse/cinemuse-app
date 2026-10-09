@@ -14,10 +14,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 class CollectionTile extends ConsumerStatefulWidget {
   final MediaCollection collection;
 
-  const CollectionTile({
-    super.key,
-    required this.collection,
-  });
+  const CollectionTile({super.key, required this.collection});
 
   @override
   ConsumerState<CollectionTile> createState() => _CollectionTileState();
@@ -45,9 +42,7 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
       _isLoading = true;
     });
 
-    final model = await ref.read(
-      collectionModelProvider(_collectionId).future,
-    );
+    final model = await ref.read(collectionModelProvider(_collectionId).future);
 
     if (!context.mounted) return;
 
@@ -99,7 +94,8 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
           image: backdropPath != null
               ? DecorationImage(
                   image: CachedNetworkImageProvider(
-                    TmdbImageHelper.backdropCardUrl(context, backdropPath) ?? '',
+                    TmdbImageHelper.backdropCardUrl(context, backdropPath) ??
+                        '',
                     maxWidth: 800,
                   ),
                   fit: BoxFit.cover,
@@ -123,41 +119,41 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
                       color: AppTheme.accent.withValues(alpha: 0.2),
                       borderRadius: AppTheme.radius12,
                     ),
-                  child: const Icon(
-                    LucideIcons.film,
-                    color: AppTheme.accent,
-                    size: 24,
+                    child: const Icon(
+                      LucideIcons.film,
+                      color: AppTheme.accent,
+                      size: 24,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: AppTheme.textWhite,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: AppTheme.textWhite,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        l10n.collectionSubtitle,
-                        style: TextStyle(
-                          color: AppTheme.textWhite.withValues(alpha: 0.7),
-                          fontSize: 14,
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.collectionSubtitle,
+                          style: TextStyle(
+                            color: AppTheme.textWhite.withValues(alpha: 0.7),
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
             ),
             if (_isLoading)
               const Center(

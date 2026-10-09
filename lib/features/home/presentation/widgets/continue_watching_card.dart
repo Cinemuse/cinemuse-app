@@ -38,10 +38,12 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
   @override
   Widget build(BuildContext context) {
     final localMedia = widget.historyItem.media;
-    final appLanguage =
-        ref.watch(settingsProvider.select((s) => s.appLanguage));
+    final appLanguage = ref.watch(
+      settingsProvider.select((s) => s.appLanguage),
+    );
 
-    final hasValidTitle = localMedia != null &&
+    final hasValidTitle =
+        localMedia != null &&
         (localMedia.getLocalizedTitle(appLanguage) ?? '').isNotEmpty &&
         localMedia.getLocalizedTitle(appLanguage) != 'Unknown' &&
         localMedia.getLocalizedTitle(appLanguage) != '...';
@@ -57,7 +59,8 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
     final mediaAsync = ref.watch(mediaItemProvider(providerArg));
 
     final fetchedMedia = mediaAsync.valueOrNull;
-    final hasFetchedValidTitle = fetchedMedia != null &&
+    final hasFetchedValidTitle =
+        fetchedMedia != null &&
         (fetchedMedia.getLocalizedTitle(appLanguage) ?? '').isNotEmpty &&
         fetchedMedia.getLocalizedTitle(appLanguage) != 'Unknown' &&
         fetchedMedia.getLocalizedTitle(appLanguage) != '...';
@@ -94,17 +97,19 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
   ) {
     final l10n = AppLocalizations.of(context)!;
     final isRewatching =
-        ref.watch(isRewatchingProvider(widget.historyItem)).valueOrNull ?? false;
+        ref.watch(isRewatchingProvider(widget.historyItem)).valueOrNull ??
+        false;
 
     String title = media?.getLocalizedTitle(appLanguage) ?? '';
     if (title.isEmpty || title == '...') {
       title = l10n.commonUnknown;
     }
 
-    final percentage = (widget.historyItem.totalDuration != null &&
+    final percentage =
+        (widget.historyItem.totalDuration != null &&
             widget.historyItem.totalDuration! > 0)
         ? (widget.historyItem.progressSeconds /
-            widget.historyItem.totalDuration!)
+              widget.historyItem.totalDuration!)
         : 0.0;
 
     final resolver = ref.read(unifiedStreamResolverProvider);
@@ -178,9 +183,11 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
           ref.read(userListsProvider.notifier).toggleWatchlist(media);
         }
       },
-      onAddToList: media != null ? () {
-        AddToListSheet.show(context, media);
-      } : null,
+      onAddToList: media != null
+          ? () {
+              AddToListSheet.show(context, media);
+            }
+          : null,
       onDrop: isRewatching ? null : widget.onDrop,
       onCancelRewatch: isRewatching ? widget.onCancelRewatch : null,
       onClearProgress: widget.onClearProgress,

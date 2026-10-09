@@ -163,7 +163,8 @@ class ControlsKeyHandler {
         key == LogicalKeyboardKey.pageDown) {
       if (isLive) {
         if (event is KeyDownEvent) {
-          final isUp = key == LogicalKeyboardKey.arrowUp ||
+          final isUp =
+              key == LogicalKeyboardKey.arrowUp ||
               key == LogicalKeyboardKey.channelUp ||
               key == LogicalKeyboardKey.pageUp;
           if (isUp) {

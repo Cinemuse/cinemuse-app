@@ -55,11 +55,9 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
   void _onCancelRewatch(WatchHistory item) {
     _runWithOptimisticHide(
       item.tmdbId,
-      (userId) => ref.read(watchHistoryRepositoryProvider).cancelRewatch(
-            userId,
-            item.tmdbId,
-            item.mediaType.name,
-          ),
+      (userId) => ref
+          .read(watchHistoryRepositoryProvider)
+          .cancelRewatch(userId, item.tmdbId, item.mediaType.name),
     );
   }
 

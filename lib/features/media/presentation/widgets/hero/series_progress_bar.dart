@@ -16,7 +16,9 @@ class SeriesProgressBar extends ConsumerWidget {
     final tmdbId = details['id'] as int;
 
     final watchedEpisodesMap = ref.watch(watchedEpisodesMapProvider(tmdbId));
-    final progress = ref.watch(seriesDomainServiceProvider).calculateSeriesProgress(
+    final progress = ref
+        .watch(seriesDomainServiceProvider)
+        .calculateSeriesProgress(
           details: details,
           watchedEpisodesMap: watchedEpisodesMap,
         );

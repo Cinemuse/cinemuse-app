@@ -51,17 +51,15 @@ class ChannelListTile extends StatelessWidget {
               color: isFocused
                   ? Colors.white.withValues(alpha: 0.18)
                   : (isHovered
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : (isSelected
-                          ? AppTheme.accent.withValues(alpha: 0.12)
-                          : Colors.transparent)),
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : (isSelected
+                              ? AppTheme.accent.withValues(alpha: 0.12)
+                              : Colors.transparent)),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isFocused
                     ? Colors.white
-                    : (isSelected
-                        ? AppTheme.border
-                        : Colors.transparent),
+                    : (isSelected ? AppTheme.border : Colors.transparent),
                 width: isFocused ? 1.5 : 1.0,
               ),
             ),
@@ -214,9 +212,7 @@ class ChannelListTile extends StatelessWidget {
       decoration: const BoxDecoration(
         color: Colors.redAccent,
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(color: Colors.redAccent, blurRadius: 4),
-        ],
+        boxShadow: [BoxShadow(color: Colors.redAccent, blurRadius: 4)],
       ),
     );
   }

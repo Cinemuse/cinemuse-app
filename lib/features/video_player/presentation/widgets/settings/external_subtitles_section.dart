@@ -40,8 +40,7 @@ class _ExternalSubtitlesSectionState extends State<ExternalSubtitlesSection> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final externalTracksLabel =
-        l10n?.playerExternalTracks ?? 'EXTERNAL TRACKS';
+    final externalTracksLabel = l10n?.playerExternalTracks ?? 'EXTERNAL TRACKS';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -75,7 +74,9 @@ class _ExternalSubtitlesSectionState extends State<ExternalSubtitlesSection> {
               padding: const EdgeInsets.all(16.0),
               child: Center(
                 child: Text(
-                  AppLocalizations.of(context)?.playerErrorPrefix(e.toString()) ??
+                  AppLocalizations.of(
+                        context,
+                      )?.playerErrorPrefix(e.toString()) ??
                       'Error: $e',
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
@@ -129,7 +130,8 @@ class _ExternalSubtitlesSectionState extends State<ExternalSubtitlesSection> {
   }) {
     final l10n = AppLocalizations.of(context);
     final isExpanded = _expandedLanguages[language] ?? false;
-    final subtitlesCountText = l10n?.playerSubtitlesCount(subtitles.length) ??
+    final subtitlesCountText =
+        l10n?.playerSubtitlesCount(subtitles.length) ??
         '${subtitles.length} subtitles';
 
     return Column(
@@ -250,7 +252,8 @@ class _ExternalSubtitleTileState extends ConsumerState<_ExternalSubtitleTile> {
           final l10n = AppLocalizations.of(context);
           AppSnackBar.show(
             context,
-            message: l10n?.playerFailedLoadSubtitle ??
+            message:
+                l10n?.playerFailedLoadSubtitle ??
                 'Failed to load external subtitle.',
           );
         }
@@ -289,10 +292,7 @@ class _ExternalSubtitleTileState extends ConsumerState<_ExternalSubtitleTile> {
             decoration: BoxDecoration(
               color: AppTheme.surfaceOverlay,
               borderRadius: AppTheme.radiusMd,
-              border: Border.all(
-                color: AppTheme.borderSubtle,
-                width: 1,
-              ),
+              border: Border.all(color: AppTheme.borderSubtle, width: 1),
             ),
             child: Row(
               children: [

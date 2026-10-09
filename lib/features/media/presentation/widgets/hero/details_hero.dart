@@ -55,7 +55,8 @@ class DetailsHero extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final isWidescreen = ref.watch(isBigPictureProvider);
 
-    final resolvedItem = mediaItem ??
+    final resolvedItem =
+        mediaItem ??
         (media != null && details != null
             ? MediaItem.fromTmdbDetails(
                 details!,
@@ -63,23 +64,28 @@ class DetailsHero extends ConsumerWidget {
               )
             : null);
 
-    final type = resolvedItem?.mediaType.name ??
+    final type =
+        resolvedItem?.mediaType.name ??
         media?['type'] ??
         (details?['title'] != null ? 'movie' : 'series');
 
-    final String title = resolvedItem?.titleEn ??
+    final String title =
+        resolvedItem?.titleEn ??
         MediaItem.extractTitleFromTmdb(details ?? {}, 'en') ??
         media?['title'] ??
         '';
 
     final tagline = resolvedItem?.tagline ?? details?['tagline'];
-    final backdropPath = resolvedItem?.backdropPath ??
+    final backdropPath =
+        resolvedItem?.backdropPath ??
         details?['backdrop_path'] ??
         media?['backdrop_path'];
-    final voteAverage = resolvedItem?.voteAverage ??
+    final voteAverage =
+        resolvedItem?.voteAverage ??
         (details?['vote_average'] as num?)?.toDouble();
 
-    final DateTime? releaseDate = resolvedItem?.releaseDate ??
+    final DateTime? releaseDate =
+        resolvedItem?.releaseDate ??
         DateTime.tryParse(
           (details?['release_date'] ??
                   details?['first_air_date'] ??
@@ -99,10 +105,13 @@ class DetailsHero extends ConsumerWidget {
       }
     }
 
-    final genres = resolvedItem?.genreList ??
+    final genres =
+        resolvedItem?.genreList ??
         ((details?['genres'] as List?)
                 ?.whereType<Map>()
-                .map((g) => MediaGenre.fromTmdbMap(Map<String, dynamic>.from(g)))
+                .map(
+                  (g) => MediaGenre.fromTmdbMap(Map<String, dynamic>.from(g)),
+                )
                 .toList() ??
             []);
 
@@ -112,10 +121,14 @@ class DetailsHero extends ConsumerWidget {
     } else if (type == 'movie') {
       runtime = details?['runtime'] as int?;
     } else {
-      runtime = ((details?['episode_run_time'] as List?)?.firstOrNull ?? details?['runtime']) as int?;
+      runtime =
+          ((details?['episode_run_time'] as List?)?.firstOrNull ??
+                  details?['runtime'])
+              as int?;
     }
 
-    final effectiveMediaItem = resolvedItem ??
+    final effectiveMediaItem =
+        resolvedItem ??
         MediaItem(
           tmdbId: int.tryParse(media?['id']?.toString() ?? '0') ?? 0,
           mediaType: MediaItem.fromString(type),
@@ -241,7 +254,11 @@ class DetailsHero extends ConsumerWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star, color: AppTheme.star, size: 14),
+                          const Icon(
+                            Icons.star,
+                            color: AppTheme.star,
+                            size: 14,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             voteAverage.toStringAsFixed(1),
@@ -277,15 +294,17 @@ class DetailsHero extends ConsumerWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.08),
                           borderRadius: AppTheme.radius12,
                         ),
                         child: Text(
                           g.name,
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface.withValues(
-                              alpha: 0.6,
-                            ),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.6),
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -304,7 +323,8 @@ class DetailsHero extends ConsumerWidget {
                   onFocusChange: (hasFocus) {
                     if (hasFocus) {
                       final scrollable = Scrollable.maybeOf(context);
-                      if (scrollable != null && scrollable.position.pixels > 0) {
+                      if (scrollable != null &&
+                          scrollable.position.pixels > 0) {
                         scrollable.position.animateTo(
                           0.0,
                           duration: const Duration(milliseconds: 300),
@@ -316,7 +336,11 @@ class DetailsHero extends ConsumerWidget {
                   child: ResponsiveActionButtons(
                     onPlayClick: onPlayClick,
                     onRestartClick: onRestartClick,
-                    playButtonLabel: _getPlayButtonLabel(l10n, type, resumeData),
+                    playButtonLabel: _getPlayButtonLabel(
+                      l10n,
+                      type,
+                      resumeData,
+                    ),
                     mediaItem: effectiveMediaItem,
                     isFavorite: isFavorite,
                     isInWatchlist: isInWatchlist,
@@ -327,8 +351,12 @@ class DetailsHero extends ConsumerWidget {
                     onClearProgress: onClearProgress,
                     seriesWatchStatus: seriesWatchStatus,
                     movieWatchCount: movieWatchCount,
-                    hasResumeProgress: (resumeData?['progress'] as int? ?? 0) > 0,
-                    mediaId: resolvedItem?.tmdbId.toString() ?? media?['id']?.toString() ?? '',
+                    hasResumeProgress:
+                        (resumeData?['progress'] as int? ?? 0) > 0,
+                    mediaId:
+                        resolvedItem?.tmdbId.toString() ??
+                        media?['id']?.toString() ??
+                        '',
                     mediaType: type == 'series' ? 'tv' : type,
                     season: resumeData?['season'] as int?,
                     episode: resumeData?['episode'] as int?,
@@ -351,9 +379,11 @@ class DetailsHero extends ConsumerWidget {
     required MediaItem? resolvedItem,
     required Map<String, dynamic>? details,
   }) {
-    final numSeasons = resolvedItem?.numberOfSeasons ??
+    final numSeasons =
+        resolvedItem?.numberOfSeasons ??
         (details?['number_of_seasons'] as int? ?? 0);
-    final numEpisodes = resolvedItem?.numberOfEpisodes ??
+    final numEpisodes =
+        resolvedItem?.numberOfEpisodes ??
         (details?['number_of_episodes'] as int? ?? 0);
     final statusStr = resolvedItem?.status ?? (details?['status'] as String?);
 
@@ -421,10 +451,7 @@ class DetailsHero extends ConsumerWidget {
         final season = resumeData['season'] as int? ?? 1;
         final episode = resumeData['episode'] as int? ?? 1;
         final label = progress > 0
-            ? l10n.detailsResumeEpisode(
-                episode,
-                season,
-              )
+            ? l10n.detailsResumeEpisode(episode, season)
             : l10n.detailsPlaySeasonEpisode(episode, season);
         return label;
       }

@@ -43,10 +43,7 @@ class CarouselVerticalSeparator extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    borderColor,
-                  ],
+                  colors: [Colors.transparent, borderColor],
                 ),
               ),
             ),
@@ -84,10 +81,7 @@ class CarouselVerticalSeparator extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    borderColor,
-                    Colors.transparent,
-                  ],
+                  colors: [borderColor, Colors.transparent],
                 ),
               ),
             ),

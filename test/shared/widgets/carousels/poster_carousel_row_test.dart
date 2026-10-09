@@ -24,7 +24,8 @@ void main() {
 
       // Verify exact screen boundary visibility:
       // Left padding + 2 full cards + 2 spacing gaps + 0.3 of 3rd card
-      final totalOccupiedAtEdge = padding.left +
+      final totalOccupiedAtEdge =
+          padding.left +
           (2 * dimensions.itemWidth) +
           (2 * spacing) +
           (0.3 * dimensions.itemWidth);
@@ -36,34 +37,47 @@ void main() {
       expect(dimensions.height, closeTo(expectedHeight, 0.001));
     });
 
-    test('calculates exactly 2.3 cards visible on 360px and 430px viewports', () {
-      for (final width in [360.0, 393.0, 412.0, 430.0]) {
-        const padding = EdgeInsets.symmetric(horizontal: 16);
-        const spacing = 16.0;
+    test(
+      'calculates exactly 2.3 cards visible on 360px and 430px viewports',
+      () {
+        for (final width in [360.0, 393.0, 412.0, 430.0]) {
+          const padding = EdgeInsets.symmetric(horizontal: 16);
+          const spacing = 16.0;
 
-        final dims = CarouselLayoutCalculator.calculatePosterDimensions(
-          screenWidth: width,
-          padding: padding,
-          spacing: spacing,
-        );
+          final dims = CarouselLayoutCalculator.calculatePosterDimensions(
+            screenWidth: width,
+            padding: padding,
+            spacing: spacing,
+          );
 
-        final totalAtEdge = padding.left +
-            (2 * dims.itemWidth) +
-            (2 * spacing) +
-            (0.3 * dims.itemWidth);
+          final totalAtEdge =
+              padding.left +
+              (2 * dims.itemWidth) +
+              (2 * spacing) +
+              (0.3 * dims.itemWidth);
 
-        expect(totalAtEdge, closeTo(width, 0.001),
-            reason: 'Failed exact 2.3 card boundary for width $width');
-      }
-    });
+          expect(
+            totalAtEdge,
+            closeTo(width, 0.001),
+            reason: 'Failed exact 2.3 card boundary for width $width',
+          );
+        }
+      },
+    );
 
     test('reverts to standard desktop sizing when width >= 600', () {
       final dims = CarouselLayoutCalculator.calculatePosterDimensions(
         screenWidth: 1200.0,
       );
 
-      expect(dims.itemWidth, equals(CarouselLayoutCalculator.defaultPosterWidthDesktop));
-      expect(dims.height, equals(CarouselLayoutCalculator.defaultPosterHeightDesktop));
+      expect(
+        dims.itemWidth,
+        equals(CarouselLayoutCalculator.defaultPosterWidthDesktop),
+      );
+      expect(
+        dims.height,
+        equals(CarouselLayoutCalculator.defaultPosterHeightDesktop),
+      );
     });
 
     test('calculates responsive backdrop dimensions for mobile', () {
@@ -80,7 +94,8 @@ void main() {
       );
 
       // (390 - 16 - 1 * 16) / 1.3 = 358 / 1.3 ≈ 275.38
-      final totalAtEdge = padding.left +
+      final totalAtEdge =
+          padding.left +
           (1 * dims.itemWidth) +
           (1 * spacing) +
           (0.3 * dims.itemWidth);
@@ -90,8 +105,9 @@ void main() {
   });
 
   group('PosterCarouselRow Widget', () {
-    testWidgets('renders items with responsive width on mobile viewport',
-        (tester) async {
+    testWidgets('renders items with responsive width on mobile viewport', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -108,11 +124,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: PosterCarouselRow(
-              items: items,
-            ),
-          ),
+          home: Scaffold(body: PosterCarouselRow(items: items)),
         ),
       );
 
@@ -127,8 +139,9 @@ void main() {
       expect(size.width, closeTo(148.696, 0.5));
     });
 
-    testWidgets('renders items with default 200px width on desktop viewport',
-        (tester) async {
+    testWidgets('renders items with default 200px width on desktop viewport', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -145,11 +158,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: PosterCarouselRow(
-              items: items,
-            ),
-          ),
+          home: Scaffold(body: PosterCarouselRow(items: items)),
         ),
       );
 
@@ -162,8 +171,9 @@ void main() {
       expect(size.width, equals(200.0));
     });
 
-    testWidgets('uses 24px padding for profileRow theme on desktop viewport',
-        (tester) async {
+    testWidgets('uses 24px padding for profileRow theme on desktop viewport', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -201,8 +211,9 @@ void main() {
       expect(topLeft.dx, equals(25.0));
     });
 
-    testWidgets('uses 16px padding for profileRow theme on mobile viewport',
-        (tester) async {
+    testWidgets('uses 16px padding for profileRow theme on mobile viewport', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -231,8 +242,9 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      final firstItemFinder =
-          find.byKey(const ValueKey('mobile_profile_item_0'));
+      final firstItemFinder = find.byKey(
+        const ValueKey('mobile_profile_item_0'),
+      );
       expect(firstItemFinder, findsOneWidget);
 
       final topLeft = tester.getTopLeft(firstItemFinder);

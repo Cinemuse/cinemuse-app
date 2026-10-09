@@ -196,7 +196,8 @@ class EpgDetailsBanner extends StatelessWidget {
   }
 
   Widget _buildDescription(AppLocalizations l10n) {
-    final desc = program?.description ??
+    final desc =
+        program?.description ??
         program?.subtitle ??
         l10n.liveTvNoProgramDetails;
 
@@ -218,8 +219,10 @@ class EpgDetailsBanner extends StatelessWidget {
     DateTime now,
   ) {
     final progress = program!.progress;
-    final remainingMinutes =
-        program!.endTime.difference(now).inMinutes.clamp(0, 9999);
+    final remainingMinutes = program!.endTime
+        .difference(now)
+        .inMinutes
+        .clamp(0, 9999);
 
     return Row(
       children: [
@@ -268,8 +271,8 @@ class EpgDetailsBanner extends StatelessWidget {
                       color: isFocused
                           ? Colors.white.withValues(alpha: 0.18)
                           : (isHovered
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : Colors.white.withValues(alpha: 0.04)),
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.white.withValues(alpha: 0.04)),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isFocused
@@ -303,8 +306,8 @@ class EpgDetailsBanner extends StatelessWidget {
                       color: isFocused
                           ? AppTheme.accentHover
                           : (isHovered
-                              ? AppTheme.accent.withValues(alpha: 0.9)
-                              : AppTheme.accent),
+                                ? AppTheme.accent.withValues(alpha: 0.9)
+                                : AppTheme.accent),
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: isFocused ? AppTheme.shadowFocusGlow : null,
                     ),
