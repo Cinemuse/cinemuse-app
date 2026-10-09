@@ -223,22 +223,41 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
   final ProfileRepository _profileRepository;
   final Ref _ref;
 
+  // The user whose stored settings are in `state`. Null until a load
+  // succeeds: until then `state` holds defaults and must not be saved,
+  // because every save writes the whole preferences object.
+  String? _loadedUserId;
+  Future<void>? _loading;
+
   SettingsNotifier(this._profileRepository, this._ref)
     : super(const UserSettings()) {
     initSettings();
   }
 
   @visibleForTesting
-  Future<void> initSettings() async {
+  Future<void> initSettings() => _loading = _loadSettings();
+
+  Future<void> _loadSettings() async {
     try {
       final user = _ref.read(authProvider).value;
-      if (user != null) {
-        final profile = await _profileRepository.getProfile(user.id);
-        if (profile != null) {
-          state = UserSettings.fromProfile(profile);
-          // Sync initial app language to localeProvider
-          _ref.read(localeProvider.notifier).setLocale(state.appLanguage);
-        }
+
+      // Account changed: drop the previous user's settings right away.
+      if (user?.id != _loadedUserId) {
+        _loadedUserId = null;
+        state = const UserSettings();
+      }
+      if (user == null) return;
+
+      final profile = await _profileRepository.getProfile(user.id);
+
+      // Ignore a slow load that finishes after an account switch.
+      if (!mounted || _ref.read(authProvider).value?.id != user.id) return;
+
+      if (profile != null) {
+        state = UserSettings.fromProfile(profile);
+        _loadedUserId = user.id;
+        // Sync initial app language to localeProvider
+        _ref.read(localeProvider.notifier).setLocale(state.appLanguage);
       }
     } catch (e) {
       debugPrint(
@@ -250,6 +269,18 @@ class SettingsNotifier extends StateNotifier<UserSettings> {
   Future<void> updateSettings(Map<String, dynamic> updates) async {
     final user = _ref.read(authProvider).value;
     if (user == null) return;
+
+    // Never save before this user's settings are loaded, or the defaults
+    // would overwrite their stored keys and addons.
+    if (_loadedUserId != user.id) {
+      await _loading; // a load already in progress
+      if (_loadedUserId != user.id) await initSettings(); // one retry
+      if (_loadedUserId != user.id) {
+        throw Exception(
+          'Settings are still loading. Check your connection and try again.',
+        );
+      }
+    }
 
     // Update local state first for responsiveness
     state = state.copyWith(

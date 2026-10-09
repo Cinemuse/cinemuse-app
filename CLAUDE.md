@@ -26,7 +26,7 @@ fvm dart format lib test integration_test test_driver scripts  # CI fails if cod
 
 CI (`.github/workflows/ci.yml`) runs format check + `flutter analyze` + `flutter test` on every push to `main`, and `release.yml` only builds if they pass. Analyze must report 0 issues (lint rules in `analysis_options.yaml`). `pubspec.lock` is committed: after changing `pubspec.yaml`, commit the updated lock file too.
 
-`fvm flutter test` must pass with 0 failures (263 pass, 1 skipped: the Live TV channel-guide button test, pending a check of the TV layout; see `../audit/08-testing.md`).
+`fvm flutter test` must pass with 0 failures (266 pass, 1 skipped: the Live TV channel-guide button test, pending a check of the TV layout; see `../audit/08-testing.md`).
 
 ## Git
 
