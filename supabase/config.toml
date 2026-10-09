@@ -386,6 +386,13 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# verify_jwt = false matches production. Turning it on is audit BE-03 (needs app changes first).
+[functions.live-tv-resolver]
+verify_jwt = false
+
+[functions.sync-agenda]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
