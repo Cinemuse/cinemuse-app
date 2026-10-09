@@ -32,6 +32,7 @@ CI (`.github/workflows/ci.yml`) runs format check + `flutter analyze` + `flutter
 
 - Conventional Commits: `type(area): description`, lowercase, imperative, under ~72 chars. Types and examples are in `.gitmessage`.
 - Pushing directly to `main` is allowed. Never force push or delete `main` (protected by a ruleset).
+- When a piece of work is ready to commit, Claude runs `git add` on exactly those files (never `git add -A` or `.`), shows `git status`, then gives the user a ready-to-paste `git commit -m "..."` command. The user runs the commit and the push themselves. Before staging, check the files for secrets.
 
 ## Supabase MCP (read-only)
 
@@ -39,6 +40,17 @@ CI (`.github/workflows/ci.yml`) runs format check + `flutter analyze` + `flutter
 - `execute_sql`: always name the columns (no `SELECT *`) and use `LIMIT 10` or less. Never dump full tables into context.
 - For debugging, start with `get_advisors` and `query_logs`.
 - Schema changes go through migrations in git, never through the MCP.
+
+## Database changes (Supabase CLI)
+
+Migrations live in `supabase/migrations/` (baseline: `20261009215049_remote_schema.sql`). Docker must be running for local commands.
+
+1. `supabase migration new <name>` → write the SQL.
+2. `supabase start` (if not running), then `supabase migration up --local` → test in the local DB (Studio: http://127.0.0.1:54323).
+3. `supabase db push --linked --dry-run` → check that only the new file is listed.
+4. `supabase db push --linked` → apply to production. Commit the migration file.
+
+Don't change the live schema by hand in the dashboard: it makes git and the database drift apart.
 
 ## Don't
 
