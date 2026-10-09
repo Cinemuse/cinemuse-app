@@ -12,7 +12,7 @@ import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
-import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 
 /// The live video player section with custom controls overlay.
 class LivePlayerSection extends ConsumerWidget {

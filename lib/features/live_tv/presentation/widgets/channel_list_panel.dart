@@ -9,7 +9,7 @@ import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_tile.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_filter_sheet.dart';
-import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 /// Minimalist Live TV channel list panel.

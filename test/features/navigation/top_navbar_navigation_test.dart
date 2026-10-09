@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cinemuse_app/features/navigation/navbar.dart';
-import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/features/navigation/presentation/navbar.dart';
+import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 void main() {

@@ -9,7 +9,7 @@ import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_filter_sheet.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/epg_details_banner.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/epg_timeline_grid.dart';
-import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 /// Complete Cinemuse classic EPG TV Guide screen.

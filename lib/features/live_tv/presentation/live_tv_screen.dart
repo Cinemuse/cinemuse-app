@@ -10,7 +10,7 @@ import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/live_tv
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/live_player_section.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
-import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/player_settings_bottom_sheet.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';

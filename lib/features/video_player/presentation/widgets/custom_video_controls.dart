@@ -22,8 +22,8 @@ import 'package:cinemuse_app/features/video_player/presentation/helpers/player_c
 import 'package:cinemuse_app/features/video_player/presentation/helpers/controls_gesture_coordinator.dart';
 import 'package:cinemuse_app/features/video_player/presentation/helpers/player_seek_coordinator.dart';
 import 'package:cinemuse_app/features/video_player/presentation/helpers/playback_control_actions.dart';
-import 'package:cinemuse_app/core/presentation/widgets/buffering_indicator.dart';
-import 'package:cinemuse_app/core/presentation/widgets/play_pause_overlay.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/buffering_indicator.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/play_pause_overlay.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/number_input_osd.dart';

@@ -9,7 +9,7 @@ import 'package:cinemuse_app/features/video_player/presentation/video_player_scr
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
-import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 class HeroSection extends ConsumerStatefulWidget {

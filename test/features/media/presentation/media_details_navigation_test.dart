@@ -9,7 +9,7 @@ import 'package:cinemuse_app/features/media/presentation/widgets/hero/details_he
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_list_card.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_carousel_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/hero/responsive_action_buttons.dart';
-import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:flutter/material.dart';

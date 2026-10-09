@@ -14,7 +14,7 @@ import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/shared/widgets/offline_placeholder.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../../../shared/widgets/app_bottom_sheet.dart';
-import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';

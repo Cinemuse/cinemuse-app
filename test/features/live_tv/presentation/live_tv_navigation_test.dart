@@ -14,7 +14,7 @@ import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_panel.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_video_controls.dart';
-import 'package:cinemuse_app/features/navigation/nav_providers.dart';
+import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/live_tv_screen.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/live_tv_guide_screen.dart';
