@@ -1974,60 +1974,6 @@ serve(async (req)=>{
       headers
     });
   }
-  // --- 5. /proxy?url=...&ref=... ---
-  if (path.endsWith("/proxy")) {
-    const targetUrl = url.searchParams.get("url");
-    const ref = url.searchParams.get("ref") || "https://hamis.romponalis.st/";
-    if (!targetUrl) {
-      return new Response("Missing url param", {
-        status: 400,
-        headers
-      });
-    }
-    try {
-      const origin = new URL(ref).origin;
-      const resp = await fetch(targetUrl, {
-        headers: {
-          "User-Agent": UA,
-          "Referer": ref,
-          "Origin": origin
-        }
-      });
-      if (!resp.ok) {
-        return new Response(`Upstream error: ${resp.status}`, {
-          status: resp.status,
-          headers
-        });
-      }
-      const contentType = resp.headers.get("content-type") || "application/octet-stream";
-      headers.set("Content-Type", contentType);
-      headers.set("Cache-Control", "no-cache");
-      if (contentType.includes("mpegurl") || targetUrl.includes(".m3u8")) {
-        const text = await resp.text();
-        const base = targetUrl.substring(0, targetUrl.lastIndexOf("/") + 1);
-        const rewritten = text.split("\n").map((line)=>{
-          const trimmed = line.trim();
-          if (trimmed && !trimmed.startsWith("#")) {
-            const absoluteUrl = trimmed.startsWith("http") ? trimmed : base + trimmed;
-            return `${PUBLIC_BASE_URL}/proxy?url=${encodeURIComponent(absoluteUrl)}&ref=${encodeURIComponent(ref)}`;
-          }
-          return line;
-        }).join("\n");
-        return new Response(rewritten, {
-          headers
-        });
-      }
-      return new Response(resp.body, {
-        headers,
-        status: resp.status
-      });
-    } catch (err) {
-      return new Response(`Proxy error: ${err}`, {
-        status: 502,
-        headers
-      });
-    }
-  }
   // --- 6. /stream?channel=... ---
   if (path.endsWith("/stream")) {
     const chId = url.searchParams.get("channel");
@@ -2046,8 +1992,8 @@ serve(async (req)=>{
           headers
         });
       }
-      const proxyUrl = `${PUBLIC_BASE_URL}/proxy?url=${encodeURIComponent(res.streamUrl)}&ref=${encodeURIComponent(res.referer)}`;
-      return Response.redirect(proxyUrl, 302);
+      // No proxy (BE-02): send the player straight to the stream, as the app's own resolver does.
+      return Response.redirect(res.streamUrl, 302);
     }
     return Response.redirect(ch.target, 302);
   }
