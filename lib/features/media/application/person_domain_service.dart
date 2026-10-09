@@ -1,3 +1,5 @@
+import 'package:cinemuse_app/features/media/domain/person.dart';
+
 class PersonSeenStats {
   final int watchedCount;
   final int totalReleased;
@@ -31,9 +33,9 @@ class PersonDomainService {
 
   /// Calculates watched statistics across released items in cast and crew credits.
   static PersonSeenStats calculateSeenStats({
-    required List<dynamic> cast,
-    required List<dynamic> crew,
-    required Map<String, dynamic> watchHistory,
+    required List<PersonCredit> cast,
+    required List<PersonCredit> crew,
+    required Map<String, Object?> watchHistory,
     DateTime? referenceDate,
   }) {
     int watchedCount = 0;
@@ -44,19 +46,15 @@ class PersonDomainService {
     final seenIds = <int>{};
 
     for (final item in allCredits) {
-      if (item is! Map) continue;
-      final id = item['id'] as int?;
-      if (id == null || seenIds.contains(id)) continue;
+      final id = item.id;
+      if (id <= 0 || seenIds.contains(id)) continue;
       seenIds.add(id);
 
-      final dateStr = (item['release_date'] ?? item['first_air_date'])?.toString();
-      if (dateStr != null && dateStr.isNotEmpty) {
-        final releaseDate = DateTime.tryParse(dateStr);
-        if (releaseDate != null && releaseDate.isBefore(now)) {
-          totalReleased++;
-          if (watchHistory.containsKey(id.toString())) {
-            watchedCount++;
-          }
+      final releaseDate = item.releaseDate;
+      if (releaseDate != null && releaseDate.isBefore(now)) {
+        totalReleased++;
+        if (watchHistory.containsKey(id.toString())) {
+          watchedCount++;
         }
       }
     }
@@ -73,31 +71,27 @@ class PersonDomainService {
   }
 
   /// Extracts the top known-for works based on vote count.
-  static List<Map<String, dynamic>> extractTopKnownFor(
-    List<dynamic> cast, {
+  static List<PersonCredit> extractTopKnownFor(
+    List<PersonCredit> cast, {
     int limit = 10,
   }) {
-    final knownFor = cast
-        .whereType<Map<String, dynamic>>()
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList()
-      ..sort((a, b) => (b['vote_count'] ?? 0).compareTo(a['vote_count'] ?? 0));
+    final knownFor = List<PersonCredit>.from(cast)
+      ..sort((a, b) => b.voteCount.compareTo(a.voteCount));
     return knownFor.take(limit).toList();
   }
 
   /// Deduplicates cast and crew, sorts by date descending, and applies hidden filters if requested.
-  static List<Map<String, dynamic>> processFilmography({
-    required List<dynamic> cast,
-    required List<dynamic> crew,
+  static List<PersonCredit> processFilmography({
+    required List<PersonCredit> cast,
+    required List<PersonCredit> crew,
     required bool showHidden,
   }) {
-    final uniqueCreditsMap = <int, Map<String, dynamic>>{};
+    final uniqueCreditsMap = <int, PersonCredit>{};
 
     for (final item in [...cast, ...crew]) {
-      if (item is! Map) continue;
-      final id = item['id'] as int?;
-      if (id != null && !uniqueCreditsMap.containsKey(id)) {
-        uniqueCreditsMap[id] = Map<String, dynamic>.from(item);
+      final id = item.id;
+      if (id > 0 && !uniqueCreditsMap.containsKey(id)) {
+        uniqueCreditsMap[id] = item;
       }
     }
 
@@ -105,23 +99,19 @@ class PersonDomainService {
 
     // Sort Date DESC
     filmography.sort((a, b) {
-      final dateA = (a['release_date'] ?? a['first_air_date'] ?? '0000-00-00').toString();
-      final dateB = (b['release_date'] ?? b['first_air_date'] ?? '0000-00-00').toString();
-      return dateB.compareTo(dateA);
+      if (a.releaseDate == null && b.releaseDate == null) return 0;
+      if (a.releaseDate == null) return 1;
+      if (b.releaseDate == null) return -1;
+      return b.releaseDate!.compareTo(a.releaseDate!);
     });
 
     if (!showHidden) {
       filmography = filmography.where((item) {
-        final genreIds =
-            (item['genre_ids'] as List<dynamic>?)?.whereType<int>().toSet() ??
-                <int>{};
-        final hasExcludedGenre = genreIds.any(
+        final hasExcludedGenre = item.genreIds.any(
           (id) => excludedGenreIds.contains(id),
         );
 
-        final title = (item['title'] ?? item['name'] ?? '')
-            .toString()
-            .toLowerCase();
+        final title = item.title.toLowerCase();
         final hasExcludedKeyword = excludedKeywords.any(
           (kw) => title.contains(kw),
         );

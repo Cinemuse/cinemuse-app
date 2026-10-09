@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
+import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:intl/intl.dart';
@@ -33,7 +34,7 @@ class WatchLogsSheet extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
 
     // Determine which stream to watch
-    final AsyncValue<List<Map<String, dynamic>>> logsAsync;
+    final AsyncValue<List<WatchLog>> logsAsync;
     if (season != null && episode != null) {
       logsAsync = ref.watch(seriesWatchLogsProvider(tmdbId));
     } else {
@@ -83,7 +84,7 @@ class WatchLogsSheet extends ConsumerWidget {
               // Filter logs for episode if needed
               var filteredLogs = logs;
               if (season != null && episode != null) {
-                filteredLogs = logs.where((l) => l['season'] == season && l['episode'] == episode).toList();
+                filteredLogs = logs.where((l) => l.season == season && l.episode == episode).toList();
               }
 
               if (filteredLogs.isEmpty) {
@@ -108,11 +109,9 @@ class WatchLogsSheet extends ConsumerWidget {
                   itemCount: filteredLogs.length,
                   itemBuilder: (context, index) {
                     final log = filteredLogs[index];
-                    final loggedAtStr = log['logged_at'] as String?;
-                    final date = loggedAtStr != null ? DateTime.tryParse(loggedAtStr) : null;
-                    final formattedDate = date != null
-                        ? DateFormat.yMMMd(Localizations.localeOf(context).languageCode).add_jm().format(date)
-                        : '—';
+                    final formattedDate = DateFormat.yMMMd(
+                      Localizations.localeOf(context).languageCode,
+                    ).add_jm().format(log.loggedAt);
 
                     return ListTile(
                       contentPadding: EdgeInsets.zero,

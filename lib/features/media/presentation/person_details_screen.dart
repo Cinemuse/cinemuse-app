@@ -4,6 +4,8 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/application/person_domain_service.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
+import 'package:cinemuse_app/features/media/domain/person.dart';
+import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/external_links.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/person_filmography_list.dart';
@@ -16,9 +18,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 final personDetailsProvider =
-    FutureProvider.family<Map<String, dynamic>?, int>((ref, id) async {
+    FutureProvider.family<PersonDetails?, int>((ref, id) async {
   final tmdbService = ref.watch(tmdbServiceProvider);
-  return tmdbService.getPersonDetails(id);
+  final map = await tmdbService.getPersonDetails(id);
+  if (map == null) return null;
+  return PersonDetails.fromTmdbMap(map);
 });
 
 class PersonDetailsScreen extends ConsumerStatefulWidget {
@@ -47,7 +51,7 @@ class _PersonDetailsScreenState extends ConsumerState<PersonDetailsScreen> {
       data: (details) {
         if (details == null) return Center(child: Text(l10n.commonError));
 
-        final watchHistory = watchHistoryAsync.value ?? {};
+        final watchHistory = watchHistoryAsync.value ?? const <String, WatchHistory>{};
         return _PersonDetailsContent(
           details: details,
           watchHistory: watchHistory,
@@ -70,8 +74,8 @@ class _PersonDetailsScreenState extends ConsumerState<PersonDetailsScreen> {
 }
 
 class _PersonDetailsContent extends StatelessWidget {
-  final Map<String, dynamic> details;
-  final Map<String, dynamic> watchHistory;
+  final PersonDetails details;
+  final Map<String, WatchHistory> watchHistory;
   final double responsivePadding;
   final int visibleCredits;
   final bool showHidden;
@@ -91,14 +95,14 @@ class _PersonDetailsContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final String name = (details['name'] ?? 'Unknown').toString();
-    final String? profilePath = details['profile_path'] as String?;
-    final String? biography = details['biography'] as String?;
-    final String? birthday = details['birthday'] as String?;
-    final String? placeOfBirth = details['place_of_birth'] as String?;
+    final String name = details.name.isEmpty ? 'Unknown' : details.name;
+    final String? profilePath = details.profilePath;
+    final String? biography = details.biography;
+    final String? birthday = details.birthday;
+    final String? placeOfBirth = details.placeOfBirth;
 
-    final cast = details['combined_credits']?['cast'] as List<dynamic>? ?? [];
-    final crew = details['combined_credits']?['crew'] as List<dynamic>? ?? [];
+    final cast = details.cast;
+    final crew = details.crew;
 
     final seenStats = PersonDomainService.calculateSeenStats(
       cast: cast,
@@ -227,7 +231,7 @@ class _PersonDetailsContent extends StatelessWidget {
                                 color: AppTheme.textWhite.withValues(
                                   alpha: 0.1,
                                 ),
-                                borderRadius: BorderRadius.circular(3),
+                                borderRadius: AppTheme.radiusFull,
                               ),
                               child: FractionallySizedBox(
                                 alignment: Alignment.centerLeft,
@@ -235,7 +239,7 @@ class _PersonDetailsContent extends StatelessWidget {
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: AppTheme.accent,
-                                    borderRadius: BorderRadius.circular(3),
+                                    borderRadius: AppTheme.radiusFull,
                                     boxShadow: [
                                       BoxShadow(
                                         color: AppTheme.accent.withValues(
@@ -252,10 +256,10 @@ class _PersonDetailsContent extends StatelessWidget {
                           ],
 
                           ExternalLinks(
-                            externalIds: details['external_ids'],
-                            homepage: details['homepage'],
+                            ids: details.externalIds,
+                            homepage: details.homepage,
                             type: 'person',
-                            tmdbId: details['id'],
+                            tmdbId: details.id,
                           ),
                         ],
                       ),
@@ -304,13 +308,10 @@ class _PersonDetailsContent extends StatelessWidget {
                         return SizedBox(
                           width: 160,
                           child: MediaCard(
-                            title: (item['title'] ?? item['name'] ?? 'Unknown')
-                                .toString(),
-                            posterPath: item['poster_path'] as String?,
-                            releaseDate:
-                                (item['release_date'] ?? item['first_air_date'])
-                                    ?.toString(),
-                            rating: (item['vote_average'] as num?)?.toDouble(),
+                            title: item.title.isEmpty ? 'Unknown' : item.title,
+                            posterPath: item.posterPath,
+                            releaseDate: item.releaseDate?.toIso8601String(),
+                            rating: item.voteAverage,
                             onTap: () => _navigateToMedia(context, item),
                           ),
                         );
@@ -448,14 +449,12 @@ class _PersonDetailsContent extends StatelessWidget {
     );
   }
 
-  void _navigateToMedia(BuildContext context, Map<String, dynamic> item) {
-    final type =
-        item['media_type'] ?? (item['title'] != null ? 'movie' : 'tv');
+  void _navigateToMedia(BuildContext context, PersonCredit item) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => MediaDetailsScreen(
-          mediaId: item['id'].toString(),
-          mediaType: type.toString(),
+          mediaId: item.id.toString(),
+          mediaType: item.mediaType.name,
         ),
       ),
     );

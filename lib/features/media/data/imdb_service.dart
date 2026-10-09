@@ -53,7 +53,13 @@ class ImdbService {
       if (rawData is String) {
         try {
           rawData = jsonDecode(rawData);
-        } catch (_) {
+        } catch (e, stack) {
+          developer.log(
+            'Failed to decode IMDb raw JSON response for $formattedId',
+            name: 'ImdbService',
+            error: e,
+            stackTrace: stack,
+          );
           return const [];
         }
       }

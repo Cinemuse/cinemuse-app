@@ -28,7 +28,7 @@ class SocialActionsGroup extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppTheme.radius12,
         border: Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.05)),
       ),
       child: Row(
@@ -173,7 +173,7 @@ class _SocialIconState extends State<_SocialIcon>
         widget.onTap();
       },
       scale: 1.0,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: AppTheme.radiusMd,
       builder: (context, isFocused, isHovered, child) {
         return Container(
           decoration: BoxDecoration(
@@ -182,7 +182,7 @@ class _SocialIconState extends State<_SocialIcon>
                 : (isHovered
                     ? theme.hoverColor
                     : Colors.transparent),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: AppTheme.radiusMd,
           ),
           child: child,
         );

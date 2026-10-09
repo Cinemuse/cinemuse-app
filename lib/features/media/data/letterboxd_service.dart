@@ -108,11 +108,12 @@ class LetterboxdService {
         final match = RegExp(r'/film/([^/]+)/?').firstMatch(location);
         return match?.group(1);
       }
-    } catch (e) {
+    } catch (e, stack) {
       developer.log(
         'Failed to query redirect slug for $url',
         name: 'LetterboxdService',
         error: e,
+        stackTrace: stack,
       );
     }
     return null;

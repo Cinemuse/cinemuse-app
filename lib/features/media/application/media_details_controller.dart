@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
@@ -131,11 +132,8 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       }
 
       // Success: stream will update automatically
-    } catch (e) {
-      // Error: Revert optimistic update
-      ref
-          .read(seriesWatchLogsProvider(tmdbId).notifier)
-          .clearOptimisticUpdates();
+    } catch (e, stack) {
+      _rollbackSeriesOptimistic(tmdbId, 'logEpisodeWatch', e, stack);
       rethrow;
     }
   }
@@ -161,10 +159,8 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
         season: season,
         episode: episode,
       );
-    } catch (e) {
-      ref
-          .read(seriesWatchLogsProvider(tmdbId).notifier)
-          .clearOptimisticUpdates();
+    } catch (e, stack) {
+      _rollbackSeriesOptimistic(tmdbId, 'deleteLatestEpisodeLog', e, stack);
       rethrow;
     }
   }
@@ -192,10 +188,8 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       );
       ref.invalidate(droppedListProvider);
       ref.invalidate(continueWatchingProvider);
-    } catch (e) {
-      ref
-          .read(seriesWatchLogsProvider(tmdbId).notifier)
-          .clearOptimisticUpdates();
+    } catch (e, stack) {
+      _rollbackSeriesOptimistic(tmdbId, 'deleteAllEpisodeLogs', e, stack);
       rethrow;
     }
   }
@@ -255,8 +249,8 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
           loggedAt: loggedAt,
         );
       }
-    } catch (e) {
-      notifier.clearOptimisticUpdates();
+    } catch (e, stack) {
+      _rollbackSeriesOptimistic(tmdbId, 'logMultipleEpisodes', e, stack);
       rethrow;
     }
   }
@@ -326,10 +320,8 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
         loggedAt: now,
       );
       // No need to invalidate, the stream and optimistic logic handle it
-    } catch (e) {
-      ref
-          .read(movieWatchLogsProvider(tmdbId).notifier)
-          .clearOptimisticUpdates();
+    } catch (e, stack) {
+      _rollbackMovieOptimistic(tmdbId, 'logMovieWatch', e, stack);
       rethrow;
     }
   }
@@ -344,10 +336,8 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       await _repository.deleteLatestMovieLog(userId: userId, tmdbId: tmdbId);
       ref.invalidate(droppedListProvider);
       ref.invalidate(continueWatchingProvider);
-    } catch (e) {
-      ref
-          .read(movieWatchLogsProvider(tmdbId).notifier)
-          .clearOptimisticUpdates();
+    } catch (e, stack) {
+      _rollbackMovieOptimistic(tmdbId, 'deleteLatestMovieLog', e, stack);
       rethrow;
     }
   }
@@ -362,12 +352,40 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       await _repository.deleteAllMovieLogs(userId: userId, tmdbId: tmdbId);
       ref.invalidate(droppedListProvider);
       ref.invalidate(continueWatchingProvider);
-    } catch (e) {
-      ref
-          .read(movieWatchLogsProvider(tmdbId).notifier)
-          .clearOptimisticUpdates();
+    } catch (e, stack) {
+      _rollbackMovieOptimistic(tmdbId, 'deleteAllMovieLogs', e, stack);
       rethrow;
     }
+  }
+
+  void _rollbackSeriesOptimistic(
+    int tmdbId,
+    String action,
+    Object error,
+    StackTrace stack,
+  ) {
+    developer.log(
+      'Failed $action for series $tmdbId: $error',
+      name: 'MediaDetailsController',
+      error: error,
+      stackTrace: stack,
+    );
+    ref.read(seriesWatchLogsProvider(tmdbId).notifier).clearOptimisticUpdates();
+  }
+
+  void _rollbackMovieOptimistic(
+    int tmdbId,
+    String action,
+    Object error,
+    StackTrace stack,
+  ) {
+    developer.log(
+      'Failed $action for movie $tmdbId: $error',
+      name: 'MediaDetailsController',
+      error: error,
+      stackTrace: stack,
+    );
+    ref.read(movieWatchLogsProvider(tmdbId).notifier).clearOptimisticUpdates();
   }
 }
 

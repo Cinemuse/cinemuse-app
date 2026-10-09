@@ -89,3 +89,90 @@ class WatchHistory {
     };
   }
 }
+
+/// Strongly-typed domain entity representing an individual watch log entry.
+class WatchLog {
+  final dynamic id;
+  final String userId;
+  final int tmdbId;
+  final MediaKind mediaType;
+  final int? season;
+  final int? episode;
+  final DateTime loggedAt;
+  final int? durationWatchedSeconds;
+  final bool isOptimistic;
+
+  const WatchLog({
+    this.id,
+    this.userId = '',
+    required this.tmdbId,
+    required this.mediaType,
+    this.season,
+    this.episode,
+    required this.loggedAt,
+    this.durationWatchedSeconds,
+    this.isOptimistic = false,
+  });
+
+  WatchLog copyWith({
+    dynamic id,
+    String? userId,
+    int? tmdbId,
+    MediaKind? mediaType,
+    int? season,
+    int? episode,
+    DateTime? loggedAt,
+    int? durationWatchedSeconds,
+    bool? isOptimistic,
+  }) {
+    return WatchLog(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      tmdbId: tmdbId ?? this.tmdbId,
+      mediaType: mediaType ?? this.mediaType,
+      season: season ?? this.season,
+      episode: episode ?? this.episode,
+      loggedAt: loggedAt ?? this.loggedAt,
+      durationWatchedSeconds:
+          durationWatchedSeconds ?? this.durationWatchedSeconds,
+      isOptimistic: isOptimistic ?? this.isOptimistic,
+    );
+  }
+
+  factory WatchLog.fromJson(Map<String, dynamic> json) {
+    final loggedAtStr = json['logged_at']?.toString();
+    final loggedAt = loggedAtStr != null
+        ? DateTime.tryParse(loggedAtStr) ?? DateTime.now()
+        : DateTime.now();
+
+    return WatchLog(
+      id: json['id'],
+      userId: json['user_id'] as String? ?? '',
+      tmdbId: (json['tmdb_id'] as num?)?.toInt() ?? 0,
+      mediaType: MediaItem.fromString(
+        json['media_type']?.toString() ?? 'movie',
+      ),
+      season: (json['season'] as num?)?.toInt(),
+      episode: (json['episode'] as num?)?.toInt(),
+      loggedAt: loggedAt,
+      durationWatchedSeconds:
+          (json['duration_watched_seconds'] as num?)?.toInt(),
+      isOptimistic: json['is_optimistic'] == true,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,
+      'user_id': userId,
+      'tmdb_id': tmdbId,
+      'media_type': mediaType.name,
+      if (season != null) 'season': season,
+      if (episode != null) 'episode': episode,
+      'logged_at': loggedAt.toIso8601String(),
+      if (durationWatchedSeconds != null)
+        'duration_watched_seconds': durationWatchedSeconds,
+      if (isOptimistic) 'is_optimistic': isOptimistic,
+    };
+  }
+}

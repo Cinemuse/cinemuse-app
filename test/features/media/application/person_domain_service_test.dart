@@ -1,4 +1,6 @@
 import 'package:cinemuse_app/features/media/application/person_domain_service.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/media/domain/person.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -7,29 +9,33 @@ void main() {
 
     test('calculateSeenStats correctly computes stats for released items', () {
       final cast = [
-        {
-          'id': 101,
-          'title': 'Released Movie 1',
-          'release_date': '2020-05-10',
-        },
-        {
-          'id': 102,
-          'title': 'Unreleased Movie',
-          'release_date': '2027-01-01',
-        },
+        PersonCredit(
+          id: 101,
+          mediaType: MediaKind.movie,
+          title: 'Released Movie 1',
+          releaseDate: DateTime(2020, 5, 10),
+        ),
+        PersonCredit(
+          id: 102,
+          mediaType: MediaKind.movie,
+          title: 'Unreleased Movie',
+          releaseDate: DateTime(2027, 1, 1),
+        ),
       ];
       final crew = [
-        {
-          'id': 103,
-          'title': 'Released Movie 2',
-          'release_date': '2021-08-15',
-        },
-        {
+        PersonCredit(
+          id: 103,
+          mediaType: MediaKind.movie,
+          title: 'Released Movie 2',
+          releaseDate: DateTime(2021, 8, 15),
+        ),
+        PersonCredit(
           // Duplicate of 101 in crew
-          'id': 101,
-          'title': 'Released Movie 1',
-          'release_date': '2020-05-10',
-        },
+          id: 101,
+          mediaType: MediaKind.movie,
+          title: 'Released Movie 1',
+          releaseDate: DateTime(2020, 5, 10),
+        ),
       ];
 
       final watchHistory = {
@@ -64,47 +70,66 @@ void main() {
 
     test('extractTopKnownFor sorts by vote_count descending', () {
       final cast = [
-        {'id': 1, 'title': 'Movie A', 'vote_count': 500},
-        {'id': 2, 'title': 'Movie B', 'vote_count': 5000},
-        {'id': 3, 'title': 'Movie C', 'vote_count': 1200},
+        const PersonCredit(
+          id: 1,
+          mediaType: MediaKind.movie,
+          title: 'Movie A',
+          voteCount: 500,
+        ),
+        const PersonCredit(
+          id: 2,
+          mediaType: MediaKind.movie,
+          title: 'Movie B',
+          voteCount: 5000,
+        ),
+        const PersonCredit(
+          id: 3,
+          mediaType: MediaKind.movie,
+          title: 'Movie C',
+          voteCount: 1200,
+        ),
       ];
 
       final top = PersonDomainService.extractTopKnownFor(cast, limit: 2);
 
       expect(top.length, 2);
-      expect(top[0]['id'], 2);
-      expect(top[1]['id'], 3);
+      expect(top[0].id, 2);
+      expect(top[1].id, 3);
     });
 
     test('processFilmography deduplicates, sorts by date desc, and filters hidden items', () {
       final cast = [
-        {
-          'id': 1,
-          'title': 'Old Movie',
-          'release_date': '2010-01-01',
-          'genre_ids': [18],
-        },
-        {
-          'id': 2,
-          'title': 'New Movie',
-          'release_date': '2024-01-01',
-          'genre_ids': [28],
-        },
-        {
-          'id': 3,
-          'title': 'The 90th Academy Awards',
-          'release_date': '2018-03-04',
-          'genre_ids': [10763],
-        },
+        PersonCredit(
+          id: 1,
+          mediaType: MediaKind.movie,
+          title: 'Old Movie',
+          releaseDate: DateTime(2010, 1, 1),
+          genreIds: const [18],
+        ),
+        PersonCredit(
+          id: 2,
+          mediaType: MediaKind.movie,
+          title: 'New Movie',
+          releaseDate: DateTime(2024, 1, 1),
+          genreIds: const [28],
+        ),
+        PersonCredit(
+          id: 3,
+          mediaType: MediaKind.movie,
+          title: 'The 90th Academy Awards',
+          releaseDate: DateTime(2018, 3, 4),
+          genreIds: const [10763],
+        ),
       ];
       final crew = [
-        {
+        PersonCredit(
           // Duplicate of 2
-          'id': 2,
-          'title': 'New Movie',
-          'release_date': '2024-01-01',
-          'genre_ids': [28],
-        },
+          id: 2,
+          mediaType: MediaKind.movie,
+          title: 'New Movie',
+          releaseDate: DateTime(2024, 1, 1),
+          genreIds: const [28],
+        ),
       ];
 
       // When hidden items are filtered (showHidden == false)
@@ -115,8 +140,8 @@ void main() {
       );
 
       expect(filtered.length, 2);
-      expect(filtered[0]['id'], 2); // 2024
-      expect(filtered[1]['id'], 1); // 2010
+      expect(filtered[0].id, 2); // 2024
+      expect(filtered[1].id, 1); // 2010
 
       // When hidden items are shown (showHidden == true)
       final all = PersonDomainService.processFilmography(
@@ -126,9 +151,9 @@ void main() {
       );
 
       expect(all.length, 3);
-      expect(all[0]['id'], 2);
-      expect(all[1]['id'], 3);
-      expect(all[2]['id'], 1);
+      expect(all[0].id, 2);
+      expect(all[1].id, 3);
+      expect(all[2].id, 1);
     });
   });
 }

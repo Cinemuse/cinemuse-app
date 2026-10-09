@@ -158,7 +158,7 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
       onLongPress: () => _showContextMenu(context),
       onSecondaryTap: () => _showContextMenu(context),
       scale: 1.04,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: AppTheme.radiusLg,
       builder: (context, isFocused, isHovered, child) {
         return SizedBox(
           width: 270,
@@ -205,7 +205,7 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
       child: Stack(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: AppTheme.radiusLg,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -220,7 +220,7 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
             child: CardFocusBorder(
               isFocused: isFocused,
               isHovered: isHovered,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: AppTheme.radiusLg,
             ),
           ),
         ],
@@ -280,7 +280,7 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
             decoration: BoxDecoration(
               color: AppTheme.surfaceOverlay,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: AppTheme.radiusSm,
               border: Border.all(
                 color: AppTheme.textWhite.withValues(alpha: 0.15),
               ),
@@ -335,7 +335,7 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
                 color: AppTheme.surfaceOverlay,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: AppTheme.radiusSm,
               ),
               child: Text(
                 '${runtime}m',

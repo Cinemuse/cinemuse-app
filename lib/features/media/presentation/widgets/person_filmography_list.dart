@@ -1,13 +1,15 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/media/domain/person.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class PersonFilmographyList extends StatelessWidget {
-  final List<Map<String, dynamic>> credits;
-  final ValueChanged<Map<String, dynamic>> onMediaTap;
+  final List<PersonCredit> credits;
+  final ValueChanged<PersonCredit> onMediaTap;
 
   const PersonFilmographyList({
     super.key,
@@ -26,15 +28,12 @@ class PersonFilmographyList extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final item = credits[index];
-        final year = (item['release_date'] ?? item['first_air_date'] ?? '')
-            .toString()
-            .split('-')
-            .first;
-        final title = (item['title'] ?? item['name'] ?? 'Unknown').toString();
-        final posterPath = item['poster_path'] as String?;
-        final isTv = item['media_type'] == 'tv';
-        final role = (item['character'] ?? item['job'] ?? '').toString();
-        final rating = (item['vote_average'] as num?)?.toDouble() ?? 0.0;
+        final year = item.releaseYear;
+        final title = item.title;
+        final posterPath = item.posterPath;
+        final isTv = item.mediaType == MediaKind.tv;
+        final role = item.role ?? '';
+        final rating = item.voteAverage;
         final thumbnailUrl = posterPath != null
             ? TmdbImageHelper.thumbnailUrl(posterPath)
             : null;
@@ -167,7 +166,7 @@ class PersonFilmographyList extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: AppTheme.success.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: AppTheme.radiusSm,
                       border: Border.all(
                         color: AppTheme.success.withValues(alpha: 0.2),
                       ),

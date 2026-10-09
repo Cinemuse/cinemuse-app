@@ -36,59 +36,21 @@ class CastRow extends StatelessWidget {
   final List<CastMember>? cast;
   final List<CrewMember>? crew;
   final List<CrewMember>? creators;
-  final Map<String, dynamic>? credits;
-  final Map<String, dynamic>? details;
 
   const CastRow({
     super.key,
     this.cast,
     this.crew,
     this.creators,
-    this.credits,
-    this.details,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    // Resolve Cast
-    final List<CastMember> resolvedCast;
-    if (cast != null) {
-      resolvedCast = cast!.take(15).toList();
-    } else {
-      final resolvedCredits = credits ?? (details?['credits'] as Map<String, dynamic>?);
-      final rawCast = (resolvedCredits?['cast'] as List?)?.take(15) ?? [];
-      resolvedCast = rawCast
-          .whereType<Map>()
-          .map((c) => CastMember.fromTmdbMap(Map<String, dynamic>.from(c)))
-          .toList();
-    }
-
-    // Resolve Crew
-    final List<CrewMember> resolvedCrew;
-    if (crew != null) {
-      resolvedCrew = crew!;
-    } else {
-      final resolvedCredits = credits ?? (details?['credits'] as Map<String, dynamic>?);
-      final rawCrew = (resolvedCredits?['crew'] as List?) ?? [];
-      resolvedCrew = rawCrew
-          .whereType<Map>()
-          .map((c) => CrewMember.fromTmdbMap(Map<String, dynamic>.from(c)))
-          .toList();
-    }
-
-    // Resolve Creators
-    final List<CrewMember> resolvedCreators;
-    if (creators != null) {
-      resolvedCreators = creators!;
-    } else {
-      final rawCreators = (details?['created_by'] as List?) ?? [];
-      resolvedCreators = rawCreators
-          .whereType<Map>()
-          .map((c) => CrewMember.fromTmdbMap(Map<String, dynamic>.from(c)))
-          .toList();
-    }
+    final resolvedCast = (cast ?? const []).take(15).toList();
+    final resolvedCrew = crew ?? const [];
+    final resolvedCreators = creators ?? const [];
 
     // 1. Extract Creative Team (Directors, Creators, Lead Writers)
     final directors = resolvedCrew.where((c) => c.job == 'Director').toList();

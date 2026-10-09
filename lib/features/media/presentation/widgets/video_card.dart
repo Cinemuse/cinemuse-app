@@ -23,7 +23,7 @@ class VideoCard extends StatelessWidget {
     return DpadFocusable(
       onTap: onTap,
       scale: 1.04,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: AppTheme.radiusLg,
       builder: (context, isFocused, isHovered, child) {
         return SizedBox(
           width: 320,
@@ -35,7 +35,7 @@ class VideoCard extends StatelessWidget {
                 child: Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: AppTheme.radiusLg,
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
@@ -77,7 +77,7 @@ class VideoCard extends StatelessWidget {
                       child: CardFocusBorder(
                         isFocused: isFocused,
                         isHovered: isHovered,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: AppTheme.radiusLg,
                       ),
                     ),
                   ],

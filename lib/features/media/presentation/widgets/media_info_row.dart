@@ -31,11 +31,12 @@ class MediaInfoRow extends StatelessWidget {
     final hasGallery =
         backdrops.isNotEmpty || posters.isNotEmpty || logos.isNotEmpty;
 
-    final extIds = mediaItem?.externalIds;
-    final legacyExtIds = details?['external_ids'];
+    final extIds = mediaItem?.externalIds ??
+        (details?['external_ids'] != null
+            ? ExternalIds.fromTmdbMap(Map<String, dynamic>.from(details!['external_ids']))
+            : null);
     final homepage = mediaItem?.homepage ?? (details?['homepage'] as String?);
     final hasLinks = extIds != null ||
-        legacyExtIds != null ||
         (homepage != null && homepage.trim().isNotEmpty);
 
     final columns = <Widget>[];
@@ -53,7 +54,6 @@ class MediaInfoRow extends StatelessWidget {
       columns.add(
         ExternalLinks(
           ids: extIds,
-          externalIds: legacyExtIds,
           homepage: homepage,
           type: typeForTmdb,
           tmdbId: tmdbId,

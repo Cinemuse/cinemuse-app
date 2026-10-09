@@ -242,7 +242,7 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppTheme.surfaceOverlay,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: AppTheme.radiusLg,
                     ),
                     child: Text(
                       '${_currentIndex + 1} / ${widget.imageUrls.length}',
@@ -342,7 +342,7 @@ class _NavigationArrowState extends State<_NavigationArrow> {
             color: Colors.transparent,
             child: InkWell(
               onTap: widget.onTap,
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: AppTheme.radiusFull,
               hoverColor: Colors.transparent,
               splashColor: isEnabled ? AppTheme.accent.withValues(alpha: 0.3) : null,
               highlightColor: isEnabled ? AppTheme.accent.withValues(alpha: 0.2) : null,

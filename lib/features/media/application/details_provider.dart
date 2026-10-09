@@ -162,12 +162,12 @@ final mediaWatchHistoryProvider =
 
 // StateNotifier for managing series logs with optimistic updates
 class OptimisticSeriesLogs
-    extends FamilyStreamNotifier<List<Map<String, dynamic>>, int> {
+    extends FamilyStreamNotifier<List<WatchLog>, int> {
   // Key: "season-episode" -> true (added), false (removed)
   final Map<String, bool> _optimisticUpdates = {};
 
   @override
-  Stream<List<Map<String, dynamic>>> build(int arg) {
+  Stream<List<WatchLog>> build(int arg) {
     final userId = ref.watch(authProvider).asData?.value?.id;
     if (userId == null) return Stream.value([]);
 
@@ -181,6 +181,7 @@ class OptimisticSeriesLogs
           }
           throw error;
         })
+        .map((list) => list.map(WatchLog.fromJson).toList())
         .map((logs) => _applyOptimisticUpdates(logs));
   }
 
@@ -201,12 +202,12 @@ class OptimisticSeriesLogs
     ref.invalidateSelf();
   }
 
-  List<Map<String, dynamic>> _applyOptimisticUpdates(
-    List<Map<String, dynamic>> currentLogs,
+  List<WatchLog> _applyOptimisticUpdates(
+    List<WatchLog> currentLogs,
   ) {
     // 0. Build current server state map
     final Set<String> serverKeys = currentLogs
-        .map((l) => '${l['season']}-${l['episode']}')
+        .map((l) => '${l.season}-${l.episode}')
         .toSet();
 
     // 1. Self-Cleaning: Prune confirmed changes from the local map
@@ -215,7 +216,7 @@ class OptimisticSeriesLogs
       return (isWatched && exists) || (!isWatched && !exists);
     });
 
-    final List<Map<String, dynamic>> updatedLogs = List.from(currentLogs);
+    final List<WatchLog> updatedLogs = List.from(currentLogs);
     final Set<String> activeKeys = Set.from(serverKeys);
 
     // 2. Apply remaining optimistic updates that aren't on the server yet
@@ -226,17 +227,20 @@ class OptimisticSeriesLogs
 
       if (isWatched) {
         if (!activeKeys.contains(key)) {
-          updatedLogs.add({
-            'season': s,
-            'episode': e,
-            'media_type': 'tv',
-            'logged_at': DateTime.now().toIso8601String(),
-            'is_optimistic': true,
-          });
+          updatedLogs.add(
+            WatchLog(
+              tmdbId: arg,
+              season: s,
+              episode: e,
+              mediaType: MediaKind.tv,
+              loggedAt: DateTime.now(),
+              isOptimistic: true,
+            ),
+          );
           activeKeys.add(key);
         }
       } else {
-        updatedLogs.removeWhere((l) => l['season'] == s && l['episode'] == e);
+        updatedLogs.removeWhere((l) => l.season == s && l.episode == e);
         activeKeys.remove(key);
       }
     });
@@ -249,7 +253,7 @@ class OptimisticSeriesLogs
 final seriesWatchLogsProvider =
     StreamNotifierProvider.family<
       OptimisticSeriesLogs,
-      List<Map<String, dynamic>>,
+      List<WatchLog>,
       int
     >(() {
       return OptimisticSeriesLogs();
@@ -265,8 +269,8 @@ final watchedEpisodesMapProvider = Provider.family<Map<String, int>, int>((
     data: (logs) {
       final counts = <String, int>{};
       for (final log in logs) {
-        final s = log['season'];
-        final e = log['episode'];
+        final s = log.season;
+        final e = log.episode;
         if (s != null && e != null) {
           final key = '$s-$e';
           counts[key] = (counts[key] ?? 0) + 1;
@@ -344,14 +348,14 @@ final episodeProgressMapProvider =
 
 // StateNotifier for managing movie logs with optimistic updates
 class OptimisticMovieLogs
-    extends FamilyStreamNotifier<List<Map<String, dynamic>>, int> {
+    extends FamilyStreamNotifier<List<WatchLog>, int> {
   // Sets of normalized "logged_at" strings to manage additions and removals
   final Set<String> _optimisticAdditions = {};
   final Set<String> _optimisticRemovals = {};
   bool _clearAll = false;
 
   @override
-  Stream<List<Map<String, dynamic>>> build(int arg) {
+  Stream<List<WatchLog>> build(int arg) {
     final userId = ref.watch(authProvider).asData?.value?.id;
     if (userId == null) return Stream.value([]);
 
@@ -365,28 +369,25 @@ class OptimisticMovieLogs
           }
           throw error;
         })
+        .map((list) => list.map(WatchLog.fromJson).toList())
         .map((logs) => _applyOptimisticUpdates(logs));
   }
 
-  String _normalizeTimestamp(String ts) {
-    if (ts.isEmpty) return ts;
-    try {
-      final date = DateTime.parse(ts);
-      return DateTime(
-        date.year,
-        date.month,
-        date.day,
-        date.hour,
-        date.minute,
-        date.second,
-      ).toIso8601String();
-    } catch (_) {
-      return ts;
-    }
+  String _normalizeTimestamp(DateTime date) {
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+      date.hour,
+      date.minute,
+      date.second,
+    ).toIso8601String();
   }
 
   void addOptimisticLog(String loggedAt) {
-    final normalized = _normalizeTimestamp(loggedAt);
+    final date = DateTime.tryParse(loggedAt);
+    if (date == null) return;
+    final normalized = _normalizeTimestamp(date);
     _optimisticRemovals.remove(normalized);
     _optimisticAdditions.add(normalized);
     _clearAll = false;
@@ -397,16 +398,15 @@ class OptimisticMovieLogs
     state.whenData((logs) {
       if (logs.isEmpty) return;
 
-      final sorted = List<Map<String, dynamic>>.from(logs)
+      final sorted = List<WatchLog>.from(logs)
         ..sort(
-          (a, b) =>
-              (b['logged_at'] as String).compareTo(a['logged_at'] as String),
+          (a, b) => b.loggedAt.compareTo(a.loggedAt),
         );
 
       final latest = sorted.first;
-      final normalized = _normalizeTimestamp(latest['logged_at'] as String);
+      final normalized = _normalizeTimestamp(latest.loggedAt);
 
-      if (latest['is_optimistic'] == true) {
+      if (latest.isOptimistic) {
         _optimisticAdditions.remove(normalized);
       } else {
         _optimisticRemovals.add(normalized);
@@ -435,41 +435,42 @@ class OptimisticMovieLogs
     });
   }
 
-  List<Map<String, dynamic>> _applyOptimisticUpdates(
-    List<Map<String, dynamic>> currentLogs,
+  List<WatchLog> _applyOptimisticUpdates(
+    List<WatchLog> currentLogs,
   ) {
     if (_clearAll) return [];
 
     final Set<String> serverKeys = currentLogs
-        .map((l) => _normalizeTimestamp(l['logged_at'] as String? ?? ''))
+        .map((l) => _normalizeTimestamp(l.loggedAt))
         .toSet();
 
     // 1. Self-Cleaning: Prune confirmed entries
     _optimisticAdditions.removeWhere((key) => serverKeys.contains(key));
     _optimisticRemovals.removeWhere((key) => !serverKeys.contains(key));
 
-    final updatedLogs = List<Map<String, dynamic>>.from(currentLogs);
+    final updatedLogs = List<WatchLog>.from(currentLogs);
 
     // 2. Hide removals still present in the stream
     updatedLogs.removeWhere(
-      (l) => _optimisticRemovals.contains(
-        _normalizeTimestamp(l['logged_at'] as String? ?? ''),
-      ),
+      (l) => _optimisticRemovals.contains(_normalizeTimestamp(l.loggedAt)),
     );
 
     final Set<String> activeKeys = updatedLogs
-        .map((l) => _normalizeTimestamp(l['logged_at'] as String? ?? ''))
+        .map((l) => _normalizeTimestamp(l.loggedAt))
         .toSet();
 
     // 3. Add additions not yet present in the stream
-    for (final loggedAt in _optimisticAdditions) {
-      if (!activeKeys.contains(loggedAt)) {
-        updatedLogs.add({
-          'media_type': 'movie',
-          'logged_at': loggedAt,
-          'is_optimistic': true,
-        });
-        activeKeys.add(loggedAt);
+    for (final loggedAtStr in _optimisticAdditions) {
+      if (!activeKeys.contains(loggedAtStr)) {
+        updatedLogs.add(
+          WatchLog(
+            tmdbId: arg,
+            mediaType: MediaKind.movie,
+            loggedAt: DateTime.tryParse(loggedAtStr) ?? DateTime.now(),
+            isOptimistic: true,
+          ),
+        );
+        activeKeys.add(loggedAtStr);
       }
     }
 
@@ -481,7 +482,7 @@ class OptimisticMovieLogs
 final movieWatchLogsProvider =
     StreamNotifierProvider.family<
       OptimisticMovieLogs,
-      List<Map<String, dynamic>>,
+      List<WatchLog>,
       int
     >(() {
       return OptimisticMovieLogs();

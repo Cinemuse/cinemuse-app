@@ -6,9 +6,9 @@ import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class GalleryBottomSheet extends StatelessWidget {
-  final List<dynamic> backdrops;
-  final List<dynamic> posters;
-  final List<dynamic> logos;
+  final List<String> backdrops;
+  final List<String> posters;
+  final List<String> logos;
   final int initialTabIndex;
 
   const GalleryBottomSheet({
@@ -22,9 +22,9 @@ class GalleryBottomSheet extends StatelessWidget {
   /// Static helper to launch the bottom sheet
   static void show({
     required BuildContext context,
-    required List<dynamic> backdrops,
-    required List<dynamic> posters,
-    required List<dynamic> logos,
+    required List<String> backdrops,
+    required List<String> posters,
+    required List<String> logos,
     required int initialTabIndex,
   }) {
     AppBottomSheet.show(
@@ -45,17 +45,15 @@ class GalleryBottomSheet extends StatelessWidget {
     );
   }
 
-  String _getImageUrl(dynamic item, String size) {
-    if (item == null) return '';
-    final path = item is Map ? item['file_path'] as String? : item.toString();
-    if (path == null || path.isEmpty) return '';
+  String _getImageUrl(String path, String size) {
+    if (path.isEmpty) return '';
     if (path.startsWith('http')) return path;
     return 'https://image.tmdb.org/t/p/$size$path';
   }
 
   void _openFullscreenViewer(
     BuildContext context,
-    List<dynamic> items,
+    List<String> items,
     int initialIndex,
   ) {
     final urls = items.map((item) => _getImageUrl(item, 'original')).toList();
@@ -123,7 +121,7 @@ class GalleryBottomSheet extends StatelessWidget {
 
   Widget _buildGrid({
     required BuildContext context,
-    required List<dynamic> items,
+    required List<String> items,
     required int crossAxisCount,
     required double aspectRatio,
     required String previewSize,
@@ -148,7 +146,7 @@ class GalleryBottomSheet extends StatelessWidget {
         return GestureDetector(
           onTap: () => _openFullscreenViewer(context, items, index),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: AppTheme.radiusMd,
             child: CachedNetworkImage(
               imageUrl: url,
               memCacheWidth: memCacheWidth,
@@ -203,7 +201,7 @@ class GalleryBottomSheet extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               color: AppTheme.secondary.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: AppTheme.radiusMd,
               border: Border.all(
                 color: AppTheme.textWhite.withValues(alpha: 0.05),
               ),

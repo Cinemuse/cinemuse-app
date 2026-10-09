@@ -517,7 +517,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       case DetailsTab.links:
         return ExternalLinks(
           ids: mediaItem.externalIds,
-          externalIds: details['external_ids'],
           homepage: mediaItem.homepage ?? details['homepage'],
           type: typeForTmdb,
           tmdbId: mediaItem.tmdbId,

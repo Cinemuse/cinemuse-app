@@ -79,8 +79,8 @@ class _ModalContentWithPickerState extends State<_ModalContentWithPicker> {
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.accent,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                      shape: const RoundedRectangleBorder(
+                          borderRadius: AppTheme.radius12),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     onPressed: () => setState(() => _isPickingDate = false),
@@ -523,12 +523,12 @@ class _ModalButton extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: AppTheme.radius12,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppTheme.radius12,
           border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Row(
@@ -633,8 +633,8 @@ class MarkPrecedingModal {
                   backgroundColor: AppTheme.accent,
                   foregroundColor: AppTheme.textWhite,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: AppTheme.radius12,
                   ),
                 ),
                 child: Text(

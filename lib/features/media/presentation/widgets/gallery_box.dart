@@ -59,7 +59,7 @@ class GalleryBox extends StatelessWidget {
       action: HoverScale(
         onTap: () => _openGallery(context, 0),
         showFocusRing: true,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppTheme.radiusMd,
         child: const Padding(
           padding: EdgeInsets.all(4.0),
           child: Icon(
@@ -126,12 +126,12 @@ class _GalleryPill extends StatelessWidget {
     return HoverScale(
       onTap: onTap,
       showFocusRing: true,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: AppTheme.radius12,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: AppTheme.secondary.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppTheme.radius12,
           border: Border.all(
             color: AppTheme.border.withValues(alpha: 0.1),
           ),

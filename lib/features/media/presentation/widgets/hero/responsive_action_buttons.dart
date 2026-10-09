@@ -298,7 +298,7 @@ class _SplitPlayButton extends StatelessWidget {
       color: theme.colorScheme.surface,
       elevation: 10,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppTheme.radius12,
         side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
       ),
       offset: const Offset(0, 48),
@@ -362,28 +362,15 @@ class _SplitPlayButton extends StatelessWidget {
         popupKey.currentState?.showButtonMenu();
       },
       scale: 1.06,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: AppTheme.radius12,
       builder: (context, isFocused, isHovered, child) {
         return Container(
           decoration: BoxDecoration(
             color: theme.colorScheme.primary,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppTheme.radius12,
             boxShadow: isFocused
-                ? const [
-                    BoxShadow(
-                      color: Color(0x99000000), // black 60%
-                      blurRadius: 18,
-                      spreadRadius: 1,
-                      offset: Offset(0, 6),
-                    ),
-                  ]
-                : const [
-                    BoxShadow(
-                      color: Color(0x40000000), // black 25%
-                      blurRadius: 8,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
+                ? AppTheme.shadowAccentGlow
+                : AppTheme.shadowCard,
           ),
           clipBehavior: Clip.antiAlias,
           child: child,
@@ -467,30 +454,17 @@ class _PlayButton extends StatelessWidget {
       },
       onTap: onPlayClick,
       scale: 1.06,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: AppTheme.radius12,
       builder: (context, isFocused, isHovered, child) {
         return Container(
           width: isFullWidth ? double.infinity : null,
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 15),
           decoration: BoxDecoration(
             color: theme.colorScheme.primary,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppTheme.radius12,
             boxShadow: isFocused
-                ? const [
-                    BoxShadow(
-                      color: Color(0x99000000), // black 60%
-                      blurRadius: 18,
-                      spreadRadius: 1,
-                      offset: Offset(0, 6),
-                    ),
-                  ]
-                : const [
-                    BoxShadow(
-                      color: Color(0x40000000), // black 25%
-                      blurRadius: 8,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
+                ? AppTheme.shadowAccentGlow
+                : AppTheme.shadowCard,
           ),
           child: child,
         );
@@ -555,7 +529,7 @@ class _TrackButton extends StatelessWidget {
       autoScroll: false,
       onTap: onTrackTap,
       scale: 1.0,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: AppTheme.radius12,
       builder: (context, isFocused, isHovered, child) {
         final theme = Theme.of(context);
         final baseColor = theme.colorScheme.onSurface.withValues(alpha: 0.08);
@@ -574,7 +548,7 @@ class _TrackButton extends StatelessWidget {
                     : (isHovered
                         ? Color.alphaBlend(theme.hoverColor, baseColor)
                         : baseColor)),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppTheme.radius12,
             border: Border.all(
               color: isFullyWatched
                   ? AppTheme.success.withValues(alpha: 0.3)
@@ -649,7 +623,7 @@ class _CommentsButton extends StatelessWidget {
         autoScroll: false,
         onTap: onCommentsTap,
         scale: 1.0,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppTheme.radius12,
         builder: (context, isFocused, isHovered, child) {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
@@ -659,7 +633,7 @@ class _CommentsButton extends StatelessWidget {
                   : (isHovered
                       ? Color.alphaBlend(theme.hoverColor, baseColor)
                       : baseColor),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: AppTheme.radius12,
               border: Border.all(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
                 width: 1.0,

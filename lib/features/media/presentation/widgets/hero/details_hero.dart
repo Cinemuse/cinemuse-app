@@ -278,7 +278,7 @@ class DetailsHero extends ConsumerWidget {
                         ),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: AppTheme.radius12,
                         ),
                         child: Text(
                           g.name,

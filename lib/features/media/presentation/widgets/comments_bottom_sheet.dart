@@ -189,7 +189,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       color: AppTheme.surface,
       surfaceTintColor: Colors.transparent,
       position: PopupMenuPosition.under,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: const RoundedRectangleBorder(borderRadius: AppTheme.radius12),
       onSelected: (val) {
         ref
             .read(commentsProvider(widget.request).notifier)
@@ -257,7 +257,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       color: AppTheme.surface,
       surfaceTintColor: Colors.transparent,
       position: PopupMenuPosition.under,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: const RoundedRectangleBorder(borderRadius: AppTheme.radius12),
       onSelected: (val) {
         ref
             .read(commentsProvider(widget.request).notifier)
@@ -292,7 +292,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppTheme.textWhite.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppTheme.radius12,
         border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
       ),
       child: Row(

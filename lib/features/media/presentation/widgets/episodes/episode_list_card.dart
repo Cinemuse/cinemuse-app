@@ -157,7 +157,7 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
       onLongPress: () => _showContextMenu(context),
       onSecondaryTap: () => _showContextMenu(context),
       scale: 1.01,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: AppTheme.radiusLg,
       builder: (context, isFocused, isHovered, child) {
         final theme = Theme.of(context);
         return Stack(
@@ -169,7 +169,7 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
                     : (isHovered
                         ? theme.colorScheme.surfaceContainer.withValues(alpha: 0.7)
                         : theme.colorScheme.surfaceContainer.withValues(alpha: 0.5)),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: AppTheme.radiusLg,
               ),
               clipBehavior: Clip.antiAlias,
               child: child,
@@ -178,7 +178,7 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
               child: CardFocusBorder(
                 isFocused: isFocused,
                 isHovered: isHovered,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: AppTheme.radiusLg,
               ),
             ),
           ],
@@ -260,7 +260,7 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
           AspectRatio(
             aspectRatio: 16 / 9,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: AppTheme.radiusMd,
               child: stillPath != null
                   ? CachedNetworkImage(
                       imageUrl: TmdbImageHelper.stillUrl(context, stillPath) ?? '',
@@ -332,7 +332,7 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
                 color: AppTheme.surfaceOverlay,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: AppTheme.radiusSm,
                 border: Border.all(
                   color: AppTheme.textWhite.withValues(alpha: 0.1),
                 ),
@@ -357,7 +357,7 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceOverlay,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: AppTheme.radiusSm,
                 ),
                 child: Row(
                   children: [

@@ -30,7 +30,7 @@ class _CommentTileState extends State<CommentTile>
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppTheme.radius12,
         border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.05)),
       ),
       child: Column(
@@ -111,7 +111,7 @@ class _CommentTileState extends State<CommentTile>
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: AppTheme.accent.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: AppTheme.radiusSm,
         border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
       ),
       child: Row(
@@ -170,7 +170,7 @@ class _CommentTileState extends State<CommentTile>
         padding: const EdgeInsets.symmetric(vertical: 24),
         decoration: BoxDecoration(
           color: AppTheme.textWhite.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: AppTheme.radiusMd,
           border: Border.all(color: AppTheme.favorites.withValues(alpha: 0.3)),
         ),
         child: Column(
@@ -257,7 +257,7 @@ class _CommentTileState extends State<CommentTile>
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: AppTheme.radiusSm,
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(

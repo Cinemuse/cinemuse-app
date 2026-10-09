@@ -425,7 +425,7 @@ class SeasonSelector extends ConsumerWidget {
             ref.read(selectedSeasonProvider(mediaId).notifier).selectSeason(val),
         child: DpadFocusable(
           onTap: () => popupKey.currentState?.showButtonMenu(),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: AppTheme.radiusMd,
           builder: (context, isFocused, isHovered, child) {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -435,7 +435,7 @@ class SeasonSelector extends ConsumerWidget {
                     : (isHovered
                         ? theme.hoverColor
                         : theme.colorScheme.surfaceContainer.withValues(alpha: 0.5)),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: AppTheme.radiusMd,
                 border: Border.all(
                   color: isFocused
                       ? theme.colorScheme.primary.withValues(alpha: 0.5)

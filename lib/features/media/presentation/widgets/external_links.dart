@@ -12,7 +12,6 @@ const Color _kTmdbBrandColor = Color(0xFF01B4E4);
 
 class ExternalLinks extends StatelessWidget {
   final ExternalIds? ids;
-  final Map<String, dynamic>? externalIds;
   final String? homepage;
   final String type;
   final int tmdbId;
@@ -20,7 +19,6 @@ class ExternalLinks extends StatelessWidget {
   const ExternalLinks({
     super.key,
     this.ids,
-    this.externalIds,
     this.homepage,
     required this.type,
     required this.tmdbId,
@@ -29,7 +27,7 @@ class ExternalLinks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final resolvedIds = ids ?? (externalIds != null ? ExternalIds.fromTmdbMap(externalIds!) : null);
+    final resolvedIds = ids;
 
     // Row 1: Themed Brand Buttons (IMDb, TMDB)
     final brandButtons = <Widget>[];

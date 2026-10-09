@@ -12,13 +12,11 @@ import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class CollectionTile extends ConsumerStatefulWidget {
-  final MediaCollection? collection;
-  final Map<String, dynamic>? rawCollection;
+  final MediaCollection collection;
 
   const CollectionTile({
     super.key,
-    this.collection,
-    this.rawCollection,
+    required this.collection,
   });
 
   @override
@@ -28,22 +26,15 @@ class CollectionTile extends ConsumerStatefulWidget {
 class _CollectionTileState extends ConsumerState<CollectionTile> {
   bool _isLoading = false;
 
-  int get _collectionId {
-    if (widget.collection != null) return widget.collection!.id;
-    return (widget.rawCollection?['id'] as num?)?.toInt() ?? 0;
-  }
+  int get _collectionId => widget.collection.id;
 
   String _getTitle(AppLocalizations l10n) {
-    if (widget.collection != null) {
-      return widget.collection!.name.isNotEmpty
-          ? widget.collection!.name
-          : l10n.collectionTitleFallback;
-    }
-    return widget.rawCollection?['name'] as String? ?? l10n.collectionTitleFallback;
+    return widget.collection.name.isNotEmpty
+        ? widget.collection.name
+        : l10n.collectionTitleFallback;
   }
 
-  String? get _backdropPath =>
-      widget.collection?.backdropPath ?? widget.rawCollection?['backdrop_path'];
+  String? get _backdropPath => widget.collection.backdropPath;
 
   void _openCollection(BuildContext context, WidgetRef ref) async {
     if (_isLoading || _collectionId == 0) return;
@@ -103,7 +94,7 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
       child: Container(
         height: 120,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: AppTheme.radiusLg,
           color: AppTheme.surface,
           image: backdropPath != null
               ? DecorationImage(
@@ -130,7 +121,7 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: AppTheme.accent.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: AppTheme.radius12,
                     ),
                   child: const Icon(
                     LucideIcons.film,

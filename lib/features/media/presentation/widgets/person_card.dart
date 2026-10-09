@@ -30,7 +30,7 @@ class PersonCard extends StatelessWidget {
       child: DpadFocusable(
         onTap: onTap,
         scale: 1.05,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppTheme.radiusLg,
         builder: (context, isFocused, isHovered, child) {
           return SizedBox(
             width: 120,
@@ -43,7 +43,7 @@ class PersonCard extends StatelessWidget {
                   child: Stack(
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: AppTheme.radiusLg,
                         child: CachedNetworkImage(
                           imageUrl: profilePath != null
                               ? TmdbImageHelper.profileUrl(context, profilePath)!
@@ -65,7 +65,7 @@ class PersonCard extends StatelessWidget {
                         child: CardFocusBorder(
                           isFocused: isFocused,
                           isHovered: isHovered,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: AppTheme.radiusLg,
                         ),
                       ),
                     ],

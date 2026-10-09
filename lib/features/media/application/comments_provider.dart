@@ -104,7 +104,13 @@ class CommentsNotifier
         hasMore: p2.isNotEmpty,
         currentPage: _currentPage,
       );
-    } catch (e) {
+    } catch (e, stack) {
+      developer.log(
+        'Failed to load initial comments for $arg',
+        name: 'CommentsNotifier',
+        error: e,
+        stackTrace: stack,
+      );
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }

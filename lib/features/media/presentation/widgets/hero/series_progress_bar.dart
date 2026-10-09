@@ -51,7 +51,7 @@ class SeriesProgressBar extends ConsumerWidget {
           ),
           const SizedBox(height: 6),
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: AppTheme.radiusFull,
             child: LinearProgressIndicator(
               value: progress.percentage / 100,
               backgroundColor: AppTheme.textWhite.withValues(alpha: 0.1),
