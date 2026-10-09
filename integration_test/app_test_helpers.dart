@@ -1,12 +1,10 @@
 /// Shared helpers for Cinemuse integration/performance tests.
 ///
 /// Bootstraps the full app with all required initializations
-/// (dotenv, Supabase, MediaKit, SQLite, HTTP overrides) and
+/// (dotenv, Supabase, MediaKit, SQLite) and
 /// authenticates via direct [AuthService.signIn] call — no UI
 /// interaction needed, which allows running in profile mode.
 library;
-
-import 'dart:io' as io;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,7 +16,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:cinemuse_app/core/data/sqlite_workaround.dart';
-import 'package:cinemuse_app/core/network/http_overrides.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/core/presentation/app_shell.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -44,7 +41,6 @@ bool _initialized = false;
 Future<void> _ensureInitialized() async {
   if (_initialized) return;
 
-  io.HttpOverrides.global = AppHttpOverrides();
   setupSqlite();
   MediaKit.ensureInitialized();
 
