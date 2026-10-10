@@ -31,10 +31,12 @@ class PlatformInfo {
     _isTvOverrideForTesting = value;
   }
 
-  /// Whether running on traditional desktop platforms (Windows, Linux, macOS).
+  /// Whether running on a desktop platform (Windows, Linux).
+  /// Uses [defaultTargetPlatform] so widget tests can fake another platform.
   static bool get isDesktop {
     if (kIsWeb) return false;
-    return Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+    return defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux;
   }
 
   /// Whether running on standard mobile platforms (Android Phone/Tablet, iOS).

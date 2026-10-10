@@ -4,7 +4,7 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class AppBottomNavbar extends StatelessWidget {
   final int currentIndex;
-  final Function(int) onTap;
+  final ValueChanged<int> onTap;
 
   const AppBottomNavbar({
     super.key,
@@ -50,7 +50,7 @@ class AppBottomNavbar extends StatelessWidget {
           ),
           _BottomNavItem(
             icon: currentIndex == 2 ? Icons.live_tv : Icons.live_tv_outlined,
-            label: "Live TV",
+            label: l10n.navLiveTV,
             isSelected: currentIndex == 2,
             onTap: () => onTap(2),
           ),

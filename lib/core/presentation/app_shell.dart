@@ -6,6 +6,7 @@ import 'package:cinemuse_app/features/explore/presentation/pages/explore_screen.
 import 'package:cinemuse_app/features/navigation/presentation/navbar.dart';
 import 'package:cinemuse_app/features/profile/presentation/profile_hub.dart';
 import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/search/presentation/search_overlay.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
@@ -83,7 +84,8 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(navIndexProvider);
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    // One rule for the whole shell (REV-51): the navbar gets the same answer.
+    final isCompact = Breakpoints.isCompact(context);
     final shellNavigatorKey = ref.watch(shellNavigatorKeyProvider);
 
     // Global Error Listener
@@ -138,36 +140,27 @@ class _AppShellState extends ConsumerState<AppShell> {
           },
           child: Scaffold(
             backgroundColor: Colors.black, // Match "bg-primary"
-            bottomNavigationBar: isMobile
+            bottomNavigationBar: isCompact
                 ? AppBottomNavbar(
                     currentIndex: currentIndex,
                     onTap: (index) =>
                         _onDestinationSelected(index, shellNavigatorKey),
                   )
                 : null,
-            body: isMobile
-                ? _buildMobileBody(shellNavigatorKey)
-                : _buildWidescreenBody(
-                    currentIndex: currentIndex,
-                    shellNavigatorKey: shellNavigatorKey,
-                  ),
+            body: _buildBody(
+              currentIndex: currentIndex,
+              isCompact: isCompact,
+              shellNavigatorKey: shellNavigatorKey,
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildMobileBody(GlobalKey<NavigatorState> shellNavigatorKey) {
-    return Stack(
-      children: [
-        _buildNavigator(shellNavigatorKey),
-        const Positioned.fill(child: UpdateOverlay()),
-      ],
-    );
-  }
-
-  Widget _buildWidescreenBody({
+  Widget _buildBody({
     required int currentIndex,
+    required bool isCompact,
     required GlobalKey<NavigatorState> shellNavigatorKey,
   }) {
     final isLiveTvFullWindow =
@@ -181,6 +174,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             if (!isLiveTvFullWindow)
               AppNavbar(
                 currentIndex: currentIndex,
+                isCompact: isCompact,
                 onTap: (index) =>
                     _onDestinationSelected(index, shellNavigatorKey),
                 onSettingsTap: () => _openSettings(shellNavigatorKey),
