@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 import 'package:cinemuse_app/core/error/supabase_failure.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
@@ -795,95 +796,6 @@ class WatchHistoryRepository {
     await _cacheReturnedRow(userId, tmdbId, 'tv', rows);
   }
 
-  /// Sets the "next" episode as watching with 0 progress in history.
-  /// Used to auto-advance the "Continue Watching" row.
-  Future<void> upsertNextEpisode({
-    required String userId,
-    required int tmdbId,
-    required int currentSeason,
-    required int currentEpisode,
-    required Map<String, dynamic> seriesDetails,
-  }) async {
-    final nowTime = DateTime.now().toUtc();
-    final nowStr = nowTime.toIso8601String();
-
-    final result = _seriesService.getNextEpisode(
-      seriesDetails,
-      currentSeason,
-      currentEpisode,
-    );
-
-    final nextEpisodeInfo = result.next;
-    final isAired = result.isAired;
-
-    if (nextEpisodeInfo != null) {
-      if (!isAired) {
-        // Next episode hasn't aired yet.
-        // Mark the CURRENT episode as 'completed' in watch_history so we have a record for the sync service.
-        final caughtUpEntry = {
-          'user_id': userId,
-          'tmdb_id': tmdbId,
-          'media_type': 'tv',
-          'season': currentSeason,
-          'episode': currentEpisode,
-          'status': 'completed',
-          'progress_seconds': 0,
-          'total_duration': 0,
-          'last_watched_at': nowStr,
-        };
-
-        // Update Local
-        await _db.upsertWatchHistory(
-          LocalWatchHistoriesCompanion(
-            userId: Value(userId),
-            tmdbId: Value(tmdbId),
-            mediaType: Value('tv'),
-            season: Value(currentSeason),
-            episode: Value(currentEpisode),
-            status: Value('completed'),
-            progressSeconds: Value(0),
-            totalDuration: Value(0),
-            lastWatchedAt: Value(nowTime),
-          ),
-        );
-
-        // Update Remote
-        await _client.from('watch_history').upsert(caughtUpEntry);
-        return;
-      }
-
-      final entry = {
-        'user_id': userId,
-        'tmdb_id': tmdbId,
-        'media_type': 'tv',
-        'season': nextEpisodeInfo.season,
-        'episode': nextEpisodeInfo.episode,
-        'status': 'watching',
-        'progress_seconds': 0,
-        'total_duration': 0,
-        'last_watched_at': nowStr,
-      };
-
-      // Update Local
-      await _db.upsertWatchHistory(
-        LocalWatchHistoriesCompanion(
-          userId: Value(userId),
-          tmdbId: Value(tmdbId),
-          mediaType: Value('tv'),
-          season: Value(nextEpisodeInfo.season),
-          episode: Value(nextEpisodeInfo.episode),
-          status: Value('watching'),
-          progressSeconds: Value(0),
-          totalDuration: Value(0),
-          lastWatchedAt: Value(nowTime),
-        ),
-      );
-
-      // Update Remote
-      await _client.from('watch_history').upsert(entry);
-    }
-  }
-
   /// Ensures an episode is marked as watching with 0 progress if not already tracked.
   /// Used for auto-advancing to new seasons.
   Future<void> ensureEpisodeWatching({
@@ -944,81 +856,76 @@ class WatchHistoryRepository {
     onlyLatest: false,
   );
 
+  /// Stops a rewatch: the title goes back to where the user was before it
+  /// (a movie or a finished show becomes "completed", otherwise the episode
+  /// after the highest one logged becomes "watching"), in one
+  /// `cancel_rewatch` RPC. Throws an [AppFailure].
   Future<void> cancelRewatch(
     String userId,
     int tmdbId,
     String mediaType,
   ) async {
-    // 1. Find the absolute highest progress in watch_logs
-    final maxLog = await _client
+    final next = mediaType == 'tv'
+        ? await _episodeAfterHighestLog(userId, tmdbId)
+        : null;
+
+    final rows = await _client
+        .rpc(
+          'cancel_rewatch',
+          params: {
+            'p_tmdb_id': tmdbId,
+            'p_media_type': mediaType,
+            'p_next_season': next?.next?.season,
+            'p_next_episode': next?.next?.episode,
+            'p_next_aired': next?.isAired ?? false,
+          },
+        )
+        .withAppFailure();
+    invalidateWatchLogsCache();
+    await _cacheReturnedRow(userId, tmdbId, mediaType, rows);
+  }
+
+  /// The episode after the show's highest logged one (choosing it needs
+  /// TMDB data). Null when nothing is logged or TMDB can't be reached.
+  Future<({NextEpisodeInfo? next, bool isAired})?> _episodeAfterHighestLog(
+    String userId,
+    int tmdbId,
+  ) async {
+    final highest = await _client
         .from('watch_logs')
         .select('season, episode')
         .eq('user_id', userId)
         .eq('tmdb_id', tmdbId)
-        .eq('media_type', mediaType)
+        .eq('media_type', 'tv')
         .order('season', ascending: false)
         .order('episode', ascending: false)
         .limit(1)
-        .maybeSingle();
+        .maybeSingle()
+        .withAppFailure();
+    if (highest == null) return null;
 
-    int maxSeason = 0;
-    int maxEpisode = 0;
-
-    if (maxLog != null) {
-      maxSeason = maxLog['season'] as int? ?? 0;
-      maxEpisode = maxLog['episode'] as int? ?? 0;
+    final Map<String, dynamic>? details;
+    try {
+      details = await _tmdbService.getMediaDetails(tmdbId.toString(), 'tv');
+    } catch (e, st) {
+      // Safe to go on: without a next episode the server marks the highest
+      // logged one as completed, which is still a valid state.
+      AppLogger.warn(
+        'WatchHistoryRepository',
+        'TMDB details for show $tmdbId failed; cancelling the rewatch '
+            'without a next episode',
+        error: e,
+        stackTrace: st,
+      );
+      return null;
     }
+    if (details == null) return null;
 
-    if (mediaType == 'tv' && maxLog != null) {
-      try {
-        final details = await _tmdbService.getMediaDetails(
-          tmdbId.toString(),
-          'tv',
-        );
-        if (details != null) {
-          await upsertNextEpisode(
-            userId: userId,
-            tmdbId: tmdbId,
-            currentSeason: maxSeason,
-            currentEpisode: maxEpisode,
-            seriesDetails: details,
-          );
-          return;
-        }
-      } catch (e, stack) {
-        developer.log(
-          'Failed to upsert next episode during max watch log update, falling back to manual update',
-          name: 'WatchHistoryRepository',
-          error: e,
-          stackTrace: stack,
-        );
-      }
-    }
-
-    // Default Fallback (Movies or if TV fetch fails)
-    // 2. Update Local
-    await (_db.update(
-      _db.localWatchHistories,
-    )..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId))).write(
-      LocalWatchHistoriesCompanion(
-        status: const Value('completed'),
-        season: Value(maxSeason),
-        episode: Value(maxEpisode),
-        progressSeconds: const Value(0),
-      ),
+    return _seriesService.getNextEpisode(
+      details,
+      highest['season'] as int? ?? 0,
+      highest['episode'] as int? ?? 0,
     );
-
-    // 3. Update Remote
-    await _client
-        .from('watch_history')
-        .update({
-          'status': 'completed',
-          'season': maxSeason,
-          'episode': maxEpisode,
-          'progress_seconds': 0,
-        })
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId);
   }
 
   Future<void> dropFromContinueWatching(String userId, int tmdbId) async {
@@ -1051,53 +958,23 @@ class WatchHistoryRepository {
         .eq('tmdb_id', tmdbId);
   }
 
+  /// Clears a title's progress ("Remove from Continue Watching") in one
+  /// `clear_progress` RPC: a title never logged loses its row, a movie seen
+  /// before becomes "completed" again, a show keeps its current episode with
+  /// progress 0. Throws an [AppFailure].
   Future<void> clearProgress({
     required String userId,
     required int tmdbId,
     required String mediaType,
   }) async {
+    final rows = await _client
+        .rpc(
+          'clear_progress',
+          params: {'p_tmdb_id': tmdbId, 'p_media_type': mediaType},
+        )
+        .withAppFailure();
     invalidateWatchLogsCache();
-    if (mediaType == 'movie') {
-      await _db.deleteWatchHistoryItem(userId, tmdbId, 'movie');
-      await _client
-          .from('watch_history')
-          .delete()
-          .eq('user_id', userId)
-          .eq('tmdb_id', tmdbId);
-      return;
-    }
-
-    // For TV: check if any episodes were completed in watch_logs
-    final completedLogs = await _client
-        .from('watch_logs')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId)
-        .eq('media_type', 'tv')
-        .limit(1);
-
-    final hasCompletedEpisodes = (completedLogs as List).isNotEmpty;
-
-    if (!hasCompletedEpisodes) {
-      // Peek state: 0 completed episodes. Revert to nothing.
-      await _db.deleteWatchHistoryItem(userId, tmdbId, 'tv');
-      await _client
-          .from('watch_history')
-          .delete()
-          .eq('user_id', userId)
-          .eq('tmdb_id', tmdbId);
-    } else {
-      // In-progress state: keep current episode on shelf, reset progress to 0
-      await (_db.update(_db.localWatchHistories)
-            ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
-          .write(const LocalWatchHistoriesCompanion(progressSeconds: Value(0)));
-
-      await _client
-          .from('watch_history')
-          .update({'progress_seconds': 0})
-          .eq('user_id', userId)
-          .eq('tmdb_id', tmdbId);
-    }
+    await _cacheReturnedRow(userId, tmdbId, mediaType, rows);
   }
 
   Future<void> removeFromDropped(
