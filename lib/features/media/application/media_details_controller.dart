@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
@@ -82,63 +83,17 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     await _listsNotifier.toggleWatchlist(item);
   }
 
-  /// Logs a single episode watch and invalidates logs to trigger UI update.
+  /// Logs a single episode watch (see [logMultipleEpisodes]).
   Future<void> logEpisodeWatch({
     required int tmdbId,
     required int season,
     required int episode,
     DateTime? loggedAt,
-  }) async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) return;
-
-    // Optimistic Update: Add log immediately
-    ref
-        .read(seriesWatchLogsProvider(tmdbId).notifier)
-        .addOptimisticUpdate(season, episode, true);
-
-    try {
-      await _repository.logEpisodeWatch(
-        userId: userId,
-        tmdbId: tmdbId,
-        mediaType: 'tv',
-        season: season,
-        episode: episode,
-        loggedAt: loggedAt,
-      );
-
-      // Auto-advance to next episode in "Continue Watching"
-      // We need series details to know max episodes.
-      // We can fetch it or pass it. Fetching is safer but adds a call.
-      // Since this is a background action after UI update, fetching is fine.
-      final tmdbService = ref.read(tmdbServiceProvider);
-      final mediaRepo = ref.read(mediaRepositoryProvider);
-
-      final details = await tmdbService.getMediaDetails(
-        tmdbId.toString(),
-        'tv',
-      );
-      if (details != null) {
-        // Opportunistically update cache
-        final item = MediaItem.fromTmdbDetails(details, MediaKind.tv);
-        await mediaRepo.saveMediaItem(item);
-
-        await _repository.upsertNextEpisode(
-          userId: userId,
-          tmdbId: tmdbId,
-          currentSeason: season,
-          currentEpisode: episode,
-          seriesDetails: details,
-          loggedAt: loggedAt,
-        );
-      }
-
-      // Success: stream will update automatically
-    } catch (e, stack) {
-      _rollbackSeriesOptimistic(tmdbId, 'logEpisodeWatch', e, stack);
-      rethrow;
-    }
-  }
+  }) => logMultipleEpisodes(
+    tmdbId: tmdbId,
+    episodes: [(season: season, episode: episode)],
+    loggedAt: loggedAt,
+  );
 
   /// Deletes the latest log for an episode.
   Future<void> deleteLatestEpisodeLog({
@@ -199,7 +154,8 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     }
   }
 
-  /// Logs multiple episodes at once (e.g., mark whole season or series).
+  /// Logs episodes (one tick, mark season / all) and moves Continue Watching
+  /// on to the next episode, in one server call.
   Future<void> logMultipleEpisodes({
     required int tmdbId,
     required List<({int season, int episode})> episodes,
@@ -219,44 +175,40 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
         userId: userId,
         tmdbId: tmdbId,
         episodes: episodes,
+        seriesDetails: await _loadSeriesDetails(tmdbId),
         loggedAt: loggedAt,
       );
-
-      // Auto-advance to next episode after the LATEST episode in the batch
-      // 1. Find the latest season/episode in the batch
-      final latest = episodes.reduce((curr, next) {
-        if (next.season > curr.season) return next;
-        if (next.season == curr.season && next.episode > curr.episode) {
-          return next;
-        }
-        return curr;
-      });
-
-      // 2. Queue the next one
-      final tmdbService = ref.read(tmdbServiceProvider);
-      final mediaRepo = ref.read(mediaRepositoryProvider);
-
-      final details = await tmdbService.getMediaDetails(
-        tmdbId.toString(),
-        'tv',
-      );
-      if (details != null) {
-        // Opportunistically update cache
-        final item = MediaItem.fromTmdbDetails(details, MediaKind.tv);
-        await mediaRepo.saveMediaItem(item);
-
-        await _repository.upsertNextEpisode(
-          userId: userId,
-          tmdbId: tmdbId,
-          currentSeason: latest.season,
-          currentEpisode: latest.episode,
-          seriesDetails: details,
-          loggedAt: loggedAt,
-        );
-      }
+      // A dropped show becomes "watching" again (REV-227).
+      ref.invalidate(droppedListProvider);
     } catch (e, stack) {
       _rollbackSeriesOptimistic(tmdbId, 'logMultipleEpisodes', e, stack);
       rethrow;
+    }
+  }
+
+  /// The show's TMDB details (needed to pick the next episode), also saved
+  /// to the media cache. Null when they can't be loaded.
+  Future<Map<String, dynamic>?> _loadSeriesDetails(int tmdbId) async {
+    try {
+      final details = await ref
+          .read(tmdbServiceProvider)
+          .getMediaDetails(tmdbId.toString(), 'tv');
+      if (details != null) {
+        await ref
+            .read(mediaRepositoryProvider)
+            .saveMediaItem(MediaItem.fromTmdbDetails(details, MediaKind.tv));
+      }
+      return details;
+    } catch (e, stack) {
+      // Safe to go on: the episodes still get logged, Continue Watching just
+      // stays on the highest marked one instead of the next.
+      AppLogger.warn(
+        'MediaDetailsController',
+        'Could not load series $tmdbId to find the next episode',
+        error: e,
+        stackTrace: stack,
+      );
+      return null;
     }
   }
 

@@ -245,49 +245,6 @@ class WatchHistoryRepository {
     await _client.from('watch_history').upsert(entry).withErrorHandling();
   }
 
-  Future<bool> isMediaAlreadyWatched({
-    required String userId,
-    required int tmdbId,
-    required String mediaType,
-    required int season,
-    required int episode,
-  }) async {
-    final response = await _client
-        .from('watch_logs')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId)
-        .eq('media_type', mediaType)
-        .eq('season', season)
-        .eq('episode', episode)
-        .limit(1)
-        .maybeSingle();
-
-    return response != null;
-  }
-
-  Future<void> logEpisodeWatch({
-    required String userId,
-    required int tmdbId,
-    required String mediaType,
-    required int season,
-    required int episode,
-    DateTime? loggedAt,
-    int? durationWatched,
-  }) async {
-    await _client.from('watch_logs').insert({
-      'user_id': userId,
-      'tmdb_id': tmdbId,
-      'media_type': mediaType,
-      'season': season,
-      'episode': episode,
-      'logged_at': (loggedAt ?? DateTime.now()).toIso8601String(),
-      'duration_watched_seconds': durationWatched,
-    }).withErrorHandling();
-
-    invalidateWatchLogsCache();
-  }
-
   Future<WatchHistory?> getHistoryItem(String userId, String tmdbId) async {
     if (int.tryParse(tmdbId) == null) {
       return null;
@@ -818,76 +775,55 @@ class WatchHistoryRepository {
     await _cacheReturnedRow(userId, tmdbId, mediaType, rows);
   }
 
+  /// Marks [episodes] of a show as watched at [loggedAt] (null = now) and,
+  /// unless an older date was picked, moves Continue Watching on to the
+  /// episode after the highest one, in one `log_episodes` RPC (one
+  /// transaction). Without [seriesDetails] the next episode is unknown, so
+  /// the show stays at the highest marked episode. Throws an [AppFailure].
   Future<void> logMultipleEpisodes({
     required String userId,
     required int tmdbId,
     required List<({int season, int episode})> episodes,
+    Map<String, dynamic>? seriesDetails,
     DateTime? loggedAt,
   }) async {
     if (episodes.isEmpty) return;
 
-    final now = (loggedAt ?? DateTime.now()).toIso8601String();
+    final latest = episodes.reduce(
+      (a, b) =>
+          (b.season > a.season ||
+              (b.season == a.season && b.episode > a.episode))
+          ? b
+          : a,
+    );
+    // Choosing the next episode needs TMDB data, so it's done here.
+    final next = seriesDetails == null
+        ? null
+        : _seriesService.getNextEpisode(
+            seriesDetails,
+            latest.season,
+            latest.episode,
+          );
 
-    final logs = episodes
-        .map(
-          (e) => {
-            'user_id': userId,
-            'tmdb_id': tmdbId,
-            'media_type': 'tv',
-            'season': e.season,
-            'episode': e.episode,
-            'logged_at': now,
+    final rows = await _client
+        .rpc(
+          'log_episodes',
+          params: {
+            'p_tmdb_id': tmdbId,
+            'p_episodes': [
+              for (final e in episodes)
+                {'season': e.season, 'episode': e.episode},
+            ],
+            // REV-178: UTC, so the server compares it with the right time.
+            'p_logged_at': loggedAt?.toUtc().toIso8601String(),
+            'p_next_season': next?.next?.season,
+            'p_next_episode': next?.next?.episode,
+            'p_next_aired': next?.isAired ?? false,
           },
         )
-        .toList();
-
-    await _client.from('watch_logs').insert(logs);
+        .withAppFailure();
     invalidateWatchLogsCache();
-
-    final nowTime = loggedAt ?? DateTime.now();
-    final existing =
-        await (_db.select(_db.localWatchHistories)
-              ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
-            .getSingleOrNull();
-
-    if (existing != null && existing.lastWatchedAt.isAfter(nowTime)) {
-      return;
-    }
-
-    // Update history for the latest marked episode to completed
-    final latestEpisode = episodes.last;
-    final historyUpdate = {
-      'user_id': userId,
-      'tmdb_id': tmdbId,
-      'media_type': 'tv',
-      'status': 'completed',
-      'progress_seconds': 0,
-      'total_duration': 0,
-      'season': latestEpisode.season,
-      'episode': latestEpisode.episode,
-      'last_watched_at': now,
-    };
-
-    await _client.from('watch_history').upsert(historyUpdate);
-
-    // Update local DB
-    await _db.batch((batch) {
-      batch.insert(
-        _db.localWatchHistories,
-        LocalWatchHistoriesCompanion(
-          userId: Value(userId),
-          tmdbId: Value(tmdbId),
-          mediaType: const Value('tv'),
-          status: const Value('completed'),
-          progressSeconds: const Value(0),
-          totalDuration: const Value(0),
-          season: Value(latestEpisode.season),
-          episode: Value(latestEpisode.episode),
-          lastWatchedAt: Value(nowTime),
-        ),
-        mode: InsertMode.insertOrReplace,
-      );
-    });
+    await _cacheReturnedRow(userId, tmdbId, 'tv', rows);
   }
 
   /// Sets the "next" episode as watching with 0 progress in history.
@@ -898,20 +834,10 @@ class WatchHistoryRepository {
     required int currentSeason,
     required int currentEpisode,
     required Map<String, dynamic> seriesDetails,
-    DateTime? loggedAt,
   }) async {
-    final nowTime = loggedAt ?? DateTime.now().toUtc();
+    final nowTime = DateTime.now().toUtc();
     final nowStr = nowTime.toIso8601String();
 
-    // Prevent retroactively logged episodes from downgrading current progress
-    final existing =
-        await (_db.select(_db.localWatchHistories)
-              ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
-            .getSingleOrNull();
-
-    if (existing != null && existing.lastWatchedAt.isAfter(nowTime)) {
-      return;
-    } // 2. Calculate next episode using Domain Service
     final result = _seriesService.getNextEpisode(
       seriesDetails,
       currentSeason,
