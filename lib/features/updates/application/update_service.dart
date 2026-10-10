@@ -15,6 +15,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/updates/data/update_archive_extractor.dart';
 import 'package:cinemuse_app/features/updates/data/update_checksum.dart';
+import 'package:cinemuse_app/features/updates/domain/release_version.dart';
 import 'package:cinemuse_app/features/updates/domain/update_state.dart';
 import 'package:cinemuse_app/features/updates/data/windows_updater_script.dart';
 import 'package:cinemuse_app/core/utils/app_logger.dart';
@@ -73,7 +74,7 @@ class UpdateNotifier extends Notifier<UpdateState> {
       final downloadUrl = await _getDownloadUrl(response.data);
       debugPrint('UpdateService: Download URL: $downloadUrl');
 
-      if (_isNewer(latestTag, currentVersion, packageInfo.buildNumber)) {
+      if (isNewerRelease(latestTag, currentVersion, packageInfo.buildNumber)) {
         debugPrint('UpdateService: New version available!');
         state = state.copyWith(
           status: UpdateStatus.available,
@@ -188,35 +189,6 @@ class UpdateNotifier extends Notifier<UpdateState> {
       orElse: () => null,
     );
     return sums?['browser_download_url'] as String?;
-  }
-
-  bool _isNewer(String latestTag, String currentName, String currentBuild) {
-    // Parse latest: v1.0.1+15 -> name: 1.0.1, build: 15
-    final tagMatch = RegExp(
-      r'v?(\d+\.\d+\.\d+)(?:\+(\d+))?',
-    ).firstMatch(latestTag);
-    if (tagMatch == null) return false;
-
-    final latestName = tagMatch.group(1)!;
-    final latestBuild = int.tryParse(tagMatch.group(2) ?? '0') ?? 0;
-
-    final curBuild = int.tryParse(currentBuild) ?? 0;
-
-    // First compare semantic version names
-    final List<int> latestParts = latestName.split('.').map(int.parse).toList();
-    final List<int> currentParts = currentName
-        .split('.')
-        .map(int.parse)
-        .toList();
-
-    for (var i = 0; i < latestParts.length; i++) {
-      if (i >= currentParts.length) return true;
-      if (latestParts[i] > currentParts[i]) return true;
-      if (latestParts[i] < currentParts[i]) return false;
-    }
-
-    // If semantic names are equal, compare build numbers
-    return latestBuild > curBuild;
   }
 
   Future<void> startUpdate() async {

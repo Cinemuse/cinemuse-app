@@ -53,14 +53,17 @@ class UpdateState {
     CancelToken? cancelToken,
     bool clearCancelToken = false,
   }) {
+    // Any step other than an error starts clean, so an old error can never
+    // show over a newer one (REV-33).
+    final keepsError = status == null || status == UpdateStatus.error;
     return UpdateState(
       status: status ?? this.status,
       latestVersion: latestVersion ?? this.latestVersion,
       currentVersion: currentVersion ?? this.currentVersion,
       progress: progress ?? this.progress,
-      error: error ?? this.error,
-      errorKey: errorKey ?? this.errorKey,
-      errorArgs: errorArgs ?? this.errorArgs,
+      error: error ?? (keepsError ? this.error : null),
+      errorKey: errorKey ?? (keepsError ? this.errorKey : null),
+      errorArgs: errorArgs ?? (keepsError ? this.errorArgs : null),
       downloadUrl: downloadUrl ?? this.downloadUrl,
       checksumUrl: checksumUrl ?? this.checksumUrl,
       releaseNotes: releaseNotes ?? this.releaseNotes,
