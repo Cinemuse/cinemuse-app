@@ -661,60 +661,29 @@ class WatchHistoryRepository {
     onlyLatest: false,
   );
 
+  /// Logs a watch of a movie at [loggedAt] and, if it's the movie's newest
+  /// watch, sets it to "completed", in one `log_movie_watch` RPC (one
+  /// transaction). [isNow] = no date was picked: the server then counts it as
+  /// newest even if the row's time is later. Throws an [AppFailure].
   Future<void> logMovieWatch({
     required String userId,
     required int tmdbId,
-    DateTime? loggedAt,
+    required DateTime loggedAt,
+    required bool isNow,
   }) async {
-    await _client.from('watch_logs').insert({
-      'user_id': userId,
-      'tmdb_id': tmdbId,
-      'media_type': 'movie',
-      'season': 0,
-      'episode': 0,
-      'logged_at': (loggedAt ?? DateTime.now()).toIso8601String(),
-    }).withErrorHandling();
-
+    final rows = await _client
+        .rpc(
+          'log_movie_watch',
+          params: {
+            'p_tmdb_id': tmdbId,
+            // REV-178: UTC, so the server compares it with the right time.
+            'p_logged_at': loggedAt.toUtc().toIso8601String(),
+            'p_is_now': isNow,
+          },
+        )
+        .withAppFailure();
     invalidateWatchLogsCache();
-
-    final nowTime = loggedAt ?? DateTime.now();
-    final existing =
-        await (_db.select(_db.localWatchHistories)
-              ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
-            .getSingleOrNull();
-
-    if (existing != null && existing.lastWatchedAt.isAfter(nowTime)) {
-      return;
-    }
-
-    // After logging, update the history to 'completed'
-    final historyUpdate = {
-      'user_id': userId,
-      'tmdb_id': tmdbId,
-      'media_type': 'movie',
-      'status': 'completed',
-      'progress_seconds': 0,
-      'total_duration': 0,
-      'season': 0,
-      'episode': 0,
-      'last_watched_at': (loggedAt ?? DateTime.now()).toIso8601String(),
-    };
-    await _client.from('watch_history').upsert(historyUpdate);
-
-    // Update local DB instantly
-    await _db.upsertWatchHistory(
-      LocalWatchHistoriesCompanion(
-        userId: Value(userId),
-        tmdbId: Value(tmdbId),
-        mediaType: const Value('movie'),
-        status: const Value('completed'),
-        progressSeconds: const Value(0),
-        totalDuration: const Value(0),
-        season: const Value(0),
-        episode: const Value(0),
-        lastWatchedAt: Value(loggedAt ?? DateTime.now()),
-      ),
-    );
+    await _cacheReturnedRow(userId, tmdbId, 'movie', rows);
   }
 
   /// Removes the newest watch of an episode. Throws an [AppFailure].

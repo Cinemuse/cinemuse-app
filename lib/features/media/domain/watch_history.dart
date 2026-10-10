@@ -114,6 +114,21 @@ class WatchLog {
     this.isOptimistic = false,
   });
 
+  /// Key that matches an optimistic log with the saved one: the same moment
+  /// in UTC, to the second. The app keeps local times and the server sends
+  /// UTC (REV-178), so both become UTC first.
+  static String timestampKey(DateTime date) {
+    final utc = date.toUtc();
+    return DateTime.utc(
+      utc.year,
+      utc.month,
+      utc.day,
+      utc.hour,
+      utc.minute,
+      utc.second,
+    ).toIso8601String();
+  }
+
   WatchLog copyWith({
     dynamic id,
     String? userId,
@@ -141,8 +156,9 @@ class WatchLog {
 
   factory WatchLog.fromJson(Map<String, dynamic> json) {
     final loggedAtStr = json['logged_at']?.toString();
+    // The server sends UTC; the app shows local time (REV-178).
     final loggedAt = loggedAtStr != null
-        ? DateTime.tryParse(loggedAtStr) ?? DateTime.now()
+        ? DateTime.tryParse(loggedAtStr)?.toLocal() ?? DateTime.now()
         : DateTime.now();
 
     return WatchLog(

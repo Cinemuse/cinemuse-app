@@ -263,20 +263,24 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) return;
 
+    // The app's own "now" (not the server's) so the optimistic log matches the
+    // saved one.
     final now = loggedAt ?? DateTime.now();
-    final loggedAtStr = now.toIso8601String();
 
     ref
         .read(movieWatchLogsProvider(tmdbId).notifier)
-        .addOptimisticLog(loggedAtStr);
+        .addOptimisticLog(now.toIso8601String());
 
     try {
       await _repository.logMovieWatch(
         userId: userId,
         tmdbId: tmdbId,
         loggedAt: now,
+        isNow: loggedAt == null,
       );
-      // No need to invalidate, the stream and optimistic logic handle it
+      // The logs stream and the optimistic logic update the logs; the Dropped
+      // list is a one-off load, and a dropped movie is now completed (REV-228).
+      ref.invalidate(droppedListProvider);
     } catch (e, stack) {
       _rollbackMovieOptimistic(tmdbId, 'logMovieWatch', e, stack);
       rethrow;

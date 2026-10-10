@@ -370,21 +370,10 @@ class OptimisticMovieLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
         .map(_applyOptimisticUpdates);
   }
 
-  String _normalizeTimestamp(DateTime date) {
-    return DateTime(
-      date.year,
-      date.month,
-      date.day,
-      date.hour,
-      date.minute,
-      date.second,
-    ).toIso8601String();
-  }
-
   void addOptimisticLog(String loggedAt) {
     final date = DateTime.tryParse(loggedAt);
     if (date == null) return;
-    final normalized = _normalizeTimestamp(date);
+    final normalized = WatchLog.timestampKey(date);
     _optimisticRemovals.remove(normalized);
     _optimisticAdditions.add(normalized);
     _clearAll = false;
@@ -399,7 +388,7 @@ class OptimisticMovieLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
         ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
 
       final latest = sorted.first;
-      final normalized = _normalizeTimestamp(latest.loggedAt);
+      final normalized = WatchLog.timestampKey(latest.loggedAt);
 
       if (latest.isOptimistic) {
         _optimisticAdditions.remove(normalized);
@@ -434,7 +423,7 @@ class OptimisticMovieLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
     if (_clearAll) return [];
 
     final Set<String> serverKeys = currentLogs
-        .map((l) => _normalizeTimestamp(l.loggedAt))
+        .map((l) => WatchLog.timestampKey(l.loggedAt))
         .toSet();
 
     // 1. Self-Cleaning: Prune confirmed entries
@@ -445,11 +434,11 @@ class OptimisticMovieLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
 
     // 2. Hide removals still present in the stream
     updatedLogs.removeWhere(
-      (l) => _optimisticRemovals.contains(_normalizeTimestamp(l.loggedAt)),
+      (l) => _optimisticRemovals.contains(WatchLog.timestampKey(l.loggedAt)),
     );
 
     final Set<String> activeKeys = updatedLogs
-        .map((l) => _normalizeTimestamp(l.loggedAt))
+        .map((l) => WatchLog.timestampKey(l.loggedAt))
         .toSet();
 
     // 3. Add additions not yet present in the stream
@@ -459,7 +448,8 @@ class OptimisticMovieLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
           WatchLog(
             tmdbId: arg,
             mediaType: MediaKind.movie,
-            loggedAt: DateTime.tryParse(loggedAtStr) ?? DateTime.now(),
+            loggedAt:
+                DateTime.tryParse(loggedAtStr)?.toLocal() ?? DateTime.now(),
             isOptimistic: true,
           ),
         );
