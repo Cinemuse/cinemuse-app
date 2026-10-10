@@ -84,17 +84,6 @@ class StremioAddon {
     };
   }
 
-  Map<String, dynamic> toProfile() {
-    return {
-      'id': id,
-      'name': name,
-      'baseUrl': baseUrl,
-      'queryParams': queryParams,
-      'types': types,
-      'enabled': enabled,
-    };
-  }
-
   factory StremioAddon.fromJson(Map<String, dynamic> json) {
     return StremioAddon(
       id: json['id'] as String? ?? '',
@@ -133,14 +122,5 @@ class StremioAddon {
     }).toList();
   }
 
-  bool hasResource(String resourceName, String type) {
-    return resources.any((r) {
-      final rName = r['name'] as String?;
-      final rTypes = (r['types'] as List?)?.cast<String>();
-      return rName == resourceName && (rTypes?.contains(type) ?? false);
-    });
-  }
-
   bool get isStreamingAddon => resources.any((r) => r['name'] == 'stream');
-  bool get hasCatalog => catalogs.isNotEmpty;
 }

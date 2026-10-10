@@ -522,18 +522,6 @@ class UnifiedStreamResolver {
     return StreamRanker.rank(results, preferredLanguage: preferredLanguage);
   }
 
-  Future<bool> checkIsAnime(Map<String, dynamic> details, String type) async {
-    final tmdbId = int.tryParse(details['id'].toString());
-    if (tmdbId == null) return false;
-
-    final kitsuMapping = await _kitsuMappingService.getMapping(
-      tmdbId: tmdbId,
-      type: type,
-    );
-
-    return kitsuMapping != null;
-  }
-
   Future<ResolvedStream?> resolveStream(
     StreamCandidate candidate, {
     int? season,

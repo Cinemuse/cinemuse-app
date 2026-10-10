@@ -5,8 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final connectivityProvider = StreamProvider<ConnectivityResult>((ref) async* {
   // 1. WSL/Linux Workaround: connectivity_plus on Linux depends on NetworkManager via DBus.
   // Many minimal Linux environments (like WSL) don't run NetworkManager, causing a crash.
-  if (defaultTargetPlatform == TargetPlatform.linux ||
-      defaultTargetPlatform == TargetPlatform.macOS) {
+  if (defaultTargetPlatform == TargetPlatform.linux) {
     yield ConnectivityResult.wifi;
     return;
   }
@@ -52,6 +51,5 @@ final connectivityProvider = StreamProvider<ConnectivityResult>((ref) async* {
 });
 
 extension ConnectivityResultSelectionX on ConnectivityResult {
-  bool get isConnected => this != ConnectivityResult.none;
   bool get isOffline => this == ConnectivityResult.none;
 }

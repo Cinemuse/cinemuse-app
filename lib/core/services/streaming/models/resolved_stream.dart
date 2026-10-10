@@ -20,6 +20,4 @@ class ResolvedStream {
     required this.candidate,
     this.headers,
   });
-
-  // Legacy map support removed to favor typed models
 }

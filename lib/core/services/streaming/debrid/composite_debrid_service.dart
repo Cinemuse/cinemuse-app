@@ -23,8 +23,6 @@ class CompositeDebridService implements BaseDebridService {
     this.preferredProvider = 'Real-Debrid',
   }) : _services = services.where((s) => s.isEnabled).toList();
 
-  List<BaseDebridService> get activeServices => List.unmodifiable(_services);
-
   @override
   String get name => _services.length == 1 ? _services.first.name : 'Debrid';
 

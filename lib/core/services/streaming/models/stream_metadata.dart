@@ -98,12 +98,6 @@ class StreamMetadata {
       custom: custom ?? this.custom,
     );
   }
-
-  StreamMetadata copyWithCustom(Map<String, dynamic> customData) {
-    return copyWith(custom: {...?custom, ...customData});
-  }
-
-  bool get isItalian => languages.contains('ITA');
 }
 
 class VideoMetadata {

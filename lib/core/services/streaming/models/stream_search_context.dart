@@ -49,15 +49,4 @@ class StreamSearchContext {
     this.isAnime = false,
     this.preferredLanguages = const ['it', 'en'],
   });
-
-  /// Returns a Stremio-compatible ID format.
-  /// Movie: tt1234567
-  /// Series: tt1234567:1:5
-  String? get strmiomdbId {
-    if (imdbId == null) return null;
-    if (type == 'tv' && season != null && episode != null) {
-      return "$imdbId:$season:$episode";
-    }
-    return imdbId;
-  }
 }
