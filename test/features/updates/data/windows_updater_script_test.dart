@@ -1,5 +1,5 @@
 import 'package:cinemuse_app/core/error/app_failure.dart';
-import 'package:cinemuse_app/core/services/updates/windows_updater_script.dart';
+import 'package:cinemuse_app/features/updates/data/windows_updater_script.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

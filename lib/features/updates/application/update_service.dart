@@ -13,10 +13,10 @@ import 'dart:ffi';
 import 'package:flutter/foundation.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
-import 'package:cinemuse_app/core/services/updates/update_archive_extractor.dart';
-import 'package:cinemuse_app/core/services/updates/update_checksum.dart';
-import 'package:cinemuse_app/core/services/updates/update_state.dart';
-import 'package:cinemuse_app/core/services/updates/windows_updater_script.dart';
+import 'package:cinemuse_app/features/updates/data/update_archive_extractor.dart';
+import 'package:cinemuse_app/features/updates/data/update_checksum.dart';
+import 'package:cinemuse_app/features/updates/domain/update_state.dart';
+import 'package:cinemuse_app/features/updates/data/windows_updater_script.dart';
 import 'package:cinemuse_app/core/utils/app_logger.dart';
 
 // Not autoDispose: the update overlay shows this state for the whole session.

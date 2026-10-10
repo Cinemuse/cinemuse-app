@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:archive/archive_io.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
-import 'package:cinemuse_app/core/services/updates/update_archive_extractor.dart';
+import 'package:cinemuse_app/features/updates/data/update_archive_extractor.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
