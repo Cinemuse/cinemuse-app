@@ -444,14 +444,14 @@ void main() {
     Map<String, dynamic> capturedParams() =>
         verify(
               () => mockSupabase.rpc<dynamic>(
-                'complete_episode',
+                'complete_watch',
                 params: captureAny(named: 'params'),
               ),
             ).captured.single
             as Map<String, dynamic>;
 
     test(
-      'does every step in one complete_episode rpc and caches its row',
+      'does every step in one complete_watch rpc and caches its row',
       () async {
         when(
           () => mockSeriesService.getNextEpisode(any(), any(), any()),
@@ -485,12 +485,15 @@ void main() {
 
         expect(capturedParams(), {
           'p_tmdb_id': 1399,
+          'p_media_type': 'tv',
           'p_season': 1,
           'p_episode': 3,
           'p_duration_watched': 2500,
           'p_next_season': 1,
           'p_next_episode': 4,
           'p_next_aired': true,
+          // "Next episode" is pressed once, so it always finishes the episode.
+          'p_only_if_watching': false,
         });
         // Separate table requests are what made it non-atomic.
         verifyNever(() => mockSupabase.from(any()));
@@ -545,6 +548,124 @@ void main() {
       );
 
       expect(await database.getWatchHistory(userId), isEmpty);
+    });
+  });
+
+  group('updateProgress when playback is finished', () {
+    const userId = 'user-123';
+    final seriesDetails = <String, dynamic>{'seasons': <dynamic>[]};
+
+    MediaItem media(int tmdbId, MediaKind kind) =>
+        MediaItem(tmdbId: tmdbId, mediaType: kind, updatedAt: DateTime.now());
+
+    void stubRpc(List<Map<String, dynamic>> rows) {
+      when(
+        () => mockSupabase.rpc<dynamic>(any(), params: any(named: 'params')),
+      ).thenAnswer((_) => FakeFilterBuilder<dynamic>(rows));
+    }
+
+    Map<String, dynamic> capturedParams() =>
+        verify(
+              () => mockSupabase.rpc<dynamic>(
+                'complete_watch',
+                params: captureAny(named: 'params'),
+              ),
+            ).captured.single
+            as Map<String, dynamic>;
+
+    test('an episode is finished in one complete_watch rpc', () async {
+      when(
+        () => mockSeriesService.getNextEpisode(any(), any(), any()),
+      ).thenReturn((
+        next: NextEpisodeInfo(season: 1, episode: 4),
+        isAired: true,
+      ));
+      stubRpc([
+        {
+          'user_id': userId,
+          'tmdb_id': 1399,
+          'media_type': 'tv',
+          'season': 1,
+          'episode': 4,
+          'status': 'watching',
+          'progress_seconds': 0,
+          'total_duration': 0,
+          'watch_count': 0,
+          'last_watched_at': '2026-10-10T18:00:00+00:00',
+        },
+      ]);
+
+      await repository.updateProgress(
+        userId: userId,
+        media: media(1399, MediaKind.tv),
+        progressSeconds: 2950,
+        totalDuration: 3000,
+        season: 1,
+        episode: 3,
+        seriesDetails: seriesDetails,
+      );
+
+      expect(capturedParams(), {
+        'p_tmdb_id': 1399,
+        'p_media_type': 'tv',
+        'p_season': 1,
+        'p_episode': 3,
+        'p_duration_watched': 2950,
+        'p_next_season': 1,
+        'p_next_episode': 4,
+        'p_next_aired': true,
+        // Saves keep coming after the end: only the first one may finish it.
+        'p_only_if_watching': true,
+      });
+      // Separate table requests are what made it non-atomic.
+      verifyNever(() => mockSupabase.from(any()));
+
+      final local = await database.getWatchHistory(userId);
+      expect(local.single.episode, 4);
+      expect(local.single.status, 'watching');
+    });
+
+    test('a movie is finished in one complete_watch rpc', () async {
+      stubRpc([
+        {
+          'user_id': userId,
+          'tmdb_id': 603,
+          'media_type': 'movie',
+          'season': 0,
+          'episode': 0,
+          'status': 'completed',
+          'progress_seconds': 0,
+          'total_duration': null,
+          'watch_count': 1,
+          'last_watched_at': '2026-10-10T18:00:00+00:00',
+        },
+      ]);
+
+      await repository.updateProgress(
+        userId: userId,
+        media: media(603, MediaKind.movie),
+        progressSeconds: 8000,
+        totalDuration: 8100,
+      );
+
+      expect(capturedParams(), {
+        'p_tmdb_id': 603,
+        'p_media_type': 'movie',
+        'p_season': 0,
+        'p_episode': 0,
+        'p_duration_watched': 8000,
+        'p_next_season': null,
+        'p_next_episode': null,
+        'p_next_aired': false,
+        'p_only_if_watching': true,
+      });
+      verifyNever(() => mockSupabase.from(any()));
+      verifyNever(() => mockSeriesService.getNextEpisode(any(), any(), any()));
+
+      // Before, the trigger's "completed" row only reached Drift on next sync.
+      final local = await database.getWatchHistory(userId);
+      expect(local.single.mediaType, 'movie');
+      expect(local.single.status, 'completed');
     });
   });
 }

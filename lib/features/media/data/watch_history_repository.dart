@@ -83,7 +83,7 @@ class WatchHistoryRepository {
   /// Used when the user presses "Next Episode" and has watched enough (≥ skip threshold).
   ///
   /// Logs the episode and moves Continue Watching to the next one in a single
-  /// `complete_episode` RPC (one transaction), so a dropped connection can't
+  /// `complete_watch` RPC (one transaction), so a dropped connection can't
   /// leave it half done. Throws an [AppFailure].
   Future<void> completeEpisode({
     required String userId,
@@ -98,26 +98,54 @@ class WatchHistoryRepository {
         ? null
         : _seriesService.getNextEpisode(seriesDetails, season, episode);
 
+    await _completeWatch(
+      userId: userId,
+      tmdbId: tmdbId,
+      mediaType: 'tv',
+      season: season,
+      episode: episode,
+      durationWatched: durationWatched,
+      next: next,
+      onlyIfWatching: false,
+    );
+  }
+
+  /// Calls the `complete_watch` RPC (remove from Continue Watching, log, move
+  /// on to [next]) and copies the title's returned row into the local cache.
+  /// With [onlyIfWatching], the server does nothing unless the episode was
+  /// still "watching". Throws an [AppFailure].
+  Future<void> _completeWatch({
+    required String userId,
+    required int tmdbId,
+    required String mediaType,
+    required int season,
+    required int episode,
+    required int? durationWatched,
+    required ({NextEpisodeInfo? next, bool isAired})? next,
+    required bool onlyIfWatching,
+  }) async {
     final rows = await _client
         .rpc(
-          'complete_episode',
+          'complete_watch',
           params: {
             'p_tmdb_id': tmdbId,
+            'p_media_type': mediaType,
             'p_season': season,
             'p_episode': episode,
             'p_duration_watched': durationWatched,
             'p_next_season': next?.next?.season,
             'p_next_episode': next?.next?.episode,
             'p_next_aired': next?.isAired ?? false,
+            'p_only_if_watching': onlyIfWatching,
           },
         )
         .withAppFailure();
     invalidateWatchLogsCache();
 
-    // The RPC returns the show's row as it is now (none = no row left).
+    // The RPC returns the title's row as it is now (none = no row left).
     final row = (rows as List).firstOrNull as Map<String, dynamic>?;
     if (row == null) {
-      await _db.deleteWatchHistoryItem(userId, tmdbId, 'tv');
+      await _db.deleteWatchHistoryItem(userId, tmdbId, mediaType);
     } else {
       await _db.upsertWatchHistory(_localEntryFromRemote(userId, row));
     }
@@ -143,67 +171,27 @@ class WatchHistoryRepository {
     // Remaining < 180s OR Progress > 95%
     if (remainingSeconds < PlaybackThresholds.completionRemainingSeconds ||
         progressPercentage > PlaybackThresholds.completionPercentage) {
-      // Remove from "Continue Watching"
-      final deleted = await _client
-          .from('watch_history')
-          .delete()
-          .match({
-            'user_id': userId,
-            'tmdb_id': media.tmdbId,
-            'media_type': media.mediaType.name,
-            'season': season ?? 0,
-            'episode': episode ?? 0,
-          })
-          .select()
-          .withErrorHandling();
+      // Choosing the next episode needs TMDB data, so it's done here.
+      final next =
+          media.mediaType == MediaKind.tv &&
+              season != null &&
+              episode != null &&
+              seriesDetails != null
+          ? _seriesService.getNextEpisode(seriesDetails, season, episode)
+          : null;
 
-      // Only proceed if we actually deleted something (prevents double logs)
-      // or if we are marking a new completion without an existing history entry
-      if ((deleted as List).isNotEmpty) {
-        // Update local DB instantly
-        await _db.deleteWatchHistoryItem(
-          userId,
-          media.tmdbId,
-          media.mediaType.name,
-          season: season ?? 0,
-          episode: episode ?? 0,
-        );
-
-        // [MODIFIED] Only log if not already watched
-        final alreadyWatched = await isMediaAlreadyWatched(
-          userId: userId,
-          tmdbId: media.tmdbId,
-          mediaType: media.mediaType.name,
-          season: season ?? 0,
-          episode: episode ?? 0,
-        );
-
-        if (!alreadyWatched) {
-          // Mark as Completed in logs (synonymous with checkmark in Cinemuse)
-          await logEpisodeWatch(
-            userId: userId,
-            tmdbId: media.tmdbId,
-            mediaType: media.mediaType.name,
-            season: season ?? 0,
-            episode: episode ?? 0,
-            durationWatched: progressSeconds,
-          );
-        }
-
-        // Auto-advance to next episode
-        if (media.mediaType == MediaKind.tv &&
-            season != null &&
-            episode != null &&
-            seriesDetails != null) {
-          await upsertNextEpisode(
-            userId: userId,
-            tmdbId: media.tmdbId,
-            currentSeason: season,
-            currentEpisode: episode,
-            seriesDetails: seriesDetails,
-          );
-        }
-      }
+      // The player keeps saving after the end: only the first save, while
+      // the episode is still "watching", may log it and move on.
+      await _completeWatch(
+        userId: userId,
+        tmdbId: media.tmdbId,
+        mediaType: media.mediaType.name,
+        season: season ?? 0,
+        episode: episode ?? 0,
+        durationWatched: progressSeconds,
+        next: next,
+        onlyIfWatching: true,
+      );
       return;
     }
 
