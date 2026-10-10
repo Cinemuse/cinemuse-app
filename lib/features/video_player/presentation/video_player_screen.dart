@@ -5,6 +5,7 @@ import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_v
 import 'package:cinemuse_app/features/video_player/presentation/widgets/subtitle_slider_overlay.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/player_settings_bottom_sheet.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/cast_remote_view.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/player_error_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -320,51 +321,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
             ),
           );
         },
-        error: (err, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error,
-                color: Theme.of(context).colorScheme.error,
-                size: 48,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                widget.errorMessage ??
-                    AppLocalizations.of(context)!.playerAllSourcesExhausted,
-                style: const TextStyle(color: AppTheme.textWhite),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.textWhite,
-                      side: const BorderSide(color: AppTheme.borderSubtle),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: AppTheme.radiusMd,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 16,
-                        horizontal: 24,
-                      ),
-                    ),
-                    child: Text(AppLocalizations.of(context)!.commonGoBack),
-                  ),
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: () =>
-                        ref.refresh(playerControllerProvider(params)),
-                    child: Text(AppLocalizations.of(context)!.commonRetry),
-                  ),
-                ],
-              ),
-            ],
-          ),
+        error: (err, stack) => PlayerErrorView(
+          message: widget.errorMessage,
+          youtubeVideoId: widget.type == 'youtube' ? widget.queryId : null,
+          onRetry: () => ref.invalidate(playerControllerProvider(params)),
         ),
         loading: () => Center(
           child: Column(

@@ -106,12 +106,7 @@ class PlayerSourceCoordinator {
     StreamCandidate candidate,
     Duration position,
   ) async {
-    final meta = candidate.metadata;
-    String? localAudioPath;
-    if (meta?.custom?['needsAudio'] == true) {
-      localAudioPath = await youtubeSourceHandler.downloadAudioToTempFile();
-    }
-
+    final audioUrl = _youtubeAudioUrl(candidate);
     final resolvedStream = ResolvedStream(
       url: candidate.url!,
       provider: candidate.provider,
@@ -124,11 +119,19 @@ class PlayerSourceCoordinator {
       play: false,
     );
 
-    if (localAudioPath != null) {
-      await player.setAudioTrack(AudioTrack.uri(localAudioPath));
+    if (audioUrl != null) {
+      await player.setAudioTrack(AudioTrack.uri(audioUrl));
     }
 
     await _finalizeSourceChange(resolvedStream, position);
+  }
+
+  /// Video-only YouTube qualities need their audio added as an external track.
+  String? _youtubeAudioUrl(StreamCandidate candidate) {
+    final custom = candidate.metadata?.custom;
+    return custom?['needsAudio'] == true
+        ? (custom?['audioUrl'] as String?)
+        : null;
   }
 
   Future<void> _changeToVodSource(
@@ -389,6 +392,21 @@ class PlayerSourceCoordinator {
     }
 
     final candidate = currentState.currentStream!.candidate;
+    // A YouTube link is reopened as it is: the resolver only knows movies
+    // and episodes, so asking it again always failed (REV-236).
+    // The retry counter is kept, so a link that keeps failing moves on to
+    // the next quality.
+    if (candidate.kind == StreamSourceKind.youtube) {
+      try {
+        await youtubeSourceHandler.openStream(
+          candidate.url!,
+          audioUrl: _youtubeAudioUrl(candidate),
+        );
+      } catch (e, st) {
+        if (!tryNextCandidate()) onError(e, st);
+      }
+      return;
+    }
     final resolvedParams = getResolvedParams();
 
     await fallbackManager.performSoftRetry(

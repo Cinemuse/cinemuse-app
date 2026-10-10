@@ -89,7 +89,6 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     _progressTracker?.dispose();
     _trackManager?.dispose();
     _player?.dispose();
-    _youtubeSourceHandler.dispose();
     _qualitySubscription?.close();
     _castHandler.dispose();
     _liveTvCoordinator?.dispose();

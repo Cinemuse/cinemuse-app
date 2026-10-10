@@ -782,9 +782,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String playerErrorResolvingYoutube(Object error) {
-    return 'Error loading YouTube video:\n$error';
-  }
+  String get playerYoutubeBlocked =>
+      'This trailer can\'t be played in the app.\nYouTube sometimes blocks apps like this one. You can watch it on YouTube instead.';
+
+  @override
+  String get playerOpenOnYoutube => 'Open on YouTube';
+
+  @override
+  String get playerOpenOnYoutubeFailed =>
+      'Couldn\'t open YouTube on this device.';
 
   @override
   String get playerNoAudioFound => 'No audio tracks found';

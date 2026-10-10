@@ -1,7 +1,3 @@
-import 'dart:async';
-import 'dart:developer' as developer;
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 import 'package:cinemuse_app/features/video_player/data/youtube_service.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
@@ -21,8 +17,7 @@ class YouTubeInitializationResult {
   });
 }
 
-/// Unified handler for YouTube video stream resolution, playback initialization,
-/// audio track extraction, and temp file caching.
+/// Resolves a YouTube video and opens it in the player.
 class YouTubeSourceHandler {
   static const Map<String, String> defaultHeaders = {
     'User-Agent':
@@ -32,68 +27,17 @@ class YouTubeSourceHandler {
 
   final YoutubeService _ytService;
   final Player _player;
-  String? _localAudioPath;
 
   YouTubeSourceHandler(this._ytService, this._player);
 
   YoutubeService get service => _ytService;
   Map<String, String> get youtubeHeaders => defaultHeaders;
 
-  void cleanup() {
-    final path = _localAudioPath;
-    if (path != null) {
-      _localAudioPath = null;
-      try {
-        final file = File(path);
-        if (file.existsSync()) {
-          file.deleteSync();
-        }
-      } catch (e, st) {
-        developer.log(
-          'Failed to delete temporary audio file: $path',
-          name: 'VideoPlayer.YouTubeSourceHandler',
-          error: e,
-          stackTrace: st,
-          level: 700,
-        );
-      }
-    }
-  }
-
-  Future<String?> downloadAudioToTempFile() async {
-    try {
-      final tempDir = await getTemporaryDirectory();
-      final path =
-          '${tempDir.path}/yt_audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
-
-      cleanup();
-
-      final resultPath = await _ytService.downloadAudioToFile(path);
-      _localAudioPath = resultPath;
-      return resultPath;
-    } catch (e, st) {
-      developer.log(
-        'Error downloading audio',
-        name: 'VideoPlayer.YouTubeSourceHandler',
-        error: e,
-        stackTrace: st,
-        level: 900,
-      );
-      return null;
-    }
-  }
-
-  void dispose() {
-    cleanup();
-  }
-
   Future<YouTubeInitializationResult> initialize(PlayerParams params) async {
-    final streams = await _fetchAvailableStreams(params.queryId);
+    final streams = await _ytService.getStreamQualities(params.queryId);
 
     final initialStream = _selectInitialStream(streams);
-    final localAudioPath = await _prepareAudioIfNecessary(initialStream);
-
-    await _openPlayer(initialStream, localAudioPath);
+    await openStream(initialStream.url, audioUrl: initialStream.audioUrl);
 
     final candidates = _createStreamCandidates(streams);
     final initialCandidate = _findInitialCandidate(candidates, initialStream);
@@ -110,16 +54,6 @@ class YouTubeSourceHandler {
     );
   }
 
-  Future<List<YouTubeStreamQuality>> _fetchAvailableStreams(
-    String queryId,
-  ) async {
-    final streams = await _ytService.getStreamQualities(queryId);
-    if (streams.isEmpty) {
-      throw Exception("Could not resolve YouTube streams");
-    }
-    return streams;
-  }
-
   YouTubeStreamQuality _selectInitialStream(
     List<YouTubeStreamQuality> streams,
   ) {
@@ -129,26 +63,14 @@ class YouTubeSourceHandler {
     );
   }
 
-  Future<String?> _prepareAudioIfNecessary(YouTubeStreamQuality stream) async {
-    if (stream.needsAudio) {
-      return downloadAudioToTempFile();
+  /// Opens [url] in the player. Video-only streams pass [audioUrl]: the
+  /// player streams it as an external audio track, so playback starts at
+  /// once instead of after downloading the whole audio file (REV-236).
+  Future<void> openStream(String url, {String? audioUrl}) async {
+    await _player.open(Media(url, httpHeaders: youtubeHeaders), play: false);
+    if (audioUrl != null) {
+      await _player.setAudioTrack(AudioTrack.uri(audioUrl));
     }
-    return null;
-  }
-
-  Future<void> _openPlayer(
-    YouTubeStreamQuality stream,
-    String? localAudioPath,
-  ) async {
-    await _player.open(
-      Media(stream.url, httpHeaders: youtubeHeaders),
-      play: false,
-    );
-
-    if (localAudioPath != null) {
-      await _player.setAudioTrack(AudioTrack.uri(localAudioPath));
-    }
-
     await _player.play();
   }
 

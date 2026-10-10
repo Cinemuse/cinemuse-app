@@ -49,7 +49,6 @@ class VideosRow extends StatelessWidget {
                     type: 'youtube',
                     episodeTitle: name,
                     loadingMessage: l10n?.playerResolvingYoutube,
-                    errorMessage: l10n?.playerErrorResolvingYoutube(''),
                   ),
                 ),
               );

@@ -790,9 +790,15 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String playerErrorResolvingYoutube(Object error) {
-    return 'Errore caricamento video YouTube:\n$error';
-  }
+  String get playerYoutubeBlocked =>
+      'Questo trailer non si può riprodurre nell\'app.\nA volte YouTube blocca le app come questa. Puoi guardarlo su YouTube.';
+
+  @override
+  String get playerOpenOnYoutube => 'Apri su YouTube';
+
+  @override
+  String get playerOpenOnYoutubeFailed =>
+      'Impossibile aprire YouTube su questo dispositivo.';
 
   @override
   String get playerNoAudioFound => 'Nessuna traccia audio trovata';

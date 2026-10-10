@@ -1454,11 +1454,23 @@ abstract class AppLocalizations {
   /// **'Error resolving stream:\n{error}'**
   String playerErrorResolving(Object error);
 
-  /// No description provided for @playerErrorResolvingYoutube.
+  /// No description provided for @playerYoutubeBlocked.
   ///
   /// In en, this message translates to:
-  /// **'Error loading YouTube video:\n{error}'**
-  String playerErrorResolvingYoutube(Object error);
+  /// **'This trailer can\'t be played in the app.\nYouTube sometimes blocks apps like this one. You can watch it on YouTube instead.'**
+  String get playerYoutubeBlocked;
+
+  /// No description provided for @playerOpenOnYoutube.
+  ///
+  /// In en, this message translates to:
+  /// **'Open on YouTube'**
+  String get playerOpenOnYoutube;
+
+  /// No description provided for @playerOpenOnYoutubeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open YouTube on this device.'**
+  String get playerOpenOnYoutubeFailed;
 
   /// No description provided for @playerNoAudioFound.
   ///

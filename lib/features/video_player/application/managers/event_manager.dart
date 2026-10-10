@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
@@ -77,11 +78,7 @@ class EventManager {
 
     _subscriptions.add(
       player.stream.error.listen((error) {
-        developer.log(
-          'Player Error: $error',
-          name: 'VideoPlayer.EventManager',
-          level: 900,
-        );
+        AppLogger.warn('VideoPlayer.EventManager', 'Player error: $error');
         onError(error);
       }),
     );
