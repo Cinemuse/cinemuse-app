@@ -9,7 +9,10 @@ import 'package:cinemuse_app/features/profile/domain/profile.dart';
 import 'package:drift/drift.dart';
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
-  return ProfileRepository(supabase, ref.watch(appDatabaseProvider));
+  return ProfileRepository(
+    ref.watch(supabaseClientProvider),
+    ref.watch(appDatabaseProvider),
+  );
 });
 
 class ProfileRepository {

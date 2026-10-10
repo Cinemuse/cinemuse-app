@@ -55,7 +55,7 @@ Future<void> _ensureInitialized() async {
 
   await Supabase.initialize(
     url: SupabaseConfig.url,
-    anonKey: SupabaseConfig.anonKey,
+    anonKey: SupabaseConfig.publishableKey,
   );
 
   _initialized = true;

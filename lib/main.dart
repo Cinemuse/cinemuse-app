@@ -57,7 +57,7 @@ void main() {
       // Depends on dotenv being loaded
       await Supabase.initialize(
         url: SupabaseConfig.url,
-        anonKey: SupabaseConfig.anonKey,
+        anonKey: SupabaseConfig.publishableKey,
       );
 
       if (io.Platform.isWindows || io.Platform.isLinux) {

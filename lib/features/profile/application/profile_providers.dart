@@ -49,7 +49,8 @@ final profileStreamProvider = StreamProvider<Profile?>((ref) async* {
 
   // 2. Real-time background update
   try {
-    final stream = supabase
+    final stream = ref
+        .read(supabaseClientProvider)
         .from('profiles')
         .stream(primaryKey: ['id'])
         .eq('id', userId)
@@ -138,7 +139,8 @@ final profileStatsProvider = StreamProvider<ProfileStats>((ref) async* {
   ref.watch(watchHistoryStreamProvider);
 
   try {
-    final res = await supabase
+    final res = await ref
+        .read(supabaseClientProvider)
         .from('user_stats')
         .select()
         .eq('user_id', userId)

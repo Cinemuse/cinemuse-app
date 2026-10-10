@@ -9,7 +9,10 @@ import 'package:cinemuse_app/features/profile/domain/agenda_event.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final agendaRepositoryProvider = Provider<AgendaRepository>((ref) {
-  return AgendaRepository(supabase, ref.watch(watchHistoryRepositoryProvider));
+  return AgendaRepository(
+    ref.watch(supabaseClientProvider),
+    ref.watch(watchHistoryRepositoryProvider),
+  );
 });
 
 enum AgendaGroup {

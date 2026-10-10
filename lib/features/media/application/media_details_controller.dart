@@ -21,6 +21,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
   WatchHistoryRepository get _repository =>
       ref.read(watchHistoryRepositoryProvider);
   UserListsNotifier get _listsNotifier => ref.read(userListsProvider.notifier);
+  String? get _userId => ref.read(supabaseClientProvider).auth.currentUser?.id;
 
   /// Resolves the appropriate starting season for a series based on watch history.
   /// If the current target season is completely watched, advances to the next season
@@ -101,7 +102,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     required int season,
     required int episode,
   }) async {
-    final userId = supabase.auth.currentUser?.id;
+    final userId = _userId;
     if (userId == null) return;
 
     // Optimistic Update: Remove log immediately
@@ -131,7 +132,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     required int season,
     required int episode,
   }) async {
-    final userId = supabase.auth.currentUser?.id;
+    final userId = _userId;
     if (userId == null) return;
 
     // Optimistic Update: Remove log immediately
@@ -161,7 +162,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     required List<({int season, int episode})> episodes,
     DateTime? loggedAt,
   }) async {
-    final userId = supabase.auth.currentUser?.id;
+    final userId = _userId;
     if (userId == null) return;
 
     // Optimistic Update: Add all logs immediately
@@ -214,7 +215,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
 
   /// Deletes all logs for a series.
   Future<void> deleteAllSeriesLogs({required int tmdbId}) async {
-    final userId = supabase.auth.currentUser?.id;
+    final userId = _userId;
     if (userId == null) return;
 
     // Optimistic Update: Retrieve current logs to determine what to "remove" locally
@@ -248,7 +249,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     required int season,
     required int episode,
   }) async {
-    final userId = supabase.auth.currentUser?.id;
+    final userId = _userId;
     if (userId == null) return;
 
     await _repository.ensureEpisodeWatching(
@@ -260,7 +261,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
   }
 
   Future<void> logMovieWatch({required int tmdbId, DateTime? loggedAt}) async {
-    final userId = supabase.auth.currentUser?.id;
+    final userId = _userId;
     if (userId == null) return;
 
     // The app's own "now" (not the server's) so the optimistic log matches the
@@ -288,7 +289,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
   }
 
   Future<void> deleteLatestMovieLog({required int tmdbId}) async {
-    final userId = supabase.auth.currentUser?.id;
+    final userId = _userId;
     if (userId == null) return;
 
     ref.read(movieWatchLogsProvider(tmdbId).notifier).removeOptimisticLog();
@@ -304,7 +305,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
   }
 
   Future<void> deleteAllMovieLogs({required int tmdbId}) async {
-    final userId = supabase.auth.currentUser?.id;
+    final userId = _userId;
     if (userId == null) return;
 
     ref.read(movieWatchLogsProvider(tmdbId).notifier).clearOptimisticOffset();

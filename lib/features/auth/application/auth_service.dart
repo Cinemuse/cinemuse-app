@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 final authProvider = StateNotifierProvider<AuthService, AsyncValue<User?>>((
   ref,
 ) {
-  return AuthService(supabase);
+  return AuthService(ref.watch(supabaseClientProvider));
 });
 
 // Auth Actions Provider

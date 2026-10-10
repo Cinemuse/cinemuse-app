@@ -19,7 +19,7 @@ import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 
 final watchHistoryRepositoryProvider = Provider<WatchHistoryRepository>((ref) {
   return WatchHistoryRepository(
-    supabase,
+    ref.watch(supabaseClientProvider),
     ref.watch(mediaRepositoryProvider),
     ref.watch(appDatabaseProvider),
     ref.watch(seriesDomainServiceProvider),

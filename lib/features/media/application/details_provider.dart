@@ -489,7 +489,8 @@ final isRewatchingProvider = FutureProvider.family<bool, WatchHistory>((
   if (authState == null) return false;
 
   try {
-    final maxLog = await supabase
+    final maxLog = await ref
+        .read(supabaseClientProvider)
         .from('watch_logs')
         .select('season, episode')
         .eq('user_id', authState.id)

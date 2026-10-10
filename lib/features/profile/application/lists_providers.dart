@@ -10,7 +10,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final listsRepositoryProvider = Provider<ListsRepository>((ref) {
-  return ListsRepository(supabase, ref.watch(appDatabaseProvider));
+  return ListsRepository(
+    ref.watch(supabaseClientProvider),
+    ref.watch(appDatabaseProvider),
+  );
 });
 
 /// A notifier that manages all user lists (Watchlist, Favorites, and Custom).
