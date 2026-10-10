@@ -5,8 +5,9 @@ extension SupabaseFutureX<T> on Future<T> {
   Future<T> withErrorHandling() async {
     try {
       return await this;
-    } catch (e) {
-      throw SupabaseErrorHandler.handleError(e);
+    } catch (e, s) {
+      // Keep the caller's stack trace, or every log points at this helper.
+      Error.throwWithStackTrace(SupabaseErrorHandler.handleError(e), s);
     }
   }
 }

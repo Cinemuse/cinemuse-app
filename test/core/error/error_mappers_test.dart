@@ -61,16 +61,40 @@ void main() {
     });
   });
 
-  group('GlobalErrorMapper keeps the old behavior', () {
-    test('AppException shows its message and type', () {
-      final result = mapper.map(
-        AppException(message: 'old', type: AppExceptionType.auth),
-      );
+  group('GlobalErrorMapper with AppException', () {
+    final cases = <AppExceptionType, String>{
+      AppExceptionType.network: l10n.failureNetwork,
+      AppExceptionType.auth: l10n.failureAuth,
+      AppExceptionType.database: l10n.failureServer,
+      AppExceptionType.streaming: l10n.failureStreaming,
+      AppExceptionType.validation: l10n.failureValidation,
+      AppExceptionType.realtime: l10n.failureUnknown,
+      AppExceptionType.system: l10n.failureUnknown,
+      AppExceptionType.unknown: l10n.failureUnknown,
+    };
 
-      expect(result.message, 'old');
-      expect(result.type, AppExceptionType.auth);
+    cases.forEach((type, expected) {
+      test('${type.name} → translated text, never the raw message', () {
+        final result = mapper.map(
+          AppException(message: 'raw database text', type: type),
+        );
+
+        expect(result.message, expected);
+        expect(result.type, type);
+      });
     });
+  });
 
+  group('GlobalErrorMapper fallback', () {
+    test('an unknown error shows the translated text, not toString()', () {
+      final result = mapper.map(Exception('Invalid URL format'));
+
+      expect(result.message, l10n.failureUnknown);
+      expect(result.message, isNot(contains('Invalid URL format')));
+    });
+  });
+
+  group('GlobalErrorMapper keeps the old behavior', () {
     test('a known StreamingException gets its translated text', () {
       final result = mapper.map(CapabilityMissingException('anime'));
 

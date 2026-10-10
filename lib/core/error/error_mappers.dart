@@ -135,15 +135,27 @@ class GlobalErrorMapper {
       final result = mapper.map(error, _l10n);
       if (result != null) return result;
     }
+    // Never show `message` / `toString()`: raw English developer text (REV-164).
     return switch (error) {
       AppException() => UserFriendlyError(
-        message: error.message,
+        message: _messageForType(error.type),
         type: error.type,
       ),
       String() => UserFriendlyError(message: error),
-      _ => UserFriendlyError(message: error.toString()),
+      _ => UserFriendlyError(message: _l10n.failureUnknown),
     };
   }
+
+  String _messageForType(AppExceptionType type) => switch (type) {
+    AppExceptionType.network => _l10n.failureNetwork,
+    AppExceptionType.auth => _l10n.failureAuth,
+    AppExceptionType.database => _l10n.failureServer,
+    AppExceptionType.streaming => _l10n.failureStreaming,
+    AppExceptionType.validation => _l10n.failureValidation,
+    AppExceptionType.realtime ||
+    AppExceptionType.system ||
+    AppExceptionType.unknown => _l10n.failureUnknown,
+  };
 }
 
 final errorMapperProvider = Provider<GlobalErrorMapper>((ref) {
