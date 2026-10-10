@@ -1,17 +1,21 @@
+import 'package:cinemuse_app/core/network/retry_interceptor.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// A plain desktop Chrome User-Agent. Some stream sites refuse requests that
+/// don't look like a browser; APIs (TMDB, debrid) accept it too (STR-10).
+const browserUserAgent =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(
-      connectTimeout: const Duration(seconds: 30),
+      // Short connect timeout: with retries, a dead host still fails in ~30 s
+      // instead of ~2 min (STR-11).
+      connectTimeout: const Duration(seconds: 10),
       sendTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
-      headers: {
-        'User-Agent':
-            'Cinemuse/1.0.0 (Windows 10; Desktop) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      },
+      headers: {'User-Agent': browserUserAgent},
     ),
   );
 
@@ -19,52 +23,3 @@ final dioProvider = Provider<Dio>((ref) {
 
   return dio;
 });
-
-class RetryInterceptor extends Interceptor {
-  final Dio dio;
-  final int maxRetries;
-  final List<int> retryStatusCodes;
-
-  RetryInterceptor(
-    this.dio, {
-    this.maxRetries = 3,
-    this.retryStatusCodes = const [502, 503, 504],
-  });
-
-  @override
-  Future onError(DioException err, ErrorInterceptorHandler handler) async {
-    final requestOptions = err.requestOptions;
-
-    // Check if we should retry
-    int retryCount = requestOptions.extra['retry_count'] ?? 0;
-
-    final bool shouldRetry =
-        retryCount < maxRetries &&
-        (err.type == DioExceptionType.connectionTimeout ||
-            err.type == DioExceptionType.receiveTimeout ||
-            (err.response != null &&
-                retryStatusCodes.contains(err.response?.statusCode)));
-
-    if (shouldRetry) {
-      retryCount++;
-      requestOptions.extra['retry_count'] = retryCount;
-
-      // Exponential backoff
-      final delay = Duration(milliseconds: 500 * (retryCount * retryCount));
-      debugPrint(
-        'NetworkInterceptor: Retrying request (${requestOptions.path}) - Attempt $retryCount after ${delay.inMilliseconds}ms',
-      );
-
-      await Future.delayed(delay);
-
-      try {
-        final response = await dio.fetch(requestOptions);
-        return handler.resolve(response);
-      } on DioException catch (e) {
-        return super.onError(e, handler);
-      }
-    }
-
-    return super.onError(err, handler);
-  }
-}

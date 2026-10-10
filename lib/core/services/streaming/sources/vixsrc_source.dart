@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
@@ -10,8 +11,7 @@ class VixSrcSource extends BaseSource {
   final Dio _dio;
   static const String _baseUrl = "https://vixsrc.to";
 
-  static const String _userAgent =
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+  static const String _userAgent = browserUserAgent;
   static const Duration _requestTimeout = Duration(seconds: 10);
 
   @override
