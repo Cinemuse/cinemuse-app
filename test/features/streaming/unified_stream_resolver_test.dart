@@ -3,6 +3,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/streaming/debrid/base_debrid_service.dart';
+import 'package:cinemuse_app/features/streaming/debrid/composite_debrid_service.dart';
 import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/features/streaming/sources/base_source.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
@@ -418,7 +419,7 @@ void main() {
         mediaRepository: mockMedia,
         settings: const UserSettings(),
         maxResolution: VideoResolution.r2160p,
-        debridService: debrid,
+        debridService: CompositeDebridService([debrid]),
       );
       final candidate = StreamCandidate(
         kind: StreamSourceKind.vod,

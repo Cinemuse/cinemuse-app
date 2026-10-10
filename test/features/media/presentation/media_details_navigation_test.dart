@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/features/streaming/unified_stream_resolver_provider.dart';
 import 'package:cinemuse_app/features/media/domain/episode_item.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_carousel_card.dart';

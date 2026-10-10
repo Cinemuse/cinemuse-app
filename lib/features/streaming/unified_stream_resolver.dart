@@ -1,137 +1,21 @@
 import 'dart:async';
-import 'package:cinemuse_app/features/streaming/debrid/base_debrid_service.dart';
+
+import 'package:cinemuse_app/core/utils/app_logger.dart';
+import 'package:cinemuse_app/features/media/data/media_repository.dart';
+import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/streaming/anime/kitsu_mapping_service.dart';
+import 'package:cinemuse_app/features/streaming/debrid/composite_debrid_service.dart';
 import 'package:cinemuse_app/features/streaming/models/provider_search_status.dart';
-import 'package:flutter/foundation.dart';
-import 'package:cinemuse_app/features/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_metadata.dart';
+import 'package:cinemuse_app/features/streaming/models/stream_search_context.dart';
+import 'package:cinemuse_app/features/streaming/models/streaming_exceptions.dart';
 import 'package:cinemuse_app/features/streaming/ranking/stream_ranker.dart';
 import 'package:cinemuse_app/features/streaming/sources/base_source.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/core/network/network_providers.dart';
-import 'package:cinemuse_app/features/settings/application/settings_service.dart';
-import 'package:cinemuse_app/features/streaming/sources/stremio_source.dart';
-import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
-import 'package:cinemuse_app/features/streaming/anime/kitsu_mapping_service.dart';
-import 'package:cinemuse_app/features/streaming/models/streaming_exceptions.dart';
-import 'package:cinemuse_app/features/streaming/sources/animetosho_source.dart';
-import 'package:cinemuse_app/features/streaming/debrid/real_debrid_service.dart';
-import 'package:cinemuse_app/features/streaming/debrid/torbox_service.dart';
-import 'package:cinemuse_app/features/streaming/debrid/composite_debrid_service.dart';
-import 'package:cinemuse_app/features/streaming/sources/vixsrc_source.dart';
-import 'package:cinemuse_app/features/streaming/sources/animeunity_source.dart';
-import 'package:cinemuse_app/features/media/domain/media_item.dart';
-import 'package:cinemuse_app/features/media/data/media_repository.dart';
-import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
-import 'package:cinemuse_app/core/utils/app_logger.dart';
-
-final unifiedStreamResolverProvider = Provider((ref) {
-  // Only watch settings that affect streaming sources and ranking
-  final settings = ref.watch(
-    settingsProvider.select(
-      (s) => (
-        s.installedAddons,
-        s.enableAnimeTosho,
-        s.enableVixSrc,
-        s.enableAnimeUnity,
-        s.enableRealDebrid,
-        s.realDebridKey,
-        s.enableTorBox,
-        s.torBoxKey,
-        s.preferredDebridProvider,
-        s.smartSearchFilter,
-        s.playerLanguage,
-        s.splitAnimePreferences,
-        s.animeAudioLanguage,
-        s.enableAutoSkipProviders,
-      ),
-    ),
-  );
-
-  // Create a minimal UserSettings object for the constructor to avoid watching the whole thing
-  final userSettings = UserSettings(
-    installedAddons: settings.$1,
-    enableAnimeTosho: settings.$2,
-    enableVixSrc: settings.$3,
-    enableAnimeUnity: settings.$4,
-    enableRealDebrid: settings.$5,
-    realDebridKey: settings.$6,
-    enableTorBox: settings.$7,
-    torBoxKey: settings.$8,
-    preferredDebridProvider: settings.$9,
-    smartSearchFilter: settings.$10,
-    playerLanguage: settings.$11,
-    splitAnimePreferences: settings.$12,
-    animeAudioLanguage: settings.$13,
-    enableAutoSkipProviders: settings.$14,
-  );
-
-  final maxResolution = ref.watch(
-    localSettingsProvider.select((s) => s.maxResolution),
-  );
-
-  final dio = ref.read(dioProvider);
-
-  final List<BaseSource> sources = [];
-
-  // Dynamic Stremio Addons
-  for (final addon in userSettings.installedAddons) {
-    if (!addon.enabled || !addon.isStreamingAddon) {
-      continue;
-    }
-
-    sources.add(
-      StremioSource(
-        dio,
-        addon.baseUrl,
-        name: addon.name,
-        supportedCategories: addon.types.toSet(),
-        queryParams: addon.queryParams,
-      ),
-    );
-  }
-
-  // Register built-in sources
-  if (userSettings.enableAnimeTosho) {
-    sources.add(AnimeToshoSource(dio));
-  }
-
-  if (userSettings.enableVixSrc) {
-    sources.add(VixSrcSource(dio));
-  }
-
-  if (userSettings.enableAnimeUnity) {
-    sources.add(AnimeUnitySource(dio, ref.read(kitsuMappingServiceProvider)));
-  }
-
-  final debridServices = <BaseDebridService>[];
-  if (userSettings.enableRealDebrid) {
-    debridServices.add(RealDebridService(dio, userSettings.realDebridKey));
-  }
-  if (userSettings.enableTorBox) {
-    debridServices.add(TorBoxService(dio, userSettings.torBoxKey));
-  }
-
-  final preferredName =
-      userSettings.preferredDebridProvider.toLowerCase() == 'torbox'
-      ? 'TorBox'
-      : 'Real-Debrid';
-
-  final debridService = debridServices.isNotEmpty
-      ? CompositeDebridService(debridServices, preferredProvider: preferredName)
-      : null;
-
-  return UnifiedStreamResolver(
-    sources: sources,
-    tmdbService: ref.read(tmdbServiceProvider),
-    kitsuMappingService: ref.read(kitsuMappingServiceProvider),
-    mediaRepository: ref.read(mediaRepositoryProvider),
-    settings: userSettings,
-    maxResolution: maxResolution,
-    debridService: debridService,
-  );
-});
+import 'package:flutter/foundation.dart';
 
 class UnifiedStreamResolver {
   final List<BaseSource> _sources;
@@ -140,11 +24,18 @@ class UnifiedStreamResolver {
   final MediaRepository _mediaRepository;
   final UserSettings _settings;
   final VideoResolution _maxResolution;
-  final BaseDebridService? _debridService;
+  final CompositeDebridService? _debridService;
 
   // Simple in-memory cache for search results
   final Map<String, _CachedSearch> _searchCache = {};
   static const Duration _cacheDuration = Duration(minutes: 30);
+
+  static String _cacheKey(
+    String queryId,
+    String type,
+    int? season,
+    int? episode,
+  ) => '$type:$queryId:${season ?? 0}:${episode ?? 0}';
 
   /// Clears the in-memory search cache.
   @visibleForTesting
@@ -159,7 +50,7 @@ class UnifiedStreamResolver {
     int? season,
     int? episode,
   }) {
-    final cacheKey = "$type:$queryId:${season ?? 0}:${episode ?? 0}";
+    final cacheKey = _cacheKey(queryId, type, season, episode);
     final cached = _searchCache[cacheKey];
     if (cached == null) return false;
 
@@ -179,7 +70,7 @@ class UnifiedStreamResolver {
     int? season,
     int? episode,
   }) {
-    final cacheKey = "$type:$queryId:${season ?? 0}:${episode ?? 0}";
+    final cacheKey = _cacheKey(queryId, type, season, episode);
     _searchCache.remove(cacheKey);
     debugPrint('UnifiedStreamResolver: Cleared cached results for $cacheKey');
   }
@@ -194,7 +85,7 @@ class UnifiedStreamResolver {
     required MediaRepository mediaRepository,
     required UserSettings settings,
     required VideoResolution maxResolution,
-    BaseDebridService? debridService,
+    CompositeDebridService? debridService,
   }) : _sources = sources,
        _tmdbService = tmdbService,
        _kitsuMappingService = kitsuMappingService,
@@ -212,7 +103,7 @@ class UnifiedStreamResolver {
     Future<void>? skipTrigger,
     Map<String, dynamic>? preloadedDetails,
   }) async {
-    final cacheKey = "$type:$queryId:${season ?? 0}:${episode ?? 0}";
+    final cacheKey = _cacheKey(queryId, type, season, episode);
     final cached = _searchCache[cacheKey];
 
     if (cached != null &&
@@ -430,44 +321,19 @@ class UnifiedStreamResolver {
           'UnifiedStreamResolver: Checking availability for ${hashes.length} hashes on ${_debridService.name}',
         );
 
-        if (_debridService is CompositeDebridService) {
-          final detailed = await _debridService.checkDetailedAvailability(
-            hashes,
-          );
+        final detailed = await _debridService.checkDetailedAvailability(hashes);
 
-          results = results.map((c) {
-            final providers = detailed[c.infoHash.toLowerCase()];
-            if (providers != null && providers.isNotEmpty) {
-              final updatedCachedOn = Map<String, bool>.from(c.cachedOn);
-              for (final p in providers) {
-                updatedCachedOn[p] = true;
-              }
-              return c.copyWith(cachedOn: updatedCachedOn);
+        results = results.map((c) {
+          final providers = detailed[c.infoHash.toLowerCase()];
+          if (providers != null && providers.isNotEmpty) {
+            final updatedCachedOn = Map<String, bool>.from(c.cachedOn);
+            for (final p in providers) {
+              updatedCachedOn[p] = true;
             }
-            return c;
-          }).toList();
-        } else {
-          // Split into chunks if there are many (RD has limits, though usually 100 is fine)
-          final Map<String, bool> availability = {};
-          for (var i = 0; i < hashes.length; i += 100) {
-            final chunk = hashes.sublist(
-              i,
-              i + 100 > hashes.length ? hashes.length : i + 100,
-            );
-            final chunkRes = await _debridService.checkAvailability(chunk);
-            availability.addAll(chunkRes);
+            return c.copyWith(cachedOn: updatedCachedOn);
           }
-
-          results = results.map((c) {
-            final isAvailable = availability[c.infoHash.toLowerCase()] ?? false;
-            if (isAvailable) {
-              final updatedCachedOn = Map<String, bool>.from(c.cachedOn);
-              updatedCachedOn[_debridService.name] = true;
-              return c.copyWith(cachedOn: updatedCachedOn);
-            }
-            return c;
-          }).toList();
-        }
+          return c;
+        }).toList();
       }
     }
 

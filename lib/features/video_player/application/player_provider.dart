@@ -5,6 +5,7 @@ import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/features/streaming/unified_stream_resolver_provider.dart';
 import 'package:cinemuse_app/features/video_player/data/youtube_service.dart';
 import 'package:cinemuse_app/core/utils/mime_resolver.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
