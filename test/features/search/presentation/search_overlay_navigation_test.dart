@@ -1,4 +1,3 @@
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/features/search/application/search_provider.dart';
@@ -37,21 +36,13 @@ void main() {
     mockTmdbService = MockTmdbService();
   });
 
-  Widget createTestWidget({
-    SearchState? initialState,
-    DisplayMode displayMode = DisplayMode.bigPicture,
-  }) {
+  Widget createTestWidget({SearchState? initialState}) {
     return ProviderScope(
       overrides: [
         tmdbServiceProvider.overrideWithValue(mockTmdbService),
         connectivityProvider.overrideWith(
           (ref) => Stream.value(ConnectivityResult.wifi),
         ),
-        displayModeProvider.overrideWith((ref) {
-          final notifier = DisplayModeNotifier();
-          notifier.setMode(displayMode);
-          return notifier;
-        }),
         settingsProvider.overrideWith((ref) => FakeSettingsNotifier()),
         if (initialState != null)
           searchProvider.overrideWith((ref) {
@@ -78,6 +69,8 @@ void main() {
     expect(find.text('Inception'), findsOneWidget);
     expect(find.text('Interstellar'), findsOneWidget);
     expect(find.text('Batman'), findsOneWidget);
+    // Remote users' only delete hint: shown for everyone now.
+    expect(find.textContaining('Hold to delete'), findsOneWidget);
 
     // Verify TextField has focus
     final textField = tester.widget<TextField>(find.byType(TextField));

@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/media/presentation/person_details_screen.dart';
@@ -215,8 +214,6 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
     final l10n = AppLocalizations.of(context)!;
     final connectivity = ref.watch(connectivityProvider);
     final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
-    final isBigPicture =
-        ref.watch(displayModeProvider) == DisplayMode.bigPicture;
 
     return PopScope(
       canPop: false,
@@ -538,7 +535,6 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
                                           searchState,
                                           l10n,
                                           isOffline,
-                                          isBigPicture,
                                         ),
                                       ),
                                     ),
@@ -560,12 +556,7 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
     );
   }
 
-  Widget _buildBody(
-    SearchState state,
-    AppLocalizations l10n,
-    bool isOffline,
-    bool isBigPicture,
-  ) {
+  Widget _buildBody(SearchState state, AppLocalizations l10n, bool isOffline) {
     if (isOffline) {
       return Center(
         child: Column(
@@ -597,7 +588,7 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
     }
 
     if (_searchController.text.trim().isEmpty) {
-      return _buildSearchHistory(state, l10n, isBigPicture);
+      return _buildSearchHistory(state, l10n);
     }
 
     if (state.status == SearchStatus.error) {
@@ -695,11 +686,7 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
     );
   }
 
-  Widget _buildSearchHistory(
-    SearchState state,
-    AppLocalizations l10n,
-    bool isBigPicture,
-  ) {
+  Widget _buildSearchHistory(SearchState state, AppLocalizations l10n) {
     final history = state.searchHistory;
     if (history.isEmpty) {
       return Center(
@@ -739,30 +726,36 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    l10n.searchRecentSearches.toUpperCase(),
-                    style: const TextStyle(
-                      color: AppTheme.textMuted,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  if (isBigPicture) ...[
-                    const SizedBox(width: 8),
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      '•  ${l10n.searchHoldToDelete}',
-                      style: TextStyle(
-                        color: AppTheme.textMuted.withValues(alpha: 0.7),
-                        fontSize: 11,
-                        fontStyle: FontStyle.italic,
+                      l10n.searchRecentSearches.toUpperCase(),
+                      style: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    // The only delete hint for remote users: the per-item
+                    // delete button can't get D-pad focus.
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        '•  ${l10n.searchHoldToDelete}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppTheme.textMuted.withValues(alpha: 0.7),
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ),
                   ],
-                ],
+                ),
               ),
               DpadFocusable(
                 focusNode: _clearHistoryFocusNode,

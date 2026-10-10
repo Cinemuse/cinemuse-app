@@ -57,9 +57,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get commonFeatured => 'IN PRIMO PIANO';
 
   @override
-  String get commonSeeAll => 'Vedi tutti';
-
-  @override
   String get commonUnexpectedError => 'Si è verificato un errore inaspettato';
 
   @override
@@ -2215,13 +2212,6 @@ class AppLocalizationsIt extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get bigPictureMode => 'Modalità Big Picture';
-
-  @override
-  String get bigPictureModeSubtitle =>
-      'Interfaccia ottimizzata per TV e navigazione con telecomando';
 
   @override
   String get liveTvFullWindow => 'A tutto schermo';

@@ -1,9 +1,7 @@
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/hero/social_actions_group.dart';
-import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
@@ -182,7 +180,6 @@ class _ResponsiveActionButtonsState
         onPlayClick: widget.onPlayClick,
         label: widget.playButtonLabel,
         isFullWidth: isFullWidth,
-        onExitLeft: _handleExitLeft,
       );
     }
 
@@ -192,16 +189,7 @@ class _ResponsiveActionButtonsState
       isFullWidth: isFullWidth,
       onDropdownOpened: _refreshCacheState,
       dropdownItems: _buildDropdownItems(context),
-      onExitLeft: _handleExitLeft,
     );
-  }
-
-  void _handleExitLeft() {
-    final isWidescreen = ref.read(isBigPictureProvider);
-    if (isWidescreen) {
-      final focusRail = ref.read(tvRailFocusActionProvider);
-      focusRail?.call();
-    }
   }
 
   List<_DropdownItem> _buildDropdownItems(BuildContext context) {
@@ -265,14 +253,12 @@ class _SplitPlayButton extends StatelessWidget {
   final bool isFullWidth;
   final List<_DropdownItem> dropdownItems;
   final VoidCallback onDropdownOpened;
-  final VoidCallback? onExitLeft;
 
   const _SplitPlayButton({
     required this.onPlayClick,
     required this.label,
     required this.dropdownItems,
     required this.onDropdownOpened,
-    this.onExitLeft,
     this.isFullWidth = false,
   });
 
@@ -347,8 +333,9 @@ class _SplitPlayButton extends StatelessWidget {
       autoScroll: false,
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent || event is KeyRepeatEvent) {
+          // Play is the first button in its row: keep focus on it instead
+          // of letting the arrow jump to an unrelated control.
           if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-            onExitLeft?.call();
             return KeyEventResult.handled;
           }
         }
@@ -425,12 +412,10 @@ class _PlayButton extends StatelessWidget {
   final VoidCallback onPlayClick;
   final String label;
   final bool isFullWidth;
-  final VoidCallback? onExitLeft;
 
   const _PlayButton({
     required this.onPlayClick,
     required this.label,
-    this.onExitLeft,
     this.isFullWidth = false,
   });
 
@@ -443,8 +428,8 @@ class _PlayButton extends StatelessWidget {
       autoScroll: false,
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent || event is KeyRepeatEvent) {
+          // Same as the split button: Left stays on Play.
           if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-            onExitLeft?.call();
             return KeyEventResult.handled;
           }
         }

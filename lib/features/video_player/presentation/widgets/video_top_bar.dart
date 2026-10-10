@@ -3,17 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 
+/// Title / channel info shown at the top of the player.
+///
+/// Info only, no buttons: Stop and Settings live in the bottom bar. The cast
+/// button was removed while casting is unreliable (its code is kept).
 class VideoTopBar extends ConsumerWidget {
   final CinemaPlayerState playerState;
   final PlayerParams params;
-  final VoidCallback onSettingsPressed;
-  final VoidCallback onCastPressed;
-  final VoidCallback? onBackPressed;
   final Channel? channel;
   final bool isLive;
 
@@ -21,9 +21,6 @@ class VideoTopBar extends ConsumerWidget {
     super.key,
     required this.playerState,
     required this.params,
-    required this.onSettingsPressed,
-    required this.onCastPressed,
-    this.onBackPressed,
     this.channel,
     this.isLive = false,
   });
@@ -31,7 +28,6 @@ class VideoTopBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(localizationsProvider);
-    final isBigPicture = ref.watch(isBigPictureProvider);
     final currentProgram = (isLive && channel != null)
         ? ref.watch(currentProgramProvider(channel!))
         : null;
@@ -49,17 +45,6 @@ class VideoTopBar extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          if (onBackPressed != null && !isBigPicture) ...[
-            IconButton(
-              icon: const Icon(
-                Icons.arrow_back_rounded,
-                color: AppTheme.textWhite,
-              ),
-              tooltip: l10n.commonGoBack,
-              onPressed: onBackPressed,
-            ),
-            const SizedBox(width: 8),
-          ],
           if (isLive) ...[
             if (channel != null) ...[
               ClipRRect(
@@ -220,21 +205,6 @@ class VideoTopBar extends ConsumerWidget {
                   ],
                 ],
               ),
-            ),
-          ],
-          if (!isBigPicture) ...[
-            IconButton(
-              icon: Icon(
-                playerState.isCasting ? Icons.cast_connected : Icons.cast,
-                color: playerState.isCasting
-                    ? AppTheme.accent
-                    : AppTheme.textWhite,
-              ),
-              onPressed: onCastPressed,
-            ),
-            IconButton(
-              icon: const Icon(Icons.settings, color: AppTheme.textWhite),
-              onPressed: onSettingsPressed,
             ),
           ],
         ],

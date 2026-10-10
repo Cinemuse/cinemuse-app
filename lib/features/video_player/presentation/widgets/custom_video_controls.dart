@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'dart:io' show Platform;
@@ -12,7 +11,6 @@ import 'package:window_manager/window_manager.dart' show DragToMoveArea;
 import 'package:cinemuse_app/features/video_player/presentation/widgets/video_top_bar.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/video_bottom_bar.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/next_episode_overlay.dart';
-import 'package:cinemuse_app/features/video_player/presentation/widgets/cast_device_selector.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/overlays/seek_feedback_hud.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/overlays/volume_brightness_hud.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/overlays/live_tv_channel_drawer.dart';
@@ -253,7 +251,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   KeyEventResult _handleKeyEvent(KeyEvent event) {
     final isLive = widget.isLive || widget.params.type == 'livetv';
     final isOverlayOpen = ref.read(liveTvChannelOverlayProvider);
-    final isBigPicture = ref.read(isBigPictureProvider);
     final isFullOrStandalone =
         widget.isFullWindow ||
         widget.params.type == 'livetv' ||
@@ -268,7 +265,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       isLive: isLive,
       isOverlayOpen: isOverlayOpen,
       isVisible: _visible,
-      isBigPicture: isBigPicture,
       isFullscreen: _isFullscreenSafe(),
       isFullOrStandalone: isFullOrStandalone,
       numberBuffer: buffer,
@@ -325,7 +321,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     onUpdate: () => mounted ? setState(() {}) : null,
   );
 
-  Widget _buildTopBar(bool isLive, bool isBigPicture) {
+  Widget _buildTopBar(bool isLive) {
     final isDesktopNonFullscreen =
         !_isFullScreen &&
         (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
@@ -333,9 +329,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     final topBar = VideoTopBar(
       playerState: widget.playerState,
       params: widget.params,
-      onSettingsPressed: widget.onSettingsPressed,
-      onCastPressed: () => _handleCastPressed(context),
-      onBackPressed: _handleBack,
       channel: isLive ? widget.channel : null,
       isLive: isLive,
     );
@@ -344,10 +337,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       top: 0,
       left: 0,
       right: 0,
-      child: ExcludeFocus(
-        excluding: isBigPicture,
-        child: isDesktopNonFullscreen ? DragToMoveArea(child: topBar) : topBar,
-      ),
+      child: isDesktopNonFullscreen ? DragToMoveArea(child: topBar) : topBar,
     );
   }
 
@@ -389,19 +379,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
         ),
       ),
     );
-  }
-
-  Future<void> _handleCastPressed(BuildContext context) async {
-    final notifier = ref.read(playerControllerProvider(widget.params).notifier);
-    if (widget.playerState.isCasting) {
-      await notifier.stopCasting();
-      return;
-    }
-    final device = await CastDeviceSelector.show(context);
-    if (!mounted) return;
-    if (device != null) {
-      await notifier.startCasting(device);
-    }
   }
 
   void _onVerticalDragStart(DragStartDetails details) =>
@@ -446,7 +423,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   @override
   Widget build(BuildContext context) {
     final player = widget.playerState.controller.player;
-    final isBigPicture = ref.watch(isBigPictureProvider);
     final isOverlayOpen = ref.watch(liveTvChannelOverlayProvider);
 
     final isLive = widget.isLive || widget.params.type == 'livetv';
@@ -454,7 +430,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     return Focus(
       focusNode: _rootFocusNode,
       autofocus: true,
-      canRequestFocus: (!isBigPicture || !_visible) && !isOverlayOpen,
+      canRequestFocus: !isOverlayOpen,
       onKeyEvent: (node, event) => _handleKeyEvent(event),
       child: MouseRegion(
         onHover: (_) => _onHover(),
@@ -489,7 +465,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                   duration: const Duration(milliseconds: 200),
                   child: Stack(
                     children: [
-                      _buildTopBar(isLive, isBigPicture),
+                      _buildTopBar(isLive),
 
                       // Buffering / play-pause center overlay
                       BufferingIndicator(player: player),

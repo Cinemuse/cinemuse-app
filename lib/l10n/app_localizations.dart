@@ -194,12 +194,6 @@ abstract class AppLocalizations {
   /// **'FEATURED'**
   String get commonFeatured;
 
-  /// No description provided for @commonSeeAll.
-  ///
-  /// In en, this message translates to:
-  /// **'See All'**
-  String get commonSeeAll;
-
   /// No description provided for @commonUnexpectedError.
   ///
   /// In en, this message translates to:
@@ -3845,18 +3839,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 filter} other{{count} filters}}'**
   String watchHistoryActiveFilterCount(int count);
-
-  /// No description provided for @bigPictureMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Big Picture Mode'**
-  String get bigPictureMode;
-
-  /// No description provided for @bigPictureModeSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Optimized 10-foot UI for TV and remote navigation'**
-  String get bigPictureModeSubtitle;
 
   /// No description provided for @liveTvFullWindow.
   ///

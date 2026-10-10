@@ -5,13 +5,11 @@ import 'package:cinemuse_app/features/media/presentation/widgets/hero/series_pro
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 
-class DetailsHero extends ConsumerWidget {
+class DetailsHero extends StatelessWidget {
   final MediaItem? mediaItem;
   final Map<String, dynamic>? media;
   final Map<String, dynamic>? details;
@@ -51,9 +49,8 @@ class DetailsHero extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isWidescreen = ref.watch(isBigPictureProvider);
 
     final resolvedItem =
         mediaItem ??
@@ -141,9 +138,7 @@ class DetailsHero extends ConsumerWidget {
           updatedAt: DateTime.now(),
         );
 
-    final heroHeight = isWidescreen
-        ? MediaQuery.of(context).size.height * 0.8
-        : MediaQuery.of(context).size.height * 0.7;
+    final heroHeight = MediaQuery.sizeOf(context).height * 0.7;
 
     return SizedBox(
       height: heroHeight,
@@ -198,26 +193,20 @@ class DetailsHero extends ConsumerWidget {
             ),
           ),
 
-          if (!isWidescreen)
-            Positioned(
-              top: MediaQuery.of(context).padding.top > 0
-                  ? MediaQuery.of(context).padding.top + 16
-                  : 24,
-              left: contentPadding,
-              child: AppBackButton(
-                onTap: () => Navigator.of(context).pop(),
-                backgroundColor: AppTheme.surfaceOverlay,
-              ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top > 0
+                ? MediaQuery.of(context).padding.top + 16
+                : 24,
+            left: contentPadding,
+            child: AppBackButton(
+              onTap: () => Navigator.of(context).pop(),
+              backgroundColor: AppTheme.surfaceOverlay,
             ),
+          ),
 
           // Content
           Padding(
-            padding: EdgeInsets.fromLTRB(
-              contentPadding,
-              0,
-              contentPadding,
-              isWidescreen ? 16 : 48,
-            ),
+            padding: EdgeInsets.fromLTRB(contentPadding, 0, contentPadding, 48),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,

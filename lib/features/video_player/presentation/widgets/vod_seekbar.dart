@@ -9,7 +9,6 @@ class VodSeekbar extends StatefulWidget {
   final Player player;
   final Duration position;
   final Duration duration;
-  final bool isBigPicture;
   final FocusNode? seekbarFocusNode;
   final FocusNode? playPauseFocusNode;
   final ValueChanged<double> onChangeStart;
@@ -22,7 +21,6 @@ class VodSeekbar extends StatefulWidget {
     required this.player,
     required this.position,
     required this.duration,
-    required this.isBigPicture,
     this.seekbarFocusNode,
     this.playPauseFocusNode,
     required this.onChangeStart,
@@ -147,18 +145,12 @@ class _VodSeekbarState extends State<VodSeekbar> {
                       },
                       child: SliderTheme(
                         data: SliderThemeData(
-                          trackHeight: _isSeekbarFocused
-                              ? 5
-                              : (widget.isBigPicture ? 4 : 2.5),
+                          trackHeight: _isSeekbarFocused ? 5 : 2.5,
                           thumbShape: RoundSliderThumbShape(
-                            enabledThumbRadius: _isSeekbarFocused
-                                ? 8
-                                : (widget.isBigPicture ? 6 : 5),
+                            enabledThumbRadius: _isSeekbarFocused ? 8 : 5,
                           ),
                           overlayShape: RoundSliderOverlayShape(
-                            overlayRadius: _isSeekbarFocused
-                                ? 14
-                                : (widget.isBigPicture ? 12 : 10),
+                            overlayRadius: _isSeekbarFocused ? 14 : 10,
                           ),
                           activeTrackColor: AppTheme.textWhite,
                           inactiveTrackColor: AppTheme.borderSubtle,
@@ -223,7 +215,7 @@ class _VodSeekbarState extends State<VodSeekbar> {
           '${_formatDuration(position)} / ${_formatDuration(duration)}',
           style: TextStyle(
             color: AppTheme.textWhite.withValues(alpha: 0.85),
-            fontSize: widget.isBigPicture ? 14 : 12,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
             fontFamily: 'Outfit',
           ),

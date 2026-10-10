@@ -16,7 +16,6 @@
   "commonClearAll": "Clear All",
   "commonUndo": "Undo",
   "commonFeatured": "FEATURED",
-  "commonSeeAll": "See All",
   "commonUnexpectedError": "An unexpected error occurred",
   "commonOk": "OK",
   "commonUnknown": "Unknown",
@@ -858,8 +857,6 @@
       "count": { "type": "int" }
     }
   },
-  "bigPictureMode": "Big Picture Mode",
-  "bigPictureModeSubtitle": "Optimized 10-foot UI for TV and remote navigation",
   "liveTvFullWindow": "Full Window",
   "liveTvSplitView": "Split View",
   "liveTvChannels": "Channels",

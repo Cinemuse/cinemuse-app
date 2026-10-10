@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
@@ -108,19 +107,9 @@ void main() {
     );
   }
 
-  Widget buildTestableWidget(
-    Widget child, {
-    DisplayMode mode = DisplayMode.bigPicture,
-    void Function(Duration)? onSeek,
-  }) {
+  Widget buildTestableWidget(Widget child, {void Function(Duration)? onSeek}) {
     return ProviderScope(
-      key: ValueKey(mode),
       overrides: [
-        displayModeProvider.overrideWith((ref) {
-          final notifier = DisplayModeNotifier();
-          notifier.setMode(mode);
-          return notifier;
-        }),
         settingsProvider.overrideWith((ref) => FakeSettingsNotifier()),
         playerControllerProvider.overrideWith(
           (ref, params) => FakePlayerController(onSeek: onSeek),
@@ -135,9 +124,7 @@ void main() {
   }
 
   group('VideoPlaybackControls TV Layout Tests', () {
-    testWidgets('Renders inline row layout in Big Picture mode', (
-      tester,
-    ) async {
+    testWidgets('Renders inline row layout', (tester) async {
       var stopTapped = false;
       var playPauseToggled = false;
       var skipDirection = false;
@@ -159,7 +146,6 @@ void main() {
               onSettingsPressed: () => settingsTapped = true,
             ),
           ),
-          mode: DisplayMode.bigPicture,
         ),
       );
       await tester.pumpAndSettle();
@@ -238,7 +224,6 @@ void main() {
               ),
             ],
           ),
-          mode: DisplayMode.bigPicture,
         ),
       );
       await tester.pumpAndSettle();
@@ -404,7 +389,7 @@ void main() {
     });
 
     testWidgets(
-      'VideoBottomBar in Big Picture mode provides focusable Slider and wires playPauseFocusNode',
+      'VideoBottomBar provides focusable Slider and wires playPauseFocusNode',
       (tester) async {
         final playPauseFocusNode = FocusNode(debugLabel: 'TestPlayPause');
         final seekbarFocusNode = FocusNode(debugLabel: 'TestSeekbar');
@@ -432,7 +417,6 @@ void main() {
               onChangeEnd: (_) {},
               onChanged: (_) {},
             ),
-            mode: DisplayMode.bigPicture,
           ),
         );
         await tester.pumpAndSettle();
@@ -477,12 +461,11 @@ void main() {
               onBackPressed: () {},
               onOverlayRequested: (_) {},
             ),
-            mode: DisplayMode.bigPicture,
           ),
         );
         await tester.pumpAndSettle();
 
-        // In Big Picture mode, Play/Pause gets initial focus
+        // Play/Pause gets initial focus
         expect(
           tester.binding.focusManager.primaryFocus?.debugLabel,
           equals('PlayPauseTvButton'),
@@ -607,7 +590,6 @@ void main() {
               onBackPressed: () {},
               onOverlayRequested: (_) {},
             ),
-            mode: DisplayMode.bigPicture,
           ),
         );
         await tester.pumpAndSettle();
@@ -671,7 +653,6 @@ void main() {
             onBackPressed: () {},
             onOverlayRequested: (_) {},
           ),
-          mode: DisplayMode.bigPicture,
           onSeek: (pos) => seekTarget = pos,
         ),
       );
@@ -717,7 +698,6 @@ void main() {
               onBackPressed: () {},
               onOverlayRequested: (_) {},
             ),
-            mode: DisplayMode.bigPicture,
             onSeek: (pos) => seekTarget = pos,
           ),
         );
@@ -806,7 +786,6 @@ void main() {
               onNextChannel: () => nextChannelZapped = true,
               onPreviousChannel: () => prevChannelZapped = true,
             ),
-            mode: DisplayMode.bigPicture,
           ),
         );
         await tester.pumpAndSettle();
@@ -858,7 +837,6 @@ void main() {
               onOverlayRequested: (_) {},
               onNumberInput: (d) => receivedDigit += d,
             ),
-            mode: DisplayMode.bigPicture,
           ),
         );
         await tester.pumpAndSettle();
@@ -872,48 +850,20 @@ void main() {
   });
 
   group('VideoTopBar TV Tests', () {
-    testWidgets('Hides Cast and Settings icons in Big Picture mode', (
-      tester,
-    ) async {
+    // Stop and Settings live in the bottom bar; cast is hidden for now.
+    testWidgets('Shows the title and no buttons', (tester) async {
       await tester.pumpWidget(
         buildTestableWidget(
           VideoTopBar(
             playerState: createDummyPlayerState(),
             params: const PlayerParams('movie-1', 'movie'),
-            onSettingsPressed: () {},
-            onCastPressed: () {},
-            onBackPressed: () {},
           ),
-          mode: DisplayMode.bigPicture,
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.cast), findsNothing);
-      expect(find.byIcon(Icons.settings), findsNothing);
-      expect(find.byIcon(Icons.arrow_back), findsNothing);
-    });
-
-    testWidgets('Shows Cast and Settings icons in Desktop mode', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        buildTestableWidget(
-          VideoTopBar(
-            playerState: createDummyPlayerState(),
-            params: const PlayerParams('movie-1', 'movie'),
-            onSettingsPressed: () {},
-            onCastPressed: () {},
-            onBackPressed: () {},
-          ),
-          mode: DisplayMode.standard,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.byIcon(Icons.cast), findsOneWidget);
-      expect(find.byIcon(Icons.settings), findsOneWidget);
-      expect(find.byIcon(Icons.arrow_back), findsNothing);
+      expect(find.text('Test Movie'), findsOneWidget);
+      expect(find.byType(IconButton), findsNothing);
     });
   });
 
@@ -927,7 +877,6 @@ void main() {
               state: createDummyPlayerState(),
               onNavigate: (_) {},
             ),
-            mode: DisplayMode.bigPicture,
           ),
         );
         await tester.pumpAndSettle();

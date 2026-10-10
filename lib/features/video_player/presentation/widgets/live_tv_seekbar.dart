@@ -10,7 +10,6 @@ class LiveTvSeekbar extends StatefulWidget {
   final Duration rawDuration;
   final Duration position;
   final bool dragging;
-  final bool isBigPicture;
   final FocusNode? seekbarFocusNode;
   final FocusNode? playPauseFocusNode;
   final ValueChanged<double> onChangeStart;
@@ -24,7 +23,6 @@ class LiveTvSeekbar extends StatefulWidget {
     required this.rawDuration,
     required this.position,
     required this.dragging,
-    required this.isBigPicture,
     this.seekbarFocusNode,
     this.playPauseFocusNode,
     required this.onChangeStart,
@@ -159,18 +157,12 @@ class _LiveTvSeekbarState extends State<LiveTvSeekbar> {
                       },
                       child: SliderTheme(
                         data: SliderThemeData(
-                          trackHeight: _isSeekbarFocused
-                              ? 5
-                              : (widget.isBigPicture ? 4 : 2.5),
+                          trackHeight: _isSeekbarFocused ? 5 : 2.5,
                           thumbShape: RoundSliderThumbShape(
-                            enabledThumbRadius: _isSeekbarFocused
-                                ? 8
-                                : (widget.isBigPicture ? 6 : 5),
+                            enabledThumbRadius: _isSeekbarFocused ? 8 : 5,
                           ),
                           overlayShape: RoundSliderOverlayShape(
-                            overlayRadius: _isSeekbarFocused
-                                ? 14
-                                : (widget.isBigPicture ? 12 : 10),
+                            overlayRadius: _isSeekbarFocused ? 14 : 10,
                           ),
                           activeTrackColor: AppTheme.textWhite,
                           inactiveTrackColor: AppTheme.borderSubtle,
@@ -287,7 +279,7 @@ class _LiveTvSeekbarState extends State<LiveTvSeekbar> {
                       : '-${_formatDuration(Duration(seconds: secondsBehindLive.toInt().abs()))}',
                   style: TextStyle(
                     color: isAtLive ? AppTheme.favorites : AppTheme.textWhite,
-                    fontSize: widget.isBigPicture ? 14 : 12,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'monospace',
                   ),

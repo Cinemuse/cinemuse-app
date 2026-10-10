@@ -1,11 +1,9 @@
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 
@@ -298,12 +296,8 @@ class _BackdropCardState extends State<BackdropCard> {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Consumer(
-                      builder: (context, ref, _) {
-                        final isBigPicture = ref.watch(isBigPictureProvider);
-                        if (isBigPicture) {
-                          return const SizedBox.shrink();
-                        }
+                    Builder(
+                      builder: (context) {
                         final isMobile =
                             MediaQuery.of(context).size.width < 600;
                         return AnimatedOpacity(

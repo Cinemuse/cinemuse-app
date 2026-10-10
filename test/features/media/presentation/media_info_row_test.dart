@@ -1,4 +1,3 @@
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/external_links.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/gallery_box.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/media_info_row.dart';
@@ -15,13 +14,6 @@ void main() {
     Size surfaceSize = const Size(1280, 800),
   }) {
     return ProviderScope(
-      overrides: [
-        displayModeProvider.overrideWith((ref) {
-          final notifier = DisplayModeNotifier();
-          notifier.setMode(DisplayMode.bigPicture);
-          return notifier;
-        }),
-      ],
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,

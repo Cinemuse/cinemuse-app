@@ -1149,15 +1149,6 @@ class _ChannelTileWrapper extends ConsumerWidget {
           }
         }
 
-        // In split mode: Left focuses the sidebar navigation rail
-        if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-          final focusRail = ref.read(tvRailFocusActionProvider);
-          if (focusRail != null) {
-            focusRail();
-            return KeyEventResult.handled;
-          }
-        }
-
         // In split mode: Right focuses the preview player
         if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
           final focusPlayer = ref.read(livePlayerFocusActionProvider);

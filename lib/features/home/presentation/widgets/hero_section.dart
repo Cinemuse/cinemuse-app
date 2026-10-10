@@ -293,11 +293,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.arrowLeft) {
-      if (_currentIndex > 0) {
-        _goToPreviousPage();
-      } else {
-        ref.read(tvRailFocusActionProvider)?.call();
-      }
+      if (_currentIndex > 0) _goToPreviousPage();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.arrowDown) {

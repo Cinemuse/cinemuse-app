@@ -11,7 +11,6 @@ import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 
 import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_sheet.dart';
 // Just in case, actually just add_to_list_sheet
@@ -452,10 +451,8 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                         ),
                       ),
                     ),
-                    Consumer(
-                      builder: (context, ref, child) {
-                        final isBigPicture = ref.watch(isBigPictureProvider);
-                        if (isBigPicture) return const SizedBox.shrink();
+                    Builder(
+                      builder: (context) {
                         final isMobile =
                             MediaQuery.of(context).size.width < 600;
                         return AnimatedOpacity(

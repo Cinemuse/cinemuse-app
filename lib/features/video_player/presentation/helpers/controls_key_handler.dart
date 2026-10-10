@@ -10,7 +10,6 @@ class ControlsKeyHandler {
     required bool isLive,
     required bool isOverlayOpen,
     required bool isVisible,
-    required bool isBigPicture,
     required bool isFullscreen,
     required bool isFullOrStandalone,
     required String numberBuffer,
@@ -87,7 +86,6 @@ class ControlsKeyHandler {
     return _handleVisibleControlsKeys(
       event: event,
       key: key,
-      isBigPicture: isBigPicture,
       isFullscreen: isFullscreen,
       onTogglePlayPause: onTogglePlayPause,
       onToggleFullscreen: onToggleFullscreen,
@@ -235,7 +233,6 @@ class ControlsKeyHandler {
   KeyEventResult _handleVisibleControlsKeys({
     required KeyEvent event,
     required LogicalKeyboardKey key,
-    required bool isBigPicture,
     required bool isFullscreen,
     required void Function() onTogglePlayPause,
     required void Function() onToggleFullscreen,
@@ -250,7 +247,7 @@ class ControlsKeyHandler {
         key == LogicalKeyboardKey.gameButtonB ||
         key == LogicalKeyboardKey.goBack) {
       if (event is KeyDownEvent) {
-        if (isFullscreen && !isBigPicture) {
+        if (isFullscreen) {
           onToggleFullscreen();
         } else {
           onHideControls();

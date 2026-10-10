@@ -1,4 +1,3 @@
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/media/domain/episode_item.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -9,7 +8,6 @@ import 'package:cinemuse_app/features/media/presentation/widgets/hero/details_he
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_list_card.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_carousel_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/hero/responsive_action_buttons.dart';
-import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:flutter/material.dart';
@@ -39,17 +37,10 @@ void main() {
 
   Widget buildTestableWidget(
     Widget child, {
-    DisplayMode mode = DisplayMode.bigPicture,
     List<dynamic> overrides = const [],
   }) {
     return ProviderScope(
-      key: ValueKey(mode),
       overrides: [
-        displayModeProvider.overrideWith((ref) {
-          final notifier = DisplayModeNotifier();
-          notifier.setMode(mode);
-          return notifier;
-        }),
         unifiedStreamResolverProvider.overrideWithValue(mockResolver),
         ...overrides.cast(),
       ],
@@ -61,49 +52,28 @@ void main() {
     );
   }
 
-  group('Details Page Big Picture Navigation Tests', () {
-    testWidgets(
-      'AppBackButton is hidden in Big Picture mode and visible in standard mode',
-      (tester) async {
-        await tester.pumpWidget(
-          buildTestableWidget(
-            DetailsHero(
-              media: const {
-                'id': '123',
-                'type': 'movie',
-                'title': 'Test Movie',
-              },
-              details: const {'title': 'Test Movie'},
-              onPlayClick: () {},
-              onListTap: () {},
-            ),
-            mode: DisplayMode.bigPicture,
+  group('Details Page Navigation Tests', () {
+    // REV-235: the back arrow was hidden on PC (Big Picture leftover).
+    testWidgets('AppBackButton is shown on a widescreen window', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          DetailsHero(
+            media: const {'id': '123', 'type': 'movie', 'title': 'Test Movie'},
+            details: const {'title': 'Test Movie'},
+            onPlayClick: () {},
+            onListTap: () {},
           ),
-        );
-        await tester.pumpAndSettle();
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        expect(find.byType(AppBackButton), findsNothing);
-
-        await tester.pumpWidget(
-          buildTestableWidget(
-            DetailsHero(
-              media: const {
-                'id': '123',
-                'type': 'movie',
-                'title': 'Test Movie',
-              },
-              details: const {'title': 'Test Movie'},
-              onPlayClick: () {},
-              onListTap: () {},
-            ),
-            mode: DisplayMode.standard,
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        expect(find.byType(AppBackButton), findsOneWidget);
-      },
-    );
+      expect(find.byType(AppBackButton), findsOneWidget);
+    });
 
     testWidgets(
       'ResponsiveActionButtons primary play button receives autofocus',
@@ -324,9 +294,8 @@ void main() {
     );
 
     testWidgets(
-      'ResponsiveActionButtons play button left key event invokes tvRailFocusActionProvider',
+      'ResponsiveActionButtons play button keeps focus on arrowLeft',
       (tester) async {
-        bool railFocused = false;
         final mediaItem = MediaItem(
           tmdbId: 123,
           mediaType: MediaKind.movie,
@@ -347,27 +316,23 @@ void main() {
               onListTap: () {},
               onTrackTap: () {},
             ),
-            overrides: [
-              tvRailFocusActionProvider.overrideWith(
-                (ref) =>
-                    () => railFocused = true,
-              ),
-            ],
           ),
         );
         await tester.pumpAndSettle();
 
+        final focusBefore = FocusManager.instance.primaryFocus;
+        expect(focusBefore, isNotNull);
+
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
         await tester.pumpAndSettle();
 
-        expect(railFocused, isTrue);
+        expect(FocusManager.instance.primaryFocus, focusBefore);
       },
     );
 
     testWidgets(
-      'GenericCarouselRow arrowLeft at index > 0 does NOT invoke tvRailFocusActionProvider',
+      'GenericCarouselRow arrowLeft at index > 0 moves to the previous card',
       (tester) async {
-        bool railFocused = false;
         final episodes = [
           EpisodeItem(episodeNumber: 1, seasonNumber: 1, name: 'Episode 1'),
           EpisodeItem(episodeNumber: 2, seasonNumber: 1, name: 'Episode 2'),
@@ -380,12 +345,6 @@ void main() {
               seasonNumber: 1,
               mediaId: '789',
             ),
-            overrides: [
-              tvRailFocusActionProvider.overrideWith(
-                (ref) =>
-                    () => railFocused = true,
-              ),
-            ],
           ),
         );
         await tester.pumpAndSettle();
@@ -409,19 +368,17 @@ void main() {
         await tester.pumpAndSettle();
         expect(FocusManager.instance.primaryFocus, focusWidgets[1].focusNode);
 
-        // Press arrowLeft from index 1: should move focus to index 0, NOT invoke rail focus action
+        // Press arrowLeft from index 1: should move focus to index 0
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
         await tester.pumpAndSettle();
 
         expect(FocusManager.instance.primaryFocus, focusWidgets[0].focusNode);
-        expect(railFocused, isFalse);
       },
     );
 
     testWidgets(
-      'GenericCarouselRow arrowLeft at index 0 DOES invoke tvRailFocusActionProvider',
+      'GenericCarouselRow arrowLeft at index 0 keeps focus on the first card',
       (tester) async {
-        bool railFocused = false;
         final episodes = [
           EpisodeItem(episodeNumber: 1, seasonNumber: 1, name: 'Episode 1'),
           EpisodeItem(episodeNumber: 2, seasonNumber: 1, name: 'Episode 2'),
@@ -434,12 +391,6 @@ void main() {
               seasonNumber: 1,
               mediaId: '789',
             ),
-            overrides: [
-              tvRailFocusActionProvider.overrideWith(
-                (ref) =>
-                    () => railFocused = true,
-              ),
-            ],
           ),
         );
         await tester.pumpAndSettle();
@@ -457,11 +408,11 @@ void main() {
         await tester.pumpAndSettle();
         expect(FocusManager.instance.primaryFocus, focusWidgets[0].focusNode);
 
-        // Press arrowLeft from index 0: MUST invoke rail focus action
+        // Press arrowLeft from index 0: focus must not escape the row
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
         await tester.pumpAndSettle();
 
-        expect(railFocused, isTrue);
+        expect(FocusManager.instance.primaryFocus, focusWidgets[0].focusNode);
       },
     );
 

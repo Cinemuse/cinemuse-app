@@ -6,7 +6,6 @@ import 'package:cinemuse_app/features/media/presentation/widgets/watch_logs_shee
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/hero/details_hero.dart';
@@ -88,7 +87,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     final isMobile = MediaQuery.of(context).size.width < 600;
     final connectivity = ref.watch(connectivityProvider);
     final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
-    final isBigPicture = ref.watch(isBigPictureProvider);
 
     final bodyContent = detailsAsync.when(
       loading: () => Center(
@@ -309,7 +307,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             SliverPadding(
               padding: EdgeInsets.symmetric(
                 horizontal: responsivePadding,
-                vertical: isBigPicture ? 16 : (isMobile ? 24 : 48),
+                vertical: isMobile ? 24 : 48,
               ),
               sliver: SliverToBoxAdapter(
                 child: isMobile

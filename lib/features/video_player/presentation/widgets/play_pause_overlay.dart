@@ -77,7 +77,7 @@ class PlayPauseOverlay extends StatelessWidget {
             );
           }
 
-          // Desktop / Big Picture behavior
+          // Desktop behavior
           if (!isPlaying && visible) {
             return IgnorePointer(
               ignoring: true,

@@ -57,9 +57,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonFeatured => 'FEATURED';
 
   @override
-  String get commonSeeAll => 'See All';
-
-  @override
   String get commonUnexpectedError => 'An unexpected error occurred';
 
   @override
@@ -2192,13 +2189,6 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get bigPictureMode => 'Big Picture Mode';
-
-  @override
-  String get bigPictureModeSubtitle =>
-      'Optimized 10-foot UI for TV and remote navigation';
 
   @override
   String get liveTvFullWindow => 'Full Window';

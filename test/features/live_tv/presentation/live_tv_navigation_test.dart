@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart' as mkv;
 import 'package:mocktail/mocktail.dart';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
@@ -238,49 +237,6 @@ void main() {
       },
     );
 
-    testWidgets('ArrowLeft in split mode invokes tvRailFocusActionProvider', (
-      tester,
-    ) async {
-      final channel = createMockChannel();
-      bool railFocused = false;
-
-      final container = ProviderContainer(
-        overrides: [
-          channelsProvider.overrideWith((ref) => Future.value([channel])),
-          tvRailFocusActionProvider.overrideWith(
-            (ref) =>
-                () => railFocused = true,
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(body: ChannelListPanel(isOverlay: false)),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Focus the channel tile
-      final tileFinder = find.byType(ChannelListTile);
-      expect(tileFinder, findsOneWidget);
-
-      await tester.tap(tileFinder);
-      await tester.pump();
-
-      // Send ArrowLeft
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
-      await tester.pump();
-
-      expect(railFocused, isTrue);
-    });
-
     testWidgets(
       'ArrowRight in split mode invokes livePlayerFocusActionProvider',
       (tester) async {
@@ -432,7 +388,7 @@ void main() {
     });
   });
 
-  group('LiveVideoControls TV and Big Picture UI', () {
+  group('LiveVideoControls TV UI', () {
     late MockLivePlayer mockPlayer;
     late MockLivePlayerStream mockStream;
     late MockLivePlayerState mockState;
@@ -479,68 +435,63 @@ void main() {
       );
     }
 
-    testWidgets(
-      'renders Big Picture centered TV buttons when isBigPicture is true',
-      (tester) async {
-        final channel = createMockChannel();
-        final playerState = createTestPlayerState();
+    testWidgets('renders the live TV buttons', (tester) async {
+      final channel = createMockChannel();
+      final playerState = createTestPlayerState();
 
-        await tester.pumpWidget(
-          buildTestWidget(
-            overrides: [isBigPictureProvider.overrideWith((ref) => true)],
-            child: CustomVideoControls(
-              playerState: playerState,
-              channel: channel,
-              videoState: FakeLiveVideoState(),
-              params: const PlayerParams('livetv_session', 'livetv'),
-              isLive: true,
-              onSettingsPressed: () {},
-            ),
+      await tester.pumpWidget(
+        buildTestWidget(
+          child: CustomVideoControls(
+            playerState: playerState,
+            channel: channel,
+            videoState: FakeLiveVideoState(),
+            params: const PlayerParams('livetv_session', 'livetv'),
+            isLive: true,
+            onSettingsPressed: () {},
           ),
-        );
-        await tester.pumpAndSettle();
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        // Live TV buttons: Stop button is present to exit player
-        expect(find.byIcon(Icons.skip_previous_rounded), findsOneWidget);
-        expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
-        expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
-        expect(find.byIcon(Icons.close_rounded), findsNothing);
-        expect(find.byIcon(Icons.skip_next_rounded), findsOneWidget);
-        expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
-        expect(find.byIcon(Icons.fullscreen_rounded), findsOneWidget);
-        expect(find.byType(Slider), findsOneWidget);
-        expect(find.text('Test Channel'), findsOneWidget);
-        expect(find.text('LIVE'), findsWidgets);
-      },
-    );
+      // Live TV buttons: Stop button is present to exit player
+      expect(find.byIcon(Icons.skip_previous_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
+      // No back arrow: the Stop button replaces it
+      expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
+      expect(find.byIcon(Icons.close_rounded), findsNothing);
+      expect(find.byIcon(Icons.skip_next_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.fullscreen_rounded), findsOneWidget);
+      expect(find.byType(Slider), findsOneWidget);
+      expect(find.text('Test Channel'), findsOneWidget);
+      expect(find.text('LIVE'), findsWidgets);
+    });
 
-    testWidgets(
-      'hides settings in top bar and shows tune icon in TV row when isBigPicture is true',
-      (tester) async {
-        final channel = createMockChannel();
-        final playerState = createTestPlayerState();
+    testWidgets('shows settings only as the tune icon in the bottom row', (
+      tester,
+    ) async {
+      final channel = createMockChannel();
+      final playerState = createTestPlayerState();
 
-        await tester.pumpWidget(
-          buildTestWidget(
-            overrides: [isBigPictureProvider.overrideWith((ref) => true)],
-            child: CustomVideoControls(
-              playerState: playerState,
-              channel: channel,
-              videoState: FakeLiveVideoState(),
-              params: const PlayerParams('livetv_session', 'livetv'),
-              isLive: true,
-              onSettingsPressed: () {},
-            ),
+      await tester.pumpWidget(
+        buildTestWidget(
+          child: CustomVideoControls(
+            playerState: playerState,
+            channel: channel,
+            videoState: FakeLiveVideoState(),
+            params: const PlayerParams('livetv_session', 'livetv'),
+            isLive: true,
+            onSettingsPressed: () {},
           ),
-        );
-        await tester.pumpAndSettle();
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        // Settings cog is NOT in top bar
-        expect(find.byIcon(Icons.settings), findsNothing);
-        // Tune icon IS in bottom TV row
-        expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
-      },
-    );
+      // No settings cog in the top bar
+      expect(find.byIcon(Icons.settings), findsNothing);
+      // Tune icon IS in bottom TV row
+      expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
+    });
 
     testWidgets(
       'renders channels drawer button in TV row when onOpenChannelGuide is provided',
@@ -551,7 +502,6 @@ void main() {
         await tester.pumpWidget(
           buildTestWidget(
             overrides: [
-              isBigPictureProvider.overrideWith((ref) => true),
               liveTvViewModeProvider.overrideWith(
                 (ref) => LiveTvViewMode.fullWindow,
               ),
@@ -572,7 +522,7 @@ void main() {
         // Channel guide button is shown
         expect(find.byIcon(Icons.list_rounded), findsOneWidget);
       },
-      // TODO: check the TV/Big-Picture layout. Either the guide button was
+      // TODO: check the TV layout. Either the guide button was
       // moved or re-iconed (update this test) or the player refactor lost it
       // (real regression). See audit/08-testing.md.
       skip: true,

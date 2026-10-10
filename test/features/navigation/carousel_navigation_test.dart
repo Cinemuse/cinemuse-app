@@ -2,76 +2,56 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
-import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 void main() {
-  testWidgets(
-    'Pressing arrowLeft on index 0 triggers tvRailFocusActionProvider in Big Picture mode',
-    (tester) async {
-      bool railFocused = false;
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            displayModeProvider.overrideWith((ref) {
-              final notifier = DisplayModeNotifier();
-              notifier.setMode(DisplayMode.bigPicture);
-              return notifier;
-            }),
-            tvRailFocusActionProvider.overrideWith(
-              (ref) =>
-                  () => railFocused = true,
-            ),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: GenericCarouselRow(
-                height: 200,
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return SizedBox(
-                    width: 100,
-                    height: 150,
-                    child: DpadFocusable(
-                      onTap: _noop,
-                      child: Text('Card $index'),
-                    ),
-                  );
-                },
-              ),
+  testWidgets('Pressing arrowLeft on the first card keeps focus there', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: GenericCarouselRow(
+              height: 200,
+              itemCount: 5,
+              itemBuilder: (context, index) {
+                return SizedBox(
+                  width: 100,
+                  height: 150,
+                  child: DpadFocusable(
+                    onTap: _noop,
+                    child: Text('Card $index'),
+                  ),
+                );
+              },
             ),
           ),
         ),
-      );
-      await tester.pumpAndSettle();
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      // Focus the first card
-      await tester.tap(find.text('Card 0'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('Card 0'));
+    await tester.pumpAndSettle();
 
-      // Send arrowLeft key
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
-      await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pumpAndSettle();
 
-      expect(railFocused, isTrue);
-    },
-  );
+    final card0Focus = tester.widget<Focus>(
+      find
+          .ancestor(of: find.text('Card 0'), matching: find.byType(Focus))
+          .first,
+    );
+    expect(card0Focus.focusNode?.hasFocus, isTrue);
+  });
 
   testWidgets(
     'Pressing arrowRight on last item stays on that item and does not escape',
     (tester) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            displayModeProvider.overrideWith((ref) {
-              final notifier = DisplayModeNotifier();
-              notifier.setMode(DisplayMode.bigPicture);
-              return notifier;
-            }),
-          ],
           child: MaterialApp(
             home: Scaffold(
               body: Column(
@@ -167,13 +147,6 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          displayModeProvider.overrideWith((ref) {
-            final notifier = DisplayModeNotifier();
-            notifier.setMode(DisplayMode.bigPicture);
-            return notifier;
-          }),
-        ],
         child: MaterialApp(
           home: Scaffold(
             body: Column(
@@ -270,13 +243,6 @@ void main() {
     (tester) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            displayModeProvider.overrideWith((ref) {
-              final notifier = DisplayModeNotifier();
-              notifier.setMode(DisplayMode.bigPicture);
-              return notifier;
-            }),
-          ],
           child: MaterialApp(
             home: Scaffold(
               body: Column(
@@ -369,54 +335,55 @@ void main() {
     },
   );
 
-  testWidgets(
-    'Row title is not focusable and See All card appears at the end in Big Picture mode',
-    (tester) async {
-      bool headerTapped = false;
+  for (final theme in [CarouselTheme.homeRow, CarouselTheme.profileRow]) {
+    testWidgets(
+      'Row title opens the full list on click and with Enter (${theme.name})',
+      (tester) async {
+        var headerTaps = 0;
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            displayModeProvider.overrideWith((ref) {
-              final notifier = DisplayModeNotifier();
-              notifier.setMode(DisplayMode.bigPicture);
-              return notifier;
-            }),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: GenericCarouselRow(
-                title: 'Trending Movies',
-                height: 200,
-                itemCount: 2,
-                onHeaderTap: () => headerTapped = true,
-                itemBuilder: (context, index) => SizedBox(
-                  width: 100,
-                  height: 150,
-                  child: DpadFocusable(
-                    onTap: _noop,
-                    child: Text('Movie $index'),
+        await tester.pumpWidget(
+          ProviderScope(
+            child: MaterialApp(
+              home: Scaffold(
+                body: GenericCarouselRow(
+                  title: 'Movies',
+                  theme: theme,
+                  height: 200,
+                  itemCount: 2,
+                  onHeaderTap: () => headerTaps++,
+                  itemBuilder: (context, index) => SizedBox(
+                    width: 100,
+                    height: 150,
+                    child: DpadFocusable(
+                      onTap: _noop,
+                      child: Text('Movie $index'),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // In Big Picture mode, chevron arrow buttons are hidden
-      expect(find.byIcon(Icons.chevron_left), findsNothing);
+        // The old Big Picture "See All" card is gone: the title is the link.
+        expect(find.text('See All'), findsNothing);
 
-      // See All card is present at the end
-      expect(find.text('See All'), findsOneWidget);
+        await tester.tap(find.text('Movies'));
+        await tester.pumpAndSettle();
+        expect(headerTaps, 1);
 
-      // Tap See All card triggers header callback
-      await tester.tap(find.text('See All'));
-      await tester.pumpAndSettle();
-      expect(headerTapped, isTrue);
-    },
-  );
+        // Remote / keyboard: move up from the first card to the title, Enter.
+        await tester.tap(find.text('Movie 0'));
+        await tester.pumpAndSettle();
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pumpAndSettle();
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+        expect(headerTaps, 2);
+      },
+    );
+  }
 
   testWidgets(
     'Navigating down and up between multiple rows in SingleChildScrollView changes row on each single press',
@@ -426,13 +393,6 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            displayModeProvider.overrideWith((ref) {
-              final notifier = DisplayModeNotifier();
-              notifier.setMode(DisplayMode.bigPicture);
-              return notifier;
-            }),
-          ],
           child: MaterialApp(
             home: Scaffold(
               body: SingleChildScrollView(

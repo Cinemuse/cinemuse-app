@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
-import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
-import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 enum CarouselTheme {
   homeRow, // Title + chevron right (no box)
@@ -15,7 +10,7 @@ enum CarouselTheme {
   plain, // No header
 }
 
-class GenericCarouselRow extends ConsumerStatefulWidget {
+class GenericCarouselRow extends StatefulWidget {
   final String? title;
   final IconData? icon;
   final CarouselTheme theme;
@@ -46,10 +41,10 @@ class GenericCarouselRow extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<GenericCarouselRow> createState() => _GenericCarouselRowState();
+  State<GenericCarouselRow> createState() => _GenericCarouselRowState();
 }
 
-class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
+class _GenericCarouselRowState extends State<GenericCarouselRow> {
   late ScrollController _controller;
   late final FocusNode _rowFocusNode;
   final Map<int, FocusNode> _trackedNodes = {};
@@ -165,10 +160,9 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
       return const SizedBox.shrink();
     }
 
-    final isBigPicture = ref.watch(isBigPictureProvider);
     final isMobile = MediaQuery.of(context).size.width < 600;
-    if (isMobile || isBigPicture) {
-      return const SizedBox.shrink(); // hide on mobile natively and in Big Picture mode
+    if (isMobile) {
+      return const SizedBox.shrink(); // mobile scrolls by swiping
     }
 
     return AnimatedOpacity(
@@ -267,15 +261,8 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
     return null;
   }
 
-  Widget _buildTrackedItem(
-    BuildContext context,
-    int index,
-    int totalCount, {
-    bool isSeeAll = false,
-  }) {
-    final item = isSeeAll
-        ? _buildSeeAllCard(context)
-        : widget.itemBuilder(context, index);
+  Widget _buildTrackedItem(BuildContext context, int index, int totalCount) {
+    final item = widget.itemBuilder(context, index);
     final node = _getOrCreateTrackedNode(index);
 
     return Focus(
@@ -307,11 +294,6 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
         // 1. Left boundary: if at leftmost focusable card and pressing arrowLeft
         if (event.logicalKey == LogicalKeyboardKey.arrowLeft &&
             _isFirstFocusableIndex(index)) {
-          final isBigPicture = ref.read(isBigPictureProvider);
-          if (isBigPicture) {
-            final focusRail = ref.read(tvRailFocusActionProvider);
-            focusRail?.call();
-          }
           // Always consume arrowLeft at leftmost focusable item so it NEVER escapes or jumps between rows
           return KeyEventResult.handled;
         }
@@ -328,88 +310,7 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
     );
   }
 
-  Widget _buildSeeAllCard(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final label = l10n?.commonSeeAll ?? 'See All';
-
-    return DpadFocusable(
-      onTap: widget.onHeaderTap,
-      scale: 1.05,
-      showFocusRing: false,
-      builder: (context, isFocused, isHovered, _) {
-        final theme = Theme.of(context);
-        final isHighlighted = isFocused || isHovered;
-        return SizedBox(
-          width: 100,
-          child: Column(
-            children: [
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        curve: Curves.easeOutCubic,
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isFocused
-                              ? theme.focusColor
-                              : (isHovered
-                                    ? theme.hoverColor
-                                    : Colors.white.withValues(alpha: 0.07)),
-                          border: Border.all(
-                            color: isHighlighted
-                                ? theme.colorScheme.primary.withValues(
-                                    alpha: 0.5,
-                                  )
-                                : Colors.white.withValues(alpha: 0.14),
-                            width: 1.0,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.arrow_forward_rounded,
-                          color: isHighlighted ? Colors.white : Colors.white70,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        label,
-                        style: TextStyle(
-                          color: isHighlighted
-                              ? Theme.of(context).colorScheme.primary
-                              : Colors.white60,
-                          fontSize: 13,
-                          fontWeight: isFocused
-                              ? FontWeight.w700
-                              : FontWeight.w600,
-                          letterSpacing: 0.2,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 48),
-            ],
-          ),
-        );
-      },
-      child: const SizedBox.shrink(),
-    );
-  }
-
-  Widget _buildList({
-    EdgeInsets? overridePadding,
-    bool hasSeeAllCard = false,
-    int totalCount = 0,
-  }) {
+  Widget _buildList({EdgeInsets? overridePadding}) {
     if (widget.itemCount == 0 && widget.emptyBuilder != null) {
       return widget.emptyBuilder!(context);
     }
@@ -418,7 +319,7 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
     final padding = overridePadding ?? widget.padding;
     final effectivePadding = padding.copyWith(bottom: padding.bottom + 16);
 
-    final count = totalCount > 0 ? totalCount : widget.itemCount;
+    final count = widget.itemCount;
 
     final list = widget.separatorBuilder != null
         ? ListView.separated(
@@ -429,15 +330,8 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
             cacheExtent: 9999,
             itemCount: count,
             separatorBuilder: widget.separatorBuilder!,
-            itemBuilder: (context, index) {
-              final isSeeAll = hasSeeAllCard && index == widget.itemCount;
-              return _buildTrackedItem(
-                context,
-                index,
-                count,
-                isSeeAll: isSeeAll,
-              );
-            },
+            itemBuilder: (context, index) =>
+                _buildTrackedItem(context, index, count),
           )
         : ListView.builder(
             controller: _controller,
@@ -446,15 +340,8 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
             padding: effectivePadding,
             cacheExtent: 9999,
             itemCount: count,
-            itemBuilder: (context, index) {
-              final isSeeAll = hasSeeAllCard && index == widget.itemCount;
-              return _buildTrackedItem(
-                context,
-                index,
-                count,
-                isSeeAll: isSeeAll,
-              );
-            },
+            itemBuilder: (context, index) =>
+                _buildTrackedItem(context, index, count),
           );
 
     return SizedBox(
@@ -482,10 +369,6 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
       return const SizedBox.shrink();
     }
 
-    final isBigPicture = ref.watch(isBigPictureProvider);
-    final hasSeeAllCard = isBigPicture && widget.onHeaderTap != null;
-    final totalCount = widget.itemCount + (hasSeeAllCard ? 1 : 0);
-
     Widget content;
 
     switch (widget.theme) {
@@ -503,10 +386,7 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
                   ],
                 )
               : _buildArrowButtons(),
-          child: _buildList(
-            hasSeeAllCard: hasSeeAllCard,
-            totalCount: totalCount,
-          ),
+          child: _buildList(),
         );
         break;
 
@@ -541,48 +421,38 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
                         child: Row(
                           children: [
                             if (widget.onHeaderTap != null)
-                              if (isBigPicture)
-                                Text(
-                                  widget.title ?? '',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                              InkWell(
+                                onTap: widget.onHeaderTap,
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
                                   ),
-                                )
-                              else
-                                InkWell(
-                                  onTap: widget.onHeaderTap,
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          widget.title ?? '',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        widget.title ?? '',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
                                         ),
-                                        const SizedBox(width: 6),
-                                        Icon(
-                                          Icons.chevron_right,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withValues(alpha: 0.6),
-                                          size: 20,
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Icon(
+                                        Icons.chevron_right,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(alpha: 0.6),
+                                        size: 20,
+                                      ),
+                                    ],
                                   ),
-                                )
+                                ),
+                              )
                             else
                               Text(
                                 widget.title ?? '',
@@ -600,11 +470,7 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _buildList(
-                  overridePadding: listPadding,
-                  hasSeeAllCard: hasSeeAllCard,
-                  totalCount: totalCount,
-                ),
+                _buildList(overridePadding: listPadding),
               ],
             ),
           ),
@@ -632,52 +498,41 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
                     child: Row(
                       children: [
                         if (widget.onHeaderTap != null)
-                          if (isBigPicture)
-                            Text(
-                              widget.title ?? '',
-                              style: Theme.of(context).textTheme.bodyMedium!
-                                  .copyWith(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            )
-                          else
-                            InkWell(
-                              onTap: widget.onHeaderTap,
-                              borderRadius: BorderRadius.circular(8),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      widget.title ?? '',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium!
-                                          .copyWith(
-                                            color: Colors.white,
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Icon(
-                                      Icons.chevron_right,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.6),
-                                      size: 24,
-                                    ),
-                                  ],
-                                ),
+                          InkWell(
+                            onTap: widget.onHeaderTap,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
                               ),
-                            )
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    widget.title ?? '',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium!
+                                        .copyWith(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.6),
+                                    size: 24,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
                         else
                           Text(
                             widget.title ?? '',
@@ -695,16 +550,13 @@ class _GenericCarouselRowState extends ConsumerState<GenericCarouselRow> {
                 ],
               ),
             ),
-            _buildList(hasSeeAllCard: hasSeeAllCard, totalCount: totalCount),
+            _buildList(),
           ],
         );
         break;
 
       case CarouselTheme.plain:
-        content = _buildList(
-          hasSeeAllCard: hasSeeAllCard,
-          totalCount: totalCount,
-        );
+        content = _buildList();
         break;
     }
 

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/presentation/helpers/playback_control_actions.dart';
@@ -10,7 +8,7 @@ import 'package:cinemuse_app/features/video_player/presentation/widgets/vod_seek
 
 /// Bottom bar overlay containing the timeline seekbar (Live TV or VOD)
 /// and playback controls.
-class VideoBottomBar extends ConsumerWidget {
+class VideoBottomBar extends StatelessWidget {
   final CinemaPlayerState playerState;
   final Duration? virtualPosition;
   final bool dragging;
@@ -31,9 +29,8 @@ class VideoBottomBar extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final player = playerState.controller.player;
-    final isBigPicture = ref.watch(isBigPictureProvider);
 
     return Container(
       decoration: BoxDecoration(
@@ -65,7 +62,6 @@ class VideoBottomBar extends ConsumerWidget {
                     rawDuration: rawDuration,
                     position: position,
                     dragging: dragging,
-                    isBigPicture: isBigPicture,
                     seekbarFocusNode: actions.seekbarFocusNode,
                     playPauseFocusNode: actions.playPauseFocusNode,
                     onChangeStart: onChangeStart,
@@ -79,7 +75,6 @@ class VideoBottomBar extends ConsumerWidget {
                   player: player,
                   position: position,
                   duration: rawDuration,
-                  isBigPicture: isBigPicture,
                   seekbarFocusNode: actions.seekbarFocusNode,
                   playPauseFocusNode: actions.playPauseFocusNode,
                   onChangeStart: onChangeStart,

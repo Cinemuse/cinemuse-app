@@ -16,7 +16,6 @@
   "commonClearAll": "Cancella tutto",
   "commonUndo": "Annulla",
   "commonFeatured": "IN PRIMO PIANO",
-  "commonSeeAll": "Vedi tutti",
   "commonUnexpectedError": "Si è verificato un errore inaspettato",
   "commonOk": "OK",
   "commonUnknown": "Sconosciuto",
@@ -789,8 +788,6 @@
       "count": { "type": "int" }
     }
   },
-  "bigPictureMode": "Modalità Big Picture",
-  "bigPictureModeSubtitle": "Interfaccia ottimizzata per TV e navigazione con telecomando",
   "liveTvFullWindow": "A tutto schermo",
   "liveTvSplitView": "Vista divisa",
   "liveTvChannels": "Canali",

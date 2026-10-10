@@ -1,4 +1,3 @@
-import 'package:cinemuse_app/core/application/display_mode_provider.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/home/domain/sport_tv_event.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
@@ -282,8 +281,6 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
       builder: (context) {
         final isHighlighted =
             DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
-        final isBigPicture = ref.watch(isBigPictureProvider);
-        if (isBigPicture) return const SizedBox.shrink();
         final isMobile = MediaQuery.of(context).size.width < 600;
 
         return AnimatedOpacity(
