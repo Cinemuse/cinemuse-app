@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
+import 'package:cinemuse_app/core/error/supabase_failure.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
@@ -79,6 +81,10 @@ class WatchHistoryRepository {
 
   /// Explicitly marks an episode as completed, regardless of playback position.
   /// Used when the user presses "Next Episode" and has watched enough (≥ skip threshold).
+  ///
+  /// Logs the episode and moves Continue Watching to the next one in a single
+  /// `complete_episode` RPC (one transaction), so a dropped connection can't
+  /// leave it half done. Throws an [AppFailure].
   Future<void> completeEpisode({
     required String userId,
     required int tmdbId,
@@ -87,50 +93,33 @@ class WatchHistoryRepository {
     int? durationWatched,
     Map<String, dynamic>? seriesDetails,
   }) async {
-    // 1. Remove any 'watching' entry for this specific episode
-    await _client.from('watch_history').delete().match({
-      'user_id': userId,
-      'tmdb_id': tmdbId,
-      'media_type': 'tv',
-      'season': season,
-      'episode': episode,
-    });
-    await _db.deleteWatchHistoryItem(
-      userId,
-      tmdbId,
-      'tv',
-      season: season,
-      episode: episode,
-    );
+    // Choosing the next episode needs TMDB data, so it's done here.
+    final next = seriesDetails == null
+        ? null
+        : _seriesService.getNextEpisode(seriesDetails, season, episode);
 
-    // 2. Log the episode as watched (if not already logged)
-    final alreadyWatched = await isMediaAlreadyWatched(
-      userId: userId,
-      tmdbId: tmdbId,
-      mediaType: 'tv',
-      season: season,
-      episode: episode,
-    );
-    if (!alreadyWatched) {
-      await logEpisodeWatch(
-        userId: userId,
-        tmdbId: tmdbId,
-        mediaType: 'tv',
-        season: season,
-        episode: episode,
-        durationWatched: durationWatched,
-      );
-    }
+    final rows = await _client
+        .rpc(
+          'complete_episode',
+          params: {
+            'p_tmdb_id': tmdbId,
+            'p_season': season,
+            'p_episode': episode,
+            'p_duration_watched': durationWatched,
+            'p_next_season': next?.next?.season,
+            'p_next_episode': next?.next?.episode,
+            'p_next_aired': next?.isAired ?? false,
+          },
+        )
+        .withAppFailure();
+    invalidateWatchLogsCache();
 
-    // 3. Auto-advance to next episode
-    if (seriesDetails != null) {
-      await upsertNextEpisode(
-        userId: userId,
-        tmdbId: tmdbId,
-        currentSeason: season,
-        currentEpisode: episode,
-        seriesDetails: seriesDetails,
-      );
+    // The RPC returns the show's row as it is now (none = no row left).
+    final row = (rows as List).firstOrNull as Map<String, dynamic>?;
+    if (row == null) {
+      await _db.deleteWatchHistoryItem(userId, tmdbId, 'tv');
+    } else {
+      await _db.upsertWatchHistory(_localEntryFromRemote(userId, row));
     }
   }
 
@@ -379,23 +368,9 @@ class WatchHistoryRepository {
         }
       }
 
-      final companions = allRemoteData.map((json) {
-        final lastWatched = json['last_watched_at'] != null
-            ? DateTime.parse(json['last_watched_at'])
-            : DateTime.now();
-
-        return LocalWatchHistoriesCompanion(
-          userId: Value(userId),
-          tmdbId: Value(json['tmdb_id'] as int? ?? 0),
-          mediaType: Value(json['media_type'] as String? ?? 'movie'),
-          status: Value(json['status'] as String? ?? 'watching'),
-          progressSeconds: Value(json['progress_seconds'] as int? ?? 0),
-          totalDuration: Value(json['total_duration'] as int? ?? 0),
-          season: Value(json['season'] as int? ?? 0),
-          episode: Value(json['episode'] as int? ?? 0),
-          lastWatchedAt: Value(lastWatched),
-        );
-      }).toList();
+      final companions = allRemoteData
+          .map((json) => _localEntryFromRemote(userId, json))
+          .toList();
 
       await _db.syncWatchHistory(userId, companions);
     } catch (e, s) {
@@ -406,6 +381,28 @@ class WatchHistoryRepository {
         stackTrace: s,
       );
     }
+  }
+
+  /// A `watch_history` row from Supabase as a local Drift entry.
+  LocalWatchHistoriesCompanion _localEntryFromRemote(
+    String userId,
+    Map<String, dynamic> json,
+  ) {
+    final lastWatched = json['last_watched_at'] != null
+        ? DateTime.parse(json['last_watched_at'])
+        : DateTime.now();
+
+    return LocalWatchHistoriesCompanion(
+      userId: Value(userId),
+      tmdbId: Value(json['tmdb_id'] as int? ?? 0),
+      mediaType: Value(json['media_type'] as String? ?? 'movie'),
+      status: Value(json['status'] as String? ?? 'watching'),
+      progressSeconds: Value(json['progress_seconds'] as int? ?? 0),
+      totalDuration: Value(json['total_duration'] as int? ?? 0),
+      season: Value(json['season'] as int? ?? 0),
+      episode: Value(json['episode'] as int? ?? 0),
+      lastWatchedAt: Value(lastWatched),
+    );
   }
 
   Stream<List<WatchHistory>> watchAllHistory(String userId) {

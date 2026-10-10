@@ -430,4 +430,121 @@ void main() {
       },
     );
   });
+
+  group('completeEpisode', () {
+    const userId = 'user-123';
+    final seriesDetails = <String, dynamic>{'seasons': <dynamic>[]};
+
+    void stubRpc(List<Map<String, dynamic>> rows) {
+      when(
+        () => mockSupabase.rpc<dynamic>(any(), params: any(named: 'params')),
+      ).thenAnswer((_) => FakeFilterBuilder<dynamic>(rows));
+    }
+
+    Map<String, dynamic> capturedParams() =>
+        verify(
+              () => mockSupabase.rpc<dynamic>(
+                'complete_episode',
+                params: captureAny(named: 'params'),
+              ),
+            ).captured.single
+            as Map<String, dynamic>;
+
+    test(
+      'does every step in one complete_episode rpc and caches its row',
+      () async {
+        when(
+          () => mockSeriesService.getNextEpisode(any(), any(), any()),
+        ).thenReturn((
+          next: NextEpisodeInfo(season: 1, episode: 4),
+          isAired: true,
+        ));
+        stubRpc([
+          {
+            'user_id': userId,
+            'tmdb_id': 1399,
+            'media_type': 'tv',
+            'season': 1,
+            'episode': 4,
+            'status': 'watching',
+            'progress_seconds': 0,
+            'total_duration': 0,
+            'watch_count': 0,
+            'last_watched_at': '2026-10-10T18:00:00+00:00',
+          },
+        ]);
+
+        await repository.completeEpisode(
+          userId: userId,
+          tmdbId: 1399,
+          season: 1,
+          episode: 3,
+          durationWatched: 2500,
+          seriesDetails: seriesDetails,
+        );
+
+        expect(capturedParams(), {
+          'p_tmdb_id': 1399,
+          'p_season': 1,
+          'p_episode': 3,
+          'p_duration_watched': 2500,
+          'p_next_season': 1,
+          'p_next_episode': 4,
+          'p_next_aired': true,
+        });
+        // Separate table requests are what made it non-atomic.
+        verifyNever(() => mockSupabase.from(any()));
+
+        final local = await database.getWatchHistory(userId);
+        expect(local.single.mediaType, 'tv');
+        expect(local.single.episode, 4);
+        expect(local.single.status, 'watching');
+        expect(
+          local.single.lastWatchedAt.toUtc(),
+          DateTime.utc(2026, 10, 10, 18),
+        );
+      },
+    );
+
+    test('without series details it sends no next episode', () async {
+      stubRpc([]);
+
+      await repository.completeEpisode(
+        userId: userId,
+        tmdbId: 1399,
+        season: 1,
+        episode: 3,
+      );
+
+      final params = capturedParams();
+      expect(params['p_next_season'], isNull);
+      expect(params['p_next_episode'], isNull);
+      expect(params['p_next_aired'], isFalse);
+      verifyNever(() => mockSeriesService.getNextEpisode(any(), any(), any()));
+    });
+
+    test('removes the local row when the server has none left', () async {
+      stubRpc([]);
+      await database.upsertWatchHistory(
+        LocalWatchHistoriesCompanion.insert(
+          userId: userId,
+          tmdbId: 1399,
+          mediaType: 'tv',
+          status: 'watching',
+          season: const Value(1),
+          episode: const Value(3),
+          lastWatchedAt: DateTime.now(),
+        ),
+      );
+
+      await repository.completeEpisode(
+        userId: userId,
+        tmdbId: 1399,
+        season: 1,
+        episode: 3,
+      );
+
+      expect(await database.getWatchHistory(userId), isEmpty);
+    });
+  });
 }
