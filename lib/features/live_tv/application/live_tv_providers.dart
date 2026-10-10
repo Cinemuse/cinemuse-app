@@ -9,7 +9,7 @@ import 'package:cinemuse_app/features/live_tv/data/epg_channel_matcher.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
-import 'package:cinemuse_app/core/services/local_playlist_storage.dart';
+import 'package:cinemuse_app/features/live_tv/data/local_playlist_storage.dart';
 
 // ---------------------------------------------------------------------------
 // Repository
