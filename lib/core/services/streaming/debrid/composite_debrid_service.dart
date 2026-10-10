@@ -1,7 +1,8 @@
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
-import 'package:flutter/foundation.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 
 /// Composite debrid service that orchestrates multiple providers (e.g. Real-Debrid, TorBox).
 ///
@@ -9,7 +10,11 @@ import 'package:flutter/foundation.dart';
 /// - Concurrent availability checks across all enabled providers.
 /// - Prioritizes user's preferred provider.
 /// - Intra-candidate failover: if provider A fails/rejects resolution, provider B is tried before candidate fallback.
+/// - If every provider failed with an error, the last error is thrown
+///   (as an [AppFailure]); `null` means "not available anywhere".
 class CompositeDebridService implements BaseDebridService {
+  static const String _tag = 'CompositeDebrid';
+
   final List<BaseDebridService> _services;
   final String preferredProvider;
 
@@ -55,9 +60,13 @@ class CompositeDebridService implements BaseDebridService {
             result[hash.toLowerCase()]?.add(service.name);
           }
         });
-      } catch (e) {
-        debugPrint(
-          'CompositeDebridService: checkAvailability error on ${service.name}: $e',
+      } catch (e, st) {
+        // Safe to continue: candidates just won't be marked as cached here.
+        AppLogger.warn(
+          _tag,
+          'checkAvailability failed on ${service.name}',
+          error: e,
+          stackTrace: st,
         );
       }
     });
@@ -76,11 +85,14 @@ class CompositeDebridService implements BaseDebridService {
     if (!isEnabled) return null;
 
     final ordered = _orderServicesForCandidate(candidate);
+    AppFailure? lastFailure;
+    var hasAnyAnswered = false;
 
     for (final service in ordered) {
       try {
-        debugPrint(
-          'CompositeDebridService: Attempting resolution on ${service.name} for ${candidate.title}',
+        AppLogger.debug(
+          _tag,
+          'Resolving on ${service.name}: ${candidate.title}',
         );
         final stream = await service.resolve(
           candidate,
@@ -89,19 +101,30 @@ class CompositeDebridService implements BaseDebridService {
           fileId: fileId,
         );
 
+        hasAnyAnswered = true;
         if (stream != null) {
-          debugPrint(
-            'CompositeDebridService: Successfully resolved on ${service.name}',
-          );
+          AppLogger.debug(_tag, 'Resolved on ${service.name}');
           return stream;
         }
-      } catch (e) {
-        debugPrint(
-          'CompositeDebridService: ${service.name} failed to resolve: $e. Cascading to next provider...',
+      } catch (e, st) {
+        // Try the next provider; the failure is thrown below if none answers.
+        AppLogger.warn(
+          _tag,
+          '${service.name} failed to resolve, trying the next provider',
+          error: e,
+          stackTrace: st,
         );
+        lastFailure = e is AppFailure
+            ? e
+            : StreamingFailure(
+                '${service.name} failed to resolve',
+                cause: e,
+                stackTrace: st,
+              );
       }
     }
 
+    if (!hasAnyAnswered && lastFailure != null) throw lastFailure;
     return null;
   }
 

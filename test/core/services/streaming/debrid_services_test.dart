@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/composite_debrid_service.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/torbox_service.dart';
@@ -209,5 +210,42 @@ void main() {
         verify(() => serviceB.resolve(candidate)).called(1);
       },
     );
+
+    group('resolve when no provider gives a stream', () {
+      final candidate = StreamCandidate(
+        kind: StreamSourceKind.vod,
+        title: 'Dune Part Two',
+        infoHash: 'dune_hash',
+        magnet: 'magnet:?xt=urn:btih:dune_hash',
+        provider: 'Torrentio',
+      );
+
+      test('throws the failure when every provider failed', () async {
+        when(
+          () => serviceA.resolve(candidate),
+        ).thenThrow(const AuthFailure('bad key'));
+        when(
+          () => serviceB.resolve(candidate),
+        ).thenThrow(const NetworkFailure('offline'));
+
+        final composite = CompositeDebridService([serviceA, serviceB]);
+
+        await expectLater(
+          composite.resolve(candidate),
+          throwsA(isA<NetworkFailure>()),
+        );
+      });
+
+      test('returns null when one provider just had nothing', () async {
+        when(
+          () => serviceA.resolve(candidate),
+        ).thenThrow(const AuthFailure('bad key'));
+        when(() => serviceB.resolve(candidate)).thenAnswer((_) async => null);
+
+        final composite = CompositeDebridService([serviceA, serviceB]);
+
+        expect(await composite.resolve(candidate), isNull);
+      });
+    });
   });
 }

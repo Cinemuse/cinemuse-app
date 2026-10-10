@@ -1,13 +1,20 @@
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/core/utils/media_parser.dart';
 import 'package:dio/dio.dart';
 
+/// Resolves torrents to playable links through the Real-Debrid API.
+///
+/// Throws an [AppFailure] when RD or the network fails; returns `null` when
+/// the torrent is simply not cached on RD.
 class RealDebridService implements BaseDebridService {
   final Dio _dio;
   final String _apiKey;
   static const String _rdApiUrl = "https://api.real-debrid.com/rest/1.0";
+  static const String _tag = 'RealDebrid';
 
   RealDebridService(this._dio, this._apiKey);
 
@@ -19,35 +26,18 @@ class RealDebridService implements BaseDebridService {
 
   Map<String, String> get _headers => {"Authorization": "Bearer $_apiKey"};
 
+  /// Always "unknown" (empty map): RD disabled `/torrents/instantAvailability`
+  /// in late 2024 and has no replacement. Adding every torrent just to check it
+  /// would cost several requests each and hit RD's rate limit (STR-03).
   @override
-  Future<Map<String, bool>> checkAvailability(List<String> hashes) async {
-    if (hashes.isEmpty || !isEnabled) return {};
+  Future<Map<String, bool>> checkAvailability(List<String> hashes) async => {};
 
-    final hashPath = hashes.join('/');
-    try {
-      final res = await _dio.get(
-        "$_rdApiUrl/torrents/instantAvailability/$hashPath",
-        options: Options(headers: _headers),
-      );
-
-      final data = res.data as Map<String, dynamic>;
-      final result = <String, bool>{};
-
-      data.forEach((hash, variants) {
-        final isAvailable =
-            variants is Map &&
-            variants['rd'] != null &&
-            variants['rd'] is List &&
-            (variants['rd'] as List).isNotEmpty;
-        result[hash.toLowerCase()] = isAvailable;
-      });
-      return result;
-    } catch (e) {
-      // Availability check failed silently
-      return {};
-    }
-  }
-
+  /// Adds the magnet to the account and returns a playable link.
+  ///
+  /// When no link comes out (not cached, no video file, error), the torrent
+  /// is deleted again so it doesn't stay on the account downloading (STR-03).
+  /// A torrent that resolved is kept: it's already downloaded (uses no active
+  /// slot) and deleting it could break the link while it plays.
   @override
   Future<ResolvedStream?> resolve(
     StreamCandidate candidate, {
@@ -56,161 +46,246 @@ class RealDebridService implements BaseDebridService {
     int? fileId,
   }) async {
     if (!isEnabled) return null;
-    final magnet = candidate.magnet;
-    final absoluteEpisode = candidate.absoluteEpisode;
 
+    final torrentId = await _guard(() => _addMagnet(candidate.magnet));
+    ResolvedStream? stream;
     try {
-      // 1. Add Magnet
-      final addFormData = FormData.fromMap({"magnet": magnet});
-      final addRes = await _dio.post(
-        "$_rdApiUrl/torrents/addMagnet",
-        data: addFormData,
-        options: Options(headers: _headers),
+      stream = await _guard(
+        () => _resolveTorrent(
+          torrentId,
+          candidate,
+          season: season,
+          episode: episode,
+          fileId: fileId,
+        ),
       );
-
-      if (addRes.data == null || addRes.data['id'] == null) {
-        throw Exception("Failed to add magnet to Real-Debrid (No ID returned)");
-      }
-
-      final torrentId = addRes.data['id'];
-
-      // 2. Get Info
-      final infoRes = await _dio.get(
-        "$_rdApiUrl/torrents/info/$torrentId",
-        options: Options(headers: _headers),
-      );
-
-      if (infoRes.data == null) {
-        throw Exception(
-          "Failed to fetch torrent info from Real-Debrid (Empty response)",
-        );
-      }
-
-      var info = infoRes.data;
-
-      // 3. File Selection Logic
-      final List<Map<String, dynamic>> allVideoFiles =
-          (info['files'] as List? ?? [])
-              .where((f) {
-                final path = (f['path'] as String? ?? '').toLowerCase();
-                return path.endsWith('.mp4') ||
-                    path.endsWith('.mkv') ||
-                    path.endsWith('.avi') ||
-                    path.endsWith('.mov') ||
-                    path.endsWith('.m4v') ||
-                    path.endsWith('.webm') ||
-                    path.endsWith('.flv') ||
-                    path.endsWith('.wmv');
-              })
-              .map(
-                (f) => <String, dynamic>{
-                  'id': f['id'] as int,
-                  'path': f['path'] as String,
-                  'bytes': f['bytes'] as int? ?? 0,
-                  'selected': f['selected'] == 1,
-                },
-              )
-              .toList();
-
-      int? selectedId = fileId;
-      if (selectedId == null && season != null && episode != null) {
-        selectedId = _findBestFileMatch(
-          allVideoFiles,
-          season,
-          episode,
-          absoluteEpisode,
-        );
-      }
-
-      // Default to largest if still null
-      if (selectedId == null && allVideoFiles.isNotEmpty) {
-        final sorted = List<Map<String, dynamic>>.from(allVideoFiles);
-        sorted.sort((a, b) => (b['bytes'] as int) - (a['bytes'] as int));
-        selectedId = sorted[0]['id'] as int;
-      }
-
-      // 4. Select Files if needed
-      final List currentlySelected = (info['files'] as List? ?? [])
-          .where((f) => f['selected'] == 1)
-          .toList();
-      final bool selectionMismatch =
-          selectedId != null &&
-          (currentlySelected.length != 1 ||
-              currentlySelected[0]['id'] != selectedId);
-
-      if (info['status'] == 'waiting_files_selection' ||
-          (selectionMismatch && info['status'] == 'downloaded')) {
-        final selFormData = FormData.fromMap({"files": selectedId.toString()});
-        await _dio.post(
-          "$_rdApiUrl/torrents/selectFiles/$torrentId",
-          data: selFormData,
-          options: Options(headers: _headers),
-        );
-
-        final updatedInfoRes = await _dio.get(
-          "$_rdApiUrl/torrents/info/$torrentId",
-          options: Options(headers: _headers),
-        );
-        info = updatedInfoRes.data;
-      }
-
-      // 5. Link Unrestricting with Retry Logic
-      // Sometimes links are not immediately available even for cached torrents after selection
-      int retryCount = 0;
-      while ((info['links'] == null || (info['links'] as List).isEmpty) &&
-          retryCount < 5) {
-        if (info['status'] == 'downloading' ||
-            info['status'] == 'compressing' ||
-            info['status'] == 'uploading') {
-          // If it's actually downloading, it's not "instantly" available even if marked as such
-          // or we selected a file that wasn't in the cache variant we checked.
-          break;
-        }
-
-        await Future.delayed(const Duration(milliseconds: 1000));
-
-        final retryRes = await _dio.get(
-          "$_rdApiUrl/torrents/info/$torrentId",
-          options: Options(headers: _headers),
-        );
-        info = retryRes.data;
-        retryCount++;
-      }
-
-      if (info['status'] != 'downloaded') {
-        return null;
-      }
-
-      if (info['links'] != null && (info['links'] as List).isNotEmpty) {
-        final link = info['links'][0];
-        final unrestrictFormData = FormData.fromMap({"link": link});
-        final unrestrictRes = await _dio.post(
-          "$_rdApiUrl/unrestrict/link",
-          data: unrestrictFormData,
-          options: Options(headers: _headers),
-        );
-
-        final unrestrictData = unrestrictRes.data;
-        final finalUrl = unrestrictData['download'] as String;
-
-        if (finalUrl.toLowerCase().contains('.rar')) {
-          throw Exception("Resolved URL is an archive (RAR/ZIP), skipping.");
-        }
-
-        return ResolvedStream(
-          url: finalUrl,
-          mimeType: unrestrictData['mimeType'],
-          filename: unrestrictData['filename'],
-          files: allVideoFiles,
-          activeFileId: selectedId,
-          provider: name,
-          candidate: candidate,
-        );
-      }
-    } catch (e) {
-      // Ignored failed resolution
+      return stream;
+    } finally {
+      if (stream == null) await _deleteTorrent(torrentId);
     }
-    return null;
+  }
+
+  Future<String> _addMagnet(String magnet) async {
+    final res = await _dio.post(
+      "$_rdApiUrl/torrents/addMagnet",
+      data: FormData.fromMap({"magnet": magnet}),
+      options: Options(headers: _headers),
+    );
+    final id = res.data is Map ? res.data['id'] : null;
+    if (id == null) {
+      throw const StreamingFailure('Real-Debrid returned no torrent id');
+    }
+    return id.toString();
+  }
+
+  Future<ResolvedStream?> _resolveTorrent(
+    String torrentId,
+    StreamCandidate candidate, {
+    int? season,
+    int? episode,
+    int? fileId,
+  }) async {
+    var info = await _fetchInfo(torrentId);
+    final videoFiles = _videoFiles(info);
+    // Nothing playable: don't send `files=null` to selectFiles.
+    if (videoFiles.isEmpty) return null;
+
+    final selectedId =
+        fileId ??
+        (season != null && episode != null
+            ? _findBestFileMatch(
+                videoFiles,
+                season,
+                episode,
+                candidate.absoluteEpisode,
+              )
+            : null) ??
+        _largestFileId(videoFiles);
+
+    if (_needsSelection(info, selectedId)) {
+      await _dio.post(
+        "$_rdApiUrl/torrents/selectFiles/$torrentId",
+        data: FormData.fromMap({"files": selectedId.toString()}),
+        options: Options(headers: _headers),
+      );
+      info = await _fetchInfo(torrentId);
+    }
+
+    info = await _waitForLinks(torrentId, info);
+    final links = info['links'] as List? ?? const [];
+    if (info['status'] != 'downloaded' || links.isEmpty) {
+      AppLogger.debug(_tag, 'Not cached (status ${info['status']})');
+      return null;
+    }
+
+    return _unrestrict(
+      links.first as String,
+      candidate,
+      videoFiles,
+      selectedId,
+    );
+  }
+
+  Future<Map<String, dynamic>> _fetchInfo(String torrentId) async {
+    final res = await _dio.get(
+      "$_rdApiUrl/torrents/info/$torrentId",
+      options: Options(headers: _headers),
+    );
+    if (res.data is! Map<String, dynamic>) {
+      throw const StreamingFailure('Real-Debrid sent no torrent info');
+    }
+    return res.data as Map<String, dynamic>;
+  }
+
+  static const _videoExtensions = [
+    '.mp4',
+    '.mkv',
+    '.avi',
+    '.mov',
+    '.m4v',
+    '.webm',
+    '.flv',
+    '.wmv',
+  ];
+
+  List<Map<String, dynamic>> _videoFiles(Map<String, dynamic> info) =>
+      (info['files'] as List? ?? [])
+          .where((f) {
+            final path = (f['path'] as String? ?? '').toLowerCase();
+            return _videoExtensions.any(path.endsWith);
+          })
+          .map(
+            (f) => <String, dynamic>{
+              'id': f['id'] as int,
+              'path': f['path'] as String,
+              'bytes': f['bytes'] as int? ?? 0,
+              'selected': f['selected'] == 1,
+            },
+          )
+          .toList();
+
+  int _largestFileId(List<Map<String, dynamic>> files) {
+    final sorted = List<Map<String, dynamic>>.from(files)
+      ..sort((a, b) => (b['bytes'] as int) - (a['bytes'] as int));
+    return sorted.first['id'] as int;
+  }
+
+  bool _needsSelection(Map<String, dynamic> info, int selectedId) {
+    final selected = (info['files'] as List? ?? [])
+        .where((f) => f['selected'] == 1)
+        .toList();
+    final isMismatch =
+        selected.length != 1 || selected.first['id'] != selectedId;
+    return info['status'] == 'waiting_files_selection' ||
+        (isMismatch && info['status'] == 'downloaded');
+  }
+
+  /// Links can lag a moment behind selection even for cached torrents, so
+  /// poll a few times. Stops at once when RD is really downloading.
+  Future<Map<String, dynamic>> _waitForLinks(
+    String torrentId,
+    Map<String, dynamic> info,
+  ) async {
+    const busy = ['downloading', 'compressing', 'uploading'];
+    var current = info;
+    for (var retry = 0; retry < 5; retry++) {
+      final links = current['links'] as List? ?? const [];
+      if (links.isNotEmpty || busy.contains(current['status'])) break;
+      await Future<void>.delayed(const Duration(seconds: 1));
+      current = await _fetchInfo(torrentId);
+    }
+    return current;
+  }
+
+  Future<ResolvedStream> _unrestrict(
+    String link,
+    StreamCandidate candidate,
+    List<Map<String, dynamic>> videoFiles,
+    int selectedId,
+  ) async {
+    final res = await _dio.post(
+      "$_rdApiUrl/unrestrict/link",
+      data: FormData.fromMap({"link": link}),
+      options: Options(headers: _headers),
+    );
+    final data = res.data as Map<String, dynamic>;
+    final url = data['download'] as String;
+    if (url.toLowerCase().contains('.rar')) {
+      throw const StreamingFailure('Real-Debrid link is an archive (RAR)');
+    }
+    return ResolvedStream(
+      url: url,
+      mimeType: data['mimeType'],
+      filename: data['filename'],
+      files: videoFiles,
+      activeFileId: selectedId,
+      provider: name,
+      candidate: candidate,
+    );
+  }
+
+  Future<void> _deleteTorrent(String torrentId) async {
+    try {
+      await _dio.delete(
+        "$_rdApiUrl/torrents/delete/$torrentId",
+        options: Options(headers: _headers),
+      );
+    } catch (e, st) {
+      // Safe to continue: a leftover torrent only wastes a slot, and the
+      // resolve result (or its own failure) matters more to the caller.
+      AppLogger.warn(
+        _tag,
+        'Could not delete torrent $torrentId',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  /// Turns Dio and parsing errors into an [AppFailure].
+  Future<T> _guard<T>(Future<T> Function() call) async {
+    try {
+      return await call();
+    } on AppFailure {
+      rethrow;
+    } on DioException catch (e, st) {
+      throw _failureFromDio(e, st);
+    } catch (e, st) {
+      // A missing or wrongly typed field in RD's answer.
+      throw StreamingFailure(
+        'Unexpected Real-Debrid answer',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  AppFailure _failureFromDio(DioException e, StackTrace st) {
+    final status = e.response?.statusCode;
+    return switch (e.type) {
+      DioExceptionType.badResponse when status == 401 || status == 403 =>
+        AuthFailure(
+          'Real-Debrid refused the API key ($status)',
+          cause: e,
+          stackTrace: st,
+        ),
+      DioExceptionType.badResponse => ServerFailure(
+        'Real-Debrid error',
+        statusCode: status,
+        cause: e,
+        stackTrace: st,
+      ),
+      DioExceptionType.cancel => UnknownFailure(
+        'Real-Debrid request cancelled',
+        cause: e,
+        stackTrace: st,
+      ),
+      _ => NetworkFailure(
+        'Could not reach Real-Debrid',
+        cause: e,
+        stackTrace: st,
+      ),
+    };
   }
 
   int? _findBestFileMatch(
