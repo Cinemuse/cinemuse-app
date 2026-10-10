@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/video_player/application/language_mapper.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
-import 'package:cinemuse_app/core/services/streaming/subtitles/subtitle_service.dart';
-import 'package:cinemuse_app/core/services/streaming/subtitles/external_subtitle.dart';
+import 'package:cinemuse_app/features/streaming/subtitles/subtitle_service.dart';
+import 'package:cinemuse_app/features/streaming/subtitles/external_subtitle.dart';
 import 'package:media_kit/media_kit.dart';
 
 /// Shared provider for external subtitle search results.

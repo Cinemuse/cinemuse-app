@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:cinemuse_app/features/profile/domain/profile.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stremio_addon.dart';
+import 'package:cinemuse_app/features/streaming/models/stremio_addon.dart';
 import 'package:cinemuse_app/core/utils/url_utils.dart';
 import 'package:flutter_test/flutter_test.dart';
 

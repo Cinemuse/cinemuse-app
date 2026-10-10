@@ -1,5 +1,5 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/hero/social_actions_group.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';

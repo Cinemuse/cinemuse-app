@@ -1,11 +1,11 @@
-import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
+import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cast/cast.dart';
-import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
+import 'package:cinemuse_app/features/streaming/models/provider_search_status.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
 

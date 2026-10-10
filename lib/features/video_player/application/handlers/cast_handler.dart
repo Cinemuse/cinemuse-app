@@ -3,9 +3,9 @@ import 'dart:developer' as developer;
 import 'package:cast/cast.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
-import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
+import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:cinemuse_app/core/utils/mime_resolver.dart';
 

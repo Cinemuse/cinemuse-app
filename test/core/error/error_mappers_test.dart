@@ -1,7 +1,7 @@
 import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
-import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
+import 'package:cinemuse_app/features/streaming/models/streaming_exceptions.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';

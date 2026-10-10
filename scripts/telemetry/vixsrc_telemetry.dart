@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 
-import 'package:cinemuse_app/core/services/streaming/sources/vixsrc_source.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
+import 'package:cinemuse_app/features/streaming/sources/vixsrc_source.dart';
+import 'package:cinemuse_app/features/streaming/models/stream_search_context.dart';
 
 void main() async {
   print('Starting VixSrc Scraper Telemetry...');

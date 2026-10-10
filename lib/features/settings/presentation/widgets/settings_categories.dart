@@ -10,7 +10,7 @@ import 'package:cinemuse_app/features/settings/application/local_settings_servic
 import 'package:cinemuse_app/features/settings/presentation/widgets/addon_settings.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/subtitle_appearance_form.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/playlist_management_sheet.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
+import 'package:cinemuse_app/features/streaming/models/stream_metadata.dart';
 
 class IdentitySettings extends ConsumerWidget {
   const IdentitySettings({super.key});

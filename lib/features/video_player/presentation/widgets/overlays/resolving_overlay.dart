@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
+import 'package:cinemuse_app/features/streaming/models/provider_search_status.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 

@@ -1,8 +1,8 @@
 import 'package:cinemuse_app/features/video_player/data/youtube_service.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
-import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
+import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
+import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/features/streaming/models/stream_metadata.dart';
 import 'package:media_kit/media_kit.dart';
 
 class YouTubeInitializationResult {

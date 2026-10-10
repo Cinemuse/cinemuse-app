@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:cinemuse_app/core/services/streaming/stremio_addon_service.dart';
+import 'package:cinemuse_app/features/streaming/stremio_addon_service.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stremio_addon.dart';
+import 'package:cinemuse_app/features/streaming/models/stremio_addon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';

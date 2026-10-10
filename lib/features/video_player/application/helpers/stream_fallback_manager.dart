@@ -1,7 +1,7 @@
 import 'dart:developer' as developer;
-import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
-import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
+import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
 import 'package:media_kit/media_kit.dart';
 
 /// Manages retry counters, candidate deduplication, and automatic soft-retries

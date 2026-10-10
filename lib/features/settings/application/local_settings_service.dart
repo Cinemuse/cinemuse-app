@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stream_metadata.dart';
+import 'package:cinemuse_app/features/streaming/models/stream_metadata.dart';
 
 class LocalSettings {
   final SubtitleStyle subtitleStyle;

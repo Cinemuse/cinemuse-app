@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 
-import 'package:cinemuse_app/core/services/streaming/sources/animeunity_source.dart';
-import 'package:cinemuse_app/core/services/streaming/models/stream_search_context.dart';
-import 'package:cinemuse_app/core/services/anime/models/kitsu_mapping.dart';
-import 'package:cinemuse_app/core/services/anime/interfaces/anime_unity_mapping_provider.dart';
-import 'package:cinemuse_app/core/services/anime/models/anime_unity_entry.dart';
+import 'package:cinemuse_app/features/streaming/sources/animeunity_source.dart';
+import 'package:cinemuse_app/features/streaming/models/stream_search_context.dart';
+import 'package:cinemuse_app/features/streaming/anime/models/kitsu_mapping.dart';
+import 'package:cinemuse_app/features/streaming/anime/interfaces/anime_unity_mapping_provider.dart';
+import 'package:cinemuse_app/features/streaming/anime/models/anime_unity_entry.dart';
 
 class MockAnimeUnityMappingProvider implements AnimeUnityMappingProvider {
   @override
