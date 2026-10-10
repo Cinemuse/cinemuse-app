@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import '../../../../core/presentation/theme/app_theme.dart';
-import '../../../../shared/widgets/media_card.dart';
 import '../../application/explore_providers.dart';
 import '../widgets/media_type_selector.dart';
+import '../widgets/explore_result_card.dart';
 import '../widgets/explore_filter_panel.dart';
-import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import '../widgets/active_filters_list.dart';
-import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import '../../../../shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/shared/widgets/offline_placeholder.dart';
@@ -337,10 +335,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                                 childAspectRatio: 0.56,
                               ),
                           delegate: SliverChildBuilderDelegate(
-                            (context, index) => _buildMediaCard(
-                              context,
-                              results[index],
-                              mediaType,
+                            (context, index) => ExploreResultCard(
+                              media: results[index],
+                              type: mediaType,
                             ),
                             childCount: results.length,
                           ),
@@ -355,10 +352,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                           childAspectRatio: 0.56,
                         ),
                         delegate: SliverChildBuilderDelegate(
-                          (context, index) => _buildMediaCard(
-                            context,
-                            results[index],
-                            mediaType,
+                          (context, index) => ExploreResultCard(
+                            media: results[index],
+                            type: mediaType,
                           ),
                           childCount: displayCount,
                         ),
@@ -420,46 +416,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildMediaCard(
-    BuildContext context,
-    Map<String, dynamic> media,
-    MediaType mediaTypeEnum,
-  ) {
-    final title =
-        media['title'] ??
-        media['name'] ??
-        AppLocalizations.of(context)!.commonUnknown;
-    final posterPath = media['poster_path'] ?? media['profile_path'];
-    final releaseDate = media['release_date'] ?? media['first_air_date'];
-    final rating = (media['vote_average'] as num?)?.toDouble();
-    final tmdbId = media['id'] as int;
-    final mediaTypeString = mediaTypeEnum == MediaType.movie ? 'movie' : 'tv';
-    final kind = mediaTypeEnum == MediaType.movie
-        ? MediaKind.movie
-        : MediaKind.tv;
-
-    return MediaCard(
-      title: title,
-      posterPath: posterPath,
-      releaseDate: releaseDate,
-      rating: rating,
-      tmdbId: tmdbId,
-      mediaType: kind,
-      onTap: () {
-        if (mediaTypeEnum != MediaType.person) {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => MediaDetailsScreen(
-                mediaId: media['id'].toString(),
-                mediaType: mediaTypeString,
-              ),
-            ),
-          );
-        }
-      },
     );
   }
 }

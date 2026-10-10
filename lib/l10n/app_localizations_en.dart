@@ -107,7 +107,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchSeries => 'Series';
 
   @override
-  String get searchPersons => 'Persons';
+  String get searchPersons => 'People';
 
   @override
   String get searchAdvancedFilters => 'Advanced Filters';

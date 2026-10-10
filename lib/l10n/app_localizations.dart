@@ -287,7 +287,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchPersons.
   ///
   /// In en, this message translates to:
-  /// **'Persons'**
+  /// **'People'**
   String get searchPersons;
 
   /// No description provided for @searchAdvancedFilters.
