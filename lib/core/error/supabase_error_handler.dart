@@ -5,7 +5,8 @@ class SupabaseErrorHandler {
   static AppException handleError(dynamic error) {
     if (error is AuthException) {
       return AppException(
-        message: _getAuthMessage(error),
+        // English developer text; the UI shows AuthErrorMapper's text.
+        message: error.message,
         type: AppExceptionType.auth,
         originalError: error,
       );
@@ -32,19 +33,5 @@ class SupabaseErrorHandler {
       type: AppExceptionType.unknown,
       originalError: error,
     );
-  }
-
-  static String _getAuthMessage(AuthException error) {
-    final msg = error.message.toLowerCase();
-    if (msg.contains('invalid login credentials')) {
-      return 'Invalid email or password.';
-    }
-    if (msg.contains('email not confirmed')) {
-      return 'Please confirm your email address.';
-    }
-    if (msg.contains('user already exists')) {
-      return 'An account with this email already exists.';
-    }
-    return error.message;
   }
 }

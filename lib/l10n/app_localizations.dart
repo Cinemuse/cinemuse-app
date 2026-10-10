@@ -1544,6 +1544,288 @@ abstract class AppLocalizations {
   /// **'Something went wrong.'**
   String get failureUnknown;
 
+  /// No description provided for @errorTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection timed out. Check your connection.'**
+  String get errorTimeout;
+
+  /// No description provided for @errorServerStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'The server returned an error ({statusCode}).'**
+  String errorServerStatus(Object statusCode);
+
+  /// No description provided for @errorCertificateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your system might be missing some root certificates. Try updating Windows or check your firewall/DNS.'**
+  String get errorCertificateHint;
+
+  /// No description provided for @authErrorInvalidCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email or password.'**
+  String get authErrorInvalidCredentials;
+
+  /// No description provided for @authErrorEmailNotConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm your email address.'**
+  String get authErrorEmailNotConfirmed;
+
+  /// No description provided for @authErrorUserExists.
+  ///
+  /// In en, this message translates to:
+  /// **'An account with this email already exists.'**
+  String get authErrorUserExists;
+
+  /// No description provided for @authErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in failed. Please try again.'**
+  String get authErrorGeneric;
+
+  /// No description provided for @updatePreparingInstaller.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing to launch the installer...'**
+  String get updatePreparingInstaller;
+
+  /// No description provided for @updateRestarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Files swapped. Restarting in a moment...'**
+  String get updateRestarting;
+
+  /// No description provided for @updatePleaseWait.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait while we prepare the new version. Do not close the app.'**
+  String get updatePleaseWait;
+
+  /// No description provided for @genreAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Action'**
+  String get genreAction;
+
+  /// No description provided for @genreAdventure.
+  ///
+  /// In en, this message translates to:
+  /// **'Adventure'**
+  String get genreAdventure;
+
+  /// No description provided for @genreAnimation.
+  ///
+  /// In en, this message translates to:
+  /// **'Animation'**
+  String get genreAnimation;
+
+  /// No description provided for @genreComedy.
+  ///
+  /// In en, this message translates to:
+  /// **'Comedy'**
+  String get genreComedy;
+
+  /// No description provided for @genreCrime.
+  ///
+  /// In en, this message translates to:
+  /// **'Crime'**
+  String get genreCrime;
+
+  /// No description provided for @genreDocumentary.
+  ///
+  /// In en, this message translates to:
+  /// **'Documentary'**
+  String get genreDocumentary;
+
+  /// No description provided for @genreDrama.
+  ///
+  /// In en, this message translates to:
+  /// **'Drama'**
+  String get genreDrama;
+
+  /// No description provided for @genreFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Family'**
+  String get genreFamily;
+
+  /// No description provided for @genreFantasy.
+  ///
+  /// In en, this message translates to:
+  /// **'Fantasy'**
+  String get genreFantasy;
+
+  /// No description provided for @genreHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get genreHistory;
+
+  /// No description provided for @genreHorror.
+  ///
+  /// In en, this message translates to:
+  /// **'Horror'**
+  String get genreHorror;
+
+  /// No description provided for @genreMusic.
+  ///
+  /// In en, this message translates to:
+  /// **'Music'**
+  String get genreMusic;
+
+  /// No description provided for @genreMystery.
+  ///
+  /// In en, this message translates to:
+  /// **'Mystery'**
+  String get genreMystery;
+
+  /// No description provided for @genreRomance.
+  ///
+  /// In en, this message translates to:
+  /// **'Romance'**
+  String get genreRomance;
+
+  /// No description provided for @genreSciFi.
+  ///
+  /// In en, this message translates to:
+  /// **'Sci-Fi'**
+  String get genreSciFi;
+
+  /// No description provided for @genreTVMovie.
+  ///
+  /// In en, this message translates to:
+  /// **'TV Movie'**
+  String get genreTVMovie;
+
+  /// No description provided for @genreThriller.
+  ///
+  /// In en, this message translates to:
+  /// **'Thriller'**
+  String get genreThriller;
+
+  /// No description provided for @genreWar.
+  ///
+  /// In en, this message translates to:
+  /// **'War'**
+  String get genreWar;
+
+  /// No description provided for @genreWestern.
+  ///
+  /// In en, this message translates to:
+  /// **'Western'**
+  String get genreWestern;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @languageSpanish.
+  ///
+  /// In en, this message translates to:
+  /// **'Spanish'**
+  String get languageSpanish;
+
+  /// No description provided for @languageFrench.
+  ///
+  /// In en, this message translates to:
+  /// **'French'**
+  String get languageFrench;
+
+  /// No description provided for @languageGerman.
+  ///
+  /// In en, this message translates to:
+  /// **'German'**
+  String get languageGerman;
+
+  /// No description provided for @languageItalian.
+  ///
+  /// In en, this message translates to:
+  /// **'Italian'**
+  String get languageItalian;
+
+  /// No description provided for @languagePortuguese.
+  ///
+  /// In en, this message translates to:
+  /// **'Portuguese'**
+  String get languagePortuguese;
+
+  /// No description provided for @languageRussian.
+  ///
+  /// In en, this message translates to:
+  /// **'Russian'**
+  String get languageRussian;
+
+  /// No description provided for @languageJapanese.
+  ///
+  /// In en, this message translates to:
+  /// **'Japanese'**
+  String get languageJapanese;
+
+  /// No description provided for @languageKorean.
+  ///
+  /// In en, this message translates to:
+  /// **'Korean'**
+  String get languageKorean;
+
+  /// No description provided for @languageChinese.
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese'**
+  String get languageChinese;
+
+  /// No description provided for @languageHindi.
+  ///
+  /// In en, this message translates to:
+  /// **'Hindi'**
+  String get languageHindi;
+
+  /// No description provided for @languageDutch.
+  ///
+  /// In en, this message translates to:
+  /// **'Dutch'**
+  String get languageDutch;
+
+  /// No description provided for @languageSwedish.
+  ///
+  /// In en, this message translates to:
+  /// **'Swedish'**
+  String get languageSwedish;
+
+  /// No description provided for @languageDanish.
+  ///
+  /// In en, this message translates to:
+  /// **'Danish'**
+  String get languageDanish;
+
+  /// No description provided for @languagePolish.
+  ///
+  /// In en, this message translates to:
+  /// **'Polish'**
+  String get languagePolish;
+
+  /// No description provided for @languageTurkish.
+  ///
+  /// In en, this message translates to:
+  /// **'Turkish'**
+  String get languageTurkish;
+
+  /// No description provided for @languageThai.
+  ///
+  /// In en, this message translates to:
+  /// **'Thai'**
+  String get languageThai;
+
+  /// No description provided for @languageIndonesian.
+  ///
+  /// In en, this message translates to:
+  /// **'Indonesian'**
+  String get languageIndonesian;
+
   /// No description provided for @streamingErrorNoProviders.
   ///
   /// In en, this message translates to:

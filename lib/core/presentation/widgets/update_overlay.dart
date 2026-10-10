@@ -65,9 +65,9 @@ class UpdateOverlay extends ConsumerWidget {
                     Text(
                       updateState.status == UpdateStatus.readyToInstall
                           ? (Platform.isAndroid
-                                ? 'Preparing to launch the installer...'
-                                : 'Files swapped. Restarting in a moment...')
-                          : 'Please wait while we prepare the new version. Do not close the app.',
+                                ? l10n.updatePreparingInstaller
+                                : l10n.updateRestarting)
+                          : l10n.updatePleaseWait,
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.white70),
                     ),

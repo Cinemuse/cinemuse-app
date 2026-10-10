@@ -1,44 +1,67 @@
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+
+/// TMDB genres and original languages offered in the Explore filters.
+/// Names come from [TmdbFilterNames], so they follow the app language.
 class TmdbConstants {
-  static const List<Map<String, dynamic>> genresList = [
-    {'id': 28, 'name': 'Action'},
-    {'id': 12, 'name': 'Adventure'},
-    {'id': 16, 'name': 'Animation'},
-    {'id': 35, 'name': 'Comedy'},
-    {'id': 80, 'name': 'Crime'},
-    {'id': 99, 'name': 'Documentary'},
-    {'id': 18, 'name': 'Drama'},
-    {'id': 10751, 'name': 'Family'},
-    {'id': 14, 'name': 'Fantasy'},
-    {'id': 36, 'name': 'History'},
-    {'id': 27, 'name': 'Horror'},
-    {'id': 10402, 'name': 'Music'},
-    {'id': 9648, 'name': 'Mystery'},
-    {'id': 10749, 'name': 'Romance'},
-    {'id': 878, 'name': 'Sci-Fi'},
-    {'id': 10770, 'name': 'TV Movie'},
-    {'id': 53, 'name': 'Thriller'},
-    {'id': 10752, 'name': 'War'},
-    {'id': 37, 'name': 'Western'},
+  static const List<int> genreIds = [
+    28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, //
+    27, 10402, 9648, 10749, 878, 10770, 53, 10752, 37,
   ];
 
-  static const List<Map<String, String>> languagesList = [
-    {'code': 'en', 'name': 'English'},
-    {'code': 'es', 'name': 'Spanish'},
-    {'code': 'fr', 'name': 'French'},
-    {'code': 'de', 'name': 'German'},
-    {'code': 'it', 'name': 'Italian'},
-    {'code': 'pt', 'name': 'Portuguese'},
-    {'code': 'ru', 'name': 'Russian'},
-    {'code': 'ja', 'name': 'Japanese'},
-    {'code': 'ko', 'name': 'Korean'},
-    {'code': 'zh', 'name': 'Chinese'},
-    {'code': 'hi', 'name': 'Hindi'},
-    {'code': 'nl', 'name': 'Dutch'},
-    {'code': 'sv', 'name': 'Swedish'},
-    {'code': 'da', 'name': 'Danish'},
-    {'code': 'pl', 'name': 'Polish'},
-    {'code': 'tr', 'name': 'Turkish'},
-    {'code': 'th', 'name': 'Thai'},
-    {'code': 'id', 'name': 'Indonesian'},
+  /// ISO 639-1 codes, as TMDB's `with_original_language` expects.
+  static const List<String> languageCodes = [
+    'en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh', //
+    'hi', 'nl', 'sv', 'da', 'pl', 'tr', 'th', 'id',
   ];
+}
+
+/// Translated names for [TmdbConstants.genreIds] and
+/// [TmdbConstants.languageCodes] (REV-15).
+extension TmdbFilterNames on AppLocalizations {
+  /// The genre name; the bare id for a genre not in the list.
+  String genreName(int id) => switch (id) {
+    28 => genreAction,
+    12 => genreAdventure,
+    16 => genreAnimation,
+    35 => genreComedy,
+    80 => genreCrime,
+    99 => genreDocumentary,
+    18 => genreDrama,
+    10751 => genreFamily,
+    14 => genreFantasy,
+    36 => genreHistory,
+    27 => genreHorror,
+    10402 => genreMusic,
+    9648 => genreMystery,
+    10749 => genreRomance,
+    878 => genreSciFi,
+    10770 => genreTVMovie,
+    53 => genreThriller,
+    10752 => genreWar,
+    37 => genreWestern,
+    _ => '$id',
+  };
+
+  /// The language name; the bare code for a language not in the list.
+  String languageName(String code) => switch (code) {
+    'en' => languageEnglish,
+    'es' => languageSpanish,
+    'fr' => languageFrench,
+    'de' => languageGerman,
+    'it' => languageItalian,
+    'pt' => languagePortuguese,
+    'ru' => languageRussian,
+    'ja' => languageJapanese,
+    'ko' => languageKorean,
+    'zh' => languageChinese,
+    'hi' => languageHindi,
+    'nl' => languageDutch,
+    'sv' => languageSwedish,
+    'da' => languageDanish,
+    'pl' => languagePolish,
+    'tr' => languageTurkish,
+    'th' => languageThai,
+    'id' => languageIndonesian,
+    _ => code,
+  };
 }

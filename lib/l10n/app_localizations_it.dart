@@ -840,6 +840,152 @@ class AppLocalizationsIt extends AppLocalizations {
   String get failureUnknown => 'Qualcosa è andato storto.';
 
   @override
+  String get errorTimeout => 'Connessione scaduta. Controlla la connessione.';
+
+  @override
+  String errorServerStatus(Object statusCode) {
+    return 'Il server ha restituito un errore ($statusCode).';
+  }
+
+  @override
+  String get errorCertificateHint =>
+      'Al sistema potrebbero mancare alcuni certificati radice. Prova ad aggiornare Windows o controlla firewall/DNS.';
+
+  @override
+  String get authErrorInvalidCredentials => 'Email o password non validi.';
+
+  @override
+  String get authErrorEmailNotConfirmed => 'Conferma il tuo indirizzo email.';
+
+  @override
+  String get authErrorUserExists => 'Esiste già un account con questa email.';
+
+  @override
+  String get authErrorGeneric => 'Accesso non riuscito. Riprova.';
+
+  @override
+  String get updatePreparingInstaller =>
+      'Avvio del programma di installazione...';
+
+  @override
+  String get updateRestarting => 'File sostituiti. Riavvio tra un momento...';
+
+  @override
+  String get updatePleaseWait =>
+      'Attendi mentre prepariamo la nuova versione. Non chiudere l\'app.';
+
+  @override
+  String get genreAction => 'Azione';
+
+  @override
+  String get genreAdventure => 'Avventura';
+
+  @override
+  String get genreAnimation => 'Animazione';
+
+  @override
+  String get genreComedy => 'Commedia';
+
+  @override
+  String get genreCrime => 'Crime';
+
+  @override
+  String get genreDocumentary => 'Documentario';
+
+  @override
+  String get genreDrama => 'Dramma';
+
+  @override
+  String get genreFamily => 'Famiglia';
+
+  @override
+  String get genreFantasy => 'Fantasy';
+
+  @override
+  String get genreHistory => 'Storia';
+
+  @override
+  String get genreHorror => 'Horror';
+
+  @override
+  String get genreMusic => 'Musica';
+
+  @override
+  String get genreMystery => 'Mistero';
+
+  @override
+  String get genreRomance => 'Romance';
+
+  @override
+  String get genreSciFi => 'Fantascienza';
+
+  @override
+  String get genreTVMovie => 'Film TV';
+
+  @override
+  String get genreThriller => 'Thriller';
+
+  @override
+  String get genreWar => 'Guerra';
+
+  @override
+  String get genreWestern => 'Western';
+
+  @override
+  String get languageEnglish => 'Inglese';
+
+  @override
+  String get languageSpanish => 'Spagnolo';
+
+  @override
+  String get languageFrench => 'Francese';
+
+  @override
+  String get languageGerman => 'Tedesco';
+
+  @override
+  String get languageItalian => 'Italiano';
+
+  @override
+  String get languagePortuguese => 'Portoghese';
+
+  @override
+  String get languageRussian => 'Russo';
+
+  @override
+  String get languageJapanese => 'Giapponese';
+
+  @override
+  String get languageKorean => 'Coreano';
+
+  @override
+  String get languageChinese => 'Cinese';
+
+  @override
+  String get languageHindi => 'Hindi';
+
+  @override
+  String get languageDutch => 'Olandese';
+
+  @override
+  String get languageSwedish => 'Svedese';
+
+  @override
+  String get languageDanish => 'Danese';
+
+  @override
+  String get languagePolish => 'Polacco';
+
+  @override
+  String get languageTurkish => 'Turco';
+
+  @override
+  String get languageThai => 'Thailandese';
+
+  @override
+  String get languageIndonesian => 'Indonesiano';
+
+  @override
   String get streamingErrorNoProviders =>
       'Nessun addon di streaming abilitato. Controlla le impostazioni.';
 

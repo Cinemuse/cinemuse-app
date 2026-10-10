@@ -5,6 +5,7 @@ import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
 void main() {
   final l10n = lookupAppLocalizations(const Locale('en'));
@@ -82,6 +83,37 @@ void main() {
         expect(result.message, expected);
         expect(result.type, type);
       });
+    });
+  });
+
+  group('GlobalErrorMapper with login errors (REV-15)', () {
+    final cases = <String, String>{
+      'Invalid login credentials': l10n.authErrorInvalidCredentials,
+      'Email not confirmed': l10n.authErrorEmailNotConfirmed,
+      'User already exists': l10n.authErrorUserExists,
+      'Signups not allowed for this instance': l10n.authErrorGeneric,
+    };
+
+    cases.forEach((supabaseText, expected) {
+      test('"$supabaseText" → translated text', () {
+        final wrapped = AppException(
+          message: supabaseText,
+          type: AppExceptionType.auth,
+          originalError: AuthException(supabaseText),
+        );
+
+        expect(mapper.map(wrapped).message, expected);
+        expect(mapper.map(AuthException(supabaseText)).message, expected);
+      });
+    });
+
+    test('uses the Italian text for the Italian locale', () {
+      final it = lookupAppLocalizations(const Locale('it'));
+      final result = GlobalErrorMapper(
+        it,
+      ).map(AuthException('Invalid login credentials'));
+
+      expect(result.message, it.authErrorInvalidCredentials);
     });
   });
 

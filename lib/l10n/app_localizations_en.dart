@@ -831,6 +831,152 @@ class AppLocalizationsEn extends AppLocalizations {
   String get failureUnknown => 'Something went wrong.';
 
   @override
+  String get errorTimeout => 'Connection timed out. Check your connection.';
+
+  @override
+  String errorServerStatus(Object statusCode) {
+    return 'The server returned an error ($statusCode).';
+  }
+
+  @override
+  String get errorCertificateHint =>
+      'Your system might be missing some root certificates. Try updating Windows or check your firewall/DNS.';
+
+  @override
+  String get authErrorInvalidCredentials => 'Invalid email or password.';
+
+  @override
+  String get authErrorEmailNotConfirmed => 'Please confirm your email address.';
+
+  @override
+  String get authErrorUserExists =>
+      'An account with this email already exists.';
+
+  @override
+  String get authErrorGeneric => 'Sign in failed. Please try again.';
+
+  @override
+  String get updatePreparingInstaller => 'Preparing to launch the installer...';
+
+  @override
+  String get updateRestarting => 'Files swapped. Restarting in a moment...';
+
+  @override
+  String get updatePleaseWait =>
+      'Please wait while we prepare the new version. Do not close the app.';
+
+  @override
+  String get genreAction => 'Action';
+
+  @override
+  String get genreAdventure => 'Adventure';
+
+  @override
+  String get genreAnimation => 'Animation';
+
+  @override
+  String get genreComedy => 'Comedy';
+
+  @override
+  String get genreCrime => 'Crime';
+
+  @override
+  String get genreDocumentary => 'Documentary';
+
+  @override
+  String get genreDrama => 'Drama';
+
+  @override
+  String get genreFamily => 'Family';
+
+  @override
+  String get genreFantasy => 'Fantasy';
+
+  @override
+  String get genreHistory => 'History';
+
+  @override
+  String get genreHorror => 'Horror';
+
+  @override
+  String get genreMusic => 'Music';
+
+  @override
+  String get genreMystery => 'Mystery';
+
+  @override
+  String get genreRomance => 'Romance';
+
+  @override
+  String get genreSciFi => 'Sci-Fi';
+
+  @override
+  String get genreTVMovie => 'TV Movie';
+
+  @override
+  String get genreThriller => 'Thriller';
+
+  @override
+  String get genreWar => 'War';
+
+  @override
+  String get genreWestern => 'Western';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageSpanish => 'Spanish';
+
+  @override
+  String get languageFrench => 'French';
+
+  @override
+  String get languageGerman => 'German';
+
+  @override
+  String get languageItalian => 'Italian';
+
+  @override
+  String get languagePortuguese => 'Portuguese';
+
+  @override
+  String get languageRussian => 'Russian';
+
+  @override
+  String get languageJapanese => 'Japanese';
+
+  @override
+  String get languageKorean => 'Korean';
+
+  @override
+  String get languageChinese => 'Chinese';
+
+  @override
+  String get languageHindi => 'Hindi';
+
+  @override
+  String get languageDutch => 'Dutch';
+
+  @override
+  String get languageSwedish => 'Swedish';
+
+  @override
+  String get languageDanish => 'Danish';
+
+  @override
+  String get languagePolish => 'Polish';
+
+  @override
+  String get languageTurkish => 'Turkish';
+
+  @override
+  String get languageThai => 'Thai';
+
+  @override
+  String get languageIndonesian => 'Indonesian';
+
+  @override
   String get streamingErrorNoProviders =>
       'No streaming addons are enabled. Please check your settings.';
 

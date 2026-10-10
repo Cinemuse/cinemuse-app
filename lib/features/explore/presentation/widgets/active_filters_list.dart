@@ -30,11 +30,8 @@ class ActiveFiltersList extends StatelessWidget {
       children: [
         // Genres
         ...filters.genres.map((gId) {
-          final genre = TmdbConstants.genresList.firstWhere(
-            (g) => g['id'] == gId,
-          );
           return _FilterChip(
-            label: genre['name'] as String,
+            label: l10n.genreName(gId),
             onDelete: () {
               final newGenres = List<int>.from(filters.genres)..remove(gId);
               onChanged(filters.copyWith(genres: newGenres));
@@ -44,11 +41,8 @@ class ActiveFiltersList extends StatelessWidget {
 
         // Languages
         ...filters.languages.map((code) {
-          final lang = TmdbConstants.languagesList.firstWhere(
-            (l) => l['code'] == code,
-          );
           return _FilterChip(
-            label: lang['name']!,
+            label: l10n.languageName(code),
             icon: Icons.language,
             onDelete: () {
               final newLangs = List<String>.from(filters.languages)

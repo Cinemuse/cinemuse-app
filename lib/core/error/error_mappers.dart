@@ -5,6 +5,7 @@ import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
 class UserFriendlyError {
   final String message;
@@ -33,30 +34,26 @@ class NetworkErrorMapper implements BaseErrorMapper {
         case DioExceptionType.sendTimeout:
         case DioExceptionType.receiveTimeout:
           return UserFriendlyError(
-            message: "Connection timed out",
-            hint: "Check your internet connection",
+            message: l10n.errorTimeout,
             type: AppExceptionType.network,
           );
         case DioExceptionType.badResponse:
           return UserFriendlyError(
-            message: "Server returned an error (${error.response?.statusCode})",
+            message: l10n.errorServerStatus(
+              '${error.response?.statusCode ?? '?'}',
+            ),
             type: AppExceptionType.network,
           );
         default:
           final underlying = error.error?.toString() ?? '';
-          final detail = error.message != null ? ': ${error.message}' : '';
-
-          String? hint;
-          if (underlying.contains('HandshakeException') ||
+          final isCertificateProblem =
+              underlying.contains('HandshakeException') ||
               underlying.contains('CertificateException') ||
-              underlying.contains('TlsException')) {
-            hint =
-                "Your system might be missing some root certificates. Try updating Windows or check your firewall/DNS.";
-          }
+              underlying.contains('TlsException');
 
           return UserFriendlyError(
-            message: "Network error occurred$detail",
-            hint: hint,
+            message: l10n.failureNetwork,
+            hint: isCertificateProblem ? l10n.errorCertificateHint : null,
             type: AppExceptionType.network,
           );
       }
@@ -98,6 +95,30 @@ class AppFailureMapper implements BaseErrorMapper {
   }
 }
 
+/// Sign-in / sign-up errors, as [SupabaseErrorHandler] wraps them, mapped to
+/// translated text by Supabase's (English) message.
+class AuthErrorMapper implements BaseErrorMapper {
+  @override
+  UserFriendlyError? map(Object error, AppLocalizations l10n) {
+    final authError = switch (error) {
+      AuthException() => error,
+      AppException(originalError: final AuthException original) => original,
+      _ => null,
+    };
+    if (authError == null) return null;
+
+    final text = authError.message.toLowerCase();
+    final message = text.contains('invalid login credentials')
+        ? l10n.authErrorInvalidCredentials
+        : text.contains('email not confirmed')
+        ? l10n.authErrorEmailNotConfirmed
+        : text.contains('already exists') || text.contains('already registered')
+        ? l10n.authErrorUserExists
+        : l10n.authErrorGeneric;
+    return UserFriendlyError(message: message, type: AppExceptionType.auth);
+  }
+}
+
 class StreamingErrorMapper implements BaseErrorMapper {
   @override
   UserFriendlyError? map(Object error, AppLocalizations l10n) {
@@ -124,6 +145,7 @@ class GlobalErrorMapper {
   final AppLocalizations _l10n;
   final List<BaseErrorMapper> _mappers = [
     AppFailureMapper(),
+    AuthErrorMapper(),
     NetworkErrorMapper(),
     StreamingErrorMapper(),
   ];

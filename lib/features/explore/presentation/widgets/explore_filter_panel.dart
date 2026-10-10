@@ -290,8 +290,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: TmdbConstants.genresList.map((g) {
-        final genreId = g['id'] as int;
+      children: TmdbConstants.genreIds.map((genreId) {
         final isSelected = filters.genres.contains(genreId);
         return HoverScale(
           onTap: () => _toggleGenre(genreId),
@@ -314,7 +313,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  g['name'] as String,
+                  AppLocalizations.of(context)!.genreName(genreId),
                   style: TextStyle(
                     color: isSelected
                         ? AppTheme.primary
@@ -369,16 +368,17 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
   }
 
   Widget _buildFilteredLanguages() {
+    final l10n = AppLocalizations.of(context)!;
     final query = _langSearchController.text.toLowerCase();
-    final filtered = TmdbConstants.languagesList
-        .where((l) => l['name']!.toLowerCase().contains(query))
+    final filtered = TmdbConstants.languageCodes
+        .where((c) => l10n.languageName(c).toLowerCase().contains(query))
         .toList();
 
     if (filtered.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(16.0),
         child: Text(
-          AppLocalizations.of(context)!.searchNoLanguagesFound,
+          l10n.searchNoLanguagesFound,
           style: TextStyle(color: AppTheme.textMuted),
         ),
       );
@@ -388,14 +388,14 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
       shrinkWrap: true,
       itemCount: filtered.length,
       itemBuilder: (context, index) {
-        final lang = filtered[index];
+        final code = filtered[index];
         return ListTile(
           dense: true,
           title: Text(
-            lang['name']!,
+            l10n.languageName(code),
             style: const TextStyle(color: AppTheme.textSecondary),
           ),
-          onTap: () => _handleLanguageSelect(lang['code']!),
+          onTap: () => _handleLanguageSelect(code),
           hoverColor: AppTheme.textWhite.withValues(alpha: 0.05),
         );
       },
@@ -407,11 +407,11 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
       spacing: 8,
       runSpacing: 8,
       children: filters.languages.map((code) {
-        final lang = TmdbConstants.languagesList.firstWhere(
-          (l) => l['code'] == code,
-        );
         return Chip(
-          label: Text(lang['name']!, style: const TextStyle(fontSize: 12)),
+          label: Text(
+            AppLocalizations.of(context)!.languageName(code),
+            style: const TextStyle(fontSize: 12),
+          ),
           backgroundColor: AppTheme.textWhite.withValues(alpha: 0.1),
           side: BorderSide(color: AppTheme.textWhite.withValues(alpha: 0.1)),
           deleteIcon: const Icon(Icons.close, size: 14),

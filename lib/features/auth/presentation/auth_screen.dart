@@ -1,4 +1,4 @@
-import 'package:cinemuse_app/core/error/app_exception.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -47,8 +47,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           await actions.signUp(email, password);
         }
       } catch (e) {
+        if (!mounted) return;
         setState(() {
-          errorMessage = e is AppException ? e.message : e.toString();
+          errorMessage = ref.read(errorMapperProvider).map(e).message;
         });
       } finally {
         if (mounted) {
