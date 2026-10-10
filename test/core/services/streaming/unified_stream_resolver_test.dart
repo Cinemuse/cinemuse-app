@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
+import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
 import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
@@ -406,6 +408,37 @@ void main() {
       expect(result?.url, equals('https://direct-link.com'));
       expect(result?.provider, equals('S'));
     });
+
+    test('passes the chosen fileId to the debrid service (REV-23)', () async {
+      final debrid = _RecordingDebridService();
+      final debridResolver = UnifiedStreamResolver(
+        sources: [mockSource],
+        tmdbService: mockTmdb,
+        kitsuMappingService: mockKitsu,
+        mediaRepository: mockMedia,
+        settings: const UserSettings(),
+        maxResolution: VideoResolution.r2160p,
+        debridService: debrid,
+      );
+      final candidate = StreamCandidate(
+        kind: StreamSourceKind.vod,
+        title: 'Season pack',
+        infoHash: 'abc',
+        magnet: 'magnet:?xt=urn:btih:abc',
+        provider: 'AnimeTosho',
+      );
+
+      await debridResolver.resolveStream(
+        candidate,
+        season: 1,
+        episode: 2,
+        fileId: 3,
+      );
+
+      expect(debrid.lastFileId, 3);
+      expect(debrid.lastSeason, 1);
+      expect(debrid.lastEpisode, 2);
+    });
   });
 
   group('UnifiedStreamResolver Cache Management', () {
@@ -442,4 +475,37 @@ void main() {
       expect(resolver.hasCachedStream('123', 'movie'), isFalse);
     });
   });
+}
+
+/// Fake debrid service that remembers what `resolve` was asked for.
+class _RecordingDebridService implements BaseDebridService {
+  int? lastFileId;
+  int? lastSeason;
+  int? lastEpisode;
+
+  @override
+  String get name => 'Fake';
+
+  @override
+  bool get isEnabled => true;
+
+  @override
+  Future<Map<String, bool>> checkAvailability(List<String> hashes) async => {};
+
+  @override
+  Future<ResolvedStream?> resolve(
+    StreamCandidate candidate, {
+    int? season,
+    int? episode,
+    int? fileId,
+  }) async {
+    lastFileId = fileId;
+    lastSeason = season;
+    lastEpisode = episode;
+    return ResolvedStream(
+      url: 'https://debrid.example/file',
+      provider: name,
+      candidate: candidate,
+    );
+  }
 }

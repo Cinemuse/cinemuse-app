@@ -24,6 +24,7 @@ import 'package:cinemuse_app/core/services/streaming/sources/animeunity_source.d
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 
 final unifiedStreamResolverProvider = Provider((ref) {
   // Only watch settings that affect streaming sources and ranking
@@ -541,8 +542,9 @@ class UnifiedStreamResolver {
   }) async {
     // Guard against non-VOD sources
     if (candidate.kind != StreamSourceKind.vod) {
-      debugPrint(
-        'UnifiedStreamResolver: Ignoring non-VOD candidate kind=${candidate.kind}',
+      AppLogger.debug(
+        'UnifiedStreamResolver',
+        'Ignoring non-VOD candidate kind=${candidate.kind}',
       );
       return null;
     }
@@ -565,6 +567,7 @@ class UnifiedStreamResolver {
         candidate,
         season: season,
         episode: episode,
+        fileId: fileId,
       );
     }
 
