@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
+import 'package:cinemuse_app/features/live_tv/application/custom_epg_url_notifier.dart';
 import 'package:cinemuse_app/features/live_tv/data/epg_channel_matcher.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
@@ -76,50 +77,6 @@ final customPlaylistsProvider =
     });
 
 // ---------------------------------------------------------------------------
-// Custom EPG Settings
-// ---------------------------------------------------------------------------
-
-class CustomEpgUrlNotifier extends StateNotifier<String?> {
-  CustomEpgUrlNotifier() : super(null) {
-    _load();
-  }
-
-  static const _key = 'live_tv_custom_epg_url';
-
-  Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    state = prefs.getString(_key);
-  }
-
-  Future<void> setUrl(String url) async {
-    final trimmed = url.trim();
-    if (trimmed.isEmpty) {
-      await reset();
-      return;
-    }
-    state = trimmed;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, trimmed);
-  }
-
-  Future<void> reset() async {
-    state = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_key);
-  }
-}
-
-final customEpgUrlProvider =
-    StateNotifierProvider<CustomEpgUrlNotifier, String?>((ref) {
-      return CustomEpgUrlNotifier();
-    });
-
-/// Currently active EPG URL (custom URL if configured, otherwise unified default).
-final activeEpgUrlProvider = Provider<String>((ref) {
-  return ref.watch(customEpgUrlProvider) ?? LiveTvRepository.defaultEpgUrl;
-});
-
-// ---------------------------------------------------------------------------
 // Data Providers
 // ---------------------------------------------------------------------------
 
@@ -151,8 +108,10 @@ final epgDataProvider = FutureProvider<Map<String, List<EpgProgram>>>((
   ref,
 ) async {
   final repo = ref.watch(liveTvRepositoryProvider);
-  final epgUrl = ref.watch(activeEpgUrlProvider);
-  return repo.fetchEpg(url: epgUrl);
+  // Wait for the saved URL: starting with the default guide meant two
+  // downloads and two parses on every start (REV-115).
+  final customUrl = await ref.watch(customEpgUrlProvider.future);
+  return repo.fetchEpg(url: customUrl ?? LiveTvRepository.defaultEpgUrl);
 });
 
 // ---------------------------------------------------------------------------

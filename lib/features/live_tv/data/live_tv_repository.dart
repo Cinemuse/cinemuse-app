@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
@@ -14,6 +16,7 @@ import 'package:cinemuse_app/features/live_tv/data/epg_storage_service.dart';
 class LiveTvRepository {
   static const String defaultEpgUrl =
       'https://enfaqgwmuytoxkxgqqvp.supabase.co/functions/v1/live-tv-resolver/epg.json';
+  static const _tag = 'LiveTvRepository';
 
   final Dio _dio;
   final EpgStorageService _epgStorage;
@@ -25,60 +28,63 @@ class LiveTvRepository {
   Future<List<Channel>> fetchChannels({
     List<LiveTvPlaylist>? customPlaylists,
   }) async {
-    try {
-      if (customPlaylists == null || customPlaylists.isEmpty) {
-        return [];
-      }
-
-      final Map<String, Channel> channelsByKey = {};
-      final List<String> channelOrder = [];
-      int syntheticLcn = 2000;
-
-      for (final playlist in customPlaylists) {
-        try {
-          final content = await _loadPlaylistContent(playlist);
-          if (content.isEmpty) continue;
-
-          final playlistChannels = _parsePlaylistChannels(
-            playlist,
-            content,
-            syntheticLcn,
-          );
-
-          for (final ch in playlistChannels) {
-            final key = _buildChannelKey(ch.epgId, ch.name);
-            if (channelsByKey.containsKey(key)) {
-              final existing = channelsByKey[key]!;
-              final mergedLinks = _mergeStreamLinks(existing.links, ch.links);
-              final preferredLcn = (existing.lcn > 0 && existing.lcn < 2000)
-                  ? existing.lcn
-                  : (ch.lcn > 0 && ch.lcn < 2000 ? ch.lcn : existing.lcn);
-              channelsByKey[key] = existing.copyWith(
-                lcn: preferredLcn,
-                links: mergedLinks,
-                logo: existing.logo.isNotEmpty ? existing.logo : ch.logo,
-                group: existing.group ?? ch.group,
-                epgId: existing.epgId ?? ch.epgId,
-                provider: existing.provider ?? ch.provider,
-                subProvider: existing.subProvider ?? ch.subProvider,
-              );
-            } else {
-              final lcn = ch.lcn > 0 ? ch.lcn : syntheticLcn++;
-              channelsByKey[key] = ch.copyWith(lcn: lcn);
-              channelOrder.add(key);
-            }
-          }
-        } catch (_) {
-          // Skip failed playlists gracefully
-        }
-      }
-
-      final channels = channelOrder.map((k) => channelsByKey[k]!).toList();
-      _sortChannels(channels);
-      return channels;
-    } catch (e) {
-      rethrow;
+    if (customPlaylists == null || customPlaylists.isEmpty) {
+      return [];
     }
+
+    final Map<String, Channel> channelsByKey = {};
+    final List<String> channelOrder = [];
+    int syntheticLcn = 2000;
+
+    for (final playlist in customPlaylists) {
+      try {
+        final content = await _loadPlaylistContent(playlist);
+        if (content.isEmpty) continue;
+
+        final playlistChannels = await _parsePlaylistChannels(
+          playlist.type,
+          playlist.name,
+          content,
+          syntheticLcn,
+        );
+
+        for (final ch in playlistChannels) {
+          final key = _buildChannelKey(ch.epgId, ch.name);
+          if (channelsByKey.containsKey(key)) {
+            final existing = channelsByKey[key]!;
+            final mergedLinks = _mergeStreamLinks(existing.links, ch.links);
+            final preferredLcn = (existing.lcn > 0 && existing.lcn < 2000)
+                ? existing.lcn
+                : (ch.lcn > 0 && ch.lcn < 2000 ? ch.lcn : existing.lcn);
+            channelsByKey[key] = existing.copyWith(
+              lcn: preferredLcn,
+              links: mergedLinks,
+              logo: existing.logo.isNotEmpty ? existing.logo : ch.logo,
+              group: existing.group ?? ch.group,
+              epgId: existing.epgId ?? ch.epgId,
+              provider: existing.provider ?? ch.provider,
+              subProvider: existing.subProvider ?? ch.subProvider,
+            );
+          } else {
+            final lcn = ch.lcn > 0 ? ch.lcn : syntheticLcn++;
+            channelsByKey[key] = ch.copyWith(lcn: lcn);
+            channelOrder.add(key);
+          }
+        }
+      } catch (e, s) {
+        // One broken playlist must not hide the channels of the others.
+        AppLogger.warn(
+          _tag,
+          'Skipping playlist "${playlist.name}": it could not be loaded',
+          error: _describeError(e),
+          stackTrace: s,
+        );
+      }
+    }
+
+    final channels = channelOrder.map((k) => channelsByKey[k]!).toList();
+    _sortChannels(channels);
+    return channels;
   }
 
   Future<String> _loadPlaylistContent(LiveTvPlaylist playlist) async {
@@ -91,18 +97,23 @@ class LiveTvRepository {
         : json.encode(response.data);
   }
 
-  List<Channel> _parsePlaylistChannels(
-    LiveTvPlaylist playlist,
+  /// Parsing a big playlist takes seconds, so it runs on a background
+  /// isolate to keep the UI responsive (PERF-01).
+  static Future<List<Channel>> _parsePlaylistChannels(
+    PlaylistType type,
+    String fallbackGroup,
     String content,
     int startLcn,
   ) {
-    if (playlist.type == PlaylistType.m3u) {
-      return M3uParser.parse(content, startLcn: startLcn);
-    }
-    return _parseJsonChannels(content, playlist.name, startLcn);
+    return Isolate.run(() {
+      if (type == PlaylistType.m3u) {
+        return M3uParser.parse(content, startLcn: startLcn);
+      }
+      return _parseJsonChannels(content, fallbackGroup, startLcn);
+    });
   }
 
-  List<Channel> _parseJsonChannels(
+  static List<Channel> _parseJsonChannels(
     String content,
     String fallbackGroup,
     int startLcn,
@@ -218,13 +229,19 @@ class LiveTvRepository {
             {};
       }
 
-      final epgData = EpgParser.parseBytes(Uint8List.fromList(bytes));
+      final epgData = await _parseEpg(bytes);
       if (epgData.isNotEmpty) {
         await _epgStorage.saveCachedEpg(effectiveUrl, epgData);
       }
       return epgData;
-    } catch (e) {
-      debugPrint('LiveTvRepository: Error fetching EPG from $effectiveUrl: $e');
+    } catch (e, s) {
+      // The URL is not logged: a custom EPG URL can contain credentials.
+      AppLogger.warn(
+        _tag,
+        'Could not load the EPG, using the old cache if there is one',
+        error: _describeError(e),
+        stackTrace: s,
+      );
       // Fallback to expired cache if available
       final fallback = await _epgStorage.loadCachedEpg(
         expectedUrl: effectiveUrl,
@@ -233,6 +250,22 @@ class LiveTvRepository {
       if (fallback != null) return fallback;
       return {};
     }
+  }
+
+  /// A guide can be 100 MB, so it is parsed on a background isolate to keep
+  /// the UI responsive (PERF-01).
+  static Future<Map<String, List<EpgProgram>>> _parseEpg(List<int> bytes) {
+    final data = bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
+    return Isolate.run(() => EpgParser.parseBytes(data));
+  }
+
+  /// Error text without the request URL, which can contain credentials.
+  static String _describeError(Object e) {
+    if (e is DioException) {
+      final status = e.response?.statusCode;
+      return 'DioException ${e.type.name}${status != null ? ' $status' : ''}';
+    }
+    return e.runtimeType.toString();
   }
 
   /// Looks up the current and next programs for a given channel using smart matching.

@@ -1,13 +1,41 @@
+import 'dart:convert';
+
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 
+/// Parses M3U playlists into channels. Big playlists take seconds: callers
+/// run [parse] on a background isolate (PERF-01).
 class M3uParser {
+  /// Built once: a big playlist has tens of thousands of lines (REV-123).
+  static final _attributeRegexes = {
+    for (final name in const [
+      'url-tvg',
+      'x-tvg-url',
+      'tvg-id',
+      'tvg-logo',
+      'tvg-name',
+      'group-title',
+      'provider',
+      'quality',
+      'tvg-chno',
+      'tvg-num',
+      'channel-id',
+    ])
+      name: RegExp('$name="([^"]*)"'),
+  };
+
+  /// `#EXTINF:` plus the duration and attributes, up to the comma before the
+  /// name. Commas inside quoted values don't end it.
+  static final _extinfHeaderRegex = RegExp(
+    r'^#EXTINF:[^,"]*(?:"[^"]*"[^,"]*)*',
+  );
+
   /// Extracts the EPG / TV guide URL from the #EXTM3U header if present.
   /// Looks for attributes like url-tvg="..." or x-tvg-url="...".
   static String? extractEpgUrl(String content) {
-    final lines = content.split('\n');
-    for (var i = 0; i < lines.length && i < 15; i++) {
-      final line = lines[i].trim();
+    // Lazy split: only the first lines are needed, not the whole playlist.
+    for (final rawLine in LineSplitter.split(content).take(15)) {
+      final line = rawLine.trim();
       if (line.startsWith('#EXTM3U')) {
         final urlTvg =
             _extractAttribute(line, 'url-tvg') ??
@@ -97,10 +125,13 @@ class M3uParser {
     return orderedKeys.map((k) => channelsByKey[k]!.build()).toList();
   }
 
+  /// The name is everything after the comma that ends the attributes, so a
+  /// name like "Rai 1, HD" keeps its own comma (REV-123).
   static String _extractChannelName(String line) {
-    final commaIndex = line.lastIndexOf(',');
-    if (commaIndex != -1 && commaIndex + 1 < line.length) {
-      return line.substring(commaIndex + 1).trim();
+    final headerEnd = _extinfHeaderRegex.firstMatch(line)?.end ?? 0;
+    if (headerEnd < line.length && line[headerEnd] == ',') {
+      final name = line.substring(headerEnd + 1).trim();
+      if (name.isNotEmpty) return name;
     }
     return _extractAttribute(line, 'tvg-name') ?? 'Unknown Channel';
   }
@@ -146,9 +177,7 @@ class M3uParser {
   }
 
   static String? _extractAttribute(String line, String attributeName) {
-    final regex = RegExp('$attributeName="([^"]*)"');
-    final match = regex.firstMatch(line);
-    return match?.group(1);
+    return _attributeRegexes[attributeName]!.firstMatch(line)?.group(1);
   }
 }
 

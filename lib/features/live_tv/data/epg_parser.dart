@@ -1,11 +1,50 @@
 import 'dart:convert';
-import 'dart:developer' as developer;
 import 'dart:typed_data';
 import 'package:archive/archive.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 
-/// High-performance parser for EPG feeds in JSON, XMLTV, and Gzipped XMLTV formats.
+/// Parser for EPG feeds in JSON, XMLTV, and Gzipped XMLTV formats.
+///
+/// Parsing a full guide takes seconds: callers run it on a background
+/// isolate (PERF-01). Lines logged from there don't reach
+/// [AppLogger.recent] of the main isolate, only the console.
 class EpgParser {
+  static const _tag = 'EpgParser';
+
+  static final _programmeRegex = RegExp(
+    r'<programme\s+([^>]+)>(.*?)</programme>',
+    caseSensitive: false,
+    dotAll: true,
+  );
+  static final _startRegex = RegExp(r'start="([^"]+)"', caseSensitive: false);
+  static final _stopRegex = RegExp(r'stop="([^"]+)"', caseSensitive: false);
+  static final _channelRegex = RegExp(
+    r'channel="([^"]+)"',
+    caseSensitive: false,
+  );
+  static final _titleRegex = RegExp(
+    r'<title[^>]*>(.*?)</title>',
+    caseSensitive: false,
+    dotAll: true,
+  );
+  static final _subTitleRegex = RegExp(
+    r'<sub-title[^>]*>(.*?)</sub-title>',
+    caseSensitive: false,
+    dotAll: true,
+  );
+  static final _descRegex = RegExp(
+    r'<desc[^>]*>(.*?)</desc>',
+    caseSensitive: false,
+    dotAll: true,
+  );
+  static final _iconRegex = RegExp(
+    r'<icon[^>]+src="([^"]+)"',
+    caseSensitive: false,
+  );
+  static final _domainSuffixRegex = RegExp(r'\.it$|\.ch$|\.com$|\.eu$');
+  static final _nonAlphanumericRegex = RegExp(r'[^a-z0-9]');
+
   /// Parses raw byte data into a unified channel EPG map.
   /// Automatically decompresses GZip if magic bytes are detected.
   static Map<String, List<EpgProgram>> parseBytes(Uint8List bytes) {
@@ -15,11 +54,15 @@ class EpgParser {
     if (_isGzip(bytes)) {
       try {
         final decompressed = GZipDecoder().decodeBytes(bytes);
-        raw = Uint8List.fromList(decompressed);
+        // Avoid a second full copy of a guide that can be 100 MB.
+        raw = decompressed is Uint8List
+            ? decompressed
+            : Uint8List.fromList(decompressed);
       } catch (e, s) {
-        developer.log(
+        // Some servers send the gzip magic bytes on plain text.
+        AppLogger.warn(
+          _tag,
           'GZip decompression failed, falling back to raw bytes',
-          name: 'EpgParser',
           error: e,
           stackTrace: s,
         );
@@ -32,8 +75,9 @@ class EpgParser {
       try {
         final decoded = json.decode(content);
         return parseJson(decoded);
-      } catch (_) {
-        // Fallback to XMLTV parsing if JSON decoding fails
+      } catch (e) {
+        // Not valid JSON: the feed may still be XMLTV, so try that next.
+        AppLogger.debug(_tag, 'EPG is not JSON, trying XMLTV: $e');
       }
     }
 
@@ -56,9 +100,10 @@ class EpgParser {
           try {
             programs.add(EpgProgram.fromJson(item));
           } catch (e, s) {
-            developer.log(
+            // One bad entry must not drop the whole guide.
+            AppLogger.warn(
+              _tag,
               'Failed to parse EPG program entry for key: $key',
-              name: 'EpgParser',
               error: e,
               stackTrace: s,
             );
@@ -67,9 +112,10 @@ class EpgParser {
           try {
             programs.add(EpgProgram.fromJson(Map<String, dynamic>.from(item)));
           } catch (e, s) {
-            developer.log(
+            // One bad entry must not drop the whole guide.
+            AppLogger.warn(
+              _tag,
               'Failed to parse EPG program map entry for key: $key',
-              name: 'EpgParser',
               error: e,
               stackTrace: s,
             );
@@ -92,40 +138,13 @@ class EpgParser {
     final Map<String, List<EpgProgram>> result = {};
     if (xmlContent.isEmpty) return result;
 
-    // Pattern matching <programme ...>...</programme>
-    final programmeRegex = RegExp(
-      r'<programme\s+([^>]+)>(.*?)</programme>',
-      caseSensitive: false,
-      dotAll: true,
-    );
-
-    final startRegex = RegExp(r'start="([^"]+)"', caseSensitive: false);
-    final stopRegex = RegExp(r'stop="([^"]+)"', caseSensitive: false);
-    final channelRegex = RegExp(r'channel="([^"]+)"', caseSensitive: false);
-    final titleRegex = RegExp(
-      r'<title[^>]*>(.*?)</title>',
-      caseSensitive: false,
-      dotAll: true,
-    );
-    final subTitleRegex = RegExp(
-      r'<sub-title[^>]*>(.*?)</sub-title>',
-      caseSensitive: false,
-      dotAll: true,
-    );
-    final descRegex = RegExp(
-      r'<desc[^>]*>(.*?)</desc>',
-      caseSensitive: false,
-      dotAll: true,
-    );
-    final iconRegex = RegExp(r'<icon[^>]+src="([^"]+)"', caseSensitive: false);
-
-    for (final match in programmeRegex.allMatches(xmlContent)) {
+    for (final match in _programmeRegex.allMatches(xmlContent)) {
       final attributes = match.group(1) ?? '';
       final inner = match.group(2) ?? '';
 
-      final channelId = channelRegex.firstMatch(attributes)?.group(1)?.trim();
-      final startStr = startRegex.firstMatch(attributes)?.group(1)?.trim();
-      final stopStr = stopRegex.firstMatch(attributes)?.group(1)?.trim();
+      final channelId = _channelRegex.firstMatch(attributes)?.group(1)?.trim();
+      final startStr = _startRegex.firstMatch(attributes)?.group(1)?.trim();
+      final stopStr = _stopRegex.firstMatch(attributes)?.group(1)?.trim();
 
       if (channelId == null || startStr == null || stopStr == null) continue;
 
@@ -133,15 +152,15 @@ class EpgParser {
       final stop = parseXmltvDate(stopStr);
       if (start == null || stop == null) continue;
 
-      final rawTitle = titleRegex.firstMatch(inner)?.group(1);
+      final rawTitle = _titleRegex.firstMatch(inner)?.group(1);
       if (rawTitle == null || rawTitle.trim().isEmpty) continue;
 
       final title = _unescapeXml(rawTitle.trim());
       final subtitle = _cleanOptionalString(
-        subTitleRegex.firstMatch(inner)?.group(1),
+        _subTitleRegex.firstMatch(inner)?.group(1),
       );
-      final desc = _cleanOptionalString(descRegex.firstMatch(inner)?.group(1));
-      final iconUrl = iconRegex.firstMatch(inner)?.group(1)?.trim();
+      final desc = _cleanOptionalString(_descRegex.firstMatch(inner)?.group(1));
+      final iconUrl = _iconRegex.firstMatch(inner)?.group(1)?.trim();
 
       final program = EpgProgram(
         name: title,
@@ -233,8 +252,8 @@ class EpgParser {
     }
 
     final strippedKey = lowerKey
-        .replaceAll(RegExp(r'\.it$|\.ch$|\.com$|\.eu$'), '')
-        .replaceAll(RegExp(r'[^a-z0-9]'), '');
+        .replaceAll(_domainSuffixRegex, '')
+        .replaceAll(_nonAlphanumericRegex, '');
     if (strippedKey.isNotEmpty && !map.containsKey(strippedKey)) {
       map[strippedKey] = programs;
     }
