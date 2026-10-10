@@ -2,8 +2,8 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-/// Centralized platform information utility.
-/// Identifies operating systems and specialized display environments (TV, desktop, mobile).
+/// Detects Android TV / Fire Stick at startup. The UI is the same everywhere
+/// (layout by width only); [isTV] is the hook for small TV-only tweaks.
 class PlatformInfo {
   static const MethodChannel _channel = MethodChannel('com.cinemuse/platform');
   static bool _isTV = false;
@@ -11,8 +11,6 @@ class PlatformInfo {
 
   /// Call this during app initialization in [main].
   static Future<void> initialize() async {
-    if (kIsWeb) return;
-
     if (Platform.isAndroid) {
       try {
         _isTV = await _channel.invokeMethod<bool>('isTV') ?? false;
@@ -33,15 +31,7 @@ class PlatformInfo {
 
   /// Whether running on a desktop platform (Windows, Linux).
   /// Uses [defaultTargetPlatform] so widget tests can fake another platform.
-  static bool get isDesktop {
-    if (kIsWeb) return false;
-    return defaultTargetPlatform == TargetPlatform.windows ||
-        defaultTargetPlatform == TargetPlatform.linux;
-  }
-
-  /// Whether running on standard mobile platforms (Android Phone/Tablet, iOS).
-  static bool get isMobile {
-    if (kIsWeb) return true;
-    return (Platform.isAndroid || Platform.isIOS) && !isTV;
-  }
+  static bool get isDesktop =>
+      defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.linux;
 }

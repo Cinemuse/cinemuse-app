@@ -106,7 +106,9 @@ void main() {
       expect(lists.length, 1);
       expect(lists.first.id, 'list-1');
 
-      final items = await database.watchListItems('list-1').first;
+      final items = await (database.select(
+        database.cachedListItems,
+      )..where((t) => t.listId.equals('list-1'))).get();
       expect(items.length, 1);
       expect(items.first.tmdbId, 555);
     });

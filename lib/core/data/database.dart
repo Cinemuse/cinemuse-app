@@ -135,12 +135,6 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(cachedListItems);
       }
     },
-    beforeOpen: (details) async {
-      // Safety: If database exists and version is different,
-      // we might want to wipe it during this dev reset phase.
-      // For now, we trust the user to clear app data if needed,
-      // but we can add a check here if requested.
-    },
   );
 
   // --- Anime Mappings ---
@@ -185,15 +179,6 @@ class AppDatabase extends _$AppDatabase {
   Future<int> getAnimeExternalMappingsCount() async {
     final countExp = animeExternalMappings.anilistId.count();
     final query = selectOnly(animeExternalMappings)..addColumns([countExp]);
-    final result = await query.map((row) => row.read(countExp)).getSingle();
-    return result ?? 0;
-  }
-
-  Future<int> getAnimeMappingsMissingAnidbCount() async {
-    final countExp = animeExternalMappings.anilistId.count();
-    final query = selectOnly(animeExternalMappings)
-      ..addColumns([countExp])
-      ..where(animeExternalMappings.anidbId.isNull());
     final result = await query.map((row) => row.read(countExp)).getSingle();
     return result ?? 0;
   }
@@ -293,29 +278,6 @@ class AppDatabase extends _$AppDatabase {
         .watch();
   }
 
-  /// Joint stream for watch history and media cache to ensure reactivity to both tables.
-  Stream<List<TypedResult>> watchWatchHistoryWithMedia(String userId) {
-    final query =
-        select(localWatchHistories).join([
-            leftOuterJoin(
-              cachedMediaItems,
-              cachedMediaItems.tmdbId.equalsExp(localWatchHistories.tmdbId) &
-                  cachedMediaItems.mediaType.equalsExp(
-                    localWatchHistories.mediaType,
-                  ),
-            ),
-          ])
-          ..where(localWatchHistories.userId.equals(userId))
-          ..orderBy([
-            OrderingTerm(
-              expression: localWatchHistories.lastWatchedAt,
-              mode: OrderingMode.desc,
-            ),
-          ]);
-
-    return query.watch();
-  }
-
   // --- User Lists ---
 
   Future<void> syncUserLists(
@@ -367,13 +329,6 @@ class AppDatabase extends _$AppDatabase {
         .watch();
   }
 
-  Stream<List<CachedListItem>> watchListItems(String listId) {
-    return (select(cachedListItems)
-          ..where((t) => t.listId.equals(listId))
-          ..orderBy([(t) => OrderingTerm(expression: t.sortOrder)]))
-        .watch();
-  }
-
   Future<void> upsertUserList(CachedUserListsCompanion list) async {
     await into(cachedUserLists).insertOnConflictUpdate(list);
   }
@@ -410,16 +365,6 @@ class AppDatabase extends _$AppDatabase {
     return (select(
       cachedProfiles,
     )..where((t) => t.id.equals(id))).getSingleOrNull();
-  }
-
-  // --- Cleanup ---
-
-  // Get total count of cached items
-  Future<int> getTotalCount() async {
-    final countExp = cachedMediaItems.tmdbId.count();
-    final query = selectOnly(cachedMediaItems)..addColumns([countExp]);
-    final result = await query.map((row) => row.read(countExp)).getSingle();
-    return result ?? 0;
   }
 }
 

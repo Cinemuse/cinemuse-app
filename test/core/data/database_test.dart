@@ -29,7 +29,7 @@ void main() {
       expect(retrieved?.titleEn, 'Inception');
     });
 
-    test('can retrieve total count', () async {
+    test('upsertMediaItem stores one row', () async {
       await database.upsertMediaItem(
         CachedMediaItemsCompanion.insert(
           tmdbId: 1,
@@ -38,8 +38,8 @@ void main() {
         ),
       );
 
-      final items = await database.getTotalCount();
-      expect(items, 1);
+      final items = await database.select(database.cachedMediaItems).get();
+      expect(items.length, 1);
     });
   });
 
@@ -115,7 +115,9 @@ void main() {
         ),
       );
 
-      final items = await database.watchListItems(listId).first;
+      final items = await (database.select(
+        database.cachedListItems,
+      )..where((t) => t.listId.equals(listId))).get();
       expect(items.length, 1);
       expect(items.first.tmdbId, 101);
     });
@@ -153,7 +155,9 @@ void main() {
       expect(lists.length, 1);
       expect(lists.first.id, 'new-list');
 
-      final items = await database.watchListItems('new-list').first;
+      final items = await (database.select(
+        database.cachedListItems,
+      )..where((t) => t.listId.equals('new-list'))).get();
       expect(items.length, 1);
       expect(items.first.tmdbId, 202);
     });

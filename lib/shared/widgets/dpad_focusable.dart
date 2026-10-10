@@ -281,7 +281,7 @@ class _DpadFocusableState extends State<DpadFocusable> {
     }
 
     final radius = widget.borderRadius ?? BorderRadius.circular(8);
-    final ringColor = widget.focusRingColor ?? AppTheme.focusRingAccent;
+    final ringColor = widget.focusRingColor ?? AppTheme.focusRing;
     final glow = widget.focusGlow ?? AppTheme.shadowFocusGlow;
 
     return DecoratedBox(

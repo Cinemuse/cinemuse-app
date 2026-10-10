@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Colors extracted from index.css
+  // Colors
   static const Color primary = Color(0xFF0f0518);
   static const Color secondary = Color(0xFF1a0b2e);
   static const Color glass = Color(0xF20f0518); // rgba(15, 5, 24, 0.95)
@@ -12,19 +12,14 @@ class AppTheme {
   static Color get accentHoverBg => accent.withValues(alpha: 0.1);
 
   static const Color favorites = Color(0xFFef4444); // Red 500
-  static const Color favoritesGlow = Color(0x80ef4444);
   static const Color watchlist = Color(0xFFeab308); // Yellow 500
-  static const Color watchlistGlow = Color(0x80eab308);
 
   static const Color star = Color(0xFFffc107); // Amber 500
-  static const Color starGlow = Color(0x80ffc107);
 
   static const Color success = Color(0xFF22c55e); // Green 500
-  static const Color successGlow = Color(0x8022c55e);
 
-  static const Color surface = Color(0xFF1a0b2e);
+  static const Color surface = secondary;
   static const Color border = Color(0x33d946ef); // rgba(217, 70, 239, 0.2)
-  static const Color borderHover = Color(0x66d946ef); // rgba(217, 70, 239, 0.4)
 
   static const Color textWhite = Color(0xFFffffff);
   static const Color textSecondary = Color(0xFFe5e7eb); // Gray 200
@@ -54,16 +49,11 @@ class AppTheme {
 
   // Focus & Navigation Constants
   static const Color focusRing = Color(0xFFffffff);
-  static const Color focusRingAccent = Color(0xFFffffff);
   static const List<BoxShadow> shadowFocusGlow = [
     BoxShadow(color: Color(0x33ffffff), blurRadius: 12, spreadRadius: 1),
   ];
 
   // Shadows
-  static const List<BoxShadow> shadowNeon = [
-    BoxShadow(color: accentGlow, blurRadius: 16, spreadRadius: 0),
-  ];
-
   static const List<BoxShadow> shadowNeonSm = [
     BoxShadow(color: accentGlow, blurRadius: 8, spreadRadius: 0),
   ];
@@ -310,7 +300,7 @@ class AppTheme {
 }
 
 class DesktopTypography {
-  static TextStyle heroTitle = const TextStyle(
+  static const heroTitle = TextStyle(
     fontFamily: 'Outfit',
     fontSize: 48,
     fontWeight: FontWeight.w900,
@@ -318,14 +308,14 @@ class DesktopTypography {
     color: AppTheme.textWhite,
   );
 
-  static TextStyle sectionHeader = const TextStyle(
+  static const sectionHeader = TextStyle(
     fontFamily: 'Outfit',
     fontSize: 24,
     fontWeight: FontWeight.w700,
     color: AppTheme.textWhite,
   );
 
-  static TextStyle bentoHeader = const TextStyle(
+  static const bentoHeader = TextStyle(
     fontFamily: 'Outfit',
     fontSize: 20,
     fontWeight: FontWeight.w700,
@@ -333,14 +323,14 @@ class DesktopTypography {
     letterSpacing: 1.1,
   );
 
-  static TextStyle subtitle = const TextStyle(
+  static const subtitle = TextStyle(
     fontFamily: 'Outfit',
     fontSize: 20,
     fontWeight: FontWeight.w600,
     color: AppTheme.textWhite,
   );
 
-  static TextStyle bodyPrimary = const TextStyle(
+  static const bodyPrimary = TextStyle(
     fontFamily: 'Outfit',
     fontSize: 16,
     fontWeight: FontWeight.w400,
@@ -348,14 +338,14 @@ class DesktopTypography {
     height: 1.6,
   );
 
-  static TextStyle bodySecondary = const TextStyle(
+  static const bodySecondary = TextStyle(
     fontFamily: 'Outfit',
     fontSize: 16,
     fontWeight: FontWeight.w500,
     color: AppTheme.textSecondary,
   );
 
-  static TextStyle captionMeta = const TextStyle(
+  static const captionMeta = TextStyle(
     fontFamily: 'Outfit',
     fontSize: 16,
     fontWeight: FontWeight.w400, // Reduced from 500 for better secondary feel

@@ -1,2 +1,8 @@
-export 'sqlite_workaround_stub.dart'
-    if (dart.library.io) 'sqlite_workaround_android.dart';
+import 'dart:io';
+import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
+
+void setupSqlite() {
+  if (Platform.isAndroid) {
+    applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
+  }
+}
