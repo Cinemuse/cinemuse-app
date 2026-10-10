@@ -3,6 +3,8 @@
 Flutter app (Dart ^3.11, Flutter 3.41.0 pinned via FVM in `.fvmrc`). Platforms: Android, Windows, Linux only (no iOS, macOS, Web).
 Riverpod for state, Supabase backend, Drift local database, Dio for HTTP, media_kit for playback. Languages: English + Italian.
 
+**Before writing or changing code, read [`CONVENTIONS.md`](CONVENTIONS.md)** (coding rules: structure, naming, Riverpod, errors, logging, security, dependencies, tests).
+
 ## Structure
 
 - `lib/main.dart`: entry point
