@@ -8,7 +8,8 @@ import 'package:dio/dio.dart';
 
 class AnimeToshoSource extends BaseSource {
   final Dio _dio;
-  static const String _baseUrl = "https://feed.animetosho.org/json";
+  // feed.animetosho.org was retired; .xyz redirects here (REV-231).
+  static const String _baseUrl = "https://feed.animetosho.net/json";
 
   @override
   final String name;
