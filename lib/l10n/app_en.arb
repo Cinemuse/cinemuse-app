@@ -311,6 +311,7 @@
   "failureStreaming": "This video couldn't be played.",
   "failureValidation": "Some data was invalid.",
   "failureUnknown": "Something went wrong.",
+  "shellPressBackAgainToExit": "Press Back again to exit",
   "errorTimeout": "Connection timed out. Check your connection.",
   "errorServerStatus": "The server returned an error ({statusCode}).",
   "errorCertificateHint": "Your system might be missing some root certificates. Try updating Windows or check your firewall/DNS.",

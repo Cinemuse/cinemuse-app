@@ -265,7 +265,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
 
     // Resolve the nav index FIRST so the listeners below can guard themselves.
     final navIndex = ref.watch(navIndexProvider);
-    final isLiveTvTab = navIndex == 2;
+    final isLiveTvTab = navIndex == NavTab.liveTv;
 
     // React to channel selection changes — only on mobile mini-player
     ref.listen(selectedChannelProvider, (prev, next) {

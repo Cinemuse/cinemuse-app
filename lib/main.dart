@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:cinemuse_app/core/presentation/app_shell.dart';
+import 'package:cinemuse_app/features/navigation/presentation/app_shell.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/auth/presentation/auth_screen.dart';
@@ -19,7 +19,7 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/core/application/locale_service.dart';
 
 import 'package:stack_trace/stack_trace.dart';
-import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
+import 'package:cinemuse_app/features/navigation/application/back_navigation_notifier.dart';
 import 'package:cinemuse_app/core/presentation/intents.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:window_manager/window_manager.dart';
@@ -95,8 +95,6 @@ void main() {
   );
 }
 
-// BackIntent moved to lib/core/presentation/intents.dart
-
 class CinemuseApp extends ConsumerWidget {
   const CinemuseApp({super.key});
 
@@ -118,20 +116,17 @@ class CinemuseApp extends ConsumerWidget {
         actions: <Type, Action<Intent>>{
           BackIntent: CallbackAction<BackIntent>(
             onInvoke: (intent) {
-              // 1. Try popping the shell navigator (nested) first
-              final shellNavigator = ref
-                  .read(shellNavigatorKeyProvider)
-                  .currentState;
-              if (shellNavigator != null && shellNavigator.canPop()) {
-                shellNavigator.pop();
-                return null;
-              }
-
-              // 2. Fallback to popping the root navigator
+              // A page above the shell (on the root navigator) is the one
+              // on screen, so it closes first.
               final navigator = navigatorKey.currentState;
               if (navigator != null && navigator.canPop()) {
                 navigator.pop();
+                return null;
               }
+              // Keyboard shortcut: never closes the app.
+              ref
+                  .read(backNavigationProvider.notifier)
+                  .handleBack(canExitApp: false);
               return null;
             },
           ),

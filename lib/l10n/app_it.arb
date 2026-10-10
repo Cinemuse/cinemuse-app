@@ -266,6 +266,7 @@
   "failureStreaming": "Impossibile riprodurre questo video.",
   "failureValidation": "Alcuni dati non sono validi.",
   "failureUnknown": "Qualcosa è andato storto.",
+  "shellPressBackAgainToExit": "Premi di nuovo Indietro per uscire",
   "errorTimeout": "Connessione scaduta. Controlla la connessione.",
   "errorServerStatus": "Il server ha restituito un errore ({statusCode}).",
   "errorCertificateHint": "Al sistema potrebbero mancare alcuni certificati radice. Prova ad aggiornare Windows o controlla firewall/DNS.",

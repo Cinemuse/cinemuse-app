@@ -1544,6 +1544,12 @@ abstract class AppLocalizations {
   /// **'Something went wrong.'**
   String get failureUnknown;
 
+  /// No description provided for @shellPressBackAgainToExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Back again to exit'**
+  String get shellPressBackAgainToExit;
+
   /// No description provided for @errorTimeout.
   ///
   /// In en, this message translates to:

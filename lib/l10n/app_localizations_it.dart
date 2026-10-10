@@ -840,6 +840,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get failureUnknown => 'Qualcosa è andato storto.';
 
   @override
+  String get shellPressBackAgainToExit => 'Premi di nuovo Indietro per uscire';
+
+  @override
   String get errorTimeout => 'Connessione scaduta. Controlla la connessione.';
 
   @override

@@ -831,6 +831,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get failureUnknown => 'Something went wrong.';
 
   @override
+  String get shellPressBackAgainToExit => 'Press Back again to exit';
+
+  @override
   String get errorTimeout => 'Connection timed out. Check your connection.';
 
   @override

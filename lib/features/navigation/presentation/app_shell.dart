@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,10 +8,10 @@ import 'package:cinemuse_app/features/home/presentation/home_screen.dart';
 import 'package:cinemuse_app/features/explore/presentation/pages/explore_screen.dart';
 import 'package:cinemuse_app/features/navigation/presentation/navbar.dart';
 import 'package:cinemuse_app/features/profile/presentation/profile_hub.dart';
-import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
 import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/search/presentation/search_overlay.dart';
+import 'package:cinemuse_app/features/navigation/application/back_navigation_notifier.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/features/navigation/presentation/bottom_navbar.dart';
 import 'package:cinemuse_app/features/settings/presentation/settings_screen.dart';
@@ -18,7 +21,9 @@ import 'package:cinemuse_app/core/services/updates/update_service.dart';
 import 'package:cinemuse_app/core/presentation/widgets/update_overlay.dart';
 import 'package:cinemuse_app/core/services/anime/anime_mapping_sync_service.dart';
 import 'package:cinemuse_app/core/error/error_service.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/shared/widgets/error_toast.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
@@ -28,6 +33,7 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
+  // In NavTab order.
   final List<Widget> _screens = [
     const HomeScreen(),
     const ExploreScreen(),
@@ -45,19 +51,22 @@ class _AppShellState extends ConsumerState<AppShell> {
     });
   }
 
-  void _handleBackNavigation() {
-    final shellNavigatorKey = ref.read(shellNavigatorKeyProvider);
-    final navigator = shellNavigatorKey.currentState;
-    if (navigator != null && navigator.canPop()) {
-      navigator.pop();
-      return;
-    }
-
-    // If currently in Live TV full-window mode, restore split mode
-    if (ref.read(navIndexProvider) == 2 &&
-        ref.read(liveTvViewModeProvider) == LiveTvViewMode.fullWindow) {
-      ref.read(liveTvViewModeProvider.notifier).state = LiveTvViewMode.split;
-      return;
+  void _handleBack({required bool canExitApp}) {
+    final outcome = ref
+        .read(backNavigationProvider.notifier)
+        .handleBack(canExitApp: canExitApp);
+    switch (outcome) {
+      case BackOutcome.handled:
+        break;
+      case BackOutcome.confirmExit:
+        AppSnackBar.show(
+          context,
+          message: AppLocalizations.of(context)!.shellPressBackAgainToExit,
+          duration: BackNavigationNotifier.exitWindow,
+        );
+      case BackOutcome.exit:
+        // Closes the Android activity; the app has nothing to await after it.
+        unawaited(SystemNavigator.pop());
     }
   }
 
@@ -123,18 +132,25 @@ class _AppShellState extends ConsumerState<AppShell> {
         canPop: false,
         onPopInvokedWithResult: (didPop, result) async {
           if (didPop) return;
-          _handleBackNavigation();
+          // Only the Android Back button / gesture gets here.
+          _handleBack(canExitApp: true);
         },
         child: Focus(
           autofocus: false,
           onKeyEvent: (node, event) {
-            if (event is KeyDownEvent) {
-              if (event.logicalKey == LogicalKeyboardKey.escape ||
-                  event.logicalKey == LogicalKeyboardKey.gameButtonB ||
-                  event.logicalKey == LogicalKeyboardKey.goBack) {
-                _handleBackNavigation();
-                return KeyEventResult.handled;
-              }
+            if (event is! KeyDownEvent) return KeyEventResult.ignored;
+            final key = event.logicalKey;
+            if (key == LogicalKeyboardKey.escape) {
+              _handleBack(canExitApp: false);
+              return KeyEventResult.handled;
+            }
+            // TV remote Back / gamepad B: same as the Android Back button.
+            if (key == LogicalKeyboardKey.goBack ||
+                key == LogicalKeyboardKey.gameButtonB) {
+              _handleBack(
+                canExitApp: defaultTargetPlatform == TargetPlatform.android,
+              );
+              return KeyEventResult.handled;
             }
             return KeyEventResult.ignored;
           },
@@ -164,7 +180,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     required GlobalKey<NavigatorState> shellNavigatorKey,
   }) {
     final isLiveTvFullWindow =
-        currentIndex == 2 &&
+        currentIndex == NavTab.liveTv &&
         ref.watch(liveTvViewModeProvider) == LiveTvViewMode.fullWindow;
 
     return Stack(

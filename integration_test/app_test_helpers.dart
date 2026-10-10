@@ -17,14 +17,14 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:cinemuse_app/core/data/sqlite_workaround.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
-import 'package:cinemuse_app/core/presentation/app_shell.dart';
+import 'package:cinemuse_app/features/navigation/presentation/app_shell.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/poster_carousel_row.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/core/application/locale_service.dart';
-import 'package:cinemuse_app/core/presentation/navigation_providers.dart';
+import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/core/presentation/intents.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 

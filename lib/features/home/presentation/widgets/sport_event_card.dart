@@ -23,7 +23,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
   final GlobalKey _menuKey = GlobalKey();
 
   void _navigateToLiveTvSearch(String channelName) {
-    ref.read(navIndexProvider.notifier).state = 2;
+    ref.read(navIndexProvider.notifier).state = NavTab.liveTv;
     ref.read(liveTvTabProvider.notifier).state = LiveTvTab.all;
     ref.read(channelFilterProvider.notifier).state = const ChannelFilter();
     ref.read(channelSearchQueryProvider.notifier).state = channelName;
