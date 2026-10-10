@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:cinemuse_app/core/services/video/youtube_service.dart';
+import 'package:cinemuse_app/features/video_player/data/youtube_service.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
