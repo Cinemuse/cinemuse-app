@@ -82,12 +82,18 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     if (!mounted) return;
 
     // Push to recents so the Recents tab stays populated
-    ref.read(recentChannelIdsProvider.notifier).push(channel.uniqueId);
+    // Recents are a convenience: playback does not wait for the save.
+    unawaited(
+      ref.read(recentChannelIdsProvider.notifier).push(channel.uniqueId),
+    );
 
     // Delegate to the unified PlayerController
-    ref
-        .read(playerControllerProvider(_liveTvParams).notifier)
-        .changeChannel(channel);
+    // The player shows its own loading and error state.
+    unawaited(
+      ref
+          .read(playerControllerProvider(_liveTvParams).notifier)
+          .changeChannel(channel),
+    );
   }
 
   void _openSettings(CinemaPlayerState state) {

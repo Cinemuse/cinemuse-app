@@ -246,7 +246,8 @@ class UnifiedStreamResolver {
 
       // Proactively ingest into cache since we have full details
       final item = MediaItem.fromTmdbDetails(details, kind);
-      _mediaRepository.saveMediaItem(item).catchError((_) {});
+      // Cache write only: resolving streams must not wait for it.
+      unawaited(_mediaRepository.saveMediaItem(item).catchError((_) {}));
 
       final tmdbId =
           int.tryParse(queryId) ?? int.tryParse(details['id'].toString());

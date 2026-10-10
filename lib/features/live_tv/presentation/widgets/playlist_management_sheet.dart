@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -196,16 +198,19 @@ class PlaylistListSection extends ConsumerWidget {
 
     final destFile = await LocalPlaylistStorage.copyPlaylistFile(sourceFile);
 
-    ref
-        .read(customPlaylistsProvider.notifier)
-        .addPlaylist(
-          LiveTvPlaylist(
-            name: result.files.single.name,
-            urlOrPath: destFile.uri.pathSegments.last, // basename only
-            isLocal: true,
-            type: type,
+    // TODO(REV-222): the save behind addPlaylist is not awaited either.
+    unawaited(
+      ref
+          .read(customPlaylistsProvider.notifier)
+          .addPlaylist(
+            LiveTvPlaylist(
+              name: result.files.single.name,
+              urlOrPath: destFile.uri.pathSegments.last, // basename only
+              isLocal: true,
+              type: type,
+            ),
           ),
-        );
+    );
   }
 }
 

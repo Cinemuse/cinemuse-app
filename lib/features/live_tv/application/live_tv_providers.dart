@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -40,13 +42,15 @@ class CustomPlaylistsNotifier extends StateNotifier<List<LiveTvPlaylist>> {
   Future<void> addPlaylist(LiveTvPlaylist playlist) async {
     final next = [...state, playlist];
     state = next;
-    _save(next);
+    // TODO(REV-222): await the save and restore state on failure.
+    unawaited(_save(next));
   }
 
   Future<void> removePlaylist(String id) async {
     final next = state.where((p) => p.id != id).toList();
     state = next;
-    _save(next);
+    // TODO(REV-222): await the save and restore state on failure.
+    unawaited(_save(next));
   }
 
   Future<void> togglePlaylistEnabled(String id) async {
@@ -55,7 +59,8 @@ class CustomPlaylistsNotifier extends StateNotifier<List<LiveTvPlaylist>> {
       return p.copyWith(isEnabled: !p.isEnabled);
     }).toList();
     state = next;
-    _save(next);
+    // TODO(REV-222): await the save and restore state on failure.
+    unawaited(_save(next));
   }
 
   Future<void> _save(List<LiveTvPlaylist> playlists) async {

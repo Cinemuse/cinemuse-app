@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:convert';
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
@@ -59,18 +61,21 @@ final profileStreamProvider = StreamProvider<Profile?>((ref) async* {
     await for (final profile in stream) {
       // Sync remote update to local cache background
       if (profile != null) {
-        db
-            .upsertProfile(
-              CachedProfilesCompanion(
-                id: Value(profile.id),
-                username: Value(profile.username),
-                avatarUrl: Value(profile.avatarUrl),
-                preferences: Value(jsonEncode(profile.preferences)),
-                createdAt: Value(profile.createdAt),
-                updatedAt: Value(profile.updatedAt),
-              ),
-            )
-            .catchError((_) {});
+        // Local cache only: the stream must keep yielding remote profiles.
+        unawaited(
+          db
+              .upsertProfile(
+                CachedProfilesCompanion(
+                  id: Value(profile.id),
+                  username: Value(profile.username),
+                  avatarUrl: Value(profile.avatarUrl),
+                  preferences: Value(jsonEncode(profile.preferences)),
+                  createdAt: Value(profile.createdAt),
+                  updatedAt: Value(profile.updatedAt),
+                ),
+              )
+              .catchError((_) {}),
+        );
       }
       yield profile;
     }

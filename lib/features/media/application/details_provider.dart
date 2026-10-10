@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:developer' as developer;
 import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
@@ -69,14 +71,17 @@ final mediaDetailsProvider =
         if (details != null) {
           // Opportunistically update cache with full details
           final item = MediaItem.fromTmdbDetails(details, type);
-          repo.saveMediaItem(item).catchError((e, stack) {
-            developer.log(
-              'Failed to opportunistically save media item ${args.id} to cache',
-              name: 'detailsProvider',
-              error: e,
-              stackTrace: stack,
-            );
-          });
+          // Cache write only: errors are logged, details still load.
+          unawaited(
+            repo.saveMediaItem(item).catchError((e, stack) {
+              developer.log(
+                'Failed to opportunistically save media item ${args.id} to cache',
+                name: 'detailsProvider',
+                error: e,
+                stackTrace: stack,
+              );
+            }),
+          );
         }
 
         return details;

@@ -820,6 +820,29 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sectionVisualArchives => 'Archivio Video';
 
   @override
+  String get failureNetwork =>
+      'Impossibile raggiungere il server. Controlla la connessione.';
+
+  @override
+  String get failureAuth => 'Accedi di nuovo.';
+
+  @override
+  String get failureServer =>
+      'Il server ha avuto un problema. Riprova più tardi.';
+
+  @override
+  String get failureNotFound => 'Elemento non trovato.';
+
+  @override
+  String get failureStreaming => 'Impossibile riprodurre questo video.';
+
+  @override
+  String get failureValidation => 'Alcuni dati non sono validi.';
+
+  @override
+  String get failureUnknown => 'Qualcosa è andato storto.';
+
+  @override
   String get streamingErrorNoProviders =>
       'Nessun addon di streaming abilitato. Controlla le impostazioni.';
 

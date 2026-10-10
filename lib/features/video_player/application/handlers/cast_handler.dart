@@ -61,7 +61,8 @@ class CastHandler {
       _castSession = await CastSessionManager().startSession(device);
       _mediaSessionId = null; // Reset for new session
 
-      _messageSubscription?.cancel();
+      // The old listener only has to stop; nothing depends on when.
+      unawaited(_messageSubscription?.cancel());
       _messageSubscription = _castSession!.messageStream.listen((message) {
         // Unnecessary type check removed (message is always Map)
 
@@ -264,7 +265,8 @@ class CastHandler {
         stackTrace: st,
         level: 900,
       );
-      stopCasting();
+      // Best-effort cleanup: the original error is rethrown below.
+      unawaited(stopCasting());
       rethrow;
     }
   }
@@ -363,7 +365,8 @@ class CastHandler {
     _statusTimer = null;
     _heartbeatTimer?.cancel();
     _heartbeatTimer = null;
-    _messageSubscription?.cancel();
+    // The listener only has to stop; nothing depends on when.
+    unawaited(_messageSubscription?.cancel());
     _messageSubscription = null;
 
     _castSession = null;

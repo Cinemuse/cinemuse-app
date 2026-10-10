@@ -15,7 +15,7 @@ analyzer:
 
 linter:
   # Extra rules on top of flutter_lints. Backlog candidates (too many existing
-  # issues to enable yet): unawaited_futures, discarded_futures,
+  # issues to enable yet): discarded_futures,
   # avoid_dynamic_calls, and the strict-casts / strict-inference /
   # strict-raw-types analyzer modes.
   rules:
@@ -25,6 +25,7 @@ linter:
     # Async
     - avoid_slow_async_io
     - avoid_void_async
+    - unawaited_futures
     - unnecessary_await_in_return
     # Correctness
     - always_declare_return_types

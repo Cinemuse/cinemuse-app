@@ -283,7 +283,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     if (state.valueOrNull?.isCasting ?? false) {
       _castHandler.pause();
     } else {
-      _player?.pause();
+      // Not awaited, as before: callers do not expect player errors here.
+      unawaited(_player?.pause());
     }
   }
 
@@ -291,7 +292,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     if (state.valueOrNull?.isCasting ?? false) {
       _castHandler.play();
     } else {
-      _player?.play();
+      // Not awaited, as before: callers do not expect player errors here.
+      unawaited(_player?.play());
     }
   }
 
@@ -328,7 +330,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         detectedMimeType: state.value!.detectedMimeType,
       );
 
-      _player?.pause();
+      // The cast device plays now; the local pause is best-effort.
+      unawaited(_player?.pause());
     } catch (e, st) {
       developer.log(
         'Error starting cast: $e',
@@ -337,7 +340,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         stackTrace: st,
         level: 900,
       );
-      stopCasting();
+      // Best-effort cleanup after a failed cast start (already logged).
+      unawaited(stopCasting());
     }
   }
 
@@ -355,7 +359,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         ),
       );
     }
-    _player?.play();
+    // Not awaited, as before: callers do not expect player errors here.
+    unawaited(_player?.play());
   }
 
   void updateSubtitleStyle(SubtitleStyle style) {

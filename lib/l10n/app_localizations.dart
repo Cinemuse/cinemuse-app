@@ -1508,6 +1508,48 @@ abstract class AppLocalizations {
   /// **'Visual Archives'**
   String get sectionVisualArchives;
 
+  /// No description provided for @failureNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t reach the server. Check your connection.'**
+  String get failureNetwork;
+
+  /// No description provided for @failureAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again.'**
+  String get failureAuth;
+
+  /// No description provided for @failureServer.
+  ///
+  /// In en, this message translates to:
+  /// **'The server had a problem. Try again later.'**
+  String get failureServer;
+
+  /// No description provided for @failureNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This item couldn\'t be found.'**
+  String get failureNotFound;
+
+  /// No description provided for @failureStreaming.
+  ///
+  /// In en, this message translates to:
+  /// **'This video couldn\'t be played.'**
+  String get failureStreaming;
+
+  /// No description provided for @failureValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Some data was invalid.'**
+  String get failureValidation;
+
+  /// No description provided for @failureUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong.'**
+  String get failureUnknown;
+
   /// No description provided for @streamingErrorNoProviders.
   ///
   /// In en, this message translates to:

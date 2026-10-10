@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cinemuse_app/core/constants/app_constants.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
@@ -716,9 +718,12 @@ class _ListMediaCard extends ConsumerWidget {
                   ref.invalidate(continueWatchingProvider);
                 }
               } else {
-                ref
-                    .read(userListsProvider.notifier)
-                    .removeItemFromList(listId, item.tmdbId, item.mediaType);
+                // TODO(REV-89): a failed removal is not shown to the user.
+                unawaited(
+                  ref
+                      .read(userListsProvider.notifier)
+                      .removeItemFromList(listId, item.tmdbId, item.mediaType),
+                );
               }
             },
       onRestore: listId == 'dropped'

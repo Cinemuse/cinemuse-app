@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
 import 'package:cinemuse_app/core/error/app_exception.dart';
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
@@ -64,6 +65,39 @@ class NetworkErrorMapper implements BaseErrorMapper {
   }
 }
 
+/// Maps an [AppFailure] to translated text. Never shows [AppFailure.message]:
+/// that is English developer text (REV-164).
+class AppFailureMapper implements BaseErrorMapper {
+  @override
+  UserFriendlyError? map(Object error, AppLocalizations l10n) {
+    if (error is! AppFailure) return null;
+    return switch (error) {
+      NetworkFailure() => UserFriendlyError(
+        message: l10n.failureNetwork,
+        type: AppExceptionType.network,
+      ),
+      AuthFailure() => UserFriendlyError(
+        message: l10n.failureAuth,
+        type: AppExceptionType.auth,
+      ),
+      ServerFailure() => UserFriendlyError(
+        message: l10n.failureServer,
+        type: AppExceptionType.database,
+      ),
+      NotFoundFailure() => UserFriendlyError(message: l10n.failureNotFound),
+      StreamingFailure() => UserFriendlyError(
+        message: l10n.failureStreaming,
+        type: AppExceptionType.streaming,
+      ),
+      ValidationFailure() => UserFriendlyError(
+        message: l10n.failureValidation,
+        type: AppExceptionType.validation,
+      ),
+      UnknownFailure() => UserFriendlyError(message: l10n.failureUnknown),
+    };
+  }
+}
+
 class StreamingErrorMapper implements BaseErrorMapper {
   @override
   UserFriendlyError? map(Object error, AppLocalizations l10n) {
@@ -116,6 +150,7 @@ class StreamingErrorMapper implements BaseErrorMapper {
 class GlobalErrorMapper {
   final AppLocalizations _l10n;
   final List<BaseErrorMapper> _mappers = [
+    AppFailureMapper(),
     NetworkErrorMapper(),
     StreamingErrorMapper(),
     // Add SupabaseErrorMapper here when implemented

@@ -276,9 +276,12 @@ class PlayerSourceCoordinator {
         'Live TV EOS. Retrying same link...',
         name: 'VideoPlayer.PlayerSourceCoordinator',
       );
-      liveTvCoordinator?.handleFailover(
-        'Stream ended (EOS)',
-        isConnectionError: false,
+      // Called from a player stream listener, which cannot wait.
+      unawaited(
+        liveTvCoordinator?.handleFailover(
+          'Stream ended (EOS)',
+          isConnectionError: false,
+        ),
       );
       return;
     }

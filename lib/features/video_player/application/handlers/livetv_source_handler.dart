@@ -118,14 +118,16 @@ class LiveTvSourceHandler {
     };
 
     // 3. Open the stream with explicit headers
-    _player.open(Media(url, httpHeaders: headers), play: true);
+    // Not awaited: the stall watchdog below handles a stream that never starts.
+    unawaited(_player.open(Media(url, httpHeaders: headers), play: true));
 
     // 4. Start Stall Watchdog
     final stallDuration = isPremium
         ? const Duration(seconds: 7)
         : const Duration(seconds: 15);
 
-    _bufferingSub?.cancel();
+    // The old listener only has to stop; a new one is attached right after.
+    unawaited(_bufferingSub?.cancel());
     _stallTimer?.cancel();
     _bufferingSub = _player.stream.buffering.listen((isBuffering) {
       if (isBuffering) {

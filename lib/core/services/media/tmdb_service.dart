@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:cinemuse_app/core/application/locale_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -103,7 +105,9 @@ class TmdbService {
     } catch (e) {
       return null;
     } finally {
-      _inflightRequests.remove(cacheKey);
+      // remove() hands back the stored in-flight Future (this very request):
+      // we only drop it from the map; awaiting it would wait on itself.
+      unawaited(_inflightRequests.remove(cacheKey));
     }
   }
 

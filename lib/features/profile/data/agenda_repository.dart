@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
@@ -226,9 +228,12 @@ class AgendaRepository {
             };
 
             // Fire and forget the update
-            _supabase.from('watch_history').upsert(watchingEntry).then((_) {
-              _watchHistoryRepo.syncWatchHistory(userId);
-            });
+            // TODO(REV-87): a read must not write; kept as before for now.
+            unawaited(
+              _supabase.from('watch_history').upsert(watchingEntry).then((_) {
+                _watchHistoryRepo.syncWatchHistory(userId);
+              }),
+            );
           }
         }
       }

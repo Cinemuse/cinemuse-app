@@ -131,7 +131,12 @@ class PlayerInitializationCoordinator {
     );
     final initialChannel = ref.read(selectedChannelProvider);
     if (initialChannel != null) {
-      ref.read(recentChannelIdsProvider.notifier).push(initialChannel.uniqueId);
+      // Recents are a convenience: playback does not wait for the save.
+      unawaited(
+        ref
+            .read(recentChannelIdsProvider.notifier)
+            .push(initialChannel.uniqueId),
+      );
       await changeChannel(initialChannel);
     }
   }
@@ -197,7 +202,8 @@ class PlayerInitializationCoordinator {
 
     unawaited(ensureMediaCached());
     handleInitialSeek(resolvedParams);
-    loadNextEpisodeAsync();
+    // Next-episode info is optional: playback starts without it.
+    unawaited(loadNextEpisodeAsync());
   }
 
   Future<void> loadNextEpisodeAsync() async {

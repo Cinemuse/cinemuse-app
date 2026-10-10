@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -270,7 +272,8 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
     if (Platform.isAndroid) {
       _startAndroidUpdate();
     } else if (Platform.isWindows) {
-      _startWindowsUpdate();
+      // Runs in the background and reports progress through `state`.
+      unawaited(_startWindowsUpdate());
     } else {
       // Fallback: open browser
       final url = Uri.parse(state.downloadUrl!);

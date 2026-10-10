@@ -812,6 +812,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sectionVisualArchives => 'Visual Archives';
 
   @override
+  String get failureNetwork =>
+      'Can\'t reach the server. Check your connection.';
+
+  @override
+  String get failureAuth => 'Please sign in again.';
+
+  @override
+  String get failureServer => 'The server had a problem. Try again later.';
+
+  @override
+  String get failureNotFound => 'This item couldn\'t be found.';
+
+  @override
+  String get failureStreaming => 'This video couldn\'t be played.';
+
+  @override
+  String get failureValidation => 'Some data was invalid.';
+
+  @override
+  String get failureUnknown => 'Something went wrong.';
+
+  @override
   String get streamingErrorNoProviders =>
       'No streaming addons are enabled. Please check your settings.';
 
