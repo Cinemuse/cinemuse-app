@@ -1,11 +1,13 @@
 import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 /// Handles platform-aware storage for local playlist files.
 ///
-/// - **Windows**: `AppData\Roaming\<app>\playlists\`
-/// - **Android / other**: `<appSupportDir>/playlists/`
+/// Files live in `<appSupportDir>/data/playlists/` on every platform
+/// (on Windows `<appSupportDir>` is `AppData\Roaming\<company>\<app>`).
 ///
 /// Playlists are stored by **basename only** in SharedPreferences, so paths
 /// remain valid across OTA updates and app reinstalls that preserve app data.
@@ -24,9 +26,23 @@ class LocalPlaylistStorage {
   }
 
   /// Copies [source] into the playlists directory and returns the destination file.
+  ///
+  /// If a playlist with the same file name is already there, the copy gets a
+  /// ` (1)`, ` (2)`, … suffix, so importing a second `playlist.m3u` never
+  /// overwrites the first one.
   static Future<File> copyPlaylistFile(File source) async {
-    final dir = await getPlaylistsDir();
-    final destPath = p.join(dir.path, p.basename(source.path));
+    return copyIntoDir(source, await getPlaylistsDir());
+  }
+
+  /// Copies [source] into [dir] under a file name that isn't taken yet.
+  @visibleForTesting
+  static Future<File> copyIntoDir(File source, Directory dir) {
+    final name = p.basenameWithoutExtension(source.path);
+    final extension = p.extension(source.path);
+    var destPath = p.join(dir.path, '$name$extension');
+    for (var i = 1; File(destPath).existsSync(); i++) {
+      destPath = p.join(dir.path, '$name ($i)$extension');
+    }
     return source.copy(destPath);
   }
 
