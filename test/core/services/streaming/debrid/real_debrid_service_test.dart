@@ -215,6 +215,31 @@ void main() {
     verifyDeleted(0);
   });
 
+  test(
+    'torrent blocked by RD (451): returns null, nothing to delete',
+    () async {
+      when(
+        () => dio.post(
+          '$_api/torrents/addMagnet',
+          data: any(named: 'data'),
+          options: any(named: 'options'),
+        ),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: ''),
+          type: DioExceptionType.badResponse,
+          response: Response(
+            requestOptions: RequestOptions(path: ''),
+            statusCode: 451,
+          ),
+        ),
+      );
+
+      expect(await service.resolve(_candidate), isNull);
+      verifyDeleted(0);
+    },
+  );
+
   test('a failed cleanup does not hide the result', () async {
     stubInfo([
       {

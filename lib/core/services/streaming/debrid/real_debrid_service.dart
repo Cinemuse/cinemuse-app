@@ -47,7 +47,16 @@ class RealDebridService implements BaseDebridService {
   }) async {
     if (!isEnabled) return null;
 
-    final torrentId = await _guard(() => _addMagnet(candidate.magnet));
+    final String torrentId;
+    try {
+      torrentId = await _guard(() => _addMagnet(candidate.magnet));
+    } on ServerFailure catch (e) {
+      // 451 = RD blocks this torrent (copyright). A normal "not available
+      // here", not an error, and nothing was added to delete (REV-230).
+      if (e.statusCode != 451) rethrow;
+      AppLogger.info(_tag, 'Real-Debrid blocked this torrent (451)');
+      return null;
+    }
     ResolvedStream? stream;
     try {
       stream = await _guard(
