@@ -101,49 +101,22 @@ class AppFailureMapper implements BaseErrorMapper {
 class StreamingErrorMapper implements BaseErrorMapper {
   @override
   UserFriendlyError? map(Object error, AppLocalizations l10n) {
-    if (error is StreamingException) {
-      if (error is NoProvidersEnabledException) {
-        return UserFriendlyError(
-          message: l10n.streamingErrorNoProviders,
-          type: AppExceptionType.streaming,
-        );
-      }
-      if (error is CapabilityMissingException) {
-        return UserFriendlyError(
-          message: l10n.streamingErrorCapabilityMissing(error.category),
-          type: AppExceptionType.streaming,
-        );
-      }
-      if (error is NoResultsFoundException) {
-        return UserFriendlyError(
-          message: l10n.streamingErrorNoResults,
-          type: AppExceptionType.streaming,
-        );
-      }
-      if (error is MediaDetailsResolutionException) {
-        return UserFriendlyError(
-          message: l10n.streamingErrorMediaDetails,
-          type: AppExceptionType.streaming,
-        );
-      }
-      if (error is ImdbIdResolutionException) {
-        return UserFriendlyError(
-          message: l10n.streamingErrorImdbId,
-          type: AppExceptionType.streaming,
-        );
-      }
-      if (error is ProviderSearchException) {
-        return UserFriendlyError(
-          message: l10n.streamingErrorProviderSearchFailed(error.providerName),
-          type: AppExceptionType.streaming,
-        );
-      }
-      return UserFriendlyError(
-        message: error.message,
-        type: AppExceptionType.streaming,
-      );
-    }
-    return null;
+    if (error is! StreamingException) return null;
+    final message = switch (error) {
+      NoProvidersEnabledException() => l10n.streamingErrorNoProviders,
+      CapabilityMissingException(:final category) =>
+        l10n.streamingErrorCapabilityMissing(category),
+      NoResultsFoundException() => l10n.streamingErrorNoResults,
+      MediaDetailsResolutionException() => l10n.streamingErrorMediaDetails,
+      ImdbIdResolutionException() => l10n.streamingErrorImdbId,
+      ProviderSearchException(:final providerName) =>
+        l10n.streamingErrorProviderSearchFailed(providerName),
+      _ => error.message,
+    };
+    return UserFriendlyError(
+      message: message,
+      type: AppExceptionType.streaming,
+    );
   }
 }
 
@@ -153,30 +126,23 @@ class GlobalErrorMapper {
     AppFailureMapper(),
     NetworkErrorMapper(),
     StreamingErrorMapper(),
-    // Add SupabaseErrorMapper here when implemented
   ];
 
   GlobalErrorMapper(this._l10n);
 
   UserFriendlyError map(Object error) {
-    // 1. Try specialized mappers
     for (final mapper in _mappers) {
       final result = mapper.map(error, _l10n);
       if (result != null) return result;
     }
-
-    // 2. Handle base AppException
-    if (error is AppException) {
-      return UserFriendlyError(message: error.message, type: error.type);
-    }
-
-    // 3. Fallback for strings
-    if (error is String) {
-      return UserFriendlyError(message: error);
-    }
-
-    // 4. Default fallback
-    return UserFriendlyError(message: error.toString());
+    return switch (error) {
+      AppException() => UserFriendlyError(
+        message: error.message,
+        type: error.type,
+      ),
+      String() => UserFriendlyError(message: error),
+      _ => UserFriendlyError(message: error.toString()),
+    };
   }
 }
 

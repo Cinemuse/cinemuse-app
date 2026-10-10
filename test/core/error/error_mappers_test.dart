@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -68,6 +69,20 @@ void main() {
 
       expect(result.message, 'old');
       expect(result.type, AppExceptionType.auth);
+    });
+
+    test('a known StreamingException gets its translated text', () {
+      final result = mapper.map(CapabilityMissingException('anime'));
+
+      expect(result.message, l10n.streamingErrorCapabilityMissing('anime'));
+      expect(result.type, AppExceptionType.streaming);
+    });
+
+    test('other StreamingExceptions show their own message', () {
+      final result = mapper.map(StreamResolutionFailedException('timeout'));
+
+      expect(result.message, 'Stream resolution failed: timeout');
+      expect(result.type, AppExceptionType.streaming);
     });
 
     test('a plain string is shown as is', () {
