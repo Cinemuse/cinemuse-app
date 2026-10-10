@@ -27,19 +27,23 @@ final updateProvider = NotifierProvider<UpdateNotifier, UpdateState>(
 
 class UpdateNotifier extends Notifier<UpdateState> {
   @override
-  UpdateState build() => UpdateState(status: UpdateStatus.initial);
+  UpdateState build() {
+    ref.onDispose(() => _otaSubscription?.cancel());
+    return UpdateState(status: UpdateStatus.initial);
+  }
 
   static const _tag = 'UpdateService';
   final Dio _dio = Dio();
+
+  /// The running Android download, so Cancel can stop it (REV-33).
+  StreamSubscription<OtaEvent>? _otaSubscription;
 
   String get _owner => dotenv.env['GITHUB_OWNER'] ?? '';
   String get _repo => dotenv.env['GITHUB_REPO'] ?? '';
 
   Future<void> checkForUpdates() async {
     if (_owner.isEmpty || _repo.isEmpty) {
-      debugPrint(
-        'UpdateService: GITHUB_OWNER or GITHUB_REPO is missing in .env',
-      );
+      AppLogger.warn(_tag, 'GITHUB_OWNER or GITHUB_REPO is missing in .env');
       return;
     }
 
@@ -58,7 +62,6 @@ class UpdateNotifier extends Notifier<UpdateState> {
       }
 
       state = state.copyWith(status: UpdateStatus.checking);
-      debugPrint('UpdateService: Checking for updates for $_owner/$_repo...');
 
       final response = await _dio.get(
         'https://api.github.com/repos/$_owner/$_repo/releases/latest',
@@ -66,16 +69,15 @@ class UpdateNotifier extends Notifier<UpdateState> {
 
       final latestTag = response.data['tag_name'] as String;
       final releaseNotes = response.data['body'] as String?;
-      debugPrint(
-        'UpdateService: Current version: $currentVersion+${packageInfo.buildNumber}',
-      );
-      debugPrint('UpdateService: Latest tag from GitHub: $latestTag');
-
       final downloadUrl = await _getDownloadUrl(response.data);
-      debugPrint('UpdateService: Download URL: $downloadUrl');
+      AppLogger.debug(
+        _tag,
+        'Installed $currentVersion+${packageInfo.buildNumber}, '
+        'latest $latestTag, download $downloadUrl',
+      );
 
       if (isNewerRelease(latestTag, currentVersion, packageInfo.buildNumber)) {
-        debugPrint('UpdateService: New version available!');
+        AppLogger.info(_tag, 'Update $latestTag available');
         state = state.copyWith(
           status: UpdateStatus.available,
           latestVersion: latestTag,
@@ -85,26 +87,30 @@ class UpdateNotifier extends Notifier<UpdateState> {
           releaseNotes: releaseNotes,
         );
       } else {
-        debugPrint('UpdateService: App is up to date');
         state = state.copyWith(
           status: UpdateStatus.upToDate,
           currentVersion: currentVersion,
         );
       }
     } catch (e) {
-      if (!e.toString().contains('Failed host lookup') &&
-          !e.toString().contains('SocketException')) {
-        debugPrint('UpdateService: Check for updates failed: $e');
-      }
-      state = state.copyWith(
-        status: UpdateStatus.error,
-        errorKey: 'updateSourceError',
-      );
+      AppLogger.warn(_tag, 'Update check failed', error: e);
+      _fail('updateSourceError');
     }
   }
 
   void cancelUpdate() {
     state.cancelToken?.cancel('User cancelled');
+    final otaSubscription = _otaSubscription;
+    if (otaSubscription != null) {
+      // Stops the Android download itself, not only the progress bar (REV-33).
+      _otaSubscription = null;
+      unawaited(otaSubscription.cancel());
+      unawaited(
+        OtaUpdate().cancel().catchError(
+          (Object e) => AppLogger.warn(_tag, 'OTA cancel failed', error: e),
+        ),
+      );
+    }
     state = state.copyWith(
       status: UpdateStatus.available,
       progress: 0,
@@ -132,9 +138,7 @@ class UpdateNotifier extends Notifier<UpdateState> {
         abiPattern = 'x86_64';
       }
 
-      debugPrint(
-        'UpdateService: Detected ABI: $currentAbi -> Pattern: $abiPattern',
-      );
+      AppLogger.debug(_tag, 'ABI $currentAbi -> APK pattern $abiPattern');
 
       // 1. Try to find an APK that matches the ABI pattern
       var apk = (abiPattern != null)
@@ -212,78 +216,35 @@ class UpdateNotifier extends Notifier<UpdateState> {
     state = state.copyWith(status: UpdateStatus.downloading, progress: 0);
 
     try {
-      OtaUpdate()
+      _otaSubscription = OtaUpdate()
           .execute(state.downloadUrl!)
           .listen(
-            (OtaEvent event) {
-              debugPrint(
-                'UpdateService: OTA Event: ${event.status} - ${event.value}',
-              );
-              switch (event.status) {
-                case OtaStatus.DOWNLOADING:
-                  state = state.copyWith(
-                    progress: double.tryParse(event.value ?? '0') ?? 0,
-                  );
-                  break;
-                case OtaStatus.INSTALLING:
-                case OtaStatus.INSTALLATION_DONE:
-                  debugPrint('UpdateService: OTA Installation starting...');
-                  state = state.copyWith(status: UpdateStatus.readyToInstall);
-                  break;
-                case OtaStatus.ALREADY_RUNNING_ERROR:
-                  debugPrint('UpdateService: OTA Error: Already running');
-                  state = state.copyWith(
-                    status: UpdateStatus.error,
-                    error: 'An update is already in progress.',
-                  );
-                  break;
-                case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
-                  debugPrint(
-                    'UpdateService: OTA Error: Permission not granted',
-                  );
-                  state = state.copyWith(
-                    status: UpdateStatus.error,
-                    error: 'Permission to install apps was denied.',
-                  );
-                  break;
-                case OtaStatus.INTERNAL_ERROR:
-                  debugPrint('UpdateService: OTA Error: Internal error');
-                  state = state.copyWith(
-                    status: UpdateStatus.error,
-                    error: 'Internal update error. Please try again.',
-                  );
-                  break;
-                case OtaStatus.DOWNLOAD_ERROR:
-                  debugPrint('UpdateService: OTA Error: Download error');
-                  state = state.copyWith(
-                    status: UpdateStatus.error,
-                    error: 'Failed to download the update.',
-                  );
-                  break;
-                case OtaStatus.CHECKSUM_ERROR:
-                  debugPrint('UpdateService: OTA Error: Checksum error');
-                  state = state.copyWith(
-                    status: UpdateStatus.error,
-                    error: 'Update file is corrupted.',
-                  );
-                  break;
-                default:
-                  break;
-              }
-            },
-            onError: (e) {
-              debugPrint('UpdateService: OTA Stream Error: $e');
-              state = state.copyWith(
-                status: UpdateStatus.error,
-                errorKey: 'updateFailed',
-              );
+            _onOtaEvent,
+            onError: (Object e, StackTrace st) {
+              AppLogger.error(_tag, 'OTA failed', error: e, stackTrace: st);
+              _fail('updateFailed');
             },
           );
-    } catch (e) {
-      state = state.copyWith(
-        status: UpdateStatus.error,
-        errorKey: 'updateFailed',
-      );
+    } catch (e, st) {
+      AppLogger.error(_tag, 'OTA did not start', error: e, stackTrace: st);
+      _fail('updateFailed');
+    }
+  }
+
+  void _onOtaEvent(OtaEvent event) {
+    switch (event.status) {
+      case OtaStatus.DOWNLOADING:
+        state = state.copyWith(
+          progress: double.tryParse(event.value ?? '0') ?? 0,
+        );
+      case OtaStatus.INSTALLING || OtaStatus.INSTALLATION_DONE:
+        AppLogger.info(_tag, 'OTA ${event.status.name}');
+        state = state.copyWith(status: UpdateStatus.readyToInstall);
+      case final status:
+        final errorKey = otaErrorKey(status);
+        if (errorKey == null) return;
+        AppLogger.warn(_tag, 'OTA ${status.name}: ${event.value}');
+        _fail(errorKey);
     }
   }
 
@@ -416,3 +377,18 @@ class UpdateNotifier extends Notifier<UpdateState> {
     exit(0);
   }
 }
+
+/// The translation key for an Android update error, or `null` when [status]
+/// is not an error (REV-29).
+@visibleForTesting
+String? otaErrorKey(OtaStatus status) => switch (status) {
+  OtaStatus.ALREADY_RUNNING_ERROR => 'updateAlreadyRunning',
+  OtaStatus.PERMISSION_NOT_GRANTED_ERROR => 'updatePermissionDenied',
+  OtaStatus.DOWNLOAD_ERROR => 'updateNetworkError',
+  OtaStatus.CHECKSUM_ERROR => 'updateIntegrityError',
+  OtaStatus.INTERNAL_ERROR || OtaStatus.INSTALLATION_ERROR => 'updateFailed',
+  OtaStatus.DOWNLOADING ||
+  OtaStatus.INSTALLING ||
+  OtaStatus.INSTALLATION_DONE ||
+  OtaStatus.CANCELED => null,
+};

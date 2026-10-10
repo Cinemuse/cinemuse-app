@@ -1606,6 +1606,13 @@ class AppLocalizationsIt extends AppLocalizations {
       'Cinemuse non può aggiornarsi in questa cartella. Sposta la cartella di Cinemuse in una posizione tua (ad esempio Documenti) oppure scarica l\'aggiornamento da GitHub.';
 
   @override
+  String get updateAlreadyRunning => 'Un aggiornamento è già in corso.';
+
+  @override
+  String get updatePermissionDenied =>
+      'Cinemuse ha bisogno del permesso di installare app. Concedilo nelle Impostazioni, poi riprova.';
+
+  @override
   String get menuMoreOptions => 'Altre Opzioni';
 
   @override

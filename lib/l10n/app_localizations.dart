@@ -2954,6 +2954,18 @@ abstract class AppLocalizations {
   /// **'Cinemuse can\'t update itself in this folder. Move the Cinemuse folder somewhere you own (for example Documents), or download the update from GitHub.'**
   String get updateFolderNotWritable;
 
+  /// No description provided for @updateAlreadyRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'An update is already in progress.'**
+  String get updateAlreadyRunning;
+
+  /// No description provided for @updatePermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Cinemuse needs permission to install apps. Allow it in Settings, then try again.'**
+  String get updatePermissionDenied;
+
   /// No description provided for @menuMoreOptions.
   ///
   /// In en, this message translates to:

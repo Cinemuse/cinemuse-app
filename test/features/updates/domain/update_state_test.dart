@@ -13,7 +13,6 @@ void main() {
 
     expect(retrying.errorKey, isNull);
     expect(retrying.errorArgs, isNull);
-    expect(retrying.error, isNull);
   });
 
   test('a newer error replaces the old one', () {

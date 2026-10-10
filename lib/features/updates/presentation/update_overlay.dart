@@ -147,36 +147,7 @@ class UpdateOverlay extends ConsumerWidget {
     AppLocalizations l10n,
     UpdateState state,
   ) {
-    String errorMessage = state.error ?? l10n.updateFailed;
-
-    // Attempt to localize if we have an errorKey
-    if (state.errorKey != null) {
-      switch (state.errorKey) {
-        case 'updateNoCompatibleApk':
-          errorMessage = l10n.updateNoCompatibleApk(
-            state.errorArgs?['abi'] ?? 'unknown',
-          );
-          break;
-        case 'updateNetworkError':
-          errorMessage = l10n.updateNetworkError;
-          break;
-        case 'updateStorageError':
-          errorMessage = l10n.updateStorageError;
-          break;
-        case 'updateSourceError':
-          errorMessage = l10n.updateSourceError;
-          break;
-        case 'updateIntegrityError':
-          errorMessage = l10n.updateIntegrityError;
-          break;
-        case 'updateFolderNotWritable':
-          errorMessage = l10n.updateFolderNotWritable;
-          break;
-        case 'updateFailed':
-          errorMessage = l10n.updateFailed;
-          break;
-      }
-    }
+    final errorMessage = updateErrorMessage(l10n, state);
 
     return Container(
       width: double.infinity,
@@ -336,3 +307,21 @@ class UpdateOverlay extends ConsumerWidget {
     );
   }
 }
+
+/// The translated text for the update error in [state] (REV-29). An unknown
+/// key falls back to the generic "update failed".
+@visibleForTesting
+String updateErrorMessage(AppLocalizations l10n, UpdateState state) =>
+    switch (state.errorKey) {
+      'updateNoCompatibleApk' => l10n.updateNoCompatibleApk(
+        state.errorArgs?['abi'] ?? 'unknown',
+      ),
+      'updateNetworkError' => l10n.updateNetworkError,
+      'updateStorageError' => l10n.updateStorageError,
+      'updateSourceError' => l10n.updateSourceError,
+      'updateIntegrityError' => l10n.updateIntegrityError,
+      'updateFolderNotWritable' => l10n.updateFolderNotWritable,
+      'updateAlreadyRunning' => l10n.updateAlreadyRunning,
+      'updatePermissionDenied' => l10n.updatePermissionDenied,
+      _ => l10n.updateFailed,
+    };

@@ -507,6 +507,8 @@
   "updateSourceError": "La sorgente dell'aggiornamento non è al momento disponibile.",
   "updateIntegrityError": "Non è stato possibile verificare l'aggiornamento scaricato, quindi non è stato installato.",
   "updateFolderNotWritable": "Cinemuse non può aggiornarsi in questa cartella. Sposta la cartella di Cinemuse in una posizione tua (ad esempio Documenti) oppure scarica l'aggiornamento da GitHub.",
+  "updateAlreadyRunning": "Un aggiornamento è già in corso.",
+  "updatePermissionDenied": "Cinemuse ha bisogno del permesso di installare app. Concedilo nelle Impostazioni, poi riprova.",
   "menuMoreOptions": "Altre Opzioni",
   "menuAddToWatchlist": "Aggiungi alla Watchlist",
   "menuRemoveFromWatchlist": "Rimuovi dalla Watchlist",

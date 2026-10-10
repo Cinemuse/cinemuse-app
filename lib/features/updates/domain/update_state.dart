@@ -15,7 +15,6 @@ class UpdateState {
   final String? latestVersion;
   final String? currentVersion;
   final double progress;
-  final String? error;
   final String? errorKey;
   final Map<String, String>? errorArgs;
   final String? downloadUrl;
@@ -30,7 +29,6 @@ class UpdateState {
     this.latestVersion,
     this.currentVersion,
     this.progress = 0,
-    this.error,
     this.errorKey,
     this.errorArgs,
     this.downloadUrl,
@@ -44,7 +42,6 @@ class UpdateState {
     String? latestVersion,
     String? currentVersion,
     double? progress,
-    String? error,
     String? errorKey,
     Map<String, String>? errorArgs,
     String? downloadUrl,
@@ -61,7 +58,6 @@ class UpdateState {
       latestVersion: latestVersion ?? this.latestVersion,
       currentVersion: currentVersion ?? this.currentVersion,
       progress: progress ?? this.progress,
-      error: error ?? (keepsError ? this.error : null),
       errorKey: errorKey ?? (keepsError ? this.errorKey : null),
       errorArgs: errorArgs ?? (keepsError ? this.errorArgs : null),
       downloadUrl: downloadUrl ?? this.downloadUrl,
