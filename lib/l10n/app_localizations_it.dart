@@ -1446,6 +1446,14 @@ class AppLocalizationsIt extends AppLocalizations {
       'La sorgente dell\'aggiornamento non è al momento disponibile.';
 
   @override
+  String get updateIntegrityError =>
+      'Non è stato possibile verificare l\'aggiornamento scaricato, quindi non è stato installato.';
+
+  @override
+  String get updateFolderNotWritable =>
+      'Cinemuse non può aggiornarsi in questa cartella. Sposta la cartella di Cinemuse in una posizione tua (ad esempio Documenti) oppure scarica l\'aggiornamento da GitHub.';
+
+  @override
   String get menuMoreOptions => 'Altre Opzioni';
 
   @override

@@ -456,6 +456,8 @@
   "updateNetworkError": "Errore di rete durante l'aggiornamento. Controlla la tua connessione.",
   "updateStorageError": "Spazio di archiviazione insufficiente per scaricare l'aggiornamento.",
   "updateSourceError": "La sorgente dell'aggiornamento non è al momento disponibile.",
+  "updateIntegrityError": "Non è stato possibile verificare l'aggiornamento scaricato, quindi non è stato installato.",
+  "updateFolderNotWritable": "Cinemuse non può aggiornarsi in questa cartella. Sposta la cartella di Cinemuse in una posizione tua (ad esempio Documenti) oppure scarica l'aggiornamento da GitHub.",
   "menuMoreOptions": "Altre Opzioni",
   "menuAddToWatchlist": "Aggiungi alla Watchlist",
   "menuRemoveFromWatchlist": "Rimuovi dalla Watchlist",

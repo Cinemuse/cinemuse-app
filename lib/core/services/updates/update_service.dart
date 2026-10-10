@@ -8,84 +8,27 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ota_update/ota_update.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
 import 'dart:ffi';
 import 'package:flutter/foundation.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:cinemuse_app/core/error/app_failure.dart';
+import 'package:cinemuse_app/core/services/updates/update_archive_extractor.dart';
+import 'package:cinemuse_app/core/services/updates/update_checksum.dart';
+import 'package:cinemuse_app/core/services/updates/update_state.dart';
+import 'package:cinemuse_app/core/services/updates/windows_updater_script.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 
-enum UpdateStatus {
-  initial,
-  checking,
-  available,
-  downloading,
-  readyToInstall,
-  upToDate,
-  error,
-}
+// Not autoDispose: the update overlay shows this state for the whole session.
+final updateProvider = NotifierProvider<UpdateNotifier, UpdateState>(
+  UpdateNotifier.new,
+);
 
-class UpdateState {
-  final UpdateStatus status;
-  final String? latestVersion;
-  final String? currentVersion;
-  final double progress;
-  final String? error;
-  final String? errorKey;
-  final Map<String, String>? errorArgs;
-  final String? downloadUrl;
-  final String? releaseNotes;
-  final CancelToken? cancelToken;
+class UpdateNotifier extends Notifier<UpdateState> {
+  @override
+  UpdateState build() => UpdateState(status: UpdateStatus.initial);
 
-  UpdateState({
-    required this.status,
-    this.latestVersion,
-    this.currentVersion,
-    this.progress = 0,
-    this.error,
-    this.errorKey,
-    this.errorArgs,
-    this.downloadUrl,
-    this.releaseNotes,
-    this.cancelToken,
-  });
-
-  UpdateState copyWith({
-    UpdateStatus? status,
-    String? latestVersion,
-    String? currentVersion,
-    double? progress,
-    String? error,
-    String? errorKey,
-    Map<String, String>? errorArgs,
-    String? downloadUrl,
-    String? releaseNotes,
-    CancelToken? cancelToken,
-    bool clearCancelToken = false,
-  }) {
-    return UpdateState(
-      status: status ?? this.status,
-      latestVersion: latestVersion ?? this.latestVersion,
-      currentVersion: currentVersion ?? this.currentVersion,
-      progress: progress ?? this.progress,
-      error: error ?? this.error,
-      errorKey: errorKey ?? this.errorKey,
-      errorArgs: errorArgs ?? this.errorArgs,
-      downloadUrl: downloadUrl ?? this.downloadUrl,
-      releaseNotes: releaseNotes ?? this.releaseNotes,
-      cancelToken: clearCancelToken ? null : (cancelToken ?? this.cancelToken),
-    );
-  }
-}
-
-final updateProvider = StateNotifierProvider<UpdateNotifier, UpdateState>((
-  ref,
-) {
-  return UpdateNotifier();
-});
-
-class UpdateNotifier extends StateNotifier<UpdateState> {
-  UpdateNotifier() : super(UpdateState(status: UpdateStatus.initial));
-
+  static const _tag = 'UpdateService';
   final Dio _dio = Dio();
 
   String get _owner => dotenv.env['GITHUB_OWNER'] ?? '';
@@ -137,6 +80,7 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
           latestVersion: latestTag,
           currentVersion: currentVersion,
           downloadUrl: downloadUrl,
+          checksumUrl: _checksumUrl(response.data),
           releaseNotes: releaseNotes,
         );
       } else {
@@ -235,6 +179,15 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
       return linuxAsset?['browser_download_url'];
     }
     return null;
+  }
+
+  String? _checksumUrl(Map<String, dynamic> releaseData) {
+    final assets = releaseData['assets'] as List;
+    final sums = assets.firstWhere(
+      (a) => a['name'] == sha256SumsAssetName,
+      orElse: () => null,
+    );
+    return sums?['browser_download_url'] as String?;
   }
 
   bool _isNewer(String latestTag, String currentName, String currentBuild) {
@@ -363,140 +316,131 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
   }
 
   Future<void> _startWindowsUpdate() async {
-    state = state.copyWith(status: UpdateStatus.downloading, progress: 0);
-
-    Directory? tempDir;
-    File? zipFile;
-
-    try {
-      tempDir = await getTemporaryDirectory();
-      final fileName = state.downloadUrl!.split('/').last;
-      zipFile = File(p.join(tempDir.path, fileName));
-      final cancelToken = CancelToken();
-
-      state = state.copyWith(cancelToken: cancelToken);
-
-      await _dio.download(
-        state.downloadUrl!,
-        zipFile.path,
-        cancelToken: cancelToken,
-        onReceiveProgress: (received, total) {
-          if (total != -1) {
-            state = state.copyWith(progress: (received / total) * 100);
-          }
-        },
-      );
-    } on DioException catch (e) {
-      if (CancelToken.isCancel(e)) {
-        debugPrint('UpdateService: Windows download cancelled');
-        return;
-      }
-      debugPrint('UpdateService: Windows download failed: $e');
-      String errorKey = 'updateNetworkError';
-      if (e.type == DioExceptionType.badResponse &&
-          e.response?.statusCode == 404) {
-        errorKey = 'updateSourceError';
-      }
-      state = state.copyWith(status: UpdateStatus.error, errorKey: errorKey);
-      return;
-    } catch (e) {
-      debugPrint('UpdateService: Windows download unexpected error: $e');
-      state = state.copyWith(
-        status: UpdateStatus.error,
-        errorKey: 'updateFailed',
-      );
+    final checksumUrl = state.checksumUrl;
+    if (checksumUrl == null) {
+      AppLogger.warn(_tag, 'Release has no $sha256SumsAssetName: not updating');
+      _fail('updateIntegrityError');
       return;
     }
+    final appDir = p.dirname(Platform.resolvedExecutable);
+    if (!_canWriteTo(appDir)) {
+      _fail('updateFolderNotWritable');
+      return;
+    }
+    state = state.copyWith(status: UpdateStatus.downloading, progress: 0);
 
     try {
+      final workDir = p.join(
+        (await getTemporaryDirectory()).path,
+        'cinemuse_update',
+      );
+      final zipFile = await _downloadVerifiedZip(workDir, checksumUrl);
       state = state.copyWith(
         status: UpdateStatus.readyToInstall,
         clearCancelToken: true,
       );
-
-      // 1. Extract the ZIP to a temporary "update" folder
-      final extractPath = p.join(tempDir.path, 'cinemuse_update');
-
-      // Clean up any previous failed extraction
-      final dir = Directory(extractPath);
-      if (dir.existsSync()) {
-        dir.deleteSync(recursive: true);
+      await _installAndRestart(zipFile, workDir, appDir);
+    } on DioException catch (e) {
+      if (CancelToken.isCancel(e)) {
+        AppLogger.info(_tag, 'Windows update cancelled');
+        return;
       }
-
-      final bytes = zipFile.readAsBytesSync();
-      final archive = ZipDecoder().decodeBytes(bytes);
-
-      for (final file in archive) {
-        final filename = file.name;
-        if (file.isFile) {
-          final data = file.content as List<int>;
-          File(p.join(extractPath, filename))
-            ..createSync(recursive: true)
-            ..writeAsBytesSync(data);
-        } else {
-          Directory(p.join(extractPath, filename)).createSync(recursive: true);
-        }
-      }
-
-      // 2. Create the .bat script to handle the file swap
-      final currentAppDir = p.dirname(Platform.resolvedExecutable);
-      final exeName = p.basename(Platform.resolvedExecutable);
-      final scriptFile = File(p.join(tempDir.path, 'updater.bat'));
-
-      // Ensure we use backslashes for Windows BAT script
-      final winExtractPath = extractPath.replaceAll('/', '\\');
-      final winAppDir = currentAppDir.replaceAll('/', '\\');
-      final winExePath = p.join(winAppDir, exeName).replaceAll('/', '\\');
-
-      final scriptContent =
-          '''
-@echo off
-setlocal
-:: 1. Self-Elevation Logic
->nul 2>&1 "%SYSTEMROOT%\\system32\\cacls.exe" "%SYSTEMROOT%\\system32\\config\\system"
-if '%errorlevel%' NEQ '0' (
-    echo Requesting Administrator privileges...
-    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\\getadmin.vbs"
-    echo UAC.ShellExecute "%~s0", "", "", "runas", 1 >> "%temp%\\getadmin.vbs"
-    "%temp%\\getadmin.vbs"
-    exit /B
-)
-if exist "%temp%\\getadmin.vbs" ( del "%temp%\\getadmin.vbs" )
-
-echo Waiting for app to close...
-:wait_loop
-tasklist /fi "ImageName eq $exeName" | find /i "$exeName" > nul
-if %errorlevel% == 0 (
-    timeout /t 1 /nobreak > nul
-    goto wait_loop
-)
-
-echo Swapping files...
-xcopy /s /e /y /i "$winExtractPath\\*" "$winAppDir" > "%temp%\\cinemuse_update_log.txt" 2>&1
-if %errorlevel% neq 0 (
-    echo Error during file swap. Check %temp%\\cinemuse_update_log.txt
-    pause
-    exit /B
-)
-
-echo Restarting app...
-start "" "$winExePath"
-
-echo Cleaning up...
-rd /s /q "$winExtractPath"
-del "%~f0"
-''';
-
-      scriptFile.writeAsStringSync(scriptContent);
-
-      // 3. Launch the script and exit
-      await Process.start(scriptFile.path, [], mode: ProcessStartMode.detached);
-      exit(0);
-    } catch (e) {
-      state = state.copyWith(
-        status: UpdateStatus.error,
-        errorKey: 'updateFailed',
-      );
+      AppLogger.warn(_tag, 'Windows update download failed', error: e);
+      final isMissing = e.response?.statusCode == 404;
+      _fail(isMissing ? 'updateSourceError' : 'updateNetworkError');
+    } on ValidationFailure catch (e, st) {
+      AppLogger.error(_tag, 'Windows update refused', error: e, stackTrace: st);
+      _fail('updateIntegrityError');
+    } catch (e, st) {
+      AppLogger.error(_tag, 'Windows update failed', error: e, stackTrace: st);
+      _fail('updateFailed');
     }
+  }
+
+  void _fail(String errorKey) {
+    state = state.copyWith(
+      status: UpdateStatus.error,
+      errorKey: errorKey,
+      clearCancelToken: true,
+    );
+  }
+
+  /// The updater script runs without admin rights (SEC-03), so it can only
+  /// replace an app in a folder the user can write to (not Program Files).
+  bool _canWriteTo(String dir) {
+    final probe = File(p.join(dir, '.cinemuse_update_check'));
+    try {
+      probe.writeAsStringSync('');
+      probe.deleteSync();
+      return true;
+    } on FileSystemException catch (e) {
+      AppLogger.warn(
+        _tag,
+        'App folder is not writable: not updating',
+        error: e,
+      );
+      return false;
+    }
+  }
+
+  /// Downloads the ZIP into a fresh [workDir] and checks it against the
+  /// release's `SHA256SUMS`. Throws a [ValidationFailure] if it doesn't match.
+  Future<File> _downloadVerifiedZip(String workDir, String checksumUrl) async {
+    final dir = Directory(workDir);
+    if (dir.existsSync()) await dir.delete(recursive: true);
+    await dir.create(recursive: true);
+
+    final url = state.downloadUrl!;
+    final assetName = Uri.parse(url).pathSegments.last;
+    final zipFile = File(p.join(workDir, assetName));
+    final cancelToken = CancelToken();
+    state = state.copyWith(cancelToken: cancelToken);
+
+    await _dio.download(
+      url,
+      zipFile.path,
+      cancelToken: cancelToken,
+      onReceiveProgress: (received, total) {
+        if (total != -1) {
+          state = state.copyWith(progress: (received / total) * 100);
+        }
+      },
+    );
+    final sums = await _dio.get<String>(
+      checksumUrl,
+      cancelToken: cancelToken,
+      options: Options(responseType: ResponseType.plain),
+    );
+    await verifyUpdateChecksum(
+      file: zipFile,
+      assetName: assetName,
+      sha256Sums: sums.data ?? '',
+    );
+    return zipFile;
+  }
+
+  /// Extracts the update, starts the script that swaps the files once the
+  /// app has closed, and closes the app.
+  Future<void> _installAndRestart(
+    File zipFile,
+    String workDir,
+    String appDir,
+  ) async {
+    final filesDir = p.join(workDir, 'files');
+    await extractUpdateArchive(zipFile.path, filesDir);
+
+    final script = File(p.join(workDir, 'updater.bat'));
+    await script.writeAsString(
+      buildWindowsUpdaterScript(
+        appPid: pid,
+        sourceDir: filesDir,
+        appDir: appDir,
+        exePath: Platform.resolvedExecutable,
+        workDir: workDir,
+      ),
+    );
+    AppLogger.info(_tag, 'Update verified and extracted, restarting');
+    await Process.start(script.path, [], mode: ProcessStartMode.detached);
+    exit(0);
   }
 }

@@ -178,6 +178,13 @@ jobs:
           path: release-assets
           merge-multiple: true
 
+      # The Windows updater refuses a download that doesn't match this file (SEC-03)
+      - name: Write SHA256SUMS
+        working-directory: release-assets
+        run: |
+          sha256sum * > SHA256SUMS
+          cat SHA256SUMS
+
       - name: List Release Assets
         run: ls -lh release-assets/
 

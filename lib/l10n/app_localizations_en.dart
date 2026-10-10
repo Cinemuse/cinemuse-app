@@ -1428,6 +1428,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateSourceError => 'The update source is currently unavailable.';
 
   @override
+  String get updateIntegrityError =>
+      'The downloaded update could not be verified, so it was not installed.';
+
+  @override
+  String get updateFolderNotWritable =>
+      'Cinemuse can\'t update itself in this folder. Move the Cinemuse folder somewhere you own (for example Documents), or download the update from GitHub.';
+
+  @override
   String get menuMoreOptions => 'More Options';
 
   @override

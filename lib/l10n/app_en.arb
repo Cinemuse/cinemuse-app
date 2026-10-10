@@ -525,6 +525,8 @@
   "updateNetworkError": "Network error during update. Please check your connection.",
   "updateStorageError": "Not enough storage space to download the update.",
   "updateSourceError": "The update source is currently unavailable.",
+  "updateIntegrityError": "The downloaded update could not be verified, so it was not installed.",
+  "updateFolderNotWritable": "Cinemuse can't update itself in this folder. Move the Cinemuse folder somewhere you own (for example Documents), or download the update from GitHub.",
   "menuMoreOptions": "More Options",
   "menuAddToWatchlist": "Add to Watchlist",
   "menuRemoveFromWatchlist": "Remove from Watchlist",

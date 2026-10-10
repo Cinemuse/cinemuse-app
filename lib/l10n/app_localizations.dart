@@ -2648,6 +2648,18 @@ abstract class AppLocalizations {
   /// **'The update source is currently unavailable.'**
   String get updateSourceError;
 
+  /// No description provided for @updateIntegrityError.
+  ///
+  /// In en, this message translates to:
+  /// **'The downloaded update could not be verified, so it was not installed.'**
+  String get updateIntegrityError;
+
+  /// No description provided for @updateFolderNotWritable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cinemuse can\'t update itself in this folder. Move the Cinemuse folder somewhere you own (for example Documents), or download the update from GitHub.'**
+  String get updateFolderNotWritable;
+
   /// No description provided for @menuMoreOptions.
   ///
   /// In en, this message translates to:
