@@ -1,6 +1,6 @@
 class UrlUtils {
-  /// Extracts a clean base URL and optional query parameters from an addon URL.
-  /// Matches PlayTorrioV2 logic for robust Stremio protocol handling.
+  /// Extracts a clean base URL and optional query parameters from an addon URL
+  /// (`stremio://` links, `/manifest.json` endings, `?apikey=…` queries).
   static ({String baseUrl, String? queryParams}) splitStremioUrl(String url) {
     String trimmed = url.trim();
     if (trimmed.startsWith('stremio://')) {
@@ -21,18 +21,14 @@ class UrlUtils {
     return (baseUrl: path, queryParams: query);
   }
 
-  /// Cleans a Stremio manifest URL to extract the base path.
-  static String cleanStremioBaseUrl(String url) {
-    return splitStremioUrl(url).baseUrl;
-  }
-
   /// Replaces encoded characters that Stremio addons usually expect to be literal.
   static String unencodeStremioUrl(String url) {
     return url.replaceAll('%7C', '|');
   }
 
-  /// Basic security check for URLs.
-  static bool isSecureUrl(String url) {
+  /// Whether [url] is an `http` or `https` URL. Plain `http` is allowed on
+  /// purpose: self-hosted Stremio addons often run on a local `http` server.
+  static bool isHttpUrl(String url) {
     return url.startsWith('https://') || url.startsWith('http://');
   }
 }

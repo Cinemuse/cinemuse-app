@@ -16,7 +16,7 @@ class StremioAddonService {
     final baseUrl = parts.baseUrl;
     final queryParams = parts.queryParams;
 
-    if (baseUrl.isEmpty || !UrlUtils.isSecureUrl(baseUrl)) {
+    if (baseUrl.isEmpty || !UrlUtils.isHttpUrl(baseUrl)) {
       throw Exception('Invalid URL format');
     }
 

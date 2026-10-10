@@ -4,7 +4,7 @@ import 'package:cinemuse_app/core/utils/url_utils.dart';
 void main() {
   group('StremioSource URL Cleaning', () {
     test(
-      'UrlUtils.cleanStremioBaseUrl should strip /manifest.json and everything after it',
+      'UrlUtils.splitStremioUrl base URL should strip /manifest.json and everything after it',
       () {
         final testCases = {
           "https://addon.com/manifest.json": "https://addon.com",
@@ -18,7 +18,7 @@ void main() {
         };
 
         testCases.forEach((input, expected) {
-          expect(UrlUtils.cleanStremioBaseUrl(input), equals(expected));
+          expect(UrlUtils.splitStremioUrl(input).baseUrl, equals(expected));
         });
       },
     );

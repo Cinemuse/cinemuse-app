@@ -56,4 +56,46 @@ void main() {
       expect(matches, isFalse);
     });
   });
+
+  group('MediaParser batches (REV-21)', () {
+    test('a codec tag like x265-10bit is not an episode range', () {
+      final result = MediaParser.parse('Show.S01E05.1080p.x265-10bit.mkv');
+      expect(result.isBatch, isFalse);
+    });
+
+    test('a year range is not an episode range', () {
+      final result = MediaParser.parse('Show.1999-2001.Documentary.mkv');
+      expect(result.isBatch, isFalse);
+    });
+
+    test('a file without an episode number does not match every episode', () {
+      final matches = MediaParser.matches(
+        'Some.Show.Pilot.1080p.x265-10bit.mkv',
+        targetSeason: 1,
+        targetEpisode: 6,
+      );
+      expect(matches, isFalse);
+    });
+
+    test('a real episode range is still a batch and matches inside it', () {
+      const name = '[Group] Show (01-26) [1080p]';
+      expect(MediaParser.parse(name).isBatch, isTrue);
+      expect(MediaParser.matches(name, targetAbsoluteEpisode: 13), isTrue);
+      expect(MediaParser.matches(name, targetAbsoluteEpisode: 27), isFalse);
+    });
+  });
+
+  group('MediaParser years (REV-21)', () {
+    test('a year is not an absolute episode', () {
+      final result = MediaParser.parse('Show.2019.S01E05.1080p.mkv');
+      expect(result.absoluteEpisode, isNull);
+      expect(result.season, 1);
+      expect(result.episode, 5);
+    });
+
+    test('an episode number after the year is still found', () {
+      final result = MediaParser.parse('[Group] Show (2019) - 07 [1080p]');
+      expect(result.absoluteEpisode, 7);
+    });
+  });
 }

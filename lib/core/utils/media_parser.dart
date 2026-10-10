@@ -1,53 +1,41 @@
 class MediaParser {
+  // Built once: the parser runs for every file of every torrent.
+  static final _seasonEpisode = RegExp(r's(\d{1,2})\s?e(\d{1,3})');
+  static final _crossFormat = RegExp(r'(\d{1,2})x(\d{1,3})');
+  static final _absolutePatterns = [
+    RegExp(r'\s-\s(\d{2,4})\b'), // " - 01 "
+    RegExp(r'episode\s+(\d{1,4})\b'), // "episode 01"
+    RegExp(r'\[(\d{2,4})\]'), // "[01]"
+    RegExp(r'\b(\d{2,4})\b'), // " 01 " (least specific)
+  ];
+  static final _seasonRange = RegExp(r's\d{1,2}\s?-\s?s\d{1,2}');
+  // Word boundaries so codec tags (x265-10bit) and years (1999-2001) don't
+  // count as episode ranges.
+  static final _episodeRange = RegExp(r'\b(\d{1,3})\s?-\s?(\d{1,3})\b');
+
   /// Result of parsing a filename for media information.
   /// Includes season, episode, and absolute episode numbers.
   static MediaParseResult parse(String filename) {
     final t = filename.toLowerCase();
     int? season;
     int? episode;
-    int? absoluteEpisode;
 
     // 1. Try to find Season and Episode (SxxExx or SxEx)
-    final seMatch = RegExp(
-      r's(\d{1,2})\s?e(\d{1,3})',
-      caseSensitive: false,
-    ).firstMatch(t);
+    final seMatch = _seasonEpisode.firstMatch(t);
     if (seMatch != null) {
       season = int.tryParse(seMatch.group(1)!);
       episode = int.tryParse(seMatch.group(2)!);
     } else {
       // 2. Try X format (1x01)
-      final xMatch = RegExp(
-        r'(\d{1,2})x(\d{1,3})',
-        caseSensitive: false,
-      ).firstMatch(t);
+      final xMatch = _crossFormat.firstMatch(t);
       if (xMatch != null) {
         season = int.tryParse(xMatch.group(1)!);
         episode = int.tryParse(xMatch.group(2)!);
       }
     }
 
-    // 3. Try Absolute Episode Patterns (common in anime)
-    // - 01 (standalone if not SxEx)
-    // - Episode 01
-    // - - 01
-    // - [01]
-
-    // We only look for absolute episode if season/episode wasn't found or as a fallback
-    final absPatterns = [
-      RegExp(r'\s-\s(\d{2,4})\b'), // " - 01 "
-      RegExp(r'episode\s+(\d{1,4})\b'), // "episode 01"
-      RegExp(r'\[(\d{2,4})\]'), // "[01]"
-      RegExp(r'\b(\d{2,4})\b'), // " 01 " (least specific)
-    ];
-
-    for (final pattern in absPatterns) {
-      final match = pattern.firstMatch(t);
-      if (match != null) {
-        absoluteEpisode = int.tryParse(match.group(1)!);
-        break;
-      }
-    }
+    // 3. Absolute episode (common in anime): " - 01", "episode 01", "[01]", " 01 "
+    final absoluteEpisode = _findAbsoluteEpisode(t);
 
     // If we only found an absolute episode and no season,
     // it's often the "episode" for season 1 or a continuous release.
@@ -61,8 +49,8 @@ class MediaParser {
         t.contains('complete') ||
         t.contains('collection') ||
         t.contains('pack') ||
-        RegExp(r's\d{1,2}\s?-\s?s\d{1,2}', caseSensitive: false).hasMatch(t) ||
-        RegExp(r'\d{1,3}\s?-\s?\d{1,3}', caseSensitive: false).hasMatch(t);
+        _seasonRange.hasMatch(t) ||
+        _findEpisodeRange(t) != null;
 
     return MediaParseResult(
       season: season,
@@ -70,6 +58,30 @@ class MediaParser {
       absoluteEpisode: absoluteEpisode,
       isBatch: isBatch,
     );
+  }
+
+  static int? _findAbsoluteEpisode(String text) {
+    for (final pattern in _absolutePatterns) {
+      for (final match in pattern.allMatches(text)) {
+        final number = int.parse(match.group(1)!);
+        if (!_looksLikeYear(number)) return number;
+      }
+    }
+    return null;
+  }
+
+  // No show has reached episode 1900, so these numbers are release years.
+  static bool _looksLikeYear(int number) => number >= 1900 && number <= 2099;
+
+  /// The first "start-end" episode range, such as `01-26`. A range that
+  /// goes backwards (`100 - 05`) is not one.
+  static ({int start, int end})? _findEpisodeRange(String text) {
+    for (final match in _episodeRange.allMatches(text)) {
+      final start = int.parse(match.group(1)!);
+      final end = int.parse(match.group(2)!);
+      if (start < end) return (start: start, end: end);
+    }
+    return null;
   }
 
   /// Checks if a filename matches a specific season and episode target.
@@ -96,23 +108,17 @@ class MediaParser {
 
       // If it has an episode but it's different, it might be the start of the batch (e.g. 01-26)
       // Check for range patterns
-      final rangeMatch = RegExp(
-        r'(\d{1,3})\s?-\s?(\d{1,3})',
-      ).firstMatch(filename);
-      if (rangeMatch != null) {
-        final start = int.tryParse(rangeMatch.group(1)!);
-        final end = int.tryParse(rangeMatch.group(2)!);
-        if (start != null && end != null) {
-          if (targetAbsoluteEpisode != null &&
-              targetAbsoluteEpisode >= start &&
-              targetAbsoluteEpisode <= end) {
-            return true;
-          }
-          if (targetEpisode != null &&
-              targetEpisode >= start &&
-              targetEpisode <= end) {
-            return true;
-          }
+      final range = _findEpisodeRange(filename.toLowerCase());
+      if (range != null) {
+        if (targetAbsoluteEpisode != null &&
+            targetAbsoluteEpisode >= range.start &&
+            targetAbsoluteEpisode <= range.end) {
+          return true;
+        }
+        if (targetEpisode != null &&
+            targetEpisode >= range.start &&
+            targetEpisode <= range.end) {
+          return true;
         }
       }
 

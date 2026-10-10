@@ -20,11 +20,9 @@ class MimeResolver {
     // 2. Protocol & Extension Pattern Matching
 
     // HLS (Most common for Live and Web streams)
-    if (path.endsWith('.m3u8') ||
+    if (path.contains('m3u8') ||
         lowerUrl.contains('protocol=hls') ||
-        lowerUrl.contains('.hls') ||
-        path.contains('/m3u8') ||
-        path.contains('m3u8')) {
+        lowerUrl.contains('.hls')) {
       return 'application/x-mpegURL';
     }
 
