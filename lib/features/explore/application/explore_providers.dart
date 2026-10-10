@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/core/error/error_service.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import '../presentation/widgets/explore_filters.dart';
 import '../presentation/widgets/media_type_selector.dart';
@@ -72,6 +73,11 @@ class ExploreResultsNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
     try {
       final nextResults = await _fetch();
       state = AsyncValue.data([...state.value ?? [], ...nextResults]);
+    } catch (e, st) {
+      // Keep the results shown and step back, so the next scroll retries
+      // this page; the toast tells the user it failed.
+      _currentPage--;
+      ref.read(errorServiceProvider.notifier).handle(e, stackTrace: st);
     } finally {
       _isFetching = false;
     }

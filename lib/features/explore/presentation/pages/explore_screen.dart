@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 import '../../../../core/presentation/theme/app_theme.dart';
 import '../../application/explore_providers.dart';
 import '../widgets/media_type_selector.dart';
@@ -383,11 +384,24 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                     padding: EdgeInsets.symmetric(
                       horizontal: horizontalPadding,
                     ),
-                    child: Text(
-                      '${l10n.commonError}: $err',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          ref.watch(errorMapperProvider).map(err).message,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          autofocus: true,
+                          onPressed: () =>
+                              ref.invalidate(exploreResultsProvider),
+                          child: Text(l10n.commonRetry),
+                        ),
+                      ],
                     ),
                   ),
                 ),

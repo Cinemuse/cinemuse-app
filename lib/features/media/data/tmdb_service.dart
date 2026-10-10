@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:cinemuse_app/core/application/locale_service.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +15,14 @@ final tmdbServiceProvider = Provider<TmdbService>((ref) {
   return TmdbService(ref.read(dioProvider), language);
 });
 
+/// Talks to the TMDB API.
+///
+/// Lists (search, Explore, popular, trending) throw an [AppFailure] when TMDB
+/// can't answer. The single-item lookups still return `null` on any error
+/// (see `_getOrNull`).
 class TmdbService {
+  static const _tag = 'TmdbService';
+
   final Dio _dio;
   final String _language;
   final String _baseUrl = 'https://api.themoviedb.org/3';
@@ -21,6 +30,59 @@ class TmdbService {
   TmdbService(this._dio, this._language);
 
   String get _apiKey => dotenv.env['TMDB_API_KEY'] ?? '';
+
+  /// GETs [path] and returns the decoded body. Any Dio error becomes an
+  /// [AppFailure] whose message names the path but never the API key.
+  Future<dynamic> _get(String path, [Map<String, dynamic>? query]) async {
+    try {
+      final res = await _dio.get(
+        '$_baseUrl$path',
+        queryParameters: {'api_key': _apiKey, ...?query},
+      );
+      return res.data;
+    } on DioException catch (e, st) {
+      throw _failureFrom(e, st, path);
+    }
+  }
+
+  static AppFailure _failureFrom(DioException e, StackTrace st, String path) {
+    final status = e.response?.statusCode;
+    final message = 'TMDB GET $path failed (${e.type.name}, status $status)';
+    return switch (e.type) {
+      DioExceptionType.badResponse when status == 404 => NotFoundFailure(
+        message,
+        cause: e,
+        stackTrace: st,
+      ),
+      DioExceptionType.badResponse => ServerFailure(
+        message,
+        statusCode: status,
+        cause: e,
+        stackTrace: st,
+      ),
+      DioExceptionType.cancel => UnknownFailure(
+        message,
+        cause: e,
+        stackTrace: st,
+      ),
+      _ => NetworkFailure(message, cause: e, stackTrace: st),
+    };
+  }
+
+  /// Like [_get], but returns `null` on any failure, after logging it.
+  // TODO(REV-30): callers still read null as "not found", so offline looks
+  // like a missing title. Throw instead once they handle errors: Continue
+  // Watching (REV-68), watch history (8j), player progress (8m).
+  Future<dynamic> _getOrNull(String path, [Map<String, dynamic>? query]) async {
+    try {
+      return await _get(path, query);
+    } on NotFoundFailure {
+      return null;
+    } on AppFailure catch (e) {
+      AppLogger.warn(_tag, '${e.message}, returning null');
+      return null;
+    }
+  }
 
   static const int _maxCachedEntries = 50;
   static const Duration _cacheTtl = Duration(minutes: 15);
@@ -68,11 +130,10 @@ class TmdbService {
       // Handle IMDB ID conversion if needed
       String tmdbId = id;
       if (id.startsWith('tt')) {
-        final findRes = await _dio.get(
-          '$_baseUrl/find/$id',
-          queryParameters: {'api_key': _apiKey, 'external_source': 'imdb_id'},
-        );
-        final data = findRes.data;
+        final data = await _getOrNull('/find/$id', {
+          'external_source': 'imdb_id',
+        });
+        if (data == null) return null;
         if (normalizedType == 'movie' && data['movie_results'].isNotEmpty) {
           tmdbId = data['movie_results'][0]['id'].toString();
         } else if (normalizedType == 'tv' && data['tv_results'].isNotEmpty) {
@@ -82,18 +143,12 @@ class TmdbService {
         }
       }
 
-      final res = await _dio.get(
-        '$_baseUrl/$normalizedType/$tmdbId',
-        queryParameters: {
-          'api_key': _apiKey,
-          'language': _language,
-          'append_to_response':
-              'credits,videos,similar,recommendations,external_ids,translations,reviews,images',
-          'include_image_language': 'en,it,null',
-        },
-      );
-
-      final data = res.data;
+      final data = await _getOrNull('/$normalizedType/$tmdbId', {
+        'language': _language,
+        'append_to_response':
+            'credits,videos,similar,recommendations,external_ids,translations,reviews,images',
+        'include_image_language': 'en,it,null',
+      });
       if (data != null && data is Map<String, dynamic>) {
         if (_detailsCache.length >= _maxCachedEntries) {
           _detailsCache.remove(_detailsCache.keys.first);
@@ -101,8 +156,6 @@ class TmdbService {
         _detailsCache[cacheKey] = _CachedMediaDetails(data, DateTime.now());
         return data;
       }
-      return null;
-    } catch (e) {
       return null;
     } finally {
       // remove() hands back the stored in-flight Future (this very request):
@@ -115,40 +168,21 @@ class TmdbService {
     int tmdbId,
     int seasonNumber,
   ) async {
-    try {
-      final res = await _dio.get(
-        '$_baseUrl/tv/$tmdbId/season/$seasonNumber',
-        queryParameters: {'api_key': _apiKey, 'language': _language},
-      );
-      return res.data;
-    } catch (e) {
-      return null;
-    }
+    return await _getOrNull('/tv/$tmdbId/season/$seasonNumber', {
+      'language': _language,
+    });
   }
 
   Future<Map<String, dynamic>?> getCollectionDetails(int collectionId) async {
-    try {
-      final res = await _dio.get(
-        '$_baseUrl/collection/$collectionId',
-        queryParameters: {'api_key': _apiKey, 'language': _language},
-      );
-      return res.data;
-    } catch (e) {
-      return null;
-    }
+    return await _getOrNull('/collection/$collectionId', {
+      'language': _language,
+    });
   }
 
   Future<String?> getImdbId(int tmdbId, String type) async {
     final endpoint = type == 'movie' ? 'movie' : 'tv';
-    try {
-      final res = await _dio.get(
-        '$_baseUrl/$endpoint/$tmdbId/external_ids',
-        queryParameters: {'api_key': _apiKey},
-      );
-      return res.data['imdb_id'] as String?;
-    } catch (e) {
-      return null;
-    }
+    final data = await _getOrNull('/$endpoint/$tmdbId/external_ids');
+    return data?['imdb_id'] as String?;
   }
 
   Future<String?> getEpisodeImdbId(
@@ -156,24 +190,16 @@ class TmdbService {
     int seasonNumber,
     int episodeNumber,
   ) async {
-    try {
-      final res = await _dio.get(
-        '$_baseUrl/tv/$showId/season/$seasonNumber/episode/$episodeNumber/external_ids',
-        queryParameters: {'api_key': _apiKey},
-      );
-      return res.data['imdb_id'] as String?;
-    } catch (e) {
-      return null;
-    }
+    final data = await _getOrNull(
+      '/tv/$showId/season/$seasonNumber/episode/$episodeNumber/external_ids',
+    );
+    return data?['imdb_id'] as String?;
   }
 
   // Trending & Popular
   Future<List<MediaItem>> getTrending() async {
-    final res = await _dio.get(
-      '$_baseUrl/trending/all/week',
-      queryParameters: {'api_key': _apiKey, 'language': _language},
-    );
-    final results = List<Map<String, dynamic>>.from(res.data['results']);
+    final data = await _get('/trending/all/week', {'language': _language});
+    final results = List<Map<String, dynamic>>.from(data['results']);
     return results
         .where((item) => item['media_type'] != 'person')
         .map(MediaItem.fromTmdbMap)
@@ -181,22 +207,16 @@ class TmdbService {
   }
 
   Future<List<MediaItem>> getPopularMovies() async {
-    final res = await _dio.get(
-      '$_baseUrl/movie/popular',
-      queryParameters: {'api_key': _apiKey, 'language': _language},
-    );
-    final results = List<Map<String, dynamic>>.from(res.data['results']);
+    final data = await _get('/movie/popular', {'language': _language});
+    final results = List<Map<String, dynamic>>.from(data['results']);
     return results
         .map((item) => MediaItem.fromTmdbMap({...item, 'media_type': 'movie'}))
         .toList();
   }
 
   Future<List<MediaItem>> getPopularSeries() async {
-    final res = await _dio.get(
-      '$_baseUrl/tv/popular',
-      queryParameters: {'api_key': _apiKey, 'language': _language},
-    );
-    final results = List<Map<String, dynamic>>.from(res.data['results']);
+    final data = await _get('/tv/popular', {'language': _language});
+    final results = List<Map<String, dynamic>>.from(data['results']);
     return results
         .map((item) => MediaItem.fromTmdbMap({...item, 'media_type': 'tv'}))
         .toList();
@@ -206,23 +226,14 @@ class TmdbService {
     String query, {
     int page = 1,
   }) async {
-    try {
-      if (query.isEmpty) return [];
-      final res = await _dio.get(
-        '$_baseUrl/search/multi',
-        queryParameters: {
-          'api_key': _apiKey,
-          'language': _language,
-          'query': query,
-          'include_adult': false,
-          'page': page,
-        },
-      );
-      final results = List<Map<String, dynamic>>.from(res.data['results']);
-      return results;
-    } catch (e) {
-      return [];
-    }
+    if (query.isEmpty) return [];
+    final data = await _get('/search/multi', {
+      'language': _language,
+      'query': query,
+      'include_adult': false,
+      'page': page,
+    });
+    return List<Map<String, dynamic>>.from(data['results']);
   }
 
   Future<Map<String, dynamic>> discover({
@@ -242,98 +253,60 @@ class TmdbService {
     List<int>? watchProviders,
     String? watchRegion,
   }) async {
-    try {
-      final queryParams = <String, dynamic>{
-        'api_key': _apiKey,
-        'page': page,
-        'language': _language,
-        'include_adult': false,
-        'sort_by': sortBy ?? 'popularity.desc',
-      };
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'language': _language,
+      'include_adult': false,
+      'sort_by': sortBy ?? 'popularity.desc',
+    };
 
-      if (genres != null && genres.isNotEmpty) {
-        queryParams['with_genres'] = genres.join(',');
-      }
-      if (languages != null && languages.isNotEmpty) {
-        queryParams['with_original_language'] = languages.join('|');
-      }
-      if (minRating != null) queryParams['vote_average.gte'] = minRating;
-      if (maxRating != null) queryParams['vote_average.lte'] = maxRating;
-      if (minVotes != null) queryParams['vote_count.gte'] = minVotes;
-      if (maxVotes != null) queryParams['vote_count.lte'] = maxVotes;
-      if (minRuntime != null) queryParams['with_runtime.gte'] = minRuntime;
-      if (maxRuntime != null) queryParams['with_runtime.lte'] = maxRuntime;
-
-      if (watchProviders != null && watchProviders.isNotEmpty) {
-        queryParams['with_watch_providers'] = watchProviders.join('|');
-        queryParams['watch_region'] = watchRegion ?? 'IT';
-      }
-
-      final dateField = type == 'movie'
-          ? 'primary_release_date'
-          : 'first_air_date';
-      if (minYear != null) queryParams['$dateField.gte'] = '$minYear-01-01';
-      if (maxYear != null) queryParams['$dateField.lte'] = '$maxYear-12-31';
-
-      final res = await _dio.get(
-        '$_baseUrl/discover/$type',
-        queryParameters: queryParams,
-      );
-      return res.data;
-    } catch (e) {
-      return {'results': [], 'total_pages': 0};
+    if (genres != null && genres.isNotEmpty) {
+      queryParams['with_genres'] = genres.join(',');
     }
+    if (languages != null && languages.isNotEmpty) {
+      queryParams['with_original_language'] = languages.join('|');
+    }
+    if (minRating != null) queryParams['vote_average.gte'] = minRating;
+    if (maxRating != null) queryParams['vote_average.lte'] = maxRating;
+    if (minVotes != null) queryParams['vote_count.gte'] = minVotes;
+    if (maxVotes != null) queryParams['vote_count.lte'] = maxVotes;
+    if (minRuntime != null) queryParams['with_runtime.gte'] = minRuntime;
+    if (maxRuntime != null) queryParams['with_runtime.lte'] = maxRuntime;
+
+    if (watchProviders != null && watchProviders.isNotEmpty) {
+      queryParams['with_watch_providers'] = watchProviders.join('|');
+      queryParams['watch_region'] = watchRegion ?? 'IT';
+    }
+
+    final dateField = type == 'movie'
+        ? 'primary_release_date'
+        : 'first_air_date';
+    if (minYear != null) queryParams['$dateField.gte'] = '$minYear-01-01';
+    if (maxYear != null) queryParams['$dateField.lte'] = '$maxYear-12-31';
+
+    return await _get('/discover/$type', queryParams);
   }
 
   Future<Map<String, dynamic>?> getPersonDetails(int id) async {
-    try {
-      final res = await _dio.get(
-        '$_baseUrl/person/$id',
-        queryParameters: {
-          'api_key': _apiKey,
-          'language': _language,
-          'append_to_response': 'combined_credits,external_ids,images',
-        },
-      );
-      return res.data;
-    } catch (e) {
-      return null;
-    }
+    return await _getOrNull('/person/$id', {
+      'language': _language,
+      'append_to_response': 'combined_credits,external_ids,images',
+    });
   }
 
   Future<Map<String, dynamic>> getPopularPersons(int page) async {
-    try {
-      final res = await _dio.get(
-        '$_baseUrl/person/popular',
-        queryParameters: {
-          'api_key': _apiKey,
-          'page': page,
-          'language': _language,
-        },
-      );
-      return res.data;
-    } catch (e) {
-      return {'results': [], 'total_pages': 0};
-    }
+    return await _get('/person/popular', {'page': page, 'language': _language});
   }
 
   Future<List<Map<String, dynamic>>> getWatchProviders(
     String type,
     String region,
   ) async {
-    try {
-      final res = await _dio.get(
-        '$_baseUrl/watch/providers/${type == 'series' ? 'tv' : 'movie'}',
-        queryParameters: {
-          'api_key': _apiKey,
-          'watch_region': region,
-          'language': _language,
-        },
-      );
-      return List<Map<String, dynamic>>.from(res.data['results']);
-    } catch (e) {
-      return [];
-    }
+    final data = await _get(
+      '/watch/providers/${type == 'series' ? 'tv' : 'movie'}',
+      {'watch_region': region, 'language': _language},
+    );
+    return List<Map<String, dynamic>>.from(data['results']);
   }
 }
 
