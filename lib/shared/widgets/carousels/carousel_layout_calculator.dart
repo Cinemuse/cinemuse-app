@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 
 /// Holds the computed layout dimensions for carousel cards.
 class CarouselDimensions {
@@ -30,8 +31,8 @@ class CarouselDimensions {
 class CarouselLayoutCalculator {
   const CarouselLayoutCalculator._();
 
-  /// Mobile breakpoint consistent with Cinemuse theme conventions.
-  static const double mobileBreakpoint = 600.0;
+  /// Below this width carousels use the phone sizes.
+  static const double mobileBreakpoint = Breakpoints.compact;
 
   /// Default desktop dimensions for poster carousels.
   static const double defaultPosterWidthDesktop = 200.0;

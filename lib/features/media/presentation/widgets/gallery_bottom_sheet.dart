@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/fullscreen_image_viewer.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
@@ -48,7 +49,7 @@ class GalleryBottomSheet extends StatelessWidget {
   String _getImageUrl(String path, String size) {
     if (path.isEmpty) return '';
     if (path.startsWith('http')) return path;
-    return 'https://image.tmdb.org/t/p/$size$path';
+    return TmdbImageHelper.sizedUrl(path, size);
   }
 
   void _openFullscreenViewer(

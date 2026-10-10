@@ -7,7 +7,14 @@ abstract final class Breakpoints {
   /// Below this width the app uses the phone layout (bottom bar).
   static const double compact = 600;
 
+  /// From this width up, TMDB images are loaded in a bigger size.
+  static const double large = 1200;
+
   /// Whether the current window is narrower than [compact].
   static bool isCompact(BuildContext context) =>
       MediaQuery.sizeOf(context).width < compact;
+
+  /// Whether the current window is at least [large] wide.
+  static bool isLarge(BuildContext context) =>
+      MediaQuery.sizeOf(context).width >= large;
 }

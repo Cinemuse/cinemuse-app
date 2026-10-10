@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:flutter/material.dart';
 
 class AppTheme {
@@ -255,8 +256,8 @@ class AppTheme {
   }
 
   static double getResponsiveHorizontalPadding(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    if (width < 600) return 16;
+    final width = MediaQuery.sizeOf(context).width;
+    if (width < Breakpoints.compact) return 16;
     return width * 0.05;
   }
 

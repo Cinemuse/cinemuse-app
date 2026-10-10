@@ -5,6 +5,7 @@ import 'package:cinemuse_app/core/services/updates/update_service.dart';
 import 'package:cinemuse_app/core/services/updates/update_state.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'dart:io';
 
@@ -114,7 +115,7 @@ class UpdateOverlay extends ConsumerWidget {
       );
     }
 
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isMobile = Breakpoints.isCompact(context);
     final double topOffset = isMobile
         ? (MediaQuery.of(context).padding.top + 60.0)
         : 80.0;

@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:flutter/widgets.dart';
 
 /// Centralized TMDB image URL builder with responsive sizing.
@@ -69,10 +70,11 @@ class TmdbImageHelper {
   /// Always original (user is zooming in).
   static String? originalUrl(String? path) {
     if (path == null) return null;
-    return '$_base/original$path';
+    return sizedUrl(path, 'original');
   }
 
-  static bool _isDesktop(BuildContext context) {
-    return MediaQuery.of(context).size.width >= 1200;
-  }
+  /// The image at a TMDB [size] chosen by the caller (`w500`, `original`, …).
+  static String sizedUrl(String path, String size) => '$_base/$size$path';
+
+  static bool _isDesktop(BuildContext context) => Breakpoints.isLarge(context);
 }
