@@ -141,8 +141,17 @@ class WatchHistoryRepository {
         )
         .withAppFailure();
     invalidateWatchLogsCache();
+    await _cacheReturnedRow(userId, tmdbId, mediaType, rows);
+  }
 
-    // The RPC returns the title's row as it is now (none = no row left).
+  /// Copies the title's row returned by an RPC into the local cache
+  /// (no row = the title has none left).
+  Future<void> _cacheReturnedRow(
+    String userId,
+    int tmdbId,
+    String mediaType,
+    dynamic rows,
+  ) async {
     final row = (rows as List).firstOrNull as Map<String, dynamic>?;
     if (row == null) {
       await _db.deleteWatchHistoryItem(userId, tmdbId, mediaType);
@@ -673,42 +682,27 @@ class WatchHistoryRepository {
     return Future.wait(futures);
   }
 
+  /// Removes the newest watch of a movie. Throws an [AppFailure].
   Future<void> deleteLatestMovieLog({
     required String userId,
     required int tmdbId,
-  }) async {
-    final response = await _client
-        .from('watch_logs')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId)
-        .eq('media_type', 'movie')
-        .order('logged_at', ascending: false)
-        .limit(1)
-        .maybeSingle();
+  }) => _undoWatch(
+    userId: userId,
+    tmdbId: tmdbId,
+    mediaType: 'movie',
+    onlyLatest: true,
+  );
 
-    if (response != null && response['id'] != null) {
-      await _client.from('watch_logs').delete().eq('id', response['id']);
-
-      await _syncLogHistory(userId, tmdbId, 'movie');
-      invalidateWatchLogsCache();
-    }
-  }
-
+  /// Removes every watch of a movie. Throws an [AppFailure].
   Future<void> deleteAllMovieLogs({
     required String userId,
     required int tmdbId,
-  }) async {
-    await _client
-        .from('watch_logs')
-        .delete()
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId)
-        .eq('media_type', 'movie');
-
-    await _syncLogHistory(userId, tmdbId, 'movie');
-    invalidateWatchLogsCache();
-  }
+  }) => _undoWatch(
+    userId: userId,
+    tmdbId: tmdbId,
+    mediaType: 'movie',
+    onlyLatest: false,
+  );
 
   Future<void> logMovieWatch({
     required String userId,
@@ -766,110 +760,62 @@ class WatchHistoryRepository {
     );
   }
 
+  /// Removes the newest watch of an episode. Throws an [AppFailure].
   Future<void> deleteLatestEpisodeLog({
     required String userId,
     required int tmdbId,
     required int season,
     required int episode,
-  }) async {
-    // 1. Get the latest log ID for this specific episode
-    final response = await _client
-        .from('watch_logs')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId)
-        .eq('season', season)
-        .eq('episode', episode)
-        .order('logged_at', ascending: false)
-        .limit(1)
-        .maybeSingle();
+  }) => _undoWatch(
+    userId: userId,
+    tmdbId: tmdbId,
+    mediaType: 'tv',
+    season: season,
+    episode: episode,
+    onlyLatest: true,
+  );
 
-    if (response != null && response['id'] != null) {
-      // 2. Delete that specific log entry
-      await _client.from('watch_logs').delete().eq('id', response['id']);
-
-      // 3. Manually sync history since trigger handles inserts but maybe not deletions
-      await _syncLogHistory(userId, tmdbId, 'tv');
-      invalidateWatchLogsCache();
-    }
-  }
-
+  /// Removes every watch of an episode. Throws an [AppFailure].
   Future<void> deleteAllEpisodeLogs({
     required String userId,
     required int tmdbId,
     required int season,
     required int episode,
+  }) => _undoWatch(
+    userId: userId,
+    tmdbId: tmdbId,
+    mediaType: 'tv',
+    season: season,
+    episode: episode,
+    onlyLatest: false,
+  );
+
+  /// Calls the `undo_watch` RPC, which removes the logs and fixes the title's
+  /// row in one transaction, then copies that row into the local cache.
+  /// [season] / [episode] null = every log of the title. Throws an
+  /// [AppFailure].
+  Future<void> _undoWatch({
+    required String userId,
+    required int tmdbId,
+    required String mediaType,
+    int? season,
+    int? episode,
+    required bool onlyLatest,
   }) async {
-    await _client
-        .from('watch_logs')
-        .delete()
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId)
-        .eq('season', season)
-        .eq('episode', episode);
-
-    await _syncLogHistory(userId, tmdbId, 'tv');
+    final rows = await _client
+        .rpc(
+          'undo_watch',
+          params: {
+            'p_tmdb_id': tmdbId,
+            'p_media_type': mediaType,
+            'p_season': season,
+            'p_episode': episode,
+            'p_only_latest': onlyLatest,
+          },
+        )
+        .withAppFailure();
     invalidateWatchLogsCache();
-  }
-
-  /// Helper to ensure watch_history table stays in sync after deletions
-  Future<void> _syncLogHistory(
-    String userId,
-    int tmdbId,
-    String mediaType,
-  ) async {
-    // 1. Remote: Find the new "latest" log
-    final latest = await _client
-        .from('watch_logs')
-        .select()
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId)
-        .eq('media_type', mediaType)
-        .order('logged_at', ascending: false)
-        .limit(1)
-        .maybeSingle();
-
-    // 2. Clear history for this show/movie first (Remote & Local)
-    // This removes any "ghost" entries (e.g. the one we just untracked)
-    await _client.from('watch_history').delete().match({
-      'user_id': userId,
-      'tmdb_id': tmdbId,
-      'media_type': mediaType,
-    });
-    await _db.deleteWatchHistoryItem(userId, tmdbId, mediaType);
-
-    if (latest != null) {
-      // Revert history to this latest log
-      final dateStr = latest['logged_at'];
-      final date = dateStr != null ? DateTime.parse(dateStr) : DateTime.now();
-
-      final historyUpdate = {
-        'user_id': userId,
-        'tmdb_id': tmdbId,
-        'media_type': mediaType,
-        'season': latest['season'],
-        'episode': latest['episode'],
-        'last_watched_at': dateStr,
-        'status': 'watching',
-      };
-
-      await _client.from('watch_history').upsert(historyUpdate);
-
-      // Update local DB
-      await _db.upsertWatchHistory(
-        LocalWatchHistoriesCompanion(
-          userId: Value(userId),
-          tmdbId: Value(tmdbId),
-          mediaType: Value(mediaType),
-          status: const Value('watching'),
-          progressSeconds: const Value(0),
-          totalDuration: const Value(0),
-          season: Value(latest['season'] as int? ?? 0),
-          episode: Value(latest['episode'] as int? ?? 0),
-          lastWatchedAt: Value(date),
-        ),
-      );
-    }
+    await _cacheReturnedRow(userId, tmdbId, mediaType, rows);
   }
 
   Future<void> logMultipleEpisodes({
@@ -1092,21 +1038,16 @@ class WatchHistoryRepository {
     }
   }
 
+  /// Removes every watch of a series. Throws an [AppFailure].
   Future<void> deleteAllSeriesLogs({
     required String userId,
     required int tmdbId,
-  }) async {
-    await _client
-        .from('watch_logs')
-        .delete()
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId)
-        .eq('media_type', 'tv');
-
-    // Also clear from watch_history (sync will handle it since no logs left)
-    await _syncLogHistory(userId, tmdbId, 'tv');
-    invalidateWatchLogsCache();
-  }
+  }) => _undoWatch(
+    userId: userId,
+    tmdbId: tmdbId,
+    mediaType: 'tv',
+    onlyLatest: false,
+  );
 
   Future<void> cancelRewatch(
     String userId,

@@ -161,6 +161,9 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
         season: season,
         episode: episode,
       );
+      // An undo can turn a dropped show back into "watching" (REV-226).
+      ref.invalidate(droppedListProvider);
+      ref.invalidate(continueWatchingProvider);
     } catch (e, stack) {
       _rollbackSeriesOptimistic(tmdbId, 'deleteLatestEpisodeLog', e, stack);
       rethrow;
