@@ -393,48 +393,40 @@ class _PersonDetailsContent extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        MouseRegion(
-                          cursor: SystemMouseCursors.click,
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: onShowMore,
-                            child: HoverScale(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 15,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.textWhite.withValues(
-                                    alpha: 0.08,
-                                  ),
-                                  borderRadius: AppTheme.radius12,
-                                  border: Border.all(
-                                    color: AppTheme.textWhite.withValues(
-                                      alpha: 0.05,
-                                    ),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      LucideIcons.plus,
-                                      color: AppTheme.textWhite,
-                                      size: 18,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      l10n.personShowMore.toUpperCase(),
-                                      style: const TextStyle(
-                                        color: AppTheme.textWhite,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                        HoverScale(
+                          onTap: onShowMore,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 15,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.textWhite.withValues(alpha: 0.08),
+                              borderRadius: AppTheme.radius12,
+                              border: Border.all(
+                                color: AppTheme.textWhite.withValues(
+                                  alpha: 0.05,
                                 ),
                               ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  LucideIcons.plus,
+                                  color: AppTheme.textWhite,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  l10n.personShowMore.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: AppTheme.textWhite,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

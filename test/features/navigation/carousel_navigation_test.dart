@@ -35,7 +35,10 @@ void main() {
                   return SizedBox(
                     width: 100,
                     height: 150,
-                    child: DpadFocusable(child: Text('Card $index')),
+                    child: DpadFocusable(
+                      onTap: _noop,
+                      child: Text('Card $index'),
+                    ),
                   );
                 },
               ),
@@ -81,7 +84,10 @@ void main() {
                       return SizedBox(
                         width: 100,
                         height: 150,
-                        child: DpadFocusable(child: Text('Row1 Card $index')),
+                        child: DpadFocusable(
+                          onTap: _noop,
+                          child: Text('Row1 Card $index'),
+                        ),
                       );
                     },
                   ),
@@ -93,7 +99,10 @@ void main() {
                       return SizedBox(
                         width: 100,
                         height: 150,
-                        child: DpadFocusable(child: Text('Row2 Card $index')),
+                        child: DpadFocusable(
+                          onTap: _noop,
+                          child: Text('Row2 Card $index'),
+                        ),
                       );
                     },
                   ),
@@ -177,7 +186,10 @@ void main() {
                     return SizedBox(
                       width: 100,
                       height: 150,
-                      child: DpadFocusable(child: Text('Row1 Card $index')),
+                      child: DpadFocusable(
+                        onTap: _noop,
+                        child: Text('Row1 Card $index'),
+                      ),
                     );
                   },
                 ),
@@ -189,7 +201,10 @@ void main() {
                     return SizedBox(
                       width: 100,
                       height: 150,
-                      child: DpadFocusable(child: Text('Row2 Card $index')),
+                      child: DpadFocusable(
+                        onTap: _noop,
+                        child: Text('Row2 Card $index'),
+                      ),
                     );
                   },
                 ),
@@ -273,7 +288,10 @@ void main() {
                     itemBuilder: (context, index) => SizedBox(
                       width: 100,
                       height: 150,
-                      child: DpadFocusable(child: Text('Above $index')),
+                      child: DpadFocusable(
+                        onTap: _noop,
+                        child: Text('Above $index'),
+                      ),
                     ),
                   ),
                   GenericCarouselRow(
@@ -291,7 +309,10 @@ void main() {
                       if (index == 1) {
                         return const SizedBox(
                           width: 150,
-                          child: DpadFocusable(child: Text('Event 1')),
+                          child: DpadFocusable(
+                            onTap: _noop,
+                            child: Text('Event 1'),
+                          ),
                         );
                       }
                       if (index == 2) {
@@ -302,7 +323,10 @@ void main() {
                       }
                       return const SizedBox(
                         width: 150,
-                        child: DpadFocusable(child: Text('Event 2')),
+                        child: DpadFocusable(
+                          onTap: _noop,
+                          child: Text('Event 2'),
+                        ),
                       );
                     },
                   ),
@@ -369,7 +393,10 @@ void main() {
                 itemBuilder: (context, index) => SizedBox(
                   width: 100,
                   height: 150,
-                  child: DpadFocusable(child: Text('Movie $index')),
+                  child: DpadFocusable(
+                    onTap: _noop,
+                    child: Text('Movie $index'),
+                  ),
                 ),
               ),
             ),
@@ -419,7 +446,10 @@ void main() {
                         itemBuilder: (context, index) => SizedBox(
                           width: 150,
                           height: 200,
-                          child: DpadFocusable(child: Text('R${r}C$index')),
+                          child: DpadFocusable(
+                            onTap: _noop,
+                            child: Text('R${r}C$index'),
+                          ),
                         ),
                       ),
                   ],
@@ -486,3 +516,7 @@ void main() {
     },
   );
 }
+
+// Real cards always have an action (open details); without one a
+// DpadFocusable ignores taps (REV-39), so tapping would not focus it.
+void _noop() {}

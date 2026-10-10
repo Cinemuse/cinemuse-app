@@ -331,10 +331,14 @@ class _DpadFocusableState extends State<DpadFocusable> {
         onExit: (_) => _handleHoverChanged(false),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () {
-            _effectiveFocusNode.requestFocus();
-            widget.onTap?.call();
-          },
+          // Only claim the tap when there is an action: an always-set onTap
+          // wins against an outer GestureDetector and swallows its tap (REV-39).
+          onTap: widget.onTap == null
+              ? null
+              : () {
+                  _effectiveFocusNode.requestFocus();
+                  _handleAction();
+                },
           onLongPress: widget.onLongPress,
           onSecondaryTap: widget.onSecondaryTap,
           child: DpadFocusScope(

@@ -522,61 +522,51 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
           // More options (right-click hint) button
           Tooltip(
             message: l10n.menuMoreOptions,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: Builder(
-                builder: (buttonContext) {
-                  return GestureDetector(
-                    onTap: () {
-                      _tapPosition = null;
-                      _showContextMenu(context, anchorContext: buttonContext);
-                    },
-                    child: HoverScale(
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.textWhite.withValues(alpha: 0.05),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppTheme.textWhite.withValues(alpha: 0.1),
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.more_vert,
-                          color: AppTheme.textWhite.withValues(alpha: 0.6),
-                          size: 20,
-                        ),
+            child: Builder(
+              builder: (buttonContext) {
+                return HoverScale(
+                  onTap: () {
+                    _tapPosition = null;
+                    _showContextMenu(context, anchorContext: buttonContext);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.textWhite.withValues(alpha: 0.05),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppTheme.textWhite.withValues(alpha: 0.1),
                       ),
                     ),
-                  );
-                },
-              ),
+                    child: Icon(
+                      Icons.more_vert,
+                      color: AppTheme.textWhite.withValues(alpha: 0.6),
+                      size: 20,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           // Comments Button
           if (widget.onShowComments != null)
             Tooltip(
               message: l10n.detailsTvTimeComments,
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: widget.onShowComments,
-                  child: HoverScale(
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.textWhite.withValues(alpha: 0.05),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppTheme.textWhite.withValues(alpha: 0.1),
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.forum_outlined,
-                        color: AppTheme.textWhite.withValues(alpha: 0.6),
-                        size: 20,
-                      ),
+              child: HoverScale(
+                onTap: widget.onShowComments,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.textWhite.withValues(alpha: 0.05),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppTheme.textWhite.withValues(alpha: 0.1),
                     ),
+                  ),
+                  child: Icon(
+                    Icons.forum_outlined,
+                    color: AppTheme.textWhite.withValues(alpha: 0.6),
+                    size: 20,
                   ),
                 ),
               ),
@@ -636,46 +626,39 @@ class MarkWatchedButton extends StatelessWidget {
       message: isWatched
           ? l10n.detailsTooltipWatched
           : l10n.detailsTooltipMarkWatched,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          onTap: onTap,
-          onLongPress: onLongPress,
-          child: HoverScale(
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: watchCount > 1 ? 12 : 8,
-                vertical: 8,
-              ),
-              decoration: BoxDecoration(
-                color: isWatched
-                    ? AppTheme.success
-                    : AppTheme.textWhite.withValues(alpha: 0.05),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isWatched
-                      ? AppTheme.success
-                      : AppTheme.textWhite.withValues(alpha: 0.1),
-                ),
-              ),
-              child: watchCount > 1
-                  ? Text(
-                      'x$watchCount',
-                      style: const TextStyle(
-                        color: AppTheme.textWhite,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  : Icon(
-                      isWatched ? Icons.check : Icons.remove_red_eye_outlined,
-                      color: isWatched
-                          ? AppTheme.textWhite
-                          : AppTheme.textMuted,
-                      size: 20,
-                    ),
+      child: HoverScale(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: watchCount > 1 ? 12 : 8,
+            vertical: 8,
+          ),
+          decoration: BoxDecoration(
+            color: isWatched
+                ? AppTheme.success
+                : AppTheme.textWhite.withValues(alpha: 0.05),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isWatched
+                  ? AppTheme.success
+                  : AppTheme.textWhite.withValues(alpha: 0.1),
             ),
           ),
+          child: watchCount > 1
+              ? Text(
+                  'x$watchCount',
+                  style: const TextStyle(
+                    color: AppTheme.textWhite,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              : Icon(
+                  isWatched ? Icons.check : Icons.remove_red_eye_outlined,
+                  color: isWatched ? AppTheme.textWhite : AppTheme.textMuted,
+                  size: 20,
+                ),
         ),
       ),
     );
