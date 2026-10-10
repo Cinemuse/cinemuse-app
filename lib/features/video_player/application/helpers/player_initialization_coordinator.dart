@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
-import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
+import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/provider_search_status.dart';
 import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';

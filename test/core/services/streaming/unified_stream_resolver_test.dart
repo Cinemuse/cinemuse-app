@@ -5,7 +5,7 @@ import 'package:cinemuse_app/core/services/streaming/unified_stream_resolver.dar
 import 'package:cinemuse_app/core/services/streaming/debrid/base_debrid_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/services/streaming/sources/base_source.dart';
-import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
+import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/anime/kitsu_mapping_service.dart';
 import 'package:cinemuse_app/core/services/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/services/streaming/models/streaming_exceptions.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
+import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/data/comments_repository_impl.dart';
 import 'package:cinemuse_app/features/media/data/imdb_service.dart';
 import 'package:cinemuse_app/features/media/data/letterboxd_service.dart';

@@ -1,5 +1,5 @@
 import 'package:cinemuse_app/core/constants/playback_constants.dart';
-import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
+import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';

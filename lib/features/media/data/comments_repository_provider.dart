@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
-import 'package:cinemuse_app/core/services/media/tmdb_service.dart';
+import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/data/imdb_service.dart';
 import 'package:cinemuse_app/features/media/data/letterboxd_service.dart';
 import 'package:cinemuse_app/features/media/data/serializd_service.dart';
