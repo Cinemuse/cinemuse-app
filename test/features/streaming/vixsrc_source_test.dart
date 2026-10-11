@@ -214,4 +214,23 @@ void main() {
       expect(candidate.url, contains('.m3u8'));
     });
   });
+
+  group('VixSrcSource.deleteStaleManifests (REV-32)', () {
+    late Directory dir;
+
+    setUp(() => dir = Directory.systemTemp.createTempSync('vixsrc_test_'));
+    tearDown(() => dir.deleteSync(recursive: true));
+
+    test('deletes old playlists and keeps recent ones', () async {
+      final old = File('${dir.path}/vixsrc_1.m3u8')..writeAsStringSync('old');
+      old.setLastModifiedSync(DateTime.now().subtract(const Duration(days: 2)));
+      final recent = File('${dir.path}/vixsrc_2.m3u8')
+        ..writeAsStringSync('new');
+
+      await VixSrcSource.deleteStaleManifests(dir);
+
+      expect(old.existsSync(), isFalse);
+      expect(recent.existsSync(), isTrue);
+    });
+  });
 }

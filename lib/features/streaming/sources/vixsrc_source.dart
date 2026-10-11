@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:cinemuse_app/core/network/network_providers.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_metadata.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_search_context.dart';
@@ -14,6 +16,8 @@ class VixSrcSource extends BaseSource {
 
   static const String _userAgent = browserUserAgent;
   static const Duration _requestTimeout = Duration(seconds: 10);
+  static const Duration _manifestMaxAge = Duration(hours: 12);
+  static const String _logTag = 'VixSrcSource';
 
   @override
   final String name = 'VixSrc';
@@ -301,9 +305,33 @@ class VixSrcSource extends BaseSource {
     } catch (_) {
       tempDir = Directory.systemTemp;
     }
-    final file = File('${tempDir.path}/vixsrc_${token.hashCode.abs()}.m3u8');
+    final dir = Directory('${tempDir.path}/vixsrc_playlists');
+    await dir.create(recursive: true);
+    await deleteStaleManifests(dir);
+    final file = File('${dir.path}/vixsrc_${token.hashCode.abs()}.m3u8');
     await file.writeAsString(content);
     return file.path;
+  }
+
+  /// Deletes playlists written more than [_manifestMaxAge] ago from [dir].
+  ///
+  /// Every search writes a new file. Old ones can't be played again (their
+  /// token has expired), so they would only pile up. Newer ones are kept:
+  /// one of them may be playing right now.
+  @visibleForTesting
+  static Future<void> deleteStaleManifests(Directory dir) async {
+    final cutoff = DateTime.now().subtract(_manifestMaxAge);
+    await for (final entity in dir.list()) {
+      if (entity is! File || !entity.path.endsWith('.m3u8')) continue;
+      try {
+        if (entity.lastModifiedSync().isBefore(cutoff)) {
+          await entity.delete();
+        }
+      } on FileSystemException catch (e) {
+        // A leftover file only wastes a few KB; the search can go on.
+        AppLogger.warn(_logTag, 'Could not delete an old playlist', error: e);
+      }
+    }
   }
 }
 
