@@ -106,18 +106,4 @@ class ProfileRepository {
       debugPrint('ProfileRepository: Failed to update local cache: $e');
     }
   }
-
-  // Note: Profile creation is handled by Database Trigger on auth.users insert
-  // But we might want a manual way if sync fails or for testing
-  Future<void> createProfile({
-    required String id,
-    String? username,
-    String? avatarUrl,
-  }) async {
-    await _client.from('profiles').insert({
-      'id': id,
-      'username': username,
-      'avatar_url': avatarUrl,
-    }).withErrorHandling();
-  }
 }
