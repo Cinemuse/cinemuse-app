@@ -66,6 +66,9 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
   }
 
   void _focusActiveItem() {
+    // The provider keeps this callback after the navbar is removed (Live TV
+    // full window), and `ref` can't be used in dispose() to clear it (REV-55).
+    if (!mounted) return;
     final targetIndex = widget.currentIndex.clamp(0, 3);
     if (targetIndex >= 0 && targetIndex < _pillFocusNodes.length) {
       _pillFocusNodes[targetIndex].requestFocus();
