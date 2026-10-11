@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/features/streaming/anime/interfaces/anime_unity_mapping_provider.dart';
 import 'package:cinemuse_app/features/streaming/anime/models/anime_unity_entry.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/features/streaming/ranking/language_codes.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_metadata.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/features/streaming/sources/base_source.dart';
@@ -272,7 +273,7 @@ class AnimeUnitySource extends BaseSource {
         r'#EXT-X-MEDIA:TYPE=AUDIO.*LANGUAGE="([^"]+)"',
       ).allMatches(playlist);
       for (final match in matches) {
-        languages.add(match.group(1)!.toUpperCase());
+        languages.add(LanguageCodes.normalize(match.group(1)!));
       }
       return languages.toList();
     } catch (e) {

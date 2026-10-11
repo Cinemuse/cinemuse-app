@@ -1,18 +1,24 @@
 import 'package:cinemuse_app/features/streaming/models/stream_metadata.dart';
+import 'package:cinemuse_app/features/streaming/ranking/language_codes.dart';
 
 /// A utility class responsible for extracting technical metadata from stream titles.
 ///
 /// It uses a declarative pattern-matching registry to standardize various
 /// naming conventions into a structured [StreamMetadata] object.
+/// Short tags are matched as whole words (`\b`), so `2k`, `hdr` or `multi`
+/// inside other words don't count (STR-02).
 class StreamParser {
   // --- Video Patterns ---
   static final Map<VideoResolution, RegExp> _resolutions = {
-    VideoResolution.r2160p: RegExp(r'2160p|4k|uhd', caseSensitive: false),
-    VideoResolution.r1440p: RegExp(r'1440p|2k', caseSensitive: false),
-    VideoResolution.r1080p: RegExp(r'1080p', caseSensitive: false),
-    VideoResolution.r720p: RegExp(r'720p', caseSensitive: false),
-    VideoResolution.r480p: RegExp(r'480p', caseSensitive: false),
+    VideoResolution.r2160p: RegExp(r'\b(2160p|4k|uhd)\b', caseSensitive: false),
+    VideoResolution.r1440p: RegExp(r'\b(1440p|2k)\b', caseSensitive: false),
+    VideoResolution.r1080p: RegExp(r'\b1080p\b', caseSensitive: false),
+    VideoResolution.r720p: RegExp(r'\b720p\b', caseSensitive: false),
+    VideoResolution.r480p: RegExp(r'\b480p\b', caseSensitive: false),
   };
+
+  static final _hdr = RegExp(r'\bhdr(10)?\b', caseSensitive: false);
+  static final _dolbyVision = RegExp(r'\b(dv|dovi)\b', caseSensitive: false);
 
   static final Map<VideoCodec, RegExp> _codecs = {
     VideoCodec.hevc: RegExp(r'hevc|x265|h265', caseSensitive: false),
@@ -39,8 +45,8 @@ class StreamParser {
       r"extended(\.cut)?|director's\.cut",
       caseSensitive: false,
     ),
-    ReleaseFlag.multi: RegExp(r'multi', caseSensitive: false),
-    ReleaseFlag.dual: RegExp(r'dual', caseSensitive: false),
+    ReleaseFlag.multi: RegExp(r'\bmulti\b', caseSensitive: false),
+    ReleaseFlag.dual: RegExp(r'\bdual\b', caseSensitive: false),
   };
 
   // --- Audio Patterns ---
@@ -58,10 +64,8 @@ class StreamParser {
       video: VideoMetadata(
         resolution: _findEnum(title, _resolutions, VideoResolution.unknown),
         codec: _findEnum(title, _codecs, VideoCodec.unknown),
-        isHDR: title.toLowerCase().contains('hdr'),
-        isDV:
-            title.toLowerCase().contains(' dv ') ||
-            title.toLowerCase().contains('dovi'),
+        isHDR: _hdr.hasMatch(title),
+        isDV: _dolbyVision.hasMatch(title),
         is10Bit: title.toLowerCase().contains('10bit'),
       ),
       audio: AudioMetadata(
@@ -100,23 +104,24 @@ class StreamParser {
     return null;
   }
 
-  static List<String> _parseLanguages(String title) {
-    final List<String> langs = [];
-
-    final itaMatch = RegExp(
+  static final Map<String, RegExp> _languages = {
+    LanguageCodes.italian: RegExp(
       r'\b(ita|italian)\b|🇮🇹',
       caseSensitive: false,
-    ).hasMatch(title);
-    final engMatch = RegExp(
+    ),
+    LanguageCodes.english: RegExp(
       r'\b(eng|english)\b|🇬🇧',
       caseSensitive: false,
-    ).hasMatch(title);
+    ),
+    LanguageCodes.japanese: RegExp(
+      r'\b(jpn|jap|japanese)\b|🇯🇵',
+      caseSensitive: false,
+    ),
+    LanguageCodes.multi: RegExp(r'\bmulti\b', caseSensitive: false),
+  };
 
-    if (itaMatch) langs.add('ITA');
-    if (engMatch) langs.add('ENG');
-
-    return langs;
-  }
+  static List<String> _parseLanguages(String title) =>
+      _findAllEnums(title, _languages);
 
   static String? _parseSize(String title) {
     final match = RegExp(

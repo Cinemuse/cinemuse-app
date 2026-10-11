@@ -120,7 +120,7 @@ void main() {
       final candidate = results.first;
       expect(candidate.provider, 'AnimeUnity');
       expect(candidate.title, contains('Ep.1'));
-      expect(candidate.metadata?.languages, containsAll(['IT', 'EN']));
+      expect(candidate.metadata?.languages, containsAll(['ITA', 'ENG']));
       expect(candidate.metadata?.video.resolution, VideoResolution.r1080p);
       expect(candidate.url, contains('token=test-token'));
       expect(candidate.url, contains('h=1'));

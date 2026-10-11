@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_metadata.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/features/streaming/ranking/language_codes.dart';
 import 'package:cinemuse_app/features/streaming/sources/base_source.dart';
 import 'package:dio/dio.dart';
 
@@ -197,7 +198,7 @@ class VixSrcSource extends BaseSource {
       if (line.startsWith('#EXT-X-MEDIA:TYPE=AUDIO')) {
         final lang = _extractAttribute(line, 'LANGUAGE');
         if (lang != null && lang.isNotEmpty) {
-          audioLanguages.add(_normalizeLangCode(lang));
+          audioLanguages.add(LanguageCodes.normalize(lang));
         }
         filteredLines.add(line);
       } else if (line.startsWith('#EXT-X-MEDIA:TYPE=SUBTITLES')) {
@@ -291,13 +292,6 @@ class VixSrcSource extends BaseSource {
       return name.startsWith('english');
     }
     return name.startsWith(pref);
-  }
-
-  String _normalizeLangCode(String lang) {
-    final l = lang.toLowerCase();
-    if (l.startsWith('it')) return 'ITA';
-    if (l.startsWith('en')) return 'ENG';
-    return l.toUpperCase();
   }
 
   Future<String> _writeManifestToTempFile(String content, String token) async {

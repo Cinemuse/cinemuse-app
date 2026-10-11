@@ -13,6 +13,7 @@ import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_metadata.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/features/streaming/models/streaming_exceptions.dart';
+import 'package:cinemuse_app/features/streaming/ranking/stream_filter.dart';
 import 'package:cinemuse_app/features/streaming/ranking/stream_ranker.dart';
 import 'package:cinemuse_app/features/streaming/sources/base_source.dart';
 import 'package:flutter/foundation.dart';
@@ -348,49 +349,14 @@ class UnifiedStreamResolver {
       }
     }
 
-    // 2. Filter out junk if smart search is enabled
-    if (_settings.smartSearchFilter) {
-      results = results.where((c) {
-        final t = c.title.toLowerCase();
-        return !(t.contains('cam') ||
-            t.contains(' ts ') ||
-            t.contains('hdcam') ||
-            t.contains('screener') ||
-            t.contains(' scr ') ||
-            t.contains(' 3d ') ||
-            t.contains('sbs'));
-      }).toList();
-    }
+    // 2. Drop junk (smart filter) and streams above the maximum resolution
+    results = StreamFilter.apply(
+      results,
+      smartFilter: _settings.smartSearchFilter,
+      maxResolution: _maxResolution,
+    );
 
-    // 3. Filter by maximum resolution
-    if (_maxResolution != VideoResolution.unknown) {
-      results = results.where((c) {
-        VideoResolution res =
-            c.metadata?.video.resolution ?? VideoResolution.unknown;
-        if (res == VideoResolution.unknown) {
-          final t = c.title.toLowerCase();
-          if (t.contains('2160p') || t.contains('4k')) {
-            res = VideoResolution.r2160p;
-          } else if (t.contains('1440p') || t.contains('2k')) {
-            res = VideoResolution.r1440p;
-          } else if (t.contains('1080p') || t.contains('fhd')) {
-            res = VideoResolution.r1080p;
-          } else if (t.contains('720p') || t.contains('hd')) {
-            res = VideoResolution.r720p;
-          } else if (t.contains('480p') || t.contains('sd')) {
-            res = VideoResolution.r480p;
-          }
-        }
-
-        if (res != VideoResolution.unknown &&
-            res.index < _maxResolution.index) {
-          return false;
-        }
-        return true;
-      }).toList();
-    }
-
-    // 4. Rank and Sort
+    // 3. Rank and Sort
     final preferredLanguage =
         (context.isAnime && _settings.splitAnimePreferences)
         ? _settings.animeAudioLanguage

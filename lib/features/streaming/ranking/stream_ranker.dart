@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_metadata.dart';
+import 'package:cinemuse_app/features/streaming/ranking/language_codes.dart';
 import 'package:cinemuse_app/features/streaming/ranking/stream_parser.dart';
 
 /// A utility class responsible for scoring and ranking [StreamCandidate]s.
@@ -56,34 +57,28 @@ class StreamRanker {
     String preferredLanguage = 'en',
   }) {
     int s = 0;
-    final isItalian = metadata.languages.contains('ITA');
-    final isEnglish = metadata.languages.contains('ENG');
-    final isMulti =
-        title.toLowerCase().contains('multi') || (isItalian && isEnglish);
+    // Settings hold 'it'/'en'/'ja'; metadata holds 'ITA'/'ENG'/'JPN' (REV-25).
+    final preferred = LanguageCodes.normalize(preferredLanguage);
+    final languages = metadata.languages;
+    final isItalian = languages.contains(LanguageCodes.italian);
+    final isEnglish = languages.contains(LanguageCodes.english);
+    final hasMulti = languages.contains(LanguageCodes.multi);
+    final isMulti = hasMulti || (isItalian && isEnglish);
 
     // Direct match for preferred language
-    final isOriginalJa = preferredLanguage == 'ja';
-
-    if (metadata.languages.contains(preferredLanguage.toUpperCase()) ||
-        (isOriginalJa &&
-            (metadata.languages.contains('JAP') ||
-                metadata.languages.contains('JAPANESE') ||
-                metadata.languages.contains('JP')))) {
-      return 1000;
-    }
-
-    // MULTI often contains many languages including the preferred one
-    if (metadata.languages.contains('MULTI')) {
-      // For anime original, MULTI is very likely to have JA
-      return isOriginalJa ? 900 : 800;
+    if (languages.contains(preferred)) {
+      s += 1000;
+    } else if (hasMulti) {
+      // MULTI often contains many languages including the preferred one.
+      // For anime original, MULTI is very likely to have Japanese.
+      s += preferred == LanguageCodes.japanese ? 900 : 800;
     }
 
     // Boost based on preferred language
-    final pref = preferredLanguage.toLowerCase();
-    if (pref == 'it' || pref == 'ita') {
+    if (preferred == LanguageCodes.italian) {
       if (isItalian) s += 100;
       if (isEnglish) s += 20;
-    } else if (pref == 'en' || pref == 'eng') {
+    } else if (preferred == LanguageCodes.english) {
       if (isEnglish) s += 100;
       if (isItalian) s += 20;
     } else {

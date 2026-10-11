@@ -122,6 +122,60 @@ void main() {
       final meta = StreamParser.parse('Movie [12.5 GB]');
       expect(meta.size, equals('12.5 GB'));
     });
+
+    test('matches short tags only as whole words (STR-02)', () {
+      final meta = StreamParser.parse(
+        'Spider-Man.Across.the.Multiverse.Individual.2k23.HDRezka',
+      );
+      expect(meta.video.resolution, VideoResolution.unknown);
+      expect(meta.video.isHDR, isFalse);
+      expect(meta.flags, isEmpty);
+      expect(meta.languages, isEmpty);
+    });
+
+    test('detects Japanese and MULTI audio (REV-25)', () {
+      expect(StreamParser.parse('Anime.S01E01.JPN.1080p').languages, ['JPN']);
+      expect(StreamParser.parse('Anime.S01E01.Japanese.1080p').languages, [
+        'JPN',
+      ]);
+      expect(StreamParser.parse('Movie.MULTI.1080p').languages, ['MULTI']);
+    });
+  });
+
+  group('StreamRanker preferred language (REV-25)', () {
+    StreamCandidate stream(String title, List<String> languages) =>
+        StreamCandidate(
+          kind: StreamSourceKind.vod,
+          title: title,
+          infoHash: '',
+          magnet: '',
+          provider: 'P1',
+          metadata: StreamMetadata(
+            video: const VideoMetadata(resolution: VideoResolution.r1080p),
+            audio: const AudioMetadata(),
+            languages: languages,
+          ),
+        );
+
+    test('with Japanese preferred, a JPN stream ranks first', () {
+      final ita = stream('Anime Ep.1 ITA', ['ITA']);
+      final jpn = stream('Anime Ep.1 SUB ITA', ['JPN']);
+
+      final result = StreamRanker.rank([ita, jpn], preferredLanguage: 'ja');
+
+      expect(result.first.title, jpn.title);
+    });
+
+    test('with Italian preferred, an ITA stream gets the full boost', () {
+      final ita = stream('Movie ITA', ['ITA']);
+      final eng = stream('Movie ENG', ['ENG']);
+
+      expect(
+        StreamRanker.score(ita, preferredLanguage: 'it') -
+            StreamRanker.score(eng, preferredLanguage: 'it'),
+        greaterThanOrEqualTo(1000),
+      );
+    });
   });
 
   group('StreamRanker ranking', () {
