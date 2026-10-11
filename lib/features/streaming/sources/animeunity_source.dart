@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/streaming/anime/interfaces/anime_unity_mapping_provider.dart';
 import 'package:cinemuse_app/features/streaming/anime/models/anime_unity_entry.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
@@ -12,6 +12,8 @@ import 'package:dio/dio.dart';
 ///
 /// Flow: KitsuMapping → Stremio mapping API → AnimeUnity episode API → VixCloud embed → HLS
 class AnimeUnitySource extends BaseSource {
+  static const String _logTag = 'AnimeUnitySource';
+
   static const _animeUnityBase = 'https://www.animeunity.so';
   static const _userAgent =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0';
@@ -46,7 +48,7 @@ class AnimeUnitySource extends BaseSource {
       }
       return candidates;
     } catch (e) {
-      debugPrint('AnimeUnitySource: Search failed: $e');
+      AppLogger.warn(_logTag, 'Search failed', error: e);
       return [];
     }
   }
@@ -66,7 +68,7 @@ class AnimeUnitySource extends BaseSource {
 
       return _extractVixCloudStream(embedUrl, episodeData, context, entry);
     } catch (e) {
-      debugPrint('AnimeUnitySource: Failed for entry ${entry.id}: $e');
+      AppLogger.warn(_logTag, 'Failed for entry ${entry.id}', error: e);
       return null;
     }
   }
@@ -175,7 +177,7 @@ class AnimeUnitySource extends BaseSource {
     );
     final scriptMatch = scriptPattern.firstMatch(html);
     if (scriptMatch == null) {
-      debugPrint('AnimeUnitySource: No masterPlaylist script found');
+      AppLogger.warn(_logTag, 'No masterPlaylist script found');
       return null;
     }
     final script = scriptMatch.group(1)!;
@@ -184,7 +186,7 @@ class AnimeUnitySource extends BaseSource {
         _extractWindowValue(script, 'masterPlaylistUrl') ??
         _extractMasterPlaylistUrl(script);
     if (url == null || url.isEmpty) {
-      debugPrint('AnimeUnitySource: masterPlaylist.url not found');
+      AppLogger.warn(_logTag, 'masterPlaylist.url not found');
       return null;
     }
 
@@ -228,7 +230,7 @@ class AnimeUnitySource extends BaseSource {
     bool canPlayFHD,
   ) {
     if (token == null || expires == null) {
-      debugPrint('AnimeUnitySource: Missing token or expires');
+      AppLogger.warn(_logTag, 'Missing token or expires');
       return null;
     }
 
@@ -277,7 +279,7 @@ class AnimeUnitySource extends BaseSource {
       }
       return languages.toList();
     } catch (e) {
-      debugPrint('AnimeUnitySource: Language detection failed: $e');
+      AppLogger.warn(_logTag, 'Language detection failed', error: e);
       return [];
     }
   }

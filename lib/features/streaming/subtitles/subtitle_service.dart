@@ -3,11 +3,12 @@ import 'package:cinemuse_app/features/streaming/subtitles/opensubtitles_provider
 import 'package:cinemuse_app/features/streaming/subtitles/subtitle_provider.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/core/utils/app_logger.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Searches subtitles across the configured providers.
 class SubtitleService {
+  static const String _logTag = 'SubtitleService';
+
   final List<SubtitleProvider> _providers;
 
   SubtitleService(this._providers);
@@ -25,11 +26,12 @@ class SubtitleService {
     required String language,
   }) async {
     final activeProviders = _providers.where((p) => p.isReady).toList();
-    debugPrint(
-      '[SubtitleService] search called — imdb=$imdbId, tmdb=$tmdbId, lang=$language, providers=${activeProviders.length}',
+    AppLogger.debug(
+      _logTag,
+      'Search called — imdb=$imdbId, tmdb=$tmdbId, lang=$language, providers=${activeProviders.length}',
     );
     if (activeProviders.isEmpty) {
-      debugPrint('[SubtitleService] No active providers, returning empty');
+      AppLogger.debug(_logTag, 'No active providers, returning empty');
       return [];
     }
 
@@ -53,7 +55,7 @@ class SubtitleService {
       allResults.addAll(list);
     }
 
-    debugPrint('[SubtitleService] Total results: ${allResults.length}');
+    AppLogger.debug(_logTag, 'Total results: ${allResults.length}');
     return allResults;
   }
 
@@ -70,7 +72,7 @@ class SubtitleService {
     if (provider == null) {
       // Its key was removed after the search: nothing can download it now.
       AppLogger.warn(
-        'SubtitleService',
+        _logTag,
         '${subtitle.providerName} is no longer configured',
       );
       return null;

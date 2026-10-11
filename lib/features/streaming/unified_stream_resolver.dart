@@ -74,7 +74,7 @@ class UnifiedStreamResolver {
   }) {
     final cacheKey = _cacheKey(queryId, type, season, episode);
     _searchCache.remove(cacheKey);
-    debugPrint('UnifiedStreamResolver: Cleared cached results for $cacheKey');
+    AppLogger.debug(_logTag, 'Cleared cached results for $cacheKey');
   }
 
   @visibleForTesting
@@ -119,9 +119,7 @@ class UnifiedStreamResolver {
     try {
       if (cached != null &&
           DateTime.now().difference(cached.timestamp) < _cacheDuration) {
-        debugPrint(
-          'UnifiedStreamResolver: Returning cached results for $cacheKey',
-        );
+        AppLogger.debug(_logTag, 'Returning cached results for $cacheKey');
         // Availability is checked again: ranking depends on the debrid cache.
         final rankedCandidates = await _finalizeResults(
           cached.candidates,
@@ -338,8 +336,9 @@ class UnifiedStreamResolver {
           .toList();
 
       if (hashes.isNotEmpty) {
-        debugPrint(
-          'UnifiedStreamResolver: Checking availability for ${hashes.length} hashes on ${_debridService.name}',
+        AppLogger.debug(
+          _logTag,
+          'Checking availability for ${hashes.length} hashes on ${_debridService.name}',
         );
 
         final detailed = await _debridService.checkDetailedAvailability(hashes);

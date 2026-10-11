@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/core/utils/url_utils.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_search_context.dart';
@@ -7,6 +8,8 @@ import 'package:cinemuse_app/features/streaming/ranking/stream_parser.dart';
 import 'package:dio/dio.dart';
 
 class StremioSource implements BaseSource {
+  static const String _logTag = 'StremioSource';
+
   // Torrentio puts the seeder count in the title ("👤 123") instead of `seeds`.
   static final _seedersPattern = RegExp(r'👤\s*(\d+)');
 
@@ -51,7 +54,8 @@ class StremioSource implements BaseSource {
     );
 
     try {
-      debugPrint('StremioSource ($name): Fetching: $url');
+      // Never log `url`: add-on configs carry API keys in the path (SEC-06).
+      AppLogger.debug(_logTag, '$name: fetching $type $queryId');
 
       final res = await _dio.get(
         url,
@@ -60,8 +64,9 @@ class StremioSource implements BaseSource {
 
       if (res.statusCode == 200 && res.data['streams'] != null) {
         final streamsData = res.data['streams'] as List;
-        debugPrint(
-          'StremioSource ($name): Found ${streamsData.length} raw streams',
+        AppLogger.debug(
+          _logTag,
+          '$name: found ${streamsData.length} raw streams',
         );
 
         return streamsData.map((s) {
@@ -98,16 +103,16 @@ class StremioSource implements BaseSource {
           );
         }).toList();
       } else {
-        debugPrint(
-          'StremioSource ($name): Unexpected response: ${res.statusCode}',
-        );
+        AppLogger.warn(_logTag, '$name: unexpected response ${res.statusCode}');
       }
     } on DioException catch (e) {
-      debugPrint(
-        'StremioSource ($name) fetch failed: ${e.message} (URL: $url)',
+      AppLogger.warn(
+        _logTag,
+        '$name: fetch failed (${e.type.name}, '
+        'status ${e.response?.statusCode})',
       );
     } catch (e) {
-      debugPrint('StremioSource ($name) unexpected error: $e');
+      AppLogger.warn(_logTag, '$name: unexpected error', error: e);
     }
     return [];
   }

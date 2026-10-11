@@ -1,12 +1,14 @@
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/streaming/sources/base_source.dart';
 import 'package:cinemuse_app/features/streaming/ranking/stream_parser.dart';
 import 'package:cinemuse_app/core/utils/media_parser.dart';
-import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 
 class AnimeToshoSource extends BaseSource {
+  static const String _logTag = 'AnimeToshoSource';
+
   final Dio _dio;
   // feed.animetosho.org was retired; .xyz redirects here (REV-231).
   static const String _baseUrl = "https://feed.animetosho.net/json";
@@ -23,8 +25,9 @@ class AnimeToshoSource extends BaseSource {
   Future<List<StreamCandidate>> search(StreamSearchContext context) async {
     // Only search AnimeTosho if it's actually an anime and we have an AniDB ID
     if (!context.isAnime || context.mapping?.anidbId == null) {
-      debugPrint(
-        'AnimeToshoSource: Skipping search. isAnime: ${context.isAnime}, anidbId: ${context.mapping?.anidbId}',
+      AppLogger.debug(
+        _logTag,
+        'Skipping search. isAnime: ${context.isAnime}, anidbId: ${context.mapping?.anidbId}',
       );
       return [];
     }
@@ -84,7 +87,7 @@ class AnimeToshoSource extends BaseSource {
 
       return uniqueMap.values.toList();
     } catch (e) {
-      debugPrint('AnimeToshoSource: Search failed: $e');
+      AppLogger.warn(_logTag, 'Search failed', error: e);
       return [];
     }
   }
@@ -144,7 +147,7 @@ class AnimeToshoSource extends BaseSource {
 
       return candidates;
     } catch (e) {
-      debugPrint('AnimeToshoSource fetch error: $e');
+      AppLogger.warn(_logTag, 'Fetch error', error: e);
       return [];
     }
   }

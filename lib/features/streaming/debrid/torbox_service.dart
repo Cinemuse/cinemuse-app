@@ -1,12 +1,14 @@
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/streaming/debrid/base_debrid_service.dart';
 import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/core/utils/media_parser.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 
 /// TorBox debrid service implementation.
 class TorBoxService implements BaseDebridService {
+  static const String _logTag = 'TorBoxService';
+
   final Dio _dio;
   final String _apiKey;
   static const String _tbApiUrl = "https://api.torbox.app/v1/api";
@@ -50,7 +52,7 @@ class TorBoxService implements BaseDebridService {
           });
         }
       } catch (e) {
-        debugPrint('TorBoxService: checkAvailability chunk error: $e');
+        AppLogger.warn(_logTag, 'checkAvailability chunk error', error: e);
       }
     }
 
@@ -110,7 +112,7 @@ class TorBoxService implements BaseDebridService {
         candidate: candidate,
       );
     } catch (e) {
-      debugPrint('TorBoxService: Resolution failed: $e');
+      AppLogger.warn(_logTag, 'Resolution failed', error: e);
       return null;
     }
   }
@@ -138,7 +140,7 @@ class TorBoxService implements BaseDebridService {
         }
       }
     } catch (e) {
-      debugPrint('TorBoxService: createtorrent error, checking mylist: $e');
+      AppLogger.warn(_logTag, 'createtorrent error, checking mylist', error: e);
     }
 
     // Fallback: check mylist if torrent was already added
@@ -164,7 +166,7 @@ class TorBoxService implements BaseDebridService {
         }
       }
     } catch (e) {
-      debugPrint('TorBoxService: _findExistingTorrentId error: $e');
+      AppLogger.warn(_logTag, '_findExistingTorrentId error', error: e);
     }
     return null;
   }
@@ -186,7 +188,7 @@ class TorBoxService implements BaseDebridService {
         }
       }
     } catch (e) {
-      debugPrint('TorBoxService: _getTorrentInfo error: $e');
+      AppLogger.warn(_logTag, '_getTorrentInfo error', error: e);
     }
     return null;
   }
@@ -298,7 +300,7 @@ class TorBoxService implements BaseDebridService {
         return res.data['data'] as String;
       }
     } catch (e) {
-      debugPrint('TorBoxService: _requestDownloadLink error: $e');
+      AppLogger.warn(_logTag, '_requestDownloadLink error', error: e);
     }
     return null;
   }

@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/core/utils/url_utils.dart';
 import 'package:cinemuse_app/features/streaming/anime/models/kitsu_mapping.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_search_context.dart';
@@ -77,6 +78,25 @@ void main() {
       ).search(animeContext);
 
       expect(results.single.title, 'Show.S01E05');
+    });
+
+    test('never logs the add-on URL, which holds the key (SEC-06)', () async {
+      AppLogger.clearRecent();
+      answerWith([
+        {'title': 'Show.S01E05', 'infoHash': 'abc'},
+      ]);
+
+      await StremioSource(
+        dio,
+        'https://torrentio.test/realdebrid=SECRETKEY',
+        queryParams: 'apikey=SECRETKEY',
+      ).search(animeContext);
+
+      expect(AppLogger.recent, isNotEmpty);
+      expect(
+        AppLogger.recent.map((e) => e.message),
+        everyElement(isNot(contains('SECRETKEY'))),
+      );
     });
 
     test('a title without seeders gives 0', () {

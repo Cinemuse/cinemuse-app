@@ -1,5 +1,5 @@
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:dio/dio.dart';
@@ -15,6 +15,8 @@ final animeMappingSyncServiceProvider = Provider((ref) {
 });
 
 class AnimeMappingSyncService {
+  static const String _logTag = 'AnimeMappingSyncService';
+
   final Dio _dio;
   final AppDatabase _db;
   static const String _lastSyncKey = 'last_anime_mapping_sync';
@@ -38,19 +40,18 @@ class AnimeMappingSyncService {
         lastSync == null ||
         DateTime.now().difference(lastSync).inHours > 24) {
       if (isEmpty) {
-        debugPrint(
-          'AnimeMappingSyncService: Mapping table is empty, forcing sync...',
-        );
+        AppLogger.debug(_logTag, 'Mapping table is empty, forcing sync...');
       } else {
-        debugPrint('AnimeMappingSyncService: Starting daily sync...');
+        AppLogger.debug(_logTag, 'Starting daily sync...');
       }
 
       await _sync();
       await prefs.setString(_lastSyncKey, DateTime.now().toIso8601String());
-      debugPrint('AnimeMappingSyncService: Sync completed.');
+      AppLogger.debug(_logTag, 'Sync completed.');
     } else {
-      debugPrint(
-        'AnimeMappingSyncService: Mapping is up to date (last sync: $lastSync, count: $count).',
+      AppLogger.debug(
+        _logTag,
+        'Mapping is up to date (last sync: $lastSync, count: $count).',
       );
     }
   }
@@ -102,7 +103,7 @@ class AnimeMappingSyncService {
         await _db.replaceAnimeExternalMappings(companions);
       }
     } catch (e) {
-      debugPrint('AnimeMappingSyncService: Sync failed: $e');
+      AppLogger.warn(_logTag, 'Sync failed', error: e);
     }
   }
 

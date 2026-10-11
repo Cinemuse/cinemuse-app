@@ -1,5 +1,5 @@
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/features/streaming/subtitles/external_subtitle.dart';
 import 'package:cinemuse_app/features/streaming/subtitles/subtitle_provider.dart';
 import 'package:dio/dio.dart';
@@ -7,6 +7,8 @@ import 'package:dio/io.dart';
 
 /// Subtitle provider backed by the OpenSubtitles.com REST API (v1).
 class OpenSubtitlesProvider implements SubtitleProvider {
+  static const String _logTag = 'OpenSubtitlesProvider';
+
   final String _apiKey;
   final Dio _dio;
 
@@ -53,7 +55,7 @@ class OpenSubtitlesProvider implements SubtitleProvider {
     required String language,
   }) async {
     if (!isReady) {
-      debugPrint('[OpenSubtitles] Not ready (API key empty)');
+      AppLogger.debug(_logTag, 'Not ready (API key empty)');
       return [];
     }
 
@@ -67,31 +69,37 @@ class OpenSubtitlesProvider implements SubtitleProvider {
         language: language,
       );
       if (queryParams == null) {
-        debugPrint(
-          '[OpenSubtitles] No valid search params (imdb=$imdbId, tmdb=$tmdbId, query=$query)',
+        AppLogger.debug(
+          _logTag,
+          'No valid search params (imdb=$imdbId, tmdb=$tmdbId, query=$query)',
         );
         return [];
       }
 
-      debugPrint('[OpenSubtitles] Searching: $queryParams');
+      AppLogger.debug(_logTag, 'Searching: $queryParams');
       final response = await _dio.get(
         '/subtitles',
         queryParameters: queryParams,
       );
-      debugPrint('[OpenSubtitles] Response: ${response.statusCode}');
+      AppLogger.debug(_logTag, 'Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final results = _parseSearchResults(response.data, language);
-        debugPrint('[OpenSubtitles] Found ${results.length} subtitles');
+        AppLogger.debug(_logTag, 'Found ${results.length} subtitles');
         return results;
       } else {
-        debugPrint(
-          '[OpenSubtitles] Error response: ${response.statusCode} — ${response.data}',
+        AppLogger.warn(
+          _logTag,
+          'Error response: ${response.statusCode} — ${response.data}',
         );
       }
     } catch (e, st) {
-      debugPrint('[OpenSubtitles] Exception during search: $e');
-      debugPrint('[OpenSubtitles] $st');
+      AppLogger.warn(
+        _logTag,
+        'Exception during search',
+        error: e,
+        stackTrace: st,
+      );
     }
 
     return [];
@@ -102,22 +110,23 @@ class OpenSubtitlesProvider implements SubtitleProvider {
     if (!isReady) return null;
 
     try {
-      debugPrint('[OpenSubtitles] Downloading file_id=${subtitle.id}');
+      AppLogger.debug(_logTag, 'Downloading file_id=${subtitle.id}');
       final response = await _dio.post(
         '/download',
         data: {'file_id': int.tryParse(subtitle.id) ?? subtitle.id},
       );
 
       if (response.statusCode == 200) {
-        debugPrint('[OpenSubtitles] Download URL obtained');
+        AppLogger.debug(_logTag, 'Download URL obtained');
         return response.data['link']?.toString();
       } else {
-        debugPrint(
-          '[OpenSubtitles] Download failed: ${response.statusCode} — ${response.data}',
+        AppLogger.warn(
+          _logTag,
+          'Download failed: ${response.statusCode} — ${response.data}',
         );
       }
     } catch (e) {
-      debugPrint('[OpenSubtitles] Download exception: $e');
+      AppLogger.warn(_logTag, 'Download exception', error: e);
     }
 
     return null;

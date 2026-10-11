@@ -1,10 +1,9 @@
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'dart:convert';
-import 'dart:developer' as developer;
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cinemuse_app/features/streaming/anime/interfaces/anime_unity_mapping_provider.dart';
@@ -19,6 +18,8 @@ final kitsuMappingServiceProvider = Provider((ref) {
 });
 
 class KitsuMappingService implements AnimeUnityMappingProvider {
+  static const String _logTag = 'KitsuMappingService';
+
   static const _stremioMappingBaseUrl =
       'https://animemapping.stremio.dpdns.org/kitsu';
 
@@ -60,8 +61,9 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
             if (result != null) {
               final kitsuId = await _getKitsuId(mapping.anilistId);
               if (kitsuId != null) {
-                debugPrint(
-                  '[KitsuMapping] TMDB $tmdbId S$season E$episode -> Kitsu $kitsuId (absEp=$result)',
+                AppLogger.debug(
+                  _logTag,
+                  'TMDB $tmdbId S$season E$episode -> Kitsu $kitsuId (absEp=$result)',
                 );
                 return KitsuMapping(
                   kitsuId: kitsuId,
@@ -114,8 +116,9 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
           final count = kitsuData.episodeCount ?? 999;
 
           if (remainingEpisode <= count) {
-            debugPrint(
-              '[KitsuMapping] TMDB $tmdbId S$season E$episode -> Kitsu ${kitsuData.kitsuId} (absEp=$remainingEpisode)',
+            AppLogger.debug(
+              _logTag,
+              'TMDB $tmdbId S$season E$episode -> Kitsu ${kitsuData.kitsuId} (absEp=$remainingEpisode)',
             );
             return KitsuMapping(
               kitsuId: kitsuData.kitsuId,
@@ -135,8 +138,9 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
     final kitsuId = await _getKitsuId(targetAnilistId);
     if (kitsuId != null) {
       final validEpisode = (episode != null && episode > 0) ? episode : null;
-      debugPrint(
-        '[KitsuMapping] TMDB $tmdbId (fallback) -> Kitsu $kitsuId (absEp=$validEpisode)',
+      AppLogger.debug(
+        _logTag,
+        'TMDB $tmdbId (fallback) -> Kitsu $kitsuId (absEp=$validEpisode)',
       );
       return KitsuMapping(
         kitsuId: kitsuId,
@@ -181,9 +185,9 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
         if (epVal == episode) return 1;
       }
     } catch (e, s) {
-      developer.log(
+      AppLogger.warn(
+        _logTag,
         'Failed to parse episode offset from range "$range" for episode $episode',
-        name: 'KitsuMappingService',
         error: e,
         stackTrace: s,
       );
@@ -238,7 +242,7 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
         }
       }
     } catch (e) {
-      debugPrint('[KitsuMapping] Failed to get Kitsu data: $e');
+      AppLogger.warn(_logTag, 'Failed to get Kitsu data', error: e);
     }
     return null;
   }
@@ -255,13 +259,16 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
 
       final entries = _parseAnimeUnityPaths(res.data);
       _animeUnityCache[kitsuId] = entries;
-      debugPrint(
-        '[KitsuMapping] Kitsu $kitsuId -> ${entries.length} AnimeUnity entries',
+      AppLogger.debug(
+        _logTag,
+        'Kitsu $kitsuId -> ${entries.length} AnimeUnity entries',
       );
       return entries;
     } catch (e) {
-      debugPrint(
-        '[KitsuMapping] AnimeUnity mapping failed for Kitsu $kitsuId: $e',
+      AppLogger.warn(
+        _logTag,
+        'AnimeUnity mapping failed for Kitsu $kitsuId',
+        error: e,
       );
       return [];
     }
