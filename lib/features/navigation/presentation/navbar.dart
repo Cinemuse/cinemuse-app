@@ -274,12 +274,16 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
             onKeyEvent: (node, event) => _handlePillKeyEvent(5, node, event),
             onFocusChange: (focused) =>
                 setState(() => _isSettingsFocused = focused),
-            child: _ProfileMenu(
-              menuKey: _settingsMenuKey,
-              isCompact: false,
-              isFocused: _isSettingsFocused,
-              onSettingsTap: widget.onSettingsTap,
-              onLogoutTap: widget.onLogoutTap,
+            // The menu button's own InkWell would be a second Tab stop with
+            // no highlight; this Focus already opens it on Enter (REV-57).
+            child: ExcludeFocus(
+              child: _ProfileMenu(
+                menuKey: _settingsMenuKey,
+                isCompact: false,
+                isFocused: _isSettingsFocused,
+                onSettingsTap: widget.onSettingsTap,
+                onLogoutTap: widget.onLogoutTap,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -442,6 +446,8 @@ class _NavItemState extends State<_NavItem> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
+          // The Focus above is the only Tab stop (REV-57).
+          canRequestFocus: false,
           onTap: widget.onTap,
           borderRadius: effectiveRadius,
           mouseCursor: SystemMouseCursors.click,
@@ -516,6 +522,8 @@ class _IconActionState extends State<_IconAction> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
+          // The Focus above is the only Tab stop (REV-57).
+          canRequestFocus: false,
           mouseCursor: SystemMouseCursors.click,
           onTap: widget.onTap,
           borderRadius: BorderRadius.circular(20),

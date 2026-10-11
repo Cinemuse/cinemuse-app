@@ -151,4 +151,35 @@ void main() {
       expect(selectedDestination, equals(1));
     },
   );
+
+  testWidgets('Tab stops once on each navbar button (REV-57)', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    late WidgetRef testRef;
+    await tester.pumpWidget(
+      ProviderScope(
+        child: Consumer(
+          builder: (context, ref, _) {
+            testRef = ref;
+            return buildTestableNavbar(ref: ref);
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    testRef.read(topNavbarFocusActionProvider)!();
+    await tester.pumpAndSettle();
+
+    final stops = <String?>[FocusManager.instance.primaryFocus?.debugLabel];
+    for (var i = 0; i < 5; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      stops.add(FocusManager.instance.primaryFocus?.debugLabel);
+    }
+
+    expect(stops, [for (var i = 0; i < 6; i++) 'NavbarPill_$i']);
+  });
 }
