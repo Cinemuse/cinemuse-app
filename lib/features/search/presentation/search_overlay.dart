@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
@@ -615,73 +616,89 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
       );
     }
 
-    return GridView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 200,
-        childAspectRatio: 0.56,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: state.results.length + (state.hasMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == state.results.length) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.accent),
-          );
-        }
+    final appLanguage = ref.watch(
+      settingsProvider.select((s) => s.appLanguage),
+    );
+    const padding = 16.0;
+    const maxCardWidth = 200.0;
+    const spacing = 16.0;
 
-        final isFirst = index == 0;
-        final isTopRow = index < 4;
-        FocusOnKeyEventCallback? topRowKeyEvent;
-        if (isTopRow) {
-          topRowKeyEvent = (node, event) {
-            if (event is KeyDownEvent &&
-                event.logicalKey == LogicalKeyboardKey.arrowUp) {
-              _focusNode.requestFocus();
-              return KeyEventResult.handled;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Same column count as SliverGridDelegateWithMaxCrossAxisExtent, so
+        // Up leaves the grid only from the real top row (REV-61).
+        final gridWidth = constraints.maxWidth - 2 * padding;
+        final columns = math.max(
+          1,
+          (gridWidth / (maxCardWidth + spacing)).ceil(),
+        );
+        return GridView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.all(padding),
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: maxCardWidth,
+            childAspectRatio: 0.56,
+            crossAxisSpacing: spacing,
+            mainAxisSpacing: 16,
+          ),
+          itemCount: state.results.length + (state.hasMore ? 1 : 0),
+          itemBuilder: (context, index) {
+            if (index == state.results.length) {
+              return const Center(
+                child: CircularProgressIndicator(color: AppTheme.accent),
+              );
             }
-            return KeyEventResult.ignored;
-          };
-        }
 
-        final item = state.results[index];
-        final isPerson = item['media_type'] == 'person';
+            final isFirst = index == 0;
+            final isTopRow = index < columns;
+            FocusOnKeyEventCallback? topRowKeyEvent;
+            if (isTopRow) {
+              topRowKeyEvent = (node, event) {
+                if (event is KeyDownEvent &&
+                    event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                  _focusNode.requestFocus();
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              };
+            }
 
-        if (isPerson) {
-          final title = item['name'] ?? 'Unknown';
-          final posterPath = item['profile_path'] as String?;
-          final releaseDate = item['known_for_department'] as String?;
-          final tmdbId = item['id'] as int;
+            final item = state.results[index];
+            final isPerson = item['media_type'] == 'person';
 
-          return MediaCard(
-            title: title,
-            posterPath: posterPath,
-            releaseDate: releaseDate,
-            rating: null,
-            tmdbId: tmdbId,
-            mediaType: null,
-            focusNode: isFirst ? _firstContentFocusNode : null,
-            onKeyEvent: topRowKeyEvent,
-            onTap: () => _onMediaTap(item),
-          );
-        } else {
-          final mediaItem = MediaItem.fromTmdbMap(item);
-          final appLanguage = ref.watch(settingsProvider).appLanguage;
+            if (isPerson) {
+              final title = item['name'] ?? 'Unknown';
+              final posterPath = item['profile_path'] as String?;
+              final releaseDate = item['known_for_department'] as String?;
+              final tmdbId = item['id'] as int;
 
-          return MediaCard(
-            title: mediaItem.getLocalizedTitle(appLanguage) ?? 'Unknown',
-            posterPath: mediaItem.posterPath,
-            releaseDate: mediaItem.releaseDate?.year.toString(),
-            rating: mediaItem.voteAverage,
-            tmdbId: mediaItem.tmdbId,
-            mediaType: mediaItem.mediaType,
-            focusNode: isFirst ? _firstContentFocusNode : null,
-            onKeyEvent: topRowKeyEvent,
-            onTap: () => _onMediaTap(item),
-          );
-        }
+              return MediaCard(
+                title: title,
+                posterPath: posterPath,
+                releaseDate: releaseDate,
+                rating: null,
+                tmdbId: tmdbId,
+                mediaType: null,
+                focusNode: isFirst ? _firstContentFocusNode : null,
+                onKeyEvent: topRowKeyEvent,
+                onTap: () => _onMediaTap(item),
+              );
+            } else {
+              final mediaItem = MediaItem.fromTmdbMap(item);
+              return MediaCard(
+                title: mediaItem.getLocalizedTitle(appLanguage) ?? 'Unknown',
+                posterPath: mediaItem.posterPath,
+                releaseDate: mediaItem.releaseDate?.year.toString(),
+                rating: mediaItem.voteAverage,
+                tmdbId: mediaItem.tmdbId,
+                mediaType: mediaItem.mediaType,
+                focusNode: isFirst ? _firstContentFocusNode : null,
+                onKeyEvent: topRowKeyEvent,
+                onTap: () => _onMediaTap(item),
+              );
+            }
+          },
+        );
       },
     );
   }
