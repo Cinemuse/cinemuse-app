@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -115,6 +117,82 @@ void main() {
 
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getStringList('global_search_history'), isNull);
+    });
+  });
+
+  group('SearchNotifier stale answers (REV-53)', () {
+    List<Map<String, dynamic>> page(String name, int count) => [
+      for (var i = 0; i < count; i++)
+        {'id': i, 'media_type': 'movie', 'title': '$name $i'},
+    ];
+
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      mockTmdbService = MockTmdbService();
+      container = ProviderContainer(
+        overrides: [tmdbServiceProvider.overrideWithValue(mockTmdbService)],
+      );
+    });
+
+    tearDown(() => container.dispose());
+
+    test('an old answer arriving last does not replace the new one', () async {
+      final bat = Completer<List<Map<String, dynamic>>>();
+      final batman = Completer<List<Map<String, dynamic>>>();
+      when(
+        () => mockTmdbService.searchMulti('bat', page: 1),
+      ).thenAnswer((_) => bat.future);
+      when(
+        () => mockTmdbService.searchMulti('batman', page: 1),
+      ).thenAnswer((_) => batman.future);
+      final notifier = container.read(searchProvider.notifier);
+
+      final first = notifier.search('bat');
+      final second = notifier.search('batman');
+      batman.complete(page('batman', 1));
+      await second;
+      bat.complete(page('bat', 3));
+      await first;
+
+      final state = container.read(searchProvider);
+      expect(state.query, 'batman');
+      expect(state.results.single['title'], 'batman 0');
+    });
+
+    test('page 2 of an old query is not added to the new results', () async {
+      final oldPage2 = Completer<List<Map<String, dynamic>>>();
+      when(
+        () => mockTmdbService.searchMulti('bat', page: 1),
+      ).thenAnswer((_) async => page('bat', 20));
+      when(
+        () => mockTmdbService.searchMulti('bat', page: 2),
+      ).thenAnswer((_) => oldPage2.future);
+      when(
+        () => mockTmdbService.searchMulti('batman', page: 1),
+      ).thenAnswer((_) async => page('batman', 1));
+      final notifier = container.read(searchProvider.notifier);
+
+      await notifier.search('bat');
+      final more = notifier.loadMore();
+      await notifier.search('batman');
+      oldPage2.complete(page('bat page 2', 5));
+      await more;
+
+      final state = container.read(searchProvider);
+      expect(state.results.map((r) => r['title']), ['batman 0']);
+    });
+
+    test('Enter after typing searches only once', () async {
+      when(
+        () => mockTmdbService.searchMulti('dune', page: 1),
+      ).thenAnswer((_) async => page('dune', 1));
+      final notifier = container.read(searchProvider.notifier);
+
+      notifier.onQueryChanged('dune');
+      await notifier.search('dune');
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+
+      verify(() => mockTmdbService.searchMulti('dune', page: 1)).called(1);
     });
   });
 }

@@ -18,6 +18,10 @@ class SearchNotifier extends StateNotifier<SearchState> {
   TmdbService get _tmdbService => _ref.read(tmdbServiceProvider);
   Timer? _debounce;
   bool _isLoadingMore = false;
+
+  /// Bumped on every new search or clear; an answer that comes back with an
+  /// older number belongs to an old query and is dropped (REV-53).
+  int _requestId = 0;
   static const String _historyKey = 'global_search_history';
 
   SearchNotifier(this._ref) : super(const SearchState()) {
@@ -93,6 +97,10 @@ class SearchNotifier extends StateNotifier<SearchState> {
   }
 
   Future<void> search(String query) async {
+    // Enter searches right away: the pending typing search would repeat it.
+    _debounce?.cancel();
+    final requestId = ++_requestId;
+
     if (query.trim().isEmpty) {
       state = SearchState(searchHistory: state.searchHistory);
       return;
@@ -115,6 +123,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
       // Let's assume standard behavior for now.
 
       final results = await _tmdbService.searchMulti(query, page: 1);
+      if (!mounted || requestId != _requestId) return;
 
       // Basic dedup logic if needed, but fresh search shouldn't have dupes
 
@@ -126,6 +135,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
         hasMore: results.length >= 20,
       );
     } catch (e) {
+      if (!mounted || requestId != _requestId) return;
       final mapped = _ref.read(errorMapperProvider).map(e);
       state = state.copyWith(
         status: SearchStatus.error,
@@ -143,12 +153,14 @@ class SearchNotifier extends StateNotifier<SearchState> {
 
     _isLoadingMore = true;
     final nextPage = state.page + 1;
+    final requestId = _requestId;
 
     try {
       final newResults = await _tmdbService.searchMulti(
         state.query,
         page: nextPage,
       );
+      if (!mounted || requestId != _requestId) return;
 
       if (newResults.isEmpty) {
         state = state.copyWith(hasMore: false);
@@ -166,6 +178,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
         );
       }
     } catch (e) {
+      if (!mounted || requestId != _requestId) return;
       // Report load more errors globally via toast
       _ref.read(errorServiceProvider.notifier).handle(e);
       state = state.copyWith(hasMore: false);
@@ -175,6 +188,8 @@ class SearchNotifier extends StateNotifier<SearchState> {
   }
 
   void clear() {
+    _debounce?.cancel();
+    _requestId++;
     state = SearchState(searchHistory: state.searchHistory);
   }
 }
