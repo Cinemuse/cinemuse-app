@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/features/search/application/search_provider.dart';
@@ -31,7 +32,7 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({
-      'global_search_history': ['Inception', 'Interstellar', 'Batman'],
+      'search_history_u1': ['Inception', 'Interstellar', 'Batman'],
     });
     mockTmdbService = MockTmdbService();
   });
@@ -40,13 +41,14 @@ void main() {
     return ProviderScope(
       overrides: [
         tmdbServiceProvider.overrideWithValue(mockTmdbService),
+        userIdProvider.overrideWithValue('u1'),
         connectivityProvider.overrideWith(
           (ref) => Stream.value(ConnectivityResult.wifi),
         ),
         settingsProvider.overrideWith((ref) => FakeSettingsNotifier()),
         if (initialState != null)
           searchProvider.overrideWith((ref) {
-            final notifier = SearchNotifier(ref);
+            final notifier = SearchNotifier(ref, userId: 'u1');
             notifier.state = initialState;
             return notifier;
           }),

@@ -4,6 +4,7 @@ import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/error/error_service.dart';
 import 'package:cinemuse_app/features/search/application/search_state.dart';
 import 'package:cinemuse_app/core/utils/app_logger.dart';
+import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,7 +12,8 @@ final searchProvider = StateNotifierProvider<SearchNotifier, SearchState>((
   ref,
 ) {
   ref.watch(tmdbServiceProvider);
-  return SearchNotifier(ref);
+  // A new notifier per account, so each one sees only its own history.
+  return SearchNotifier(ref, userId: ref.watch(userIdProvider));
 });
 
 class SearchNotifier extends StateNotifier<SearchState> {
@@ -23,16 +25,28 @@ class SearchNotifier extends StateNotifier<SearchState> {
   /// Bumped on every new search or clear; an answer that comes back with an
   /// older number belongs to an old query and is dropped (REV-53).
   int _requestId = 0;
-  static const String _historyKey = 'global_search_history';
 
-  SearchNotifier(this._ref) : super(const SearchState()) {
+  /// Saved-history key, one per account (REV-62). Null when logged out:
+  /// the history then lives in memory only.
+  final String? _historyKey;
+
+  /// The old device-wide key: nobody knows whose searches it holds.
+  static const String _legacyHistoryKey = 'global_search_history';
+
+  SearchNotifier(this._ref, {String? userId})
+    : _historyKey = userId == null ? null : 'search_history_$userId',
+      super(const SearchState()) {
     _loadSearchHistory();
   }
 
   Future<void> _loadSearchHistory() async {
+    final key = _historyKey;
+    if (key == null) return;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final history = prefs.getStringList(_historyKey) ?? [];
+      await prefs.remove(_legacyHistoryKey);
+      final history = prefs.getStringList(key) ?? [];
+      if (!mounted) return;
       state = state.copyWith(searchHistory: history);
     } catch (e) {
       // Only the saved history is lost; search still works.
@@ -53,38 +67,35 @@ class SearchNotifier extends StateNotifier<SearchState> {
     }
 
     state = state.copyWith(searchHistory: currentHistory);
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_historyKey, currentHistory);
-    } catch (e) {
-      // Only the saved history is lost; search still works.
-      AppLogger.warn('Search', 'Could not save the search history', error: e);
-    }
+    await _saveHistory(currentHistory);
   }
 
   Future<void> removeFromHistory(String query) async {
     final currentHistory = List<String>.from(state.searchHistory);
     if (currentHistory.remove(query)) {
       state = state.copyWith(searchHistory: currentHistory);
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setStringList(_historyKey, currentHistory);
-      } catch (e) {
-        // Only the saved history is lost; search still works.
-        AppLogger.warn('Search', 'Could not save the search history', error: e);
-      }
+      await _saveHistory(currentHistory);
     }
   }
 
   Future<void> clearHistory() async {
     state = state.copyWith(searchHistory: const []);
+    await _saveHistory(const []);
+  }
+
+  Future<void> _saveHistory(List<String> history) async {
+    final key = _historyKey;
+    if (key == null) return;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_historyKey);
+      if (history.isEmpty) {
+        await prefs.remove(key);
+      } else {
+        await prefs.setStringList(key, history);
+      }
     } catch (e) {
       // Only the saved history is lost; search still works.
-      AppLogger.warn('Search', 'Could not clear the search history', error: e);
+      AppLogger.warn('Search', 'Could not save the search history', error: e);
     }
   }
 

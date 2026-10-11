@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cinemuse_app/features/search/application/search_provider.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
+import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockTmdbService extends Mock implements TmdbService {}
@@ -20,13 +21,16 @@ void main() {
   group('SearchNotifier History Tests', () {
     setUp(() async {
       SharedPreferences.setMockInitialValues({
-        'global_search_history': ['initial 1', 'initial 2'],
+        'search_history_u1': ['initial 1', 'initial 2'],
       });
 
       mockTmdbService = MockTmdbService();
 
       container = ProviderContainer(
-        overrides: [tmdbServiceProvider.overrideWithValue(mockTmdbService)],
+        overrides: [
+          tmdbServiceProvider.overrideWithValue(mockTmdbService),
+          userIdProvider.overrideWithValue('u1'),
+        ],
       );
     });
 
@@ -57,7 +61,7 @@ void main() {
 
       final prefs = await SharedPreferences.getInstance();
       expect(
-        prefs.getStringList('global_search_history'),
+        prefs.getStringList('search_history_u1'),
         equals(['new search', 'initial 1', 'initial 2']),
       );
     });
@@ -73,7 +77,7 @@ void main() {
 
       final prefs = await SharedPreferences.getInstance();
       expect(
-        prefs.getStringList('global_search_history'),
+        prefs.getStringList('search_history_u1'),
         equals(['initial 2', 'initial 1']),
       );
     });
@@ -102,10 +106,7 @@ void main() {
       expect(state.searchHistory, equals(['initial 2']));
 
       final prefs = await SharedPreferences.getInstance();
-      expect(
-        prefs.getStringList('global_search_history'),
-        equals(['initial 2']),
-      );
+      expect(prefs.getStringList('search_history_u1'), equals(['initial 2']));
     });
 
     test('clearHistory removes all queries from history', () async {
@@ -118,7 +119,7 @@ void main() {
       expect(state.searchHistory, isEmpty);
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getStringList('global_search_history'), isNull);
+      expect(prefs.getStringList('search_history_u1'), isNull);
     });
   });
 
@@ -135,7 +136,10 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       mockTmdbService = MockTmdbService();
       container = ProviderContainer(
-        overrides: [tmdbServiceProvider.overrideWithValue(mockTmdbService)],
+        overrides: [
+          tmdbServiceProvider.overrideWithValue(mockTmdbService),
+          userIdProvider.overrideWithValue('u1'),
+        ],
       );
     });
 
@@ -244,5 +248,45 @@ void main() {
         expect(container.read(searchProvider).hasMore, isFalse);
       },
     );
+  });
+
+  group('SearchNotifier history per account (REV-62)', () {
+    test('another account does not see the history', () async {
+      SharedPreferences.setMockInitialValues({
+        'search_history_u1': ['mine'],
+      });
+      final other = ProviderContainer(
+        overrides: [
+          tmdbServiceProvider.overrideWithValue(MockTmdbService()),
+          userIdProvider.overrideWithValue('u2'),
+        ],
+      );
+      addTearDown(other.dispose);
+
+      other.read(searchProvider.notifier);
+      await Future.delayed(Duration.zero);
+
+      expect(other.read(searchProvider).searchHistory, isEmpty);
+    });
+
+    test('the old device-wide history is deleted', () async {
+      SharedPreferences.setMockInitialValues({
+        'global_search_history': ['someone else'],
+      });
+      final c = ProviderContainer(
+        overrides: [
+          tmdbServiceProvider.overrideWithValue(MockTmdbService()),
+          userIdProvider.overrideWithValue('u1'),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      c.read(searchProvider.notifier);
+      await Future.delayed(Duration.zero);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getStringList('global_search_history'), isNull);
+      expect(c.read(searchProvider).searchHistory, isEmpty);
+    });
   });
 }
