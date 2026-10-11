@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
+import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/data/lists_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
@@ -15,13 +17,16 @@ class MockListsRepository extends Mock implements ListsRepository {}
 
 class MockSupabaseClient extends Mock implements SupabaseClient {}
 
+class MockWatchHistoryRepository extends Mock
+    implements WatchHistoryRepository {}
+
 class MockGoTrueClient extends Mock implements GoTrueClient {}
 
-UserList _list(String id) => UserList(
+UserList _list(String id, {ListType type = ListType.custom}) => UserList(
   id: id,
   userId: 'user-a',
   name: id,
-  type: ListType.custom,
+  type: type,
   createdAt: DateTime(2026),
 );
 
@@ -60,6 +65,9 @@ void main() {
       overrides: [
         authProvider.overrideWith((ref) => AuthService(client)),
         listsRepositoryProvider.overrideWithValue(repo),
+        watchHistoryRepositoryProvider.overrideWithValue(
+          MockWatchHistoryRepository(),
+        ),
       ],
     );
     container.listen(userListsProvider, (_, __) {});
@@ -116,5 +124,55 @@ void main() {
 
     expect(visibleIds(), ['b']);
     expect(container.read(pinnedListIdsProvider), isEmpty);
+  });
+
+  // REV-96: right after a fresh install the lists aren't synced yet.
+  group('toggleWatchlist before the first sync', () {
+    final media = MediaItem(
+      tmdbId: 1,
+      mediaType: MediaKind.movie,
+      updatedAt: DateTime(2026),
+    );
+
+    setUp(() {
+      registerFallbackValue(MediaKind.movie);
+      registerFallbackValue(<String, dynamic>{});
+      when(
+        () => repo.addItemToList(
+          listId: any(named: 'listId'),
+          tmdbId: any(named: 'tmdbId'),
+          mediaType: any(named: 'mediaType'),
+          meta: any(named: 'meta'),
+        ),
+      ).thenAnswer((_) async {});
+    });
+
+    test('syncs once, then adds to the watchlist', () async {
+      when(() => repo.watchUserLists(any())).thenAnswer(
+        (_) => Stream.value([_list('a'), _list('w', type: ListType.watchlist)]),
+      );
+
+      await container.read(userListsProvider.notifier).toggleWatchlist(media);
+
+      verify(
+        () => repo.addItemToList(
+          listId: 'w',
+          tmdbId: 1,
+          mediaType: MediaKind.movie,
+          meta: any(named: 'meta'),
+        ),
+      ).called(1);
+    });
+
+    test('throws a NotFoundFailure if the list is still missing', () async {
+      when(
+        () => repo.watchUserLists(any()),
+      ).thenAnswer((_) => Stream.value([_list('a')]));
+
+      await expectLater(
+        container.read(userListsProvider.notifier).toggleWatchlist(media),
+        throwsA(isA<NotFoundFailure>()),
+      );
+    });
   });
 }

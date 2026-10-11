@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
@@ -51,23 +52,29 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
   }
 
   /// Toggles an item in a system list (Watchlist or Favorites).
+  /// Throws a [NotFoundFailure] if the list is still missing after a sync.
   Future<void> toggleSystemList(MediaItem media, ListType type) async {
-    final lists = state.value ?? [];
+    final repo = ref.read(listsRepositoryProvider);
+    UserList? findList(List<UserList> lists) =>
+        lists.where((l) => l.type == type).firstOrNull;
 
-    // Find the specific list of this type
-    final targetList = lists.firstWhere(
-      (l) => l.type == type,
-      orElse: () => throw Exception(
-        'System list $type not found. Ensure it exists in DB.',
-      ),
-    );
+    var targetList = findList(state.value ?? const []);
+    if (targetList == null) {
+      // Right after a fresh install the first sync may still be running.
+      final user = ref.read(authProvider).value;
+      if (user != null) {
+        await repo.syncUserLists(user.id);
+        targetList = findList(await repo.watchUserLists(user.id).first);
+      }
+    }
+    if (targetList == null) {
+      throw NotFoundFailure('System list ${type.name} not found');
+    }
 
     final exists = targetList.items.any(
       (item) =>
           item.tmdbId == media.tmdbId && item.mediaType == media.mediaType,
     );
-
-    final repo = ref.read(listsRepositoryProvider);
 
     if (exists) {
       await repo.removeItemFromList(
