@@ -49,6 +49,8 @@ app.*.map.json
 
 # Project
 .env
+# Dev/test account for the debug "Dev login" button (SEC-08)
+dev_login.json
 cinemuse.sqlite
 untranslated.json
 *_telemetry_report.json

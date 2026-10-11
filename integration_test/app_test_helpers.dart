@@ -80,13 +80,18 @@ Future<ProviderContainer> pumpAppAndLogin(WidgetTester tester) async {
   );
 
   // Authenticate directly — works in both debug and profile mode.
-  // The test account lives in the uncommitted .env (SEC-08: the repo is
-  // public, so no login in code).
+  // The test account lives in the uncommitted dev_login.json, passed with
+  // `--dart-define-from-file=dev_login.json` (SEC-08: the repo is public, so
+  // no login in code; and not in .env, which is bundled into every build).
+  const email = String.fromEnvironment('DEV_LOGIN_EMAIL');
+  const password = String.fromEnvironment('DEV_LOGIN_PASSWORD');
+  if (email.isEmpty || password.isEmpty) {
+    throw StateError(
+      'No test account: run with --dart-define-from-file=dev_login.json',
+    );
+  }
   final authService = testContainer.read(authProvider.notifier);
-  await authService.signIn(
-    dotenv.env['TEST_EMAIL']!,
-    dotenv.env['TEST_PASSWORD']!,
-  );
+  await authService.signIn(email, password);
 
   // Wait for auth state to propagate and home screen to render
   await tester.pumpAndSettle(const Duration(seconds: 1));

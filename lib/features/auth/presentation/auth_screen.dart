@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -11,6 +12,13 @@ class AuthScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<AuthScreen> createState() => _AuthScreenState();
 }
+
+// Dev login, debug builds only. The account comes from the uncommitted
+// dev_login.json (`--dart-define-from-file=dev_login.json`), never from code:
+// the repo is public (SEC-08). Without the file the button is hidden.
+const _devLoginEmail = String.fromEnvironment('DEV_LOGIN_EMAIL');
+const _devLoginPassword = String.fromEnvironment('DEV_LOGIN_PASSWORD');
+const _hasDevLogin = kDebugMode && _devLoginEmail != '';
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool isLoading = false;
@@ -52,6 +60,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         }
       }
     }
+  }
+
+  void _devLogin() {
+    _emailController.text = _devLoginEmail;
+    _passwordController.text = _devLoginPassword;
+    _submit();
   }
 
   @override
@@ -192,6 +206,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           : Text(l10n.authSignIn),
                     ),
                   ),
+
+                  if (_hasDevLogin) ...[
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton.icon(
+                        icon: const Icon(
+                          Icons.developer_mode,
+                          color: Colors.amber,
+                        ),
+                        // Not translated: debug builds only, users never see it.
+                        label: const Text(
+                          'Dev login',
+                          style: TextStyle(color: Colors.amber),
+                        ),
+                        onPressed: isLoading ? null : _devLogin,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

@@ -20,6 +20,7 @@ Riverpod for state, Supabase backend, Drift local database, Dio for HTTP, media_
 ```powershell
 fvm flutter pub get
 fvm flutter run
+fvm flutter run --dart-define-from-file=dev_login.json   # debug "Dev login" button (account in the uncommitted dev_login.json, see dev_login.example.json)
 fvm flutter analyze
 fvm flutter test
 fvm dart run build_runner build --delete-conflicting-outputs   # regenerate *.g.dart (Drift)
