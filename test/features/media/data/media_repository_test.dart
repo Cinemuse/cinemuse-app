@@ -34,6 +34,9 @@ class FakeFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
   PostgrestFilterBuilder<T> eq(String column, Object value) => this;
 
   @override
+  PostgrestFilterBuilder<T> inFilter(String column, List values) => this;
+
+  @override
   PostgrestTransformBuilder<Map<String, dynamic>?> maybeSingle() {
     Map<String, dynamic>? singleValue;
     if (_value is List && (_value as List).isNotEmpty) {
@@ -120,6 +123,58 @@ void main() {
     test('getMediaItem returns null if not in memory or Drift', () async {
       final result = await repository.getMediaItem(tmdbId, mediaType);
       expect(result, isNull);
+    });
+  });
+
+  group('cacheMissingFromRemote', () {
+    test(
+      'saves missing titles from media_cache, with the right type',
+      () async {
+        when(() => mockSupabase.from('media_cache')).thenAnswer(
+          (_) => FakeQueryBuilder(<Map<String, dynamic>>[
+            {
+              'tmdb_id': 1399,
+              'media_type': 'tv',
+              'title_en': 'Game of Thrones',
+              'poster_path': '/got.jpg',
+              'genres': [18],
+              'release_date': '2011-04-17',
+              'updated_at': '2026-10-01T10:00:00Z',
+            },
+            // Same ID, other type: not asked for, must not be saved.
+            {'tmdb_id': 1399, 'media_type': 'movie', 'title_en': 'Wrong'},
+          ]),
+        );
+
+        await repository.cacheMissingFromRemote([
+          (id: 1399, type: MediaKind.tv),
+        ]);
+
+        final tv = await database.getMediaItem(1399, 'tv');
+        expect(tv?.titleEn, 'Game of Thrones');
+        expect(tv?.posterPath, '/got.jpg');
+        expect(tv?.releaseDate, DateTime(2011, 4, 17));
+        expect(await database.getMediaItem(1399, 'movie'), isNull);
+      },
+    );
+
+    test('keeps titles the local cache already has', () async {
+      await database.upsertMediaItem(
+        CachedMediaItemsCompanion.insert(
+          tmdbId: 1399,
+          mediaType: 'tv',
+          titleEn: const Value('Local title'),
+          voteAverage: const Value(8.4),
+          updatedAt: DateTime(2026),
+        ),
+      );
+
+      await repository.cacheMissingFromRemote([(id: 1399, type: MediaKind.tv)]);
+
+      verifyNever(() => mockSupabase.from('media_cache'));
+      final tv = await database.getMediaItem(1399, 'tv');
+      expect(tv?.titleEn, 'Local title');
+      expect(tv?.voteAverage, 8.4);
     });
   });
 }

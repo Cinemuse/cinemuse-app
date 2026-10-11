@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
+import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show SupabaseClient;
 import 'package:drift/drift.dart';
@@ -12,8 +13,9 @@ import 'package:uuid/uuid.dart';
 class ListsRepository {
   final SupabaseClient _client;
   final AppDatabase _db;
+  final MediaRepository _mediaRepo;
 
-  ListsRepository(this._client, this._db);
+  ListsRepository(this._client, this._db, this._mediaRepo);
 
   /// Fetch all lists for a user, including their items.
   Future<List<UserList>> getUserLists(String userId) async {
@@ -167,26 +169,11 @@ class ListsRepository {
         final listId = listJson['id'] as String;
         final itemsJson = listJson['list_items'] as List? ?? [];
         for (final itemJson in itemsJson) {
-          Map<String, dynamic>? metaData;
-          if (itemJson['media'] != null) {
-            final media = itemJson['media'] as Map<String, dynamic>;
-            metaData = {
-              'title': media['title_en'] ?? media['title_it'],
-              'poster_path': media['poster_path'],
-              'backdrop_path': media['backdrop_path'],
-              'rating': media['vote_average'],
-              'year': media['release_date'] != null
-                  ? DateTime.tryParse(media['release_date'])?.year
-                  : null,
-            };
-          }
-
           items.add(
             CachedListItemsCompanion(
               listId: Value(listId),
               tmdbId: Value(itemJson['tmdb_id'] as int),
               mediaType: Value(itemJson['media_type'] as String),
-              meta: Value(metaData != null ? jsonEncode(metaData) : null),
               sortOrder: Value(itemJson['sort_order'] as int? ?? 0),
               addedAt: Value(
                 DateTime.parse(
@@ -200,6 +187,19 @@ class ListsRepository {
       }
 
       await _db.syncUserLists(userId, lists, items);
+
+      // Remote list items carry no title or poster: fill them in from
+      // media_cache, or a second device shows "Unknown" (REV-88).
+      await _mediaRepo.cacheMissingFromRemote(
+        items
+            .map(
+              (i) => (
+                id: i.tmdbId.value,
+                type: MediaItem.fromString(i.mediaType.value),
+              ),
+            )
+            .toList(),
+      );
     } catch (e) {
       if (!e.toString().contains('Failed host lookup') &&
           !e.toString().contains('SocketException')) {

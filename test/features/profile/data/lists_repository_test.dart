@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:cinemuse_app/core/data/database.dart';
+import 'package:cinemuse_app/features/media/data/media_repository.dart';
+import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/profile/data/lists_repository.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
@@ -9,6 +11,8 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MockSupabaseClient extends Mock implements SupabaseClient {}
+
+class _MockTmdbService extends Mock implements TmdbService {}
 
 class FakeFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
   final T _value;
@@ -60,7 +64,11 @@ void main() {
   setUp(() {
     mockSupabase = MockSupabaseClient();
     database = AppDatabase(NativeDatabase.memory());
-    repository = ListsRepository(mockSupabase, database);
+    repository = ListsRepository(
+      mockSupabase,
+      database,
+      MediaRepository(database, _MockTmdbService(), mockSupabase),
+    );
 
     const channel = MethodChannel('dev.fluttercommunity.plus/connectivity');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

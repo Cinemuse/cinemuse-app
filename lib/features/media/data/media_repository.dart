@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
+import 'package:cinemuse_app/core/error/supabase_failure.dart';
 
 final mediaRepositoryProvider = Provider<MediaRepository>((ref) {
   return MediaRepository(
@@ -95,6 +97,65 @@ class MediaRepository {
         stackTrace: s,
       );
       return [];
+    }
+  }
+
+  /// Copies the titles in [requests] that the local cache doesn't have yet
+  /// from the shared `media_cache` table, so a second device shows their
+  /// title and poster. Titles missing there too stay missing.
+  /// Throws an [AppFailure].
+  Future<void> cacheMissingFromRemote(
+    List<({int id, MediaKind type})> requests,
+  ) async {
+    final local = await _db.getMediaItems(
+      requests.map((r) => (id: r.id, type: r.type.name)).toList(),
+    );
+    final have = {for (final row in local) '${row.mediaType}-${row.tmdbId}'};
+    final missing = {
+      for (final r in requests)
+        if (!have.contains('${r.type.name}-${r.id}')) '${r.type.name}-${r.id}',
+    };
+    if (missing.isEmpty) return;
+
+    final ids = requests.map((r) => r.id).toSet().toList();
+    for (var i = 0; i < ids.length; i += 100) {
+      final chunk = ids.sublist(i, i + 100 > ids.length ? ids.length : i + 100);
+      final rows = await _supabase
+          .from('media_cache')
+          .select(
+            'tmdb_id, media_type, title_en, title_it, poster_path, '
+            'backdrop_path, runtime_minutes, genres, release_date, updated_at',
+          )
+          .inFilter('tmdb_id', chunk)
+          .withAppFailure();
+      for (final row in rows) {
+        final type = row['media_type'] as String;
+        final id = row['tmdb_id'] as int;
+        if (!missing.contains('$type-$id')) continue;
+        final releaseDate = row['release_date'] as String?;
+        final updatedAt = row['updated_at'] as String?;
+        await _db.upsertMediaItem(
+          CachedMediaItemsCompanion(
+            tmdbId: Value(id),
+            mediaType: Value(type),
+            titleIt: Value(row['title_it'] as String?),
+            titleEn: Value(row['title_en'] as String?),
+            posterPath: Value(row['poster_path'] as String?),
+            backdropPath: Value(row['backdrop_path'] as String?),
+            runtimeMinutes: Value(row['runtime_minutes'] as int?),
+            genres: Value(
+              row['genres'] != null ? jsonEncode(row['genres']) : null,
+            ),
+            releaseDate: Value(
+              releaseDate != null ? DateTime.tryParse(releaseDate) : null,
+            ),
+            updatedAt: Value(
+              (updatedAt != null ? DateTime.tryParse(updatedAt) : null) ??
+                  DateTime.now(),
+            ),
+          ),
+        );
+      }
     }
   }
 
