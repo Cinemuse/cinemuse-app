@@ -372,6 +372,7 @@
   "settingsInstalledAddons": "ADDON INSTALLATI",
   "settingsNoAddons": "Nessun addon installato",
   "settingsAddonSuccess": "Addon installato con successo",
+  "settingsAddonInvalid": "Questo non è un link valido per un addon Stremio.",
   "settingsCopiedToClipboard": "URL copiato negli appunti",
   "settingsCopy": "Copia URL",
   "settingsRemove": "Rimuovi",

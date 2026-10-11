@@ -1165,6 +1165,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAddonSuccess => 'Addon installed successfully';
 
   @override
+  String get settingsAddonInvalid => 'This isn\'t a valid Stremio add-on link.';
+
+  @override
   String get settingsCopiedToClipboard => 'URL copied to clipboard';
 
   @override

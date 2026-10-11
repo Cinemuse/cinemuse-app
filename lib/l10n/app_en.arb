@@ -441,6 +441,7 @@
   "settingsInstalledAddons": "INSTALLED ADDONS",
   "settingsNoAddons": "No addons installed yet",
   "settingsAddonSuccess": "Addon installed successfully",
+  "settingsAddonInvalid": "This isn't a valid Stremio add-on link.",
   "settingsCopiedToClipboard": "URL copied to clipboard",
   "settingsCopy": "Copy URL",
   "settingsRemove": "Remove",

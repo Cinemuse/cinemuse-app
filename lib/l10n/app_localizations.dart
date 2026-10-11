@@ -2168,6 +2168,12 @@ abstract class AppLocalizations {
   /// **'Addon installed successfully'**
   String get settingsAddonSuccess;
 
+  /// No description provided for @settingsAddonInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn\'t a valid Stremio add-on link.'**
+  String get settingsAddonInvalid;
+
   /// No description provided for @settingsCopiedToClipboard.
   ///
   /// In en, this message translates to:

@@ -1,3 +1,5 @@
+import 'package:cinemuse_app/core/error/app_failure.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/settings_widgets.dart';
@@ -47,7 +49,11 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
         AppSnackBar.show(context, message: l10n.settingsAddonSuccess);
       }
     } catch (e) {
-      setState(() => _error = e.toString().replaceAll('Exception: ', ''));
+      if (!mounted) return;
+      final message = e is ValidationFailure
+          ? l10n.settingsAddonInvalid
+          : ref.read(errorMapperProvider).map(e).message;
+      setState(() => _error = message);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
