@@ -273,22 +273,35 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                             fit: StackFit.expand,
                             children: [
                               if (imageUrl != null)
-                                CachedNetworkImage(
-                                  imageUrl: imageUrl,
-                                  fit: BoxFit.cover,
-                                  memCacheWidth: 260,
-                                  fadeInDuration: const Duration(
-                                    milliseconds: 120,
-                                  ),
-                                  placeholderFadeInDuration: Duration.zero,
-                                  placeholder: (context, url) =>
-                                      Container(color: AppTheme.surface),
-                                  errorWidget: (context, url, error) =>
-                                      const Center(
-                                        child: Icon(
-                                          Icons.broken_image,
-                                          color: Colors.white24,
+                                LayoutBuilder(
+                                  builder: (context, constraints) =>
+                                      CachedNetworkImage(
+                                        imageUrl: imageUrl,
+                                        fit: BoxFit.cover,
+                                        // Physical pixels: the card's real
+                                        // width times the screen density.
+                                        memCacheWidth:
+                                            constraints.hasBoundedWidth
+                                            ? (constraints.maxWidth *
+                                                      MediaQuery.devicePixelRatioOf(
+                                                        context,
+                                                      ))
+                                                  .round()
+                                            : null,
+                                        fadeInDuration: const Duration(
+                                          milliseconds: 120,
                                         ),
+                                        placeholderFadeInDuration:
+                                            Duration.zero,
+                                        placeholder: (context, url) =>
+                                            Container(color: AppTheme.surface),
+                                        errorWidget: (context, url, error) =>
+                                            const Center(
+                                              child: Icon(
+                                                Icons.broken_image,
+                                                color: Colors.white24,
+                                              ),
+                                            ),
                                       ),
                                 )
                               else

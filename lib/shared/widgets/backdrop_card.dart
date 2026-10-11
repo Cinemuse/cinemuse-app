@@ -144,6 +144,10 @@ class _BackdropCardState extends State<BackdropCard> {
       context,
       effectiveImagePath,
     );
+    final cardWidth = widget.width ?? 280;
+    // memCacheWidth is in physical pixels: decode at the real on-screen size.
+    final cacheWidth = (cardWidth * MediaQuery.devicePixelRatioOf(context))
+        .round();
 
     return DpadFocusable(
       onTap: widget.onTap,
@@ -154,7 +158,7 @@ class _BackdropCardState extends State<BackdropCard> {
       curve: Curves.easeOutCubic,
       autoScroll: true,
       child: SizedBox(
-        width: widget.width ?? 280,
+        width: cardWidth,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -177,7 +181,7 @@ class _BackdropCardState extends State<BackdropCard> {
                           ? CachedNetworkImage(
                               imageUrl: imageUrl,
                               fit: BoxFit.cover,
-                              memCacheWidth: 280, // Target width
+                              memCacheWidth: cacheWidth,
                               color: Colors.black.withValues(alpha: 0.2),
                               colorBlendMode: BlendMode.darken,
                               errorWidget: (context, url, error) =>
