@@ -3,10 +3,10 @@ import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/collection_card.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/create_list_sheet.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/list_delete_with_undo.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_sheet.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/system_list_card.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
-import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,7 +28,6 @@ class ProfileCollections extends ConsumerWidget {
   }
 
   void _showListDetails(BuildContext context, WidgetRef ref, UserList list) {
-    final l10n = AppLocalizations.of(context)!;
     final isSystemList =
         list.type == ListType.watchlist || list.type == ListType.favorites;
 
@@ -42,29 +41,7 @@ class ProfileCollections extends ConsumerWidget {
                   .read(userListsProvider.notifier)
                   .updateList(list.id, name, description);
             },
-      onDelete: () async {
-        // Optimistic delete
-        // The modal is closed by ListDetailsSheet itself to avoid context issues
-        final notifier = ref.read(userListsProvider.notifier);
-        notifier.optimisticRemove(list.id);
-
-        final reason = await AppSnackBar.show(
-          context,
-          message: l10n.detailsListDeleted(list.name),
-          actionLabel: l10n.commonUndo,
-          showTimer: true,
-          onAction:
-              () {}, // Action just closes the snackbar with 'action' reason
-        ).closed;
-
-        if (reason != SnackBarClosedReason.action) {
-          final repo = ref.read(listsRepositoryProvider);
-          await repo.deleteList(list.id);
-        } else {
-          // User undid the deletion, restore the UI state
-          ref.invalidate(userListsProvider);
-        }
-      },
+      onDelete: () => deleteListWithUndo(context, ref, list),
     );
   }
 

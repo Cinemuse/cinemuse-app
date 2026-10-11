@@ -1,0 +1,120 @@
+import 'dart:async';
+
+import 'package:cinemuse_app/core/error/app_failure.dart';
+import 'package:cinemuse_app/features/auth/application/auth_service.dart';
+import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
+import 'package:cinemuse_app/features/profile/data/lists_repository.dart';
+import 'package:cinemuse_app/features/profile/domain/user_list.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class MockListsRepository extends Mock implements ListsRepository {}
+
+class MockSupabaseClient extends Mock implements SupabaseClient {}
+
+class MockGoTrueClient extends Mock implements GoTrueClient {}
+
+UserList _list(String id) => UserList(
+  id: id,
+  userId: 'user-a',
+  name: id,
+  type: ListType.custom,
+  createdAt: DateTime(2026),
+);
+
+// REV-69: deleting a list with Undo.
+void main() {
+  late MockListsRepository repo;
+  late StreamController<List<UserList>> dbLists;
+  late ProviderContainer container;
+
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    repo = MockListsRepository();
+    dbLists = StreamController<List<UserList>>.broadcast();
+    when(() => repo.syncUserLists(any())).thenAnswer((_) async {});
+    when(() => repo.watchUserLists(any())).thenAnswer((_) => dbLists.stream);
+
+    final auth = MockGoTrueClient();
+    when(() => auth.currentSession).thenReturn(
+      Session(
+        accessToken: 'token',
+        tokenType: 'bearer',
+        user: User(
+          id: 'user-a',
+          appMetadata: {},
+          userMetadata: {},
+          aud: '',
+          createdAt: '',
+        ),
+      ),
+    );
+    when(() => auth.onAuthStateChange).thenAnswer((_) => const Stream.empty());
+    final client = MockSupabaseClient();
+    when(() => client.auth).thenReturn(auth);
+
+    container = ProviderContainer(
+      overrides: [
+        authProvider.overrideWith((ref) => AuthService(client)),
+        listsRepositoryProvider.overrideWithValue(repo),
+      ],
+    );
+    container.listen(userListsProvider, (_, __) {});
+    await pumpEventQueue();
+    dbLists.add([_list('a'), _list('b')]);
+    await pumpEventQueue();
+  });
+
+  tearDown(() async {
+    container.dispose();
+    await dbLists.close();
+  });
+
+  List<String> visibleIds() =>
+      container.read(userListsProvider).value!.map((l) => l.id).toList();
+
+  test('undo brings the list back; a refresh meanwhile does not', () async {
+    final undone = Completer<bool>();
+    final delete = container
+        .read(userListsProvider.notifier)
+        .deleteWithUndo('a', undone: undone.future);
+    expect(visibleIds(), ['b']);
+
+    dbLists.add([_list('a'), _list('b')]); // a pull-to-refresh sync
+    await pumpEventQueue();
+    expect(visibleIds(), ['b']);
+
+    undone.complete(true);
+    await delete;
+    expect(visibleIds(), ['a', 'b']);
+    verifyNever(() => repo.deleteList(any()));
+  });
+
+  test('a failed delete brings the list back and rethrows', () async {
+    when(() => repo.deleteList('a')).thenThrow(const NetworkFailure('offline'));
+
+    await expectLater(
+      container
+          .read(userListsProvider.notifier)
+          .deleteWithUndo('a', undone: Future.value(false)),
+      throwsA(isA<NetworkFailure>()),
+    );
+    expect(visibleIds(), ['a', 'b']);
+    verify(() => repo.syncUserLists('user-a')).called(greaterThan(1));
+  });
+
+  test('a deleted list is unpinned', () async {
+    when(() => repo.deleteList('a')).thenAnswer((_) async {});
+    await container.read(pinnedListIdsProvider.notifier).togglePin('a');
+
+    await container
+        .read(userListsProvider.notifier)
+        .deleteWithUndo('a', undone: Future.value(false));
+
+    expect(visibleIds(), ['b']);
+    expect(container.read(pinnedListIdsProvider), isEmpty);
+  });
+}

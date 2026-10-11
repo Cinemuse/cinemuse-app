@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
@@ -6,6 +8,7 @@ import 'package:cinemuse_app/features/profile/data/lists_repository.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/core/data/database.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -19,6 +22,14 @@ final listsRepositoryProvider = Provider<ListsRepository>((ref) {
 /// A notifier that manages all user lists (Watchlist, Favorites, and Custom).
 /// It now uses a stream from the local database for offline-first responsiveness.
 class UserListsNotifier extends StreamNotifier<List<UserList>> {
+  // Lists deleted while the undo snackbar is still open: hidden from every
+  // database update, so a pull-to-refresh can't bring them back.
+  final _pendingDeletes = <String>{};
+  List<UserList> _latestLists = const [];
+
+  List<UserList> _visible(List<UserList> lists) =>
+      lists.where((l) => !_pendingDeletes.contains(l.id)).toList();
+
   @override
   Stream<List<UserList>> build() {
     final user = ref.watch(authProvider).asData?.value;
@@ -31,7 +42,10 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
         .syncUserLists(user.id)
         .catchError((e) => debugPrint('UserListsNotifier: Sync failed: $e'));
 
-    return repo.watchUserLists(user.id);
+    return repo.watchUserLists(user.id).map((lists) {
+      _latestLists = lists;
+      return _visible(lists);
+    });
   }
 
   /// Toggles an item in a system list (Watchlist or Favorites).
@@ -184,11 +198,43 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
     );
   }
 
-  /// Optimistically remove a list from the current state.
-  /// Used in conjunction with Undo-based deletions.
-  void optimisticRemove(String listId) {
-    final lists = state.value ?? [];
-    state = AsyncValue.data(lists.where((l) => l.id != listId).toList());
+  /// Hides the list at once and deletes it unless [undone] completes with
+  /// true. On undo the list comes back; on failure it comes back too (after
+  /// a sync) and the error is rethrown for the UI to show.
+  Future<void> deleteWithUndo(
+    String listId, {
+    required Future<bool> undone,
+  }) async {
+    _pendingDeletes.add(listId);
+    state = AsyncData(_visible(_latestLists));
+    try {
+      if (await undone) return;
+      await ref.read(listsRepositoryProvider).deleteList(listId);
+      _latestLists = _latestLists.where((l) => l.id != listId).toList();
+      final pins = ref.read(pinnedListIdsProvider.notifier);
+      if (pins.isPinned(listId)) await pins.togglePin(listId);
+    } catch (_) {
+      // The local copy may already be gone: sync it back from the server.
+      final userId = ref.read(authProvider).value?.id;
+      if (userId != null) {
+        unawaited(
+          ref
+              .read(listsRepositoryProvider)
+              .syncUserLists(userId)
+              .catchError(
+                (Object e) => AppLogger.warn(
+                  'Lists',
+                  'Sync after a failed delete failed',
+                  error: e,
+                ),
+              ),
+        );
+      }
+      rethrow;
+    } finally {
+      _pendingDeletes.remove(listId);
+      state = AsyncData(_visible(_latestLists));
+    }
   }
 }
 
