@@ -384,7 +384,7 @@
   "settingsEnableVixSrc": "Abilita VixSrc",
   "settingsEnableAnimeUnity": "Abilita AnimeUnity",
   "settingsEnableAnimeUnityDesc": "Sorgente di streaming anime nativa (nessun Debrid necessario)",
-  "settingsEnableAnimeToshoWarning": "Richiede un'integrazione Real-Debrid attiva",
+  "settingsEnableAnimeToshoWarning": "AnimeTosho richiede Real-Debrid o TorBox con una chiave API",
   "settingsDebridServices": "Servizi Debrid",
   "settingsRealDebridTitle": "Real-Debrid (Nativo)",
   "settingsRealDebridKey": "Chiave API Real-Debrid",

@@ -2243,7 +2243,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsEnableAnimeToshoWarning.
   ///
   /// In en, this message translates to:
-  /// **'Requires active Real-Debrid integration'**
+  /// **'AnimeTosho needs Real-Debrid or TorBox with an API key'**
   String get settingsEnableAnimeToshoWarning;
 
   /// No description provided for @settingsDebridServices.

@@ -73,6 +73,15 @@ class UserSettings {
     this.liveTvQuality = StreamQuality.hd,
   });
 
+  /// A debrid service is switched on and has a key.
+  bool get hasDebrid =>
+      (enableRealDebrid && realDebridKey.trim().isNotEmpty) ||
+      (enableTorBox && torBoxKey.trim().isNotEmpty);
+
+  /// AnimeTosho only returns torrents, which need a debrid service. The one
+  /// rule for the resolver and the settings switch (REV-80).
+  bool get isAnimeToshoActive => enableAnimeTosho && hasDebrid;
+
   factory UserSettings.fromProfile(Profile profile) {
     final prefs = profile.preferences;
     return UserSettings(

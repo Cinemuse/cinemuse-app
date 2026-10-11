@@ -1219,7 +1219,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get settingsEnableAnimeToshoWarning =>
-      'Richiede un\'integrazione Real-Debrid attiva';
+      'AnimeTosho richiede Real-Debrid o TorBox con una chiave API';
 
   @override
   String get settingsDebridServices => 'Servizi Debrid';

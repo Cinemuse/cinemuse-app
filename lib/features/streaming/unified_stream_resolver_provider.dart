@@ -90,7 +90,7 @@ final unifiedStreamResolverProvider = Provider((ref) {
   }
 
   // Register built-in sources
-  if (userSettings.enableAnimeTosho) {
+  if (userSettings.isAnimeToshoActive) {
     sources.add(AnimeToshoSource(dio));
   }
 

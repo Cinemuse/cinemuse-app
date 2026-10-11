@@ -243,83 +243,73 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
           children: [
             SettingsCard(
               children: [
-                Builder(
-                  builder: (context) {
-                    final isDebridActive =
-                        settings.enableRealDebrid &&
-                        settings.realDebridKey.trim().isNotEmpty;
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                SettingsTile(
+                  label: l10n.settingsEnableAnimeTosho,
+                  description: "Native high-quality anime source (Torrent)",
+                  icon: LucideIcons.zap,
+                  showDivider: settings.hasDebrid,
+                  trailing: SettingToggle(
+                    value: settings.isAnimeToshoActive,
+                    onChanged: settings.hasDebrid
+                        ? (val) => saveSettings(context, ref, {
+                            'enableAnimeTosho': val,
+                          })
+                        : null,
+                  ),
+                ),
+                // Under its own tile: only AnimeTosho needs debrid.
+                if (!settings.hasDebrid) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Row(
                       children: [
-                        SettingsTile(
-                          label: l10n.settingsEnableAnimeTosho,
-                          description:
-                              "Native high-quality anime source (Torrent)",
-                          icon: LucideIcons.zap,
-                          trailing: SettingToggle(
-                            value: settings.enableAnimeTosho && isDebridActive,
-                            onChanged: isDebridActive
-                                ? (val) => saveSettings(context, ref, {
-                                    'enableAnimeTosho': val,
-                                  })
-                                : (val) {}, // No-op if disabled
-                          ),
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          size: 16,
+                          color: Colors.orangeAccent,
                         ),
-                        SettingsTile(
-                          label: l10n.settingsEnableVixSrc,
-                          description:
-                              "Native direct streaming source (No Debrid required)",
-                          icon: LucideIcons.playCircle,
-                          trailing: SettingToggle(
-                            value: settings.enableVixSrc,
-                            onChanged: (val) => saveSettings(context, ref, {
-                              'enableVixSrc': val,
-                            }),
-                          ),
-                        ),
-                        SettingsTile(
-                          label: l10n.settingsEnableAnimeUnity,
-                          description: l10n.settingsEnableAnimeUnityDesc,
-                          icon: LucideIcons.playCircle,
-                          showDivider: !isDebridActive,
-                          trailing: SettingToggle(
-                            value: settings.enableAnimeUnity,
-                            onChanged: (val) => saveSettings(context, ref, {
-                              'enableAnimeUnity': val,
-                            }),
-                          ),
-                        ),
-                        if (!isDebridActive)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                              horizontal: 8,
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.warning_amber_rounded,
-                                  size: 16,
-                                  color: Colors.orangeAccent,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    l10n.settingsEnableAnimeToshoWarning,
-                                    style: const TextStyle(
-                                      color: Colors.orangeAccent,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            l10n.settingsEnableAnimeToshoWarning,
+                            style: const TextStyle(
+                              color: Colors.orangeAccent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
+                        ),
                       ],
-                    );
-                  },
+                    ),
+                  ),
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: Colors.white.withValues(alpha: 0.05),
+                    indent: 52,
+                  ),
+                ],
+                SettingsTile(
+                  label: l10n.settingsEnableVixSrc,
+                  description:
+                      "Native direct streaming source (No Debrid required)",
+                  icon: LucideIcons.playCircle,
+                  trailing: SettingToggle(
+                    value: settings.enableVixSrc,
+                    onChanged: (val) =>
+                        saveSettings(context, ref, {'enableVixSrc': val}),
+                  ),
+                ),
+                SettingsTile(
+                  label: l10n.settingsEnableAnimeUnity,
+                  description: l10n.settingsEnableAnimeUnityDesc,
+                  icon: LucideIcons.playCircle,
+                  showDivider: false,
+                  trailing: SettingToggle(
+                    value: settings.enableAnimeUnity,
+                    onChanged: (val) =>
+                        saveSettings(context, ref, {'enableAnimeUnity': val}),
+                  ),
                 ),
               ],
             ),

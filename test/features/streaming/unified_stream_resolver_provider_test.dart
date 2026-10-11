@@ -28,17 +28,10 @@ class _FakeSettingsNotifier extends SettingsNotifier {
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  test('passes the subtitle languages on to the resolver (REV-24)', () {
+  ProviderContainer containerWith(UserSettings settings) {
     final container = ProviderContainer(
       overrides: [
-        settingsProvider.overrideWith(
-          () => _FakeSettingsNotifier(
-            const UserSettings(
-              subtitleLanguage: 'it',
-              animeSubtitleLanguage: 'ja',
-            ),
-          ),
-        ),
+        settingsProvider.overrideWith(() => _FakeSettingsNotifier(settings)),
         dioProvider.overrideWithValue(Dio()),
         tmdbServiceProvider.overrideWithValue(_MockTmdbService()),
         kitsuMappingServiceProvider.overrideWithValue(
@@ -48,10 +41,42 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
+    return container;
+  }
+
+  test('passes the subtitle languages on to the resolver (REV-24)', () {
+    final container = containerWith(
+      const UserSettings(subtitleLanguage: 'it', animeSubtitleLanguage: 'ja'),
+    );
 
     final resolver = container.read(unifiedStreamResolverProvider);
 
     expect(resolver.settings.subtitleLanguage, 'it');
     expect(resolver.settings.animeSubtitleLanguage, 'ja');
+  });
+
+  // REV-80: the switch is on by default, but torrents need debrid.
+  test('leaves AnimeTosho out without a debrid service', () {
+    final container = containerWith(const UserSettings());
+
+    final names = container
+        .read(unifiedStreamResolverProvider)
+        .sources
+        .map((s) => s.name);
+
+    expect(names, isNot(contains('AnimeTosho')));
+  });
+
+  test('uses AnimeTosho with TorBox only', () {
+    final container = containerWith(
+      const UserSettings(enableTorBox: true, torBoxKey: 'key'),
+    );
+
+    final names = container
+        .read(unifiedStreamResolverProvider)
+        .sources
+        .map((s) => s.name);
+
+    expect(names, contains('AnimeTosho'));
   });
 }
