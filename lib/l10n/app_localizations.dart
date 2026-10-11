@@ -1700,6 +1700,54 @@ abstract class AppLocalizations {
   /// **'Western'**
   String get genreWestern;
 
+  /// No description provided for @genreActionAdventure.
+  ///
+  /// In en, this message translates to:
+  /// **'Action & Adventure'**
+  String get genreActionAdventure;
+
+  /// No description provided for @genreKids.
+  ///
+  /// In en, this message translates to:
+  /// **'Kids'**
+  String get genreKids;
+
+  /// No description provided for @genreNews.
+  ///
+  /// In en, this message translates to:
+  /// **'News'**
+  String get genreNews;
+
+  /// No description provided for @genreReality.
+  ///
+  /// In en, this message translates to:
+  /// **'Reality'**
+  String get genreReality;
+
+  /// No description provided for @genreSciFiFantasy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sci-Fi & Fantasy'**
+  String get genreSciFiFantasy;
+
+  /// No description provided for @genreSoap.
+  ///
+  /// In en, this message translates to:
+  /// **'Soap'**
+  String get genreSoap;
+
+  /// No description provided for @genreTalk.
+  ///
+  /// In en, this message translates to:
+  /// **'Talk Show'**
+  String get genreTalk;
+
+  /// No description provided for @genreWarPolitics.
+  ///
+  /// In en, this message translates to:
+  /// **'War & Politics'**
+  String get genreWarPolitics;
+
   /// No description provided for @languageEnglish.
   ///
   /// In en, this message translates to:

@@ -915,6 +915,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get genreWestern => 'Western';
 
   @override
+  String get genreActionAdventure => 'Action & Adventure';
+
+  @override
+  String get genreKids => 'Kids';
+
+  @override
+  String get genreNews => 'News';
+
+  @override
+  String get genreReality => 'Reality';
+
+  @override
+  String get genreSciFiFantasy => 'Sci-Fi & Fantasy';
+
+  @override
+  String get genreSoap => 'Soap';
+
+  @override
+  String get genreTalk => 'Talk Show';
+
+  @override
+  String get genreWarPolitics => 'War & Politics';
+
+  @override
   String get languageEnglish => 'English';
 
   @override

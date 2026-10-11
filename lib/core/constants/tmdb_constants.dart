@@ -3,9 +3,15 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 /// TMDB genres and original languages offered in the Explore filters.
 /// Names come from [TmdbFilterNames], so they follow the app language.
 class TmdbConstants {
-  static const List<int> genreIds = [
+  static const List<int> movieGenreIds = [
     28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, //
     27, 10402, 9648, 10749, 878, 10770, 53, 10752, 37,
+  ];
+
+  /// TMDB series use their own genre ids (e.g. 10759 instead of 28 + 12).
+  static const List<int> tvGenreIds = [
+    10759, 16, 35, 80, 99, 18, 10751, 10762, 9648, 10763, //
+    10764, 10765, 10766, 10767, 10768, 37,
   ];
 
   /// ISO 639-1 codes, as TMDB's `with_original_language` expects.
@@ -15,7 +21,8 @@ class TmdbConstants {
   ];
 }
 
-/// Translated names for [TmdbConstants.genreIds] and
+/// Translated names for [TmdbConstants.movieGenreIds],
+/// [TmdbConstants.tvGenreIds] and
 /// [TmdbConstants.languageCodes] (REV-15).
 extension TmdbFilterNames on AppLocalizations {
   /// The genre name; the bare id for a genre not in the list.
@@ -39,6 +46,14 @@ extension TmdbFilterNames on AppLocalizations {
     53 => genreThriller,
     10752 => genreWar,
     37 => genreWestern,
+    10759 => genreActionAdventure,
+    10762 => genreKids,
+    10763 => genreNews,
+    10764 => genreReality,
+    10765 => genreSciFiFantasy,
+    10766 => genreSoap,
+    10767 => genreTalk,
+    10768 => genreWarPolitics,
     _ => '$id',
   };
 

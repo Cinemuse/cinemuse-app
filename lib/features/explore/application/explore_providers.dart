@@ -4,9 +4,25 @@ import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import '../presentation/widgets/explore_filters.dart';
 import '../presentation/widgets/media_type_selector.dart';
 
-final exploreMediaTypeProvider = StateProvider<MediaType>(
-  (ref) => MediaType.movie,
-);
+// Not autoDispose: Explore keeps its tab and filters while the user is on
+// other screens.
+final exploreMediaTypeProvider =
+    NotifierProvider<ExploreMediaTypeNotifier, MediaType>(
+      ExploreMediaTypeNotifier.new,
+    );
+
+class ExploreMediaTypeNotifier extends Notifier<MediaType> {
+  @override
+  MediaType build() => MediaType.movie;
+
+  /// Switches the tab and fits the filters to it (series use other genres
+  /// and another date field).
+  void select(MediaType type) {
+    state = type;
+    final filters = ref.read(exploreFiltersProvider);
+    ref.read(exploreFiltersProvider.notifier).state = filters.forType(type);
+  }
+}
 
 final exploreFiltersProvider = StateProvider<ExploreFilters>(
   (ref) => ExploreFilters(),

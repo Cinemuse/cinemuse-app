@@ -924,6 +924,30 @@ class AppLocalizationsIt extends AppLocalizations {
   String get genreWestern => 'Western';
 
   @override
+  String get genreActionAdventure => 'Azione e avventura';
+
+  @override
+  String get genreKids => 'Bambini';
+
+  @override
+  String get genreNews => 'Notiziari';
+
+  @override
+  String get genreReality => 'Reality';
+
+  @override
+  String get genreSciFiFantasy => 'Fantascienza e fantasy';
+
+  @override
+  String get genreSoap => 'Soap opera';
+
+  @override
+  String get genreTalk => 'Talk show';
+
+  @override
+  String get genreWarPolitics => 'Guerra e politica';
+
+  @override
   String get languageEnglish => 'Inglese';
 
   @override

@@ -6,6 +6,7 @@ import '../../../../core/constants/tmdb_constants.dart';
 import '../../../../core/constants/tmdb_image_helper.dart';
 import 'explore_filters.dart';
 import 'filter_range_slider.dart';
+import 'media_type_selector.dart';
 
 import 'package:cinemuse_app/features/explore/application/explore_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -76,6 +77,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final filters = ref.watch(exploreFiltersProvider);
+    final mediaType = ref.watch(exploreMediaTypeProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
@@ -112,7 +114,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                         const SizedBox(height: 8),
                         _buildSortOption(
                           l10n.searchNewestReleases,
-                          'primary_release_date.desc',
+                          ExploreFilters.newestSortFor(mediaType),
                           filters,
                         ),
                         const SizedBox(height: 32),
@@ -141,7 +143,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                           subtitle: l10n.searchMatchAll,
                         ),
                         const SizedBox(height: 16),
-                        _buildGenreGrid(filters),
+                        _buildGenreGrid(filters, mediaType),
                         const SizedBox(height: 32),
                         _buildSectionLabel(l10n.searchWatchProviders),
                         const SizedBox(height: 12),
@@ -286,11 +288,11 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
     );
   }
 
-  Widget _buildGenreGrid(ExploreFilters filters) {
+  Widget _buildGenreGrid(ExploreFilters filters, MediaType mediaType) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: TmdbConstants.genreIds.map((genreId) {
+      children: ExploreFilters.genreIdsFor(mediaType).map((genreId) {
         final isSelected = filters.genres.contains(genreId);
         return HoverScale(
           onTap: () => _toggleGenre(genreId),

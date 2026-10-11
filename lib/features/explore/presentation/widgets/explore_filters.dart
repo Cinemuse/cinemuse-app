@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/tmdb_constants.dart';
+import 'media_type_selector.dart';
+
 class ExploreFilters {
   // Slider limits and defaults: the panel, the chips and [isFiltered] all
   // read these, so they can't disagree.
@@ -9,6 +12,15 @@ class ExploreFilters {
   // Hides titles with almost no votes (mostly empty TMDB entries).
   static const defaultVoteCount = RangeValues(100, 20000);
   static const runtimeLimits = RangeValues(0, 240);
+
+  /// "Newest releases": series name the date field differently.
+  static String newestSortFor(MediaType type) => type == MediaType.tv
+      ? 'first_air_date.desc'
+      : 'primary_release_date.desc';
+
+  static List<int> genreIdsFor(MediaType type) => type == MediaType.tv
+      ? TmdbConstants.tvGenreIds
+      : TmdbConstants.movieGenreIds;
 
   /// Up to next year, so announced titles can be found too.
   static RangeValues get yearLimits =>
@@ -57,6 +69,18 @@ class ExploreFilters {
       runtime: runtime ?? this.runtime,
       watchProviders: watchProviders ?? this.watchProviders,
       watchRegion: watchRegion ?? this.watchRegion,
+    );
+  }
+
+  /// The same filters for [type]: drops the genres it doesn't have and
+  /// renames the "newest" sort.
+  ExploreFilters forType(MediaType type) {
+    final isNewest =
+        sortBy == newestSortFor(MediaType.movie) ||
+        sortBy == newestSortFor(MediaType.tv);
+    return copyWith(
+      genres: genres.where(genreIdsFor(type).contains).toList(),
+      sortBy: isNewest ? newestSortFor(type) : sortBy,
     );
   }
 

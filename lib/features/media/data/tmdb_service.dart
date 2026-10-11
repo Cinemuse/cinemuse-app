@@ -310,7 +310,7 @@ class TmdbService {
     String region,
   ) async {
     final data = await _get(
-      '/watch/providers/${type == 'series' ? 'tv' : 'movie'}',
+      '/watch/providers/${type == 'tv' ? 'tv' : 'movie'}',
       {'watch_region': region, 'language': _language},
     );
     return List<Map<String, dynamic>>.from(data['results']);

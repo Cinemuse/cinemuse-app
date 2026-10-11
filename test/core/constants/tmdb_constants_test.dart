@@ -8,7 +8,10 @@ void main() {
   final it = lookupAppLocalizations(const Locale('it'));
 
   test('every Explore genre has a name in English and Italian', () {
-    for (final id in TmdbConstants.genreIds) {
+    for (final id in [
+      ...TmdbConstants.movieGenreIds,
+      ...TmdbConstants.tvGenreIds,
+    ]) {
       expect(en.genreName(id), isNot('$id'));
       expect(it.genreName(id), isNot('$id'));
     }

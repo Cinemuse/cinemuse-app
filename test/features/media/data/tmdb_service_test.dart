@@ -92,6 +92,14 @@ void main() {
       );
     });
 
+    test('watch providers for series ask for the TV list', () async {
+      final adapter = _FakeAdapter(body: '{"results": []}');
+
+      await _service(adapter).getWatchProviders('tv', 'IT');
+
+      expect(adapter.lastRequest!.path, endsWith('/watch/providers/tv'));
+    });
+
     test('the failure message never contains the API key', () async {
       final service = _service(_FakeAdapter(statusCode: 500));
 

@@ -154,12 +154,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                                             : null,
                                         onTypeChanged: (type) {
                                           ref
-                                                  .read(
-                                                    exploreMediaTypeProvider
-                                                        .notifier,
-                                                  )
-                                                  .state =
-                                              type;
+                                              .read(
+                                                exploreMediaTypeProvider
+                                                    .notifier,
+                                              )
+                                              .select(type);
                                           ref
                                               .read(
                                                 exploreResultsProvider.notifier,
@@ -209,12 +208,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                                             : null,
                                         onTypeChanged: (type) {
                                           ref
-                                                  .read(
-                                                    exploreMediaTypeProvider
-                                                        .notifier,
-                                                  )
-                                                  .state =
-                                              type;
+                                              .read(
+                                                exploreMediaTypeProvider
+                                                    .notifier,
+                                              )
+                                              .select(type);
                                           ref
                                               .read(
                                                 exploreResultsProvider.notifier,
