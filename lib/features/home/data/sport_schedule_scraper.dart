@@ -1,4 +1,4 @@
-import 'dart:developer' as developer;
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/home/domain/sport_tv_event.dart';
 import 'package:dio/dio.dart';
 import 'package:html/parser.dart' show parse;
@@ -14,9 +14,9 @@ class SportScheduleScraper {
       final response = await _dio.get('https://sport.virgilio.it/guida-tv/');
       return parseHtml(response.data.toString());
     } catch (e, st) {
-      developer.log(
+      AppLogger.warn(
+        'SportScheduleScraper',
         'Failed to fetch sports schedule from Virgilio Sport',
-        name: 'SportScheduleScraper',
         error: e,
         stackTrace: st,
       );
@@ -100,32 +100,22 @@ class SportScheduleScraper {
     'dicembre': 12,
   };
 
-  /// Tries to parse date and time strings into a standard Dart DateTime object.
+  /// Parses "17 maggio 2026" + "12:30" into a local [DateTime], or `null`
+  /// when the day, month or hour can't be read (better no date than a wrong
+  /// one).
   DateTime? _tryParseDateTime(String dateStr, String timeStr) {
-    try {
-      final dateParts = dateStr.trim().split(' ');
-      if (dateParts.length < 3) return null;
+    final dateParts = dateStr.trim().split(' ');
+    if (dateParts.length < 3) return null;
 
-      final day = int.tryParse(dateParts[0]) ?? 1;
-      final monthStr = dateParts[1].toLowerCase();
-      final year = int.tryParse(dateParts[2]) ?? DateTime.now().year;
-      final month = _italianMonths[monthStr] ?? 1;
+    final day = int.tryParse(dateParts[0]);
+    final month = _italianMonths[dateParts[1].toLowerCase()];
+    final year = int.tryParse(dateParts[2]) ?? DateTime.now().year;
 
-      final timeParts = timeStr.trim().split(':');
-      final hour = timeParts.isNotEmpty ? (int.tryParse(timeParts[0]) ?? 0) : 0;
-      final minute = timeParts.length > 1
-          ? (int.tryParse(timeParts[1]) ?? 0)
-          : 0;
+    final timeParts = timeStr.trim().split(':');
+    final hour = int.tryParse(timeParts[0]);
+    final minute = timeParts.length > 1 ? (int.tryParse(timeParts[1]) ?? 0) : 0;
 
-      return DateTime(year, month, day, hour, minute);
-    } catch (e, st) {
-      developer.log(
-        'Failed to parse sport event date/time: "$dateStr $timeStr"',
-        name: 'SportScheduleScraper',
-        error: e,
-        stackTrace: st,
-      );
-      return null;
-    }
+    if (day == null || month == null || hour == null) return null;
+    return DateTime(year, month, day, hour, minute);
   }
 }

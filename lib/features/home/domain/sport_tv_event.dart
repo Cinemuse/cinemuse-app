@@ -34,34 +34,4 @@ class SportTvEvent {
         )
         .key;
   }
-
-  @override
-  String toString() {
-    return 'SportTvEvent(dateTime: $dateTime, sportName: $sportName, description: $description, channels: $channels)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    if (other is! SportTvEvent) return false;
-
-    if (dateTime != other.dateTime) return false;
-    if (sportName != other.sportName) return false;
-    if (description != other.description) return false;
-
-    if (channels.length != other.channels.length) return false;
-    for (int i = 0; i < channels.length; i++) {
-      if (channels[i] != other.channels[i]) return false;
-    }
-
-    return true;
-  }
-
-  @override
-  int get hashCode {
-    return dateTime.hashCode ^
-        sportName.hashCode ^
-        description.hashCode ^
-        channels.hashCode;
-  }
 }

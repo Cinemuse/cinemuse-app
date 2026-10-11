@@ -76,6 +76,29 @@ void main() {
       },
     );
 
+    test('an unreadable day, month or hour gives no date', () {
+      const html = '''
+        <div class="entry-content">
+          <h2>Oggi – 17 maggo 2026 – Le partite</h2>
+          <table><tbody>
+            <tr><td>12:30</td><td><strong>Calcio</strong>, A</td><td>Dazn</td></tr>
+          </tbody></table>
+          <h2>Domani – xx maggio 2026 – Le partite</h2>
+          <table><tbody>
+            <tr><td>15:00</td><td><strong>Calcio</strong>, B</td><td>Dazn</td></tr>
+          </tbody></table>
+          <h2>Lunedì – 19 maggio 2026 – Le partite</h2>
+          <table><tbody>
+            <tr><td>da definire</td><td><strong>Calcio</strong>, C</td><td>Dazn</td></tr>
+          </tbody></table>
+        </div>
+      ''';
+
+      final events = scraper.parseHtml(html);
+
+      expect(events.map((e) => e.dateTime), [null, null, null]);
+    });
+
     test('parseHtml handles malformed or empty content gracefully', () {
       const emptyHtml = '<html><body></body></html>';
       final eventsEmpty = scraper.parseHtml(emptyHtml);
