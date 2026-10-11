@@ -3,6 +3,7 @@ import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/profile/data/lists_repository.dart';
+import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -119,6 +120,23 @@ void main() {
       )..where((t) => t.listId.equals('list-1'))).get();
       expect(items.length, 1);
       expect(items.first.tmdbId, 555);
+    });
+
+    test('an unknown list type does not break the other lists', () async {
+      for (final (id, type) in [('l1', 'watchlist'), ('l2', 'ranking')]) {
+        await database.upsertUserList(
+          CachedUserListsCompanion.insert(
+            id: id,
+            userId: userId,
+            name: id,
+            type: type,
+          ),
+        );
+      }
+
+      final lists = await repository.watchUserLists(userId).first;
+
+      expect(lists.map((l) => l.type), [ListType.watchlist, ListType.custom]);
     });
 
     test('watchUserLists correctly maps and combines DB data', () async {

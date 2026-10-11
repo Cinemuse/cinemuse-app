@@ -1,6 +1,24 @@
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
-enum ListType { watchlist, favorites, custom, tierlist, dropped }
+enum ListType {
+  watchlist('watchlist'),
+  favorites('favorites'),
+  custom('custom'),
+  tierlist('tier_list'),
+  dropped('dropped');
+
+  const ListType(this.dbName);
+
+  /// The value of the `lists.type` column.
+  final String dbName;
+
+  /// Reads `lists.type`. An unknown value is shown as a custom list, so one
+  /// new type can't break every list (REV-91).
+  static ListType fromDb(String? value) => values.firstWhere(
+    (t) => t.dbName == value || t.name == value,
+    orElse: () => custom,
+  );
+}
 
 class UserList {
   final String id;
@@ -55,25 +73,12 @@ class UserList {
   }
 
   factory UserList.fromJson(Map<String, dynamic> json) {
-    // Determine type from string
-    ListType type = ListType.custom;
-    final typeStr = json['type'] as String?;
-    if (typeStr == 'watchlist') {
-      type = ListType.watchlist;
-    } else if (typeStr == 'favorites') {
-      type = ListType.favorites;
-    } else if (typeStr == 'tierlist') {
-      type = ListType.tierlist;
-    } else if (typeStr == 'dropped') {
-      type = ListType.dropped;
-    }
-
     return UserList(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       name: json['name'] as String,
       description: json['description'] as String?,
-      type: type,
+      type: ListType.fromDb(json['type'] as String?),
       sortOrder: json['sort_order'] as int? ?? 0,
       settings: json['settings'] as Map<String, dynamic>? ?? {},
       createdAt: DateTime.parse(json['created_at'] as String),
