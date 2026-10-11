@@ -5,6 +5,7 @@ import 'package:cinemuse_app/features/media/presentation/widgets/tracking_modals
 import 'package:cinemuse_app/features/media/presentation/widgets/watch_logs_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/refresh_user_data.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
@@ -360,15 +361,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           color: AppTheme.accent,
           backgroundColor: AppTheme.secondary,
           onRefresh: () async {
-            final user = ref.read(authProvider).value;
-            if (user != null) {
-              await Future.wait([
-                ref
-                    .read(watchHistoryRepositoryProvider)
-                    .syncWatchHistory(user.id),
-                ref.read(listsRepositoryProvider).syncUserLists(user.id),
-              ]).catchError((_) => []);
-            }
+            await refreshUserData(context, ref);
 
             ref.invalidate(
               mediaDetailsProvider((id: widget.mediaId, type: typeForTmdb)),

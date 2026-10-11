@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/refresh_user_data.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
@@ -7,8 +8,6 @@ import 'package:cinemuse_app/shared/widgets/offline_banner.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
-import 'package:cinemuse_app/features/auth/application/auth_service.dart';
-import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/profile_hero.dart';
 import 'package:cinemuse_app/features/profile/presentation/profile_overview.dart';
@@ -60,15 +59,7 @@ class _ProfileHubState extends ConsumerState<ProfileHub>
         color: AppTheme.accent,
         backgroundColor: AppTheme.secondary,
         onRefresh: () async {
-          final user = ref.read(authProvider).value;
-          if (user != null) {
-            await Future.wait([
-              ref
-                  .read(watchHistoryRepositoryProvider)
-                  .syncWatchHistory(user.id),
-              ref.read(listsRepositoryProvider).syncUserLists(user.id),
-            ]).catchError((_) => []);
-          }
+          await refreshUserData(context, ref);
 
           ref.invalidate(userListsProvider);
         },

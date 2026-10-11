@@ -27,6 +27,33 @@ class UserList {
     this.items = const [],
   });
 
+  /// A TMDB collection shown as a read-only list (the list details sheet).
+  factory UserList.fromCollection(
+    MediaCollection collection, {
+    required String name,
+  }) {
+    final id = 'collection_${collection.id}';
+    final now = DateTime.now();
+    return UserList(
+      id: id,
+      userId: 'system',
+      name: name,
+      description: collection.overview,
+      type: ListType.custom,
+      createdAt: now,
+      items: [
+        for (final media in collection.parts)
+          UserListItem(
+            listId: id,
+            addedAt: now,
+            tmdbId: media.tmdbId,
+            mediaType: media.mediaType,
+            media: media,
+          ),
+      ],
+    );
+  }
+
   factory UserList.fromJson(Map<String, dynamic> json) {
     // Determine type from string
     ListType type = ListType.custom;

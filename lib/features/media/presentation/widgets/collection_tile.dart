@@ -51,28 +51,13 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
     });
 
     if (model != null) {
-      final listItems = model.parts.map((mediaItem) {
-        return UserListItem(
-          listId: 'collection_$_collectionId',
-          addedAt: DateTime.now(),
-          tmdbId: mediaItem.tmdbId,
-          mediaType: mediaItem.mediaType,
-          media: mediaItem,
-          meta: {},
-        );
-      }).toList();
-
-      final userList = UserList(
-        id: 'collection_$_collectionId',
-        name: model.name.isNotEmpty ? model.name : _getTitle(l10n),
-        description: model.overview,
-        type: ListType.custom,
-        items: listItems,
-        createdAt: DateTime.now(),
-        userId: 'system',
+      ListDetailsSheet.show(
+        context,
+        list: UserList.fromCollection(
+          model,
+          name: model.name.isNotEmpty ? model.name : _getTitle(l10n),
+        ),
       );
-
-      ListDetailsSheet.show(context, list: userList);
     } else {
       AppSnackBar.show(context, message: l10n.detailsFailedLoadCollection);
     }

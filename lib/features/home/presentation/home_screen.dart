@@ -1,4 +1,3 @@
-import 'dart:developer' as developer;
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/continue_watching_row.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/sport_schedule_row.dart';
@@ -16,8 +15,7 @@ import 'package:cinemuse_app/shared/widgets/offline_banner.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
-import 'package:cinemuse_app/features/auth/application/auth_service.dart';
-import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/refresh_user_data.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_sheet.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
@@ -101,23 +99,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         color: theme.colorScheme.primary,
         backgroundColor: theme.colorScheme.surfaceContainer,
         onRefresh: () async {
-          final user = ref.read(authProvider).value;
-          if (user != null) {
-            await Future.wait([
-              ref
-                  .read(watchHistoryRepositoryProvider)
-                  .syncWatchHistory(user.id),
-              ref.read(listsRepositoryProvider).syncUserLists(user.id),
-            ]).catchError((e, st) {
-              developer.log(
-                'Background sync failed during pull-to-refresh',
-                name: 'HomeScreen',
-                error: e,
-                stackTrace: st,
-              );
-              return <void>[];
-            });
-          }
+          await refreshUserData(context, ref);
 
           ref.invalidate(sportScheduleProvider);
           ref.invalidate(trendingProvider);
@@ -367,30 +349,10 @@ class _PinnedCollectionRow extends ConsumerWidget {
             child: MediaRow(
               title: title,
               asyncData: AsyncValue.data(collection.parts),
-              onHeaderTap: () {
-                final listItems = collection.parts
-                    .map(
-                      (mediaItem) => UserListItem(
-                        listId: collectionId,
-                        addedAt: DateTime.now(),
-                        tmdbId: mediaItem.tmdbId,
-                        mediaType: mediaItem.mediaType,
-                        media: mediaItem,
-                        meta: const {},
-                      ),
-                    )
-                    .toList();
-                final userList = UserList(
-                  id: collectionId,
-                  name: title,
-                  description: collection.overview,
-                  type: ListType.custom,
-                  items: listItems,
-                  createdAt: DateTime.now(),
-                  userId: 'system',
-                );
-                ListDetailsSheet.show(context, list: userList);
-              },
+              onHeaderTap: () => ListDetailsSheet.show(
+                context,
+                list: UserList.fromCollection(collection, name: title),
+              ),
             ),
           ),
         );

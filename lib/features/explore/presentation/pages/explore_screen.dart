@@ -14,9 +14,6 @@ import 'package:cinemuse_app/shared/widgets/offline_placeholder.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../../../shared/widgets/app_bottom_sheet.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
-import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
-import 'package:cinemuse_app/features/auth/application/auth_service.dart';
-import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
@@ -113,16 +110,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
         color: AppTheme.accent,
         backgroundColor: AppTheme.secondary,
         onRefresh: () async {
-          final user = ref.read(authProvider).value;
-          if (user != null) {
-            await Future.wait([
-              ref
-                  .read(watchHistoryRepositoryProvider)
-                  .syncWatchHistory(user.id),
-              ref.read(listsRepositoryProvider).syncUserLists(user.id),
-            ]).catchError((_) => []);
-          }
-
           ref.invalidate(exploreResultsProvider);
         },
         child: CustomScrollView(
