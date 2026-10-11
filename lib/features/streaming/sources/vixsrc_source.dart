@@ -148,8 +148,9 @@ class VixSrcSource extends BaseSource {
             );
           }
         }
-      } catch (_) {
-        // Fall back to direct playlistUrl if manifest filtering fails
+      } catch (e) {
+        // Fall back to the untrimmed playlist: it plays, just starts slower.
+        AppLogger.warn(_logTag, 'Could not trim the playlist', error: e);
       }
 
       return [
@@ -180,6 +181,8 @@ class VixSrcSource extends BaseSource {
         ),
       ];
     } catch (e) {
+      // Logged so "offline" can be told apart from "not on VixSrc".
+      AppLogger.warn(_logTag, 'Search failed for $path', error: e);
       return [];
     }
   }
@@ -302,7 +305,9 @@ class VixSrcSource extends BaseSource {
     Directory tempDir;
     try {
       tempDir = await getTemporaryDirectory();
-    } catch (_) {
+    } catch (e) {
+      // path_provider has no plugin in some test and desktop setups.
+      AppLogger.debug(_logTag, 'No app temp folder, using the system one: $e');
       tempDir = Directory.systemTemp;
     }
     final dir = Directory('${tempDir.path}/vixsrc_playlists');

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:dio/dio.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/streaming/sources/vixsrc_source.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_metadata.dart';
@@ -213,6 +214,26 @@ void main() {
       expect(candidate.provider, 'VixSrc');
       expect(candidate.url, contains('.m3u8'));
     });
+  });
+
+  test('a failed search is logged, not silent (REV-30)', () async {
+    AppLogger.clearRecent();
+    when(() => mockDio.get(any(), options: any(named: 'options'))).thenThrow(
+      DioException(
+        requestOptions: RequestOptions(path: '/api/movie/1'),
+        type: DioExceptionType.connectionError,
+      ),
+    );
+
+    final results = await source.search(
+      StreamSearchContext(tmdbId: '1', type: 'movie', title: 'Test Movie'),
+    );
+
+    expect(results, isEmpty);
+    expect(
+      AppLogger.recent.map((e) => e.message),
+      contains(startsWith('Search failed for /movie/1')),
+    );
   });
 
   group('VixSrcSource.deleteStaleManifests (REV-32)', () {

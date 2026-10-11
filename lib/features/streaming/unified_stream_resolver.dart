@@ -30,6 +30,7 @@ class UnifiedStreamResolver {
   // Simple in-memory cache for search results
   final Map<String, _CachedSearch> _searchCache = {};
   static const Duration _cacheDuration = Duration(minutes: 30);
+  static const String _logTag = 'UnifiedStreamResolver';
 
   static String _cacheKey(
     String queryId,
@@ -143,8 +144,13 @@ class UnifiedStreamResolver {
 
       // Proactively ingest into cache since we have full details
       final item = MediaItem.fromTmdbDetails(details, kind);
-      // Cache write only: resolving streams must not wait for it.
-      unawaited(_mediaRepository.saveMediaItem(item).catchError((_) {}));
+      // Cache write only: resolving streams must not wait for it, and a
+      // failed write only means the title is fetched again next time.
+      unawaited(
+        _mediaRepository.saveMediaItem(item).catchError((Object e) {
+          AppLogger.warn(_logTag, 'Could not cache $kind $queryId', error: e);
+        }),
+      );
 
       final tmdbId =
           int.tryParse(queryId) ?? int.tryParse(details['id'].toString());
@@ -238,6 +244,9 @@ class UnifiedStreamResolver {
             );
             onStatusUpdate?.call(searchStatuses);
           } catch (e) {
+            // One source failing must not stop the others; the status row
+            // shows it as failed.
+            AppLogger.warn(_logTag, '${source.name} search failed', error: e);
             searchStatuses[i] = searchStatuses[i].copyWith(
               status: ProviderStatus.failed,
               errorMessage: e.toString(),
@@ -374,7 +383,7 @@ class UnifiedStreamResolver {
     // Guard against non-VOD sources
     if (candidate.kind != StreamSourceKind.vod) {
       AppLogger.debug(
-        'UnifiedStreamResolver',
+        _logTag,
         'Ignoring non-VOD candidate kind=${candidate.kind}',
       );
       return null;

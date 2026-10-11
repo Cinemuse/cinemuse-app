@@ -2,6 +2,7 @@ import 'package:cinemuse_app/features/streaming/subtitles/external_subtitle.dart
 import 'package:cinemuse_app/features/streaming/subtitles/opensubtitles_provider.dart';
 import 'package:cinemuse_app/features/streaming/subtitles/subtitle_provider.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -63,15 +64,18 @@ class SubtitleService {
     }
 
     // Find the provider that supplied this subtitle
-    try {
-      final provider = _providers.firstWhere(
-        (p) => p.name == subtitle.providerName,
+    final provider = _providers
+        .where((p) => p.name == subtitle.providerName)
+        .firstOrNull;
+    if (provider == null) {
+      // Its key was removed after the search: nothing can download it now.
+      AppLogger.warn(
+        'SubtitleService',
+        '${subtitle.providerName} is no longer configured',
       );
-      return provider.getDownloadUrl(subtitle);
-    } catch (e) {
-      // Provider not found or not configured anymore
       return null;
     }
+    return provider.getDownloadUrl(subtitle);
   }
 }
 
