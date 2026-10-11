@@ -38,7 +38,9 @@ void main() {
         mapping: KitsuMapping(kitsuId: '12', absoluteEpisode: 1),
       );
 
-      when(() => mockMappingService.getAnimeUnityIds('12')).thenAnswer(
+      when(
+        () => mockMappingService.getAnimeUnityIds(context.mapping!),
+      ).thenAnswer(
         (_) async => [AnimeUnityEntry(id: 999, path: '/anime/999-test')],
       );
 
@@ -136,7 +138,50 @@ void main() {
 
       final results = await source.search(context);
       expect(results, isEmpty);
-      verifyNever(() => mockMappingService.getAnimeUnityIds(any()));
+      verifyZeroInteractions(mockMappingService);
     });
+
+    test(
+      'never plays another episode than the one asked for (REV-241)',
+      () async {
+        final context = StreamSearchContext(
+          tmdbId: '123',
+          type: 'tv',
+          title: 'Test Anime',
+          isAnime: true,
+          episode: 3,
+          season: 1,
+          mapping: KitsuMapping(kitsuId: '12', absoluteEpisode: 3),
+        );
+        when(
+          () => mockMappingService.getAnimeUnityIds(context.mapping!),
+        ).thenAnswer(
+          (_) async => [AnimeUnityEntry(id: 999, path: '/anime/999-test')],
+        );
+        final infoResponse = MockResponse();
+        when(() => infoResponse.statusCode).thenReturn(200);
+        when(() => infoResponse.data).thenReturn({
+          'episodes': [
+            {'id': 1000, 'number': '2', 'file_name': 'Test.S01E02.mkv'},
+          ],
+        });
+        when(
+          () => mockDio.get(
+            any(that: contains('info_api/999/1')),
+            options: any(named: 'options'),
+          ),
+        ).thenAnswer((_) async => infoResponse);
+
+        final results = await source.search(context);
+
+        expect(results, isEmpty);
+        verifyNever(
+          () => mockDio.get(
+            any(that: contains('embed-url')),
+            options: any(named: 'options'),
+          ),
+        );
+      },
+    );
   });
 }

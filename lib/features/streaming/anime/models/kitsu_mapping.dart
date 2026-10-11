@@ -3,5 +3,14 @@ class KitsuMapping {
   final int? absoluteEpisode;
   final int? anidbId;
 
-  KitsuMapping({required this.kitsuId, this.absoluteEpisode, this.anidbId});
+  /// The AniList ID of the matched season; AnimeUnity results are matched on
+  /// it (REV-232).
+  final int? anilistId;
+
+  KitsuMapping({
+    required this.kitsuId,
+    this.absoluteEpisode,
+    this.anidbId,
+    this.anilistId,
+  });
 }

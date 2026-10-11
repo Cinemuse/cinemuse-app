@@ -6,42 +6,15 @@ import 'package:dio/dio.dart';
 import 'package:cinemuse_app/features/streaming/sources/animeunity_source.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/features/streaming/anime/models/kitsu_mapping.dart';
-import 'package:cinemuse_app/features/streaming/anime/interfaces/anime_unity_mapping_provider.dart';
-import 'package:cinemuse_app/features/streaming/anime/models/anime_unity_entry.dart';
-
-class MockAnimeUnityMappingProvider implements AnimeUnityMappingProvider {
-  @override
-  Future<List<AnimeUnityEntry>> getAnimeUnityIds(String kitsuId) async {
-    // We use hardcoded static mappings for the telemetry script
-    // to strictly test AnimeUnity extraction and not rely on external mapping APIs.
-    switch (kitsuId) {
-      case '11': // Naruto
-        return [
-          AnimeUnityEntry(id: 1469, path: '/anime/1469-naruto'),
-          AnimeUnityEntry(id: 1468, path: '/anime/1468-naruto-ita'),
-        ];
-      case '42765': // Jujutsu Kaisen
-        return [
-          AnimeUnityEntry(id: 2791, path: '/anime/2791-jujutsu-kaisen'),
-          AnimeUnityEntry(id: 3896, path: '/anime/3896-jujutsu-kaisen-ita'),
-        ];
-      case '7442': // Attack on Titan
-        return [
-          AnimeUnityEntry(id: 2616, path: '/anime/2616-attack-on-titan'),
-          AnimeUnityEntry(id: 2617, path: '/anime/2617-attack-on-titan-ita'),
-        ];
-      default:
-        return [];
-    }
-  }
-}
+import 'package:cinemuse_app/features/streaming/anime/animeunity_lookup_service.dart';
 
 void main() async {
   print('Starting AnimeUnity Scraper Telemetry...');
 
   final dio = Dio();
-  final mappingProvider = MockAnimeUnityMappingProvider();
-  final scraper = AnimeUnitySource(dio, mappingProvider);
+  // The real lookup (Kitsu titles → AnimeUnity search), so a broken search
+  // shows up here too.
+  final scraper = AnimeUnitySource(dio, AnimeUnityLookupService(dio));
 
   // Define our test cases
   final testCases = [
@@ -50,21 +23,29 @@ void main() async {
       title: 'Naruto',
       type: 'tv',
       isAnime: true,
-      mapping: KitsuMapping(kitsuId: '11', absoluteEpisode: 1),
+      mapping: KitsuMapping(kitsuId: '11', absoluteEpisode: 1, anilistId: 20),
     ),
     StreamSearchContext(
       tmdbId: '0',
       title: 'Jujutsu Kaisen',
       type: 'tv',
       isAnime: true,
-      mapping: KitsuMapping(kitsuId: '42765', absoluteEpisode: 1),
+      mapping: KitsuMapping(
+        kitsuId: '42765',
+        absoluteEpisode: 1,
+        anilistId: 113415,
+      ),
     ),
     StreamSearchContext(
       tmdbId: '0',
       title: 'Attack on Titan',
       type: 'tv',
       isAnime: true,
-      mapping: KitsuMapping(kitsuId: '7442', absoluteEpisode: 1),
+      mapping: KitsuMapping(
+        kitsuId: '7442',
+        absoluteEpisode: 1,
+        anilistId: 16498,
+      ),
     ),
   ];
 

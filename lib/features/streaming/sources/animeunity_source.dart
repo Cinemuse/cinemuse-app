@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/core/utils/app_logger.dart';
+import 'package:cinemuse_app/features/streaming/anime/animeunity_lookup_service.dart';
 import 'package:cinemuse_app/features/streaming/anime/interfaces/anime_unity_mapping_provider.dart';
 import 'package:cinemuse_app/features/streaming/anime/models/anime_unity_entry.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
@@ -10,11 +11,11 @@ import 'package:dio/dio.dart';
 
 /// Native anime streaming source that resolves streams from AnimeUnity via VixCloud.
 ///
-/// Flow: KitsuMapping → Stremio mapping API → AnimeUnity episode API → VixCloud embed → HLS
+/// Flow: KitsuMapping → AnimeUnity search (matched on AniList ID) → AnimeUnity
+/// episode API → VixCloud embed → HLS
 class AnimeUnitySource extends BaseSource {
   static const String _logTag = 'AnimeUnitySource';
 
-  static const _animeUnityBase = 'https://www.animeunity.so';
   static const _userAgent =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0';
 
@@ -33,12 +34,11 @@ class AnimeUnitySource extends BaseSource {
   Future<List<StreamCandidate>> search(StreamSearchContext context) async {
     if (!context.isAnime || context.mapping == null) return [];
 
-    final kitsuId = context.mapping!.kitsuId;
     final targetEpisode = context.mapping!.absoluteEpisode ?? context.episode;
     if (targetEpisode == null) return [];
 
     try {
-      final entries = await _mappingService.getAnimeUnityIds(kitsuId);
+      final entries = await _mappingService.getAnimeUnityIds(context.mapping!);
       if (entries.isEmpty) return [];
 
       final candidates = <StreamCandidate>[];
@@ -79,7 +79,7 @@ class AnimeUnitySource extends BaseSource {
     int episodeNumber,
   ) async {
     final url =
-        '$_animeUnityBase/info_api/$animeId/1?start_range=$episodeNumber&end_range=$episodeNumber';
+        '$animeUnityBaseUrl/info_api/$animeId/1?start_range=$episodeNumber&end_range=$episodeNumber';
 
     final res = await _dio.get(url, options: _defaultOptions());
     if (res.statusCode != 200 || res.data == null) return null;
@@ -90,19 +90,19 @@ class AnimeUnitySource extends BaseSource {
     return _findMatchingEpisode(episodes, episodeNumber);
   }
 
-  /// Finds the episode matching the target number from the API response.
+  /// Finds the episode numbered [target]. Never falls back to another
+  /// episode: playing the wrong one is worse than finding none (REV-241).
   Map<String, dynamic>? _findMatchingEpisode(List episodes, int target) {
     for (final ep in episodes) {
       final epNum = int.tryParse(ep['number']?.toString() ?? '');
       if (epNum == target) return ep as Map<String, dynamic>;
     }
-    // Fallback: return the first episode if only one is returned
-    return episodes.length == 1 ? episodes.first as Map<String, dynamic> : null;
+    return null;
   }
 
   /// Fetches the VixCloud embed URL for a given episode ID.
   Future<String?> _fetchEmbedUrl(int episodeId) async {
-    final url = '$_animeUnityBase/embed-url/$episodeId';
+    final url = '$animeUnityBaseUrl/embed-url/$episodeId';
 
     final res = await _dio.get(
       url,
@@ -306,7 +306,7 @@ class AnimeUnitySource extends BaseSource {
 
   Options _defaultOptions({bool followRedirects = true}) {
     return Options(
-      headers: {'User-Agent': _userAgent, 'Referer': _animeUnityBase},
+      headers: {'User-Agent': _userAgent, 'Referer': animeUnityBaseUrl},
       followRedirects: followRedirects,
       receiveTimeout: const Duration(seconds: 15),
     );

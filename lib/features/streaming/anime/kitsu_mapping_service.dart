@@ -6,8 +6,6 @@ import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:cinemuse_app/features/streaming/anime/interfaces/anime_unity_mapping_provider.dart';
-import 'package:cinemuse_app/features/streaming/anime/models/anime_unity_entry.dart';
 import 'package:cinemuse_app/features/streaming/anime/models/kitsu_mapping.dart';
 
 final kitsuMappingServiceProvider = Provider((ref) {
@@ -17,15 +15,11 @@ final kitsuMappingServiceProvider = Provider((ref) {
   );
 });
 
-class KitsuMappingService implements AnimeUnityMappingProvider {
+class KitsuMappingService {
   static const String _logTag = 'KitsuMappingService';
-
-  static const _stremioMappingBaseUrl =
-      'https://animemapping.stremio.dpdns.org/kitsu';
 
   final Dio _dio;
   final AppDatabase _db;
-  final Map<String, List<AnimeUnityEntry>> _animeUnityCache = {};
 
   KitsuMappingService(this._dio, this._db);
 
@@ -69,6 +63,7 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
                   kitsuId: kitsuId,
                   absoluteEpisode: result,
                   anidbId: mapping.anidbId,
+                  anilistId: mapping.anilistId,
                 );
               }
             }
@@ -124,6 +119,7 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
               kitsuId: kitsuData.kitsuId,
               absoluteEpisode: remainingEpisode,
               anidbId: mapping.anidbId,
+              anilistId: mapping.anilistId,
             );
           } else {
             remainingEpisode -= count;
@@ -160,6 +156,7 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
         kitsuId: kitsuId,
         absoluteEpisode: validEpisode,
         anidbId: fallback.anidbId,
+        anilistId: fallback.anilistId,
       );
     }
 
@@ -270,54 +267,5 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
       AppLogger.warn(_logTag, 'Failed to get Kitsu data', error: e);
     }
     return null;
-  }
-
-  /// Resolves a Kitsu ID to a list of [AnimeUnityEntry] using the Stremio mapping API.
-  @override
-  Future<List<AnimeUnityEntry>> getAnimeUnityIds(String kitsuId) async {
-    final cached = _animeUnityCache[kitsuId];
-    if (cached != null) return cached;
-
-    try {
-      final res = await _dio.get('$_stremioMappingBaseUrl/$kitsuId');
-      if (res.statusCode != 200 || res.data == null) return [];
-
-      final entries = _parseAnimeUnityPaths(res.data);
-      _animeUnityCache[kitsuId] = entries;
-      AppLogger.debug(
-        _logTag,
-        'Kitsu $kitsuId -> ${entries.length} AnimeUnity entries',
-      );
-      return entries;
-    } catch (e) {
-      AppLogger.warn(
-        _logTag,
-        'AnimeUnity mapping failed for Kitsu $kitsuId',
-        error: e,
-      );
-      return [];
-    }
-  }
-
-  /// Parses AnimeUnity paths from the Stremio mapping API response.
-  /// Expected format: `mappings.animeunity = ["/anime/12-one-piece", ...]`
-  List<AnimeUnityEntry> _parseAnimeUnityPaths(Map<String, dynamic> data) {
-    final paths = data['mappings']?['animeunity'] as List?;
-    if (paths == null) return [];
-
-    final results = <AnimeUnityEntry>[];
-    final idPattern = RegExp(r'/anime/(\d+)');
-
-    for (final raw in paths) {
-      final path = raw.toString();
-      final match = idPattern.firstMatch(path);
-      if (match == null) continue;
-
-      final id = int.tryParse(match.group(1)!);
-      if (id != null) {
-        results.add(AnimeUnityEntry(id: id, path: path));
-      }
-    }
-    return results;
   }
 }
