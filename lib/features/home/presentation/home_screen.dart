@@ -4,6 +4,7 @@ import 'package:cinemuse_app/features/home/presentation/widgets/sport_schedule_r
 import 'package:cinemuse_app/features/home/presentation/widgets/hero_section.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/media_row.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/list_delete_with_undo.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,7 +91,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         (c) => c.valueOrNull == ConnectivityResult.none,
       ),
     );
-    final isMobile = MediaQuery.sizeOf(context).width < 600;
+    final isMobile = Breakpoints.isCompact(context);
     final theme = Theme.of(context);
 
     return Scaffold(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,7 +27,7 @@ class HeroSection extends ConsumerStatefulWidget {
   /// Responsive hero height: 46% of screen height on mobile, 75% on desktop/TV.
   static double getHeroHeight(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final isMobile = size.width < 600;
+    final isMobile = size.width < Breakpoints.compact;
     return isMobile ? size.height * 0.46 : size.height * 0.75;
   }
 
@@ -200,7 +201,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
   Widget build(BuildContext context) {
     if (widget.items.isEmpty) return const SizedBox.shrink();
 
-    final isMobile = MediaQuery.sizeOf(context).width < 600;
+    final isMobile = Breakpoints.isCompact(context);
     final isWidescreen = !isMobile;
     final heroHeight = HeroSection.getHeroHeight(context);
     final l10n = AppLocalizations.of(context)!;
