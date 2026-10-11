@@ -29,81 +29,101 @@ final exploreFiltersProvider = StateProvider<ExploreFilters>(
 );
 
 final exploreResultsProvider =
-    AsyncNotifierProvider<ExploreResultsNotifier, List<Map<String, dynamic>>>(
-      () {
-        return ExploreResultsNotifier();
-      },
+    AsyncNotifierProvider<ExploreResultsNotifier, ExploreResults>(
+      ExploreResultsNotifier.new,
     );
 
-class ExploreResultsNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
-  int _currentPage = 1;
-  bool _hasMore = true;
-  bool _isFetching = false;
+/// The Explore grid: the pages loaded so far.
+class ExploreResults {
+  final List<Map<String, dynamic>> items;
+  final bool hasMore;
+
+  /// A next page is loading (shows the spinner under the grid).
+  final bool isLoadingMore;
+
+  const ExploreResults({
+    required this.items,
+    required this.hasMore,
+    this.isLoadingMore = false,
+  });
+}
+
+class ExploreResultsNotifier extends AsyncNotifier<ExploreResults> {
+  late TmdbService _tmdb;
+  late MediaType _type;
+  late ExploreFilters _filters;
+  int _page = 1;
+  // Bumped on every rebuild, so a next page still loading for the old
+  // type/filters is dropped instead of appended to the new results.
+  int _generation = 0;
 
   @override
-  Future<List<Map<String, dynamic>>> build() async {
-    _currentPage = 1;
-    _hasMore = true;
-    _isFetching = false;
-    return _fetch();
+  Future<ExploreResults> build() async {
+    _tmdb = ref.watch(tmdbServiceProvider);
+    _type = ref.watch(exploreMediaTypeProvider);
+    _filters = ref.watch(exploreFiltersProvider);
+    _generation++;
+    _page = 1;
+    return _fetchPage(1);
   }
 
-  Future<List<Map<String, dynamic>>> _fetch() async {
-    final mediaType = ref.watch(exploreMediaTypeProvider);
-    final filters = ref.watch(exploreFiltersProvider);
-    final tmdbService = ref.watch(tmdbServiceProvider);
-
-    if (mediaType == MediaType.person) {
-      final res = await tmdbService.getPopularPersons(_currentPage);
-      _hasMore = _currentPage < (res['total_pages'] ?? 0);
-      return List<Map<String, dynamic>>.from(res['results'] ?? []);
-    } else {
-      final res = await tmdbService.discover(
-        type: mediaType == MediaType.movie ? 'movie' : 'tv',
-        page: _currentPage,
-        sortBy: filters.sortBy,
-        genres: filters.genres,
-        languages: filters.languages,
-        minRating: filters.rating.start,
-        maxRating: filters.rating.end,
-        minYear: filters.year.start.round(),
-        maxYear: filters.year.end.round(),
-        minVotes: filters.voteCount.start.round(),
-        maxVotes: filters.voteCount.end.round(),
-        minRuntime: filters.runtime.start.round(),
-        maxRuntime: filters.runtime.end.round(),
-        watchProviders: filters.watchProviders,
-        watchRegion: filters.watchRegion,
-      );
-      _hasMore = _currentPage < (res['total_pages'] ?? 0);
-      return List<Map<String, dynamic>>.from(res['results'] ?? []);
-    }
+  Future<ExploreResults> _fetchPage(int page) async {
+    final res = _type == MediaType.person
+        ? await _tmdb.getPopularPersons(page)
+        : await _tmdb.discover(
+            type: _type == MediaType.movie ? 'movie' : 'tv',
+            page: page,
+            sortBy: _filters.sortBy,
+            genres: _filters.genres,
+            languages: _filters.languages,
+            minRating: _filters.rating.start,
+            maxRating: _filters.rating.end,
+            minYear: _filters.year.start.round(),
+            maxYear: _filters.year.end.round(),
+            minVotes: _filters.voteCount.start.round(),
+            maxVotes: _filters.voteCount.end.round(),
+            minRuntime: _filters.runtime.start.round(),
+            maxRuntime: _filters.runtime.end.round(),
+            watchProviders: _filters.watchProviders,
+            watchRegion: _filters.watchRegion,
+          );
+    return ExploreResults(
+      items: List<Map<String, dynamic>>.from(res['results'] ?? []),
+      hasMore: page < (res['total_pages'] ?? 0),
+    );
   }
 
   Future<void> fetchNextPage() async {
-    if (state.isLoading || !_hasMore || _isFetching) return;
+    final current = state.valueOrNull;
+    if (state.isLoading ||
+        current == null ||
+        !current.hasMore ||
+        current.isLoadingMore) {
+      return;
+    }
 
-    _isFetching = true;
-    _currentPage++;
+    final generation = _generation;
+    state = AsyncData(
+      ExploreResults(items: current.items, hasMore: true, isLoadingMore: true),
+    );
 
     try {
-      final nextResults = await _fetch();
-      state = AsyncValue.data([...state.value ?? [], ...nextResults]);
+      final next = await _fetchPage(_page + 1);
+      if (generation != _generation) return;
+      _page++;
+      state = AsyncData(
+        ExploreResults(
+          items: [...current.items, ...next.items],
+          hasMore: next.hasMore,
+        ),
+      );
     } catch (e, st) {
-      // Keep the results shown and step back, so the next scroll retries
-      // this page; the toast tells the user it failed.
-      _currentPage--;
+      if (generation != _generation) return;
+      // Keep the results shown, so the next scroll retries this page; the
+      // toast tells the user it failed.
+      state = AsyncData(current);
       ref.read(errorServiceProvider.notifier).handle(e, stackTrace: st);
-    } finally {
-      _isFetching = false;
     }
-  }
-
-  void reset() {
-    _currentPage = 1;
-    _hasMore = true;
-    _isFetching = false;
-    ref.invalidateSelf();
   }
 }
 

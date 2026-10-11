@@ -26,7 +26,6 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
 
   void _updateFilters(ExploreFilters newFilters) {
     ref.read(exploreFiltersProvider.notifier).state = newFilters;
-    ref.read(exploreResultsProvider.notifier).reset();
   }
 
   void _toggleGenre(int genreId) {

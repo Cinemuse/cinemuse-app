@@ -68,6 +68,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   }
 
   void _onScroll() {
+    if (!_scrollController.hasClients) return;
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       ref.read(exploreResultsProvider.notifier).fetchNextPage();
@@ -89,6 +90,16 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final mediaType = ref.watch(exploreMediaTypeProvider);
     final filters = ref.watch(exploreFiltersProvider);
     final resultsAsync = ref.watch(exploreResultsProvider);
+    // A new page may still not fill the screen (big display): check after
+    // layout whether the next one is needed, since no scroll event comes.
+    ref.listen(exploreResultsProvider, (previous, next) {
+      final items = next.valueOrNull?.items;
+      if (items != null && !identical(items, previous?.valueOrNull?.items)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _onScroll();
+        });
+      }
+    });
 
     final screenWidth = MediaQuery.of(context).size.width;
     const double maxContentWidth = 1600.0;
@@ -159,11 +170,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                                                     .notifier,
                                               )
                                               .select(type);
-                                          ref
-                                              .read(
-                                                exploreResultsProvider.notifier,
-                                              )
-                                              .reset();
                                         },
                                       ),
                                       if (mediaType != MediaType.person) ...[
@@ -213,11 +219,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                                                     .notifier,
                                               )
                                               .select(type);
-                                          ref
-                                              .read(
-                                                exploreResultsProvider.notifier,
-                                              )
-                                              .reset();
                                         },
                                       ),
                                       if (mediaType != MediaType.person)
@@ -255,11 +256,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                         onChanged: (newFilters) {
                           ref.read(exploreFiltersProvider.notifier).state =
                               newFilters;
-                          ref.read(exploreResultsProvider.notifier).reset();
                         },
                         onClear: () {
                           ref.invalidate(exploreFiltersProvider);
-                          ref.read(exploreResultsProvider.notifier).reset();
                         },
                       ),
                     ],
@@ -271,7 +270,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             // Results Grid
             resultsAsync.when(
               data: (results) {
-                if (results.isEmpty) {
+                final items = results.items;
+                if (items.isEmpty) {
                   return SliverFillRemaining(
                     hasScrollBody: false,
                     child: Center(
@@ -319,29 +319,13 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                               .floor()
                               .clamp(2, 12);
 
-                      // "Full Row" logic: only show full rows
-                      final displayCount =
-                          (results.length ~/ crossAxisCount) * crossAxisCount;
-
-                      if (displayCount == 0 && results.isNotEmpty) {
-                        // If we can't even fill one row, show what we have so it's not empty
-                        return SliverGrid(
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: crossAxisCount,
-                                mainAxisSpacing: 16,
-                                crossAxisSpacing: spacing,
-                                childAspectRatio: 0.56,
-                              ),
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) => ExploreResultCard(
-                              media: results[index],
-                              type: mediaType,
-                            ),
-                            childCount: results.length,
-                          ),
-                        );
-                      }
+                      // Only full rows while a next page can fill the last
+                      // one; the last page shows everything.
+                      final fullRows =
+                          (items.length ~/ crossAxisCount) * crossAxisCount;
+                      final displayCount = !results.hasMore || fullRows == 0
+                          ? items.length
+                          : fullRows;
 
                       return SliverGrid(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -352,7 +336,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                         ),
                         delegate: SliverChildBuilderDelegate(
                           (context, index) => ExploreResultCard(
-                            media: results[index],
+                            media: items[index],
                             type: mediaType,
                           ),
                           childCount: displayCount,
@@ -407,9 +391,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             ),
 
             // Loading more indicator
-            if (resultsAsync.isLoading &&
-                resultsAsync.hasValue &&
-                resultsAsync.value!.isNotEmpty)
+            if (resultsAsync.valueOrNull?.isLoadingMore ?? false)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(
