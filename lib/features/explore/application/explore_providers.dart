@@ -127,6 +127,28 @@ class ExploreResultsNotifier extends AsyncNotifier<ExploreResults> {
   }
 }
 
+/// How many streaming services the filter panel shows.
+const _mainWatchProviderCount = 8;
+
+/// The [count] services TMDB ranks first in [region] (its
+/// `display_priorities`, falling back to the global `display_priority`).
+List<Map<String, dynamic>> mainWatchProviders(
+  List<Map<String, dynamic>> providers,
+  String region, {
+  int count = _mainWatchProviderCount,
+}) {
+  int priorityOf(Map<String, dynamic> p) {
+    final byRegion = p['display_priorities'];
+    final regional = byRegion is Map ? byRegion[region] : null;
+    return ((regional ?? p['display_priority']) as num?)?.toInt() ?? 1 << 30;
+  }
+
+  final sorted = [...providers]
+    ..sort((a, b) => priorityOf(a).compareTo(priorityOf(b)));
+  return sorted.take(count).toList();
+}
+
+/// The main streaming services for the current media type and region.
 final watchProvidersListProvider = FutureProvider<List<Map<String, dynamic>>>((
   ref,
 ) async {
@@ -136,8 +158,9 @@ final watchProvidersListProvider = FutureProvider<List<Map<String, dynamic>>>((
     exploreFiltersProvider.select((f) => f.watchRegion),
   );
 
-  return tmdbService.getWatchProviders(
+  final providers = await tmdbService.getWatchProviders(
     mediaType == MediaType.movie ? 'movie' : 'tv',
     watchRegion,
   );
+  return mainWatchProviders(providers, watchRegion);
 });

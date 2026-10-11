@@ -428,26 +428,10 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
 
     return providersAsync.when(
       data: (providers) {
-        // Show only the most common/popular ones to avoid UI clutter
-        final mainProviders = providers.where((p) {
-          final name = p['provider_name']?.toString().toLowerCase() ?? '';
-          return name.contains('netflix') ||
-              name.contains('disney') ||
-              name.contains('prime video') ||
-              name.contains('apple tv') ||
-              name.contains('now') ||
-              name.contains('rakuten');
-        }).toList();
-
-        if (mainProviders.isEmpty && providers.isNotEmpty) {
-          // Fallback to first few if no major ones identified by keywords
-          mainProviders.addAll(providers.take(6));
-        }
-
         return Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: mainProviders.map((p) {
+          children: providers.map((p) {
             final id = p['provider_id'] as int;
             final isSelected = filters.watchProviders.contains(id);
             final imageUrl = TmdbImageHelper.logoUrl(p['logo_path']) ?? '';

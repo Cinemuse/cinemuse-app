@@ -114,4 +114,44 @@ void main() {
       },
     ]);
   });
+
+  group('mainWatchProviders', () {
+    Map<String, dynamic> provider(
+      String name, {
+      int? global,
+      Map<String, int>? byRegion,
+    }) => {
+      'provider_name': name,
+      'display_priority': ?global,
+      'display_priorities': ?byRegion,
+    };
+
+    test('keeps the services ranked first in the region', () {
+      final result = mainWatchProviders(
+        [
+          provider('Now Playing TV', global: 1, byRegion: {'IT': 50}),
+          provider('Netflix', global: 2, byRegion: {'IT': 1}),
+          provider('NOW', global: 9, byRegion: {'IT': 2}),
+          provider('Other', global: 3),
+        ],
+        'IT',
+        count: 3,
+      );
+
+      expect(result.map((p) => p['provider_name']), [
+        'Netflix',
+        'NOW',
+        'Other',
+      ]);
+    });
+
+    test('providers without a priority go last', () {
+      final result = mainWatchProviders([
+        provider('Unranked'),
+        provider('Ranked', global: 5),
+      ], 'IT');
+
+      expect(result.map((p) => p['provider_name']), ['Ranked', 'Unranked']);
+    });
+  });
 }

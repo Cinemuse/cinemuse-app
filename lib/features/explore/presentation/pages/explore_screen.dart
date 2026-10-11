@@ -98,7 +98,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
       }
     });
 
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.sizeOf(context).width;
     const double maxContentWidth = 1600.0;
     final horizontalPadding = screenWidth > maxContentWidth
         ? (screenWidth - maxContentWidth) / 2 + 24
