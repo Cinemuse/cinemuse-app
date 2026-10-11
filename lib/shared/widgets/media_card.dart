@@ -13,7 +13,6 @@ import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 
 import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_sheet.dart';
-// Just in case, actually just add_to_list_sheet
 
 class MediaCard extends ConsumerStatefulWidget {
   final String title;
@@ -23,6 +22,7 @@ class MediaCard extends ConsumerStatefulWidget {
   final bool isWatchlisted;
   final VoidCallback? onWatchlistToggle;
   final VoidCallback? onTap;
+  final VoidCallback? onPlay;
   final VoidCallback? onRemoveFromList;
   final VoidCallback? onRestore;
 
@@ -36,6 +36,9 @@ class MediaCard extends ConsumerStatefulWidget {
 
   // Optional card deck stack count for grouped watch history items
   final int? stackCount;
+
+  final FocusNode? focusNode;
+  final FocusOnKeyEventCallback? onKeyEvent;
 
   const MediaCard({
     super.key,
@@ -58,16 +61,25 @@ class MediaCard extends ConsumerStatefulWidget {
     this.onKeyEvent,
   });
 
-  final VoidCallback? onPlay;
-  final FocusNode? focusNode;
-  final FocusOnKeyEventCallback? onKeyEvent;
-
   @override
   ConsumerState<MediaCard> createState() => _MediaCardState();
 }
 
 class _MediaCardState extends ConsumerState<MediaCard> {
   final GlobalKey _menuKey = GlobalKey();
+
+  /// Only call when `tmdbId` and `mediaType` are set.
+  MediaItem _toMediaItem() => MediaItem(
+    tmdbId: widget.tmdbId!,
+    mediaType: widget.mediaType!,
+    titleEn: widget.title,
+    posterPath: widget.posterPath,
+    releaseDate: widget.releaseDate != null
+        ? DateTime.tryParse(widget.releaseDate!)
+        : null,
+    voteAverage: widget.rating,
+    updatedAt: DateTime.now(),
+  );
 
   void _showContextActions(
     BuildContext context, {
@@ -102,11 +114,12 @@ class _MediaCardState extends ConsumerState<MediaCard> {
           label: l10n.menuPlay,
           onTap: widget.onPlay!,
         ),
-      AppMenuOption(
-        icon: Icons.info_outline,
-        label: l10n.homeMoreInfo,
-        onTap: widget.onTap ?? () {},
-      ),
+      if (widget.onTap != null)
+        AppMenuOption(
+          icon: Icons.info_outline,
+          label: l10n.homeMoreInfo,
+          onTap: widget.onTap!,
+        ),
       if ((widget.tmdbId != null && widget.mediaType != null) ||
           widget.onWatchlistToggle != null)
         AppMenuOption(
@@ -122,19 +135,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
             } else {
               ref
                   .read(userListsProvider.notifier)
-                  .toggleWatchlist(
-                    MediaItem(
-                      tmdbId: widget.tmdbId!,
-                      mediaType: widget.mediaType!,
-                      titleEn: widget.title,
-                      posterPath: widget.posterPath,
-                      releaseDate: widget.releaseDate != null
-                          ? DateTime.tryParse(widget.releaseDate!)
-                          : null,
-                      voteAverage: widget.rating,
-                      updatedAt: DateTime.now(),
-                    ),
-                  );
+                  .toggleWatchlist(_toMediaItem());
             }
           },
         ),
@@ -143,20 +144,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
           icon: Icons.playlist_add,
           label: l10n.detailsAddToList,
           onTap: () {
-            AddToListSheet.show(
-              context,
-              MediaItem(
-                tmdbId: widget.tmdbId!,
-                mediaType: widget.mediaType!,
-                titleEn: widget.title,
-                posterPath: widget.posterPath,
-                releaseDate: widget.releaseDate != null
-                    ? DateTime.tryParse(widget.releaseDate!)
-                    : null,
-                voteAverage: widget.rating,
-                updatedAt: DateTime.now(),
-              ),
-            );
+            AddToListSheet.show(context, _toMediaItem());
           },
         ),
       if (widget.onRemoveFromList != null)
@@ -421,7 +409,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                         const CardFocusBorder(),
 
                         // Unified Stack & Episode Overlay Badge (Top-Right)
-                        if (_buildOverlayBadge() != null) _buildOverlayBadge()!,
+                        if (_buildOverlayBadge() case final badge?) badge,
                       ],
                     ),
                   ),
