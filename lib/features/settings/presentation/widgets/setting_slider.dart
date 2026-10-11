@@ -8,6 +8,9 @@ class SettingSlider extends StatelessWidget {
   final double max;
   final int? divisions;
   final ValueChanged<double> onChanged;
+
+  /// Called once when the drag ends: save here, not in [onChanged].
+  final ValueChanged<double>? onChangeEnd;
   final String Function(double)? valueLabelBuilder;
 
   const SettingSlider({
@@ -18,6 +21,7 @@ class SettingSlider extends StatelessWidget {
     required this.max,
     this.divisions,
     required this.onChanged,
+    this.onChangeEnd,
     this.valueLabelBuilder,
   });
 
@@ -63,6 +67,7 @@ class SettingSlider extends StatelessWidget {
               max: max,
               divisions: divisions,
               onChanged: onChanged,
+              onChangeEnd: onChangeEnd,
             ),
           ),
         ],

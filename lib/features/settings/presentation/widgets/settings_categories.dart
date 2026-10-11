@@ -404,7 +404,8 @@ class SubtitleAppearanceSettings extends ConsumerWidget {
           children: [
             SubtitleAppearanceForm(
               style: localSettings.subtitleStyle,
-              onChanged: localNotifier.updateSubtitleStyle,
+              onChanged: localNotifier.previewSubtitleStyle,
+              onChangeEnd: localNotifier.updateSubtitleStyle,
             ),
           ],
         ),

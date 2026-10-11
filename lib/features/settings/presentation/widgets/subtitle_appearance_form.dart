@@ -7,17 +7,26 @@ import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 class SubtitleAppearanceForm extends StatelessWidget {
   final SubtitleStyle style;
+
+  /// A slider is moving: show it, don't save yet.
   final ValueChanged<SubtitleStyle> onChanged;
+
+  /// A change is final (drag ended, colour picked): save it (REV-85).
+  final ValueChanged<SubtitleStyle> onChangeEnd;
 
   const SubtitleAppearanceForm({
     super.key,
     required this.style,
     required this.onChanged,
+    required this.onChangeEnd,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    SubtitleStyle withBackground(double alpha) => style.copyWith(
+      backgroundColor: Colors.black.withAlpha((alpha * 255).round()),
+    );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -32,6 +41,7 @@ class SubtitleAppearanceForm extends StatelessWidget {
           min: 12.0,
           max: 48.0,
           onChanged: (val) => onChanged(style.copyWith(fontSize: val)),
+          onChangeEnd: (val) => onChangeEnd(style.copyWith(fontSize: val)),
         ),
 
         // Text Color
@@ -46,7 +56,7 @@ class SubtitleAppearanceForm extends StatelessWidget {
             Colors.blueAccent,
             Colors.redAccent,
           ],
-          onColorSelected: (color) => onChanged(style.copyWith(color: color)),
+          onColorSelected: (color) => onChangeEnd(style.copyWith(color: color)),
         ),
 
         // Background Opacity
@@ -56,12 +66,8 @@ class SubtitleAppearanceForm extends StatelessWidget {
           min: 0.0,
           max: 1.0,
           valueLabelBuilder: (val) => '${(val * 100).toInt()}%',
-          onChanged: (val) {
-            final newAlpha = (val * 255).round();
-            onChanged(
-              style.copyWith(backgroundColor: Colors.black.withAlpha(newAlpha)),
-            );
-          },
+          onChanged: (val) => onChanged(withBackground(val)),
+          onChangeEnd: (val) => onChangeEnd(withBackground(val)),
         ),
 
         // Vertical Position
@@ -69,6 +75,8 @@ class SubtitleAppearanceForm extends StatelessWidget {
           label: l10n.playerAppearanceBottomPadding,
           value: style.verticalPosition,
           onChanged: (val) => onChanged(style.copyWith(verticalPosition: val)),
+          onChangeEnd: (val) =>
+              onChangeEnd(style.copyWith(verticalPosition: val)),
         ),
       ],
     );
@@ -79,11 +87,13 @@ class _PositionSliderTile extends StatelessWidget {
   final String label;
   final double value;
   final ValueChanged<double> onChanged;
+  final ValueChanged<double> onChangeEnd;
 
   const _PositionSliderTile({
     required this.label,
     required this.value,
     required this.onChanged,
+    required this.onChangeEnd,
   });
 
   @override
@@ -99,6 +109,7 @@ class _PositionSliderTile extends StatelessWidget {
           divisions: 20, // 5% steps
           valueLabelBuilder: (val) => '${(val * 100).toInt()}%',
           onChanged: onChanged,
+          onChangeEnd: onChangeEnd,
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(28, 0, 28, 8),
@@ -234,15 +245,14 @@ class _SubtitlePreview extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       height: 80,
       decoration: BoxDecoration(
-        color: Colors.black45,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white12),
-        image: const DecorationImage(
-          image: NetworkImage(
-            'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2059&auto=format&fit=crop',
-          ),
-          fit: BoxFit.cover,
-          opacity: 0.3,
+        // A local gradient, not a downloaded photo: works offline and
+        // calls no third-party site (REV-85).
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppTheme.accent.withValues(alpha: 0.25), AppTheme.primary],
         ),
       ),
       alignment: Alignment.center,
