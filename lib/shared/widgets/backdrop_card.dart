@@ -6,6 +6,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
+import 'package:cinemuse_app/shared/widgets/card_progress_bar.dart';
 
 class BackdropCard extends StatefulWidget {
   final String title;
@@ -251,19 +252,7 @@ class _BackdropCardState extends State<BackdropCard> {
 
                     // Progress Bar
                     if (widget.progress != null)
-                      Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: LinearProgressIndicator(
-                          value: widget.progress,
-                          backgroundColor: Colors.white.withValues(alpha: 0.2),
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            Colors.redAccent,
-                          ),
-                          minHeight: 4,
-                        ),
-                      ),
+                      CardProgressBar(progress: widget.progress!),
 
                     // Border Overlay
                     const CardFocusBorder(),

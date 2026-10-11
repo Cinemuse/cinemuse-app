@@ -6,10 +6,9 @@ import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 /// Automatically retrieves focus and hover state from an enclosing [DpadFocusScope],
 /// or uses explicitly provided [isFocused] / [isHovered] overrides.
 ///
-/// Complies with 10-foot TV UI standards:
-/// - **Focused (D-pad/Remote)**: High-contrast white border (2.0px) with focus glow.
-/// - **Hovered (Desktop Mouse)**: Primary theme color border (1.5px).
-/// - **Inactive**: Subtle card outline (1.0px).
+/// - **Focused (D-pad/Remote)**: primary theme color border (2.0px).
+/// - **Hovered (Desktop Mouse)**: primary theme color at 50% (1.5px).
+/// - **Inactive**: subtle white outline (1.0px).
 class CardFocusBorder extends StatelessWidget {
   final BorderRadius borderRadius;
   final bool? isFocused;

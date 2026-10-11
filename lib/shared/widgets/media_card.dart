@@ -11,6 +11,7 @@ import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
+import 'package:cinemuse_app/shared/widgets/card_progress_bar.dart';
 
 import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_sheet.dart';
 
@@ -34,7 +35,7 @@ class MediaCard extends ConsumerStatefulWidget {
   final double? progress;
   final String? infoText;
 
-  // Optional card deck stack count for grouped watch history items
+  // Optional count of grouped watch-history items, shown in the badge
   final int? stackCount;
 
   final FocusNode? focusNode;
@@ -193,9 +194,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
           color: Colors.black.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: isStacked
-                ? AppTheme.accent.withValues(alpha: 0.7)
-                : Colors.white.withValues(alpha: 0.25),
+            color: AppTheme.accent.withValues(alpha: 0.7),
             width: 1,
           ),
           boxShadow: [
@@ -220,7 +219,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
             Text(
               badgeText,
               style: TextStyle(
-                color: isStacked ? Colors.white : AppTheme.accent,
+                color: Colors.white,
                 fontSize: 10.5,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.2,
@@ -251,47 +250,11 @@ class _MediaCardState extends ConsumerState<MediaCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Poster Image (with optional stacked deck layers behind)
+            // Poster Image
             Expanded(
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // Back Layer 2 (Bottom card in deck)
-                  if (widget.stackCount != null && widget.stackCount! > 2)
-                    Positioned.fill(
-                      child: Transform.translate(
-                        offset: const Offset(5.0, -5.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: const Color(0xFF16171B),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.08),
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                  // Back Layer 1 (Middle card in deck)
-                  if (widget.stackCount != null && widget.stackCount! > 1)
-                    Positioned.fill(
-                      child: Transform.translate(
-                        offset: const Offset(-4.0, -3.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: const Color(0xFF22242A),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.12),
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
                   // Main Top Card
                   Container(
                     width: double.infinity,
@@ -380,27 +343,8 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                               ),
 
                               // Optional Playback Progress Bar
-                              if (widget.progress != null &&
-                                  widget.progress! > 0)
-                                Positioned(
-                                  left: 0,
-                                  right: 0,
-                                  bottom: 0,
-                                  child: ClipRRect(
-                                    borderRadius: const BorderRadius.vertical(
-                                      bottom: Radius.circular(8),
-                                    ),
-                                    child: LinearProgressIndicator(
-                                      value: widget.progress!.clamp(0.0, 1.0),
-                                      minHeight: 3.5,
-                                      backgroundColor: Colors.white24,
-                                      valueColor:
-                                          const AlwaysStoppedAnimation<Color>(
-                                            AppTheme.accent,
-                                          ),
-                                    ),
-                                  ),
-                                ),
+                              if (widget.progress != null)
+                                CardProgressBar(progress: widget.progress!),
                             ],
                           ),
                         ),
