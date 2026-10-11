@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -103,7 +104,7 @@ class AppSnackBar {
     scaffoldMessenger.hideCurrentSnackBar();
 
     final size = MediaQuery.sizeOf(context);
-    final isDesktop = size.width > 800;
+    final isDesktop = !Breakpoints.isCompact(context);
 
     // Desktop: ~ 1/4th of screen, clamped between 300 and 400.
     final double snackBarWidth = (size.width * 0.25).clamp(300.0, 400.0);

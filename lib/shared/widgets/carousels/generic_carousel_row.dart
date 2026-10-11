@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -186,7 +187,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
       return const SizedBox.shrink();
     }
 
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isMobile = Breakpoints.isCompact(context);
     if (isMobile) {
       return const SizedBox.shrink(); // mobile scrolls by swiping
     }
@@ -418,7 +419,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
         break;
 
       case CarouselTheme.profileRow:
-        final isMobile = MediaQuery.of(context).size.width < 600;
+        final isMobile = Breakpoints.isCompact(context);
         final horizontalPadding = isMobile ? 16.0 : 24.0;
         final listPadding = widget.padding != EdgeInsets.zero
             ? widget.padding
@@ -505,7 +506,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
         break;
 
       case CarouselTheme.homeRow:
-        final isMobile = MediaQuery.of(context).size.width < 600;
+        final isMobile = Breakpoints.isCompact(context);
         final horizontalPadding = widget.padding.left > 0
             ? widget.padding.left
             : (isMobile ? 16.0 : 24.0);

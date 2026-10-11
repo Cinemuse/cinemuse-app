@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
@@ -24,7 +25,7 @@ class AppMenu {
     BuildContext? anchorContext,
     Offset? position,
   }) async {
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isMobile = Breakpoints.isCompact(context);
 
     if (isMobile) {
       return _showBottomSheet(context, options, title);
@@ -45,7 +46,7 @@ class AppMenu {
         backgroundColor: AppTheme.primary.withValues(alpha: 0.8),
         border: Border.all(color: AppTheme.border, width: 0.5),
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).padding.bottom + 16,
+          bottom: MediaQuery.paddingOf(context).bottom + 16,
           top: 8,
         ),
         child: Builder(

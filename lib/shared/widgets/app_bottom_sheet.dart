@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -32,9 +33,8 @@ class AppBottomSheet extends StatelessWidget {
     bool isScrollControlled = true,
     bool useRootNavigator = true,
   }) {
-    final width = MediaQuery.of(context).size.width;
     final effectiveConstraints =
-        constraints ?? BoxConstraints(maxWidth: width > 1200 ? 1200 : width);
+        constraints ?? const BoxConstraints(maxWidth: Breakpoints.large);
 
     return showModalBottomSheet<T>(
       context: context,

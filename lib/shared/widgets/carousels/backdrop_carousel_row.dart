@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
@@ -39,7 +40,7 @@ class BackdropCarouselRow extends StatelessWidget {
     BuildContext context,
     CarouselTheme theme,
   ) {
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isMobile = Breakpoints.isCompact(context);
     switch (theme) {
       case CarouselTheme.profileRow:
         return EdgeInsets.symmetric(horizontal: isMobile ? 16.0 : 24.0);
