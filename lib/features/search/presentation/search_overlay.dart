@@ -33,7 +33,7 @@ class SearchOverlay extends ConsumerStatefulWidget {
     return showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: 'Search',
+      barrierLabel: AppLocalizations.of(context)!.navSearch,
       barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 200),
       pageBuilder: (context, animation, secondaryAnimation) =>
@@ -667,7 +667,7 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
             final isPerson = item['media_type'] == 'person';
 
             if (isPerson) {
-              final title = item['name'] ?? 'Unknown';
+              final title = item['name'] ?? l10n.commonUnknown;
               final posterPath = item['profile_path'] as String?;
               final releaseDate = item['known_for_department'] as String?;
               final tmdbId = item['id'] as int;
@@ -686,7 +686,9 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
             } else {
               final mediaItem = MediaItem.fromTmdbMap(item);
               return MediaCard(
-                title: mediaItem.getLocalizedTitle(appLanguage) ?? 'Unknown',
+                title:
+                    mediaItem.getLocalizedTitle(appLanguage) ??
+                    l10n.commonUnknown,
                 posterPath: mediaItem.posterPath,
                 releaseDate: mediaItem.releaseDate?.year.toString(),
                 rating: mediaItem.voteAverage,

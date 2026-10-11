@@ -86,6 +86,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   Image.asset(
                     'assets/wordmark-logo.png',
                     height: 48,
+                    // Brand name: the same in every language.
                     errorBuilder: (c, e, s) => Text(
                       "CINEMUSE",
                       style: TextStyle(
@@ -140,7 +141,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     style: const TextStyle(color: Colors.white),
                     validator: (value) => value != null && value.contains('@')
                         ? null
-                        : 'Enter a valid email',
+                        : l10n.authInvalidEmail,
                   ),
                   const SizedBox(height: 16),
 
@@ -170,7 +171,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     style: const TextStyle(color: Colors.white),
                     validator: (value) => value != null && value.length >= 6
                         ? null
-                        : 'Password must be 6+ chars',
+                        : l10n.authPasswordTooShort,
                   ),
                   const SizedBox(height: 24),
 

@@ -105,6 +105,8 @@
   "authWelcomeBackDesc": "Sign in to access your library and settings",
   "authEmail": "EMAIL",
   "authPassword": "PASSWORD",
+  "authInvalidEmail": "Enter a valid email",
+  "authPasswordTooShort": "The password must be at least 6 characters",
   "authSignIn": "Sign In",
   "settingsErrorSaving": "Error saving: {error}",
   

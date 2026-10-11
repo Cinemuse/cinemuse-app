@@ -330,6 +330,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authPassword => 'PASSWORD';
 
   @override
+  String get authInvalidEmail => 'Enter a valid email';
+
+  @override
+  String get authPasswordTooShort =>
+      'The password must be at least 6 characters';
+
+  @override
   String get authSignIn => 'Sign In';
 
   @override

@@ -100,6 +100,8 @@
   "authWelcomeBackDesc": "Accedi per visualizzare la tua libreria e le impostazioni",
   "authEmail": "EMAIL",
   "authPassword": "PASSWORD",
+  "authInvalidEmail": "Inserisci un'email valida",
+  "authPasswordTooShort": "La password deve avere almeno 6 caratteri",
   "authSignIn": "Accedi",
   "settingsErrorSaving": "Errore salvataggio: {error}",
   

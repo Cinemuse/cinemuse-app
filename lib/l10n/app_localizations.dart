@@ -698,6 +698,18 @@ abstract class AppLocalizations {
   /// **'PASSWORD'**
   String get authPassword;
 
+  /// No description provided for @authInvalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email'**
+  String get authInvalidEmail;
+
+  /// No description provided for @authPasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'The password must be at least 6 characters'**
+  String get authPasswordTooShort;
+
   /// No description provided for @authSignIn.
   ///
   /// In en, this message translates to:
