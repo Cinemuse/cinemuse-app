@@ -27,6 +27,18 @@ class BentoBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
+    final body = Padding(
+      padding:
+          padding ??
+          EdgeInsets.fromLTRB(
+            isMobile ? 16 : 24,
+            0,
+            isMobile ? 16 : 24,
+            isMobile ? 16 : 24,
+          ),
+      child: child,
+    );
+
     return Container(
       height: height,
       decoration: BoxDecoration(
@@ -70,24 +82,8 @@ class BentoBox extends StatelessWidget {
                 ],
               ),
             ),
-          // We use flexible child handling: if height is set, we pad and potentially scroll/clip.
-          // If no height, we just padding and wrap.
-          Padding(
-            padding:
-                padding ??
-                EdgeInsets.fromLTRB(
-                  isMobile ? 16 : 24,
-                  0,
-                  isMobile ? 16 : 24,
-                  isMobile ? 16 : 24,
-                ),
-            child: height != null
-                ? SizedBox(
-                    height: height! - (title.isNotEmpty ? 62 : 0),
-                    child: child,
-                  )
-                : child,
-          ),
+          // With a fixed height the child gets whatever the header leaves.
+          if (height != null) Expanded(child: body) else body,
         ],
       ),
     );
