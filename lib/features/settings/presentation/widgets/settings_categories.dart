@@ -271,8 +271,6 @@ class CustomizationSettings extends ConsumerWidget {
       ],
     );
   }
-
-  // Removed _buildMediaGroup as it's replaced by SettingsDropdown
 }
 
 Widget buildSmallDropdown<T>({
@@ -386,38 +384,6 @@ class IntegrationsSettings extends ConsumerWidget {
       title: l10n.settingsIntegrations,
       description: l10n.settingsIntegrationsDesc,
       children: const [AddonSettings()],
-    );
-  }
-}
-
-class ImportSettings extends StatelessWidget {
-  const ImportSettings({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return SettingsSection(
-      title: l10n.settingsImport,
-      description: l10n.settingsImportDesc,
-      children: [
-        const SettingsCard(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(width: double.infinity),
-            Icon(
-              Icons.cloud_upload_outlined,
-              size: 48,
-              color: AppTheme.textMuted,
-            ),
-            SizedBox(height: 16),
-            Text(
-              "No services available for import",
-              style: TextStyle(color: AppTheme.textMuted),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

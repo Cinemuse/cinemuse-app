@@ -79,12 +79,6 @@ class LocalSettingsNotifier extends StateNotifier<LocalSettings> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_keyMaxResolution, resolution.index);
   }
-
-  Future<void> resetToDefaults() async {
-    const defaultStyle = SubtitleStyle();
-    await updateSubtitleStyle(defaultStyle);
-    await updateMaxResolution(VideoResolution.unknown);
-  }
 }
 
 final localSettingsProvider =

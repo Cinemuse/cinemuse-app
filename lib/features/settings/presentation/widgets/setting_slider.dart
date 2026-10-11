@@ -24,22 +24,18 @@ class SettingSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                label,
-                style: const TextStyle(color: Colors.white, fontSize: 16),
-              ),
+              Text(label, style: DesktopTypography.subtitle),
               Text(
                 valueLabelBuilder?.call(value) ?? value.toInt().toString(),
-                style: const TextStyle(
+                style: DesktopTypography.bodyPrimary.copyWith(
                   color: AppTheme.accent,
-                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
               ),

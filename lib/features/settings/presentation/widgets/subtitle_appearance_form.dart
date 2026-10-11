@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
+import 'package:cinemuse_app/features/settings/presentation/widgets/setting_slider.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class SubtitleAppearanceForm extends StatelessWidget {
   final SubtitleStyle style;
   final ValueChanged<SubtitleStyle> onChanged;
-  final bool showPreview;
 
   const SubtitleAppearanceForm({
     super.key,
     required this.style,
     required this.onChanged,
-    this.showPreview = true,
   });
 
   @override
@@ -23,15 +22,10 @@ class SubtitleAppearanceForm extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (showPreview) ...[
-          _SubtitlePreview(
-            style: style,
-            label: l10n.playerAppearanceSampleText,
-          ),
-          const SizedBox(height: 16),
-        ],
+        _SubtitlePreview(style: style, label: l10n.playerAppearanceSampleText),
+        const SizedBox(height: 16),
         // Font Size
-        _SettingsSliderTile(
+        SettingSlider(
           label: l10n.playerAppearanceFontSize,
           value: style.fontSize,
           min: 12.0,
@@ -55,7 +49,7 @@ class SubtitleAppearanceForm extends StatelessWidget {
         ),
 
         // Background Opacity
-        _SettingsSliderTile(
+        SettingSlider(
           label: l10n.playerAppearanceBackground,
           value: style.backgroundColor.a.clamp(0.0, 1.0),
           min: 0.0,
@@ -80,69 +74,6 @@ class SubtitleAppearanceForm extends StatelessWidget {
   }
 }
 
-class _SettingsSliderTile extends StatelessWidget {
-  final String label;
-  final double value;
-  final double min;
-  final double max;
-  final ValueChanged<double> onChanged;
-  final String Function(double)? valueLabelBuilder;
-
-  const _SettingsSliderTile({
-    required this.label,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.onChanged,
-    this.valueLabelBuilder,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final valueText = valueLabelBuilder != null
-        ? valueLabelBuilder!(value)
-        : value.toInt().toString();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label, style: DesktopTypography.subtitle),
-              Text(
-                valueText,
-                style: DesktopTypography.bodyPrimary.copyWith(
-                  color: AppTheme.accent,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 2,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-              activeTrackColor: AppTheme.accent,
-              inactiveTrackColor: Colors.white10,
-              thumbColor: AppTheme.accent,
-            ),
-            child: Slider(
-              value: value,
-              min: min,
-              max: max,
-              onChanged: onChanged,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _PositionSliderTile extends StatelessWidget {
   final String label;
   final double value;
@@ -156,64 +87,33 @@ class _PositionSliderTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final percentage = (value * 100).toInt();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SettingSlider(
+          label: label,
+          value: value,
+          min: 0.0,
+          max: 1.0,
+          divisions: 20, // 5% steps
+          valueLabelBuilder: (val) => '${(val * 100).toInt()}%',
+          onChanged: onChanged,
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(28, 0, 28, 8),
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: DesktopTypography.subtitle),
-              Text(
-                '$percentage%',
-                style: DesktopTypography.bodyPrimary.copyWith(
-                  color: AppTheme.accent,
-                  fontWeight: FontWeight.bold,
-                ),
+              _AnchorLabel(label: 'BOTTOM', isSelected: value < 0.2),
+              _AnchorLabel(
+                label: 'MIDDLE',
+                isSelected: value > 0.4 && value < 0.6,
               ),
+              _AnchorLabel(label: 'TOP', isSelected: value > 0.8),
             ],
           ),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 2,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-              activeTrackColor: AppTheme.accent,
-              inactiveTrackColor: Colors.white10,
-              thumbColor: AppTheme.accent,
-              tickMarkShape: const RoundSliderTickMarkShape(
-                tickMarkRadius: 1.5,
-              ),
-              activeTickMarkColor: AppTheme.accent.withAlpha(128),
-              inactiveTickMarkColor: Colors.white24,
-            ),
-            child: Slider(
-              value: value,
-              min: 0.0,
-              max: 1.0,
-              divisions: 20, // 5% steps
-              onChanged: onChanged,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _AnchorLabel(label: 'BOTTOM', isSelected: value < 0.2),
-                _AnchorLabel(
-                  label: 'MIDDLE',
-                  isSelected: value > 0.4 && value < 0.6,
-                ),
-                _AnchorLabel(label: 'TOP', isSelected: value > 0.8),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

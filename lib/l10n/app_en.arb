@@ -432,8 +432,6 @@
   "settingsIntegrationsDesc": "Manage streaming providers, addons, and external integrations.",
   "settingsData": "Data & Storage",
   "settingsDataDesc": "Manage your local data and cache.",
-  "settingsImport": "Import & Export",
-  "settingsImportDesc": "Transfer your data to and from other services.",
   
   "settingsProvidersTitle": "Streaming Addons",
   "settingsProvidersDesc": "Manage your Stremio-compatible addons.",

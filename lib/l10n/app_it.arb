@@ -363,8 +363,6 @@
   "settingsIntegrationsDesc": "Gestisci i provider di streaming, gli addon e le integrazioni esterne.",
   "settingsData": "Dati e Archiviazione",
   "settingsDataDesc": "Gestisci i tuoi dati locali e la cache.",
-  "settingsImport": "Importa ed Esporta",
-  "settingsImportDesc": "Trasferisci i tuoi dati da e verso altri servizi.",
 
   "settingsProvidersTitle": "Addon di Streaming",
   "settingsProvidersDesc": "Gestisci i tuoi addon compatibili con Stremio.",

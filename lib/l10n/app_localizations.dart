@@ -2120,18 +2120,6 @@ abstract class AppLocalizations {
   /// **'Manage your local data and cache.'**
   String get settingsDataDesc;
 
-  /// No description provided for @settingsImport.
-  ///
-  /// In en, this message translates to:
-  /// **'Import & Export'**
-  String get settingsImport;
-
-  /// No description provided for @settingsImportDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Transfer your data to and from other services.'**
-  String get settingsImportDesc;
-
   /// No description provided for @settingsProvidersTitle.
   ///
   /// In en, this message translates to:

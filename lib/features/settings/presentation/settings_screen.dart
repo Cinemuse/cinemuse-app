@@ -38,7 +38,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         'label': l10n.settingsIntegrations,
         'icon': Icons.link,
       },
-      {'id': 'import', 'label': l10n.settingsImport, 'icon': Icons.download},
     ];
 
     Widget buildSidebar() {
@@ -146,27 +145,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       );
     }
 
-    Widget buildContent() {
-      switch (_activeCategory) {
-        case 'identity':
-          return const IdentitySettings();
-        case 'customization':
-          return const CustomizationSettings();
-        case 'livetv':
-          return const LiveTvSettings();
-        case 'integrations':
-          return const IntegrationsSettings();
-        case 'import':
-          return const ImportSettings();
-        default:
-          return Center(
-            child: Text(
-              "Category $_activeCategory not implemented yet",
-              style: const TextStyle(color: Colors.white),
-            ),
-          );
-      }
-    }
+    Widget buildContent() => switch (_activeCategory) {
+      'customization' => const CustomizationSettings(),
+      'livetv' => const LiveTvSettings(),
+      'integrations' => const IntegrationsSettings(),
+      _ => const IdentitySettings(), // 'identity', the first category
+    };
 
     final contentWidget = Column(
       crossAxisAlignment: CrossAxisAlignment.start,

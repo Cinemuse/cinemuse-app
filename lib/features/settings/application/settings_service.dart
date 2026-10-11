@@ -22,9 +22,6 @@ class UserSettings {
   final String animeAudioLanguage;
   final bool animeShowSubtitles;
   final String animeSubtitleLanguage;
-  final String playerPrimaryColor;
-  final String playerSecondaryColor;
-  final bool showDebugPanel;
   final bool smartSearchFilter;
   final bool enableAutoSkipProviders;
   final bool enableAnimeTosho;
@@ -52,9 +49,6 @@ class UserSettings {
     this.animeAudioLanguage = 'en',
     this.animeShowSubtitles = true,
     this.animeSubtitleLanguage = 'en',
-    this.playerPrimaryColor = '',
-    this.playerSecondaryColor = '',
-    this.showDebugPanel = false,
     this.smartSearchFilter = true,
     this.enableAutoSkipProviders = true,
     this.enableAnimeTosho = true,
@@ -94,9 +88,6 @@ class UserSettings {
       animeAudioLanguage: prefs['animeAudioLanguage'] ?? 'en',
       animeShowSubtitles: prefs['animeShowSubtitles'] ?? true,
       animeSubtitleLanguage: prefs['animeSubtitleLanguage'] ?? 'en',
-      playerPrimaryColor: prefs['playerPrimaryColor'] ?? '',
-      playerSecondaryColor: prefs['playerSecondaryColor'] ?? '',
-      showDebugPanel: prefs['showDebugPanel'] ?? false,
       smartSearchFilter: prefs['smartSearchFilter'] ?? true,
       enableAutoSkipProviders: prefs['enableAutoSkipProviders'] ?? true,
       enableAnimeTosho: prefs['enableAnimeTosho'] ?? true,
@@ -139,9 +130,6 @@ class UserSettings {
     String? animeAudioLanguage,
     bool? animeShowSubtitles,
     String? animeSubtitleLanguage,
-    String? playerPrimaryColor,
-    String? playerSecondaryColor,
-    bool? showDebugPanel,
     bool? smartSearchFilter,
     bool? enableAutoSkipProviders,
     bool? enableAnimeTosho,
@@ -171,9 +159,6 @@ class UserSettings {
       animeShowSubtitles: animeShowSubtitles ?? this.animeShowSubtitles,
       animeSubtitleLanguage:
           animeSubtitleLanguage ?? this.animeSubtitleLanguage,
-      playerPrimaryColor: playerPrimaryColor ?? this.playerPrimaryColor,
-      playerSecondaryColor: playerSecondaryColor ?? this.playerSecondaryColor,
-      showDebugPanel: showDebugPanel ?? this.showDebugPanel,
       smartSearchFilter: smartSearchFilter ?? this.smartSearchFilter,
       enableAutoSkipProviders:
           enableAutoSkipProviders ?? this.enableAutoSkipProviders,
@@ -207,9 +192,6 @@ class UserSettings {
       'animeAudioLanguage': animeAudioLanguage,
       'animeShowSubtitles': animeShowSubtitles,
       'animeSubtitleLanguage': animeSubtitleLanguage,
-      'playerPrimaryColor': playerPrimaryColor,
-      'playerSecondaryColor': playerSecondaryColor,
-      'showDebugPanel': showDebugPanel,
       'smartSearchFilter': smartSearchFilter,
       'enableAutoSkipProviders': enableAutoSkipProviders,
       'enableAnimeTosho': enableAnimeTosho,
@@ -324,11 +306,6 @@ class SettingsNotifier extends Notifier<UserSettings> {
           updates['animeShowSubtitles'] ?? state.animeShowSubtitles,
       animeSubtitleLanguage:
           updates['animeSubtitleLanguage'] ?? state.animeSubtitleLanguage,
-      playerPrimaryColor:
-          updates['playerPrimaryColor'] ?? state.playerPrimaryColor,
-      playerSecondaryColor:
-          updates['playerSecondaryColor'] ?? state.playerSecondaryColor,
-      showDebugPanel: updates['showDebugPanel'] ?? state.showDebugPanel,
       smartSearchFilter:
           updates['smartSearchFilter'] ?? state.smartSearchFilter,
       enableAutoSkipProviders:

@@ -1140,13 +1140,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDataDesc => 'Manage your local data and cache.';
 
   @override
-  String get settingsImport => 'Import & Export';
-
-  @override
-  String get settingsImportDesc =>
-      'Transfer your data to and from other services.';
-
-  @override
   String get settingsProvidersTitle => 'Streaming Addons';
 
   @override
