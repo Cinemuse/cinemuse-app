@@ -1,6 +1,19 @@
 import 'package:flutter/material.dart';
 
 class ExploreFilters {
+  // Slider limits and defaults: the panel, the chips and [isFiltered] all
+  // read these, so they can't disagree.
+  static const defaultSortBy = 'popularity.desc';
+  static const ratingLimits = RangeValues(0, 10);
+  static const voteCountLimits = RangeValues(0, 20000);
+  // Hides titles with almost no votes (mostly empty TMDB entries).
+  static const defaultVoteCount = RangeValues(100, 20000);
+  static const runtimeLimits = RangeValues(0, 240);
+
+  /// Up to next year, so announced titles can be found too.
+  static RangeValues get yearLimits =>
+      RangeValues(1900, DateTime.now().year + 1.0);
+
   final String sortBy;
   final List<int> genres;
   final List<String> languages;
@@ -11,17 +24,17 @@ class ExploreFilters {
   final List<int> watchProviders;
   final String watchRegion;
 
-  const ExploreFilters({
-    this.sortBy = 'popularity.desc',
+  ExploreFilters({
+    this.sortBy = defaultSortBy,
     this.genres = const [],
     this.languages = const [],
-    this.rating = const RangeValues(0, 10),
-    this.year = const RangeValues(1900, 2025),
-    this.voteCount = const RangeValues(100, 20000),
-    this.runtime = const RangeValues(0, 240),
+    this.rating = ratingLimits,
+    RangeValues? year,
+    this.voteCount = defaultVoteCount,
+    this.runtime = runtimeLimits,
     this.watchProviders = const [],
     this.watchRegion = 'IT',
-  });
+  }) : year = year ?? yearLimits;
 
   ExploreFilters copyWith({
     String? sortBy,
@@ -47,18 +60,20 @@ class ExploreFilters {
     );
   }
 
+  bool get hasRatingFilter => rating != ratingLimits;
+  bool get hasYearFilter => year != yearLimits;
+  bool get hasVoteCountFilter => voteCount != defaultVoteCount;
+  bool get hasRuntimeFilter => runtime != runtimeLimits;
+
+  /// True when anything differs from the defaults ("Clear all" is shown).
   bool get isFiltered {
-    return sortBy != 'popularity.desc' ||
+    return sortBy != defaultSortBy ||
         genres.isNotEmpty ||
         languages.isNotEmpty ||
-        rating.start != 0 ||
-        rating.end != 10 ||
-        year.start != 1900 ||
-        year.end != 2025 ||
-        voteCount.start != 0 ||
-        voteCount.end != 20000 ||
-        runtime.start != 0 ||
-        runtime.end != 240 ||
+        hasRatingFilter ||
+        hasYearFilter ||
+        hasVoteCountFilter ||
+        hasRuntimeFilter ||
         watchProviders.isNotEmpty;
   }
 }

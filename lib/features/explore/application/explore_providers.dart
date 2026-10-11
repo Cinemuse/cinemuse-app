@@ -9,7 +9,7 @@ final exploreMediaTypeProvider = StateProvider<MediaType>(
 );
 
 final exploreFiltersProvider = StateProvider<ExploreFilters>(
-  (ref) => const ExploreFilters(),
+  (ref) => ExploreFilters(),
 );
 
 final exploreResultsProvider =

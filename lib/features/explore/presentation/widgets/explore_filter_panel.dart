@@ -100,7 +100,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                         const SizedBox(height: 12),
                         _buildSortOption(
                           l10n.searchMostPopular,
-                          'popularity.desc',
+                          ExploreFilters.defaultSortBy,
                           filters,
                         ),
                         const SizedBox(height: 8),
@@ -159,8 +159,8 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         FilterRangeSlider(
-                          min: 0,
-                          max: 10,
+                          min: ExploreFilters.ratingLimits.start,
+                          max: ExploreFilters.ratingLimits.end,
                           values: filters.rating,
                           onChanged: (v) =>
                               _updateFilters(filters.copyWith(rating: v)),
@@ -171,8 +171,8 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                         ),
                         const SizedBox(height: 32),
                         FilterRangeSlider(
-                          min: 1900,
-                          max: 2025,
+                          min: ExploreFilters.yearLimits.start,
+                          max: ExploreFilters.yearLimits.end,
                           values: filters.year,
                           onChanged: (v) =>
                               _updateFilters(filters.copyWith(year: v)),
@@ -183,26 +183,26 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                         ),
                         const SizedBox(height: 32),
                         FilterRangeSlider(
-                          min: 0,
-                          max: 20000,
+                          min: ExploreFilters.voteCountLimits.start,
+                          max: ExploreFilters.voteCountLimits.end,
                           values: filters.voteCount,
                           onChanged: (v) =>
                               _updateFilters(filters.copyWith(voteCount: v)),
                           label: l10n.searchVoteCount,
                           valueLabel:
-                              '${filters.voteCount.start.round()} - ${filters.voteCount.end.round() >= 20000 ? l10n.filterMax : filters.voteCount.end.round()}',
+                              '${filters.voteCount.start.round()} - ${filters.voteCount.end >= ExploreFilters.voteCountLimits.end ? l10n.filterMax : filters.voteCount.end.round()}',
                           icon: Icons.thumb_up_outlined,
                         ),
                         const SizedBox(height: 32),
                         FilterRangeSlider(
-                          min: 0,
-                          max: 240,
+                          min: ExploreFilters.runtimeLimits.start,
+                          max: ExploreFilters.runtimeLimits.end,
                           values: filters.runtime,
                           onChanged: (v) =>
                               _updateFilters(filters.copyWith(runtime: v)),
                           label: l10n.searchRuntime,
                           valueLabel:
-                              '${filters.runtime.start.round()}m - ${filters.runtime.end.round() >= 240 ? l10n.filterMax : '${filters.runtime.end.round()}m'}',
+                              '${filters.runtime.start.round()}m - ${filters.runtime.end >= ExploreFilters.runtimeLimits.end ? l10n.filterMax : '${filters.runtime.end.round()}m'}',
                           icon: Icons.access_time,
                         ),
                       ],

@@ -53,45 +53,46 @@ class ActiveFiltersList extends StatelessWidget {
         }),
 
         // Year
-        if (filters.year.start != 1900 || filters.year.end != 2025)
+        if (filters.hasYearFilter)
           _FilterChip(
             label:
                 '${filters.year.start.round()} - ${filters.year.end.round()}',
             icon: Icons.calendar_today,
-            onDelete: () => onChanged(
-              filters.copyWith(year: const RangeValues(1900, 2025)),
-            ),
+            onDelete: () =>
+                onChanged(filters.copyWith(year: ExploreFilters.yearLimits)),
           ),
 
         // Rating
-        if (filters.rating.start != 0 || filters.rating.end != 10)
+        if (filters.hasRatingFilter)
           _FilterChip(
             label:
                 '${filters.rating.start.round()} - ${filters.rating.end.round()}',
             icon: Icons.whatshot,
-            onDelete: () =>
-                onChanged(filters.copyWith(rating: const RangeValues(0, 10))),
+            onDelete: () => onChanged(
+              filters.copyWith(rating: ExploreFilters.ratingLimits),
+            ),
           ),
 
         // Vote Count
-        if (filters.voteCount.start != 0 || filters.voteCount.end != 20000)
+        if (filters.hasVoteCountFilter)
           _FilterChip(
             label:
-                '${filters.voteCount.start.round()} - ${filters.voteCount.end.round() >= 20000 ? l10n.filterMax : filters.voteCount.end.round()}',
+                '${filters.voteCount.start.round()} - ${filters.voteCount.end >= ExploreFilters.voteCountLimits.end ? l10n.filterMax : filters.voteCount.end.round()}',
             icon: Icons.thumb_up,
             onDelete: () => onChanged(
-              filters.copyWith(voteCount: const RangeValues(0, 20000)),
+              filters.copyWith(voteCount: ExploreFilters.defaultVoteCount),
             ),
           ),
 
         // Runtime
-        if (filters.runtime.start != 0 || filters.runtime.end != 240)
+        if (filters.hasRuntimeFilter)
           _FilterChip(
             label:
-                '${filters.runtime.start.round()}m - ${filters.runtime.end.round() >= 240 ? l10n.filterMax : '${filters.runtime.end.round()}m'}',
+                '${filters.runtime.start.round()}m - ${filters.runtime.end >= ExploreFilters.runtimeLimits.end ? l10n.filterMax : '${filters.runtime.end.round()}m'}',
             icon: Icons.access_time,
-            onDelete: () =>
-                onChanged(filters.copyWith(runtime: const RangeValues(0, 240))),
+            onDelete: () => onChanged(
+              filters.copyWith(runtime: ExploreFilters.runtimeLimits),
+            ),
           ),
 
         // Clear All
