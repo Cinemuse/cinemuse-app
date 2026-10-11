@@ -1,9 +1,11 @@
 import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'dart:convert';
+import 'dart:isolate';
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -45,9 +47,15 @@ class AnimeMappingSyncService {
         AppLogger.debug(_logTag, 'Starting daily sync...');
       }
 
-      await _sync();
-      await prefs.setString(_lastSyncKey, DateTime.now().toIso8601String());
-      AppLogger.debug(_logTag, 'Sync completed.');
+      // Save the time only after a good sync: a failed one is retried on
+      // the next start instead of 24 h later (REV-34).
+      if (await _sync()) {
+        await prefs.setString(
+          _lastSyncKey,
+          DateTime.now().toUtc().toIso8601String(),
+        );
+        AppLogger.debug(_logTag, 'Sync completed.');
+      }
     } else {
       AppLogger.debug(
         _logTag,
@@ -56,58 +64,76 @@ class AnimeMappingSyncService {
     }
   }
 
-  Future<void> _sync() async {
+  /// Downloads and stores the mappings. Returns whether it worked.
+  Future<bool> _sync() async {
     try {
-      final response = await _dio.get(_mappingUrl);
-      if (response.statusCode != 200) {
-        throw Exception('Failed to download mappings');
+      // Plain text, so the JSON is decoded in the isolate below, not here.
+      final response = await _dio.get<String>(
+        _mappingUrl,
+        options: Options(responseType: ResponseType.plain),
+      );
+      final body = response.data;
+      if (response.statusCode != 200 || body == null) {
+        AppLogger.warn(_logTag, 'Sync failed: status ${response.statusCode}');
+        return false;
       }
 
-      final Map<String, dynamic> data = response.data is String
-          ? jsonDecode(response.data)
-          : response.data;
-
-      final List<AnimeExternalMappingsCompanion> companions = [];
-
-      data.forEach((anilistIdStr, value) {
-        final anilistId = int.tryParse(anilistIdStr);
-        if (anilistId == null) return;
-
-        final map = value as Map<String, dynamic>;
-
-        // Extract IDs
-        final anidbId = _extractInt(map['anidb_id']);
-        final tmdbShowId = _extractInt(map['tmdb_show_id']);
-        final tmdbMovieId = _extractInt(map['tmdb_movie_id']);
-        final tvdbId = _extractInt(map['tvdb_id']);
-
-        // Extract mappings (pick tmdb first, fallback to tvdb)
-        final mappings = map['tmdb_mappings'] ?? map['tvdb_mappings'];
-        final mappingsJson = mappings != null ? jsonEncode(mappings) : null;
-
-        if (tmdbShowId != null || tmdbMovieId != null || tvdbId != null) {
-          companions.add(
-            AnimeExternalMappingsCompanion(
-              anilistId: Value(anilistId),
-              anidbId: Value(anidbId),
-              tmdbShowId: Value(tmdbShowId),
-              tmdbMovieId: Value(tmdbMovieId),
-              tvdbId: Value(tvdbId),
-              mappingsData: Value(mappingsJson),
-            ),
-          );
-        }
-      });
-
-      if (companions.isNotEmpty) {
-        await _db.replaceAnimeExternalMappings(companions);
+      // Thousands of entries: decoding them on the UI isolate made the app
+      // stutter right after start.
+      final companions = await Isolate.run(() => parseMappings(body));
+      if (companions.isEmpty) {
+        AppLogger.warn(_logTag, 'Sync failed: the mappings file is empty');
+        return false;
       }
+
+      await _db.replaceAnimeExternalMappings(companions);
+      return true;
     } catch (e) {
+      // A background job: the old mappings stay usable until the next try.
       AppLogger.warn(_logTag, 'Sync failed', error: e);
+      return false;
     }
   }
 
-  int? _extractInt(dynamic value) {
+  /// Turns the mappings file into database rows. Static, so it can run in
+  /// another isolate.
+  @visibleForTesting
+  static List<AnimeExternalMappingsCompanion> parseMappings(String body) {
+    final data = jsonDecode(body) as Map<String, dynamic>;
+    final List<AnimeExternalMappingsCompanion> companions = [];
+
+    data.forEach((anilistIdStr, value) {
+      final anilistId = int.tryParse(anilistIdStr);
+      if (anilistId == null || value is! Map<String, dynamic>) return;
+
+      // Extract IDs
+      final anidbId = _extractInt(value['anidb_id']);
+      final tmdbShowId = _extractInt(value['tmdb_show_id']);
+      final tmdbMovieId = _extractInt(value['tmdb_movie_id']);
+      final tvdbId = _extractInt(value['tvdb_id']);
+
+      // Extract mappings (pick tmdb first, fallback to tvdb)
+      final mappings = value['tmdb_mappings'] ?? value['tvdb_mappings'];
+      final mappingsJson = mappings != null ? jsonEncode(mappings) : null;
+
+      if (tmdbShowId != null || tmdbMovieId != null || tvdbId != null) {
+        companions.add(
+          AnimeExternalMappingsCompanion(
+            anilistId: Value(anilistId),
+            anidbId: Value(anidbId),
+            tmdbShowId: Value(tmdbShowId),
+            tmdbMovieId: Value(tmdbMovieId),
+            tvdbId: Value(tvdbId),
+            mappingsData: Value(mappingsJson),
+          ),
+        );
+      }
+    });
+
+    return companions;
+  }
+
+  static int? _extractInt(dynamic value) {
     if (value is int) return value;
     if (value is String) return int.tryParse(value);
     if (value is List && value.isNotEmpty) return _extractInt(value[0]);
