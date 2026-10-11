@@ -119,6 +119,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             });
           }
 
+          ref.invalidate(sportScheduleProvider);
           ref.invalidate(trendingProvider);
           ref.invalidate(popularMoviesProvider);
           ref.invalidate(popularSeriesProvider);
@@ -158,8 +159,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     // Continue Watching
                     const RepaintBoundary(child: ContinueWatchingRow()),
 
-                    // Sports Schedule
-                    const RepaintBoundary(child: SportScheduleRow()),
+                    // Sports Schedule (online only, like the TMDB rows)
+                    if (!isOffline)
+                      const RepaintBoundary(child: SportScheduleRow()),
 
                     // Pinned Lists & Collections
                     _PinnedListsSection(onShowListDetails: _showListDetails),
