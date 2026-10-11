@@ -680,12 +680,6 @@ abstract class AppLocalizations {
   /// **'Welcome Back'**
   String get authWelcomeBack;
 
-  /// No description provided for @authJoinCineMuse.
-  ///
-  /// In en, this message translates to:
-  /// **'Join CineMuse'**
-  String get authJoinCineMuse;
-
   /// No description provided for @authEnterCredentials.
   ///
   /// In en, this message translates to:
@@ -697,12 +691,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign in to access your library and settings'**
   String get authWelcomeBackDesc;
-
-  /// No description provided for @authCreateAccount.
-  ///
-  /// In en, this message translates to:
-  /// **'Create an account to start watching'**
-  String get authCreateAccount;
 
   /// No description provided for @authEmail.
   ///
@@ -721,24 +709,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign In'**
   String get authSignIn;
-
-  /// No description provided for @authCreateAccountAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Create Account'**
-  String get authCreateAccountAction;
-
-  /// No description provided for @authNoAccount.
-  ///
-  /// In en, this message translates to:
-  /// **'Don\'t have an account?'**
-  String get authNoAccount;
-
-  /// No description provided for @authHaveAccount.
-  ///
-  /// In en, this message translates to:
-  /// **'Already have an account?'**
-  String get authHaveAccount;
 
   /// No description provided for @authOr.
   ///

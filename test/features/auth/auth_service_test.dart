@@ -160,54 +160,6 @@ void main() {
     });
   });
 
-  group('AuthService signUp', () {
-    setUp(() {
-      when(() => mockGoTrueClient.currentSession).thenReturn(null);
-      authService = AuthService(mockSupabaseClient);
-    });
-
-    test('successfully signs up', () async {
-      when(
-        () => mockGoTrueClient.signUp(
-          email: 'new@test.com',
-          password: 'password',
-        ),
-      ).thenAnswer(
-        (_) async => AuthResponse(user: testUser, session: testSession),
-      );
-
-      final future = authService.signUp('new@test.com', 'password');
-      expect(authService.state, const AsyncValue<User?>.loading());
-
-      await future;
-
-      verify(
-        () => mockGoTrueClient.signUp(
-          email: 'new@test.com',
-          password: 'password',
-        ),
-      ).called(1);
-    });
-
-    test('handles sign up failure', () async {
-      final authException = AuthException('User already exists');
-
-      when(
-        () => mockGoTrueClient.signUp(
-          email: 'test@test.com',
-          password: 'password',
-        ),
-      ).thenThrow(authException);
-
-      when(() => mockGoTrueClient.currentUser).thenReturn(null);
-
-      expect(
-        () => authService.signUp('test@test.com', 'password'),
-        throwsA(isA<AppException>()),
-      );
-    });
-  });
-
   group('AuthService signOut', () {
     setUp(() {
       when(() => mockGoTrueClient.currentSession).thenReturn(testSession);

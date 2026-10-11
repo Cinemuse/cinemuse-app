@@ -319,18 +319,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authWelcomeBack => 'Welcome Back';
 
   @override
-  String get authJoinCineMuse => 'Join CineMuse';
-
-  @override
   String get authEnterCredentials =>
       'Enter your credentials to access your account';
 
   @override
   String get authWelcomeBackDesc =>
       'Sign in to access your library and settings';
-
-  @override
-  String get authCreateAccount => 'Create an account to start watching';
 
   @override
   String get authEmail => 'EMAIL';
@@ -340,15 +334,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authSignIn => 'Sign In';
-
-  @override
-  String get authCreateAccountAction => 'Create Account';
-
-  @override
-  String get authNoAccount => 'Don\'t have an account?';
-
-  @override
-  String get authHaveAccount => 'Already have an account?';
 
   @override
   String get authOr => 'OR';

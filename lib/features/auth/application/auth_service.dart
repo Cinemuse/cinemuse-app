@@ -58,23 +58,6 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
     }
   }
 
-  Future<void> signUp(String email, String password) async {
-    state = const AsyncValue.loading();
-    try {
-      final response = await _supabaseClient.auth.signUp(
-        email: email,
-        password: password,
-      );
-      if (response.user == null) {
-        throw AuthException('Sign up failed');
-      }
-    } catch (e) {
-      final appEx = SupabaseErrorHandler.handleError(e);
-      state = AsyncValue.data(_supabaseClient.auth.currentUser);
-      throw appEx;
-    }
-  }
-
   Future<void> debugSignIn() async {
     if (!kDebugMode) return;
     await signIn('aaa@aaa.aa', 'Password');

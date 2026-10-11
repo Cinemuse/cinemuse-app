@@ -15,7 +15,6 @@ class AuthScreen extends ConsumerStatefulWidget {
 }
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
-  bool isLogin = true;
   bool isLoading = false;
   String? errorMessage;
   final _emailController = TextEditingController();
@@ -41,11 +40,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       final password = _passwordController.text.trim();
 
       try {
-        if (isLogin) {
-          await actions.signIn(email, password);
-        } else {
-          await actions.signUp(email, password);
-        }
+        await actions.signIn(email, password);
       } catch (e) {
         if (!mounted) return;
         setState(() {
@@ -120,7 +115,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
                   // Title
                   Text(
-                    isLogin ? l10n.authWelcomeBack : l10n.authJoinCineMuse,
+                    l10n.authWelcomeBack,
                     style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
@@ -129,9 +124,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    isLogin
-                        ? l10n.authEnterCredentials
-                        : l10n.authCreateAccount,
+                    l10n.authEnterCredentials,
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: AppTheme.textMuted),
                   ),
@@ -210,28 +203,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : Text(
-                              isLogin
-                                  ? l10n.authSignIn
-                                  : l10n.authCreateAccountAction,
-                            ),
+                          : Text(l10n.authSignIn),
                     ),
                   ),
 
                   const SizedBox(height: 24),
-
-                  // Toggle Login/Signup
-                  TextButton(
-                    onPressed: () {
-                      setState(() => isLogin = !isLogin);
-                    },
-                    child: Text(
-                      isLogin ? l10n.authNoAccount : l10n.authHaveAccount,
-                      style: const TextStyle(color: AppTheme.textMuted),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
 
                   // Divider
                   Row(
