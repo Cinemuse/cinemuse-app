@@ -36,7 +36,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
       final actions = ref.read(authActionsProvider);
       final email = _emailController.text.trim();
-      final password = _passwordController.text.trim();
+      // Not trimmed: spaces can be part of a password (REV-58).
+      final password = _passwordController.text;
 
       try {
         await actions.signIn(email, password);
