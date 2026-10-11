@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'dart:convert';
 import 'package:cinemuse_app/core/data/database.dart';
+import 'package:cinemuse_app/core/error/supabase_failure.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
@@ -27,11 +29,13 @@ final profileStreamProvider = StreamProvider<Profile?>((ref) async* {
   }
 
   final db = ref.watch(appDatabaseProvider);
+  var hasYielded = false;
 
   // 1. Instant Cache Fallback
   try {
     final cached = await db.getCachedProfile(userId);
     if (cached != null) {
+      hasYielded = true;
       yield Profile(
         id: cached.id,
         username: cached.username,
@@ -43,8 +47,14 @@ final profileStreamProvider = StreamProvider<Profile?>((ref) async* {
         updatedAt: cached.updatedAt,
       );
     }
-  } catch (e) {
-    // Ignore cache error, proceed to stream
+  } catch (e, s) {
+    // The remote stream below still delivers the profile.
+    AppLogger.warn(
+      'profileStreamProvider',
+      'Could not read the cached profile',
+      error: e,
+      stackTrace: s,
+    );
   }
 
   // 2. Real-time background update
@@ -75,14 +85,29 @@ final profileStreamProvider = StreamProvider<Profile?>((ref) async* {
                   updatedAt: Value(profile.updatedAt),
                 ),
               )
-              .catchError((_) {}),
+              .catchError(
+                (Object e, StackTrace s) => AppLogger.warn(
+                  'profileStreamProvider',
+                  'Could not cache the profile locally',
+                  error: e,
+                  stackTrace: s,
+                ),
+              ),
         );
       }
+      hasYielded = true;
       yield profile;
     }
-  } catch (e) {
-    // Silently stop if stream fails (e.g. offline)
-    // We already yielded the cached version so UI is happy.
+  } catch (e, s) {
+    AppLogger.warn(
+      'profileStreamProvider',
+      'Profile realtime stream failed; live updates stop',
+      error: e,
+      stackTrace: s,
+    );
+    // With a profile already shown, keep it; with none, show the error
+    // instead of loading forever (REV-90).
+    if (!hasYielded) rethrow;
   }
 });
 
@@ -138,44 +163,42 @@ final profileStatsProvider = StreamProvider<ProfileStats>((ref) async* {
   // triggering this stream, which in turn fetches the true aggregated stats from backend.
   ref.watch(watchHistoryStreamProvider);
 
-  try {
-    final res = await ref
-        .read(supabaseClientProvider)
-        .from('user_stats')
-        .select()
-        .eq('user_id', userId)
-        .maybeSingle();
-    if (res == null) {
-      yield ProfileStats.empty();
-      return;
-    }
-
-    yield ProfileStats(
-      totalMinutesWatched: (res['total_minutes_watched'] as num?)?.toInt() ?? 0,
-      totalEpisodes: (res['total_episodes'] as num?)?.toInt() ?? 0,
-      totalMovies: (res['total_movies'] as num?)?.toInt() ?? 0,
-      totalSeries: (res['total_series'] as num?)?.toInt() ?? 0,
-      totalSeasons: (res['total_seasons'] as num?)?.toInt() ?? 0,
-      last7Days: PeriodStats(
-        totalMinutes: (res['p7_minutes'] as num?)?.toInt() ?? 0,
-        movieCount: (res['p7_movies'] as num?)?.toInt() ?? 0,
-        episodeCount: (res['p7_episodes'] as num?)?.toInt() ?? 0,
-      ),
-      last30Days: PeriodStats(
-        totalMinutes: (res['p30_minutes'] as num?)?.toInt() ?? 0,
-        movieCount: (res['p30_movies'] as num?)?.toInt() ?? 0,
-        episodeCount: (res['p30_episodes'] as num?)?.toInt() ?? 0,
-      ),
-      last365Days: PeriodStats(
-        totalMinutes: (res['p365_minutes'] as num?)?.toInt() ?? 0,
-        movieCount: (res['p365_movies'] as num?)?.toInt() ?? 0,
-        episodeCount: (res['p365_episodes'] as num?)?.toInt() ?? 0,
-      ),
-      movieMinutes: (res['movie_minutes'] as num?)?.toInt() ?? 0,
-      seriesMinutes: (res['series_minutes'] as num?)?.toInt() ?? 0,
-    );
-  } catch (e) {
-    // Return empty stats on failure or keep previous
+  // Errors reach the UI as AsyncError; Riverpod keeps the last stats as
+  // its value, so a failed refresh never shows zeros as if real (REV-90).
+  final res = await ref
+      .read(supabaseClientProvider)
+      .from('user_stats')
+      .select()
+      .eq('user_id', userId)
+      .maybeSingle()
+      .withAppFailure();
+  if (res == null) {
     yield ProfileStats.empty();
+    return;
   }
+
+  yield ProfileStats(
+    totalMinutesWatched: (res['total_minutes_watched'] as num?)?.toInt() ?? 0,
+    totalEpisodes: (res['total_episodes'] as num?)?.toInt() ?? 0,
+    totalMovies: (res['total_movies'] as num?)?.toInt() ?? 0,
+    totalSeries: (res['total_series'] as num?)?.toInt() ?? 0,
+    totalSeasons: (res['total_seasons'] as num?)?.toInt() ?? 0,
+    last7Days: PeriodStats(
+      totalMinutes: (res['p7_minutes'] as num?)?.toInt() ?? 0,
+      movieCount: (res['p7_movies'] as num?)?.toInt() ?? 0,
+      episodeCount: (res['p7_episodes'] as num?)?.toInt() ?? 0,
+    ),
+    last30Days: PeriodStats(
+      totalMinutes: (res['p30_minutes'] as num?)?.toInt() ?? 0,
+      movieCount: (res['p30_movies'] as num?)?.toInt() ?? 0,
+      episodeCount: (res['p30_episodes'] as num?)?.toInt() ?? 0,
+    ),
+    last365Days: PeriodStats(
+      totalMinutes: (res['p365_minutes'] as num?)?.toInt() ?? 0,
+      movieCount: (res['p365_movies'] as num?)?.toInt() ?? 0,
+      episodeCount: (res['p365_episodes'] as num?)?.toInt() ?? 0,
+    ),
+    movieMinutes: (res['movie_minutes'] as num?)?.toInt() ?? 0,
+    seriesMinutes: (res['series_minutes'] as num?)?.toInt() ?? 0,
+  );
 });
