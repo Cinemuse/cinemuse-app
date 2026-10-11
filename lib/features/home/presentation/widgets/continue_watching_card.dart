@@ -42,38 +42,22 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
       settingsProvider.select((s) => s.appLanguage),
     );
 
-    final hasValidTitle =
-        localMedia != null &&
-        (localMedia.getLocalizedTitle(appLanguage) ?? '').isNotEmpty &&
-        localMedia.getLocalizedTitle(appLanguage) != 'Unknown' &&
-        localMedia.getLocalizedTitle(appLanguage) != '...';
-
-    if (hasValidTitle) {
+    if (localMedia != null && localMedia.hasCompleteTitle(appLanguage)) {
       return _buildCard(context, ref, localMedia, appLanguage);
     }
 
-    final providerArg = (
-      id: widget.historyItem.tmdbId,
-      type: widget.historyItem.mediaType,
+    final mediaAsync = ref.watch(
+      mediaItemProvider((
+        id: widget.historyItem.tmdbId,
+        type: widget.historyItem.mediaType,
+      )),
     );
-    final mediaAsync = ref.watch(mediaItemProvider(providerArg));
-
-    final fetchedMedia = mediaAsync.valueOrNull;
-    final hasFetchedValidTitle =
-        fetchedMedia != null &&
-        (fetchedMedia.getLocalizedTitle(appLanguage) ?? '').isNotEmpty &&
-        fetchedMedia.getLocalizedTitle(appLanguage) != 'Unknown' &&
-        fetchedMedia.getLocalizedTitle(appLanguage) != '...';
 
     return mediaAsync.when(
-      data: (media) {
-        if (media != null && hasFetchedValidTitle) {
-          return _buildCard(context, ref, media, appLanguage);
-        }
-        // Offline or TMDB failed (null): still a usable card, titled
-        // "Unknown", so it can be resumed or removed.
-        return _buildCard(context, ref, media ?? localMedia, appLanguage);
-      },
+      // Offline or TMDB failed (null): still a usable card from the local
+      // data, titled "Unknown", so it can be resumed or removed.
+      data: (media) =>
+          _buildCard(context, ref, media ?? localMedia, appLanguage),
       loading: _buildSkeleton,
       error: (_, __) => _buildCard(context, ref, localMedia, appLanguage),
     );
@@ -102,10 +86,11 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
         ref.watch(isRewatchingProvider(widget.historyItem)).valueOrNull ??
         false;
 
-    String title = media?.getLocalizedTitle(appLanguage) ?? '';
-    if (title.isEmpty || title == '...') {
-      title = l10n.commonUnknown;
-    }
+    final title = media != null && media.hasCompleteTitle(appLanguage)
+        ? media.getLocalizedTitle(appLanguage)!
+        : l10n.commonUnknown;
+    final item = widget.historyItem;
+    final type = item.mediaType.name;
 
     final percentage =
         (widget.historyItem.totalDuration != null &&
@@ -114,16 +99,16 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
               widget.historyItem.totalDuration!)
         : 0.0;
 
-    final resolver = ref.read(unifiedStreamResolverProvider);
+    final resolver = ref.watch(unifiedStreamResolverProvider);
     final hasCache = resolver.hasCachedStream(
       widget.historyItem.tmdbId.toString(),
-      widget.historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+      type,
       season: widget.historyItem.season,
       episode: widget.historyItem.episode,
     );
 
     return BackdropCard(
-      key: ValueKey(widget.historyItem.tmdbId),
+      key: ValueKey('$type-${item.tmdbId}'),
       title: title,
       width: widget.width,
       backdropPath: media?.backdropPath,
@@ -143,9 +128,7 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
           MaterialPageRoute(
             builder: (_) => VideoPlayerScreen(
               queryId: widget.historyItem.tmdbId.toString(),
-              type: widget.historyItem.mediaType == MediaKind.tv
-                  ? 'tv'
-                  : 'movie',
+              type: type,
               season: widget.historyItem.season,
               episode: widget.historyItem.episode,
               startPosition: widget.historyItem.progressSeconds,
@@ -158,9 +141,7 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
           MaterialPageRoute(
             builder: (_) => VideoPlayerScreen(
               queryId: widget.historyItem.tmdbId.toString(),
-              type: widget.historyItem.mediaType == MediaKind.tv
-                  ? 'tv'
-                  : 'movie',
+              type: type,
               season: widget.historyItem.season,
               episode: widget.historyItem.episode,
               startPosition: 0,
@@ -173,9 +154,7 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
           MaterialPageRoute(
             builder: (_) => MediaDetailsScreen(
               mediaId: widget.historyItem.tmdbId.toString(),
-              mediaType: widget.historyItem.mediaType == MediaKind.tv
-                  ? 'tv'
-                  : 'movie',
+              mediaType: type,
             ),
           ),
         );
@@ -197,7 +176,7 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
           ? () {
               resolver.clearCachedStream(
                 widget.historyItem.tmdbId.toString(),
-                widget.historyItem.mediaType == MediaKind.tv ? 'tv' : 'movie',
+                type,
                 season: widget.historyItem.season,
                 episode: widget.historyItem.episode,
               );

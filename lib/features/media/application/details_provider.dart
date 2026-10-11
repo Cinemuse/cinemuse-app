@@ -25,13 +25,7 @@ final mediaItemProvider =
 
       // 1. Check local cache (Memory/Drift)
       final cached = await repo.getMediaItem(args.id, args.type);
-      final title = cached?.titleEn?.trim();
-      final hasCompleteTitle =
-          title != null &&
-          title.isNotEmpty &&
-          title != 'Unknown' &&
-          title != '...';
-      if (hasCompleteTitle) return cached;
+      if (cached != null && cached.hasCompleteTitle('en')) return cached;
 
       final connectivity = ref.watch(connectivityProvider).valueOrNull;
       if (connectivity == ConnectivityResult.none) return cached;

@@ -1,12 +1,10 @@
-import 'dart:developer' as developer;
-import 'package:cinemuse_app/features/auth/application/auth_service.dart';
-import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
+import 'package:cinemuse_app/features/home/application/continue_watching_service.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
-import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -24,75 +22,40 @@ class ContinueWatchingRow extends ConsumerStatefulWidget {
 }
 
 class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
-  // Set of tmdbId that are hidden because they are pending removal or being removed.
-  final Set<int> _hiddenItems = {};
+  // Cards hidden while their action runs (`mediaType-tmdbId`).
+  final Set<String> _hiddenItems = {};
 
-  Future<void> _runWithOptimisticHide(
-    int tmdbId,
-    Future<void> Function(String userId) action,
-  ) async {
-    setState(() => _hiddenItems.add(tmdbId));
+  // The history stream is debounced by 300 ms: keep the card hidden until the
+  // new state arrives, so it doesn't flash back.
+  static const _hideUntilHistoryUpdates = Duration(milliseconds: 500);
+
+  static String _keyOf(WatchHistory item) =>
+      '${item.mediaType.name}-${item.tmdbId}';
+
+  /// Runs [action] for [item]; on failure shows the error in a snackbar.
+  /// With [hide], the card is hidden while the action runs.
+  Future<void> _run(
+    WatchHistory item,
+    Future<void> Function(ContinueWatchingService service) action, {
+    bool hide = false,
+  }) async {
+    final service = ref.read(continueWatchingServiceProvider);
+    final errorMapper = ref.read(errorMapperProvider);
+    final key = _keyOf(item);
+    if (hide) setState(() => _hiddenItems.add(key));
     try {
-      final userId = ref.read(authProvider).value?.id;
-      if (userId != null) {
-        await action(userId);
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
-    } catch (e, st) {
-      developer.log(
-        'Failed optimistic action for item $tmdbId',
-        name: 'ContinueWatchingRow',
-        error: e,
-        stackTrace: st,
-      );
-    } finally {
+      await action(service);
+      if (hide) await Future<void>.delayed(_hideUntilHistoryUpdates);
+    } catch (e) {
       if (mounted) {
-        setState(() => _hiddenItems.remove(tmdbId));
-      }
-    }
-  }
-
-  void _onCancelRewatch(WatchHistory item) {
-    _runWithOptimisticHide(
-      item.tmdbId,
-      (userId) => ref
-          .read(watchHistoryRepositoryProvider)
-          .cancelRewatch(userId, item.tmdbId, item.mediaType.name),
-    );
-  }
-
-  void _onDrop(WatchHistory item) {
-    _runWithOptimisticHide(item.tmdbId, (userId) async {
-      await ref
-          .read(watchHistoryRepositoryProvider)
-          .dropFromContinueWatching(userId, item.tmdbId);
-      ref.invalidate(droppedListProvider);
-      ref.invalidate(continueWatchingProvider);
-    });
-  }
-
-  Future<void> _onClearProgress(WatchHistory item) async {
-    final tmdbId = item.tmdbId;
-    final authState = ref.read(authProvider);
-    final repository = ref.read(watchHistoryRepositoryProvider);
-    final userId = authState.value?.id;
-
-    if (userId != null) {
-      try {
-        await repository.clearProgress(
-          userId: userId,
-          tmdbId: tmdbId,
-          mediaType: item.mediaType.name,
-        );
-        ref.invalidate(continueWatchingProvider);
-      } catch (e, st) {
-        developer.log(
-          'Failed to clear progress for item $tmdbId',
-          name: 'ContinueWatchingRow',
-          error: e,
-          stackTrace: st,
+        AppSnackBar.show(
+          context,
+          message: errorMapper.map(e).message,
+          isError: true,
         );
       }
+    } finally {
+      if (hide && mounted) setState(() => _hiddenItems.remove(key));
     }
   }
 
@@ -124,10 +87,9 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
 
     final items = historyAsync.value ?? [];
 
-    // Filter out locally hidden items
-    final effectiveItems = items.where((i) {
-      return !_hiddenItems.contains(i.tmdbId);
-    }).toList();
+    final effectiveItems = items
+        .where((i) => !_hiddenItems.contains(_keyOf(i)))
+        .toList();
 
     if (effectiveItems.isEmpty) return const SizedBox.shrink();
 
@@ -149,9 +111,15 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
         return ContinueWatchingCard(
           historyItem: historyItem,
           width: dimensions.itemWidth,
-          onDrop: () => _onDrop(historyItem),
-          onCancelRewatch: () => _onCancelRewatch(historyItem),
-          onClearProgress: () => _onClearProgress(historyItem),
+          onDrop: () =>
+              _run(historyItem, (s) => s.drop(historyItem), hide: true),
+          onCancelRewatch: () => _run(
+            historyItem,
+            (s) => s.cancelRewatch(historyItem),
+            hide: true,
+          ),
+          onClearProgress: () =>
+              _run(historyItem, (s) => s.clearProgress(historyItem)),
         );
       },
     );

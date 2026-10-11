@@ -81,6 +81,16 @@ class MediaItem {
     return title;
   }
 
+  /// Titles saved by older versions while TMDB details were missing.
+  static const _placeholderTitles = {'Unknown', '...'};
+
+  /// Whether the title for [languageCode] is a real one, not missing or a
+  /// placeholder (then the details still need to be fetched).
+  bool hasCompleteTitle(String languageCode) {
+    final title = getLocalizedTitle(languageCode)?.trim();
+    return title != null && !_placeholderTitles.contains(title);
+  }
+
   static MediaKind fromString(String type) {
     if (type == 'series' || type == 'tv') return MediaKind.tv;
     if (type == 'episode') return MediaKind.episode;
