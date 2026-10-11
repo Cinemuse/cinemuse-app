@@ -121,11 +121,11 @@ void main() {
         (_) async => AuthResponse(user: testUser, session: testSession),
       );
 
-      // We explicitly DO NOT await here right away to check the loading state
       final future = authService.signIn('test@test.com', 'password');
 
-      // Before future completes, state should be loading
-      expect(authService.state, const AsyncValue<User?>.loading());
+      // No loading state while waiting: it would replace the login screen
+      // with a spinner and lose its error message (REV-52).
+      expect(authService.state, const AsyncValue<User?>.data(null));
 
       await future;
 

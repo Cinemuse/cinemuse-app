@@ -40,8 +40,12 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
     });
   }
 
+  /// Signs in; the auth stream then sets the user.
+  ///
+  /// The state is not set to loading here: the app swaps `AuthScreen` for a
+  /// spinner on loading, which would destroy the screen and its error
+  /// message (REV-52). The screen shows its own spinner.
   Future<void> signIn(String email, String password) async {
-    state = const AsyncValue.loading();
     try {
       final response = await _supabaseClient.auth.signInWithPassword(
         email: email,
