@@ -11,6 +11,11 @@ class RetryInterceptor extends Interceptor {
   static const _retryableMethods = {'GET', 'HEAD'};
   static const _retryCountKey = 'retry_count';
 
+  /// Put `true` under this key in a request's `extra` to never retry it:
+  /// for a one-off check the user is waiting on, a quick failure is better
+  /// (REV-259).
+  static const skipRetryKey = 'skip_retry';
+
   final Dio dio;
   final int maxRetries;
   final List<int> retryStatusCodes;
@@ -56,6 +61,7 @@ class RetryInterceptor extends Interceptor {
   }
 
   bool _isRetryable(DioException err) {
+    if (err.requestOptions.extra[skipRetryKey] == true) return false;
     final method = err.requestOptions.method.toUpperCase();
     if (!_retryableMethods.contains(method)) return false;
     return err.type == DioExceptionType.connectionTimeout ||

@@ -43,6 +43,17 @@ void main() {
     expect(adapter.calls, 1 + RetryInterceptor.defaultMaxRetries);
   });
 
+  test('a GET marked skip-retry is tried once (REV-259)', () async {
+    await expectLater(
+      dio.get<void>(
+        'https://example.com',
+        options: Options(extra: {RetryInterceptor.skipRetryKey: true}),
+      ),
+      throwsA(isA<DioException>()),
+    );
+    expect(adapter.calls, 1);
+  });
+
   test('a POST is never re-sent (STR-11)', () async {
     await expectLater(
       dio.post<void>('https://example.com', data: {'magnet': 'x'}),

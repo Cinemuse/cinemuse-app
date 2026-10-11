@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/network/retry_interceptor.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:cinemuse_app/core/utils/url_utils.dart';
@@ -36,6 +37,9 @@ class StremioAddonService {
         options: Options(
           receiveTimeout: const Duration(seconds: 10),
           sendTimeout: const Duration(seconds: 10),
+          // The user is waiting on the Install button: a wrong link must
+          // fail after one try, not after three (REV-259).
+          extra: {RetryInterceptor.skipRetryKey: true},
         ),
       );
     } on DioException catch (e, st) {
