@@ -107,11 +107,14 @@ void main() {
   });
 
   test('search still sends the key and the query', () async {
-    final adapter = _FakeAdapter(body: '{"results": [{"id": 1}]}');
+    final adapter = _FakeAdapter(
+      body: '{"results": [{"id": 1}], "total_pages": 3}',
+    );
 
-    final results = await _service(adapter).searchMulti('inception');
+    final page = await _service(adapter).searchMulti('inception');
 
-    expect(results, [
+    expect(page.totalPages, 3);
+    expect(page.results, [
       {'id': 1},
     ]);
     expect(adapter.lastRequest!.queryParameters['api_key'], 'secret-key');

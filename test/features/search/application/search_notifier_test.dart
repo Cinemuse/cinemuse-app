@@ -9,6 +9,8 @@ import 'package:mocktail/mocktail.dart';
 
 class MockTmdbService extends Mock implements TmdbService {}
 
+typedef _Page = ({List<Map<String, dynamic>> results, int totalPages});
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -121,10 +123,13 @@ void main() {
   });
 
   group('SearchNotifier stale answers (REV-53)', () {
-    List<Map<String, dynamic>> page(String name, int count) => [
-      for (var i = 0; i < count; i++)
-        {'id': i, 'media_type': 'movie', 'title': '$name $i'},
-    ];
+    _Page page(String name, int count, {int totalPages = 1}) => (
+      results: [
+        for (var i = 0; i < count; i++)
+          {'id': i, 'media_type': 'movie', 'title': '$name $i'},
+      ],
+      totalPages: totalPages,
+    );
 
     setUp(() {
       SharedPreferences.setMockInitialValues({});
@@ -137,8 +142,8 @@ void main() {
     tearDown(() => container.dispose());
 
     test('an old answer arriving last does not replace the new one', () async {
-      final bat = Completer<List<Map<String, dynamic>>>();
-      final batman = Completer<List<Map<String, dynamic>>>();
+      final bat = Completer<_Page>();
+      final batman = Completer<_Page>();
       when(
         () => mockTmdbService.searchMulti('bat', page: 1),
       ).thenAnswer((_) => bat.future);
@@ -160,10 +165,10 @@ void main() {
     });
 
     test('page 2 of an old query is not added to the new results', () async {
-      final oldPage2 = Completer<List<Map<String, dynamic>>>();
+      final oldPage2 = Completer<_Page>();
       when(
         () => mockTmdbService.searchMulti('bat', page: 1),
-      ).thenAnswer((_) async => page('bat', 20));
+      ).thenAnswer((_) async => page('bat', 20, totalPages: 2));
       when(
         () => mockTmdbService.searchMulti('bat', page: 2),
       ).thenAnswer((_) => oldPage2.future);
@@ -194,5 +199,50 @@ void main() {
 
       verify(() => mockTmdbService.searchMulti('dune', page: 1)).called(1);
     });
+
+    test(
+      'a show and a movie with the same id are both kept (REV-62)',
+      () async {
+        when(() => mockTmdbService.searchMulti('x', page: 1)).thenAnswer(
+          (_) async => (
+            results: [
+              {'id': 7, 'media_type': 'movie'},
+            ],
+            totalPages: 2,
+          ),
+        );
+        when(() => mockTmdbService.searchMulti('x', page: 2)).thenAnswer(
+          (_) async => (
+            results: [
+              {'id': 7, 'media_type': 'tv'},
+              {'id': 7, 'media_type': 'movie'},
+            ],
+            totalPages: 2,
+          ),
+        );
+        final notifier = container.read(searchProvider.notifier);
+
+        await notifier.search('x');
+        await notifier.loadMore();
+
+        final state = container.read(searchProvider);
+        expect(state.results.map((r) => r['media_type']), ['movie', 'tv']);
+        expect(state.hasMore, isFalse);
+      },
+    );
+
+    test(
+      'hasMore follows TMDB total_pages, not the page size (REV-62)',
+      () async {
+        when(
+          () => mockTmdbService.searchMulti('one', page: 1),
+        ).thenAnswer((_) async => page('one', 20));
+        final notifier = container.read(searchProvider.notifier);
+
+        await notifier.search('one');
+
+        expect(container.read(searchProvider).hasMore, isFalse);
+      },
+    );
   });
 }

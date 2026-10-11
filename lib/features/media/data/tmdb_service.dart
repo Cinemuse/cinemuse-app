@@ -222,18 +222,25 @@ class TmdbService {
         .toList();
   }
 
-  Future<List<Map<String, dynamic>>> searchMulti(
+  /// One page of movies, shows and people matching [query], with TMDB's
+  /// page count so callers know when to stop loading more.
+  Future<({List<Map<String, dynamic>> results, int totalPages})> searchMulti(
     String query, {
     int page = 1,
   }) async {
-    if (query.isEmpty) return [];
+    if (query.isEmpty) {
+      return (results: <Map<String, dynamic>>[], totalPages: 0);
+    }
     final data = await _get('/search/multi', {
       'language': _language,
       'query': query,
       'include_adult': false,
       'page': page,
     });
-    return List<Map<String, dynamic>>.from(data['results']);
+    return (
+      results: List<Map<String, dynamic>>.from(data['results']),
+      totalPages: (data['total_pages'] as num?)?.toInt() ?? page,
+    );
   }
 
   Future<Map<String, dynamic>> discover({

@@ -3,6 +3,7 @@ import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/error/error_service.dart';
 import 'package:cinemuse_app/features/search/application/search_state.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -34,7 +35,8 @@ class SearchNotifier extends StateNotifier<SearchState> {
       final history = prefs.getStringList(_historyKey) ?? [];
       state = state.copyWith(searchHistory: history);
     } catch (e) {
-      // Fail silently
+      // Only the saved history is lost; search still works.
+      AppLogger.warn('Search', 'Could not load the search history', error: e);
     }
   }
 
@@ -56,7 +58,8 @@ class SearchNotifier extends StateNotifier<SearchState> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList(_historyKey, currentHistory);
     } catch (e) {
-      // Fail silently
+      // Only the saved history is lost; search still works.
+      AppLogger.warn('Search', 'Could not save the search history', error: e);
     }
   }
 
@@ -68,7 +71,8 @@ class SearchNotifier extends StateNotifier<SearchState> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setStringList(_historyKey, currentHistory);
       } catch (e) {
-        // Fail silently
+        // Only the saved history is lost; search still works.
+        AppLogger.warn('Search', 'Could not save the search history', error: e);
       }
     }
   }
@@ -79,7 +83,8 @@ class SearchNotifier extends StateNotifier<SearchState> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_historyKey);
     } catch (e) {
-      // Fail silently
+      // Only the saved history is lost; search still works.
+      AppLogger.warn('Search', 'Could not clear the search history', error: e);
     }
   }
 
@@ -106,33 +111,24 @@ class SearchNotifier extends StateNotifier<SearchState> {
       return;
     }
 
-    state = state.copyWith(
+    // A fresh state, so an old error message can't stay behind.
+    state = SearchState(
       query: query,
       status: SearchStatus.loading,
-      page: 1,
-      results: [],
-      hasMore: true,
-      errorMessage: null,
+      searchHistory: state.searchHistory,
     );
 
     try {
-      // Fetch initial batch (pages 1 and 2 to mimic web)
-      // Note: TmdbService.searchMulti might need adjustment if it doesn't support page param readily
-      // or returns List<Map> directly. Assuming it returns List<Map> for now and we might need to modify it or assume page 1.
-      // Checking TmdbService usage in other files would be good, but standard usually implies page 1.
-      // Let's assume standard behavior for now.
-
-      final results = await _tmdbService.searchMulti(query, page: 1);
+      final page = await _tmdbService.searchMulti(query, page: 1);
       if (!mounted || requestId != _requestId) return;
 
-      // Basic dedup logic if needed, but fresh search shouldn't have dupes
-
       state = state.copyWith(
-        results: results,
-        status: results.isEmpty ? SearchStatus.noResults : SearchStatus.loaded,
+        results: page.results,
+        status: page.results.isEmpty
+            ? SearchStatus.noResults
+            : SearchStatus.loaded,
         page: 1,
-        // Simplistic assumption: if we got 20 results (default page size), there might be more.
-        hasMore: results.length >= 20,
+        hasMore: page.totalPages > 1,
       );
     } catch (e) {
       if (!mounted || requestId != _requestId) return;
@@ -156,27 +152,20 @@ class SearchNotifier extends StateNotifier<SearchState> {
     final requestId = _requestId;
 
     try {
-      final newResults = await _tmdbService.searchMulti(
-        state.query,
-        page: nextPage,
-      );
+      final page = await _tmdbService.searchMulti(state.query, page: nextPage);
       if (!mounted || requestId != _requestId) return;
 
-      if (newResults.isEmpty) {
-        state = state.copyWith(hasMore: false);
-      } else {
-        // Dedup against existing
-        final existingIds = state.results.map((r) => '${r['id']}').toSet();
-        final uniqueNew = newResults
-            .where((r) => !existingIds.contains('${r['id']}'))
-            .toList();
+      // TMDB pages can overlap while results move; ids are per media type.
+      final existingKeys = state.results.map(_resultKey).toSet();
+      final uniqueNew = page.results
+          .where((r) => !existingKeys.contains(_resultKey(r)))
+          .toList();
 
-        state = state.copyWith(
-          results: [...state.results, ...uniqueNew],
-          page: nextPage,
-          hasMore: newResults.length >= 20,
-        );
-      }
+      state = state.copyWith(
+        results: [...state.results, ...uniqueNew],
+        page: nextPage,
+        hasMore: page.results.isNotEmpty && nextPage < page.totalPages,
+      );
     } catch (e) {
       if (!mounted || requestId != _requestId) return;
       // Report load more errors globally via toast
@@ -186,6 +175,9 @@ class SearchNotifier extends StateNotifier<SearchState> {
       _isLoadingMore = false;
     }
   }
+
+  static String _resultKey(Map<String, dynamic> r) =>
+      '${r['media_type']}:${r['id']}';
 
   void clear() {
     _debounce?.cancel();
