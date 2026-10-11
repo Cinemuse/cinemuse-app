@@ -5,22 +5,11 @@ import 'package:cinemuse_app/features/settings/application/settings_service.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Searches subtitles across the configured providers.
 class SubtitleService {
-  final Ref _ref;
+  final List<SubtitleProvider> _providers;
 
-  SubtitleService(this._ref);
-
-  List<SubtitleProvider> get _providers {
-    final settings = _ref.read(settingsProvider);
-    final providers = <SubtitleProvider>[];
-
-    if (settings.openSubtitlesKey.isNotEmpty) {
-      providers.add(OpenSubtitlesProvider(settings.openSubtitlesKey));
-    }
-
-    // Add other providers here in the future
-    return providers;
-  }
+  SubtitleService(this._providers);
 
   /// Checks if there are any configured and ready providers available
   bool get hasActiveProviders => _providers.any((p) => p.isReady);
@@ -86,6 +75,27 @@ class SubtitleService {
   }
 }
 
+/// The configured subtitle providers. Rebuilt only when a provider key
+/// changes, so each one keeps its HTTP client between calls (REV-35).
+///
+/// Not autoDispose: callers use `ref.read`, so an autoDispose provider would
+/// be thrown away and rebuilt on every call.
+final subtitleProvidersProvider = Provider<List<SubtitleProvider>>((ref) {
+  final openSubtitlesKey = ref.watch(
+    settingsProvider.select((s) => s.openSubtitlesKey),
+  );
+  final providers = <SubtitleProvider>[];
+
+  if (openSubtitlesKey.isNotEmpty) {
+    final openSubtitles = OpenSubtitlesProvider(openSubtitlesKey);
+    ref.onDispose(openSubtitles.close);
+    providers.add(openSubtitles);
+  }
+
+  return providers;
+});
+
+// Not autoDispose, same reason as subtitleProvidersProvider.
 final subtitleServiceProvider = Provider<SubtitleService>((ref) {
-  return SubtitleService(ref);
+  return SubtitleService(ref.watch(subtitleProvidersProvider));
 });

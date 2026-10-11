@@ -1,7 +1,6 @@
 class ExternalSubtitle {
   final String id;
   final String language; // Language code, e.g., 'en', 'it'
-  final String languageName; // Display name, e.g., 'English', 'Italian'
   final String format; // e.g., 'srt', 'vtt'
   final String? url; // Direct download URL if available immediately
   final String
@@ -13,7 +12,6 @@ class ExternalSubtitle {
   const ExternalSubtitle({
     required this.id,
     required this.language,
-    required this.languageName,
     required this.format,
     this.url,
     required this.providerName,

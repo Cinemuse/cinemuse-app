@@ -34,6 +34,9 @@ class OpenSubtitlesProvider implements SubtitleProvider {
     };
   }
 
+  /// Closes the HTTP client. Requests already running still finish.
+  void close() => _dio.close();
+
   @override
   String get name => 'OpenSubtitles.com';
 
@@ -197,7 +200,6 @@ class OpenSubtitlesProvider implements SubtitleProvider {
     return ExternalSubtitle(
       id: fileInfo['file_id'].toString(),
       language: attrs['language']?.toString() ?? fallbackLanguage,
-      languageName: attrs['language']?.toString() ?? fallbackLanguage,
       format: 'srt',
       providerName: name,
       title: fileInfo['file_name']?.toString() ?? 'Unknown',

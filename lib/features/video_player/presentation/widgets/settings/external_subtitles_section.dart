@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:cinemuse_app/core/constants/tmdb_constants.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/streaming/subtitles/external_subtitle.dart';
 import 'package:cinemuse_app/features/streaming/subtitles/subtitle_service.dart';
@@ -107,7 +108,7 @@ class _ExternalSubtitlesSectionState extends State<ExternalSubtitlesSection> {
 
     final grouped = <String, List<ExternalSubtitle>>{};
     for (var sub in subs) {
-      grouped.putIfAbsent(sub.languageName, () => []).add(sub);
+      grouped.putIfAbsent(sub.language, () => []).add(sub);
     }
 
     return Column(
@@ -161,7 +162,8 @@ class _ExternalSubtitlesSectionState extends State<ExternalSubtitlesSection> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          language.toUpperCase(),
+                          (l10n?.languageName(language) ?? language)
+                              .toUpperCase(),
                           style: const TextStyle(
                             color: AppTheme.textWhite,
                             fontSize: 13,
