@@ -78,6 +78,9 @@ class UnifiedStreamResolver {
   @visibleForTesting
   List<BaseSource> get sources => _sources;
 
+  @visibleForTesting
+  UserSettings get settings => _settings;
+
   UnifiedStreamResolver({
     required List<BaseSource> sources,
     required TmdbService tmdbService,
@@ -106,27 +109,28 @@ class UnifiedStreamResolver {
     final cacheKey = _cacheKey(queryId, type, season, episode);
     final cached = _searchCache[cacheKey];
 
-    if (cached != null &&
-        DateTime.now().difference(cached.timestamp) < _cacheDuration) {
-      debugPrint(
-        'UnifiedStreamResolver: Returning cached results for $cacheKey',
-      );
-      // Proactively check availability again if needed, or return cached ones
-      // Since ranking depends on cache status, we might want to re-check if we have a debrid service
-      final rankedCandidates = await _finalizeResults(
-        cached.candidates,
-        context: cached.context,
-      );
-      return StreamSearchResult(
-        candidates: rankedCandidates,
-        isAnime: cached.context.isAnime,
-      );
-    }
-
     Timer? statusTimer;
     final kind = MediaItem.fromString(type);
 
+    // The cached path is inside the try too, so its errors reach callers as
+    // StreamingExceptions like the main path's (STR-06).
     try {
+      if (cached != null &&
+          DateTime.now().difference(cached.timestamp) < _cacheDuration) {
+        debugPrint(
+          'UnifiedStreamResolver: Returning cached results for $cacheKey',
+        );
+        // Availability is checked again: ranking depends on the debrid cache.
+        final rankedCandidates = await _finalizeResults(
+          cached.candidates,
+          context: cached.context,
+        );
+        return StreamSearchResult(
+          candidates: rankedCandidates,
+          isAnime: cached.context.isAnime,
+        );
+      }
+
       if (_sources.isEmpty) {
         throw NoProvidersEnabledException();
       }
@@ -283,12 +287,19 @@ class UnifiedStreamResolver {
       }
       final candidates = uniqueMap.values.toList();
 
-      // Save to cache before finalization (availability check and ranking)
-      _searchCache[cacheKey] = _CachedSearch(
-        candidates: List.from(candidates),
-        context: context,
-        timestamp: DateTime.now(),
+      // Cache only complete searches: a skipped or failed provider would
+      // otherwise hide its results for the whole cache duration (STR-05).
+      // Saved before finalization (availability check and ranking).
+      final isComplete = searchStatuses.every(
+        (s) => s.status == ProviderStatus.finished,
       );
+      if (isComplete) {
+        _searchCache[cacheKey] = _CachedSearch(
+          candidates: List.from(candidates),
+          context: context,
+          timestamp: DateTime.now(),
+        );
+      }
 
       final finalized = await _finalizeResults(candidates, context: context);
 

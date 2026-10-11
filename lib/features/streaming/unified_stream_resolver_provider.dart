@@ -37,6 +37,8 @@ final unifiedStreamResolverProvider = Provider((ref) {
         s.splitAnimePreferences,
         s.animeAudioLanguage,
         s.enableAutoSkipProviders,
+        s.subtitleLanguage,
+        s.animeSubtitleLanguage,
       ),
     ),
   );
@@ -57,6 +59,8 @@ final unifiedStreamResolverProvider = Provider((ref) {
     splitAnimePreferences: settings.$12,
     animeAudioLanguage: settings.$13,
     enableAutoSkipProviders: settings.$14,
+    subtitleLanguage: settings.$15,
+    animeSubtitleLanguage: settings.$16,
   );
 
   final maxResolution = ref.watch(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:mocktail/mocktail.dart';
@@ -475,8 +477,115 @@ void main() {
       // Now cache should be gone
       expect(resolver.hasCachedStream('123', 'movie'), isFalse);
     });
+
+    test('does not cache a search that was skipped early (STR-05)', () async {
+      final slowSource = MockSource();
+      final neverEnds = Completer<List<StreamCandidate>>();
+      when(() => slowSource.name).thenReturn('Slow');
+      when(() => slowSource.search(any())).thenAnswer((_) => neverEnds.future);
+      when(() => mockTmdb.getMediaDetails(any(), any())).thenAnswer(
+        (_) async => {'id': 123, 'imdb_id': 'tt123', 'title': 'Test Movie'},
+      );
+      when(
+        () => mockSource.search(any()),
+      ).thenAnswer((_) async => [_candidate('fast')]);
+      final twoSources = UnifiedStreamResolver(
+        sources: [mockSource, slowSource],
+        tmdbService: mockTmdb,
+        kitsuMappingService: mockKitsu,
+        mediaRepository: mockMedia,
+        settings: const UserSettings(),
+        maxResolution: VideoResolution.r2160p,
+      );
+
+      final result = await twoSources.searchStreams(
+        '123',
+        'movie',
+        skipTrigger: Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+
+      expect(result.candidates, hasLength(1));
+      expect(twoSources.hasCachedStream('123', 'movie'), isFalse);
+    });
+
+    test('does not cache a search where a provider failed (STR-05)', () async {
+      final brokenSource = MockSource();
+      when(() => brokenSource.name).thenReturn('Broken');
+      when(
+        () => brokenSource.search(any()),
+      ).thenThrow(Exception('Source down'));
+      when(() => mockTmdb.getMediaDetails(any(), any())).thenAnswer(
+        (_) async => {'id': 123, 'imdb_id': 'tt123', 'title': 'Test Movie'},
+      );
+      when(
+        () => mockSource.search(any()),
+      ).thenAnswer((_) async => [_candidate('ok')]);
+      final twoSources = UnifiedStreamResolver(
+        sources: [mockSource, brokenSource],
+        tmdbService: mockTmdb,
+        kitsuMappingService: mockKitsu,
+        mediaRepository: mockMedia,
+        settings: const UserSettings(),
+        maxResolution: VideoResolution.r2160p,
+      );
+
+      await twoSources.searchStreams('123', 'movie');
+
+      expect(twoSources.hasCachedStream('123', 'movie'), isFalse);
+    });
+
+    test(
+      'wraps errors on the cached path in a StreamingException (STR-06)',
+      () async {
+        final debrid = _MockCompositeDebridService();
+        when(() => debrid.isEnabled).thenReturn(true);
+        when(() => debrid.name).thenReturn('Debrid');
+        var availabilityCalls = 0;
+        when(() => debrid.checkDetailedAvailability(any())).thenAnswer((
+          _,
+        ) async {
+          availabilityCalls++;
+          if (availabilityCalls > 1) throw Exception('debrid down');
+          return {};
+        });
+        when(() => mockTmdb.getMediaDetails(any(), any())).thenAnswer(
+          (_) async => {'id': 123, 'imdb_id': 'tt123', 'title': 'Test Movie'},
+        );
+        when(
+          () => mockSource.search(any()),
+        ).thenAnswer((_) async => [_candidate('hash1')]);
+        final debridResolver = UnifiedStreamResolver(
+          sources: [mockSource],
+          tmdbService: mockTmdb,
+          kitsuMappingService: mockKitsu,
+          mediaRepository: mockMedia,
+          settings: const UserSettings(),
+          maxResolution: VideoResolution.r2160p,
+          debridService: debrid,
+        );
+        await debridResolver.searchStreams('123', 'movie');
+
+        // Second search is served from the cache, then the check fails.
+        await expectLater(
+          debridResolver.searchStreams('123', 'movie'),
+          throwsA(isA<StreamingException>()),
+        );
+      },
+    );
   });
 }
+
+StreamCandidate _candidate(String hash) => StreamCandidate(
+  kind: StreamSourceKind.vod,
+  title: 'Stream $hash',
+  infoHash: hash,
+  magnet: 'magnet:?xt=urn:btih:$hash',
+  seeds: 1,
+  provider: 'MockSource',
+);
+
+class _MockCompositeDebridService extends Mock
+    implements CompositeDebridService {}
 
 /// Fake debrid service that remembers what `resolve` was asked for.
 class _RecordingDebridService implements BaseDebridService {
