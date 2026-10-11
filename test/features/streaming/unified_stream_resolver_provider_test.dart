@@ -16,12 +16,13 @@ class _MockKitsuMappingService extends Mock implements KitsuMappingService {}
 
 class _MockMediaRepository extends Mock implements MediaRepository {}
 
-class _FakeSettingsNotifier extends StateNotifier<UserSettings>
-    implements SettingsNotifier {
-  _FakeSettingsNotifier(super.state);
+class _FakeSettingsNotifier extends SettingsNotifier {
+  _FakeSettingsNotifier([this.initial = const UserSettings()]);
+
+  final UserSettings initial;
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  UserSettings build() => initial;
 }
 
 void main() {
@@ -31,7 +32,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         settingsProvider.overrideWith(
-          (ref) => _FakeSettingsNotifier(
+          () => _FakeSettingsNotifier(
             const UserSettings(
               subtitleLanguage: 'it',
               animeSubtitleLanguage: 'ja',

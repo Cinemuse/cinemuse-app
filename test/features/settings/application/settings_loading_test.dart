@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/profile/data/profile_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/profile.dart';
@@ -112,5 +113,23 @@ void main() {
       throwsException,
     );
     verifyNever(() => profileRepo.updateProfile('user-b', any()));
+  });
+
+  test('a failed save puts the old value back and rethrows (REV-78)', () async {
+    when(
+      () => profileRepo.getProfile('user-a'),
+    ).thenAnswer((_) async => _profile('user-a', {'showSubtitles': true}));
+    when(
+      () => profileRepo.updateProfile(any(), any()),
+    ).thenThrow(const NetworkFailure('offline'));
+
+    final notifier = container.read(settingsProvider.notifier);
+    await notifier.initSettings();
+
+    await expectLater(
+      notifier.updateSettings({'showSubtitles': false}),
+      throwsA(isA<NetworkFailure>()),
+    );
+    expect(container.read(settingsProvider).showSubtitles, true);
   });
 }

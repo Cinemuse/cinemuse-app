@@ -4,6 +4,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_toggle.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_input.dart';
+import 'package:cinemuse_app/features/settings/presentation/widgets/save_settings.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/settings_widgets.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
@@ -32,6 +33,7 @@ class IdentitySettings extends ConsumerWidget {
               description: l10n.settingsDisplayNameDesc,
               value: userSettings.displayName,
               placeholder: l10n.settingsEnterName,
+              // SettingInput shows its own error, so it needs the throw.
               onSave: (val) =>
                   settingsNotifier.updateSettings({'displayName': val}),
             ),
@@ -49,7 +51,6 @@ class CustomizationSettings extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final userSettings = ref.watch(settingsProvider);
-    final settingsNotifier = ref.read(settingsProvider.notifier);
     final localSettings = ref.watch(localSettingsProvider);
     final localNotifier = ref.read(localSettingsProvider.notifier);
 
@@ -80,7 +81,7 @@ class CustomizationSettings extends ConsumerWidget {
                       ),
                     ],
                     onChanged: (lang) =>
-                        settingsNotifier.updateSettings({'appLanguage': lang}),
+                        saveSettings(context, ref, {'appLanguage': lang}),
                   ),
                 ),
               ],
@@ -105,9 +106,8 @@ class CustomizationSettings extends ConsumerWidget {
                         child: Text(l10n.settingsItalian),
                       ),
                     ],
-                    onChanged: (lang) => settingsNotifier.updateSettings({
-                      'playerLanguage': lang,
-                    }),
+                    onChanged: (lang) =>
+                        saveSettings(context, ref, {'playerLanguage': lang}),
                   ),
                 ),
                 SettingsTile(
@@ -117,7 +117,7 @@ class CustomizationSettings extends ConsumerWidget {
                   trailing: SettingToggle(
                     value: userSettings.showSubtitles,
                     onChanged: (val) =>
-                        settingsNotifier.updateSettings({'showSubtitles': val}),
+                        saveSettings(context, ref, {'showSubtitles': val}),
                   ),
                 ),
                 if (userSettings.showSubtitles)
@@ -137,7 +137,7 @@ class CustomizationSettings extends ConsumerWidget {
                           child: Text(l10n.settingsItalian),
                         ),
                       ],
-                      onChanged: (lang) => settingsNotifier.updateSettings({
+                      onChanged: (lang) => saveSettings(context, ref, {
                         'subtitleLanguage': lang,
                       }),
                     ),
@@ -149,7 +149,7 @@ class CustomizationSettings extends ConsumerWidget {
                   showDivider: userSettings.splitAnimePreferences,
                   trailing: SettingToggle(
                     value: userSettings.splitAnimePreferences,
-                    onChanged: (val) => settingsNotifier.updateSettings({
+                    onChanged: (val) => saveSettings(context, ref, {
                       'splitAnimePreferences': val,
                     }),
                   ),
@@ -221,7 +221,7 @@ class CustomizationSettings extends ConsumerWidget {
                               child: Text(l10n.settingsItalian),
                             ),
                           ],
-                          onChanged: (lang) => settingsNotifier.updateSettings({
+                          onChanged: (lang) => saveSettings(context, ref, {
                             'animeAudioLanguage': lang,
                           }),
                         ),
@@ -232,7 +232,7 @@ class CustomizationSettings extends ConsumerWidget {
                         icon: Icons.subtitles,
                         trailing: SettingToggle(
                           value: userSettings.animeShowSubtitles,
-                          onChanged: (val) => settingsNotifier.updateSettings({
+                          onChanged: (val) => saveSettings(context, ref, {
                             'animeShowSubtitles': val,
                           }),
                         ),
@@ -255,10 +255,9 @@ class CustomizationSettings extends ConsumerWidget {
                                 child: Text(l10n.settingsItalian),
                               ),
                             ],
-                            onChanged: (lang) =>
-                                settingsNotifier.updateSettings({
-                                  'animeSubtitleLanguage': lang,
-                                }),
+                            onChanged: (lang) => saveSettings(context, ref, {
+                              'animeSubtitleLanguage': lang,
+                            }),
                           ),
                         ),
                     ],
@@ -321,7 +320,6 @@ class LiveTvSettings extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final userSettings = ref.watch(settingsProvider);
-    final settingsNotifier = ref.read(settingsProvider.notifier);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,9 +341,8 @@ class LiveTvSettings extends ConsumerWidget {
                       DropdownMenuItem(value: 1024, child: Text('1 GB')),
                       DropdownMenuItem(value: 2048, child: Text('2 GB')),
                     ],
-                    onChanged: (val) => settingsNotifier.updateSettings({
-                      'liveTvBufferSize': val,
-                    }),
+                    onChanged: (val) =>
+                        saveSettings(context, ref, {'liveTvBufferSize': val}),
                   ),
                 ),
                 SettingsTile(
@@ -355,7 +352,7 @@ class LiveTvSettings extends ConsumerWidget {
                   showDivider: false,
                   trailing: SettingToggle(
                     value: userSettings.enableLiveTvDiskCache,
-                    onChanged: (val) => settingsNotifier.updateSettings({
+                    onChanged: (val) => saveSettings(context, ref, {
                       'enableLiveTvDiskCache': val,
                     }),
                   ),

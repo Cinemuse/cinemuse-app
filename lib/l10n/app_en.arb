@@ -447,6 +447,7 @@
   "settingsCopiedToClipboard": "URL copied to clipboard",
   "settingsCopy": "Copy URL",
   "settingsRemove": "Remove",
+  "settingsAddonRemoved": "{name} removed",
   "settingsNativeIntegrations": "Native Providers",
   "settingsEnableAnimeTosho": "Enable AnimeTosho",
   "settingsEnableVixSrc": "Enable VixSrc",

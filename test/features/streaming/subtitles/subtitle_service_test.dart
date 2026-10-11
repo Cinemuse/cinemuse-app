@@ -3,12 +3,17 @@ import 'package:cinemuse_app/features/streaming/subtitles/subtitle_service.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class _FakeSettingsNotifier extends StateNotifier<UserSettings>
-    implements SettingsNotifier {
-  _FakeSettingsNotifier(super.state);
+class _FakeSettingsNotifier extends SettingsNotifier {
+  _FakeSettingsNotifier([this.initial = const UserSettings()]);
+
+  final UserSettings initial;
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  UserSettings build() => initial;
+
+  UserSettings get current => state;
+
+  void set(UserSettings settings) => state = settings;
 }
 
 void main() {
@@ -20,7 +25,7 @@ void main() {
       const UserSettings(openSubtitlesKey: 'key-1'),
     );
     container = ProviderContainer(
-      overrides: [settingsProvider.overrideWith((ref) => settings)],
+      overrides: [settingsProvider.overrideWith(() => settings)],
     );
     addTearDown(container.dispose);
   });
@@ -32,20 +37,21 @@ void main() {
     expect(container.read(subtitleProvidersProvider), same(first));
 
     // Another setting changing doesn't rebuild them either.
-    settings.state = settings.state.copyWith(subtitleLanguage: 'it');
+    settings.set(settings.current.copyWith(subtitleLanguage: 'it'));
     expect(container.read(subtitleProvidersProvider), same(first));
   });
 
   test('rebuilds the providers when the OpenSubtitles key changes', () {
     final first = container.read(subtitleProvidersProvider);
 
-    settings.state = settings.state.copyWith(openSubtitlesKey: 'key-2');
+    settings.set(settings.current.copyWith(openSubtitlesKey: 'key-2'));
 
     expect(container.read(subtitleProvidersProvider), isNot(same(first)));
   });
 
   test('no key, no providers', () {
-    settings.state = settings.state.copyWith(openSubtitlesKey: '');
+    container.read(settingsProvider); // a Notifier has state once read
+    settings.set(settings.current.copyWith(openSubtitlesKey: ''));
 
     expect(container.read(subtitleServiceProvider).hasActiveProviders, false);
   });

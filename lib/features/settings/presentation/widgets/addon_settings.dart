@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/streaming/models/stremio_addon.dart';
+import 'package:cinemuse_app/features/settings/presentation/widgets/save_settings.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/settings_widgets.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_toggle.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -59,6 +63,35 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
     }
   }
 
+  /// Removes [addon] with an Undo snackbar (REV-78).
+  Future<void> _removeAddon(StremioAddon addon) async {
+    final l10n = AppLocalizations.of(context)!;
+    final index = ref
+        .read(settingsProvider)
+        .installedAddons
+        .indexWhere((a) => a.id == addon.id);
+
+    await runSettingsSave(context, ref, (s) => s.removeAddon(addon.id));
+    final isRemoved = !ref
+        .read(settingsProvider)
+        .installedAddons
+        .any((a) => a.id == addon.id);
+    if (!mounted || !isRemoved) return; // the save failed and said so
+
+    AppSnackBar.show(
+      context,
+      message: l10n.settingsAddonRemoved(addon.name),
+      actionLabel: l10n.commonUndo,
+      onAction: () {
+        // Undo needs this screen's context for its error message.
+        if (!mounted) return;
+        unawaited(
+          runSettingsSave(context, ref, (s) => s.restoreAddon(addon, index)),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -80,9 +113,8 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   icon: LucideIcons.hardDrive,
                   trailing: SettingToggle(
                     value: settings.enableRealDebrid,
-                    onChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateSettings({'enableRealDebrid': val}),
+                    onChanged: (val) =>
+                        saveSettings(context, ref, {'enableRealDebrid': val}),
                   ),
                 ),
                 if (settings.enableRealDebrid)
@@ -129,9 +161,8 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                               setState(() => _showApiKey = !_showApiKey),
                         ),
                       ),
-                      onChanged: (val) => ref
-                          .read(settingsProvider.notifier)
-                          .updateSettings({'realDebridKey': val}),
+                      onChanged: (val) =>
+                          saveSettings(context, ref, {'realDebridKey': val}),
                     ),
                   ),
                 SettingsTile(
@@ -140,9 +171,8 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   icon: LucideIcons.box,
                   trailing: SettingToggle(
                     value: settings.enableTorBox,
-                    onChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateSettings({'enableTorBox': val}),
+                    onChanged: (val) =>
+                        saveSettings(context, ref, {'enableTorBox': val}),
                   ),
                 ),
                 if (settings.enableTorBox)
@@ -191,9 +221,8 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                               setState(() => _showTorBoxKey = !_showTorBoxKey),
                         ),
                       ),
-                      onChanged: (val) => ref
-                          .read(settingsProvider.notifier)
-                          .updateSettings({'torBoxKey': val}),
+                      onChanged: (val) =>
+                          saveSettings(context, ref, {'torBoxKey': val}),
                     ),
                   ),
                 if (settings.enableRealDebrid && settings.enableTorBox)
@@ -227,7 +256,7 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                       ],
                       onChanged: (val) {
                         if (val != null) {
-                          ref.read(settingsProvider.notifier).updateSettings({
+                          saveSettings(context, ref, {
                             'preferredDebridProvider': val,
                           });
                         }
@@ -294,9 +323,8 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                             setState(() => _showApiKey = !_showApiKey),
                       ),
                     ),
-                    onChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateSettings({'openSubtitlesKey': val}),
+                    onChanged: (val) =>
+                        saveSettings(context, ref, {'openSubtitlesKey': val}),
                   ),
                 ),
                 Padding(
@@ -309,7 +337,7 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                     description: l10n.settingsOpenSubtitlesAutoDownloadDesc,
                     value: settings.autoDownloadMissingSubtitles,
                     onChanged: (val) {
-                      ref.read(settingsProvider.notifier).updateSettings({
+                      saveSettings(context, ref, {
                         'autoDownloadMissingSubtitles': val,
                       });
                     },
@@ -343,9 +371,9 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                           trailing: SettingToggle(
                             value: settings.enableAnimeTosho && isDebridActive,
                             onChanged: isDebridActive
-                                ? (val) => ref
-                                      .read(settingsProvider.notifier)
-                                      .updateSettings({'enableAnimeTosho': val})
+                                ? (val) => saveSettings(context, ref, {
+                                    'enableAnimeTosho': val,
+                                  })
                                 : (val) {}, // No-op if disabled
                           ),
                         ),
@@ -356,9 +384,9 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                           icon: LucideIcons.playCircle,
                           trailing: SettingToggle(
                             value: settings.enableVixSrc,
-                            onChanged: (val) => ref
-                                .read(settingsProvider.notifier)
-                                .updateSettings({'enableVixSrc': val}),
+                            onChanged: (val) => saveSettings(context, ref, {
+                              'enableVixSrc': val,
+                            }),
                           ),
                         ),
                         SettingsTile(
@@ -368,9 +396,9 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                           showDivider: !isDebridActive,
                           trailing: SettingToggle(
                             value: settings.enableAnimeUnity,
-                            onChanged: (val) => ref
-                                .read(settingsProvider.notifier)
-                                .updateSettings({'enableAnimeUnity': val}),
+                            onChanged: (val) => saveSettings(context, ref, {
+                              'enableAnimeUnity': val,
+                            }),
                           ),
                         ),
                         if (!isDebridActive)
@@ -422,9 +450,8 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   showDivider: true,
                   trailing: SettingToggle(
                     value: settings.smartSearchFilter,
-                    onChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateSettings({'smartSearchFilter': val}),
+                    onChanged: (val) =>
+                        saveSettings(context, ref, {'smartSearchFilter': val}),
                   ),
                 ),
                 SettingsTile(
@@ -434,9 +461,9 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   showDivider: false,
                   trailing: SettingToggle(
                     value: settings.enableAutoSkipProviders,
-                    onChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateSettings({'enableAutoSkipProviders': val}),
+                    onChanged: (val) => saveSettings(context, ref, {
+                      'enableAutoSkipProviders': val,
+                    }),
                   ),
                 ),
               ],
@@ -587,9 +614,11 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                       children: [
                         SettingToggle(
                           value: addon.enabled,
-                          onChanged: (val) => ref
-                              .read(settingsProvider.notifier)
-                              .toggleAddon(addon.id, val),
+                          onChanged: (val) => runSettingsSave(
+                            context,
+                            ref,
+                            (settings) => settings.toggleAddon(addon.id, val),
+                          ),
                         ),
                         const SizedBox(width: 4),
                         IconButton(
@@ -617,9 +646,7 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                             color: Colors.redAccent,
                             size: 18,
                           ),
-                          onPressed: () => ref
-                              .read(settingsProvider.notifier)
-                              .removeAddon(addon.id),
+                          onPressed: () => _removeAddon(addon),
                           tooltip: l10n.settingsRemove,
                         ),
                         const SizedBox(width: 4),

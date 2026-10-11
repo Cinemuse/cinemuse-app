@@ -2204,6 +2204,12 @@ abstract class AppLocalizations {
   /// **'Remove'**
   String get settingsRemove;
 
+  /// No description provided for @settingsAddonRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} removed'**
+  String settingsAddonRemoved(Object name);
+
   /// No description provided for @settingsNativeIntegrations.
   ///
   /// In en, this message translates to:

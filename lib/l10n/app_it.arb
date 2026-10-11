@@ -378,6 +378,7 @@
   "settingsCopiedToClipboard": "URL copiato negli appunti",
   "settingsCopy": "Copia URL",
   "settingsRemove": "Rimuovi",
+  "settingsAddonRemoved": "{name} rimosso",
   "settingsNativeIntegrations": "Provider Nativi",
   "settingsEnableAnimeTosho": "Abilita AnimeTosho",
   "settingsEnableVixSrc": "Abilita VixSrc",

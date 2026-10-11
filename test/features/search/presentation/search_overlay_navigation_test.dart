@@ -17,12 +17,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class MockTmdbService extends Mock implements TmdbService {}
 
-class FakeSettingsNotifier extends StateNotifier<UserSettings>
-    implements SettingsNotifier {
-  FakeSettingsNotifier() : super(const UserSettings());
+class FakeSettingsNotifier extends SettingsNotifier {
+  FakeSettingsNotifier([this.initial = const UserSettings()]);
+
+  final UserSettings initial;
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  UserSettings build() => initial;
 }
 
 void main() {
@@ -45,7 +46,7 @@ void main() {
         connectivityProvider.overrideWith(
           (ref) => Stream.value(ConnectivityResult.wifi),
         ),
-        settingsProvider.overrideWith((ref) => FakeSettingsNotifier()),
+        settingsProvider.overrideWith(FakeSettingsNotifier.new),
         if (initialState != null)
           searchProvider.overrideWith((ref) {
             final notifier = SearchNotifier(ref, userId: 'u1');

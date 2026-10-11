@@ -34,12 +34,9 @@ class FakeVideoState extends Fake implements VideoState {
 
 class FakeAudioTrack extends Fake implements AudioTrack {}
 
-class FakeSettingsNotifier extends StateNotifier<UserSettings>
-    implements SettingsNotifier {
-  FakeSettingsNotifier() : super(const UserSettings());
-
+class FakeSettingsNotifier extends SettingsNotifier {
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  UserSettings build() => const UserSettings();
 }
 
 class FakePlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>>
@@ -110,7 +107,7 @@ void main() {
   Widget buildTestableWidget(Widget child, {void Function(Duration)? onSeek}) {
     return ProviderScope(
       overrides: [
-        settingsProvider.overrideWith((ref) => FakeSettingsNotifier()),
+        settingsProvider.overrideWith(FakeSettingsNotifier.new),
         playerControllerProvider.overrideWith(
           (ref, params) => FakePlayerController(onSeek: onSeek),
         ),

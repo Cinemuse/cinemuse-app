@@ -1197,6 +1197,11 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsRemove => 'Rimuovi';
 
   @override
+  String settingsAddonRemoved(Object name) {
+    return '$name rimosso';
+  }
+
+  @override
   String get settingsNativeIntegrations => 'Provider Nativi';
 
   @override
