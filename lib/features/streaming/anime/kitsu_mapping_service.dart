@@ -132,10 +132,24 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
       }
     }
 
-    // Fallback: Just return the first available mapping
+    // 4. Fallback. For an episode, only a row that names no season may be
+    // guessed: a row of another season (or s0, the specials) would copy the
+    // TMDB episode number onto the wrong anime, and rows of this season were
+    // already checked above (REV-233). With no row left, the sources search by
+    // IMDb ID instead.
+    final isEpisode = type == 'tv' && season != null && episode != null;
+    final fallback = isEpisode
+        ? candidates.where((c) => !_hasSeasonKey(c)).firstOrNull
+        : candidates.first;
+    if (fallback == null) {
+      AppLogger.debug(
+        _logTag,
+        'TMDB $tmdbId S$season E$episode: no mapping covers this episode',
+      );
+      return null;
+    }
 
-    final targetAnilistId = candidates.first.anilistId;
-    final kitsuId = await _getKitsuId(targetAnilistId);
+    final kitsuId = await _getKitsuId(fallback.anilistId);
     if (kitsuId != null) {
       final validEpisode = (episode != null && episode > 0) ? episode : null;
       AppLogger.debug(
@@ -145,11 +159,22 @@ class KitsuMappingService implements AnimeUnityMappingProvider {
       return KitsuMapping(
         kitsuId: kitsuId,
         absoluteEpisode: validEpisode,
-        anidbId: candidates.first.anidbId,
+        anidbId: fallback.anidbId,
       );
     }
 
     return null;
+  }
+
+  bool _hasSeasonKey(AnimeExternalMapping mapping) {
+    if (mapping.mappingsData == null) return false;
+    try {
+      final Map<String, dynamic> map = jsonDecode(mapping.mappingsData!);
+      return map.keys.any((k) => k.startsWith('s'));
+    } catch (_) {
+      // Unreadable data says nothing about seasons either.
+      return false;
+    }
   }
 
   int _getSeasonIndex(AnimeExternalMapping mapping) {
