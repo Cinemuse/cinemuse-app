@@ -70,7 +70,9 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
         if (media != null && hasFetchedValidTitle) {
           return _buildCard(context, ref, media, appLanguage);
         }
-        return _buildSkeleton();
+        // Offline or TMDB failed (null): still a usable card, titled
+        // "Unknown", so it can be resumed or removed.
+        return _buildCard(context, ref, media ?? localMedia, appLanguage);
       },
       loading: _buildSkeleton,
       error: (_, __) => _buildCard(context, ref, localMedia, appLanguage),
