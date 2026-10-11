@@ -71,6 +71,32 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
   }
 
   @override
+  void didUpdateWidget(GenericCarouselRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.controller != oldWidget.controller) {
+      _controller.removeListener(_updateScrollButtons);
+      if (oldWidget.controller == null) _controller.dispose();
+      _controller = widget.controller ?? ScrollController();
+      _controller.addListener(_updateScrollButtons);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updateScrollButtons();
+      });
+    }
+    if (widget.itemCount < oldWidget.itemCount) {
+      final removed = _trackedNodes.keys
+          .where((index) => index >= widget.itemCount)
+          .toList();
+      final staleNodes = [for (final i in removed) _trackedNodes.remove(i)!];
+      // The old items still hold these nodes until this frame rebuilds them away.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        for (final node in staleNodes) {
+          node.dispose();
+        }
+      });
+    }
+  }
+
+  @override
   void dispose() {
     for (final node in _trackedNodes.values) {
       node.dispose();
@@ -170,31 +196,32 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
           ? 1.0
           : 0.0,
       duration: const Duration(milliseconds: 200),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            focusNode: FocusNode(skipTraversal: true),
-            icon: const Icon(Icons.chevron_left, size: 28),
-            onPressed: _canScrollLeft ? _scrollLeft : null,
-            color: Colors.white,
-            disabledColor: Colors.white24,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            splashRadius: 20,
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            focusNode: FocusNode(skipTraversal: true),
-            icon: const Icon(Icons.chevron_right, size: 28),
-            onPressed: _canScrollRight ? _scrollRight : null,
-            color: Colors.white,
-            disabledColor: Colors.white24,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            splashRadius: 20,
-          ),
-        ],
+      // Mouse-only buttons: the D-pad scrolls by moving between cards.
+      child: ExcludeFocus(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.chevron_left, size: 28),
+              onPressed: _canScrollLeft ? _scrollLeft : null,
+              color: Colors.white,
+              disabledColor: Colors.white24,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              splashRadius: 20,
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.chevron_right, size: 28),
+              onPressed: _canScrollRight ? _scrollRight : null,
+              color: Colors.white,
+              disabledColor: Colors.white24,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              splashRadius: 20,
+            ),
+          ],
+        ),
       ),
     );
   }
