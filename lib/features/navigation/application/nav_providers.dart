@@ -22,11 +22,6 @@ final topNavbarFocusActionProvider = StateProvider<void Function()?>(
   (ref) => null,
 );
 
-/// Action callback to request focus on the first element of the current page content from the Top Navbar.
-final pageContentFocusActionProvider = StateProvider<void Function()?>(
-  (ref) => null,
-);
-
 /// Registry mapping a [NavTab] index to its content focus callback.
 final pageContentFocusActionsProvider =
     StateProvider<Map<int, void Function()>>((ref) => const {});

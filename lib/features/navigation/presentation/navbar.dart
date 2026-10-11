@@ -104,11 +104,6 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
         currentAction();
         return KeyEventResult.handled;
       }
-      final fallbackAction = ref.read(pageContentFocusActionProvider);
-      if (fallbackAction != null) {
-        fallbackAction();
-        return KeyEventResult.handled;
-      }
       return KeyEventResult.ignored;
     }
 

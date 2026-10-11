@@ -64,7 +64,7 @@ void main() {
   );
 
   testWidgets(
-    'Pressing arrowDown in AppNavbar triggers pageContentFocusActionProvider',
+    'Pressing arrowDown in AppNavbar runs the current tab content action',
     (tester) async {
       tester.view.physicalSize = const Size(1920, 1080);
       tester.view.devicePixelRatio = 1.0;
