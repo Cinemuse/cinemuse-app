@@ -1,6 +1,6 @@
-import 'dart:async';
-
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
+import 'package:cinemuse_app/core/error/supabase_failure.dart';
 
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -97,14 +97,18 @@ class AgendaRepository {
   }
 
   /// Fetches upcoming episodes for followed series from the cache table.
-  /// Also syncs new episodes back to "Continue Watching" if they are out.
-  Future<List<AgendaEvent>> fetchUpcomingEpisodes(
-    String userId,
-    Set<int> followedIds,
-  ) async {
-    if (followedIds.isEmpty) return [];
-
+  /// Read-only: completed series with a new aired episode are returned in
+  /// `toReopen`, and the caller puts them back with [reopenSeries].
+  Future<
+    ({
+      List<AgendaEvent> events,
+      List<({int tmdbId, int season, int episode})> toReopen,
+    })
+  >
+  fetchUpcomingEpisodes(String userId, Set<int> followedIds) async {
     final events = <AgendaEvent>[];
+    final toReopen = <({int tmdbId, int season, int episode})>[];
+    if (followedIds.isEmpty) return (events: events, toReopen: toReopen);
 
     // Get current watch history to check for "caught up" status
     final historyRes = await _supabase
@@ -157,16 +161,8 @@ class AgendaRepository {
         now.day,
       ).subtract(const Duration(days: 30));
 
-      Map<String, dynamic>? verifiedLastAired;
-
       for (final ep in episodes) {
         final airDateStr = ep['air_date'] as String?;
-        if (airDateStr != null &&
-            airDateStr.isNotEmpty &&
-            airDateStr.compareTo(todayStr) <= 0) {
-          verifiedLastAired = ep;
-        }
-
         if (airDateStr == null || airDateStr.isEmpty) {
           events.add(
             AgendaEvent.fromEpisode(
@@ -204,41 +200,89 @@ class AgendaRepository {
         }
       }
 
-      // SYNC LOGIC: Check if this series should be added back to "watching"
       final historyItem = historyMap[seriesId];
       if (historyItem != null && historyItem['status'] == 'completed') {
-        if (verifiedLastAired != null) {
-          final sHistory = historyItem['season'] as int? ?? 0;
-          final eHistory = historyItem['episode'] as int? ?? 0;
-          final lastS = verifiedLastAired['season_number'] as int? ?? 0;
-          final lastE = verifiedLastAired['episode_number'] as int? ?? 0;
-
-          if (lastS > sHistory || (lastS == sHistory && lastE > eHistory)) {
-            // We can safely update watch_history here
-            final watchingEntry = {
-              'user_id': userId,
-              'tmdb_id': seriesId,
-              'media_type': 'tv',
-              'season': lastS,
-              'episode': lastE,
-              'status': 'watching',
-              'progress_seconds': 0,
-              'total_duration': 0,
-              'last_watched_at': DateTime.now().toUtc().toIso8601String(),
-            };
-
-            // Fire and forget the update
-            // TODO(REV-87): a read must not write; kept as before for now.
-            unawaited(
-              _supabase.from('watch_history').upsert(watchingEntry).then((_) {
-                _watchHistoryRepo.syncWatchHistory(userId);
-              }),
-            );
-          }
+        final next = firstAiredEpisodeAfter(
+          season: historyItem['season'] as int? ?? 0,
+          episode: historyItem['episode'] as int? ?? 0,
+          episodes: episodes,
+          todayStr: todayStr,
+        );
+        if (next != null) {
+          toReopen.add((
+            tmdbId: seriesId,
+            season: next.season,
+            episode: next.episode,
+          ));
         }
       }
     }
 
-    return events;
+    return (events: events, toReopen: toReopen);
   }
+
+  /// Puts a completed series back in Continue Watching at [season] /
+  /// [episode]. Only a row that is still "completed" changes, so a second
+  /// call or a show the user started meanwhile is left alone.
+  /// Throws an [AppFailure].
+  Future<void> reopenSeries({
+    required String userId,
+    required int tmdbId,
+    required int season,
+    required int episode,
+  }) async {
+    final rows = await _supabase
+        .from('watch_history')
+        .update({
+          'season': season,
+          'episode': episode,
+          'status': 'watching',
+          'progress_seconds': 0,
+          'total_duration': 0,
+          'last_watched_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId)
+        .eq('media_type', 'tv')
+        .eq('status', 'completed')
+        .select('tmdb_id')
+        .withAppFailure();
+    if ((rows as List).isNotEmpty) {
+      await _watchHistoryRepo.syncWatchHistory(userId);
+    }
+  }
+}
+
+/// The first episode in [episodes] (one season from the agenda cache) that
+/// aired on or before [todayStr] and comes after [season] / [episode].
+/// Only the next episode of the same season or episode 1 of the next season
+/// count: anything further would skip episodes the cache doesn't list.
+({int season, int episode})? firstAiredEpisodeAfter({
+  required int season,
+  required int episode,
+  required List<dynamic> episodes,
+  required String todayStr,
+}) {
+  ({int season, int episode})? first;
+  for (final ep in episodes) {
+    final airDateStr = ep['air_date'] as String?;
+    if (airDateStr == null ||
+        airDateStr.isEmpty ||
+        airDateStr.compareTo(todayStr) > 0) {
+      continue;
+    }
+    final s = ep['season_number'] as int? ?? 0;
+    final e = ep['episode_number'] as int? ?? 0;
+    final isAfter = s > season || (s == season && e > episode);
+    final isBeforeFirst =
+        first == null ||
+        s < first.season ||
+        (s == first.season && e < first.episode);
+    if (isAfter && isBeforeFirst) first = (season: s, episode: e);
+  }
+  if (first == null) return null;
+  final isNext =
+      (first.season == season && first.episode == episode + 1) ||
+      (first.season == season + 1 && first.episode == 1);
+  return isNext ? first : null;
 }

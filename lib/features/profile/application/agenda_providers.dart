@@ -1,4 +1,6 @@
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
@@ -49,7 +51,27 @@ final agendaProvider = FutureProvider<GroupedAgenda>((ref) async {
     followed.keys.contains(MediaKind.tv) ? followed[MediaKind.tv]! : {},
   );
 
-  final allEvents = [...movies, ...episodes];
+  // 3. Completed series with a new episode go back to Continue Watching.
+  for (final show in episodes.toReopen) {
+    try {
+      await repo.reopenSeries(
+        userId: userId,
+        tmdbId: show.tmdbId,
+        season: show.season,
+        episode: show.episode,
+      );
+    } on AppFailure catch (e, s) {
+      // The agenda still shows; the next load tries again.
+      AppLogger.warn(
+        'agendaProvider',
+        'Could not put series ${show.tmdbId} back in Continue Watching',
+        error: e,
+        stackTrace: s,
+      );
+    }
+  }
+
+  final allEvents = [...movies, ...episodes.events];
   allEvents.sort((a, b) => a.releaseDate.compareTo(b.releaseDate));
 
   return _groupEvents(allEvents);
