@@ -7,6 +7,16 @@ import 'package:cinemuse_app/features/streaming/ranking/stream_parser.dart';
 import 'package:dio/dio.dart';
 
 class StremioSource implements BaseSource {
+  // Torrentio puts the seeder count in the title ("👤 123") instead of `seeds`.
+  static final _seedersPattern = RegExp(r'👤\s*(\d+)');
+
+  /// Reads the seeder count from a Torrentio-style title, or 0 if it has none.
+  @visibleForTesting
+  static int seedersFromTitle(String title) {
+    final match = _seedersPattern.firstMatch(title);
+    return match == null ? 0 : int.parse(match.group(1)!);
+  }
+
   final Dio _dio;
   final String _baseUrl;
   final String? _queryParams;
@@ -73,12 +83,12 @@ class StremioSource implements BaseSource {
 
           return StreamCandidate(
             kind: StreamSourceKind.vod,
-            title: context.mapping != null ? " (Kitsu) $title" : title,
+            title: title,
             infoHash: infoHash,
             magnet: infoHash.isNotEmpty
                 ? "magnet:?xt=urn:btih:$infoHash&dn=${Uri.encodeComponent(title)}"
                 : "",
-            seeds: s['seeds'] ?? 0,
+            seeds: (s['seeds'] as num?)?.toInt() ?? seedersFromTitle(rawTitle),
             provider: name,
             absoluteEpisode: context.mapping?.absoluteEpisode,
             metadata: metadata,
