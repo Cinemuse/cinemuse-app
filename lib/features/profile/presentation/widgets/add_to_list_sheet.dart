@@ -145,7 +145,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
                                       .removeItemFromList(
                                         listId: list.id,
                                         tmdbId: widget.media.tmdbId,
-                                        mediaType: widget.media.mediaType.name,
+                                        mediaType: widget.media.mediaType,
                                       );
                                   ref.invalidate(userListsProvider);
                                 } else {

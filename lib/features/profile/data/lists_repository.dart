@@ -17,30 +17,6 @@ class ListsRepository {
 
   ListsRepository(this._client, this._db, this._mediaRepo);
 
-  /// Fetch all lists for a user, including their items.
-  Future<List<UserList>> getUserLists(String userId) async {
-    // Sync then rely on watchUserLists for reactive UI
-    await syncUserLists(userId);
-
-    // Fallback fetch from remote if needed for direct await (rarely used now)
-    final connectivity = await Connectivity().checkConnectivity();
-    if (connectivity.isNotEmpty &&
-        connectivity.first == ConnectivityResult.none) {
-      // Return local immediately if offline
-      return watchUserLists(userId).first;
-    }
-
-    final response = await _client
-        .from('lists')
-        .select('*, list_items(*)')
-        .eq('user_id', userId)
-        .order('sort_order', ascending: true)
-        .withErrorHandling();
-
-    final data = response as List<dynamic>;
-    return data.map((json) => UserList.fromJson(json)).toList();
-  }
-
   /// Watch user lists locally
   Stream<List<UserList>> watchUserLists(String userId) {
     // Using a join ensures the stream triggers when either table changes
@@ -275,20 +251,16 @@ class ListsRepository {
   Future<void> addItemToList({
     required String listId,
     required int tmdbId,
-    required String mediaType,
+    required MediaKind mediaType,
     required Map<String, dynamic> meta,
     int? sortOrder,
   }) async {
-    final normalizedType = (mediaType == 'series' || mediaType == 'tv')
-        ? 'tv'
-        : mediaType;
-
     // Update Local
     await _db.upsertListItem(
       CachedListItemsCompanion(
         listId: Value(listId),
         tmdbId: Value(tmdbId),
-        mediaType: Value(normalizedType),
+        mediaType: Value(mediaType.name),
         meta: Value(jsonEncode(meta)),
         sortOrder: Value(sortOrder ?? 0),
         addedAt: Value(DateTime.now()),
@@ -299,7 +271,7 @@ class ListsRepository {
     await _client.from('list_items').upsert({
       'list_id': listId,
       'tmdb_id': tmdbId,
-      'media_type': normalizedType,
+      'media_type': mediaType.name,
       'sort_order': sortOrder ?? 0,
     }, onConflict: 'list_id,tmdb_id,media_type').withErrorHandling();
   }
@@ -308,14 +280,10 @@ class ListsRepository {
   Future<void> removeItemFromList({
     required String listId,
     required int tmdbId,
-    required String mediaType,
+    required MediaKind mediaType,
   }) async {
-    final normalizedType = (mediaType == 'series' || mediaType == 'tv')
-        ? 'tv'
-        : mediaType;
-
     // Update Local
-    await _db.deleteListItem(listId, tmdbId, normalizedType);
+    await _db.deleteListItem(listId, tmdbId, mediaType.name);
 
     // Update Remote
     await _client
@@ -323,7 +291,7 @@ class ListsRepository {
         .delete()
         .eq('list_id', listId)
         .eq('tmdb_id', tmdbId)
-        .eq('media_type', normalizedType)
+        .eq('media_type', mediaType.name)
         .withErrorHandling();
   }
 

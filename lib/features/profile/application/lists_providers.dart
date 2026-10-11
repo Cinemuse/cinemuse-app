@@ -62,13 +62,10 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
       ),
     );
 
-    // Find if the item exists in the list (checking both 'tv' and 'series' for series)
-    final isTV = media.mediaType == MediaKind.tv;
-    final exists = targetList.items.any((item) {
-      if (item.tmdbId != media.tmdbId) return false;
-      if (isTV) return item.mediaType == MediaKind.tv;
-      return item.mediaType == media.mediaType;
-    });
+    final exists = targetList.items.any(
+      (item) =>
+          item.tmdbId == media.tmdbId && item.mediaType == media.mediaType,
+    );
 
     final repo = ref.read(listsRepositoryProvider);
 
@@ -76,7 +73,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
       await repo.removeItemFromList(
         listId: targetList.id,
         tmdbId: media.tmdbId,
-        mediaType: media.mediaType.name,
+        mediaType: media.mediaType,
       );
     } else {
       // Cache the item before adding it to ensure FK constraints are met
@@ -89,7 +86,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
       await repo.addItemToList(
         listId: targetList.id,
         tmdbId: media.tmdbId,
-        mediaType: media.mediaType.name,
+        mediaType: media.mediaType,
         meta: {
           'title':
               media.getLocalizedTitle('en') ??
@@ -149,7 +146,7 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
     await repo.addItemToList(
       listId: listId,
       tmdbId: media.tmdbId,
-      mediaType: media.mediaType.name,
+      mediaType: media.mediaType,
       meta: {
         'title':
             media.getLocalizedTitle('en') ??
@@ -172,32 +169,24 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
     await repo.removeItemFromList(
       listId: listId,
       tmdbId: tmdbId,
-      mediaType: mediaType.name,
+      mediaType: mediaType,
     );
   }
 
-  /// Helper to check if a specific item is in the Watchlist.
-  bool isInWatchlist(int tmdbId, MediaKind mediaType) {
-    final lists = state.value ?? [];
-    final watchlist = lists
-        .where((l) => l.type == ListType.watchlist)
-        .firstOrNull;
-    if (watchlist == null) return false;
-    return watchlist.items.any(
-      (i) => i.tmdbId == tmdbId && i.mediaType == mediaType,
-    );
-  }
+  /// Whether a title is in the Watchlist.
+  bool isInWatchlist(int tmdbId, MediaKind mediaType) =>
+      _isInList(ListType.watchlist, tmdbId, mediaType);
 
-  /// Helper to check if a specific item is in Favorites.
-  bool isFavorite(int tmdbId, MediaKind mediaType) {
-    final lists = state.value ?? [];
-    final favorites = lists
-        .where((l) => l.type == ListType.favorites)
-        .firstOrNull;
-    if (favorites == null) return false;
-    return favorites.items.any(
-      (i) => i.tmdbId == tmdbId && i.mediaType == mediaType,
-    );
+  /// Whether a title is in Favorites.
+  bool isFavorite(int tmdbId, MediaKind mediaType) =>
+      _isInList(ListType.favorites, tmdbId, mediaType);
+
+  bool _isInList(ListType type, int tmdbId, MediaKind mediaType) {
+    final list = (state.value ?? []).where((l) => l.type == type).firstOrNull;
+    return list?.items.any(
+          (i) => i.tmdbId == tmdbId && i.mediaType == mediaType,
+        ) ??
+        false;
   }
 
   /// Hides the list at once and deletes it unless [undone] completes with

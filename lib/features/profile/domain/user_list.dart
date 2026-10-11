@@ -27,7 +27,6 @@ class UserList {
   final String? description;
   final ListType type;
   final int sortOrder;
-  final Map<String, dynamic> settings;
   final DateTime createdAt;
 
   // For easy display
@@ -40,7 +39,6 @@ class UserList {
     this.description,
     required this.type,
     this.sortOrder = 0,
-    this.settings = const {},
     required this.createdAt,
     this.items = const [],
   });
@@ -80,7 +78,6 @@ class UserList {
       description: json['description'] as String?,
       type: ListType.fromDb(json['type'] as String?),
       sortOrder: json['sort_order'] as int? ?? 0,
-      settings: json['settings'] as Map<String, dynamic>? ?? {},
       createdAt: DateTime.parse(json['created_at'] as String),
       items:
           (json['list_items'] as List<dynamic>?)
