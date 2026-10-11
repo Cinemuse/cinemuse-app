@@ -112,7 +112,7 @@ class CustomizationSettings extends ConsumerWidget {
                 ),
                 SettingsTile(
                   label: l10n.settingsShowSubtitles,
-                  description: l10n.settingsShowSubtitles,
+                  description: l10n.settingsShowSubtitlesDesc,
                   icon: Icons.subtitles,
                   trailing: SettingToggle(
                     value: userSettings.showSubtitles,

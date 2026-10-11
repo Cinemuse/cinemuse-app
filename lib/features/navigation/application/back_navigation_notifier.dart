@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,7 +33,10 @@ class BackNavigationNotifier extends Notifier<DateTime?> {
   BackOutcome handleBack({required bool canExitApp, DateTime? now}) {
     final navigator = ref.read(shellNavigatorKeyProvider).currentState;
     if (navigator != null && navigator.canPop()) {
-      navigator.pop();
+      // maybePop, not pop: a page's PopScope can take a step of its own first
+      // (e.g. Settings goes back to its category list, REV-86). Nothing to
+      // await: the outcome is "handled" either way.
+      unawaited(navigator.maybePop());
       return BackOutcome.handled;
     }
 

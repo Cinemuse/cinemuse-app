@@ -409,6 +409,7 @@
   "settingsSubtitleLanguage": "Lingua Sottotitoli",
   "settingsSubtitleLanguageDesc": "Lingua sottotitoli preferita per film e serie.",
   "settingsShowSubtitles": "Mostra Sottotitoli",
+  "settingsShowSubtitlesDesc": "Attiva i sottotitoli quando parte un video",
   "settingsJapanese": "Giapponese",
   "settingsOriginal": "Originale",
   "settingsPlayer": "Preferenze Media",

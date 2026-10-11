@@ -1298,6 +1298,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsShowSubtitles => 'Mostra Sottotitoli';
 
   @override
+  String get settingsShowSubtitlesDesc =>
+      'Attiva i sottotitoli quando parte un video';
+
+  @override
   String get settingsJapanese => 'Giapponese';
 
   @override

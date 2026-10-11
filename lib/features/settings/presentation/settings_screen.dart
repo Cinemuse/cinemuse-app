@@ -197,40 +197,49 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ],
     );
 
-    return Scaffold(
-      backgroundColor: AppTheme.primary,
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: isMobile
-              ? (_showMobileContent
-                    ? Container(
-                        color: AppTheme.surface.withValues(alpha: 0.8),
-                        child: contentWidget,
-                      )
-                    : buildSidebar())
-              : Container(
-                  margin: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.01),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.05),
+    final isShowingMobileContent = isMobile && _showMobileContent;
+
+    // Narrow layout: Back first returns to the category list (REV-86).
+    return PopScope(
+      canPop: !isShowingMobileContent,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) setState(() => _showMobileContent = false);
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.primary,
+        body: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 1200),
+            child: isMobile
+                ? (_showMobileContent
+                      ? Container(
+                          color: AppTheme.surface.withValues(alpha: 0.8),
+                          child: contentWidget,
+                        )
+                      : buildSidebar())
+                : Container(
+                    margin: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.01),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Row(
+                      children: [
+                        buildSidebar(),
+                        Expanded(
+                          child: Container(
+                            color: AppTheme.surface.withValues(alpha: 0.5),
+                            child: contentWidget,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Row(
-                    children: [
-                      buildSidebar(),
-                      Expanded(
-                        child: Container(
-                          color: AppTheme.surface.withValues(alpha: 0.5),
-                          child: contentWidget,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+          ),
         ),
       ),
     );

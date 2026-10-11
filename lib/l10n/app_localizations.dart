@@ -2384,6 +2384,12 @@ abstract class AppLocalizations {
   /// **'Show Subtitles'**
   String get settingsShowSubtitles;
 
+  /// No description provided for @settingsShowSubtitlesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn subtitles on when a video starts'**
+  String get settingsShowSubtitlesDesc;
+
   /// No description provided for @settingsJapanese.
   ///
   /// In en, this message translates to:

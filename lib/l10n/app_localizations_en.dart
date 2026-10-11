@@ -1285,6 +1285,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsShowSubtitles => 'Show Subtitles';
 
   @override
+  String get settingsShowSubtitlesDesc =>
+      'Turn subtitles on when a video starts';
+
+  @override
   String get settingsJapanese => 'Japanese';
 
   @override

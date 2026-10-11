@@ -1,9 +1,11 @@
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 
-class SettingInput extends StatefulWidget {
+class SettingInput extends ConsumerStatefulWidget {
   final String? label;
   final String? description;
   final String value;
@@ -22,10 +24,10 @@ class SettingInput extends StatefulWidget {
   });
 
   @override
-  State<SettingInput> createState() => _SettingInputState();
+  ConsumerState<SettingInput> createState() => _SettingInputState();
 }
 
-class _SettingInputState extends State<SettingInput> {
+class _SettingInputState extends ConsumerState<SettingInput> {
   late TextEditingController _controller;
   bool _isDirty = false;
   bool _isSaving = false;
@@ -87,11 +89,13 @@ class _SettingInputState extends State<SettingInput> {
         setState(() {
           _isSaving = false;
         });
+        // Translated text, never e.toString() (REV-86, REV-164).
         AppSnackBar.show(
           context,
           message: AppLocalizations.of(
             context,
-          )!.settingsErrorSaving(e.toString()),
+          )!.settingsErrorSaving(ref.read(errorMapperProvider).map(e).message),
+          isError: true,
         );
       }
     }
