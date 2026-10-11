@@ -116,15 +116,15 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
             : l10n.sportGeneric);
   }
 
-  static const _sportAssetOverrides = <String, String>{
+  /// Sports that have a background image; the others show the placeholder.
+  static const _sportAssets = <String, String>{
+    'sport_football': 'assets/sports/sport_football.jpg',
     'sport_motorcycling': 'assets/sports/sport_motogp.jpg',
-    'sport_volleyball': 'assets/sports/sport_volleyball.png',
+    'sport_volleyball': 'assets/sports/sport_volleyball.jpg',
+    'sport_tennis': 'assets/sports/sport_tennis.jpg',
+    'sport_cycling': 'assets/sports/sport_cycling.jpg',
+    'sport_f1': 'assets/sports/sport_f1.jpg',
   };
-
-  String _getSportAsset() {
-    final key = widget.event.sportTranslationKey;
-    return _sportAssetOverrides[key] ?? 'assets/sports/$key.jpg';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +159,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
   }
 
   Widget _buildBackdrop(ThemeData theme) {
+    final asset = _sportAssets[widget.event.sportTranslationKey];
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: Container(
@@ -172,14 +173,16 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                _getSportAsset(),
-                fit: BoxFit.cover,
-                color: AppTheme.primary.withValues(alpha: 0.3),
-                colorBlendMode: BlendMode.darken,
-                errorBuilder: (context, error, stackTrace) =>
-                    _buildPlaceholder(context),
-              ),
+              child: asset == null
+                  ? _buildPlaceholder(context)
+                  : Image.asset(
+                      asset,
+                      fit: BoxFit.cover,
+                      color: AppTheme.primary.withValues(alpha: 0.3),
+                      colorBlendMode: BlendMode.darken,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildPlaceholder(context),
+                    ),
             ),
             Positioned(top: 8, left: 8, child: _buildTimeBadge(theme)),
             if (widget.event.channels.isNotEmpty)

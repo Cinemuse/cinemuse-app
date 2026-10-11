@@ -34,7 +34,9 @@ class _ProfileHubState extends ConsumerState<ProfileHub>
       if (mounted) {
         ref
             .read(pageContentFocusActionsProvider.notifier)
-            .update((map) => {...map, 3: _tabBarFocusNode.requestFocus});
+            .update(
+              (map) => {...map, NavTab.profile: _tabBarFocusNode.requestFocus},
+            );
       }
     });
   }

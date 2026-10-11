@@ -42,7 +42,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             .update(
               (map) => {
                 ...map,
-                1: () {
+                NavTab.explore: () {
                   if (_scrollController.hasClients &&
                       _scrollController.offset > 0) {
                     _scrollController.animateTo(

@@ -43,7 +43,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             .update(
               (map) => {
                 ...map,
-                0: () {
+                NavTab.home: () {
                   if (_scrollController.hasClients &&
                       _scrollController.offset > 0) {
                     _scrollController.animateTo(

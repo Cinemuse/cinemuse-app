@@ -47,7 +47,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
             .update(
               (map) => {
                 ...map,
-                2: () {
+                NavTab.liveTv: () {
                   final isMobile = MediaQuery.of(context).size.width < 600;
                   if (isMobile) {
                     _playerFocusNode.requestFocus();
