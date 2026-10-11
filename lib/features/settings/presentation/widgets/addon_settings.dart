@@ -6,6 +6,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/streaming/models/stremio_addon.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/save_settings.dart';
+import 'package:cinemuse_app/features/settings/presentation/widgets/setting_input.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/settings_widgets.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_toggle.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -25,8 +26,6 @@ class AddonSettings extends ConsumerStatefulWidget {
 class _AddonSettingsState extends ConsumerState<AddonSettings> {
   final _urlController = TextEditingController();
   bool _isLoading = false;
-  bool _showApiKey = false;
-  bool _showTorBoxKey = false;
   String? _error;
 
   @override
@@ -120,49 +119,13 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                 if (settings.enableRealDebrid)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: TextField(
-                      controller: TextEditingController(
-                        text: settings.realDebridKey,
-                      ),
-                      style: const TextStyle(color: Colors.white),
-                      obscureText: !_showApiKey,
-                      decoration: InputDecoration(
-                        labelText: l10n.settingsRealDebridKey,
-                        labelStyle: const TextStyle(color: AppTheme.textMuted),
-                        filled: true,
-                        fillColor: Colors.black.withValues(alpha: 0.3),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.05),
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.05),
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.accent),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _showApiKey ? LucideIcons.eye : LucideIcons.eyeOff,
-                            color: AppTheme.textMuted,
-                            size: 20,
-                          ),
-                          onPressed: () =>
-                              setState(() => _showApiKey = !_showApiKey),
-                        ),
-                      ),
-                      onChanged: (val) =>
-                          saveSettings(context, ref, {'realDebridKey': val}),
+                    child: SettingInput(
+                      value: settings.realDebridKey,
+                      placeholder: l10n.settingsRealDebridKey,
+                      isPassword: true,
+                      onSave: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateSettings({'realDebridKey': val.trim()}),
                     ),
                   ),
                 SettingsTile(
@@ -178,51 +141,13 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                 if (settings.enableTorBox)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: TextField(
-                      controller: TextEditingController(
-                        text: settings.torBoxKey,
-                      ),
-                      style: const TextStyle(color: Colors.white),
-                      obscureText: !_showTorBoxKey,
-                      decoration: InputDecoration(
-                        labelText: l10n.settingsTorBoxKey,
-                        labelStyle: const TextStyle(color: AppTheme.textMuted),
-                        filled: true,
-                        fillColor: Colors.black.withValues(alpha: 0.3),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.05),
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.05),
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.accent),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _showTorBoxKey
-                                ? LucideIcons.eye
-                                : LucideIcons.eyeOff,
-                            color: AppTheme.textMuted,
-                            size: 20,
-                          ),
-                          onPressed: () =>
-                              setState(() => _showTorBoxKey = !_showTorBoxKey),
-                        ),
-                      ),
-                      onChanged: (val) =>
-                          saveSettings(context, ref, {'torBoxKey': val}),
+                    child: SettingInput(
+                      value: settings.torBoxKey,
+                      placeholder: l10n.settingsTorBoxKey,
+                      isPassword: true,
+                      onSave: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateSettings({'torBoxKey': val.trim()}),
                     ),
                   ),
                 if (settings.enableRealDebrid && settings.enableTorBox)
@@ -282,49 +207,13 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: TextField(
-                    controller: TextEditingController(
-                      text: settings.openSubtitlesKey,
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                    obscureText: !_showApiKey,
-                    decoration: InputDecoration(
-                      labelText: l10n.settingsOpenSubtitlesKey,
-                      labelStyle: const TextStyle(color: AppTheme.textMuted),
-                      filled: true,
-                      fillColor: Colors.black.withValues(alpha: 0.3),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.05),
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.05),
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppTheme.accent),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _showApiKey ? LucideIcons.eye : LucideIcons.eyeOff,
-                          color: AppTheme.textMuted,
-                          size: 20,
-                        ),
-                        onPressed: () =>
-                            setState(() => _showApiKey = !_showApiKey),
-                      ),
-                    ),
-                    onChanged: (val) =>
-                        saveSettings(context, ref, {'openSubtitlesKey': val}),
+                  child: SettingInput(
+                    value: settings.openSubtitlesKey,
+                    placeholder: l10n.settingsOpenSubtitlesKey,
+                    isPassword: true,
+                    onSave: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSettings({'openSubtitlesKey': val.trim()}),
                   ),
                 ),
                 Padding(
