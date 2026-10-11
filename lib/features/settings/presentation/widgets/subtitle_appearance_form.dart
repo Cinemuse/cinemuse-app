@@ -3,6 +3,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_slider.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 class SubtitleAppearanceForm extends StatelessWidget {
   final SubtitleStyle style;
@@ -161,9 +162,11 @@ class _ColorSelectorTile extends StatelessWidget {
           Text(label, style: DesktopTypography.subtitle),
           const SizedBox(height: 12),
           SizedBox(
-            height: 36,
+            // Room for the focused circle's zoom and ring.
+            height: 48,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               itemCount: colors.length,
               separatorBuilder: (_, __) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
@@ -171,36 +174,43 @@ class _ColorSelectorTile extends StatelessWidget {
                 // Handle both direct reference and hex match for consistency
                 final isSelected = color.toARGB32() == selectedColor.toARGB32();
 
-                return GestureDetector(
-                  onTap: () => onColorSelected(color),
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected ? AppTheme.accent : Colors.white24,
-                        width: isSelected ? 3 : 1,
+                // DpadFocusable, not GestureDetector: reachable with a
+                // remote and arrow keys (REV-84).
+                return Center(
+                  child: DpadFocusable(
+                    onTap: () => onColorSelected(color),
+                    borderRadius: BorderRadius.circular(18),
+                    scale: 1.15,
+                    showFocusRing: true,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected ? AppTheme.accent : Colors.white24,
+                          width: isSelected ? 3 : 1,
+                        ),
+                        boxShadow: [
+                          if (isSelected)
+                            BoxShadow(
+                              color: AppTheme.accent.withAlpha(102),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                        ],
                       ),
-                      boxShadow: [
-                        if (isSelected)
-                          BoxShadow(
-                            color: AppTheme.accent.withAlpha(102),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          ),
-                      ],
+                      child: isSelected
+                          ? Icon(
+                              Icons.check,
+                              size: 20,
+                              color: color.computeLuminance() > 0.5
+                                  ? Colors.black
+                                  : Colors.white,
+                            )
+                          : null,
                     ),
-                    child: isSelected
-                        ? Icon(
-                            Icons.check,
-                            size: 20,
-                            color: color.computeLuminance() > 0.5
-                                ? Colors.black
-                                : Colors.white,
-                          )
-                        : null,
                   ),
                 );
               },
