@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/settings_categories.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
@@ -17,9 +18,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _showMobileContent = false;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => LayoutBuilder(
+    // The width Settings really gets, not the window's (REV-20): below
+    // `medium` the 320 px sidebar leaves no room for the content.
+    builder: (context, constraints) => _buildLayout(
+      context,
+      isMobile: constraints.maxWidth < Breakpoints.medium,
+    ),
+  );
+
+  Widget _buildLayout(BuildContext context, {required bool isMobile}) {
     final l10n = AppLocalizations.of(context)!;
-    final isMobile = MediaQuery.of(context).size.width < 768;
 
     final categories = [
       {
