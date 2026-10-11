@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../../../core/presentation/theme/app_theme.dart';
 
-class FilterRangeSlider extends StatelessWidget {
+/// A range slider that reports its value only when the drag ends, so a
+/// drag starts one TMDB request instead of dozens.
+class FilterRangeSlider extends StatefulWidget {
   final double min;
   final double max;
   final RangeValues values;
   final ValueChanged<RangeValues> onChanged;
   final String label;
-  final String valueLabel;
+  final String Function(RangeValues values) formatValue;
   final IconData icon;
 
   const FilterRangeSlider({
@@ -17,12 +19,21 @@ class FilterRangeSlider extends StatelessWidget {
     required this.values,
     required this.onChanged,
     required this.label,
-    required this.valueLabel,
+    required this.formatValue,
     required this.icon,
   });
 
   @override
+  State<FilterRangeSlider> createState() => _FilterRangeSliderState();
+}
+
+class _FilterRangeSliderState extends State<FilterRangeSlider> {
+  // The value while dragging; null when not dragging.
+  RangeValues? _dragValues;
+
+  @override
   Widget build(BuildContext context) {
+    final values = _dragValues ?? widget.values;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -31,10 +42,10 @@ class FilterRangeSlider extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(icon, size: 16, color: AppTheme.accent),
+                Icon(widget.icon, size: 16, color: AppTheme.accent),
                 const SizedBox(width: 8),
                 Text(
-                  label,
+                  widget.label,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -44,7 +55,7 @@ class FilterRangeSlider extends StatelessWidget {
               ],
             ),
             Text(
-              valueLabel,
+              widget.formatValue(values),
               style: const TextStyle(
                 color: AppTheme.accent,
                 fontFamily: 'monospace',
@@ -70,9 +81,13 @@ class FilterRangeSlider extends StatelessWidget {
           ),
           child: RangeSlider(
             values: values,
-            min: min,
-            max: max,
-            onChanged: onChanged,
+            min: widget.min,
+            max: widget.max,
+            onChanged: (v) => setState(() => _dragValues = v),
+            onChangeEnd: (v) {
+              setState(() => _dragValues = null);
+              widget.onChanged(v);
+            },
           ),
         ),
       ],

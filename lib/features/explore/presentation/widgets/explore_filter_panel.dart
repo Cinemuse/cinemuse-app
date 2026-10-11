@@ -166,8 +166,8 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                           onChanged: (v) =>
                               _updateFilters(filters.copyWith(rating: v)),
                           label: l10n.searchRating,
-                          valueLabel:
-                              '${filters.rating.start.round()} - ${filters.rating.end.round()}',
+                          formatValue: (v) =>
+                              '${v.start.round()} - ${v.end.round()}',
                           icon: Icons.whatshot,
                         ),
                         const SizedBox(height: 32),
@@ -178,8 +178,8 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                           onChanged: (v) =>
                               _updateFilters(filters.copyWith(year: v)),
                           label: l10n.searchYearRange,
-                          valueLabel:
-                              '${filters.year.start.round()} - ${filters.year.end.round()}',
+                          formatValue: (v) =>
+                              '${v.start.round()} - ${v.end.round()}',
                           icon: Icons.calendar_today_outlined,
                         ),
                         const SizedBox(height: 32),
@@ -190,8 +190,8 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                           onChanged: (v) =>
                               _updateFilters(filters.copyWith(voteCount: v)),
                           label: l10n.searchVoteCount,
-                          valueLabel:
-                              '${filters.voteCount.start.round()} - ${filters.voteCount.end >= ExploreFilters.voteCountLimits.end ? l10n.filterMax : filters.voteCount.end.round()}',
+                          formatValue: (v) =>
+                              '${v.start.round()} - ${v.end >= ExploreFilters.voteCountLimits.end ? l10n.filterMax : v.end.round()}',
                           icon: Icons.thumb_up_outlined,
                         ),
                         const SizedBox(height: 32),
@@ -202,8 +202,8 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
                           onChanged: (v) =>
                               _updateFilters(filters.copyWith(runtime: v)),
                           label: l10n.searchRuntime,
-                          valueLabel:
-                              '${filters.runtime.start.round()}m - ${filters.runtime.end >= ExploreFilters.runtimeLimits.end ? l10n.filterMax : '${filters.runtime.end.round()}m'}',
+                          formatValue: (v) =>
+                              '${v.start.round()}m - ${v.end >= ExploreFilters.runtimeLimits.end ? l10n.filterMax : '${v.end.round()}m'}',
                           icon: Icons.access_time,
                         ),
                       ],
