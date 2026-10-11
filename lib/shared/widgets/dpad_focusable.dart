@@ -25,7 +25,6 @@ class DpadFocusable extends StatefulWidget {
   final VoidCallback? onLongPress;
   final VoidCallback? onSecondaryTap;
   final ValueChanged<bool>? onFocusChange;
-  final ValueChanged<bool>? onHoverChange;
   final FocusNode? focusNode;
   final bool autofocus;
   final bool autoScroll;
@@ -36,7 +35,6 @@ class DpadFocusable extends StatefulWidget {
   final BorderRadius? borderRadius;
   final Color? focusRingColor;
   final double focusRingWidth;
-  final List<BoxShadow>? focusGlow;
   final DpadFocusableBuilder? builder;
   final FocusOnKeyEventCallback? onKeyEvent;
 
@@ -47,7 +45,6 @@ class DpadFocusable extends StatefulWidget {
     this.onLongPress,
     this.onSecondaryTap,
     this.onFocusChange,
-    this.onHoverChange,
     this.focusNode,
     this.autofocus = false,
     this.autoScroll = true,
@@ -58,7 +55,6 @@ class DpadFocusable extends StatefulWidget {
     this.borderRadius,
     this.focusRingColor,
     this.focusRingWidth = 2.0,
-    this.focusGlow,
     this.builder,
     this.onKeyEvent,
   });
@@ -113,7 +109,6 @@ class _DpadFocusableState extends State<DpadFocusable> {
   void _handleHoverChanged(bool isHovered) {
     if (_isHovered == isHovered) return;
     setState(() => _isHovered = isHovered);
-    widget.onHoverChange?.call(isHovered);
   }
 
   void _autoScrollIntoView() {
@@ -125,106 +120,61 @@ class _DpadFocusableState extends State<DpadFocusable> {
 
       // 1. Immediate scrollable (e.g. horizontal carousel row or single list)
       final scrollable = Scrollable.maybeOf(context);
-      if (scrollable != null && scrollable.position.hasPixels) {
-        final position = scrollable.position;
-        final viewport = RenderAbstractViewport.maybeOf(renderObject);
-        if (viewport != null) {
-          final current = position.pixels;
-          final revealLeading = viewport.getOffsetToReveal(renderObject, 0.0);
-          final revealTrailing = viewport.getOffsetToReveal(renderObject, 1.0);
-
-          // Margin to consider an item "comfortably visible" without jitter
-          const margin = 24.0;
-          final minComfortable = revealTrailing.offset + margin;
-          final maxComfortable = revealLeading.offset - margin;
-
-          final bool isComfortablyVisible = minComfortable <= maxComfortable
-              ? (current >= minComfortable && current <= maxComfortable)
-              : (current >= revealTrailing.offset &&
-                    current <= revealLeading.offset);
-
-          if (!isComfortablyVisible) {
-            // Only scroll the carousel when the item is actually off-screen or clipped
-            double targetOffset;
-            if (current < minComfortable) {
-              // Off the trailing edge: scroll just enough to show it with margin
-              targetOffset = revealTrailing.offset + (margin * 2);
-            } else {
-              // Off the leading edge: scroll just enough to show it with margin
-              targetOffset = revealLeading.offset - (margin * 2);
-            }
-
-            final clamped = targetOffset.clamp(
-              position.minScrollExtent,
-              position.maxScrollExtent,
-            );
-
-            if ((clamped - current).abs() > 2.0) {
-              position.animateTo(
-                clamped,
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOutCubic,
-              );
-            }
-          }
-        }
+      if (scrollable == null) return;
+      if (scrollable.position.hasPixels) {
+        _reveal(scrollable.position, renderObject, 24.0);
       }
 
       // 2. Outer vertical scrollable (e.g. Page scrollable for HomeScreen Column)
-      final parentScrollableState = scrollable?.context
+      final parent = scrollable.context
           .findAncestorStateOfType<ScrollableState>();
-      if (parentScrollableState != null &&
-          parentScrollableState.position.hasPixels &&
-          parentScrollableState.position.axis == Axis.vertical) {
-        final vPosition = parentScrollableState.position;
-        final rowRenderObject = scrollable!.context.findRenderObject();
+      if (parent != null &&
+          parent.position.hasPixels &&
+          parent.position.axis == Axis.vertical) {
+        final rowRenderObject = scrollable.context.findRenderObject();
         if (rowRenderObject != null && rowRenderObject.attached) {
-          final vViewport = RenderAbstractViewport.maybeOf(rowRenderObject);
-          if (vViewport != null) {
-            final current = vPosition.pixels;
-            final revealLeading = vViewport.getOffsetToReveal(
-              rowRenderObject,
-              0.0,
-            );
-            final revealTrailing = vViewport.getOffsetToReveal(
-              rowRenderObject,
-              1.0,
-            );
-
-            const vMargin = 32.0;
-            final minComfortable = revealTrailing.offset + vMargin;
-            final maxComfortable = revealLeading.offset - vMargin;
-
-            final bool isRowVisible = minComfortable <= maxComfortable
-                ? (current >= minComfortable && current <= maxComfortable)
-                : (current >= revealTrailing.offset &&
-                      current <= revealLeading.offset);
-
-            if (!isRowVisible) {
-              double targetOffset;
-              if (current < minComfortable) {
-                targetOffset = revealTrailing.offset + (vMargin * 2);
-              } else {
-                targetOffset = revealLeading.offset - (vMargin * 2);
-              }
-
-              final clamped = targetOffset.clamp(
-                vPosition.minScrollExtent,
-                vPosition.maxScrollExtent,
-              );
-
-              if ((clamped - current).abs() > 2.0) {
-                vPosition.animateTo(
-                  clamped,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOutCubic,
-                );
-              }
-            }
-          }
+          _reveal(parent.position, rowRenderObject, 32.0);
         }
       }
     });
+  }
+
+  /// Scrolls [position] just enough to show [target] with [margin] around it,
+  /// only when it is off-screen or clipped (so focus moves don't jitter).
+  static void _reveal(
+    ScrollPosition position,
+    RenderObject target,
+    double margin,
+  ) {
+    final viewport = RenderAbstractViewport.maybeOf(target);
+    if (viewport == null) return;
+
+    final current = position.pixels;
+    final revealLeading = viewport.getOffsetToReveal(target, 0.0).offset;
+    final revealTrailing = viewport.getOffsetToReveal(target, 1.0).offset;
+    final minComfortable = revealTrailing + margin;
+    final maxComfortable = revealLeading - margin;
+
+    final isComfortablyVisible = minComfortable <= maxComfortable
+        ? (current >= minComfortable && current <= maxComfortable)
+        : (current >= revealTrailing && current <= revealLeading);
+    if (isComfortablyVisible) return;
+
+    final targetOffset = current < minComfortable
+        ? revealTrailing + (margin * 2)
+        : revealLeading - (margin * 2);
+    final clamped = targetOffset.clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+
+    if ((clamped - current).abs() > 2.0) {
+      position.animateTo(
+        clamped,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 
   void _handleAction() {
@@ -282,13 +232,12 @@ class _DpadFocusableState extends State<DpadFocusable> {
 
     final radius = widget.borderRadius ?? BorderRadius.circular(8);
     final ringColor = widget.focusRingColor ?? AppTheme.focusRing;
-    final glow = widget.focusGlow ?? AppTheme.shadowFocusGlow;
 
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: radius,
         border: Border.all(color: ringColor, width: widget.focusRingWidth),
-        boxShadow: glow,
+        boxShadow: AppTheme.shadowFocusGlow,
       ),
       position: DecorationPosition.foreground,
       child: child,
@@ -368,12 +317,6 @@ class DpadFocusScope extends InheritedWidget {
 
   static DpadFocusScope? maybeOf(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<DpadFocusScope>();
-  }
-
-  static DpadFocusScope of(BuildContext context) {
-    final scope = maybeOf(context);
-    assert(scope != null, 'No DpadFocusScope found in context');
-    return scope!;
   }
 
   @override

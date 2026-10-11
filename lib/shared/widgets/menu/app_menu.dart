@@ -7,14 +7,12 @@ class AppMenuOption {
   final String label;
   final VoidCallback onTap;
   final bool isDestructive;
-  final String? subtitle;
 
   const AppMenuOption({
     required this.icon,
     required this.label,
     required this.onTap,
     this.isDestructive = false,
-    this.subtitle,
   });
 }
 
@@ -171,34 +169,16 @@ class AppMenu {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          option.label,
-                          style: Theme.of(context).textTheme.bodyMedium!
-                              .copyWith(
-                                color: option.isDestructive
-                                    ? AppTheme.favorites
-                                    : Colors.white,
-                                fontSize: 14,
-                              ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (option.subtitle != null)
-                          Text(
-                            option.subtitle!,
-                            style: Theme.of(context).textTheme.bodyMedium!
-                                .copyWith(
-                                  color: Colors.white.withValues(alpha: 0.5),
-                                  fontSize: 12,
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
+                    child: Text(
+                      option.label,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: option.isDestructive
+                            ? AppTheme.favorites
+                            : Colors.white,
+                        fontSize: 14,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
