@@ -22,7 +22,7 @@ class StremioAddonService {
     final baseUrl = parts.baseUrl;
     final queryParams = parts.queryParams;
 
-    if (baseUrl.isEmpty || !UrlUtils.isHttpUrl(baseUrl)) {
+    if (!_isAddonUrl(baseUrl)) {
       throw const ValidationFailure('Add-on URL is not an http(s) URL');
     }
 
@@ -74,6 +74,13 @@ class StremioAddonService {
         stackTrace: st,
       );
     }
+  }
+
+  // splitStremioUrl puts `https://` in front of any text, so also check for a
+  // real host: "not a url" becomes the host "not%20a%20url" (REV-240).
+  static bool _isAddonUrl(String url) {
+    final host = Uri.tryParse(url)?.host ?? '';
+    return UrlUtils.isHttpUrl(url) && host.isNotEmpty && !host.contains('%');
   }
 }
 

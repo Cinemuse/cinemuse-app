@@ -51,6 +51,16 @@ void main() {
       );
     });
 
+    test('text that is not a link is a ValidationFailure (REV-240)', () {
+      expect(
+        service.fetchManifest('not a url'),
+        throwsA(isA<ValidationFailure>()),
+      );
+      verifyNever(
+        () => dio.get<dynamic>(any(), options: any(named: 'options')),
+      );
+    });
+
     test('a manifest without id or name is a ValidationFailure', () {
       answerWith({'name': 'No id'});
 
