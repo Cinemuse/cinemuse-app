@@ -108,7 +108,6 @@
   "authPassword": "PASSWORD",
   "authSignIn": "Sign In",
   "authOr": "OR",
-  "authDebugLogin": "Debug Login",
   "settingsErrorSaving": "Error saving: {error}",
   
   "detailsEpisodes": "Episodes",

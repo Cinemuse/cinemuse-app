@@ -339,9 +339,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authOr => 'OR';
 
   @override
-  String get authDebugLogin => 'Debug Login';
-
-  @override
   String settingsErrorSaving(Object error) {
     return 'Error saving: $error';
   }

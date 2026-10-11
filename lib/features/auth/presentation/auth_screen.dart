@@ -2,7 +2,6 @@ import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -245,25 +244,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Debug Login
-                  if (kDebugMode)
-                    SizedBox(
-                      width: double.infinity,
-                      child: TextButton.icon(
-                        icon: const Icon(
-                          Icons.developer_mode,
-                          color: Colors.amber,
-                        ),
-                        label: Text(
-                          l10n.authDebugLogin,
-                          style: const TextStyle(color: Colors.amber),
-                        ),
-                        onPressed: () {
-                          ref.read(authActionsProvider).debugSignIn();
-                        },
-                      ),
-                    ),
                 ],
               ),
             ),

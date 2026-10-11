@@ -716,12 +716,6 @@ abstract class AppLocalizations {
   /// **'OR'**
   String get authOr;
 
-  /// No description provided for @authDebugLogin.
-  ///
-  /// In en, this message translates to:
-  /// **'Debug Login'**
-  String get authDebugLogin;
-
   /// No description provided for @settingsErrorSaving.
   ///
   /// In en, this message translates to:

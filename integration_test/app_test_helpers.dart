@@ -79,9 +79,14 @@ Future<ProviderContainer> pumpAppAndLogin(WidgetTester tester) async {
     ),
   );
 
-  // Authenticate directly — works in both debug and profile mode
+  // Authenticate directly — works in both debug and profile mode.
+  // The test account lives in the uncommitted .env (SEC-08: the repo is
+  // public, so no login in code).
   final authService = testContainer.read(authProvider.notifier);
-  await authService.signIn('aaa@aaa.aa', 'Password');
+  await authService.signIn(
+    dotenv.env['TEST_EMAIL']!,
+    dotenv.env['TEST_PASSWORD']!,
+  );
 
   // Wait for auth state to propagate and home screen to render
   await tester.pumpAndSettle(const Duration(seconds: 1));
