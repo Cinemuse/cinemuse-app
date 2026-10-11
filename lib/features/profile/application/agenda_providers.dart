@@ -7,6 +7,7 @@ import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
 import 'package:cinemuse_app/features/profile/data/agenda_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/agenda_event.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final agendaRepositoryProvider = Provider<AgendaRepository>((ref) {
@@ -70,10 +71,14 @@ final agendaProvider = FutureProvider<GroupedAgenda>((ref) async {
   final allEvents = [...movies, ...episodes.events];
   allEvents.sort((a, b) => a.releaseDate.compareTo(b.releaseDate));
 
-  return _groupEvents(allEvents);
+  return groupEvents(allEvents);
 });
 
-GroupedAgenda _groupEvents(List<AgendaEvent> events) {
+/// Sorts [events] into agenda groups, relative to [now] (default: the
+/// current time). Boundaries are calendar days, never `+ 24 h`, so the days
+/// the clocks change (23 or 25 hours long) group correctly.
+@visibleForTesting
+GroupedAgenda groupEvents(List<AgendaEvent> events, {DateTime? now}) {
   final groups = <AgendaGroup, List<AgendaEvent>>{
     AgendaGroup.recentlyReleased: [],
     AgendaGroup.today: [],
@@ -84,24 +89,19 @@ GroupedAgenda _groupEvents(List<AgendaEvent> events) {
     AgendaGroup.tbd: [],
   };
 
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  final tomorrow = today.add(const Duration(days: 1));
+  final current = now ?? DateTime.now();
+  DateTime day(int offset) =>
+      DateTime(current.year, current.month, current.day + offset);
 
-  // End of this week (Sunday)
-  final daysUntilSunday = 7 - today.weekday;
-  final endOfThisWeek = today.add(
-    Duration(days: daysUntilSunday, hours: 23, minutes: 59, seconds: 59),
-  );
-
-  // Next week boundaries
-  final nextWeekStart = endOfThisWeek.add(const Duration(seconds: 1));
-  final nextWeekEnd = nextWeekStart.add(
-    const Duration(days: 6, hours: 23, minutes: 59, seconds: 59),
-  );
+  final today = day(0);
+  final tomorrow = day(1);
+  // Weeks run Monday to Sunday: next Monday starts "next week", the Monday
+  // after it starts "later".
+  final nextWeekStart = day(8 - current.weekday);
+  final laterStart = day(15 - current.weekday);
 
   // Agenda only shows releases up to 30 days in the past
-  final recentlyReleasedCutoff = today.subtract(const Duration(days: 30));
+  final recentlyReleasedCutoff = day(-30);
 
   for (final event in events) {
     final date = event.releaseDate;
@@ -118,9 +118,9 @@ GroupedAgenda _groupEvents(List<AgendaEvent> events) {
       groups[AgendaGroup.today]!.add(event);
     } else if (dateNoTime == tomorrow) {
       groups[AgendaGroup.tomorrow]!.add(event);
-    } else if (date.isBefore(endOfThisWeek)) {
+    } else if (dateNoTime.isBefore(nextWeekStart)) {
       groups[AgendaGroup.thisWeek]!.add(event);
-    } else if (date.isAfter(endOfThisWeek) && date.isBefore(nextWeekEnd)) {
+    } else if (dateNoTime.isBefore(laterStart)) {
       groups[AgendaGroup.nextWeek]!.add(event);
     } else {
       groups[AgendaGroup.later]!.add(event);

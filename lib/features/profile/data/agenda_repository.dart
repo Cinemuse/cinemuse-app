@@ -104,10 +104,11 @@ class AgendaRepository {
     if (followedIds.isEmpty) return [];
 
     // Only movies that are upcoming or released within the last 30 days
+    final now = DateTime.now();
     final rows = await _fetchCacheRows(
       'movie',
       followedIds,
-      releasedFrom: dateOnly(DateTime.now().subtract(const Duration(days: 30))),
+      releasedFrom: dateOnly(DateTime(now.year, now.month, now.day - 30)),
     );
     return [
       for (final row in rows)
@@ -137,11 +138,7 @@ class AgendaRepository {
 
     final now = DateTime.now();
     final todayStr = dateOnly(now);
-    final startDate = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    ).subtract(const Duration(days: 30));
+    final startDate = DateTime(now.year, now.month, now.day - 30);
 
     for (final row in rows) {
       final seriesId = row['tmdb_id'] as int;
