@@ -2,7 +2,6 @@ import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/core/utils/app_logger.dart';
 
-import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
@@ -42,14 +41,11 @@ final agendaProvider = FutureProvider<GroupedAgenda>((ref) async {
   // 1. Get IDs
   final followed = await repo.getFollowedIds(userId);
 
-  // 2. Fetch from TMDB & Sync New Episodes
-  final movies = await repo.fetchUpcomingMovies(
-    followed.keys.contains(MediaKind.movie) ? followed[MediaKind.movie]! : {},
-  );
-  final episodes = await repo.fetchUpcomingEpisodes(
-    userId,
-    followed.keys.contains(MediaKind.tv) ? followed[MediaKind.tv]! : {},
-  );
+  // 2. Read the agenda cache table (movies and episodes together)
+  final (movies, episodes) = await (
+    repo.fetchUpcomingMovies(followed.movieIds),
+    repo.fetchUpcomingEpisodes(followed.seriesIds, followed.seriesHistory),
+  ).wait;
 
   // 3. Completed series with a new episode go back to Continue Watching.
   for (final show in episodes.toReopen) {

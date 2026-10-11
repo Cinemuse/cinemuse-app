@@ -13,25 +13,44 @@ class AgendaRepository {
 
   AgendaRepository(this._supabase, this._watchHistoryRepo);
 
-  /// Collects all TMDB IDs the user "follows" (watched, watchlist, favorites, custom lists).
-  Future<Map<MediaKind, Set<int>>> getFollowedIds(String userId) async {
+  /// Collects all TMDB IDs the user "follows" (watched, watchlist,
+  /// favorites, custom lists), plus each show's watch history row, which
+  /// [fetchUpcomingEpisodes] needs (one history query per reload).
+  Future<
+    ({
+      Set<int> movieIds,
+      Set<int> seriesIds,
+      Map<int, Map<String, dynamic>> seriesHistory,
+    })
+  >
+  getFollowedIds(String userId) async {
     final movieIds = <int>{};
     final seriesIds = <int>{};
+    final seriesHistory = <int, Map<String, dynamic>>{};
+
+    void follow(dynamic row) {
+      final id = row['tmdb_id'] as int;
+      switch (MediaItem.fromString(row['media_type'])) {
+        case MediaKind.movie:
+          movieIds.add(id);
+        case MediaKind.tv:
+          seriesIds.add(id);
+        case MediaKind.episode:
+          break;
+      }
+    }
 
     // 1. From Watch History
     final historyRes = await _supabase
         .from('watch_history')
-        .select('tmdb_id, media_type')
+        .select('tmdb_id, media_type, season, episode, status')
         .eq('user_id', userId)
         .withErrorHandling();
 
     for (final row in (historyRes as List)) {
-      final type = MediaItem.fromString(row['media_type']);
-      final id = row['tmdb_id'] as int;
-      if (type == MediaKind.movie) {
-        movieIds.add(id);
-      } else if (type == MediaKind.tv) {
-        seriesIds.add(id);
+      follow(row);
+      if (MediaItem.fromString(row['media_type']) == MediaKind.tv) {
+        seriesHistory[row['tmdb_id'] as int] = row as Map<String, dynamic>;
       }
     }
 
@@ -43,164 +62,108 @@ class AgendaRepository {
         .withErrorHandling();
 
     for (final list in (listsRes as List)) {
-      final items = list['list_items'] as List;
-      for (final item in items) {
-        final type = MediaItem.fromString(item['media_type']);
-        final id = item['tmdb_id'] as int;
-        if (type == MediaKind.movie) {
-          movieIds.add(id);
-        } else if (type == MediaKind.tv) {
-          seriesIds.add(id);
-        }
-      }
+      (list['list_items'] as List).forEach(follow);
     }
 
-    return {MediaKind.movie: movieIds, MediaKind.tv: seriesIds};
+    return (
+      movieIds: movieIds,
+      seriesIds: seriesIds,
+      seriesHistory: seriesHistory,
+    );
+  }
+
+  /// Rows of `upcoming_agenda_cache` for [ids], 100 IDs per query to keep
+  /// the URL short. With [releasedFrom], only rows released on or after it.
+  Future<List<Map<String, dynamic>>> _fetchCacheRows(
+    String mediaType,
+    Set<int> ids, {
+    String? releasedFrom,
+  }) async {
+    final allIds = ids.toList();
+    final rows = <Map<String, dynamic>>[];
+    for (var i = 0; i < allIds.length; i += 100) {
+      final chunk = allIds.sublist(
+        i,
+        i + 100 > allIds.length ? allIds.length : i + 100,
+      );
+      var query = _supabase
+          .from('upcoming_agenda_cache')
+          .select()
+          .eq('media_type', mediaType);
+      if (releasedFrom != null) {
+        query = query.gte('release_date', releasedFrom);
+      }
+      final res = await query.inFilter('tmdb_id', chunk).withErrorHandling();
+      rows.addAll(List<Map<String, dynamic>>.from(res as List));
+    }
+    return rows;
   }
 
   /// Fetches upcoming movies from the cache table
   Future<List<AgendaEvent>> fetchUpcomingMovies(Set<int> followedIds) async {
     if (followedIds.isEmpty) return [];
 
-    final events = <AgendaEvent>[];
-
-    // Only fetch movies that are upcoming or released within the last 30 days
-    final cutoff = DateTime.now().subtract(const Duration(days: 30));
-    final cutoffStr =
-        "${cutoff.year.toString().padLeft(4, '0')}-${cutoff.month.toString().padLeft(2, '0')}-${cutoff.day.toString().padLeft(2, '0')}";
-
-    // Chunk queries to avoid URL length issues or limits
-    final allIds = followedIds.toList();
-    final allRows = <Map<String, dynamic>>[];
-
-    for (var i = 0; i < allIds.length; i += 100) {
-      final chunk = allIds.sublist(
-        i,
-        i + 100 > allIds.length ? allIds.length : i + 100,
-      );
-      final cacheRes = await _supabase
-          .from('upcoming_agenda_cache')
-          .select()
-          .eq('media_type', 'movie')
-          .gte('release_date', cutoffStr)
-          .inFilter('tmdb_id', chunk)
-          .withErrorHandling();
-      allRows.addAll(List<Map<String, dynamic>>.from(cacheRes as List));
-    }
-
-    for (final row in allRows) {
-      final eventData = row['event_data'] as Map<String, dynamic>;
-      events.add(AgendaEvent.fromMovie(eventData));
-    }
-
-    return events;
+    // Only movies that are upcoming or released within the last 30 days
+    final rows = await _fetchCacheRows(
+      'movie',
+      followedIds,
+      releasedFrom: dateOnly(DateTime.now().subtract(const Duration(days: 30))),
+    );
+    return [
+      for (final row in rows)
+        AgendaEvent.fromMovie(row['event_data'] as Map<String, dynamic>),
+    ];
   }
 
   /// Fetches upcoming episodes for followed series from the cache table.
-  /// Read-only: completed series with a new aired episode are returned in
-  /// `toReopen`, and the caller puts them back with [reopenSeries].
+  /// Read-only: completed series in [seriesHistory] with a new aired episode
+  /// are returned in `toReopen`, and the caller puts them back with
+  /// [reopenSeries].
   Future<
     ({
       List<AgendaEvent> events,
       List<({int tmdbId, int season, int episode})> toReopen,
     })
   >
-  fetchUpcomingEpisodes(String userId, Set<int> followedIds) async {
+  fetchUpcomingEpisodes(
+    Set<int> followedIds,
+    Map<int, Map<String, dynamic>> seriesHistory,
+  ) async {
     final events = <AgendaEvent>[];
     final toReopen = <({int tmdbId, int season, int episode})>[];
     if (followedIds.isEmpty) return (events: events, toReopen: toReopen);
 
-    // Get current watch history to check for "caught up" status
-    final historyRes = await _supabase
-        .from('watch_history')
-        .select('tmdb_id, season, episode, status')
-        .eq('user_id', userId)
-        .eq('media_type', 'tv')
-        .order('last_watched_at', ascending: false)
-        .withErrorHandling();
-
-    final historyMap = <int, Map<String, dynamic>>{};
-    for (final row in (historyRes as List)) {
-      final id = row['tmdb_id'] as int;
-      if (!historyMap.containsKey(id)) {
-        historyMap[id] = row;
-      }
-    }
-
-    // Fetch from denormalized cache table
-    final allIds = followedIds.toList();
-    final allRows = <Map<String, dynamic>>[];
-
-    for (var i = 0; i < allIds.length; i += 100) {
-      final chunk = allIds.sublist(
-        i,
-        i + 100 > allIds.length ? allIds.length : i + 100,
-      );
-      final cacheRes = await _supabase
-          .from('upcoming_agenda_cache')
-          .select()
-          .eq('media_type', 'tv')
-          .inFilter('tmdb_id', chunk)
-          .withErrorHandling();
-      allRows.addAll(List<Map<String, dynamic>>.from(cacheRes as List));
-    }
+    final rows = await _fetchCacheRows('tv', followedIds);
 
     final now = DateTime.now();
-    final todayStr =
-        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    final todayStr = dateOnly(now);
+    final startDate = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(const Duration(days: 30));
 
-    for (final row in allRows) {
+    for (final row in rows) {
       final seriesId = row['tmdb_id'] as int;
       final eventData = row['event_data'] as Map<String, dynamic>;
 
       final episodes = eventData['episodes'] as List? ?? [eventData];
 
-      final startDate = DateTime(
-        now.year,
-        now.month,
-        now.day,
-      ).subtract(const Duration(days: 30));
-
       for (final ep in episodes) {
-        final airDateStr = ep['air_date'] as String?;
-        if (airDateStr == null || airDateStr.isEmpty) {
-          events.add(
-            AgendaEvent.fromEpisode(
-              seriesId: seriesId,
-              seriesName: eventData['series_name'] ?? '',
-              seriesPosterPath: eventData['series_poster_path'],
-              epJson: ep,
-            ),
-          );
-        } else {
-          try {
-            final airDate = DateTime.parse(airDateStr);
-            if (airDate.isAfter(
-              startDate.subtract(const Duration(seconds: 1)),
-            )) {
-              events.add(
-                AgendaEvent.fromEpisode(
-                  seriesId: seriesId,
-                  seriesName: eventData['series_name'] ?? '',
-                  seriesPosterPath: eventData['series_poster_path'],
-                  epJson: ep,
-                ),
-              );
-            }
-          } catch (_) {
-            events.add(
-              AgendaEvent.fromEpisode(
-                seriesId: seriesId,
-                seriesName: eventData['series_name'] ?? '',
-                seriesPosterPath: eventData['series_poster_path'],
-                epJson: ep,
-              ),
-            );
-          }
-        }
+        // Episodes without a valid date (TBD) are always shown.
+        final airDate = DateTime.tryParse(ep['air_date'] as String? ?? '');
+        if (airDate != null && airDate.isBefore(startDate)) continue;
+        events.add(
+          AgendaEvent.fromEpisode(
+            seriesId: seriesId,
+            seriesName: eventData['series_name'] ?? '',
+            seriesPosterPath: eventData['series_poster_path'],
+            epJson: ep,
+          ),
+        );
       }
 
-      final historyItem = historyMap[seriesId];
+      final historyItem = seriesHistory[seriesId];
       if (historyItem != null && historyItem['status'] == 'completed') {
         final next = firstAiredEpisodeAfter(
           season: historyItem['season'] as int? ?? 0,
@@ -286,3 +249,9 @@ class AgendaRepository {
       (first.season == season + 1 && first.episode == 1);
   return isNext ? first : null;
 }
+
+/// [date] as `yyyy-MM-dd`, the format of the cache's date columns.
+String dateOnly(DateTime date) =>
+    '${date.year.toString().padLeft(4, '0')}-'
+    '${date.month.toString().padLeft(2, '0')}-'
+    '${date.day.toString().padLeft(2, '0')}';
