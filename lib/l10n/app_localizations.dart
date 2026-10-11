@@ -668,12 +668,6 @@ abstract class AppLocalizations {
   /// **'Removed {title}'**
   String homeRemovedFromContinueWatching(Object title);
 
-  /// No description provided for @authContinueGuest.
-  ///
-  /// In en, this message translates to:
-  /// **'Continue as Guest'**
-  String get authContinueGuest;
-
   /// No description provided for @authWelcomeBack.
   ///
   /// In en, this message translates to:
@@ -709,12 +703,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign In'**
   String get authSignIn;
-
-  /// No description provided for @authOr.
-  ///
-  /// In en, this message translates to:
-  /// **'OR'**
-  String get authOr;
 
   /// No description provided for @settingsErrorSaving.
   ///

@@ -10,11 +10,6 @@ final authProvider = StateNotifierProvider<AuthService, AsyncValue<User?>>((
   return AuthService(ref.watch(supabaseClientProvider));
 });
 
-// Auth Actions Provider
-final authActionsProvider = Provider<AuthService>((ref) {
-  return ref.watch(authProvider.notifier);
-});
-
 class AuthService extends StateNotifier<AsyncValue<User?>> {
   final SupabaseClient _supabaseClient;
 
@@ -28,15 +23,9 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
     state = AsyncValue.data(session?.user);
 
     // 2. Listen to auth changes
+    // On sign-out the session is null, so this also clears the user.
     _supabaseClient.auth.onAuthStateChange.listen((data) {
-      final AuthChangeEvent event = data.event;
-      final Session? session = data.session;
-
-      state = AsyncValue.data(session?.user);
-
-      if (event == AuthChangeEvent.signedOut) {
-        state = const AsyncValue.data(null);
-      }
+      state = AsyncValue.data(data.session?.user);
     });
   }
 

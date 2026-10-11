@@ -4,7 +4,6 @@ import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -15,7 +14,6 @@ class AuthScreen extends ConsumerStatefulWidget {
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool isLoading = false;
-  String? errorMessage;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -29,12 +27,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        isLoading = true;
-        errorMessage = null;
-      });
+      setState(() => isLoading = true);
 
-      final actions = ref.read(authActionsProvider);
+      final actions = ref.read(authProvider.notifier);
       final email = _emailController.text.trim();
       // Not trimmed: spaces can be part of a password (REV-58).
       final password = _passwordController.text;
@@ -43,9 +38,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         await actions.signIn(email, password);
       } catch (e) {
         if (!mounted) return;
-        setState(() {
-          errorMessage = ref.read(errorMapperProvider).map(e).message;
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ref.read(errorMapperProvider).map(e).message),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
       } finally {
         if (mounted) {
           setState(() {
@@ -59,19 +57,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    // Show error snackbar
-    if (errorMessage != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage!),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-        setState(() => errorMessage = null);
-      });
-    }
-
     return Scaffold(
       backgroundColor: AppTheme.primary,
       body: Center(
@@ -206,45 +191,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           : Text(l10n.authSignIn),
                     ),
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // Divider
-                  Row(
-                    children: [
-                      const Expanded(child: Divider(color: AppTheme.border)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          l10n.authOr,
-                          style: const TextStyle(
-                            color: Colors.white24,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const Expanded(child: Divider(color: AppTheme.border)),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Guest Button (Visual only)
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      icon: const Icon(LucideIcons.user),
-                      label: Text(l10n.authContinueGuest),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.textMuted,
-                        side: const BorderSide(color: AppTheme.border),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      onPressed: null, // Disabled
-                    ),
-                  ),
-                  const SizedBox(height: 16),
                 ],
               ),
             ),

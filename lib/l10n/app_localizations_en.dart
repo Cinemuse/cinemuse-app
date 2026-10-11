@@ -313,9 +313,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get authContinueGuest => 'Continue as Guest';
-
-  @override
   String get authWelcomeBack => 'Welcome Back';
 
   @override
@@ -334,9 +331,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authSignIn => 'Sign In';
-
-  @override
-  String get authOr => 'OR';
 
   @override
   String settingsErrorSaving(Object error) {

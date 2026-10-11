@@ -313,9 +313,6 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get authContinueGuest => 'Continua come Ospite';
-
-  @override
   String get authWelcomeBack => 'Bentornato';
 
   @override
@@ -334,9 +331,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get authSignIn => 'Accedi';
-
-  @override
-  String get authOr => 'OPPURE';
 
   @override
   String settingsErrorSaving(Object error) {
