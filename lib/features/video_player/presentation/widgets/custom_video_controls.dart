@@ -45,6 +45,10 @@ class CustomVideoControls extends ConsumerStatefulWidget {
   final bool isFullWindow;
   final VoidCallback? onToggleFullWindow;
 
+  /// Replaces the tap's show-controls / play-pause; the Live TV mini-player
+  /// opens the big player with it (REV-156).
+  final VoidCallback? onTap;
+
   const CustomVideoControls({
     super.key,
     required this.videoState,
@@ -64,6 +68,7 @@ class CustomVideoControls extends ConsumerStatefulWidget {
     this.onOpenChannelGuide,
     this.isFullWindow = false,
     this.onToggleFullWindow,
+    this.onTap,
   });
 
   @override
@@ -440,6 +445,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
         child: GestureDetector(
           onTap: () {
             if (isOverlayOpen) return;
+            if (widget.onTap != null) return widget.onTap!();
             _visible ? _togglePlayPause() : _onHover();
           },
           onDoubleTapDown: _onDoubleTapDown,
@@ -450,7 +456,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
           behavior: HitTestBehavior.opaque,
           child: Stack(
             children: [
-              // Brightness overlay
               IgnorePointer(
                 child: Container(
                   color: Theme.of(context).colorScheme.scrim.withValues(
@@ -467,7 +472,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                     children: [
                       _buildTopBar(isLive),
 
-                      // Buffering / play-pause center overlay
                       BufferingIndicator(player: player),
                       PlayPauseOverlay(
                         player: player,
@@ -484,7 +488,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                 ),
               ),
 
-              // Number input OSD (always visible, above controls)
               Consumer(
                 builder: (context, ref, _) {
                   final buffer = widget.numberBuffer.isNotEmpty
@@ -496,14 +499,11 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                 },
               ),
 
-              // Channel List Overlay Drawer (for Live TV)
               if (isLive) LiveTvChannelDrawer(onClose: _closeChannelOverlay),
 
-              // Center Seek Indicator HUD
               if (_seekCoordinator.showSeekIndicator)
                 SeekFeedbackHud(seekAmount: _seekCoordinator.seekAmount),
 
-              // Top-Center Volume & Brightness Indicator HUD
               if (_gestureCoordinator.currentDragType != DragType.none)
                 VolumeBrightnessHud(
                   dragType: _gestureCoordinator.currentDragType,

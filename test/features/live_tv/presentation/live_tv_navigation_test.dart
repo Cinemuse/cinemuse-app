@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/gestures.dart' show kDoubleTapTimeout;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -198,43 +199,46 @@ void main() {
   });
 
   group('LiveTvViewMode and D-Pad Navigation Integration', () {
-    testWidgets(
-      'tapping the playing channel keeps the split layout (REV-132)',
-      (tester) async {
-        final channel = createMockChannel();
-        final container = ProviderContainer(
-          overrides: [
-            channelsProvider.overrideWith((ref) => Future.value([channel])),
-          ],
-        );
-        addTearDown(container.dispose);
+    testWidgets('tapping the playing channel opens the big player (REV-132)', (
+      tester,
+    ) async {
+      final channel = createMockChannel();
+      final container = ProviderContainer(
+        overrides: [
+          channelsProvider.overrideWith((ref) => Future.value([channel])),
+        ],
+      );
+      addTearDown(container.dispose);
 
-        // Set current channel as selected
-        container.read(selectedChannelProvider.notifier).select(channel);
-        expect(container.read(liveTvViewModeProvider), LiveTvViewMode.split);
+      // Set current channel as selected
+      container.read(selectedChannelProvider.notifier).select(channel);
+      expect(container.read(liveTvViewModeProvider), LiveTvViewMode.split);
+      Channel? opened;
 
-        await tester.pumpWidget(
-          UncontrolledProviderScope(
-            container: container,
-            child: const MaterialApp(
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              home: Scaffold(body: ChannelListPanel(isOverlay: false)),
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: ChannelListPanel(onOpenPlayer: (c) => opened = c),
             ),
           ),
-        );
-        await tester.pumpAndSettle();
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        // Tap the already selected channel
-        await tester.tap(find.text(channel.name));
-        await tester.pump();
+      // Tap the already selected channel
+      await tester.tap(find.text(channel.name));
+      await tester.pump();
 
-        // fullWindow hid the navbar on wide screens and showed nothing on
-        // phones.
-        expect(container.read(liveTvViewModeProvider), LiveTvViewMode.split);
-        expect(container.read(selectedChannelProvider), same(channel));
-      },
-    );
+      // fullWindow hid the navbar on wide screens and showed nothing on
+      // phones.
+      expect(container.read(liveTvViewModeProvider), LiveTvViewMode.split);
+      expect(container.read(selectedChannelProvider), same(channel));
+      expect(opened, same(channel));
+    });
 
     testWidgets(
       'ArrowRight in split mode invokes livePlayerFocusActionProvider',
@@ -490,6 +494,35 @@ void main() {
       expect(find.byIcon(Icons.settings), findsNothing);
       // Tune icon IS in bottom TV row
       expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
+    });
+
+    testWidgets('a tap runs onTap instead of play/pause (REV-156)', (
+      tester,
+    ) async {
+      var taps = 0;
+      await tester.pumpWidget(
+        buildTestWidget(
+          child: CustomVideoControls(
+            playerState: createTestPlayerState(),
+            channel: createMockChannel(),
+            videoState: FakeLiveVideoState(),
+            params: const PlayerParams('livetv_session', 'livetv'),
+            isLive: true,
+            onSettingsPressed: () {},
+            onTap: () => taps++,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Empty video area, away from the centre play button.
+      final box = tester.getRect(find.byType(CustomVideoControls));
+      await tester.tapAt(Offset(box.left + 20, box.center.dy));
+      // Wait out the double-tap window so the single tap fires.
+      await tester.pump(kDoubleTapTimeout);
+
+      expect(taps, 1);
+      verifyNever(() => mockPlayer.pause());
     });
 
     testWidgets(

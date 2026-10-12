@@ -74,6 +74,7 @@ class LivePlayerSection extends ConsumerWidget {
                       onConfirmNumber: onConfirmNumber,
                       numberBuffer: numberBuffer,
                       onSettingsPressed: onSettingsPressed ?? () {},
+                      onTap: onExpand,
                     ),
                   );
                 },

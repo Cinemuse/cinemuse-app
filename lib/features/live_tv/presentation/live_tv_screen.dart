@@ -31,6 +31,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
   Timer? _channelSwitchTimer;
   final FocusNode _playerFocusNode = FocusNode();
   final FocusNode _guideFocusNode = FocusNode(debugLabel: 'LiveTvGuide');
+  bool _isBigPlayerOpen = false;
 
   // We use a constant PlayerParams for Live TV to keep the provider alive.
   // The actual channel is swapped via `changeChannel`.
@@ -135,10 +136,14 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     ref.read(numberInputBufferProvider.notifier).state = '';
   }
 
-  void _openPlayer(Channel channel) {
+  Future<void> _openPlayer(Channel channel) async {
+    _channelSwitchTimer?.cancel();
     ref.read(selectedChannelProvider.notifier).select(channel);
-    Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute(
+    // The mini-player stops while the big player is open, or both would
+    // play (REV-156); it restarts on the last channel when the user is back.
+    setState(() => _isBigPlayerOpen = true);
+    await Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute<void>(
         builder: (_) => VideoPlayerScreen(
           queryId: channel.uniqueId,
           type: 'livetv',
@@ -146,6 +151,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
         ),
       ),
     );
+    if (mounted) setState(() => _isBigPlayerOpen = false);
   }
 
   void _tuneToLcn(int lcn) {
@@ -160,7 +166,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
         if (isMobile) {
           _playChannel(match);
         } else {
-          _openPlayer(match);
+          unawaited(_openPlayer(match));
         }
       }
     });
@@ -262,13 +268,11 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     // Resolve the nav index FIRST so the listeners below can guard themselves.
     final navIndex = ref.watch(navIndexProvider);
     final isLiveTvTab = navIndex == NavTab.liveTv;
+    final isMiniPlayerOn = isMobile && isLiveTvTab && !_isBigPlayerOpen;
 
     // React to channel selection changes — only on mobile mini-player
     ref.listen(selectedChannelProvider, (prev, next) {
-      if (isMobile &&
-          isLiveTvTab &&
-          next != null &&
-          next.uniqueId != prev?.uniqueId) {
+      if (isMiniPlayerOn && next != null && next.uniqueId != prev?.uniqueId) {
         _playChannel(next);
       }
     });
@@ -285,7 +289,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     AsyncValue<CinemaPlayerState>? playerState;
     // No channel (e.g. every playlist removed): not watching the player
     // disposes it, which stops playback (REV-271).
-    if (isMobile && isLiveTvTab && selectedChannel != null) {
+    if (isMiniPlayerOn && selectedChannel != null) {
       final ps = ref.watch(playerControllerProvider(_liveTvParams));
       playerState = ps;
 
@@ -349,7 +353,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
                 numberBuffer: numberBuffer,
                 onExpand: () {
                   if (selectedChannel != null) {
-                    _openPlayer(selectedChannel);
+                    unawaited(_openPlayer(selectedChannel));
                   }
                 },
                 onSettingsPressed: playerState?.valueOrNull != null
@@ -360,7 +364,11 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
           ),
         ),
         // EPG card removed for mobile to maximize space
-        const Expanded(child: RepaintBoundary(child: ChannelListPanel())),
+        Expanded(
+          child: RepaintBoundary(
+            child: ChannelListPanel(onOpenPlayer: _openPlayer),
+          ),
+        ),
       ],
     );
   }

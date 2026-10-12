@@ -21,7 +21,15 @@ class ChannelListPanel extends ConsumerWidget {
   final bool isOverlay;
   final VoidCallback? onClose;
 
-  const ChannelListPanel({super.key, this.isOverlay = false, this.onClose});
+  /// Phone list: tapping the playing channel opens the big player (REV-132).
+  final ValueChanged<Channel>? onOpenPlayer;
+
+  const ChannelListPanel({
+    super.key,
+    this.isOverlay = false,
+    this.onClose,
+    this.onOpenPlayer,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -80,7 +88,7 @@ class ChannelListPanel extends ConsumerWidget {
           const _SearchRow(),
           const _CategoryChipsRow(),
           const Divider(height: 1, color: Colors.white10),
-          Expanded(child: _ChannelList(isOverlay: false, onClose: onClose)),
+          Expanded(child: _ChannelList(onOpenPlayer: onOpenPlayer)),
         ],
       ),
     );
@@ -176,10 +184,6 @@ class ChannelListPanel extends ConsumerWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Category Chips Row — Horizontal filter chips for Live TV
-// ---------------------------------------------------------------------------
 
 class _CategoryChipsRow extends ConsumerWidget {
   const _CategoryChipsRow();
@@ -314,10 +318,6 @@ class _CategoryChip extends StatelessWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Search Row — Search field + Tab Icons + Filter icon
-// ---------------------------------------------------------------------------
 
 class _SearchRow extends ConsumerStatefulWidget {
   final bool isOverlay;
@@ -697,15 +697,12 @@ class _LiveTvOptionsButton extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Channel List — Flat list with sticky section headers
-// ---------------------------------------------------------------------------
-
 class _ChannelList extends ConsumerStatefulWidget {
   final bool isOverlay;
   final VoidCallback? onClose;
+  final ValueChanged<Channel>? onOpenPlayer;
 
-  const _ChannelList({this.isOverlay = false, this.onClose});
+  const _ChannelList({this.isOverlay = false, this.onClose, this.onOpenPlayer});
 
   @override
   ConsumerState<_ChannelList> createState() => _ChannelListState();
@@ -941,6 +938,7 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
           selectedChannel: selected,
           isOverlay: widget.isOverlay,
           onClose: widget.onClose,
+          onOpenPlayer: widget.onOpenPlayer,
           isFirst: index == 0,
           focusNode: (widget.isOverlay && isSelected)
               ? _selectedChannelFocusNode
@@ -979,6 +977,7 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
             selectedChannel: selected,
             isOverlay: widget.isOverlay,
             onClose: widget.onClose,
+            onOpenPlayer: widget.onOpenPlayer,
             isFirst: isFirst,
             focusNode: (widget.isOverlay && isSelected)
                 ? _selectedChannelFocusNode
@@ -1004,10 +1003,6 @@ class _ListItem {
   bool get isHeader => headerTitle != null;
 }
 
-// ---------------------------------------------------------------------------
-// Section Header
-// ---------------------------------------------------------------------------
-
 class _SectionHeader extends StatelessWidget {
   final String title;
 
@@ -1032,15 +1027,12 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Channel Tile Wrapper — connects tile to providers & D-Pad navigation
-// ---------------------------------------------------------------------------
-
 class _ChannelTileWrapper extends ConsumerWidget {
   final Channel channel;
   final Channel? selectedChannel;
   final bool isOverlay;
   final VoidCallback? onClose;
+  final ValueChanged<Channel>? onOpenPlayer;
   final bool isFirst;
   final FocusNode? focusNode;
   final bool autofocus;
@@ -1050,6 +1042,7 @@ class _ChannelTileWrapper extends ConsumerWidget {
     this.selectedChannel,
     this.isOverlay = false,
     this.onClose,
+    this.onOpenPlayer,
     this.isFirst = false,
     this.focusNode,
     this.autofocus = false,
@@ -1069,9 +1062,9 @@ class _ChannelTileWrapper extends ConsumerWidget {
       currentProgram: currentProgram,
       focusNode: focusNode,
       autofocus: autofocus,
-      // TODO(REV-132): open the big player for the playing channel, with
-      // REV-156 (today that starts a second player).
-      onTap: () => ref.read(selectedChannelProvider.notifier).select(channel),
+      onTap: isPlaying && onOpenPlayer != null
+          ? () => onOpenPlayer!(channel)
+          : () => ref.read(selectedChannelProvider.notifier).select(channel),
       onKeyEvent: (node, event) {
         if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
