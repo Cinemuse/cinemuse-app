@@ -2,6 +2,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -65,8 +66,11 @@ class CollectionCard extends StatelessWidget {
       ];
     }
 
-    return GestureDetector(
+    return DpadFocusable(
       onTap: onTap,
+      scale: 1.02,
+      showFocusRing: true,
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(

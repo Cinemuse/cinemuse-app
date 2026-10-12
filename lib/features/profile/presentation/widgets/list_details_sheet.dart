@@ -8,6 +8,7 @@ import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -241,14 +242,15 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
+                  final subtitleStyle = TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                    height: 1.5,
+                  );
                   final textSpan = TextSpan(
                     text: _displaySubtitle(list),
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                      height: 1.5,
-                    ),
+                    style: subtitleStyle,
                   );
                   final textPainter = TextPainter(
                     text: textSpan,
@@ -267,19 +269,16 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                       children: [
                         Text(
                           _displaySubtitle(list),
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 14,
-                            fontStyle: FontStyle.italic,
-                            height: 1.5,
-                          ),
+                          style: subtitleStyle,
                           maxLines: _isDescExpanded ? null : 3,
                           overflow: _isDescExpanded
                               ? TextOverflow.visible
                               : TextOverflow.ellipsis,
                         ),
                         if (isOverflowing)
-                          GestureDetector(
+                          DpadFocusable(
+                            showFocusRing: true,
+                            borderRadius: BorderRadius.circular(4),
                             onTap: () => setState(
                               () => _isDescExpanded = !_isDescExpanded,
                             ),

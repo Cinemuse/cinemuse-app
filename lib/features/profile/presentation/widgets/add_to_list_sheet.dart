@@ -5,7 +5,6 @@ import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
-import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -128,65 +127,58 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 4),
-                        child: HoverScale(
-                          scale: 1.02,
-                          child: Material(
-                            color: Colors.transparent,
-                            child: ListTile(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: ListTile(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            hoverColor: Colors.white.withValues(alpha: 0.1),
+                            focusColor: Colors.white.withValues(alpha: 0.1),
+                            splashColor: Colors.white.withValues(alpha: 0.05),
+                            onTap: () async {
+                              if (isInList) {
+                                await ref
+                                    .read(listsRepositoryProvider)
+                                    .removeItemFromList(
+                                      listId: list.id,
+                                      tmdbId: widget.media.tmdbId,
+                                      mediaType: widget.media.mediaType,
+                                    );
+                                ref.invalidate(userListsProvider);
+                              } else {
+                                await ref
+                                    .read(userListsProvider.notifier)
+                                    .addItemToCustomList(list.id, widget.media);
+                              }
+                            },
+                            leading: Icon(
+                              isInList
+                                  ? LucideIcons.checkCircle2
+                                  : LucideIcons.circle,
+                              color: isInList
+                                  ? AppTheme.accent
+                                  : Colors.white24,
+                              size: 20,
+                            ),
+                            title: Text(
+                              list.name,
+                              style: TextStyle(
+                                color: isInList ? Colors.white : Colors.white70,
+                                fontWeight: isInList
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                               ),
-                              hoverColor: Colors.white.withValues(alpha: 0.1),
-                              splashColor: Colors.white.withValues(alpha: 0.05),
-                              onTap: () async {
-                                if (isInList) {
-                                  await ref
-                                      .read(listsRepositoryProvider)
-                                      .removeItemFromList(
-                                        listId: list.id,
-                                        tmdbId: widget.media.tmdbId,
-                                        mediaType: widget.media.mediaType,
-                                      );
-                                  ref.invalidate(userListsProvider);
-                                } else {
-                                  await ref
-                                      .read(userListsProvider.notifier)
-                                      .addItemToCustomList(
-                                        list.id,
-                                        widget.media,
-                                      );
-                                }
-                              },
-                              leading: Icon(
-                                isInList
-                                    ? LucideIcons.checkCircle2
-                                    : LucideIcons.circle,
-                                color: isInList
-                                    ? AppTheme.accent
-                                    : Colors.white24,
-                                size: 20,
+                            ),
+                            trailing: Text(
+                              '${list.items.length}',
+                              style: const TextStyle(
+                                color: Colors.white24,
+                                fontSize: 12,
                               ),
-                              title: Text(
-                                list.name,
-                                style: TextStyle(
-                                  color: isInList
-                                      ? Colors.white
-                                      : Colors.white70,
-                                  fontWeight: isInList
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                              trailing: Text(
-                                '${list.items.length}',
-                                style: const TextStyle(
-                                  color: Colors.white24,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
                             ),
                           ),
                         ),
@@ -232,38 +224,32 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
     return Container(
       key: const ValueKey('create_btn'),
       margin: const EdgeInsets.only(bottom: 4),
-      child: HoverScale(
-        scale: 1.02,
-        child: Material(
-          color: Colors.transparent,
-          child: ListTile(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            hoverColor: Colors.white.withValues(alpha: 0.1),
-            splashColor: Colors.white.withValues(alpha: 0.05),
-            onTap: () {
-              setState(() {
-                _isCreatingList = true;
-              });
-              Future.delayed(const Duration(milliseconds: 100), () {
-                if (mounted) _focusNode.requestFocus();
-              });
-            },
-            leading: const Icon(
-              LucideIcons.plus,
-              color: Colors.white,
-              size: 20,
-            ),
-            title: Text(
-              l10n.detailsCreateNewList,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
+          hoverColor: Colors.white.withValues(alpha: 0.1),
+          focusColor: Colors.white.withValues(alpha: 0.1),
+          splashColor: Colors.white.withValues(alpha: 0.05),
+          onTap: () {
+            setState(() {
+              _isCreatingList = true;
+            });
+            Future.delayed(const Duration(milliseconds: 100), () {
+              if (mounted) _focusNode.requestFocus();
+            });
+          },
+          leading: const Icon(LucideIcons.plus, color: Colors.white, size: 20),
+          title: Text(
+            l10n.detailsCreateNewList,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
         ),
       ),
     );

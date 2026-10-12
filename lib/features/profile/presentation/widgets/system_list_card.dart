@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class SystemListCard extends StatelessWidget {
@@ -52,8 +53,11 @@ class SystemListCard extends StatelessWidget {
         ? l10n.listCuratedPicks
         : l10n.listDroppedSubtitle;
 
-    return GestureDetector(
+    return DpadFocusable(
       onTap: onTap,
+      scale: 1.02,
+      showFocusRing: true,
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(

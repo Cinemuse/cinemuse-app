@@ -10,6 +10,7 @@ import 'package:cinemuse_app/features/video_player/presentation/video_player_scr
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/watch_history_filter_sheet.dart';
@@ -737,17 +738,16 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
             ),
           ),
           if (_searchQuery.isNotEmpty)
-            GestureDetector(
+            DpadFocusable(
               onTap: _searchController.clear,
-              child: const MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(
-                    Icons.close_rounded,
-                    color: AppTheme.textMuted,
-                    size: 16,
-                  ),
+              showFocusRing: true,
+              borderRadius: BorderRadius.circular(12),
+              child: const Padding(
+                padding: EdgeInsets.all(4),
+                child: Icon(
+                  Icons.close_rounded,
+                  color: AppTheme.textMuted,
+                  size: 16,
                 ),
               ),
             ),
@@ -858,39 +858,37 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(9),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(
-                  icon,
-                  size: 14,
-                  color: isSelected ? Colors.black : AppTheme.textMuted,
-                ),
-                const SizedBox(width: 5),
-              ],
-              Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? Colors.black : AppTheme.textMuted,
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                ),
+    return DpadFocusable(
+      onTap: onTap,
+      showFocusRing: true,
+      borderRadius: BorderRadius.circular(9),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected ? Colors.black : AppTheme.textMuted,
               ),
+              const SizedBox(width: 5),
             ],
-          ),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.black : AppTheme.textMuted,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );

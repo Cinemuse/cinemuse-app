@@ -2,6 +2,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/profile_stats.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -553,28 +554,19 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay>
 
           Widget currentWidget;
           if (isBack && _expandedIndex != null) {
-            switch (_expandedIndex) {
-              case 0:
-                currentWidget = GestureDetector(
-                  onTap: () => _toggleExpanded(0),
-                  child: TimeBreakdownCard(stats: widget.stats),
-                );
-                break;
-              case 1:
-                currentWidget = GestureDetector(
-                  onTap: () => _toggleExpanded(1),
-                  child: MoviesStatsCard(stats: widget.stats),
-                );
-                break;
-              case 2:
-                currentWidget = GestureDetector(
-                  onTap: () => _toggleExpanded(2),
-                  child: SeriesStatsCard(stats: widget.stats),
-                );
-                break;
-              default:
-                currentWidget = const SizedBox.shrink();
-            }
+            final index = _expandedIndex!;
+            // The small card that had focus is gone after the flip.
+            currentWidget = DpadFocusable(
+              onTap: () => _toggleExpanded(index),
+              autofocus: true,
+              showFocusRing: true,
+              borderRadius: BorderRadius.circular(16),
+              child: switch (index) {
+                0 => TimeBreakdownCard(stats: widget.stats),
+                1 => MoviesStatsCard(stats: widget.stats),
+                _ => SeriesStatsCard(stats: widget.stats),
+              },
+            );
           } else {
             currentWidget = _buildCollapsedRow(l10n);
           }
@@ -634,8 +626,10 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay>
     Color color,
     String value,
   ) {
-    return GestureDetector(
+    return DpadFocusable(
       onTap: () => _toggleExpanded(index),
+      showFocusRing: true,
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         height: 110,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
