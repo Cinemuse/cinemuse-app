@@ -6,6 +6,11 @@ import 'package:cinemuse_app/features/media/domain/comment.dart';
 
 class MockDio extends Mock implements Dio {}
 
+/// Matches a request whose `after` variable is [cursor].
+Matcher _withCursor(String? cursor) => predicate<Object?>(
+  (data) => ((data! as Map)['variables'] as Map)['after'] == cursor,
+);
+
 void main() {
   late MockDio mockDio;
   late ImdbService imdbService;
@@ -130,10 +135,7 @@ void main() {
       when(
         () => mockDio.post<dynamic>(
           any(),
-          data: any(
-            named: 'data',
-            that: containsPair('query', contains(r'$first: Int!')),
-          ),
+          data: any(named: 'data', that: _withCursor(null)),
           options: any(named: 'options'),
         ),
       ).thenAnswer(
@@ -147,10 +149,7 @@ void main() {
       when(
         () => mockDio.post<dynamic>(
           any(),
-          data: any(
-            named: 'data',
-            that: containsPair('query', contains(r'$after: ID!')),
-          ),
+          data: any(named: 'data', that: _withCursor('cursor_123')),
           options: any(named: 'options'),
         ),
       ).thenAnswer(
@@ -176,6 +175,66 @@ void main() {
       expect(page2Reviews.length, 1);
       expect(page2Reviews.first.id, 'imdb_p2');
       expect(page2Reviews.first.rating, 4.0); // 8 / 2 = 4.0
+    });
+
+    // REV-188: without a saved cursor, page 2 re-downloaded page 1.
+    test('a page after the last one is empty and downloads nothing', () async {
+      final reviews = await imdbService.fetchReviews(
+        imdbId: 'tt0816692',
+        page: 2,
+      );
+
+      expect(reviews, isEmpty);
+      verifyNever(
+        () => mockDio.post<dynamic>(
+          any(),
+          data: any(named: 'data'),
+          options: any(named: 'options'),
+        ),
+      );
+    });
+
+    // REV-188: `&amp;` was decoded first, so a written `&lt;` became `<`.
+    test('decodes each HTML entity once', () async {
+      when(
+        () => mockDio.post<dynamic>(
+          any(),
+          data: any(named: 'data'),
+          options: any(named: 'options'),
+        ),
+      ).thenAnswer(
+        (_) async => Response(
+          data: {
+            'data': {
+              'title': {
+                'reviews': {
+                  'edges': [
+                    {
+                      'node': {
+                        'id': 'e1',
+                        'summary': {'originalText': 'Tom &amp; Jerry'},
+                        'text': {
+                          'originalText': {
+                            'plaidHtml':
+                                'Type &amp;lt; here<br/>&quot;ok&quot;',
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          statusCode: 200,
+          requestOptions: RequestOptions(path: ''),
+        ),
+      );
+
+      final review = (await imdbService.fetchReviews(imdbId: 'tt1')).single;
+
+      expect(review.title, 'Tom & Jerry');
+      expect(review.text, 'Type &lt; here\n"ok"');
     });
 
     test('gracefully handles network error and returns empty list', () async {

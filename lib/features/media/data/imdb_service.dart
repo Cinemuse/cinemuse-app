@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
+import 'package:html/parser.dart' as html_parser;
 import 'package:cinemuse_app/features/media/domain/comment.dart';
 import 'package:cinemuse_app/features/media/data/review_json_fields.dart';
 
@@ -33,21 +34,22 @@ class ImdbService {
     final previousCursor = page > 1
         ? _pageCursors['$formattedId:p${page - 1}']
         : null;
+    // REV-188: no cursor for the previous page means IMDb has no more (or
+    // that page failed): asking without one would download page 1 again.
+    if (page > 1 && (previousCursor == null || previousCursor.isEmpty)) {
+      return const [];
+    }
 
-    final isPaginated = previousCursor != null && previousCursor.isNotEmpty;
-    final query = isPaginated
-        ? _reviewsGraphQLQueryAfter
-        : _reviewsGraphQLQueryInitial;
     final variables = <String, dynamic>{
       'titleId': formattedId,
       'first': limit,
-      if (isPaginated) 'after': previousCursor,
+      'after': previousCursor,
     };
 
     try {
       final response = await _dio.post<dynamic>(
         _endpoint,
-        data: {'query': query, 'variables': variables},
+        data: {'query': _reviewsGraphQLQuery, 'variables': variables},
         options: Options(headers: _defaultHeaders),
       );
 
@@ -124,8 +126,6 @@ class ImdbService {
       rawText = textObj.toString();
     }
 
-    final cleanedText = _cleanReviewText(rawText);
-
     // Normalize IMDb rating from 0-10 scale into 0-5 scale
     final rawRating = node['authorRating'];
     final rating = rawRating is num ? (rawRating / 2.0) : null;
@@ -138,8 +138,8 @@ class ImdbService {
         id: 'imdb_$authorName',
         username: authorName.isNotEmpty ? authorName : 'IMDb User',
       ),
-      title: summary.isNotEmpty ? _unescapeHtml(summary) : null,
-      text: _unescapeHtml(cleanedText),
+      title: summary.isNotEmpty ? _htmlToText(summary) : null,
+      text: _htmlToText(rawText),
       rating: rating,
       createdAt: date,
       likeCount: upVotes,
@@ -147,65 +147,21 @@ class ImdbService {
     );
   }
 
-  String _cleanReviewText(String html) {
+  /// Review HTML as plain text: line breaks kept, tags dropped, entities
+  /// decoded once by a real parser (REV-188: decoding `&amp;` first turned
+  /// a written `&lt;` into `<`).
+  String _htmlToText(String html) {
     if (html.isEmpty) return '';
-    return html
-        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
-        .replaceAll(RegExp(r'<[^>]*>'), '')
-        .trim();
+    final withBreaks = html.replaceAll(
+      RegExp(r'<br\s*/?>', caseSensitive: false),
+      '\n',
+    );
+    return (html_parser.parseFragment(withBreaks).text ?? '').trim();
   }
 
-  String _unescapeHtml(String text) {
-    if (text.isEmpty) return '';
-    return text
-        .replaceAll('&amp;', '&')
-        .replaceAll('&lt;', '<')
-        .replaceAll('&gt;', '>')
-        .replaceAll('&quot;', '"')
-        .replaceAll('&#39;', "'")
-        .replaceAll('&apos;', "'")
-        .replaceAll('&#27;', "'")
-        .replaceAll('&#x2F;', '/');
-  }
-
-  static const String _reviewsGraphQLQueryInitial = r'''
-    query TitleReviews($titleId: ID!, $first: Int!) {
-      title(id: $titleId) {
-        reviews(first: $first) {
-          total
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-          edges {
-            node {
-              id
-              author {
-                nickName
-              }
-              authorRating
-              submissionDate
-              summary {
-                originalText
-              }
-              text {
-                originalText {
-                  plaidHtml
-                }
-              }
-              helpfulness {
-                upVotes
-                downVotes
-              }
-            }
-          }
-        }
-      }
-    }
-  ''';
-
-  static const String _reviewsGraphQLQueryAfter = r'''
-    query TitleReviewsAfter($titleId: ID!, $first: Int!, $after: ID!) {
+  /// One query for every page: `$after` is null on the first one.
+  static const String _reviewsGraphQLQuery = r'''
+    query TitleReviews($titleId: ID!, $first: Int!, $after: ID) {
       title(id: $titleId) {
         reviews(first: $first, after: $after) {
           total
