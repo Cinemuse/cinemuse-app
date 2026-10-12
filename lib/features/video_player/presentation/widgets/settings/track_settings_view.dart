@@ -218,11 +218,7 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
           builder: (context) {
             bool foundAutoMatch = false;
             final hasMatchInList = tracks.any(
-              (track) =>
-                  selectedTrack.id == track.id ||
-                  (selectedTrack.title != null &&
-                      track.title != null &&
-                      selectedTrack.title == track.title),
+              (track) => _isSameTrack(selectedTrack, track),
             );
 
             return Column(
@@ -230,11 +226,7 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
               children: tracks.asMap().entries.map((entry) {
                 final index = entry.key;
                 final track = entry.value;
-                bool isSelected =
-                    selectedTrack.id == track.id ||
-                    (selectedTrack.title != null &&
-                        track.title != null &&
-                        selectedTrack.title == track.title);
+                bool isSelected = _isSameTrack(selectedTrack, track);
 
                 if (!isSelected &&
                     selectedTrack.id == 'auto' &&
@@ -286,3 +278,13 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
       .read(playerControllerProvider(widget.params).notifier)
       .setManualTrackSelection();
 }
+
+/// By id: two tracks may share a title (e.g. two "English" subtitles, full
+/// and SDH), and both looked selected (REV-169). The title counts only for
+/// on-demand subtitle entries, whose id is their URI.
+bool _isSameTrack(dynamic selected, dynamic track) =>
+    selected.id == track.id ||
+    (track is SubtitleTrack &&
+        track.uri &&
+        track.title != null &&
+        selected.title == track.title);
