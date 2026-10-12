@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -130,6 +131,32 @@ void main() {
       final replies = await service.fetchReviewComments('101');
       expect(replies.length, 1);
       expect(replies.first['commentText'], 'Agreed!');
+    });
+
+    // REV-189: show reviews and replies returned {} / [] when offline, so
+    // "offline" looked like "no reviews".
+    test('offline requests throw a NetworkFailure', () async {
+      when(
+        () => mockDio.get<Map<String, dynamic>>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+          options: any(named: 'options'),
+        ),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: ''),
+          type: DioExceptionType.connectionError,
+        ),
+      );
+
+      await expectLater(
+        service.fetchShowReviews(showId: 1399),
+        throwsA(isA<NetworkFailure>()),
+      );
+      await expectLater(
+        service.fetchReviewComments('101'),
+        throwsA(isA<NetworkFailure>()),
+      );
     });
   });
 }

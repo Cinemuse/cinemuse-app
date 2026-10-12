@@ -1,8 +1,10 @@
-import 'dart:developer' as developer;
+import 'package:cinemuse_app/core/error/app_failure.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:dio/dio.dart';
 import 'package:cinemuse_app/features/media/data/review_json_fields.dart';
 
 /// Service responsible for communicating with Serializd API endpoints.
+/// Failures are thrown as an [AppFailure] (REV-189).
 class SerializdService {
   static const String _baseUrl = 'https://serializd.onrender.com/api';
   static const Map<String, String> _defaultHeaders = {
@@ -25,12 +27,7 @@ class SerializdService {
     }
 
     try {
-      final response = await _dio.get<Map<String, dynamic>>(
-        '$_baseUrl/show/$showId/season/$seasonNumber',
-        options: Options(headers: _defaultHeaders),
-      );
-
-      final data = response.data;
+      final data = await _get('/show/$showId/season/$seasonNumber');
       if (data != null && data['seasonId'] != null) {
         final seasonId = jsonInt(data['seasonId']);
         if (seasonId > 0) {
@@ -38,12 +35,13 @@ class SerializdService {
           return seasonId;
         }
       }
-    } catch (e, stack) {
-      developer.log(
-        'Failed to resolve Serializd seasonId for show $showId season $seasonNumber',
-        name: 'SerializdService',
+    } on AppFailure catch (e, st) {
+      // Safe to go on: the reviews request works without a season id.
+      AppLogger.warn(
+        'SerializdService',
+        'No seasonId for show $showId season $seasonNumber',
         error: e,
-        stackTrace: stack,
+        stackTrace: st,
       );
     }
     return null;
@@ -80,23 +78,7 @@ class SerializdService {
       queryParams['cursor'] = cursor;
     }
 
-    try {
-      final response = await _dio.get<Map<String, dynamic>>(
-        '$_baseUrl/show/$showId/reviewspage_v3',
-        queryParameters: queryParams,
-        options: Options(headers: _defaultHeaders),
-      );
-
-      return response.data ?? {};
-    } catch (e, stack) {
-      developer.log(
-        'Failed to fetch Serializd episode reviews for show $showId season $seasonNumber episode $episodeNumber',
-        name: 'SerializdService',
-        error: e,
-        stackTrace: stack,
-      );
-      rethrow;
-    }
+    return await _get('/show/$showId/reviewspage_v3', query: queryParams) ?? {};
   }
 
   /// Fetches top-level show reviews/discussions.
@@ -112,48 +94,36 @@ class SerializdService {
       queryParams['cursor'] = cursor;
     }
 
-    try {
-      final response = await _dio.get<Map<String, dynamic>>(
-        '$_baseUrl/show/$showId/reviewspage_v3',
-        queryParameters: queryParams,
-        options: Options(headers: _defaultHeaders),
-      );
-
-      return response.data ?? {};
-    } catch (e, stack) {
-      developer.log(
-        'Failed to fetch Serializd show reviews for show $showId',
-        name: 'SerializdService',
-        error: e,
-        stackTrace: stack,
-      );
-      return {};
-    }
+    return await _get('/show/$showId/reviewspage_v3', query: queryParams) ?? {};
   }
 
   /// Fetches threaded comments/replies for a specific review [reviewId].
   Future<List<Map<String, dynamic>>> fetchReviewComments(
     String reviewId,
   ) async {
+    final data = await _get('/review/$reviewId/comments');
+    final comments = data?['reviewComments'] as List<dynamic>? ?? [];
+    return comments.whereType<Map<String, dynamic>>().toList();
+  }
+
+  /// GET on the Serializd API. Throws an [AppFailure].
+  Future<Map<String, dynamic>?> _get(
+    String path, {
+    Map<String, dynamic>? query,
+  }) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
-        '$_baseUrl/review/$reviewId/comments',
+        '$_baseUrl$path',
+        queryParameters: query,
         options: Options(headers: _defaultHeaders),
       );
-
-      final data = response.data;
-      if (data == null) return [];
-
-      final comments = data['reviewComments'] as List<dynamic>? ?? [];
-      return comments.whereType<Map<String, dynamic>>().toList();
-    } catch (e, stack) {
-      developer.log(
-        'Failed to fetch review comments for review $reviewId',
-        name: 'SerializdService',
-        error: e,
-        stackTrace: stack,
-      );
-      return [];
+      return response.data;
+    } on DioException catch (e, st) {
+      final status = e.response?.statusCode;
+      final message = 'Serializd GET $path failed (${e.type.name}, $status)';
+      throw e.type == DioExceptionType.badResponse
+          ? ServerFailure(message, statusCode: status, cause: e, stackTrace: st)
+          : NetworkFailure(message, cause: e, stackTrace: st);
     }
   }
 }
