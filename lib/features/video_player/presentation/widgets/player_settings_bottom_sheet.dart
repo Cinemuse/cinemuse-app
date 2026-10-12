@@ -7,13 +7,11 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 
 import 'settings/main_settings_view.dart';
+export 'settings/main_settings_view.dart' show SettingsView;
 import 'settings/quality_settings_view.dart';
 import 'settings/track_settings_view.dart';
 import 'settings/subtitle_appearance_view.dart';
 import 'settings/live_tv_quality_view.dart';
-
-/// The views available inside the settings sheet.
-enum SettingsView { main, quality, audio, subtitles, appearance }
 
 class PlayerSettingsBottomSheet extends ConsumerStatefulWidget {
   final CinemaPlayerState state;
@@ -152,25 +150,7 @@ class _PlayerSettingsBottomSheetState
   Widget _buildView(SettingsView view, CinemaPlayerState currentState) {
     switch (view) {
       case SettingsView.main:
-        return MainSettingsView(
-          state: currentState,
-          onNavigate: (viewStr) {
-            switch (viewStr) {
-              case 'quality':
-                _navigateTo(SettingsView.quality);
-                break;
-              case 'audio':
-                _navigateTo(SettingsView.audio);
-                break;
-              case 'subtitles':
-                _navigateTo(SettingsView.subtitles);
-                break;
-              case 'appearance':
-                _navigateTo(SettingsView.appearance);
-                break;
-            }
-          },
-        );
+        return MainSettingsView(state: currentState, onNavigate: _navigateTo);
       case SettingsView.quality:
         if (currentState.isLive) {
           return LiveTvQualityView(

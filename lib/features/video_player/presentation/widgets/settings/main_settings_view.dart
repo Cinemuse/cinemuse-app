@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'settings_widgets.dart';
 
-// The enumeration is still in the main file, but we use strings or integers if needed.
-// However, it's better to pass a callback that handles the navigation logic.
+/// The views available inside the player's settings sheet. Here, not in
+/// the sheet: the sheet imports this menu, which navigates with it.
+enum SettingsView { main, quality, audio, subtitles, appearance }
 
-class MainSettingsView extends ConsumerWidget {
+class MainSettingsView extends StatelessWidget {
   final CinemaPlayerState state;
-  final void Function(String) onNavigate;
+  final ValueChanged<SettingsView> onNavigate;
 
   const MainSettingsView({
     super.key,
@@ -19,7 +19,7 @@ class MainSettingsView extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
@@ -45,7 +45,7 @@ class MainSettingsView extends ConsumerWidget {
               icon: Icons.high_quality_rounded,
               title: l10n.playerQuality,
               subtitle: QualitySubtitle(state: state),
-              onTap: () => onNavigate('quality'),
+              onTap: () => onNavigate(SettingsView.quality),
               compact: isLandscape,
               autofocus: true,
             ),
@@ -54,20 +54,20 @@ class MainSettingsView extends ConsumerWidget {
                 icon: Icons.audiotrack_rounded,
                 title: l10n.playerAudio,
                 subtitle: TrackSubtitle(state: state, isSubtitle: false),
-                onTap: () => onNavigate('audio'),
+                onTap: () => onNavigate(SettingsView.audio),
                 compact: isLandscape,
               ),
               SettingsTile(
                 icon: Icons.subtitles_rounded,
                 title: l10n.playerSubtitles,
                 subtitle: TrackSubtitle(state: state, isSubtitle: true),
-                onTap: () => onNavigate('subtitles'),
+                onTap: () => onNavigate(SettingsView.subtitles),
                 compact: isLandscape,
               ),
               SettingsTile(
                 icon: Icons.style_outlined,
                 title: l10n.playerSubtitleAppearance,
-                onTap: () => onNavigate('appearance'),
+                onTap: () => onNavigate(SettingsView.appearance),
                 compact: isLandscape,
               ),
             ],

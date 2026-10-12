@@ -12,12 +12,11 @@ import 'package:cinemuse_app/features/streaming/subtitles/subtitle_service.dart'
 import 'package:cinemuse_app/features/video_player/presentation/widgets/settings/external_subtitles_section.dart';
 import 'settings_widgets.dart';
 
-class TrackSettingsView extends ConsumerStatefulWidget {
+class TrackSettingsView extends ConsumerWidget {
   final CinemaPlayerState state;
   final PlayerParams params;
   final bool isSubtitle;
   final VoidCallback onBack;
-  final void Function(String)? onNavigate;
 
   const TrackSettingsView({
     super.key,
@@ -25,38 +24,29 @@ class TrackSettingsView extends ConsumerStatefulWidget {
     required this.params,
     required this.isSubtitle,
     required this.onBack,
-    this.onNavigate,
   });
 
   @override
-  ConsumerState<TrackSettingsView> createState() => _TrackSettingsViewState();
-}
-
-class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final currentState =
-        ref.watch(playerControllerProvider(widget.params)).value ??
-        widget.state;
+        ref.watch(playerControllerProvider(params)).value ?? state;
     final player = currentState.controller.player;
     final l10n = AppLocalizations.of(context)!;
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
 
-    final tracks = widget.isSubtitle
+    final tracks = isSubtitle
         ? player.state.tracks.subtitle
         : player.state.tracks.audio;
-    final selectedTrack = widget.isSubtitle
+    final selectedTrack = isSubtitle
         ? (currentState.activeSubtitleTrack ?? player.state.track.subtitle)
         : (currentState.activeAudioTrack ?? player.state.track.audio);
 
     final pref = ref.watch(settingsProvider);
     final prefLang = (currentState.isAnime && pref.splitAnimePreferences)
-        ? (widget.isSubtitle
-                  ? pref.animeSubtitleLanguage
-                  : pref.animeAudioLanguage)
+        ? (isSubtitle ? pref.animeSubtitleLanguage : pref.animeAudioLanguage)
               .toLowerCase()
-        : (widget.isSubtitle ? pref.subtitleLanguage : pref.playerLanguage)
+        : (isSubtitle ? pref.subtitleLanguage : pref.playerLanguage)
               .toLowerCase();
 
     final regularTracks = tracks
@@ -65,7 +55,7 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
 
     // Include on-demand stream subtitles (e.g. from VixSrc) among internal tracks
     final allInternalTracks = <dynamic>[...regularTracks];
-    if (widget.isSubtitle) {
+    if (isSubtitle) {
       final onDemandList =
           currentState
                   .currentStream
@@ -98,18 +88,18 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
 
     final noTrack =
         tracks.where((t) => t.id == 'no').firstOrNull ??
-        (widget.isSubtitle ? SubtitleTrack.no() : AudioTrack.no());
-    final externalSubsAsync = widget.isSubtitle
-        ? ref.watch(externalSubtitlesProvider(widget.params))
+        (isSubtitle ? SubtitleTrack.no() : AudioTrack.no());
+    final externalSubsAsync = isSubtitle
+        ? ref.watch(externalSubtitlesProvider(params))
         : null;
 
     return Column(
       children: [
         SubViewHeader(
-          title: widget.isSubtitle
+          title: isSubtitle
               ? l10n.playerSelectSubtitle
               : l10n.playerSelectAudio,
-          onBack: widget.onBack,
+          onBack: onBack,
           compact: isLandscape,
         ),
         Flexible(
@@ -122,13 +112,14 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
               children: [
                 SizedBox(height: isLandscape ? 4 : 12),
                 _buildDisableTrackTile(
+                  ref,
                   player,
                   noTrack,
                   selectedTrack,
                   l10n,
                   autofocus: selectedTrack.id == 'no',
                 ),
-                if (allInternalTracks.isNotEmpty || widget.isSubtitle)
+                if (allInternalTracks.isNotEmpty || isSubtitle)
                   const Divider(
                     color: AppTheme.borderSubtle,
                     height: 32,
@@ -137,6 +128,7 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
                   ),
                 if (allInternalTracks.isNotEmpty)
                   _buildInternalTracks(
+                    ref,
                     player,
                     allInternalTracks,
                     selectedTrack,
@@ -144,7 +136,7 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
                     l10n,
                     hasSelectionPrior: selectedTrack.id == 'no',
                   ),
-                if (widget.isSubtitle &&
+                if (isSubtitle &&
                     ref.read(subtitleServiceProvider).hasActiveProviders) ...[
                   if (allInternalTracks.isNotEmpty)
                     const Divider(
@@ -157,8 +149,8 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
                     player: player,
                     externalSubsAsync: externalSubsAsync!,
                     isLandscape: isLandscape,
-                    onBack: widget.onBack,
-                    params: widget.params,
+                    onBack: onBack,
+                    params: params,
                   ),
                 ],
                 const SizedBox(height: 24),
@@ -176,6 +168,7 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
 
   /// Builds the "Off / Disable" or "No Audio / Mute" tile.
   Widget _buildDisableTrackTile(
+    WidgetRef ref,
     Player player,
     dynamic noTrack,
     dynamic selectedTrack,
@@ -187,19 +180,18 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
       player: player,
       track: noTrack,
       isSelected: isSelected,
-      isSubtitle: widget.isSubtitle,
-      customTitle: widget.isSubtitle
-          ? l10n.playerTrackOff
-          : l10n.playerTrackNoAudio,
+      isSubtitle: isSubtitle,
+      customTitle: isSubtitle ? l10n.playerTrackOff : l10n.playerTrackNoAudio,
       color: AppTheme.textMuted,
-      onBack: widget.onBack,
-      onSelected: _notifyManualSelection,
+      onBack: onBack,
+      onSelected: () => _notifyManualSelection(ref),
       autofocus: autofocus || isSelected,
     );
   }
 
   /// Builds the "INTERNAL TRACKS" section header and track list.
   Widget _buildInternalTracks(
+    WidgetRef ref,
     Player player,
     List<dynamic> tracks,
     dynamic selectedTrack,
@@ -207,7 +199,7 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
     AppLocalizations l10n, {
     bool hasSelectionPrior = false,
   }) {
-    final internalTracksHeader = widget.isSubtitle
+    final internalTracksHeader = isSubtitle
         ? l10n.playerInternalTracks
         : l10n.playerAudioTracks;
     return Column(
@@ -244,9 +236,9 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
                   player: player,
                   track: track,
                   isSelected: isSelected,
-                  isSubtitle: widget.isSubtitle,
-                  onBack: widget.onBack,
-                  onSelected: _notifyManualSelection,
+                  isSubtitle: isSubtitle,
+                  onBack: onBack,
+                  onSelected: () => _notifyManualSelection(ref),
                   autofocus: shouldAutofocus,
                 );
               }).toList(),
@@ -274,8 +266,8 @@ class _TrackSettingsViewState extends ConsumerState<TrackSettingsView> {
     ),
   );
 
-  void _notifyManualSelection() => ref
-      .read(playerControllerProvider(widget.params).notifier)
+  void _notifyManualSelection(WidgetRef ref) => ref
+      .read(playerControllerProvider(params).notifier)
       .setManualTrackSelection();
 }
 

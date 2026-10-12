@@ -266,7 +266,7 @@ class TrackSubtitle extends ConsumerWidget {
   }
 }
 
-class TrackTile extends ConsumerWidget {
+class TrackTile extends StatelessWidget {
   final Player player;
   final dynamic track;
   final bool isSelected;
@@ -291,7 +291,7 @@ class TrackTile extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final title =
         customTitle ??
         LanguageMapper.getDisplayLanguage(
