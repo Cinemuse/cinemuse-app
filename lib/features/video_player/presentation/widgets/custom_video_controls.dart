@@ -43,6 +43,7 @@ class CustomVideoControls extends ConsumerStatefulWidget {
   /// Replaces the tap's show-controls / play-pause; the Live TV mini-player
   /// opens the big player with it (REV-156).
   final VoidCallback? onTap;
+  final bool isSubtitleOverlayOpen;
 
   const CustomVideoControls({
     super.key,
@@ -59,6 +60,7 @@ class CustomVideoControls extends ConsumerStatefulWidget {
     this.onConfirmNumber,
     this.numberBuffer = '',
     this.onTap,
+    this.isSubtitleOverlayOpen = false,
   });
 
   @override
@@ -96,6 +98,15 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _syncFocusForVisibility();
     });
+  }
+
+  @override
+  void didUpdateWidget(CustomVideoControls oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Keys come back here when the subtitle panel closes (REV-166).
+    if (oldWidget.isSubtitleOverlayOpen && !widget.isSubtitleOverlayOpen) {
+      _syncFocusForVisibility();
+    }
   }
 
   @override
@@ -374,20 +385,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
         onUpdate: () => mounted ? setState(() {}) : null,
       );
 
-  void _onVerticalDragEnd(DragEndDetails details) =>
-      _gestureCoordinator.onVerticalDragEnd(
-        onComplete: () => mounted ? setState(() {}) : null,
-        onStartHideTimer: _startHideTimer,
-      );
-
-  void _onDoubleTapDown(TapDownDetails details) =>
-      _gestureCoordinator.onDoubleTapDown(details);
-
-  void _onDoubleTap() => _gestureCoordinator.onDoubleTap(
-    screenWidth: MediaQuery.of(context).size.width,
-    onSkip: _performRealSkip,
-  );
-
   void _closeChannelOverlay() {
     ref.read(liveTvChannelOverlayProvider.notifier).state = false;
     _showControls();
@@ -397,8 +394,8 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   @override
   Widget build(BuildContext context) {
     final player = widget.playerState.controller.player;
-    final isOverlayOpen = ref.watch(liveTvChannelOverlayProvider);
-
+    final isOverlayOpen =
+        ref.watch(liveTvChannelOverlayProvider) || widget.isSubtitleOverlayOpen;
     final isLive = widget.isLive || widget.params.type == 'livetv';
 
     return Focus(
@@ -417,11 +414,17 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
             if (widget.onTap != null) return widget.onTap!();
             _visible ? _togglePlayPause() : _showControls();
           },
-          onDoubleTapDown: _onDoubleTapDown,
-          onDoubleTap: _onDoubleTap,
+          onDoubleTapDown: _gestureCoordinator.onDoubleTapDown,
+          onDoubleTap: () => _gestureCoordinator.onDoubleTap(
+            screenWidth: MediaQuery.of(context).size.width,
+            onSkip: _performRealSkip,
+          ),
           onVerticalDragStart: _onVerticalDragStart,
           onVerticalDragUpdate: _onVerticalDragUpdate,
-          onVerticalDragEnd: _onVerticalDragEnd,
+          onVerticalDragEnd: (_) => _gestureCoordinator.onVerticalDragEnd(
+            onComplete: () => mounted ? setState(() {}) : null,
+            onStartHideTimer: _startHideTimer,
+          ),
           behavior: HitTestBehavior.opaque,
           child: Stack(
             children: [
@@ -443,7 +446,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                     child: Stack(
                       children: [
                         _buildTopBar(isLive),
-
                         BufferingIndicator(player: player),
                         PlayPauseOverlay(
                           player: player,
@@ -453,14 +455,12 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                           seekAmount: _seekCoordinator.seekAmount,
                           showSeekIndicator: _seekCoordinator.showSeekIndicator,
                         ),
-
                         _buildBottomBar(isLive),
                       ],
                     ),
                   ),
                 ),
               ),
-
               Consumer(
                 builder: (context, ref, _) {
                   final buffer = widget.numberBuffer.isNotEmpty
@@ -471,20 +471,16 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
                       : NumberInputOsd(buffer: buffer);
                 },
               ),
-
               if (isLive) LiveTvChannelDrawer(onClose: _closeChannelOverlay),
-
               // The visible touch overlay shows the count in its seek button.
               if (_seekCoordinator.showSeekIndicator &&
                   !(_visible && PlayPauseOverlay.isTouchLayout))
                 SeekFeedbackHud(seekAmount: _seekCoordinator.seekAmount),
-
               if (_gestureCoordinator.currentDragType != DragType.none)
                 VolumeBrightnessHud(
                   dragType: _gestureCoordinator.currentDragType,
                   indicatorValue: _gestureCoordinator.dragIndicatorValue,
                 ),
-
               if (widget.onNextEpisode != null)
                 NextEpisodeOverlay(
                   playerState: widget.playerState,

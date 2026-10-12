@@ -254,6 +254,8 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                                     widget.channel)
                               : null,
                           isLive: widget.type == 'livetv',
+                          isSubtitleOverlayOpen:
+                              _activeOverlay != SliderOverlayType.none,
                           onSettingsPressed: () => _openSettings(state, params),
                           onBackPressed: () => Navigator.of(context).pop(),
                           onOverlayRequested: (type) {

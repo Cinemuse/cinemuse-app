@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
-import 'dart:ui';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 class SubtitleSliderOverlay extends ConsumerWidget {
   final SliderOverlayType type;
@@ -32,7 +33,7 @@ class SubtitleSliderOverlay extends ConsumerWidget {
 
     String title = '';
     Widget control = const SizedBox.shrink();
-    VoidCallback? onReset;
+    late final VoidCallback onReset;
     VoidCallback? onSave;
 
     final currentStyle =
@@ -46,7 +47,6 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           onChanged: controller.updateSubtitleDelay,
         );
         onReset = () => controller.updateSubtitleDelay(0.0);
-        break;
       case SliderOverlayType.fontSize:
         title = l10n.playerAppearanceFontSize;
         control = _SliderControl(
@@ -62,7 +62,6 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           currentStyle.copyWith(fontSize: 24.0),
         );
         onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
-        break;
       case SliderOverlayType.position:
         title = l10n.playerAppearanceBottomPadding;
         control = _SliderControl(
@@ -79,7 +78,6 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           currentStyle.copyWith(verticalPosition: 0.05),
         );
         onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
-        break;
       case SliderOverlayType.background:
         title = l10n.playerAppearanceBackground;
         control = _SliderControl(
@@ -105,7 +103,6 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           ),
         );
         onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
-        break;
       case SliderOverlayType.color:
         title = l10n.playerAppearanceTextColor;
         control = _ColorControl(
@@ -118,28 +115,30 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           currentStyle.copyWith(color: AppTheme.textWhite),
         );
         onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
-        break;
       case SliderOverlayType.none:
         break;
     }
 
-    return Stack(
-      children: [
-        // Backdrop scrim to close
-        GestureDetector(
-          onTap: () => onClose(false),
-          child: Container(color: AppTheme.surfaceOverlay),
-        ),
-
-        // Floating Panel
-        Align(
-          alignment: Alignment.topRight,
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: ClipRRect(
-              borderRadius: AppTheme.radiusXl,
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+    void cancel() => onClose(false);
+    // Keys stay in the panel; Esc / Back cancel it (REV-166).
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.escape): cancel,
+        const SingleActivator(LogicalKeyboardKey.goBack): cancel,
+        const SingleActivator(LogicalKeyboardKey.gameButtonB): cancel,
+      },
+      child: FocusScope(
+        child: Stack(
+          children: [
+            GestureDetector(
+              onTap: () => onClose(false),
+              child: Container(color: AppTheme.surfaceOverlay),
+            ),
+            Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                // No blur: it would be redone on every video frame (REV-138).
                 child: Container(
                   width: 380,
                   padding: const EdgeInsets.all(20),
@@ -151,45 +150,42 @@ class SubtitleSliderOverlay extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Header
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            title.toUpperCase(),
-                            style: const TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.2,
+                          // Long Italian titles must not push Reset out.
+                          Expanded(
+                            child: Text(
+                              title.toUpperCase(),
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
+                              ),
                             ),
                           ),
-                          if (onReset != null)
-                            TextButton.icon(
-                              onPressed: onReset,
-                              icon: const Icon(
-                                Icons.refresh,
-                                size: 16,
+                          TextButton.icon(
+                            onPressed: onReset,
+                            icon: const Icon(
+                              Icons.refresh,
+                              size: 16,
+                              color: AppTheme.accent,
+                            ),
+                            label: Text(
+                              l10n.playerAppearanceReset,
+                              style: const TextStyle(
                                 color: AppTheme.accent,
-                              ),
-                              label: Text(
-                                l10n.playerAppearanceReset,
-                                style: const TextStyle(
-                                  color: AppTheme.accent,
-                                  fontSize: 12,
-                                ),
+                                fontSize: 12,
                               ),
                             ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 20),
-
-                      // Control
                       control,
-
                       const SizedBox(height: 24),
-
-                      // Action Buttons
                       Row(
                         children: [
                           if (onSave != null) ...[
@@ -218,9 +214,9 @@ class SubtitleSliderOverlay extends ConsumerWidget {
                 ),
               ),
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -331,23 +327,24 @@ class _StepButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 3),
-      child: Material(
-        color: AppTheme.surfaceOverlay,
+      child: DpadFocusable(
+        onTap: onTap,
+        showFocusRing: true,
         borderRadius: AppTheme.radiusMd,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: AppTheme.radiusMd,
-          child: Container(
-            width: 44,
-            height: 40,
-            alignment: Alignment.center,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: AppTheme.textWhite,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
+        child: Container(
+          width: 44,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(
+            color: AppTheme.surfaceOverlay,
+            borderRadius: AppTheme.radiusMd,
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: AppTheme.textWhite,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -384,8 +381,10 @@ class _ColorControl extends StatelessWidget {
       alignment: WrapAlignment.center,
       children: colors.map((color) {
         final isSelected = color.toARGB32() == selectedColor.toARGB32();
-        return GestureDetector(
+        return DpadFocusable(
           onTap: () => onColorSelected(color),
+          showFocusRing: true,
+          borderRadius: BorderRadius.circular(22),
           child: Container(
             width: 44,
             height: 44,
@@ -399,9 +398,7 @@ class _ColorControl extends StatelessWidget {
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: color.withValues(
-                          alpha: 0.4,
-                        ), // 100/255 approx 0.4
+                        color: color.withValues(alpha: 0.4),
                         blurRadius: 12,
                         spreadRadius: 2,
                       ),
@@ -439,6 +436,8 @@ class _OverlayButton extends StatelessWidget {
     return SizedBox(
       height: 48,
       child: ElevatedButton(
+        // The main button starts focused (REV-166).
+        autofocus: isPrimary,
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: isPrimary
