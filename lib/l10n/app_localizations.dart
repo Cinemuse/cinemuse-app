@@ -3074,12 +3074,6 @@ abstract class AppLocalizations {
   /// **'Cancel Rewatch'**
   String get menuCancelRewatch;
 
-  /// No description provided for @menuRemoveFromContinueWatching.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove from Continue Watching'**
-  String get menuRemoveFromContinueWatching;
-
   /// No description provided for @menuRemoveCachedProvider.
   ///
   /// In en, this message translates to:
@@ -4033,18 +4027,6 @@ abstract class AppLocalizations {
   /// **'This Month'**
   String get watchHistoryDateThisMonth;
 
-  /// No description provided for @watchHistoryResume.
-  ///
-  /// In en, this message translates to:
-  /// **'Resume'**
-  String get watchHistoryResume;
-
-  /// No description provided for @watchHistoryWatchAgain.
-  ///
-  /// In en, this message translates to:
-  /// **'Watch Again'**
-  String get watchHistoryWatchAgain;
-
   /// No description provided for @watchHistoryReplay.
   ///
   /// In en, this message translates to:
@@ -4056,18 +4038,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Season {season} • Episode {episode}'**
   String watchHistorySeasonEpisode(int season, int episode);
-
-  /// No description provided for @watchHistoryHoursAgo.
-  ///
-  /// In en, this message translates to:
-  /// **'{hours, plural, =1{1 hour ago} other{{hours} hours ago}}'**
-  String watchHistoryHoursAgo(int hours);
-
-  /// No description provided for @watchHistoryMinutesAgo.
-  ///
-  /// In en, this message translates to:
-  /// **'{minutes, plural, =1{1 minute ago} other{{minutes} minutes ago}}'**
-  String watchHistoryMinutesAgo(int minutes);
 
   /// No description provided for @watchHistoryEmpty.
   ///

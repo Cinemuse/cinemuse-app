@@ -527,7 +527,6 @@
   "menuPlay": "Riproduci",
   "menuStopWatching": "Interrompi Visione",
   "menuCancelRewatch": "Annulla Rewatch",
-  "menuRemoveFromContinueWatching": "Rimuovi da Continua a Guardare",
   "menuRemoveCachedProvider": "Rimuovi Stream in Cache",
   "menuManageWatchHistory": "Modifica visione",
   "liveTvTabAll": "Tutti",
@@ -774,26 +773,12 @@
   "watchHistoryDateYesterday": "Ieri",
   "watchHistoryDateThisWeek": "Questa settimana",
   "watchHistoryDateThisMonth": "Questo mese",
-  "watchHistoryResume": "Riprendi",
-  "watchHistoryWatchAgain": "Riguarda",
   "watchHistoryReplay": "Rivedi",
   "watchHistorySeasonEpisode": "Stagione {season} • Episodio {episode}",
   "@watchHistorySeasonEpisode": {
     "placeholders": {
       "season": { "type": "int" },
       "episode": { "type": "int" }
-    }
-  },
-  "watchHistoryHoursAgo": "{hours, plural, =1{1 ora fa} other{{hours} ore fa}}",
-  "@watchHistoryHoursAgo": {
-    "placeholders": {
-      "hours": { "type": "int" }
-    }
-  },
-  "watchHistoryMinutesAgo": "{minutes, plural, =1{1 minuto fa} other{{minutes} minuti fa}}",
-  "@watchHistoryMinutesAgo": {
-    "placeholders": {
-      "minutes": { "type": "int" }
     }
   },
   "watchHistoryEmpty": "Nessuna cronologia trovata",

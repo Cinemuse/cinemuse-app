@@ -1652,9 +1652,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuCancelRewatch => 'Cancel Rewatch';
 
   @override
-  String get menuRemoveFromContinueWatching => 'Remove from Continue Watching';
-
-  @override
   String get menuRemoveCachedProvider => 'Remove Cached Stream';
 
   @override
@@ -2254,39 +2251,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchHistoryDateThisMonth => 'This Month';
 
   @override
-  String get watchHistoryResume => 'Resume';
-
-  @override
-  String get watchHistoryWatchAgain => 'Watch Again';
-
-  @override
   String get watchHistoryReplay => 'Replay';
 
   @override
   String watchHistorySeasonEpisode(int season, int episode) {
     return 'Season $season • Episode $episode';
-  }
-
-  @override
-  String watchHistoryHoursAgo(int hours) {
-    String _temp0 = intl.Intl.pluralLogic(
-      hours,
-      locale: localeName,
-      other: '$hours hours ago',
-      one: '1 hour ago',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String watchHistoryMinutesAgo(int minutes) {
-    String _temp0 = intl.Intl.pluralLogic(
-      minutes,
-      locale: localeName,
-      other: '$minutes minutes ago',
-      one: '1 minute ago',
-    );
-    return '$_temp0';
   }
 
   @override
