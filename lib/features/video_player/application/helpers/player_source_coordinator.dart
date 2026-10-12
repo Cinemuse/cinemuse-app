@@ -443,10 +443,10 @@ class PlayerSourceCoordinator {
           }
         }
       },
+      // A failed retry moves on to the next source; the error screen can't
+      // switch source, so it comes only when none is left (REV-144).
       onError: (e, st) {
-        if (isMounted()) {
-          onError(e.toString(), st);
-        }
+        if (isMounted() && !tryNextCandidate()) onError(e.toString(), st);
       },
     );
   }
