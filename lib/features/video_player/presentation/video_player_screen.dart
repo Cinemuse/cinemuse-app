@@ -7,6 +7,7 @@ import 'package:cinemuse_app/features/video_player/presentation/widgets/player_s
 import 'package:cinemuse_app/features/video_player/presentation/widgets/cast_remote_view.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/player_error_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -15,6 +16,7 @@ import 'package:cinemuse_app/features/settings/application/local_settings_servic
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
+import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 
 class VideoPlayerScreen extends ConsumerStatefulWidget {
@@ -163,14 +165,16 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       body: playerState.when(
         data: (state) {
           if (state.isResolving) {
-            return ResolvingOverlay(
-              state: state,
-              loadingMessage: widget.loadingMessage,
-              onSkipResolution: () {
-                ref
-                    .read(playerControllerProvider(params).notifier)
-                    .skipResolution();
-              },
+            return _LeavableLoadingView(
+              child: ResolvingOverlay(
+                state: state,
+                loadingMessage: widget.loadingMessage,
+                onSkipResolution: () {
+                  ref
+                      .read(playerControllerProvider(params).notifier)
+                      .skipResolution();
+                },
+              ),
             );
           }
 
@@ -326,19 +330,51 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           youtubeVideoId: widget.type == 'youtube' ? widget.queryId : null,
           onRetry: () => ref.invalidate(playerControllerProvider(params)),
         ),
-        loading: () => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text(
-                widget.loadingMessage ??
-                    AppLocalizations.of(context)!.playerResolving,
-                style: const TextStyle(color: AppTheme.textMuted),
-              ),
-            ],
+        loading: () => _LeavableLoadingView(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  widget.loadingMessage ??
+                      AppLocalizations.of(context)!.playerResolving,
+                  style: const TextStyle(color: AppTheme.textMuted),
+                ),
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Loading / source search with a back button and Esc: on PC the player
+/// route sits above the shell's Esc handler, so nothing else can leave
+/// (REV-159). Leaving disposes the player, which stops the search.
+class _LeavableLoadingView extends StatelessWidget {
+  final Widget child;
+
+  const _LeavableLoadingView({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    void leave() => Navigator.of(context).maybePop();
+    return CallbackShortcuts(
+      bindings: {const SingleActivator(LogicalKeyboardKey.escape): leave},
+      child: Focus(
+        autofocus: true,
+        child: Stack(
+          children: [
+            Positioned.fill(child: child),
+            Positioned(
+              top: 16,
+              left: 16,
+              child: SafeArea(child: AppBackButton(onTap: leave)),
+            ),
+          ],
         ),
       ),
     );
