@@ -200,7 +200,7 @@ class WatchHistoryRepository {
     }
 
     // 3. Watching State (Implicitly: Progress > 120s OR Progress > 10%)
-
+    final now = DateTime.now().toUtc(); // REV-178: the server stores UTC.
     final entry = {
       'user_id': userId,
       'tmdb_id': media.tmdbId,
@@ -210,7 +210,7 @@ class WatchHistoryRepository {
       'total_duration': totalDuration,
       'season': season ?? 0,
       'episode': episode ?? 0,
-      'last_watched_at': DateTime.now().toIso8601String(),
+      'last_watched_at': now.toIso8601String(),
     };
 
     await _db.upsertWatchHistory(
@@ -223,7 +223,7 @@ class WatchHistoryRepository {
         totalDuration: Value(totalDuration),
         season: Value(season ?? 0),
         episode: Value(episode ?? 0),
-        lastWatchedAt: Value(DateTime.now()),
+        lastWatchedAt: Value(now),
       ),
     );
 
@@ -797,7 +797,7 @@ class WatchHistoryRepository {
           status: Value('watching'),
           progressSeconds: Value(0),
           totalDuration: Value(0),
-          lastWatchedAt: Value(DateTime.now()),
+          lastWatchedAt: Value(DateTime.now().toUtc()),
         ),
       );
 
@@ -810,7 +810,7 @@ class WatchHistoryRepository {
         'status': 'watching',
         'progress_seconds': 0,
         'total_duration': 0,
-        'last_watched_at': DateTime.now().toIso8601String(),
+        'last_watched_at': DateTime.now().toUtc().toIso8601String(),
       });
     }
   }

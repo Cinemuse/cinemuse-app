@@ -41,10 +41,22 @@ class _RecordingFilterBuilder extends Fake
 
 class _RecordingQueryBuilder extends Fake implements SupabaseQueryBuilder {
   final filters = <String, Object>{};
+  final upserts = <Map<String, dynamic>>[];
 
   @override
   PostgrestFilterBuilder<List<Map<String, dynamic>>> update(Map values) =>
       _RecordingFilterBuilder(filters);
+
+  @override
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> upsert(
+    Object values, {
+    String? onConflict,
+    bool ignoreDuplicates = false,
+    bool defaultToNull = true,
+  }) {
+    upserts.add(values as Map<String, dynamic>);
+    return _RecordingFilterBuilder(filters);
+  }
 }
 
 // REV-177: TMDB movie 1399 and TV show 1399 are different titles.
@@ -114,6 +126,27 @@ void main() {
 
     expect(await localStatuses(), {'movie': 'dropped', 'tv': 'watching'});
     expect(table.filters['media_type'], 'tv');
+  });
+
+  // REV-178: local time without an offset was stored 1-2 hours ahead.
+  test('a progress save sends the time as UTC', () async {
+    await repository.updateProgress(
+      userId: userId,
+      media: MediaItem(
+        tmdbId: sharedId,
+        mediaType: MediaKind.movie,
+        updatedAt: DateTime.now(),
+      ),
+      progressSeconds: 1800,
+      totalDuration: 6000,
+    );
+
+    final sent = table.upserts.single['last_watched_at'] as String;
+    expect(sent, endsWith('Z'));
+    expect(
+      DateTime.parse(sent).difference(DateTime.now()).inMinutes.abs(),
+      lessThan(1),
+    );
   });
 
   test('a series history stream has no movie rows', () async {
