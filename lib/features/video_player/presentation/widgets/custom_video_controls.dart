@@ -186,9 +186,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     _showControls();
   }
 
-  bool _isFullscreenSafe() =>
-      PlayerWindowCoordinator.isFullscreenSafe(widget.videoState);
-
   Future<void> _toggleFullscreen() async {
     final isNowFullscreen = await PlayerWindowCoordinator.toggleFullscreen(
       widget.videoState,
@@ -229,7 +226,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
 
   KeyEventResult _handleKeyEvent(KeyEvent event) {
     final isLive = widget.isLive || widget.params.type == 'livetv';
-    final isOverlayOpen = ref.read(liveTvChannelOverlayProvider);
     final buffer = widget.numberBuffer.isNotEmpty
         ? widget.numberBuffer
         : ref.read(numberInputBufferProvider);
@@ -237,9 +233,9 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     return _keyHandler.handleKeyEvent(
       event: event,
       isLive: isLive,
-      isOverlayOpen: isOverlayOpen,
+      isOverlayOpen: ref.read(liveTvChannelOverlayProvider),
       isVisible: _visible,
-      isFullscreen: _isFullscreenSafe(),
+      isFullscreen: PlayerWindowCoordinator.isFullscreenSafe(widget.videoState),
       numberBuffer: buffer,
       onTogglePlayPause: _togglePlayPause,
       onSkip: _performRealSkip,
@@ -478,7 +474,9 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
 
               if (isLive) LiveTvChannelDrawer(onClose: _closeChannelOverlay),
 
-              if (_seekCoordinator.showSeekIndicator)
+              // The visible touch overlay shows the count in its seek button.
+              if (_seekCoordinator.showSeekIndicator &&
+                  !(_visible && PlayPauseOverlay.isTouchLayout))
                 SeekFeedbackHud(seekAmount: _seekCoordinator.seekAmount),
 
               if (_gestureCoordinator.currentDragType != DragType.none)

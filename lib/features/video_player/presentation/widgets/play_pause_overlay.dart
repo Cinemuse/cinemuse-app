@@ -1,10 +1,18 @@
+import 'package:cinemuse_app/core/utils/platform_info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
 
 /// Centered play icon shown when the player is paused and controls are visible.
-/// On mobile, this shows the main playback controls (Play/Pause, Skip).
+/// On touch screens, this shows the main playback controls (Play/Pause, Skip).
 class PlayPauseOverlay extends StatelessWidget {
+  /// Touch phones and tablets. Not by width: a phone in landscape is as wide
+  /// as a TV, and Android TV has no touch screen (REV-163).
+  static bool get isTouchLayout =>
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS) &&
+      !PlatformInfo.isTV;
+
   final Player player;
   final bool visible;
   final VoidCallback onTogglePlayPause;
@@ -24,10 +32,6 @@ class PlayPauseOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile =
-        defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS;
-
     return Center(
       child: StreamBuilder<bool>(
         stream: player.stream.playing,
@@ -35,7 +39,7 @@ class PlayPauseOverlay extends StatelessWidget {
         builder: (context, snapshot) {
           final isPlaying = snapshot.data ?? player.state.playing;
 
-          if (isMobile) {
+          if (isTouchLayout) {
             return IgnorePointer(
               ignoring: !visible,
               child: Row(
