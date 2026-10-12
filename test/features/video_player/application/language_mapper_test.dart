@@ -69,6 +69,75 @@ void main() {
       expect(LanguageMapper.isMatch(subTrackIta, 'en'), isFalse);
     });
 
+    test('isMatch ignores codes hidden inside other words (REV-143)', () {
+      expect(
+        LanguageMapper.isMatch(AudioTrack('1', 'French', ''), 'en'),
+        isFalse,
+      );
+      expect(
+        LanguageMapper.isMatch(AudioTrack('1', 'Commentary', 'und'), 'en'),
+        isFalse,
+      );
+      expect(
+        LanguageMapper.isMatch(AudioTrack('1', 'Japanese', ''), 'es'),
+        isFalse,
+      );
+      expect(
+        LanguageMapper.isMatch(AudioTrack('1', 'Chinese', ''), 'es'),
+        isFalse,
+      );
+      expect(
+        LanguageMapper.isMatch(SubtitleTrack('1', 'Subtitles', ''), 'es'),
+        isFalse,
+      );
+      expect(
+        LanguageMapper.isMatch(SubtitleTrack('1', 'Subtitles', ''), 'it'),
+        isFalse,
+      );
+      expect(
+        LanguageMapper.isMatch(AudioTrack('1', 'Director with cast', ''), 'it'),
+        isFalse,
+      );
+      expect(LanguageMapper.isMatch(AudioTrack('1', '', 'fre'), 'en'), isFalse);
+    });
+
+    test('isMatch still finds whole words and tagged languages', () {
+      expect(
+        LanguageMapper.isMatch(AudioTrack('1', 'ES 5.1', ''), 'es'),
+        isTrue,
+      );
+      expect(
+        LanguageMapper.isMatch(AudioTrack('1', 'Español (Latino)', ''), 'es'),
+        isTrue,
+      );
+      expect(
+        LanguageMapper.isMatch(AudioTrack('1', 'English', ''), 'en'),
+        isTrue,
+      );
+      expect(
+        LanguageMapper.isMatch(AudioTrack('1', '', 'en-US'), 'en'),
+        isTrue,
+      );
+      expect(LanguageMapper.isMatch(AudioTrack('1', '', 'spa'), 'es'), isTrue);
+      expect(
+        LanguageMapper.isMatch(AudioTrack('1', 'Italian', ''), 'it'),
+        isTrue,
+      );
+      expect(
+        LanguageMapper.isMatch(AudioTrack('1', 'Spanish', ''), 'es'),
+        isTrue,
+      );
+    });
+
+    test('a Spanish user gets the Spanish track, not Japanese (REV-143)', () {
+      final tracks = [
+        AudioTrack('1', 'Japanese', 'jpn'),
+        AudioTrack('2', 'Spanish', 'spa'),
+      ];
+      final match = tracks.firstWhere((t) => LanguageMapper.isMatch(t, 'es'));
+      expect(match.id, '2');
+    });
+
     test('isMatch handles empty or null cases safely', () {
       final track = AudioTrack('1', 'Audio', 'en');
       expect(LanguageMapper.isMatch(track, ''), isFalse);

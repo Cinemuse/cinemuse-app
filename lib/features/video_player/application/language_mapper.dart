@@ -3,30 +3,30 @@ import 'package:media_kit/media_kit.dart';
 /// Utility class for language code resolution, display formatting, and audio/subtitle track matching.
 class LanguageMapper {
   static const Map<String, List<String>> _languageAliases = {
-    'it': ['ita', 'it', 'italiano'],
-    'ita': ['ita', 'it', 'italiano'],
-    'italiano': ['ita', 'it', 'italiano'],
-    'italian': ['ita', 'it', 'italiano'],
+    'it': ['ita', 'it', 'italiano', 'italian'],
+    'ita': ['ita', 'it', 'italiano', 'italian'],
+    'italiano': ['ita', 'it', 'italiano', 'italian'],
+    'italian': ['ita', 'it', 'italiano', 'italian'],
     'en': ['eng', 'en', 'english'],
     'eng': ['eng', 'en', 'english'],
     'english': ['eng', 'en', 'english'],
     'ja': ['jpn', 'ja', 'japanese'],
     'jpn': ['jpn', 'ja', 'japanese'],
     'japanese': ['jpn', 'ja', 'japanese'],
-    'fr': ['fra', 'fr', 'français', 'fre'],
-    'fra': ['fra', 'fr', 'français', 'fre'],
-    'fre': ['fra', 'fr', 'français', 'fre'],
-    'french': ['fra', 'fr', 'français', 'fre'],
-    'français': ['fra', 'fr', 'français', 'fre'],
-    'de': ['deu', 'de', 'deutsch', 'ger'],
-    'deu': ['deu', 'de', 'deutsch', 'ger'],
-    'ger': ['deu', 'de', 'deutsch', 'ger'],
-    'german': ['deu', 'de', 'deutsch', 'ger'],
-    'deutsch': ['deu', 'de', 'deutsch', 'ger'],
-    'es': ['spa', 'es', 'español'],
-    'spa': ['spa', 'es', 'español'],
-    'spanish': ['spa', 'es', 'español'],
-    'español': ['spa', 'es', 'español'],
+    'fr': ['fra', 'fr', 'français', 'fre', 'french'],
+    'fra': ['fra', 'fr', 'français', 'fre', 'french'],
+    'fre': ['fra', 'fr', 'français', 'fre', 'french'],
+    'french': ['fra', 'fr', 'français', 'fre', 'french'],
+    'français': ['fra', 'fr', 'français', 'fre', 'french'],
+    'de': ['deu', 'de', 'deutsch', 'ger', 'german'],
+    'deu': ['deu', 'de', 'deutsch', 'ger', 'german'],
+    'ger': ['deu', 'de', 'deutsch', 'ger', 'german'],
+    'german': ['deu', 'de', 'deutsch', 'ger', 'german'],
+    'deutsch': ['deu', 'de', 'deutsch', 'ger', 'german'],
+    'es': ['spa', 'es', 'español', 'spanish'],
+    'spa': ['spa', 'es', 'español', 'spanish'],
+    'spanish': ['spa', 'es', 'español', 'spanish'],
+    'español': ['spa', 'es', 'español', 'spanish'],
   };
 
   static const Map<String, String> _displayLanguages = {
@@ -89,22 +89,18 @@ class LanguageMapper {
     };
 
     final normalizedPref = preferredLang.trim().toLowerCase();
-    final codes = getCodes(normalizedPref);
+    final codes = {normalizedPref, ...getCodes(normalizedPref)};
+    // "en-US" counts as "en".
+    final baseLanguage = language.split(RegExp('[-_]')).first;
+    if (codes.contains(language) || codes.contains(baseLanguage)) return true;
 
-    // Check direct preference string (e.g. "english")
-    if (title.contains(normalizedPref) || language.contains(normalizedPref)) {
-      return true;
-    }
-
-    // Check associated codes (e.g. "eng", "en")
-    for (final code in codes) {
-      if (title.contains(code) || language == code) {
-        return true;
-      }
-    }
-
-    return false;
+    // Whole words only: a substring match took "es" from "Japanese" and
+    // "en" from "French" (REV-143).
+    return codes.any((code) => _wholeWord(code).hasMatch(title));
   }
+
+  static RegExp _wholeWord(String code) =>
+      RegExp('(?<!\\p{L})${RegExp.escape(code)}(?!\\p{L})', unicode: true);
 
   /// Returns known ISO/alias codes for a given language tag or name.
   static List<String> getCodes(String lang) {
