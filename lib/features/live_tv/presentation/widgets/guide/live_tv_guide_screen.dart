@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,6 +39,7 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
   );
   EpgProgram? _focusedProgram;
   late final TextEditingController _searchController;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -48,8 +51,23 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  // Waits like the phone field, so big playlists don't re-filter per key.
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      ref.read(channelSearchQueryProvider.notifier).state = value;
+    });
+  }
+
+  void _clearSearch() {
+    _searchDebounce?.cancel();
+    _searchController.clear();
+    ref.read(channelSearchQueryProvider.notifier).state = '';
   }
 
   void _onProgramFocused(Channel channel, EpgProgram? program) {
@@ -71,6 +89,10 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
     final selectedChannel = ref.watch(selectedChannelProvider);
     final favoriteIds = ref.watch(favoriteChannelIdsProvider);
     final activeTab = ref.watch(liveTvTabProvider);
+    // Searches set elsewhere (a sport card on Home) show here too (REV-129).
+    ref.listen<String>(channelSearchQueryProvider, (_, next) {
+      if (_searchController.text != next) _searchController.text = next;
+    });
 
     // Initial fallback channel and program if none focused yet
     final effectiveChannel = _focusedChannel ?? selectedChannel;
@@ -88,14 +110,8 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
       backgroundColor: AppTheme.primary,
       body: Column(
         children: [
-          // -------------------------------------------------------------
-          // Top Controls Bar (Search, Category Filters, Jump To Now, Settings)
-          // -------------------------------------------------------------
           _buildTopBar(context, l10n, allChannelsAsync.valueOrNull ?? []),
 
-          // -------------------------------------------------------------
-          // Program Details Banner (Top Preview)
-          // -------------------------------------------------------------
           EpgDetailsBanner(
             channel: effectiveChannel,
             program: effectiveProgram,
@@ -109,9 +125,6 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                 : null,
           ),
 
-          // -------------------------------------------------------------
-          // EPG Timeline Grid
-          // -------------------------------------------------------------
           Expanded(
             child: channelsAsync.when(
               data: (channels) {
@@ -156,7 +169,6 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
     final activeTab = ref.watch(liveTvTabProvider);
     final filter = ref.watch(channelFilterProvider);
 
-    // Extract categories
     final categories = allChannels
         .map((c) => c.group)
         .where((g) => g != null && g.isNotEmpty)
@@ -219,10 +231,7 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                     ),
                     child: TextField(
                       controller: _searchController,
-                      onChanged: (val) {
-                        ref.read(channelSearchQueryProvider.notifier).state =
-                            val;
-                      },
+                      onChanged: _onSearchChanged,
                       decoration: InputDecoration(
                         hintText: l10n.liveTvSearchPlaceholder,
                         hintStyle: const TextStyle(
@@ -247,16 +256,7 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                                       size: 16,
                                       color: Colors.white38,
                                     ),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      ref
-                                              .read(
-                                                channelSearchQueryProvider
-                                                    .notifier,
-                                              )
-                                              .state =
-                                          '';
-                                    },
+                                    onPressed: _clearSearch,
                                   )
                                 : const SizedBox.shrink();
                           },
