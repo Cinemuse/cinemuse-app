@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:cast/cast.dart';
+import 'package:cinemuse_app/core/application/l10n_provider.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
@@ -166,6 +167,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         }
       },
       onError: _handleInitializationError,
+      unavailableMessage: () =>
+          ref.read(localizationsProvider).liveTvStreamUnavailable,
     );
 
     if (resolvedParams.type == 'livetv') {
@@ -270,12 +273,6 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   void clearError() {
     if (state.value != null) {
       state = AsyncValue.data(state.value!.copyWith(error: null));
-    }
-  }
-
-  void clearNotification() {
-    if (mounted && state.valueOrNull != null) {
-      state = AsyncValue.data(state.valueOrNull!.copyWith(notification: null));
     }
   }
 

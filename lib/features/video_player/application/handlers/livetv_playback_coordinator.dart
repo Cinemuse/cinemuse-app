@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
@@ -18,6 +19,9 @@ class LiveTvPlaybackCoordinator {
   final void Function(CinemaPlayerState newState) onStateChanged;
   final void Function(dynamic error, StackTrace st) onError;
 
+  /// Translated "channel not available" text, shown when every link failed.
+  final String Function() unavailableMessage;
+
   LiveTvPlaybackCoordinator({
     required this.player,
     required this.controller,
@@ -26,6 +30,7 @@ class LiveTvPlaybackCoordinator {
     required this.getCurrentState,
     required this.onStateChanged,
     required this.onError,
+    required this.unavailableMessage,
   });
 
   Channel? _currentChannel;
@@ -34,9 +39,18 @@ class LiveTvPlaybackCoordinator {
   int _activeRequestId = 0;
   LiveTvSourceHandler? _sourceHandler;
 
-  /// Max retries on a connection error before rotating to the next link.
-  /// EOS (stream ended) retries the same link infinitely since the server was working.
-  static const int _maxErrorRetries = 1;
+  /// Rounds in which every link failed; at [_maxFailedRounds] we give up.
+  int _failedRounds = 0;
+  Timer? _nextRoundTimer;
+  StreamSubscription<Duration>? _positionSub;
+  Duration? _firstPosition;
+
+  /// An EOS means the server was streaming, so the link gets one more try.
+  static const int _maxEosRetries = 1;
+  static const int _maxFailedRounds = 3;
+
+  /// A link that played this long counts as working: the counters reset.
+  static const Duration _healthyPlayback = Duration(seconds: 30);
 
   Channel? get currentChannel => _currentChannel;
   StreamLink? get currentLink => _currentLink;
@@ -44,6 +58,8 @@ class LiveTvPlaybackCoordinator {
 
   void dispose() {
     _sourceHandler?.dispose();
+    _nextRoundTimer?.cancel();
+    unawaited(_positionSub?.cancel());
   }
 
   /// Sets up a bare "ready-but-idle" initial state for Live TV.
@@ -82,7 +98,9 @@ class LiveTvPlaybackCoordinator {
     try {
       if (!isFailover) {
         _resetChannelLinkCounters(channel);
+        _resetFailedRounds();
       }
+      _watchPlayback();
 
       final settings = getSettings();
       _currentLink = _selectPreferredLink(channel, settings.liveTvQuality);
@@ -122,12 +140,12 @@ class LiveTvPlaybackCoordinator {
               channel,
               _currentLink!,
               settings,
-              onStall: () => handleFailover('Stream stalled'),
+              onStall: _onStall,
             )
           : await _sourceHandler!.initialize(
               channel,
               settings,
-              onStall: () => handleFailover('Stream stalled'),
+              onStall: _onStall,
             );
 
       if (isMounted() && requestId == _activeRequestId) {
@@ -161,6 +179,8 @@ class LiveTvPlaybackCoordinator {
     final requestId = ++_activeRequestId;
     _isChangingChannel = true;
     _currentLink = link;
+    _resetFailedRounds();
+    _watchPlayback();
 
     try {
       if (isMounted()) {
@@ -184,7 +204,7 @@ class LiveTvPlaybackCoordinator {
         channel,
         link,
         settings,
-        onStall: () => handleFailover('Stream stalled'),
+        onStall: _onStall,
       );
 
       if (isMounted() && requestId == _activeRequestId) {
@@ -217,45 +237,98 @@ class LiveTvPlaybackCoordinator {
     String error, {
     bool isConnectionError = false,
   }) async {
-    if (_currentChannel == null) return;
-
-    if (_currentLink != null) {
-      if (isConnectionError) {
-        _currentLink!.softRetryCount++;
-        if (_currentLink!.softRetryCount >= _maxErrorRetries) {
-          developer.log(
-            'Link unreachable after ${_currentLink!.softRetryCount} errors. Rotating.',
-            name: 'VideoPlayer.LiveTvCoordinator',
-          );
-          _currentLink!.isFailed = true;
-          _currentLink!.softRetryCount = 0;
-        } else {
-          developer.log(
-            'Connection error (${_currentLink!.softRetryCount}/$_maxErrorRetries). Retrying SAME link.',
-            name: 'VideoPlayer.LiveTvCoordinator',
-          );
-        }
-      } else {
-        // EOS: the server was streaming. Retry same link.
-        developer.log(
-          'EOS on link. Retrying SAME link (server was active).',
-          name: 'VideoPlayer.LiveTvCoordinator',
-        );
-      }
+    final channel = _currentChannel;
+    // Already given up, or already waiting for the next round: the dead
+    // stream's later errors must not count again.
+    if (channel == null ||
+        _failedRounds >= _maxFailedRounds ||
+        (_nextRoundTimer?.isActive ?? false)) {
+      return;
     }
 
-    final hasWorkingLinks = _currentChannel!.links.any((l) => !l.isFailed);
-    if (!hasWorkingLinks) {
-      developer.log(
-        'All links exhausted. Restarting loop...',
-        name: 'VideoPlayer.LiveTvCoordinator',
-      );
-      _resetChannelLinkCounters(_currentChannel!);
+    final link = _currentLink;
+    if (link != null) {
+      if (!isConnectionError && link.softRetryCount < _maxEosRetries) {
+        link.softRetryCount++;
+      } else {
+        link.isFailed = true;
+      }
+    }
+    developer.log(
+      'Live failover ($error), link failed: ${link?.isFailed ?? true}',
+      name: 'VideoPlayer.LiveTvCoordinator',
+    );
+
+    // Without links the channel's own URL is the only one, so it always
+    // ends a round.
+    if (channel.links.every((l) => l.isFailed)) {
+      _endFailedRound(channel);
+      return;
     }
 
     if (isMounted()) {
-      await changeChannel(_currentChannel!, isFailover: true);
+      await changeChannel(channel, isFailover: true);
     }
+  }
+
+  /// Every link failed: wait longer each round before trying them all again
+  /// (a dead channel used to reopen in a tight loop), and after
+  /// [_maxFailedRounds] stop and say so (REV-145).
+  void _endFailedRound(Channel channel) {
+    _failedRounds++;
+    if (_failedRounds >= _maxFailedRounds) {
+      _showUnavailable();
+      return;
+    }
+    _resetChannelLinkCounters(channel);
+    final delay = Duration(seconds: 2 * _failedRounds);
+    developer.log(
+      'All links failed (round $_failedRounds). Retrying in ${delay.inSeconds}s.',
+      name: 'VideoPlayer.LiveTvCoordinator',
+    );
+    _nextRoundTimer = Timer(delay, () {
+      if (isMounted() && identical(_currentChannel, channel)) {
+        unawaited(changeChannel(channel, isFailover: true));
+      }
+    });
+  }
+
+  void _showUnavailable() {
+    _sourceHandler?.dispose();
+    // Stops mpv's own reconnect attempts; the user can still zap away.
+    unawaited(player.stop());
+    final current = getCurrentState();
+    if (!isMounted() || current == null) return;
+    onStateChanged(
+      current.copyWith(
+        isResolving: false,
+        currentStream: null,
+        error: unavailableMessage(),
+      ),
+    );
+  }
+
+  /// A stall means the link stopped delivering: rotate, like a connection
+  /// error (before, it retried the same link forever).
+  void _onStall() =>
+      unawaited(handleFailover('Stream stalled', isConnectionError: true));
+
+  void _resetFailedRounds() {
+    _failedRounds = 0;
+    _nextRoundTimer?.cancel();
+  }
+
+  /// Resets the counters once a link has played for [_healthyPlayback], so an
+  /// occasional drop on a working channel never adds up to "unavailable".
+  void _watchPlayback() {
+    _firstPosition = null;
+    _positionSub ??= player.stream.position.listen((position) {
+      if (_isChangingChannel) return;
+      final first = _firstPosition ??= position;
+      if (position - first < _healthyPlayback) return;
+      _failedRounds = 0;
+      _currentLink?.softRetryCount = 0;
+    });
   }
 
   void _resetChannelLinkCounters(Channel channel) {
