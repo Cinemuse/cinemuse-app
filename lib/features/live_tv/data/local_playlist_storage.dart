@@ -46,6 +46,20 @@ class LocalPlaylistStorage {
     return source.copy(destPath);
   }
 
+  /// Deletes the copy of a removed playlist. A legacy absolute path is left
+  /// alone: it may be the user's own file, not a copy.
+  static Future<void> deletePlaylistFile(String filenameOrLegacyPath) async {
+    if (p.isAbsolute(filenameOrLegacyPath)) return;
+    await deleteFromDir(filenameOrLegacyPath, await getPlaylistsDir());
+  }
+
+  /// Deletes [fileName] from [dir], if it is there.
+  @visibleForTesting
+  static Future<void> deleteFromDir(String fileName, Directory dir) async {
+    final file = File(p.join(dir.path, p.basename(fileName)));
+    if (file.existsSync()) await file.delete();
+  }
+
   /// Resolves a stored [filenameOrLegacyPath] to a full, absolute file path.
   ///
   /// - If [filenameOrLegacyPath] is already absolute (legacy entry), it is

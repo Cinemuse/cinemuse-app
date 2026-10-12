@@ -1,7 +1,16 @@
 import 'dart:convert';
+import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
-enum PlaylistType { m3u, json }
+enum PlaylistType {
+  m3u,
+  json;
+
+  /// From the file's extension only: an `.m3u` inside a folder named
+  /// "json" is still M3U (REV-136).
+  static PlaylistType fromPath(String path) =>
+      p.extension(path).toLowerCase() == '.json' ? json : m3u;
+}
 
 class LiveTvPlaylist {
   final String id;

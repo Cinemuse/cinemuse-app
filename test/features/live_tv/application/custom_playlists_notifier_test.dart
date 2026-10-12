@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cinemuse_app/features/live_tv/application/custom_playlists_notifier.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
@@ -66,5 +69,24 @@ void main() {
       'a',
       'b',
     ]);
+  });
+
+  test('a local file that cannot be copied throws and adds nothing '
+      '(REV-136)', () async {
+    SharedPreferences.setMockInitialValues({
+      _key: [_playlist('a').encode()],
+    });
+    final container = createContainer();
+    await _settle();
+
+    // No app folder in tests: the copy fails like a full or locked disk.
+    await expectLater(
+      container
+          .read(customPlaylistsProvider.notifier)
+          .addLocalPlaylist(File('missing.m3u')),
+      throwsA(isA<AppFailure>()),
+    );
+
+    expect(container.read(customPlaylistsProvider).map((p) => p.id), ['a']);
   });
 }

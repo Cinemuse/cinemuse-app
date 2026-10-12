@@ -52,4 +52,21 @@ void main() {
       expect(third.readAsStringSync(), 'third');
     },
   );
+
+  test('deletes a removed playlist copy (REV-136)', () async {
+    final copy = await LocalPlaylistStorage.copyIntoDir(
+      sourceFile('a', 'first'),
+      playlistsDir,
+    );
+
+    await LocalPlaylistStorage.deleteFromDir('playlist.m3u', playlistsDir);
+
+    expect(copy.existsSync(), isFalse);
+    // The picked original is never touched.
+    expect(File(p.join(tempDir.path, 'a', 'playlist.m3u')).existsSync(), true);
+  });
+
+  test('deleting a file that is already gone does not throw', () async {
+    await LocalPlaylistStorage.deleteFromDir('missing.m3u', playlistsDir);
+  });
 }

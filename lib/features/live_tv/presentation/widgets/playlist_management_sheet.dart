@@ -11,6 +11,7 @@ import 'package:cinemuse_app/features/live_tv/data/local_playlist_storage.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/application/custom_epg_url_notifier.dart';
+import 'package:cinemuse_app/features/live_tv/application/epg_refresh_notifier.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/save_live_tv_change.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_toggle.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -122,28 +123,12 @@ class PlaylistListSection extends ConsumerWidget {
       allowedExtensions: ['m3u', 'm3u8', 'json'],
     );
 
-    if (result == null || result.files.single.path == null) return;
-
-    final sourceFile = File(result.files.single.path!);
-    final extension = sourceFile.path.toLowerCase();
-    final type = extension.contains('json')
-        ? PlaylistType.json
-        : PlaylistType.m3u;
-
-    final destFile = await LocalPlaylistStorage.copyPlaylistFile(sourceFile);
-
-    if (!context.mounted) return;
+    final path = result?.files.single.path;
+    if (path == null || !context.mounted) return;
     await savePlaylists(
       context,
       ref,
-      (playlists) => playlists.addPlaylist(
-        LiveTvPlaylist(
-          name: result.files.single.name,
-          urlOrPath: destFile.uri.pathSegments.last, // basename only
-          isLocal: true,
-          type: type,
-        ),
-      ),
+      (playlists) => playlists.addLocalPlaylist(File(path)),
     );
   }
 }
@@ -414,8 +399,13 @@ class _AddRemotePlaylistDialogState extends State<_AddRemotePlaylistDialog> {
     super.dispose();
   }
 
-  bool get _canSubmit =>
-      _nameController.text.isNotEmpty && _urlController.text.isNotEmpty;
+  bool get _canSubmit {
+    final uri = Uri.tryParse(_urlController.text.trim());
+    return _nameController.text.trim().isNotEmpty &&
+        uri != null &&
+        uri.host.isNotEmpty &&
+        (uri.scheme == 'http' || uri.scheme == 'https');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -467,8 +457,8 @@ class _AddRemotePlaylistDialogState extends State<_AddRemotePlaylistDialog> {
           onPressed: _canSubmit
               ? () {
                   widget.onAdd(
-                    _nameController.text,
-                    _urlController.text,
+                    _nameController.text.trim(),
+                    _urlController.text.trim(),
                     _type,
                   );
                   Navigator.pop(context);
@@ -493,6 +483,7 @@ class _EpgSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final customUrl = ref.watch(customEpgUrlProvider).valueOrNull;
     final activeUrl = ref.watch(activeEpgUrlProvider);
+    final isRefreshing = ref.watch(epgRefreshProvider);
     final isCustom = customUrl != null && customUrl.isNotEmpty;
 
     return Column(
@@ -601,7 +592,9 @@ class _EpgSection extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   FilledButton.tonalIcon(
-                    onPressed: () => _refreshEpg(context, ref, l10n),
+                    onPressed: isRefreshing
+                        ? null
+                        : () => _refreshEpg(context, ref, l10n),
                     icon: const Icon(LucideIcons.refreshCw, size: 14),
                     label: Text(l10n.liveTvRefreshEpg),
                   ),
@@ -640,12 +633,9 @@ class _EpgSection extends ConsumerWidget {
     WidgetRef ref,
     AppLocalizations l10n,
   ) async {
-    final epgUrl = ref.read(activeEpgUrlProvider);
-    await ref
-        .read(liveTvRepositoryProvider)
-        .fetchEpg(url: epgUrl, forceRefresh: true);
-    ref.invalidate(epgDataProvider);
-
+    // TODO(REV-117): say so when the download fails (today it falls back
+    // to the cached guide and this still says "refreshed").
+    await ref.read(epgRefreshProvider.notifier).refresh();
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
