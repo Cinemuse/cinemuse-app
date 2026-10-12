@@ -40,11 +40,15 @@ class LiveTvRepository {
     final List<String> channelOrder = [];
     int syntheticLcn = 2000;
 
-    for (final playlist in customPlaylists) {
-      try {
-        final content = await _loadPlaylistContent(playlist);
-        if (content.isEmpty) continue;
+    // Downloaded at the same time, so one slow server doesn't hold up the
+    // others (REV-117); parsed and merged in order below.
+    final contents = await Future.wait(customPlaylists.map(_tryLoadContent));
 
+    for (var i = 0; i < customPlaylists.length; i++) {
+      final playlist = customPlaylists[i];
+      final content = contents[i];
+      if (content == null || content.isEmpty) continue;
+      try {
         final playlistChannels = await _parsePlaylistChannels(
           playlist.type,
           playlist.name,
@@ -82,19 +86,33 @@ class LiveTvRepository {
           }
         }
       } catch (e, s) {
-        // One broken playlist must not hide the channels of the others.
-        AppLogger.warn(
-          _tag,
-          'Skipping playlist "${playlist.name}": it could not be loaded',
-          error: _describeError(e),
-          stackTrace: s,
-        );
+        _logSkipped(playlist, e, s);
       }
     }
 
     final channels = channelOrder.map((k) => channelsByKey[k]!).toList();
     _sortChannels(channels);
     return channels;
+  }
+
+  /// The playlist's text, or `null` when it can't be loaded.
+  Future<String?> _tryLoadContent(LiveTvPlaylist playlist) async {
+    try {
+      return await _loadPlaylistContent(playlist);
+    } catch (e, s) {
+      _logSkipped(playlist, e, s);
+      return null;
+    }
+  }
+
+  // One broken playlist must not hide the channels of the others.
+  static void _logSkipped(LiveTvPlaylist playlist, Object e, StackTrace s) {
+    AppLogger.warn(
+      _tag,
+      'Skipping playlist "${playlist.name}": it could not be loaded',
+      error: _describeError(e),
+      stackTrace: s,
+    );
   }
 
   Future<String> _loadPlaylistContent(LiveTvPlaylist playlist) async {

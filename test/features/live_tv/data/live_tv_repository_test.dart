@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +8,34 @@ import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 
 const _epgUrl = 'https://example.com/epg.json';
+
+/// Answers no request until two have started: if playlists were downloaded
+/// one after another, the first would wait forever.
+class _TwoAtOnceAdapter implements HttpClientAdapter {
+  var _started = 0;
+  final _bothStarted = Completer<void>();
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    if (++_started == 2) _bothStarted.complete();
+    await _bothStarted.future;
+    final name = options.uri.pathSegments.last;
+    return ResponseBody.fromString(
+      '#EXTM3U\n#EXTINF:-1,$name\nhttp://example.com/$name.m3u8\n',
+      200,
+      headers: {
+        Headers.contentTypeHeader: ['text/plain'],
+      },
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
 
 void main() {
   late Directory dir;
@@ -89,4 +119,21 @@ http://example.com/c.m3u8
       expect(channels.map((c) => c.lcn).toSet(), hasLength(3));
     },
   );
+
+  test('downloads playlists at the same time (REV-117)', () async {
+    final dio = Dio()..httpClientAdapter = _TwoAtOnceAdapter();
+    final repo = LiveTvRepository(dio, defaultEpgUrl: _epgUrl);
+    LiveTvPlaylist remote(String name) => LiveTvPlaylist(
+      name: name,
+      urlOrPath: 'https://example.com/$name',
+      isLocal: false,
+      type: PlaylistType.m3u,
+    );
+
+    final channels = await repo
+        .fetchChannels(customPlaylists: [remote('one'), remote('two')])
+        .timeout(const Duration(seconds: 5));
+
+    expect(channels.map((c) => c.name), ['one', 'two']);
+  });
 }

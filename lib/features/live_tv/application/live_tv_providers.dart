@@ -3,7 +3,7 @@ export 'package:cinemuse_app/features/live_tv/application/custom_playlists_notif
 
 import 'dart:async';
 
-import 'package:dio/dio.dart';
+import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
@@ -19,9 +19,10 @@ import 'package:cinemuse_app/features/live_tv/data/local_playlist_storage.dart';
 // Repository
 // ---------------------------------------------------------------------------
 
+// Shared client: timeouts + retries, so a dead server can't hang (REV-117).
 final liveTvRepositoryProvider = Provider<LiveTvRepository>((ref) {
   return LiveTvRepository(
-    Dio(),
+    ref.watch(dioProvider),
     defaultEpgUrl: ref.watch(defaultEpgUrlProvider),
   );
 });
