@@ -69,65 +69,62 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                     // Files Section (Accordion)
                     if (currentState.currentStream?.files.isNotEmpty ??
                         false) ...[
-                      Material(
-                        type: MaterialType.transparency,
-                        child: InkWell(
-                          onTap: () =>
-                              setState(() => _filesExpanded = !_filesExpanded),
-                          borderRadius: AppTheme.radius12,
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: isLandscape ? 8 : 12,
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.folder_open_rounded,
-                                  color: AppTheme.accent,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        l10n.playerFiles.toUpperCase(),
-                                        style: const TextStyle(
-                                          color: AppTheme.textWhite,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 1.2,
-                                        ),
+                      DpadFocusable(
+                        showFocusRing: true,
+                        onTap: () =>
+                            setState(() => _filesExpanded = !_filesExpanded),
+                        borderRadius: AppTheme.radius12,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: isLandscape ? 8 : 12,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.folder_open_rounded,
+                                color: AppTheme.accent,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      l10n.playerFiles.toUpperCase(),
+                                      style: const TextStyle(
+                                        color: AppTheme.textWhite,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.2,
                                       ),
-                                      Text(
-                                        l10n.playerFilesCount(
-                                          currentState
-                                                  .currentStream
-                                                  ?.files
-                                                  .length ??
-                                              0,
-                                        ),
-                                        style: TextStyle(
-                                          color: AppTheme.textMuted.withAlpha(
-                                            128,
-                                          ),
-                                          fontSize: 11,
-                                        ),
+                                    ),
+                                    Text(
+                                      l10n.playerFilesCount(
+                                        currentState
+                                                .currentStream
+                                                ?.files
+                                                .length ??
+                                            0,
                                       ),
-                                    ],
-                                  ),
+                                      style: TextStyle(
+                                        color: AppTheme.textMuted.withAlpha(
+                                          128,
+                                        ),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Icon(
-                                  _filesExpanded
-                                      ? Icons.keyboard_arrow_up_rounded
-                                      : Icons.keyboard_arrow_down_rounded,
-                                  color: AppTheme.textMuted,
-                                ),
-                              ],
-                            ),
+                              ),
+                              Icon(
+                                _filesExpanded
+                                    ? Icons.keyboard_arrow_up_rounded
+                                    : Icons.keyboard_arrow_down_rounded,
+                                color: AppTheme.textMuted,
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -141,88 +138,78 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 8.0),
-                            child: Material(
-                              type: MaterialType.transparency,
-                              child: InkWell(
-                                borderRadius: AppTheme.radius12,
-                                onTap: () {
-                                  ref
-                                      .read(
-                                        playerControllerProvider(
-                                          params,
-                                        ).notifier,
-                                      )
-                                      .changeFile(file.id);
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                  decoration: BoxDecoration(
+                            child: DpadFocusable(
+                              showFocusRing: true,
+                              borderRadius: AppTheme.radius12,
+                              onTap: () {
+                                ref
+                                    .read(
+                                      playerControllerProvider(params).notifier,
+                                    )
+                                    .changeFile(file.id);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppTheme.accent.withValues(alpha: 0.12)
+                                      : AppTheme.textWhite.withValues(
+                                          alpha: 0.04,
+                                        ),
+                                  borderRadius: AppTheme.radius12,
+                                  border: Border.all(
                                     color: isSelected
-                                        ? AppTheme.accent.withValues(
-                                            alpha: 0.12,
-                                          )
+                                        ? AppTheme.accent.withValues(alpha: 0.6)
                                         : AppTheme.textWhite.withValues(
-                                            alpha: 0.04,
+                                            alpha: 0.08,
                                           ),
-                                    borderRadius: AppTheme.radius12,
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? AppTheme.accent.withValues(
-                                              alpha: 0.6,
-                                            )
-                                          : AppTheme.textWhite.withValues(
-                                              alpha: 0.08,
-                                            ),
-                                      width: 1,
-                                    ),
+                                    width: 1,
                                   ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              file.filename,
-                                              style: TextStyle(
-                                                color: isSelected
-                                                    ? AppTheme.textWhite
-                                                    : AppTheme.textWhite
-                                                          .withValues(
-                                                            alpha: 0.7,
-                                                          ),
-                                                fontSize: 13,
-                                                fontWeight: isSelected
-                                                    ? FontWeight.w600
-                                                    : FontWeight.w400,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            file.filename,
+                                            style: TextStyle(
+                                              color: isSelected
+                                                  ? AppTheme.textWhite
+                                                  : AppTheme.textWhite
+                                                        .withValues(alpha: 0.7),
+                                              fontSize: 13,
+                                              fontWeight: isSelected
+                                                  ? FontWeight.w600
+                                                  : FontWeight.w400,
                                             ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              "${file.sizeInGB.toStringAsFixed(2)} GB",
-                                              style: TextStyle(
-                                                color: AppTheme.textMuted
-                                                    .withValues(alpha: 0.5),
-                                                fontSize: 10,
-                                              ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            "${file.sizeInGB.toStringAsFixed(2)} GB",
+                                            style: TextStyle(
+                                              color: AppTheme.textMuted
+                                                  .withValues(alpha: 0.5),
+                                              fontSize: 10,
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       ),
-                                      if (isSelected)
-                                        const Icon(
-                                          Icons.check_circle_rounded,
-                                          color: AppTheme.accent,
-                                          size: 18,
-                                        ),
-                                    ],
-                                  ),
+                                    ),
+                                    if (isSelected)
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        color: AppTheme.accent,
+                                        size: 18,
+                                      ),
+                                  ],
                                 ),
                               ),
                             ),

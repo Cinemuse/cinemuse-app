@@ -134,7 +134,6 @@ class SettingsTile extends StatelessWidget {
               Icons.chevron_right_rounded,
               color: AppTheme.borderSubtle,
             ),
-            onTap: onTap,
           ),
         );
       },
@@ -347,7 +346,6 @@ class TrackTile extends ConsumerWidget {
                     size: 20,
                   )
                 : null,
-            onTap: _handleTrackSelection,
           ),
         );
       },

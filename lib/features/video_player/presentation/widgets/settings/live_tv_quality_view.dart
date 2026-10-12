@@ -65,18 +65,14 @@ class LiveTvQualityView extends ConsumerWidget {
               ],
               _buildSectionHeader(l10n.playerPreferredQuality),
               const SizedBox(height: 8),
-              ...StreamQuality.values.reversed.toList().asMap().entries.map((
-                entry,
-              ) {
-                final index = entry.key;
-                final q = entry.value;
+              ...StreamQuality.values.reversed.map((q) {
                 return _buildQualityTile(
                   ref: ref,
                   quality: q,
                   icon: _getQualityIcon(q),
                   current: currentQuality,
-                  autofocus:
-                      links.isEmpty && (q == currentQuality || index == 0),
+                  // The first one used to win and focused 4K (REV-171).
+                  autofocus: links.isEmpty && q == currentQuality,
                 );
               }),
               const SizedBox(height: 24),

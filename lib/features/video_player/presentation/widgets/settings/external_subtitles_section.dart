@@ -5,6 +5,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:cinemuse_app/core/constants/tmdb_constants.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/features/streaming/subtitles/external_subtitle.dart';
 import 'package:cinemuse_app/features/streaming/subtitles/subtitle_service.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
@@ -138,57 +139,55 @@ class _ExternalSubtitlesSectionState extends State<ExternalSubtitlesSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            onTap: () =>
-                setState(() => _expandedLanguages[language] = !isExpanded),
-            borderRadius: AppTheme.radiusMd,
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: widget.isLandscape ? 8 : 12,
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.folder_open_rounded,
-                    color: AppTheme.accent,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          (l10n?.languageName(language) ?? language)
-                              .toUpperCase(),
-                          style: const TextStyle(
-                            color: AppTheme.textWhite,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
+        DpadFocusable(
+          showFocusRing: true,
+          onTap: () =>
+              setState(() => _expandedLanguages[language] = !isExpanded),
+          borderRadius: AppTheme.radiusMd,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: widget.isLandscape ? 8 : 12,
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.folder_open_rounded,
+                  color: AppTheme.accent,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        (l10n?.languageName(language) ?? language)
+                            .toUpperCase(),
+                        style: const TextStyle(
+                          color: AppTheme.textWhite,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
                         ),
-                        Text(
-                          subtitlesCountText,
-                          style: TextStyle(
-                            color: AppTheme.textMuted.withValues(alpha: 0.8),
-                            fontSize: 11,
-                          ),
+                      ),
+                      Text(
+                        subtitlesCountText,
+                        style: TextStyle(
+                          color: AppTheme.textMuted.withValues(alpha: 0.8),
+                          fontSize: 11,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Icon(
-                    isExpanded
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                    color: AppTheme.textMuted,
-                  ),
-                ],
-              ),
+                ),
+                Icon(
+                  isExpanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  color: AppTheme.textMuted,
+                ),
+              ],
             ),
           ),
         ),
@@ -284,68 +283,66 @@ class _ExternalSubtitleTileState extends ConsumerState<_ExternalSubtitleTile> {
     final sub = widget.subtitle;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          borderRadius: AppTheme.radiusMd,
-          onTap: _isApplying ? null : _apply,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceOverlay,
-              borderRadius: AppTheme.radiusMd,
-              border: Border.all(color: AppTheme.borderSubtle, width: 1),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        sub.title,
-                        style: TextStyle(
-                          color: AppTheme.textWhite.withValues(alpha: 0.9),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+      child: DpadFocusable(
+        showFocusRing: true,
+        borderRadius: AppTheme.radiusMd,
+        onTap: _isApplying ? null : _apply,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceOverlay,
+            borderRadius: AppTheme.radiusMd,
+            border: Border.all(color: AppTheme.borderSubtle, width: 1),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sub.title,
+                      style: TextStyle(
+                        color: AppTheme.textWhite.withValues(alpha: 0.9),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
                       ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        SettingsBadge(
+                          text: sub.providerName,
+                          color: AppTheme.accent,
+                        ),
+                        if (sub.downloadCount != null)
                           SettingsBadge(
-                            text: sub.providerName,
+                            text: '\u2193 ${sub.downloadCount}',
                             color: AppTheme.accent,
                           ),
-                          if (sub.downloadCount != null)
-                            SettingsBadge(
-                              text: '\u2193 ${sub.downloadCount}',
-                              color: AppTheme.accent,
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                if (_isApplying)
-                  const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                else
-                  const Icon(
-                    LucideIcons.download,
-                    color: AppTheme.textMuted,
-                    size: 20,
-                  ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              if (_isApplying)
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                const Icon(
+                  LucideIcons.download,
+                  color: AppTheme.textMuted,
+                  size: 20,
+                ),
+            ],
           ),
         ),
       ),
