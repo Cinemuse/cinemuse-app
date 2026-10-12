@@ -5,7 +5,6 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
-import 'package:cinemuse_app/features/profile/domain/profile_stats.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -122,8 +121,6 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     final appLanguage = ref.watch(settingsProvider).appLanguage;
     final historyAsync = ref.watch(watchLogsProvider);
     final localHistoryAsync = ref.watch(watchHistoryStreamProvider);
-    final stats =
-        ref.watch(profileStatsProvider).valueOrNull ?? ProfileStats.empty();
     final horizontalPadding = AppTheme.getResponsiveHorizontalPadding(context);
 
     return Scaffold(
@@ -142,7 +139,6 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
               appLanguage,
               filtered,
               joined,
-              stats,
               horizontalPadding,
             );
           },
@@ -159,7 +155,6 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
                 appLanguage,
                 filtered,
                 localList,
-                stats,
                 horizontalPadding,
               );
             }
@@ -248,13 +243,13 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     String appLanguage,
     List<WatchHistory> items,
     List<WatchHistory> allHistory,
-    ProfileStats stats,
     double horizontalPadding,
   ) {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isDesktop = screenWidth >= 850;
 
-    // 1. Overall unique items across full history (with profileStats fallback)
+    // 1. Overall unique items across full history. The header counts only
+    // what this screen loaded, never the server stats (REV-269).
     final totalUniqueMap = <int, WatchHistory>{};
     for (final item in allHistory.where((h) => h.media != null)) {
       final existing = totalUniqueMap[item.tmdbId];
@@ -263,19 +258,12 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
         totalUniqueMap[item.tmdbId] = item;
       }
     }
-    final fallbackMovies = totalUniqueMap.values
+    final totalMovies = totalUniqueMap.values
         .where((h) => h.mediaType == MediaKind.movie)
         .length;
-    final fallbackSeries = totalUniqueMap.values
+    final totalSeries = totalUniqueMap.values
         .where((h) => h.mediaType == MediaKind.tv)
         .length;
-
-    final totalMovies = stats.totalMovies > 0
-        ? stats.totalMovies
-        : fallbackMovies;
-    final totalSeries = stats.totalSeries > 0
-        ? stats.totalSeries
-        : fallbackSeries;
     final totalCount = totalMovies + totalSeries;
 
     // 2. Filtered unique titles
@@ -302,15 +290,6 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
       episodesCount++;
     }
 
-    final hasRefiningFilter =
-        _selectedStatus != null || _searchQuery.isNotEmpty;
-    final effectiveSeasons = (!hasRefiningFilter && stats.totalSeasons > 0)
-        ? stats.totalSeasons
-        : seasonsSet.length;
-    final effectiveEpisodes = (!hasRefiningFilter && stats.totalEpisodes > 0)
-        ? stats.totalEpisodes
-        : episodesCount;
-
     final subtitle = _buildSubtitleText(
       l10n,
       totalTitles: totalCount,
@@ -319,8 +298,8 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
       filteredTitles: filteredTotalTitles,
       filteredMovies: filteredMovies,
       filteredSeries: filteredSeries,
-      seasonsCount: effectiveSeasons,
-      episodesCount: effectiveEpisodes,
+      seasonsCount: seasonsSet.length,
+      episodesCount: episodesCount,
     );
 
     final gridItems = _viewMode == HistoryViewMode.grid

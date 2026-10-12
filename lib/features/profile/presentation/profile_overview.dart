@@ -1,11 +1,12 @@
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
-import 'package:cinemuse_app/features/profile/domain/profile_stats.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/stats_display.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/agenda_widget.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/poster_carousel_row.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
+import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
@@ -31,14 +32,14 @@ class ProfileOverview extends ConsumerWidget {
         .where((h) => h.mediaType == MediaKind.tv)
         .toList();
     final statsAsync = ref.watch(profileStatsProvider);
-    final stats = statsAsync.valueOrNull ?? ProfileStats.empty();
+    // null until the first stats arrive: the cards show "–". A failed refresh
+    // keeps the last stats, so the error card is only for the first load
+    // (REV-269).
+    final stats = statsAsync.valueOrNull;
+    final statsError = statsAsync.hasError && stats == null
+        ? ref.read(errorMapperProvider).map(statsAsync.error!)
+        : null;
     final l10n = AppLocalizations.of(context)!;
-
-    String formatDuration(int minutes) {
-      final d = minutes ~/ 1440;
-      final h = (minutes % 1440) ~/ 60;
-      return l10n.statsDaysHours(d, h);
-    }
 
     final appLanguage = ref.watch(settingsProvider).appLanguage;
 
@@ -109,6 +110,13 @@ class ProfileOverview extends ConsumerWidget {
       );
     }
 
+    Widget statsErrorCard(UserFriendlyError error) => ErrorCard(
+      message: error.message,
+      hint: error.hint,
+      type: error.type,
+      onRetry: () => ref.invalidate(profileStatsProvider),
+    );
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth > 900;
@@ -136,13 +144,14 @@ class ProfileOverview extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              if (statsError != null) ...[
+                                statsErrorCard(statsError),
+                                const SizedBox(height: 24),
+                              ],
                               Row(
                                 children: [
                                   Expanded(
-                                    child: TimeBreakdownCard(
-                                      stats: stats,
-                                      formatDuration: formatDuration,
-                                    ),
+                                    child: TimeBreakdownCard(stats: stats),
                                   ),
                                   const SizedBox(width: 24),
                                   Expanded(
@@ -210,6 +219,10 @@ class ProfileOverview extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Stats
+                    if (statsError != null) ...[
+                      statsErrorCard(statsError),
+                      const SizedBox(height: 16),
+                    ],
                     const StatsDisplay(),
                     const SizedBox(height: 16),
 

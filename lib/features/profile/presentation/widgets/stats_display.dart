@@ -12,16 +12,8 @@ class StatsDisplay extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statsAsync = ref.watch(profileStatsProvider);
-    final stats = statsAsync.valueOrNull ?? ProfileStats.empty();
-    final l10n = AppLocalizations.of(context)!;
-
-    // Helpers
-    String formatDuration(int minutes) {
-      final d = minutes ~/ 1440;
-      final h = (minutes % 1440) ~/ 60;
-      return l10n.statsDaysHours(d, h);
-    }
+    // null until the first stats arrive: the cards show "–" (REV-269).
+    final stats = ref.watch(profileStatsProvider).valueOrNull;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -29,21 +21,13 @@ class StatsDisplay extends ConsumerWidget {
         final isDesktop = constraints.maxWidth > 900;
 
         if (!isDesktop) {
-          return _MobileStatsDisplay(
-            stats: stats,
-            formatDuration: formatDuration,
-          );
+          return _MobileStatsDisplay(stats: stats);
         }
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: TimeBreakdownCard(
-                stats: stats,
-                formatDuration: formatDuration,
-              ),
-            ),
+            Expanded(child: TimeBreakdownCard(stats: stats)),
             const SizedBox(width: 24),
             Expanded(child: MoviesStatsCard(stats: stats)),
             const SizedBox(width: 24),
@@ -55,16 +39,27 @@ class StatsDisplay extends ConsumerWidget {
   }
 }
 
+/// Shown until the first stats arrive, so "no data" is never a 0 (REV-269).
+const _noValue = '–';
+
+String _formatCount(ProfileStats? stats, int Function(ProfileStats) pick) =>
+    stats == null ? _noValue : pick(stats).toString();
+
+String _formatTime(
+  AppLocalizations l10n,
+  ProfileStats? stats,
+  int Function(ProfileStats) pick,
+) {
+  if (stats == null) return _noValue;
+  final minutes = pick(stats);
+  return l10n.statsDaysHours(minutes ~/ 1440, (minutes % 1440) ~/ 60);
+}
+
 // --- Card 1: Time Breakdown ---
 class TimeBreakdownCard extends StatelessWidget {
-  final ProfileStats stats;
-  final String Function(int) formatDuration;
+  final ProfileStats? stats;
 
-  const TimeBreakdownCard({
-    super.key,
-    required this.stats,
-    required this.formatDuration,
-  });
+  const TimeBreakdownCard({super.key, required this.stats});
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +82,7 @@ class TimeBreakdownCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      formatDuration(stats.totalMinutesWatched),
+                      _formatTime(l10n, stats, (s) => s.totalMinutesWatched),
                       style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         fontSize: 32, // slightly smaller to fit
                         fontWeight: FontWeight.w900,
@@ -118,12 +113,12 @@ class TimeBreakdownCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _SubStatItem(
-                        value: formatDuration(stats.movieMinutes),
+                        value: _formatTime(l10n, stats, (s) => s.movieMinutes),
                         label: l10n.statsMovies.toUpperCase(),
                       ),
                       const SizedBox(height: 8),
                       _SubStatItem(
-                        value: formatDuration(stats.seriesMinutes),
+                        value: _formatTime(l10n, stats, (s) => s.seriesMinutes),
                         label: l10n.statsSeries.toUpperCase(),
                       ),
                     ],
@@ -138,16 +133,28 @@ class TimeBreakdownCard extends StatelessWidget {
           Row(
             children: [
               _FooterStat(
-                value: formatDuration(stats.last7Days.totalMinutes),
+                value: _formatTime(
+                  l10n,
+                  stats,
+                  (s) => s.last7Days.totalMinutes,
+                ),
                 label: l10n.statsLast7Days.toUpperCase(),
               ),
               _FooterStat(
-                value: formatDuration(stats.last30Days.totalMinutes),
+                value: _formatTime(
+                  l10n,
+                  stats,
+                  (s) => s.last30Days.totalMinutes,
+                ),
                 label: l10n.statsLast30Days.toUpperCase(),
                 showBorder: true,
               ),
               _FooterStat(
-                value: formatDuration(stats.last365Days.totalMinutes),
+                value: _formatTime(
+                  l10n,
+                  stats,
+                  (s) => s.last365Days.totalMinutes,
+                ),
                 label: l10n.statsLastYear.toUpperCase(),
                 showBorder: true,
               ),
@@ -161,7 +168,7 @@ class TimeBreakdownCard extends StatelessWidget {
 
 // --- Card 2: Movies Stats ---
 class MoviesStatsCard extends StatelessWidget {
-  final ProfileStats stats;
+  final ProfileStats? stats;
 
   const MoviesStatsCard({super.key, required this.stats});
 
@@ -180,7 +187,7 @@ class MoviesStatsCard extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  stats.totalMovies.toString(),
+                  _formatCount(stats, (s) => s.totalMovies),
                   style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     fontSize: 48,
                     fontWeight: FontWeight.w900,
@@ -207,16 +214,16 @@ class MoviesStatsCard extends StatelessWidget {
           Row(
             children: [
               _FooterStat(
-                value: stats.last7Days.movieCount.toString(),
+                value: _formatCount(stats, (s) => s.last7Days.movieCount),
                 label: l10n.statsLast7Days.toUpperCase(),
               ),
               _FooterStat(
-                value: stats.last30Days.movieCount.toString(),
+                value: _formatCount(stats, (s) => s.last30Days.movieCount),
                 label: l10n.statsLast30Days.toUpperCase(),
                 showBorder: true,
               ),
               _FooterStat(
-                value: stats.last365Days.movieCount.toString(),
+                value: _formatCount(stats, (s) => s.last365Days.movieCount),
                 label: l10n.statsLastYear.toUpperCase(),
                 showBorder: true,
               ),
@@ -230,7 +237,7 @@ class MoviesStatsCard extends StatelessWidget {
 
 // --- Card 3: Series Stats ---
 class SeriesStatsCard extends StatelessWidget {
-  final ProfileStats stats;
+  final ProfileStats? stats;
 
   const SeriesStatsCard({super.key, required this.stats});
 
@@ -255,7 +262,7 @@ class SeriesStatsCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      stats.totalEpisodes.toString(),
+                      _formatCount(stats, (s) => s.totalEpisodes),
                       style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         fontSize: 32,
                         fontWeight: FontWeight.w900,
@@ -286,12 +293,12 @@ class SeriesStatsCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _SubStatItem(
-                        value: stats.totalSeries.toString(),
+                        value: _formatCount(stats, (s) => s.totalSeries),
                         label: l10n.statsSeries.toUpperCase(),
                       ),
                       const SizedBox(height: 8),
                       _SubStatItem(
-                        value: stats.totalSeasons.toString(),
+                        value: _formatCount(stats, (s) => s.totalSeasons),
                         label: l10n.statsSeasons.toUpperCase(),
                       ),
                     ],
@@ -306,16 +313,16 @@ class SeriesStatsCard extends StatelessWidget {
           Row(
             children: [
               _FooterStat(
-                value: stats.last7Days.episodeCount.toString(),
+                value: _formatCount(stats, (s) => s.last7Days.episodeCount),
                 label: l10n.statsLast7Days.toUpperCase(),
               ),
               _FooterStat(
-                value: stats.last30Days.episodeCount.toString(),
+                value: _formatCount(stats, (s) => s.last30Days.episodeCount),
                 label: l10n.statsLast30Days.toUpperCase(),
                 showBorder: true,
               ),
               _FooterStat(
-                value: stats.last365Days.episodeCount.toString(),
+                value: _formatCount(stats, (s) => s.last365Days.episodeCount),
                 label: l10n.statsLastYear.toUpperCase(),
                 showBorder: true,
               ),
@@ -469,13 +476,9 @@ class _FooterStat extends StatelessWidget {
 }
 
 class _MobileStatsDisplay extends StatefulWidget {
-  final ProfileStats stats;
-  final String Function(int) formatDuration;
+  final ProfileStats? stats;
 
-  const _MobileStatsDisplay({
-    required this.stats,
-    required this.formatDuration,
-  });
+  const _MobileStatsDisplay({required this.stats});
 
   @override
   State<_MobileStatsDisplay> createState() => _MobileStatsDisplayState();
@@ -554,10 +557,7 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay>
               case 0:
                 currentWidget = GestureDetector(
                   onTap: () => _toggleExpanded(0),
-                  child: TimeBreakdownCard(
-                    stats: widget.stats,
-                    formatDuration: widget.formatDuration,
-                  ),
+                  child: TimeBreakdownCard(stats: widget.stats),
                 );
                 break;
               case 1:
@@ -600,7 +600,7 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay>
             LucideIcons.clock,
             l10n.statsTime.toUpperCase(),
             Colors.blue,
-            widget.formatDuration(widget.stats.totalMinutesWatched),
+            _formatTime(l10n, widget.stats, (s) => s.totalMinutesWatched),
           ),
         ),
         const SizedBox(width: 12),
@@ -610,7 +610,7 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay>
             LucideIcons.film,
             l10n.statsMovies.toUpperCase(),
             AppTheme.accent,
-            widget.stats.totalMovies.toString(),
+            _formatCount(widget.stats, (s) => s.totalMovies),
           ),
         ),
         const SizedBox(width: 12),
@@ -620,7 +620,7 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay>
             LucideIcons.tv,
             l10n.statsSeries.toUpperCase(),
             Colors.green,
-            widget.stats.totalEpisodes.toString(),
+            _formatCount(widget.stats, (s) => s.totalEpisodes),
           ),
         ),
       ],
