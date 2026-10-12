@@ -176,7 +176,7 @@ void main() {
     });
   });
 
-  // REV-106: Dropped list actions go through the notifier.
+  // REV-106: Restore goes through the notifier.
   group('dropped list', () {
     setUp(() {
       when(
@@ -197,18 +197,6 @@ void main() {
       );
       await container.read(droppedListProvider.future);
       verify(() => historyRepo.getDroppedItems('user-a')).called(2);
-    });
-
-    test('remove deletes the history row of that title', () async {
-      when(
-        () => historyRepo.removeFromDropped(any(), any(), any()),
-      ).thenAnswer((_) async {});
-
-      await container
-          .read(userListsProvider.notifier)
-          .removeFromDropped(7, MediaKind.tv);
-
-      verify(() => historyRepo.removeFromDropped('user-a', 7, 'tv')).called(1);
     });
   });
 }

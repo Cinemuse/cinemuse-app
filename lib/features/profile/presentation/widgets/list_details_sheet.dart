@@ -697,24 +697,17 @@ class _ListMediaCard extends ConsumerWidget {
       rating: rating,
       releaseDate: year,
       tmdbId: item.tmdbId,
-      onRemoveFromList: listId.startsWith('collection_')
+      // Dropped is a label, not a list: its titles only leave it through
+      // Restore (REV-262).
+      onRemoveFromList: listId.startsWith('collection_') || listId == 'dropped'
           ? null
-          : () async {
-              if (listId == 'dropped') {
-                await runListAction(
-                  context,
-                  ref,
-                  (lists) =>
-                      lists.removeFromDropped(item.tmdbId, item.mediaType),
-                );
-              } else {
-                // TODO(REV-89): a failed removal is not shown to the user.
-                unawaited(
-                  ref
-                      .read(userListsProvider.notifier)
-                      .removeItemFromList(listId, item.tmdbId, item.mediaType),
-                );
-              }
+          : () {
+              // TODO(REV-89): a failed removal is not shown to the user.
+              unawaited(
+                ref
+                    .read(userListsProvider.notifier)
+                    .removeItemFromList(listId, item.tmdbId, item.mediaType),
+              );
             },
       onRestore: listId == 'dropped'
           ? () async {

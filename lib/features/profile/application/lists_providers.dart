@@ -180,14 +180,6 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
     );
   }
 
-  /// Takes a title off the Dropped list by deleting its history row.
-  /// Throws an [AppFailure]; the Dropped list reloads either way.
-  Future<void> removeFromDropped(int tmdbId, MediaKind mediaType) =>
-      _changeDropped(
-        (repo, userId) =>
-            repo.removeFromDropped(userId, tmdbId, mediaType.name),
-      );
-
   /// Puts a dropped title back in Continue Watching.
   /// Throws an [AppFailure]; the Dropped list reloads either way.
   Future<void> restoreFromDropped(int tmdbId) => _changeDropped(

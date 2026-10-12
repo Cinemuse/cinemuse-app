@@ -210,23 +210,6 @@ void main() {
       },
     );
 
-    test('removeFromDropped deletes item from database', () async {
-      await database.upsertWatchHistory(
-        LocalWatchHistoriesCompanion.insert(
-          userId: userId,
-          tmdbId: 303,
-          mediaType: 'tv',
-          status: 'dropped',
-          lastWatchedAt: DateTime.now(),
-        ),
-      );
-
-      await repository.removeFromDropped(userId, 303, 'tv');
-
-      final history = await database.getWatchHistory(userId);
-      expect(history.any((h) => h.tmdbId == 303), isFalse);
-    });
-
     test(
       'getAllWatchLogs fetches watch logs and maps to WatchHistory with metadata',
       () async {

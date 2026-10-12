@@ -976,22 +976,6 @@ class WatchHistoryRepository {
     await _cacheReturnedRow(userId, tmdbId, mediaType, rows);
   }
 
-  Future<void> removeFromDropped(
-    String userId,
-    int tmdbId,
-    String mediaType,
-  ) async {
-    invalidateWatchLogsCache();
-    await _client
-        .from('watch_history')
-        .delete()
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId)
-        .eq('status', 'dropped')
-        .withAppFailure();
-    await _db.deleteWatchHistoryItem(userId, tmdbId, mediaType);
-  }
-
   // Simple StreamTransformer to debounce events
   StreamTransformer<T, T> _debounceTransformer<T>(Duration duration) {
     return StreamTransformer<T, T>.fromBind((Stream<T> stream) {
