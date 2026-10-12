@@ -199,7 +199,7 @@ void main() {
 
   group('LiveTvViewMode and D-Pad Navigation Integration', () {
     testWidgets(
-      'tapping already selected channel in split mode expands to fullWindow',
+      'tapping the playing channel keeps the split layout (REV-132)',
       (tester) async {
         final channel = createMockChannel();
         final container = ProviderContainer(
@@ -229,11 +229,10 @@ void main() {
         await tester.tap(find.text(channel.name));
         await tester.pump();
 
-        // Should have switched to fullWindow
-        expect(
-          container.read(liveTvViewModeProvider),
-          LiveTvViewMode.fullWindow,
-        );
+        // fullWindow hid the navbar on wide screens and showed nothing on
+        // phones.
+        expect(container.read(liveTvViewModeProvider), LiveTvViewMode.split);
+        expect(container.read(selectedChannelProvider), same(channel));
       },
     );
 

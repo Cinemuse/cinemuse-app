@@ -1088,14 +1088,9 @@ class _ChannelTileWrapper extends ConsumerWidget {
       currentProgram: currentProgram,
       focusNode: focusNode,
       autofocus: autofocus,
-      onTap: () {
-        if (!isOverlay && isPlaying) {
-          ref.read(liveTvViewModeProvider.notifier).state =
-              LiveTvViewMode.fullWindow;
-        } else {
-          ref.read(selectedChannelProvider.notifier).state = channel;
-        }
-      },
+      // TODO(REV-132): open the big player for the playing channel, with
+      // REV-156 (today that starts a second player).
+      onTap: () => ref.read(selectedChannelProvider.notifier).state = channel,
       onKeyEvent: (node, event) {
         if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
