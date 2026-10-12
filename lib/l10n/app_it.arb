@@ -450,8 +450,6 @@
   "settingsProfile": "Libreria",
   "profileOverview": "PANORAMICA",
   "profileCollections": "COLLEZIONI",
-  "profileActivity": "ATTIVITÀ",
-  "profileActivityComingSoon": "Attività disponibile a breve",
   "profileUserDashboard": "Libreria Utente",
   "profileErrorLoading": "Errore caricamento libreria",
   "profileMemberSince": "Membro dal {year}",

@@ -1426,12 +1426,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get profileCollections => 'COLLEZIONI';
 
   @override
-  String get profileActivity => 'ATTIVITÀ';
-
-  @override
-  String get profileActivityComingSoon => 'Attività disponibile a breve';
-
-  @override
   String get profileUserDashboard => 'Libreria Utente';
 
   @override

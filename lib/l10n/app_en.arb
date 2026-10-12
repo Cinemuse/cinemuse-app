@@ -519,8 +519,6 @@
   "settingsProfile": "Library",
   "profileOverview": "OVERVIEW",
   "profileCollections": "COLLECTIONS",
-  "profileActivity": "ACTIVITY",
-  "profileActivityComingSoon": "Activity Coming Soon",
   "profileUserDashboard": "User Library",
   "profileErrorLoading": "Error loading library",
   "profileMemberSince": "Member since {year}",

@@ -1410,12 +1410,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileCollections => 'COLLECTIONS';
 
   @override
-  String get profileActivity => 'ACTIVITY';
-
-  @override
-  String get profileActivityComingSoon => 'Activity Coming Soon';
-
-  @override
   String get profileUserDashboard => 'User Library';
 
   @override

@@ -14,57 +14,18 @@ class CollectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine styling based on type
-    final isWatchlist = list.type == ListType.watchlist;
-    final isFavorites = list.type == ListType.favorites;
-
-    Color borderColor = Colors.white10;
-    double borderWidth = 1.0;
-    Color iconColor = Colors.grey;
-    Color badgeColor = Colors.grey;
-    Color badgeBg = Colors.white10;
-    IconData icon = LucideIcons.list;
-    List<Color> backgroundGradient = [AppTheme.surface, AppTheme.surface];
-    List<Color> headerGradient = [
+    // Only custom lists use this card; system lists use SystemListCard.
+    const borderColor = Colors.white10;
+    const borderWidth = 1.0;
+    const iconColor = Colors.grey;
+    const badgeColor = Colors.grey;
+    const badgeBg = Colors.white10;
+    const icon = LucideIcons.list;
+    const backgroundGradient = [AppTheme.surface, AppTheme.surface];
+    final headerGradient = [
       Colors.black.withValues(alpha: 0.05),
       Colors.black.withValues(alpha: 0.05),
     ];
-
-    if (isWatchlist) {
-      borderColor = const Color(
-        0xFFCA8A04,
-      ).withValues(alpha: 0.4); // yellow-600/40
-      borderWidth = 2.0;
-      iconColor = const Color(0xFFEAB308); // yellow-500
-      badgeColor = const Color(0xFFEAB308); // yellow-500
-      badgeBg = const Color(0xFFEAB308).withValues(alpha: 0.2); // yellow-500/20
-      icon = LucideIcons.bookmark;
-      backgroundGradient = [
-        const Color(0xFF713F12).withValues(alpha: 0.3), // yellow-900/30
-        const Color(0xFF7C2D12).withValues(alpha: 0.2), // orange-900/20
-      ];
-      headerGradient = [
-        const Color(0xFFCA8A04).withValues(alpha: 0.2), // yellow-600/20
-        const Color(0xFFEA580C).withValues(alpha: 0.2), // orange-600/20
-      ];
-    } else if (isFavorites) {
-      borderColor = const Color(
-        0xFFDC2626,
-      ).withValues(alpha: 0.4); // red-600/40
-      borderWidth = 2.0;
-      iconColor = const Color(0xFFEF4444); // red-500
-      badgeColor = const Color(0xFFEF4444); // red-500
-      badgeBg = const Color(0xFFEF4444).withValues(alpha: 0.2); // red-500/20
-      icon = LucideIcons.heart;
-      backgroundGradient = [
-        const Color(0xFF7F1D1D).withValues(alpha: 0.3), // red-900/30
-        const Color(0xFF831843).withValues(alpha: 0.2), // pink-900/20
-      ];
-      headerGradient = [
-        const Color(0xFFDC2626).withValues(alpha: 0.2), // red-600/20
-        const Color(0xFFDB2777).withValues(alpha: 0.2), // pink-600/20
-      ];
-    }
 
     return DpadFocusable(
       onTap: onTap,

@@ -28,7 +28,7 @@ class _ProfileHubState extends ConsumerState<ProfileHub>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref
@@ -129,7 +129,6 @@ class _ProfileHubState extends ConsumerState<ProfileHub>
                               tabs: [
                                 Tab(text: l10n.profileOverview),
                                 Tab(text: l10n.profileCollections),
-                                Tab(text: l10n.profileActivity),
                               ],
                             ),
                           ),
@@ -144,16 +143,7 @@ class _ProfileHubState extends ConsumerState<ProfileHub>
           },
           body: TabBarView(
             controller: _tabController,
-            children: [
-              const ProfileOverview(),
-              const ProfileCollections(),
-              Center(
-                child: Text(
-                  l10n.profileActivityComingSoon,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-              ),
-            ],
+            children: const [ProfileOverview(), ProfileCollections()],
           ),
         ),
       ),

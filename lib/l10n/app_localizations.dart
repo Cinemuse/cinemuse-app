@@ -2618,18 +2618,6 @@ abstract class AppLocalizations {
   /// **'COLLECTIONS'**
   String get profileCollections;
 
-  /// No description provided for @profileActivity.
-  ///
-  /// In en, this message translates to:
-  /// **'ACTIVITY'**
-  String get profileActivity;
-
-  /// No description provided for @profileActivityComingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Activity Coming Soon'**
-  String get profileActivityComingSoon;
-
   /// No description provided for @profileUserDashboard.
   ///
   /// In en, this message translates to:

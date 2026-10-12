@@ -1476,7 +1476,6 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
       return _buildSingleSeasonLabel(
         seasons.first,
         seasonMap[seasons.first]!,
-        list.length,
         l10n,
       );
     }
@@ -1497,7 +1496,6 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
   String _buildSingleSeasonLabel(
     int season,
     Set<int> episodeSet,
-    int totalCount,
     AppLocalizations l10n,
   ) {
     final eps = episodeSet.toList()..sort();

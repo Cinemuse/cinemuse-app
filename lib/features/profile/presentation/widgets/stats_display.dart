@@ -15,28 +15,9 @@ class StatsDisplay extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // null until the first stats arrive: the cards show "–" (REV-269).
     final stats = ref.watch(profileStatsProvider).valueOrNull;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Simple responsive switch
-        final isDesktop = constraints.maxWidth > 900;
-
-        if (!isDesktop) {
-          return _MobileStatsDisplay(stats: stats);
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: TimeBreakdownCard(stats: stats)),
-            const SizedBox(width: 24),
-            Expanded(child: MoviesStatsCard(stats: stats)),
-            const SizedBox(width: 24),
-            Expanded(child: SeriesStatsCard(stats: stats)),
-          ],
-        );
-      },
-    );
+    // Only the narrow Profile layout uses this; the wide one places the
+    // three cards itself (profile_overview.dart).
+    return _MobileStatsDisplay(stats: stats);
   }
 }
 
@@ -66,7 +47,7 @@ class TimeBreakdownCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return BaseCard(
+    return _BaseCard(
       icon: LucideIcons.clock,
       title: l10n.statsTimeBreakdown.toUpperCase(),
       iconColor: Colors.blue,
@@ -177,7 +158,7 @@ class MoviesStatsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return BaseCard(
+    return _BaseCard(
       icon: LucideIcons.film,
       title: l10n.statsMoviesStats.toUpperCase(),
       iconColor: AppTheme.accent,
@@ -246,7 +227,7 @@ class SeriesStatsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return BaseCard(
+    return _BaseCard(
       icon: LucideIcons.tv,
       title: l10n.statsSeriesStats.toUpperCase(),
       iconColor: Colors.green,
@@ -337,14 +318,13 @@ class SeriesStatsCard extends StatelessWidget {
 
 // --- Shared Components ---
 
-class BaseCard extends StatelessWidget {
+class _BaseCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final Color iconColor;
   final Widget child;
 
-  const BaseCard({
-    super.key,
+  const _BaseCard({
     required this.icon,
     required this.title,
     required this.iconColor,
