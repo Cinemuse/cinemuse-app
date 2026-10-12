@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_panel.dart';
@@ -48,7 +49,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
               (map) => {
                 ...map,
                 NavTab.liveTv: () {
-                  final isMobile = MediaQuery.of(context).size.width < 600;
+                  final isMobile = Breakpoints.isCompact(context);
                   if (isMobile) {
                     _playerFocusNode.requestFocus();
                   } else {
@@ -155,7 +156,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
       final match = channels.where((ch) => ch.lcn == lcn).firstOrNull;
       if (match != null) {
         ref.read(selectedChannelProvider.notifier).select(match);
-        final isMobile = MediaQuery.of(context).size.width < 600;
+        final isMobile = Breakpoints.isCompact(context);
         if (isMobile) {
           _playChannel(match);
         } else {
@@ -256,7 +257,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
 
     final selectedChannel = ref.watch(selectedChannelProvider);
     final numberBuffer = ref.watch(numberInputBufferProvider);
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isMobile = Breakpoints.isCompact(context);
 
     // Resolve the nav index FIRST so the listeners below can guard themselves.
     final navIndex = ref.watch(navIndexProvider);

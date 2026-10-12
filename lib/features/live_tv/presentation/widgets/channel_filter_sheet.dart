@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
@@ -18,12 +19,10 @@ void showChannelFilterSheet(
   BuildContext context, {
   LiveTvSheetTab initialTab = LiveTvSheetTab.categories,
 }) {
-  final width = MediaQuery.sizeOf(context).width;
-  final effectiveMaxWidth = width < 640 ? width : 620.0;
-
   AppBottomSheet.show(
     context: context,
-    constraints: BoxConstraints(maxWidth: effectiveMaxWidth),
+    // No wider than the phone layout, full width below it.
+    constraints: const BoxConstraints(maxWidth: Breakpoints.compact),
     child: _FilterSheetContent(initialTab: initialTab),
   );
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/save_live_tv_change.dart';
@@ -168,7 +169,7 @@ class ChannelListPanel extends ConsumerWidget {
   }
 
   BoxBorder? _resolveBorder(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isMobile = Breakpoints.isCompact(context);
     if (isMobile) return null;
     return Border(
       right: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
@@ -411,7 +412,7 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
     final filterIsActive = ref.watch(
       channelFilterProvider.select((f) => f.isActive),
     );
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isMobile = Breakpoints.isCompact(context);
 
     // Sync controller when the provider is changed externally (e.g. from sport cards)
     ref.listen<String>(channelSearchQueryProvider, (previous, next) {
