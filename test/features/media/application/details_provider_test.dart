@@ -17,17 +17,21 @@ class _MockWatchHistoryRepository extends Mock
 
 void main() {
   const movieId = 27205;
+  const showId = 1396;
 
   late StreamController<List<Map<String, dynamic>>> logs;
+  late StreamController<List<Map<String, dynamic>>> showLogs;
   late bool isLogStreamCancelled;
   late ProviderContainer container;
 
   setUp(() {
     isLogStreamCancelled = false;
-    logs = StreamController<List<Map<String, dynamic>>>(
+    logs = StreamController<List<Map<String, dynamic>>>.broadcast(
       onCancel: () => isLogStreamCancelled = true,
     );
     addTearDown(logs.close);
+    showLogs = StreamController<List<Map<String, dynamic>>>.broadcast();
+    addTearDown(showLogs.close);
 
     final auth = _MockGoTrueClient();
     when(() => auth.currentSession).thenReturn(
@@ -51,6 +55,9 @@ void main() {
     when(
       () => repository.watchTitleLogs('user-a', movieId, 'movie'),
     ).thenAnswer((_) => logs.stream);
+    when(
+      () => repository.watchTitleLogs('user-a', showId, 'tv'),
+    ).thenAnswer((_) => showLogs.stream);
 
     container = ProviderContainer(
       overrides: [
@@ -60,6 +67,11 @@ void main() {
     );
     addTearDown(container.dispose);
   });
+
+  Future<void> pumpEvents() async {
+    await container.pump();
+    await Future<void>.delayed(Duration.zero);
+  }
 
   // REV-191: the log providers were never disposed, so every title opened
   // kept a Supabase realtime channel open for the whole session.
@@ -84,4 +96,37 @@ void main() {
 
     expect(isLogStreamCancelled, isTrue);
   });
+
+  // REV-192: "Remove one" on a rewatched episode hid every log of it, and
+  // the hide was never dropped while the server still had one.
+  test(
+    'removing one of two watches shows one, also after the server',
+    () async {
+      Map<String, dynamic> log(String at) => {
+        'tmdb_id': showId,
+        'media_type': 'tv',
+        'season': 1,
+        'episode': 3,
+        'logged_at': at,
+      };
+      container.listen(watchedEpisodesMapProvider(showId), (_, __) {});
+      showLogs.add([log('2026-10-01T20:00:00Z'), log('2026-10-12T20:00:00Z')]);
+      await pumpEvents();
+      expect(container.read(watchedEpisodesMapProvider(showId))['1-3'], 2);
+
+      container
+          .read(seriesWatchLogsProvider(showId).notifier)
+          .changeEpisodeCount(1, 3, (shown) => shown - 1);
+      expect(container.read(watchedEpisodesMapProvider(showId))['1-3'], 1);
+
+      showLogs.add([log('2026-10-01T20:00:00Z')]);
+      await pumpEvents();
+      expect(container.read(watchedEpisodesMapProvider(showId))['1-3'], 1);
+
+      // Confirmed, so a new watch from elsewhere shows up again.
+      showLogs.add([log('2026-10-01T20:00:00Z'), log('2026-10-13T20:00:00Z')]);
+      await pumpEvents();
+      expect(container.read(watchedEpisodesMapProvider(showId))['1-3'], 2);
+    },
+  );
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'dart:developer' as developer;
 import 'package:cinemuse_app/core/error/app_exception.dart';
@@ -115,7 +116,6 @@ final collectionDetailsProvider = FutureProvider.autoDispose
       return tmdbService.getCollectionDetails(collectionId);
     });
 
-// Family provider to fetch strongly-typed collection domain model
 final collectionModelProvider = FutureProvider.autoDispose
     .family<MediaCollection?, int>((ref, collectionId) async {
       final raw = await ref.watch(
@@ -145,11 +145,14 @@ final mediaWatchHistoryProvider = Provider.autoDispose
       return store.whenData((map) => map[tmdbId]);
     });
 
-// StateNotifier for managing series logs with optimistic updates
+// A show's watch logs, with not-yet-saved changes shown at once.
 class OptimisticSeriesLogs
     extends AutoDisposeFamilyStreamNotifier<List<WatchLog>, int> {
-  // Key: "season-episode" -> true (added), false (removed)
-  final Map<String, bool> _optimisticUpdates = {};
+  // "season-episode" -> the watch count to show until the server has it.
+  // A count, not watched / unwatched: removing one of two watches must
+  // still show one (REV-192).
+  final Map<String, int> _expectedCounts = {};
+  List<WatchLog> _serverLogs = const [];
 
   @override
   Stream<List<WatchLog>> build(int arg) {
@@ -166,68 +169,65 @@ class OptimisticSeriesLogs
           }
           throw error;
         })
-        .map((list) => list.map(WatchLog.fromJson).toList())
+        .map((list) => _serverLogs = list.map(WatchLog.fromJson).toList())
         .map(_applyOptimisticUpdates);
   }
 
-  void addOptimisticUpdate(int season, int episode, bool isWatched) {
-    final key = '$season-$episode';
-    _optimisticUpdates[key] = isWatched;
-    _forceRebuild();
-  }
-
-  void _forceRebuild() {
-    state.whenData((logs) {
-      state = AsyncValue.data(_applyOptimisticUpdates(logs));
-    });
+  /// Shows an episode with [change] applied to its shown watch count
+  /// (e.g. `(n) => n - 1` for "remove one") until the server agrees.
+  void changeEpisodeCount(
+    int season,
+    int episode,
+    int Function(int shown) change,
+  ) {
+    final shown = (state.valueOrNull ?? _serverLogs)
+        .where((l) => l.season == season && l.episode == episode)
+        .length;
+    _expectedCounts['$season-$episode'] = max(0, change(shown));
+    // Always applied to the server list: the shown one already has them.
+    state = AsyncValue.data(_applyOptimisticUpdates(_serverLogs));
   }
 
   void clearOptimisticUpdates() {
-    _optimisticUpdates.clear();
+    _expectedCounts.clear();
     ref.invalidateSelf();
   }
 
-  List<WatchLog> _applyOptimisticUpdates(List<WatchLog> currentLogs) {
-    // 0. Build current server state map
-    final Set<String> serverKeys = currentLogs
-        .map((l) => '${l.season}-${l.episode}')
-        .toSet();
+  List<WatchLog> _applyOptimisticUpdates(List<WatchLog> serverLogs) {
+    final serverCounts = <String, int>{};
+    for (final l in serverLogs) {
+      final key = '${l.season}-${l.episode}';
+      serverCounts[key] = (serverCounts[key] ?? 0) + 1;
+    }
+    // Confirmed by the server: nothing left to fake.
+    _expectedCounts.removeWhere(
+      (key, count) => (serverCounts[key] ?? 0) == count,
+    );
 
-    // 1. Self-Cleaning: Prune confirmed changes from the local map
-    _optimisticUpdates.removeWhere((key, isWatched) {
-      final exists = serverKeys.contains(key);
-      return (isWatched && exists) || (!isWatched && !exists);
-    });
-
-    final List<WatchLog> updatedLogs = List.from(currentLogs);
-    final Set<String> activeKeys = Set.from(serverKeys);
-
-    // 2. Apply remaining optimistic updates that aren't on the server yet
-    _optimisticUpdates.forEach((key, isWatched) {
-      final parts = key.split('-');
-      final s = int.parse(parts[0]);
-      final e = int.parse(parts[1]);
-
-      if (isWatched) {
-        if (!activeKeys.contains(key)) {
-          updatedLogs.add(
-            WatchLog(
-              tmdbId: arg,
-              season: s,
-              episode: e,
-              mediaType: MediaKind.tv,
-              loggedAt: DateTime.now(),
-              isOptimistic: true,
-            ),
-          );
-          activeKeys.add(key);
-        }
-      } else {
-        updatedLogs.removeWhere((l) => l.season == s && l.episode == e);
-        activeKeys.remove(key);
+    final updatedLogs = List<WatchLog>.from(serverLogs);
+    _expectedCounts.forEach((key, expected) {
+      final [s, e] = key.split('-').map(int.parse).toList();
+      final extra = (serverCounts[key] ?? 0) - expected;
+      // Hide the newest logs (the ones being removed), or add fake ones.
+      final hidden =
+          (updatedLogs.where((l) => l.season == s && l.episode == e).toList()
+                ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt)))
+              .take(max(0, extra))
+              .toSet();
+      updatedLogs.removeWhere(hidden.contains);
+      for (var i = 0; i < -extra; i++) {
+        updatedLogs.add(
+          WatchLog(
+            tmdbId: arg,
+            season: s,
+            episode: e,
+            mediaType: MediaKind.tv,
+            loggedAt: DateTime.now(),
+            isOptimistic: true,
+          ),
+        );
       }
     });
-
     return updatedLogs;
   }
 }

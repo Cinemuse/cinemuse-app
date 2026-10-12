@@ -99,10 +99,9 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     final userId = _userId;
     if (userId == null) return;
 
-    // Optimistic Update: Remove log immediately
     ref
         .read(seriesWatchLogsProvider(tmdbId).notifier)
-        .addOptimisticUpdate(season, episode, false);
+        .changeEpisodeCount(season, episode, (shown) => shown - 1);
 
     try {
       await _repository.deleteLatestEpisodeLog(
@@ -129,10 +128,9 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     final userId = _userId;
     if (userId == null) return;
 
-    // Optimistic Update: Remove log immediately
     ref
         .read(seriesWatchLogsProvider(tmdbId).notifier)
-        .addOptimisticUpdate(season, episode, false);
+        .changeEpisodeCount(season, episode, (_) => 0);
 
     try {
       await _repository.deleteAllEpisodeLogs(
@@ -159,10 +157,9 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     final userId = _userId;
     if (userId == null) return;
 
-    // Optimistic Update: Add all logs immediately
     final notifier = ref.read(seriesWatchLogsProvider(tmdbId).notifier);
     for (final ep in episodes) {
-      notifier.addOptimisticUpdate(ep.season, ep.episode, true);
+      notifier.changeEpisodeCount(ep.season, ep.episode, (shown) => shown + 1);
     }
 
     try {
