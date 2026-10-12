@@ -43,12 +43,24 @@ class UserList {
     this.items = const [],
   });
 
+  /// Id of the Dropped list, built from the watch history (REV-107).
+  static const droppedId = 'dropped';
+
+  /// Id prefix of a TMDB collection shown as a list; pinned ids use it too.
+  static const collectionIdPrefix = 'collection_';
+
+  /// A TMDB collection: shown like a list, but can't be edited.
+  bool get isCollection => id.startsWith(collectionIdPrefix);
+
+  /// Whether items can be added, removed or the list edited.
+  bool get isReadOnly => isCollection;
+
   /// A TMDB collection shown as a read-only list (the list details sheet).
   factory UserList.fromCollection(
     MediaCollection collection, {
     required String name,
   }) {
-    final id = 'collection_${collection.id}';
+    final id = '$collectionIdPrefix${collection.id}';
     final now = DateTime.now();
     return UserList(
       id: id,

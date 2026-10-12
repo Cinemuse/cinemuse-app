@@ -314,7 +314,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
 
     // Watch the corresponding provider to reflect item removals immediately
     UserList currentList;
-    if (widget.list.id == 'dropped') {
+    if (widget.list.type == ListType.dropped) {
       final droppedListState = ref.watch(droppedListProvider);
       currentList = droppedListState.valueOrNull ?? widget.list;
     } else {
@@ -331,7 +331,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
     final isSystemList =
         currentList.type == ListType.watchlist ||
         currentList.type == ListType.favorites;
-    final isReadOnly = currentList.userId == 'system';
+    final isReadOnly = currentList.isReadOnly;
     final icon = currentList.type == ListType.watchlist
         ? LucideIcons.bookmark
         : (currentList.type == ListType.favorites
@@ -615,7 +615,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                         itemBuilder: (context, index) {
                           return _ListMediaCard(
                             item: currentList.items[index],
-                            listId: currentList.id,
+                            list: currentList,
                           );
                         },
                       );
@@ -630,9 +630,9 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
 
 class _ListMediaCard extends ConsumerWidget {
   final UserListItem item;
-  final String listId;
+  final UserList list;
 
-  const _ListMediaCard({required this.item, required this.listId});
+  const _ListMediaCard({required this.item, required this.list});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -699,17 +699,17 @@ class _ListMediaCard extends ConsumerWidget {
       tmdbId: item.tmdbId,
       // Dropped is a label, not a list: its titles only leave it through
       // Restore (REV-262).
-      onRemoveFromList: listId.startsWith('collection_') || listId == 'dropped'
+      onRemoveFromList: list.isReadOnly || list.type == ListType.dropped
           ? null
           : () {
               // TODO(REV-89): a failed removal is not shown to the user.
               unawaited(
                 ref
                     .read(userListsProvider.notifier)
-                    .removeItemFromList(listId, item.tmdbId, item.mediaType),
+                    .removeItemFromList(list.id, item.tmdbId, item.mediaType),
               );
             },
-      onRestore: listId == 'dropped'
+      onRestore: list.type == ListType.dropped
           ? () async {
               await runListAction(
                 context,

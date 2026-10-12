@@ -316,7 +316,7 @@ class _PinnedListsSection extends ConsumerWidget {
           error: (err, stack) => const SizedBox.shrink(),
         ),
         ...pinnedListIds
-            .where((id) => id.startsWith('collection_'))
+            .where((id) => id.startsWith(UserList.collectionIdPrefix))
             .map((id) => _PinnedCollectionRow(collectionId: id)),
       ],
     );
@@ -329,7 +329,11 @@ class _PinnedCollectionRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final id = int.tryParse(collectionId.replaceFirst('collection_', '')) ?? 0;
+    final id =
+        int.tryParse(
+          collectionId.replaceFirst(UserList.collectionIdPrefix, ''),
+        ) ??
+        0;
     if (id == 0) return const SizedBox.shrink();
 
     final asyncData = ref.watch(collectionModelProvider(id));

@@ -270,7 +270,7 @@ final droppedListProvider = FutureProvider<UserList?>((ref) async {
   final items = droppedItems.map((history) {
     final media = history.media;
     return UserListItem(
-      listId: 'dropped',
+      listId: UserList.droppedId,
       mediaType: history.mediaType,
       tmdbId: history.tmdbId,
       addedAt: history.lastWatchedAt,
@@ -291,7 +291,7 @@ final droppedListProvider = FutureProvider<UserList?>((ref) async {
   }).toList();
 
   return UserList(
-    id: 'dropped',
+    id: UserList.droppedId,
     userId: user.id,
     name: 'Dropped',
     type: ListType.dropped,
