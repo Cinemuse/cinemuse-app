@@ -45,6 +45,9 @@ class WatchHistory {
 
   bool get isCompleted => status == WatchStatus.completed;
 
+  /// One title = type + id: TMDB movie and series ids overlap (REV-98).
+  String get titleKey => '${mediaType.name}-$tmdbId';
+
   factory WatchHistory.fromJson(Map<String, dynamic> json) {
     return WatchHistory(
       userId: json['user_id'] as String,

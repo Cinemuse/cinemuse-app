@@ -180,14 +180,14 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
 
     final localMap = <String, WatchHistory>{};
     for (final item in localList) {
-      localMap['${item.mediaType.name}-${item.tmdbId}'] = item;
+      localMap[item.titleKey] = item;
     }
 
     final joined = <WatchHistory>[];
     final loggedMediaKeys = <String>{};
 
     for (final log in logs) {
-      final key = '${log.mediaType.name}-${log.tmdbId}';
+      final key = log.titleKey;
       loggedMediaKeys.add(key);
       final local = localMap[key];
 
@@ -216,14 +216,14 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
 
     // Append any local in-progress or dropped items that have no completed watch_logs entries
     for (final local in localList) {
-      final key = '${local.mediaType.name}-${local.tmdbId}';
+      final key = local.titleKey;
       if (!loggedMediaKeys.contains(key)) {
         joined.add(local);
       } else if (local.status == WatchStatus.watching &&
           local.progressSeconds > 0) {
         final hasActiveEntry = joined.any(
           (j) =>
-              j.tmdbId == local.tmdbId &&
+              j.titleKey == local.titleKey &&
               j.season == local.season &&
               j.episode == local.episode &&
               j.status == WatchStatus.watching,
@@ -250,12 +250,12 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
 
     // 1. Overall unique items across full history. The header counts only
     // what this screen loaded, never the server stats (REV-269).
-    final totalUniqueMap = <int, WatchHistory>{};
+    final totalUniqueMap = <String, WatchHistory>{};
     for (final item in allHistory.where((h) => h.media != null)) {
-      final existing = totalUniqueMap[item.tmdbId];
+      final existing = totalUniqueMap[item.titleKey];
       if (existing == null ||
           item.lastWatchedAt.isAfter(existing.lastWatchedAt)) {
-        totalUniqueMap[item.tmdbId] = item;
+        totalUniqueMap[item.titleKey] = item;
       }
     }
     final totalMovies = totalUniqueMap.values
@@ -267,9 +267,9 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     final totalCount = totalMovies + totalSeries;
 
     // 2. Filtered unique titles
-    final filteredUniqueMap = <int, WatchHistory>{};
+    final filteredUniqueMap = <String, WatchHistory>{};
     for (final item in items.where((h) => h.media != null)) {
-      filteredUniqueMap[item.tmdbId] = item;
+      filteredUniqueMap[item.titleKey] = item;
     }
     final filteredItemsList = filteredUniqueMap.values.toList();
     final filteredMovies = filteredItemsList
@@ -1147,16 +1147,16 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
       }).toList();
     }
 
-    // 5. In Grid mode, deduplicate by tmdbId so each title appears once with its latest activity.
+    // 5. In Grid mode, deduplicate by title key so each title appears once with its latest activity.
     // In Timeline mode, retain all entries so they can be grouped and clustered into decks per date window.
     final List<WatchHistory> result;
     if (_viewMode == HistoryViewMode.grid) {
-      final uniqueMap = <int, WatchHistory>{};
+      final uniqueMap = <String, WatchHistory>{};
       for (final item in list) {
-        final existing = uniqueMap[item.tmdbId];
+        final existing = uniqueMap[item.titleKey];
         if (existing == null ||
             item.lastWatchedAt.isAfter(existing.lastWatchedAt)) {
-          uniqueMap[item.tmdbId] = item;
+          uniqueMap[item.titleKey] = item;
         }
       }
       result = uniqueMap.values.toList();
@@ -1416,15 +1416,15 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     List<WatchHistory> items,
     AppLocalizations l10n,
   ) {
-    final map = <int, List<WatchHistory>>{};
-    final order = <int>[];
+    final map = <String, List<WatchHistory>>{};
+    final order = <String>[];
 
     for (final item in items) {
-      if (!map.containsKey(item.tmdbId)) {
-        order.add(item.tmdbId);
-        map[item.tmdbId] = [];
+      if (!map.containsKey(item.titleKey)) {
+        order.add(item.titleKey);
+        map[item.titleKey] = [];
       }
-      map[item.tmdbId]!.add(item);
+      map[item.titleKey]!.add(item);
     }
 
     final decks = <_DeckEntry>[];
