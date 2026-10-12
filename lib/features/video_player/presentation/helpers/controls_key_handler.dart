@@ -69,6 +69,7 @@ class ControlsKeyHandler {
         event: event,
         key: key,
         isLive: isLive,
+        isFullscreen: isFullscreen,
         isFullOrStandalone: isFullOrStandalone,
         onTogglePlayPause: onTogglePlayPause,
         onSkip: onSkip,
@@ -123,6 +124,7 @@ class ControlsKeyHandler {
     required KeyEvent event,
     required LogicalKeyboardKey key,
     required bool isLive,
+    required bool isFullscreen,
     required bool isFullOrStandalone,
     required void Function() onTogglePlayPause,
     required void Function(bool forward, {bool showControls}) onSkip,
@@ -216,7 +218,11 @@ class ControlsKeyHandler {
     if (key == LogicalKeyboardKey.escape ||
         key == LogicalKeyboardKey.gameButtonB ||
         key == LogicalKeyboardKey.goBack) {
-      if (event is KeyDownEvent) onBack();
+      // Same as with visible controls: in fullscreen Esc only leaves
+      // fullscreen; onBack would also close the player (REV-158).
+      if (event is KeyDownEvent) {
+        isFullscreen ? onToggleFullscreen() : onBack();
+      }
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.keyF || key == LogicalKeyboardKey.f11) {
