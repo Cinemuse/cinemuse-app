@@ -181,10 +181,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     }
   }
 
-  void _onHover() {
-    _showControls();
-  }
-
   void _togglePlayPause() {
     final notifier = ref.read(playerControllerProvider(widget.params).notifier);
     final player = widget.playerState.controller.player;
@@ -194,7 +190,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     } else {
       notifier.play();
     }
-    _onHover();
+    _showControls();
   }
 
   void _toggleMute() {
@@ -207,7 +203,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
     } else {
       player.setVolume(_lastVolume > 0 ? _lastVolume : 100);
     }
-    _onHover();
+    _showControls();
   }
 
   bool _isFullscreenSafe() =>
@@ -281,7 +277,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       onShowControls: _showControls,
       onHideControls: _hideControls,
       onFocusPlayPause: _playPauseFocusNode.requestFocus,
-      onHover: _onHover,
+      onHover: _showControls,
       onNumberInput: _handleNumberInput,
       onConfirmNumber: _confirmNumberInput,
       onZapNextChannel: _zapNextChannel,
@@ -302,7 +298,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       onUpdate: () {
         if (mounted) setState(() {});
       },
-      onHover: _onHover,
+      onHover: _showControls,
       showControls: showControls,
     );
   }
@@ -391,7 +387,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
         details: details,
         screenWidth: MediaQuery.of(context).size.width,
         currentVolume: widget.playerState.controller.player.state.volume,
-        onHover: _onHover,
+        onHover: _showControls,
         onUpdate: () => mounted ? setState(() {}) : null,
       );
 
@@ -438,7 +434,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       canRequestFocus: !isOverlayOpen,
       onKeyEvent: (node, event) => _handleKeyEvent(event),
       child: MouseRegion(
-        onHover: (_) => _onHover(),
+        onHover: (_) => _showControls(),
         cursor: (_visible || !_isFullScreen)
             ? SystemMouseCursors.basic
             : SystemMouseCursors.none,
@@ -446,7 +442,7 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
           onTap: () {
             if (isOverlayOpen) return;
             if (widget.onTap != null) return widget.onTap!();
-            _visible ? _togglePlayPause() : _onHover();
+            _visible ? _togglePlayPause() : _showControls();
           },
           onDoubleTapDown: _onDoubleTapDown,
           onDoubleTap: _onDoubleTap,
@@ -465,25 +461,29 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
               ),
               ExcludeFocus(
                 excluding: isOverlayOpen,
-                child: AnimatedOpacity(
-                  opacity: _visible ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 200),
-                  child: Stack(
-                    children: [
-                      _buildTopBar(isLive),
+                // Opacity 0 still takes taps (REV-157).
+                child: IgnorePointer(
+                  ignoring: !_visible,
+                  child: AnimatedOpacity(
+                    opacity: _visible ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Stack(
+                      children: [
+                        _buildTopBar(isLive),
 
-                      BufferingIndicator(player: player),
-                      PlayPauseOverlay(
-                        player: player,
-                        visible: _visible,
-                        onTogglePlayPause: _togglePlayPause,
-                        onSkip: _performRealSkip,
-                        seekAmount: _seekCoordinator.seekAmount,
-                        showSeekIndicator: _seekCoordinator.showSeekIndicator,
-                      ),
+                        BufferingIndicator(player: player),
+                        PlayPauseOverlay(
+                          player: player,
+                          visible: _visible,
+                          onTogglePlayPause: _togglePlayPause,
+                          onSkip: _performRealSkip,
+                          seekAmount: _seekCoordinator.seekAmount,
+                          showSeekIndicator: _seekCoordinator.showSeekIndicator,
+                        ),
 
-                      _buildBottomBar(isLive),
-                    ],
+                        _buildBottomBar(isLive),
+                      ],
+                    ),
                   ),
                 ),
               ),
