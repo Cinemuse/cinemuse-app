@@ -111,6 +111,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(Media('https://fallback'));
     registerFallbackValue(Duration.zero);
+    registerFallbackValue(_sourceA);
   });
 
   group('performSoftRetry', () {
@@ -141,6 +142,49 @@ void main() {
       await pumpEventQueue();
 
       expect(h.errors, hasLength(1));
+    });
+  });
+
+  group('handlePlayerError', () {
+    test('a real error with "track" in it is not ignored (REV-149)', () async {
+      final h = _Harness();
+      addTearDown(h.container.dispose);
+      h.resolves(_sourceA, null);
+
+      h.coordinator.handlePlayerError(
+        'Failed to open https://cdn.example/soundtrack.mkv.',
+      );
+      await pumpEventQueue();
+
+      verify(
+        () => h.resolver.resolveStream(
+          _sourceA,
+          season: any(named: 'season'),
+          episode: any(named: 'episode'),
+          fileId: any(named: 'fileId'),
+        ),
+      ).called(1);
+    });
+
+    test('a failed external subtitle is still ignored', () async {
+      final h = _Harness();
+      addTearDown(h.container.dispose);
+
+      h.coordinator.handlePlayerError(
+        'Can not open external file https://subs.example/en.srt.',
+      );
+      h.coordinator.handlePlayerError('Track 2 already selected.');
+      await pumpEventQueue();
+
+      verifyNever(
+        () => h.resolver.resolveStream(
+          any(),
+          season: any(named: 'season'),
+          episode: any(named: 'episode'),
+          fileId: any(named: 'fileId'),
+        ),
+      );
+      expect(h.errors, isEmpty);
     });
   });
 

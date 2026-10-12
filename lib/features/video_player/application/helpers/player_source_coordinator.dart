@@ -29,6 +29,13 @@ class PlayerSourceCoordinator {
   final void Function(dynamic error, StackTrace st) onError;
   final Future<void> Function() saveProgress;
 
+  /// mpv errors that leave the video playing (re-picking a track, a failed
+  /// external subtitle). Any "track" also hid real failures (REV-149).
+  static final _benignMpvError = RegExp(
+    r'already selected|^can not open external file',
+    caseSensitive: false,
+  );
+
   PlayerSourceCoordinator({
     required this.ref,
     required this.player,
@@ -68,10 +75,8 @@ class PlayerSourceCoordinator {
       switch (candidate.kind) {
         case StreamSourceKind.youtube:
           await _changeToYouTubeSource(candidate, position);
-          break;
         case StreamSourceKind.vod:
           await _changeToVodSource(candidate, position);
-          break;
         case StreamSourceKind.live:
           throw Exception(
             "Cannot change source on Live TV kind via changeSource.",
@@ -86,18 +91,19 @@ class PlayerSourceCoordinator {
         level: 900,
       );
       if (!isManual && tryNextCandidate()) return;
-      if (isMounted()) {
-        final current = getCurrentState();
-        if (current != null) {
-          onStateChanged(
-            current.copyWith(
-              isResolving: false,
-              error: ref.read(errorMapperProvider).map(e).message,
-            ),
-          );
-        }
-      }
+      _updateState(
+        (s) => s.copyWith(
+          isResolving: false,
+          error: ref.read(errorMapperProvider).map(e).message,
+        ),
+      );
     }
+  }
+
+  /// Applies [change] to the current state while the player is open.
+  void _updateState(CinemaPlayerState Function(CinemaPlayerState) change) {
+    final current = getCurrentState();
+    if (isMounted() && current != null) onStateChanged(change(current));
   }
 
   Future<void> _changeToYouTubeSource(
@@ -327,9 +333,7 @@ class PlayerSourceCoordinator {
       return;
     }
 
-    final lowerError = error.toLowerCase();
-    if (lowerError.contains('already selected') ||
-        lowerError.contains('track')) {
+    if (_benignMpvError.hasMatch(error)) {
       developer.log(
         'Ignoring benign MPV error: $error',
         name: 'VideoPlayer.PlayerSourceCoordinator',
@@ -415,33 +419,16 @@ class PlayerSourceCoordinator {
       season: resolvedParams.season,
       episode: resolvedParams.episode,
       fileId: currentState.currentStream?.activeFileId,
-      onResolving: () {
-        if (isMounted()) {
-          final current = getCurrentState();
-          if (current != null) {
-            onStateChanged(
-              current.copyWith(
-                isResolving: true,
-                providerStatuses: const [],
-                error: null,
-              ),
-            );
-          }
-        }
-      },
-      onSuccess: (resolvedStream) {
-        if (isMounted()) {
-          final current = getCurrentState();
-          if (current != null) {
-            onStateChanged(
-              current.copyWith(
-                currentStream: resolvedStream,
-                isResolving: false,
-              ),
-            );
-          }
-        }
-      },
+      onResolving: () => _updateState(
+        (s) => s.copyWith(
+          isResolving: true,
+          providerStatuses: const [],
+          error: null,
+        ),
+      ),
+      onSuccess: (resolvedStream) => _updateState(
+        (s) => s.copyWith(currentStream: resolvedStream, isResolving: false),
+      ),
       // A failed retry moves on to the next source; the error screen can't
       // switch source, so it comes only when none is left (REV-144).
       onError: (e, st) {
