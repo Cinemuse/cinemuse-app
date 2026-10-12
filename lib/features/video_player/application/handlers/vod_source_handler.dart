@@ -30,9 +30,20 @@ class VodSourceHandler {
   final TmdbService _tmdbService;
   final Player _player;
 
-  VodSourceHandler(this._resolver, this._tmdbService, this._player);
+  /// False once the player was closed: each step checks it and stops, so a
+  /// closed player doesn't go on resolving (an RD torrent, STR-03) and
+  /// opening a stream (REV-147).
+  final bool Function() _isMounted;
 
-  Future<VodInitializationResult> initialize(
+  VodSourceHandler(
+    this._resolver,
+    this._tmdbService,
+    this._player, {
+    required bool Function() isMounted,
+  }) : _isMounted = isMounted;
+
+  /// Returns `null` when the player was closed before the stream opened.
+  Future<VodInitializationResult?> initialize(
     PlayerParams params, {
     required Function(List<ProviderSearchStatus>) onStatusUpdate,
     required Function(MediaItem?, Map<String, dynamic>?) onMediaDetailsFetched,
@@ -42,6 +53,7 @@ class VodSourceHandler {
       params,
       onMediaDetailsFetched,
     );
+    if (!_isMounted()) return null;
 
     final searchResult = await _searchAvailableStreams(
       params,
@@ -49,11 +61,13 @@ class VodSourceHandler {
       skipTrigger: skipTrigger,
       preloadedDetails: detailsResult.raw,
     );
+    if (!_isMounted()) return null;
 
     final resolution = await _resolveBestStream(
       params,
       searchResult.candidates,
     );
+    if (resolution == null || !_isMounted()) return null;
 
     await _player.open(
       Media(resolution.stream.url, httpHeaders: resolution.stream.headers),
@@ -107,12 +121,13 @@ class VodSourceHandler {
     return result;
   }
 
-  Future<({ResolvedStream stream, StreamCandidate candidate})>
+  Future<({ResolvedStream stream, StreamCandidate candidate})?>
   _resolveBestStream(
     PlayerParams params,
     List<StreamCandidate> candidates,
   ) async {
     for (var candidate in candidates) {
+      if (!_isMounted()) return null;
       try {
         final resolvedStream = await _resolver.resolveStream(
           candidate,

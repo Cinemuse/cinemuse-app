@@ -34,6 +34,9 @@ class PlayerHistoryManager {
 
     final user = ref.read(authProvider).value;
     if (user == null) return;
+    // The final save runs while the player closes: refresh through the
+    // app's container, which outlives the player's provider (PLY-01).
+    final container = ref.container;
 
     try {
       final repo = ref.read(watchHistoryRepositoryProvider);
@@ -60,8 +63,8 @@ class PlayerHistoryManager {
         if (params.type == 'tv') {
           final tmdbIdInt = int.tryParse(params.queryId);
           if (tmdbIdInt != null) {
-            ref.invalidate(seriesWatchLogsProvider(tmdbIdInt));
-            ref.invalidate(watchedEpisodesMapProvider(tmdbIdInt));
+            container.invalidate(seriesWatchLogsProvider(tmdbIdInt));
+            container.invalidate(watchedEpisodesMapProvider(tmdbIdInt));
           }
         }
       }

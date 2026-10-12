@@ -83,7 +83,7 @@ class _Harness {
         getCurrentState: () => state,
         onStateChanged: (s) => state = s,
         onError: (e, _) => errors.add(e),
-        saveProgress: ({force = false}) async {},
+        saveProgress: () async {},
       ),
     );
     container = ProviderContainer(

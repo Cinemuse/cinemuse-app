@@ -54,13 +54,13 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   EventManager? _eventManager;
   LiveTvPlaybackCoordinator? _liveTvCoordinator;
   ProviderSubscription? _qualitySubscription;
-  late final PlayerInitializationCoordinator _initializationCoordinator;
+  PlayerInitializationCoordinator? _initializationCoordinator;
   late final PlayerSourceCoordinator _sourceCoordinator;
 
   bool _isCompletionLogged = false;
 
   PlayerHistoryManager get historyManager =>
-      _initializationCoordinator.historyManager!;
+      _initializationCoordinator!.historyManager!;
 
   PlayerController(this.ref, this.params) : super(const AsyncValue.loading()) {
     resolvedParams = params;
@@ -85,7 +85,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
   @override
   void dispose() {
-    _saveProgress(force: true);
+    // Can't be awaited here; the position is read before the player goes.
+    unawaited(_saveProgress());
+    _initializationCoordinator?.skipResolution(); // Ends a search (REV-147).
     _eventManager?.dispose();
     _progressTracker?.dispose();
     _trackManager?.dispose();
@@ -104,22 +106,23 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         ref: ref,
         params: params,
       );
+      if (!mounted) return; // Closed during the history read (REV-147).
 
       _initializeManagers();
       _initializeCoordinators();
       _setupProgressTracking();
 
       if (resolvedParams.type == 'youtube') {
-        await _initializationCoordinator.handleYouTubeInitialization(
+        await _initializationCoordinator!.handleYouTubeInitialization(
           resolvedParams,
         );
         return;
       } else if (resolvedParams.type == 'livetv') {
-        await _initializationCoordinator.handleLiveTvInitialization(params);
+        await _initializationCoordinator!.handleLiveTvInitialization(params);
         return;
       }
 
-      await _initializationCoordinator.handleVodInitialization(resolvedParams);
+      await _initializationCoordinator!.handleVodInitialization(resolvedParams);
     } catch (e, st) {
       _handleInitializationError(e, st);
     }
@@ -251,7 +254,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     }
   }
 
-  void skipResolution() => _initializationCoordinator.skipResolution();
+  void skipResolution() => _initializationCoordinator?.skipResolution();
 
   Future<void> changeChannel(Channel channel, {bool isFailover = false}) async {
     if (_player == null) return;
@@ -382,8 +385,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     _trackManager?.setManualSelection();
   }
 
-  Future<void> _saveProgress({bool force = false}) async {
-    final historyManager = _initializationCoordinator.historyManager;
+  Future<void> _saveProgress() async {
+    final historyManager = _initializationCoordinator?.historyManager;
     if (_player == null || historyManager == null) return;
 
     await historyManager.saveProgress(

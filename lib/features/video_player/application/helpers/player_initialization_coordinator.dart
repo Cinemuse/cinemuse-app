@@ -147,6 +147,7 @@ class PlayerInitializationCoordinator {
       resolver,
       ref.read(tmdbServiceProvider),
       player,
+      isMounted: isMounted,
     );
     final vodResult = await handler.initialize(
       resolvedParams,
@@ -155,6 +156,7 @@ class PlayerInitializationCoordinator {
           onMediaDetailsFetched(resolvedParams, item, rawDetails),
       skipTrigger: _skipCompleter!.future,
     );
+    if (vodResult == null) return;
 
     await performPostInitialization(resolvedParams, vodResult);
   }

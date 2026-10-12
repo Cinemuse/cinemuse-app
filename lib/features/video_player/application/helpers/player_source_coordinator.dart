@@ -27,7 +27,7 @@ class PlayerSourceCoordinator {
   final CinemaPlayerState? Function() getCurrentState;
   final void Function(CinemaPlayerState) onStateChanged;
   final void Function(dynamic error, StackTrace st) onError;
-  final Future<void> Function({bool force}) saveProgress;
+  final Future<void> Function() saveProgress;
 
   PlayerSourceCoordinator({
     required this.ref,
@@ -305,7 +305,7 @@ class PlayerSourceCoordinator {
       }
     }
 
-    await saveProgress(force: true);
+    await saveProgress();
 
     developer.log(
       'Playback finished. Ready for next actions.',
