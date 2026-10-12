@@ -407,35 +407,37 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
       children: [
         // Row 1: Back button, Title & Subtitle ... Search bar & View toggle on right
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             AppBackButton(onTap: () => Navigator.of(context).pop()),
             const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  l10n.watchHistoryTitle,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.5,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    l10n.watchHistoryTitle,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const Spacer(),
             _buildSearchBar(l10n, width: 280),
             const SizedBox(width: 12),
             _buildViewModeToggle(l10n),
@@ -444,11 +446,16 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
         const SizedBox(height: 20),
         // Row 2: Filter controls (Type pills, Status pills, Granularity toggle & Sort dropdown)
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTypeFilter(l10n),
-            const SizedBox(width: 12),
-            _buildStatusFilter(l10n),
-            const Spacer(),
+            // Wraps to two lines when the window is narrow (REV-105).
+            Expanded(
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [_buildTypeFilter(l10n), _buildStatusFilter(l10n)],
+              ),
+            ),
             if (_viewMode == HistoryViewMode.timeline) ...[
               _buildGranularityToggle(l10n),
               const SizedBox(width: 10),
@@ -754,50 +761,78 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
   }
 
   Widget _buildTypeFilter(AppLocalizations l10n) {
-    return Container(
-      height: 40,
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+    return _buildPillGroup([
+      _buildPillButton(
+        label: l10n.watchHistoryAll,
+        icon: Icons.grid_view_rounded,
+        isSelected: _selectedType == null,
+        onTap: () => setState(() {
+          _selectedType = null;
+          _resetPagination();
+        }),
       ),
-      padding: const EdgeInsets.all(3),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildPillButton(
-            label: l10n.watchHistoryAll,
-            icon: Icons.grid_view_rounded,
-            isSelected: _selectedType == null,
-            onTap: () => setState(() {
-              _selectedType = null;
-              _resetPagination();
-            }),
-          ),
-          _buildPillButton(
-            label: l10n.searchMovies,
-            icon: Icons.movie_outlined,
-            isSelected: _selectedType == MediaKind.movie,
-            onTap: () => setState(() {
-              _selectedType = MediaKind.movie;
-              _resetPagination();
-            }),
-          ),
-          _buildPillButton(
-            label: l10n.searchSeries,
-            icon: Icons.tv_outlined,
-            isSelected: _selectedType == MediaKind.tv,
-            onTap: () => setState(() {
-              _selectedType = MediaKind.tv;
-              _resetPagination();
-            }),
-          ),
-        ],
+      _buildPillButton(
+        label: l10n.searchMovies,
+        icon: Icons.movie_outlined,
+        isSelected: _selectedType == MediaKind.movie,
+        onTap: () => setState(() {
+          _selectedType = MediaKind.movie;
+          _resetPagination();
+        }),
       ),
-    );
+      _buildPillButton(
+        label: l10n.searchSeries,
+        icon: Icons.tv_outlined,
+        isSelected: _selectedType == MediaKind.tv,
+        onTap: () => setState(() {
+          _selectedType = MediaKind.tv;
+          _resetPagination();
+        }),
+      ),
+    ]);
   }
 
   Widget _buildStatusFilter(AppLocalizations l10n) {
+    return _buildPillGroup([
+      _buildPillButton(
+        label: l10n.watchHistoryStatusAll,
+        isSelected: _selectedStatus == null,
+        onTap: () => setState(() {
+          _selectedStatus = null;
+          _resetPagination();
+        }),
+      ),
+      _buildPillButton(
+        label: l10n.watchHistoryStatusWatching,
+        icon: Icons.play_circle_outline_rounded,
+        isSelected: _selectedStatus == WatchStatus.watching,
+        onTap: () => setState(() {
+          _selectedStatus = WatchStatus.watching;
+          _resetPagination();
+        }),
+      ),
+      _buildPillButton(
+        label: l10n.watchHistoryStatusCompleted,
+        icon: Icons.check_circle_outline_rounded,
+        isSelected: _selectedStatus == WatchStatus.completed,
+        onTap: () => setState(() {
+          _selectedStatus = WatchStatus.completed;
+          _resetPagination();
+        }),
+      ),
+      _buildPillButton(
+        label: l10n.watchHistoryStatusDropped,
+        icon: Icons.cancel_outlined,
+        isSelected: _selectedStatus == WatchStatus.dropped,
+        onTap: () => setState(() {
+          _selectedStatus = WatchStatus.dropped;
+          _resetPagination();
+        }),
+      ),
+    ]);
+  }
+
+  Widget _buildPillGroup(List<Widget> pills) {
     return Container(
       height: 40,
       decoration: BoxDecoration(
@@ -806,46 +841,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
         border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       padding: const EdgeInsets.all(3),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildPillButton(
-            label: l10n.watchHistoryStatusAll,
-            isSelected: _selectedStatus == null,
-            onTap: () => setState(() {
-              _selectedStatus = null;
-              _resetPagination();
-            }),
-          ),
-          _buildPillButton(
-            label: l10n.watchHistoryStatusWatching,
-            icon: Icons.play_circle_outline_rounded,
-            isSelected: _selectedStatus == WatchStatus.watching,
-            onTap: () => setState(() {
-              _selectedStatus = WatchStatus.watching;
-              _resetPagination();
-            }),
-          ),
-          _buildPillButton(
-            label: l10n.watchHistoryStatusCompleted,
-            icon: Icons.check_circle_outline_rounded,
-            isSelected: _selectedStatus == WatchStatus.completed,
-            onTap: () => setState(() {
-              _selectedStatus = WatchStatus.completed;
-              _resetPagination();
-            }),
-          ),
-          _buildPillButton(
-            label: l10n.watchHistoryStatusDropped,
-            icon: Icons.cancel_outlined,
-            isSelected: _selectedStatus == WatchStatus.dropped,
-            onTap: () => setState(() {
-              _selectedStatus = WatchStatus.dropped;
-              _resetPagination();
-            }),
-          ),
-        ],
-      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: pills),
     );
   }
 
@@ -1182,79 +1178,55 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
   }
 
   Widget _buildViewModeToggle(AppLocalizations l10n) {
-    return Container(
-      height: 40,
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+    return _buildPillGroup([
+      _buildPillButton(
+        icon: Icons.grid_view_rounded,
+        label: l10n.watchHistoryViewGrid,
+        isSelected: _viewMode == HistoryViewMode.grid,
+        onTap: () => setState(() {
+          _viewMode = HistoryViewMode.grid;
+          _resetPagination();
+        }),
       ),
-      padding: const EdgeInsets.all(3),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildPillButton(
-            icon: Icons.grid_view_rounded,
-            label: l10n.watchHistoryViewGrid,
-            isSelected: _viewMode == HistoryViewMode.grid,
-            onTap: () => setState(() {
-              _viewMode = HistoryViewMode.grid;
-              _resetPagination();
-            }),
-          ),
-          _buildPillButton(
-            icon: Icons.view_timeline_rounded,
-            label: l10n.watchHistoryViewTimeline,
-            isSelected: _viewMode == HistoryViewMode.timeline,
-            onTap: () => setState(() {
-              _viewMode = HistoryViewMode.timeline;
-              _resetPagination();
-            }),
-          ),
-        ],
+      _buildPillButton(
+        icon: Icons.view_timeline_rounded,
+        label: l10n.watchHistoryViewTimeline,
+        isSelected: _viewMode == HistoryViewMode.timeline,
+        onTap: () => setState(() {
+          _viewMode = HistoryViewMode.timeline;
+          _resetPagination();
+        }),
       ),
-    );
+    ]);
   }
 
   Widget _buildGranularityToggle(AppLocalizations l10n) {
-    return Container(
-      height: 40,
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+    return _buildPillGroup([
+      _buildPillButton(
+        label: l10n.watchHistoryGranularityDaily,
+        isSelected: _granularity == TimelineGranularity.daily,
+        onTap: () => setState(() {
+          _granularity = TimelineGranularity.daily;
+          _resetPagination();
+        }),
       ),
-      padding: const EdgeInsets.all(3),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildPillButton(
-            label: l10n.watchHistoryGranularityDaily,
-            isSelected: _granularity == TimelineGranularity.daily,
-            onTap: () => setState(() {
-              _granularity = TimelineGranularity.daily;
-              _resetPagination();
-            }),
-          ),
-          _buildPillButton(
-            label: l10n.watchHistoryGranularityMonthly,
-            isSelected: _granularity == TimelineGranularity.monthly,
-            onTap: () => setState(() {
-              _granularity = TimelineGranularity.monthly;
-              _resetPagination();
-            }),
-          ),
-          _buildPillButton(
-            label: l10n.watchHistoryGranularityYearly,
-            isSelected: _granularity == TimelineGranularity.yearly,
-            onTap: () => setState(() {
-              _granularity = TimelineGranularity.yearly;
-              _resetPagination();
-            }),
-          ),
-        ],
+      _buildPillButton(
+        label: l10n.watchHistoryGranularityMonthly,
+        isSelected: _granularity == TimelineGranularity.monthly,
+        onTap: () => setState(() {
+          _granularity = TimelineGranularity.monthly;
+          _resetPagination();
+        }),
       ),
-    );
+      _buildPillButton(
+        label: l10n.watchHistoryGranularityYearly,
+        isSelected: _granularity == TimelineGranularity.yearly,
+        onTap: () => setState(() {
+          _granularity = TimelineGranularity.yearly;
+          _resetPagination();
+        }),
+      ),
+    ]);
   }
 
   Widget _buildTimelineSliver(
