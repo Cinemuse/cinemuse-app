@@ -36,7 +36,6 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
 
-    // Sort files alphabetically by filename
     final sortedFiles =
         (currentState.currentStream?.files ?? [])
             .map(StreamFileInfo.fromMap)
@@ -66,7 +65,6 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Files Section (Accordion)
                     if (currentState.currentStream?.files.isNotEmpty ??
                         false) ...[
                       DpadFocusable(
@@ -142,6 +140,8 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                               showFocusRing: true,
                               borderRadius: AppTheme.radius12,
                               onTap: () {
+                                // Would restart at 0:00 (REV-172).
+                                if (isSelected) return;
                                 ref
                                     .read(
                                       playerControllerProvider(params).notifier,
@@ -219,7 +219,6 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                       const Divider(color: AppTheme.borderSubtle, height: 32),
                     ],
 
-                    // Sources Section
                     Padding(
                       padding: const EdgeInsets.only(
                         left: 8,
@@ -261,6 +260,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                           scale: 1.02,
                           borderRadius: AppTheme.radiusLg,
                           onTap: () {
+                            if (isSelected) return;
                             ref
                                 .read(playerControllerProvider(params).notifier)
                                 .changeSource(stream);
@@ -349,7 +349,6 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
           ],
         ),
 
-        // Loading Overlay
         if (currentState.isResolving)
           Positioned.fill(
             child: Container(
@@ -389,7 +388,6 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
             ),
           ),
 
-        // Error Banner
         if (currentState.error != null)
           Positioned(
             left: 16,
