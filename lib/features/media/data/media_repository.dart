@@ -40,7 +40,7 @@ class MediaRepository {
     try {
       final localData = await _db.getMediaItem(tmdbId, type.name);
       if (localData != null) {
-        final item = mapToMediaItem(localData);
+        final item = _mapToMediaItem(localData);
         _memoryCache[key] = item;
         return item;
       }
@@ -88,7 +88,7 @@ class MediaRepository {
           .toList();
       final localResults = await _db.getMediaItems(filters);
 
-      return localResults.map<MediaItem>(mapToMediaItem).toList();
+      return localResults.map<MediaItem>(_mapToMediaItem).toList();
     } catch (e, s) {
       developer.log(
         'Failed to fetch batch media items from Drift database',
@@ -221,7 +221,7 @@ class MediaRepository {
   }
 
   /// Map Drift data to Domain model
-  MediaItem mapToMediaItem(CachedMediaItem data) {
+  MediaItem _mapToMediaItem(CachedMediaItem data) {
     return MediaItem(
       tmdbId: data.tmdbId,
       mediaType: MediaKind.values.firstWhere(

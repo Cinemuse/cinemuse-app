@@ -255,15 +255,6 @@ void main() {
         expect(result.first.episode, 1);
         expect(result.first.media?.titleEn, 'Test Series');
         expect(result.last.episode, 2);
-
-        // Verify cached call returns same reference without hitting Supabase again
-        final cachedResult = await repository.getAllWatchLogs(userId);
-        expect(identical(result, cachedResult), isTrue);
-
-        // Invalidate cache and verify fresh call
-        repository.invalidateWatchLogsCache();
-        final freshResult = await repository.getAllWatchLogs(userId);
-        expect(freshResult.length, 2);
       },
     );
 
@@ -312,10 +303,7 @@ void main() {
           ),
         );
 
-        final result = await repository.getAllWatchLogs(
-          userId,
-          forceRefresh: true,
-        );
+        final result = await repository.getAllWatchLogs(userId);
 
         expect(result.length, 2);
         expect(result.first.tmdbId, 200);

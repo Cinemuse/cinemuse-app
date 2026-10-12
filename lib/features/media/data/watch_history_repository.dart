@@ -35,13 +35,6 @@ class WatchHistoryRepository {
   final SeriesDomainService _seriesService;
   final TmdbService _tmdbService;
 
-  /// In-memory cache for timeline watch logs to avoid redundant network & database roundtrips
-  List<WatchHistory>? _cachedWatchLogs;
-
-  void invalidateWatchLogsCache() {
-    _cachedWatchLogs = null;
-  }
-
   WatchHistoryRepository(
     this._client,
     this._mediaRepo,
@@ -129,7 +122,6 @@ class WatchHistoryRepository {
           },
         )
         .withAppFailure();
-    invalidateWatchLogsCache();
     await _cacheReturnedRow(userId, tmdbId, mediaType, rows);
   }
 
@@ -378,27 +370,16 @@ class WatchHistoryRepository {
 
   /// Fetches all watch log entries for a user, enriched with media metadata.
   /// Serves as the single source of truth for watch history timeline visualizations.
-  Future<List<WatchHistory>> getAllWatchLogs(
-    String userId, {
-    bool forceRefresh = false,
-  }) async {
-    if (!forceRefresh && _cachedWatchLogs != null) {
-      return _cachedWatchLogs!;
-    }
+  Future<List<WatchHistory>> getAllWatchLogs(String userId) async {
     try {
       final logs = await _fetchWatchLogs(userId);
-      if (logs.isEmpty) {
-        _cachedWatchLogs = [];
-        return [];
-      }
+      if (logs.isEmpty) return [];
 
       final mediaMap = await _resolveUniqueMediaItems(logs);
       final statusMap = await _resolveStatusMap(userId);
-      final result = logs
+      return logs
           .map((log) => _mapLogToWatchHistory(log, userId, mediaMap, statusMap))
           .toList();
-      _cachedWatchLogs = result;
-      return result;
     } catch (e, stack) {
       developer.log(
         'Failed to fetch all watch logs, falling back to local history',
@@ -645,7 +626,6 @@ class WatchHistoryRepository {
           },
         )
         .withAppFailure();
-    invalidateWatchLogsCache();
     await _cacheReturnedRow(userId, tmdbId, 'movie', rows);
   }
 
@@ -703,7 +683,6 @@ class WatchHistoryRepository {
           },
         )
         .withAppFailure();
-    invalidateWatchLogsCache();
     await _cacheReturnedRow(userId, tmdbId, mediaType, rows);
   }
 
@@ -754,7 +733,6 @@ class WatchHistoryRepository {
           },
         )
         .withAppFailure();
-    invalidateWatchLogsCache();
     await _cacheReturnedRow(userId, tmdbId, 'tv', rows);
   }
 
@@ -794,7 +772,6 @@ class WatchHistoryRepository {
           },
         )
         .withAppFailure();
-    invalidateWatchLogsCache();
     await _cacheReturnedRow(userId, tmdbId, mediaType, rows);
   }
 
@@ -846,7 +823,6 @@ class WatchHistoryRepository {
     int tmdbId,
     String mediaType,
   ) async {
-    invalidateWatchLogsCache();
     await _setLocalStatus(userId, tmdbId, mediaType, 'dropped');
     await _titleRow(
       _client.from('watch_history').update({'status': 'dropped'}),
@@ -861,7 +837,6 @@ class WatchHistoryRepository {
     int tmdbId,
     String mediaType,
   ) async {
-    invalidateWatchLogsCache();
     // Server first: if it fails, the local copy stays as it was (REV-106).
     await _titleRow(
       _client.from('watch_history').update({'status': 'watching'}),
@@ -914,7 +889,6 @@ class WatchHistoryRepository {
           params: {'p_tmdb_id': tmdbId, 'p_media_type': mediaType},
         )
         .withAppFailure();
-    invalidateWatchLogsCache();
     await _cacheReturnedRow(userId, tmdbId, mediaType, rows);
   }
 }

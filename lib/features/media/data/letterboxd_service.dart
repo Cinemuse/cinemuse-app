@@ -20,8 +20,8 @@ class LetterboxdService {
 
   LetterboxdService(this._dio);
 
-  /// Converts a movie [title] and optional [year] into a Letterboxd slug.
-  static String toSlug(String title, [int? year]) {
+  /// Converts a movie [title] into a Letterboxd slug.
+  static String toSlug(String title) {
     var cleaned = title
         .toLowerCase()
         .replaceAll(RegExp(r'&'), 'and')
