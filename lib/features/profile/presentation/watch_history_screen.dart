@@ -1369,8 +1369,8 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     final groups = _groupItemsByDate(items, l10n, appLanguage);
     final sections = <_TimelineSection>[];
     for (final group in groups) {
-      final clusteredDecks = _clusterDeckItems(group.items, l10n);
-      sections.add(_TimelineSection(title: group.title, decks: clusteredDecks));
+      final clusteredDecks = _clusterDeckItems(group.value, l10n);
+      sections.add(_TimelineSection(title: group.key, decks: clusteredDecks));
     }
 
     _lastFilteredForTimeline = items;
@@ -1571,7 +1571,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     );
   }
 
-  List<_TimelineGroup> _groupItemsByDate(
+  List<MapEntry<String, List<WatchHistory>>> _groupItemsByDate(
     List<WatchHistory> items,
     AppLocalizations l10n,
     String appLanguage,
@@ -1605,23 +1605,23 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
           } else {
             groupTitle = DateFormat.yMMMMd(appLanguage).format(date);
           }
-          break;
 
         case TimelineGranularity.monthly:
           groupTitle = DateFormat.yMMMM(appLanguage).format(date);
-          break;
 
         case TimelineGranularity.yearly:
           groupTitle = DateFormat.y(appLanguage).format(date);
-          break;
       }
 
       groupedMap.putIfAbsent(groupTitle, () => []).add(item);
     }
 
-    return groupedMap.entries
-        .map((e) => _TimelineGroup(title: e.key, items: e.value))
-        .toList();
+    // Sections newest first whatever the sort, which applies inside each one
+    // (REV-104). Date ranges don't overlap, so any item dates its section.
+    return groupedMap.entries.toList()..sort(
+      (a, b) =>
+          b.value.first.lastWatchedAt.compareTo(a.value.first.lastWatchedAt),
+    );
   }
 }
 
@@ -1631,13 +1631,6 @@ class _DeckEntry {
   final String? customInfoText;
 
   const _DeckEntry({required this.item, this.stackCount, this.customInfoText});
-}
-
-class _TimelineGroup {
-  final String title;
-  final List<WatchHistory> items;
-
-  const _TimelineGroup({required this.title, required this.items});
 }
 
 class _TimelineSection {
