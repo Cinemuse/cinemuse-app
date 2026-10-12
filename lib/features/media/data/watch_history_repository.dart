@@ -43,7 +43,6 @@ class WatchHistoryRepository {
     this._tmdbService,
   );
 
-  // Get dropped items
   Future<List<WatchHistory>> getDroppedItems(String userId) async {
     final response = await _client
         .from('watch_history')
@@ -157,8 +156,6 @@ class WatchHistoryRepository {
     final progressPercentage = progressSeconds / totalDuration;
     final remainingSeconds = totalDuration - progressSeconds;
 
-    // 1. Check for Completed State
-    // Remaining < 180s OR Progress > 95%
     if (remainingSeconds < PlaybackThresholds.completionRemainingSeconds ||
         progressPercentage > PlaybackThresholds.completionPercentage) {
       // Choosing the next episode needs TMDB data, so it's done here.
@@ -185,8 +182,7 @@ class WatchHistoryRepository {
       return;
     }
 
-    // 2. Check for Peeking State
-    // Watched < 120s AND Watched < 10%
+    // Peeking: too little watched to save.
     if (progressSeconds < PlaybackThresholds.peekingSeconds &&
         progressPercentage < PlaybackThresholds.peekingPercentage) {
       return;
@@ -285,6 +281,9 @@ class WatchHistoryRepository {
             .from('watch_history')
             .select()
             .eq('user_id', userId)
+            // REV-185: a fixed order, or pages can repeat or skip rows.
+            .order('tmdb_id')
+            .order('media_type')
             .range(offset, offset + limit - 1)
             .withAppFailure();
 
@@ -437,6 +436,8 @@ class WatchHistoryRepository {
         )
         .eq('user_id', userId)
         .order('logged_at', ascending: false)
+        // REV-185: a season logged at once shares one logged_at.
+        .order('id')
         .range(offset, offset + limit - 1)
         .withAppFailure();
 
@@ -503,7 +504,6 @@ class WatchHistoryRepository {
       );
     }
 
-    // 2. If local database has no status entries, fetch from Supabase watch_history
     if (statusMap.isEmpty) {
       try {
         final remoteHistory = await _client

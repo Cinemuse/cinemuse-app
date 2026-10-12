@@ -22,7 +22,11 @@ class MockTmdbService extends Mock implements TmdbService {}
 
 class FakeFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
   final T _value;
-  FakeFilterBuilder(this._value);
+
+  /// The columns passed to `order()`, in call order.
+  final List<String> orders;
+  FakeFilterBuilder(this._value, [List<String>? orders])
+    : orders = orders ?? [];
 
   @override
   PostgrestFilterBuilder<T> eq(String column, Object value) => this;
@@ -43,28 +47,10 @@ class FakeFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
     bool ascending = false,
     bool nullsFirst = false,
     String? referencedTable,
-  }) => FakeTransformBuilder<T>(_value);
-
-  @override
-  Future<R> then<R>(
-    FutureOr<R> Function(T value) onValue, {
-    Function? onError,
   }) {
-    return Future.value(_value).then(onValue, onError: onError);
+    orders.add(column);
+    return this;
   }
-}
-
-class FakeTransformBuilder<T> extends Fake
-    implements PostgrestTransformBuilder<T> {
-  final T _value;
-  FakeTransformBuilder(this._value);
-
-  @override
-  PostgrestTransformBuilder<T> range(
-    int from,
-    int to, {
-    String? referencedTable,
-  }) => this;
 
   @override
   Future<R> then<R>(
@@ -77,6 +63,7 @@ class FakeTransformBuilder<T> extends Fake
 
 class FakeQueryBuilder extends Fake implements SupabaseQueryBuilder {
   final dynamic _value;
+  final orders = <String>[];
   FakeQueryBuilder([this._value]);
 
   @override
@@ -85,6 +72,7 @@ class FakeQueryBuilder extends Fake implements SupabaseQueryBuilder {
   ]) {
     return FakeFilterBuilder<List<Map<String, dynamic>>>(
       (_value as List?)?.cast<Map<String, dynamic>>() ?? [],
+      orders,
     );
   }
 
@@ -156,15 +144,16 @@ void main() {
         },
       ];
 
-      when(
-        () => mockSupabase.from(any()),
-      ).thenAnswer((_) => FakeQueryBuilder(remoteData) as SupabaseQueryBuilder);
+      final table = FakeQueryBuilder(remoteData);
+      when(() => mockSupabase.from(any())).thenAnswer((_) => table);
 
       await repository.syncWatchHistory(userId);
 
       final history = await database.getWatchHistory(userId);
       expect(history.length, 1);
       expect(history.first.tmdbId, 1);
+      // REV-185: pages need a fixed order, or they repeat or skip rows.
+      expect(table.orders, ['tmdb_id', 'media_type']);
     });
 
     test(
@@ -233,9 +222,10 @@ void main() {
           },
         ];
 
+        final logsTable = FakeQueryBuilder(logsData);
         when(
           () => mockSupabase.from('watch_logs'),
-        ).thenAnswer((_) => FakeQueryBuilder(logsData));
+        ).thenAnswer((_) => logsTable);
 
         await database.upsertMediaItem(
           CachedMediaItemsCompanion.insert(
@@ -255,6 +245,7 @@ void main() {
         expect(result.first.episode, 1);
         expect(result.first.media?.titleEn, 'Test Series');
         expect(result.last.episode, 2);
+        expect(logsTable.orders, ['logged_at', 'id']);
       },
     );
 
