@@ -240,7 +240,6 @@ class LiveTvSourceHandler {
       platform.setProperty('http-reconnect', 'yes');
       platform.setProperty('reconnect-on-network-error', 'yes');
       platform.setProperty('reconnect-on-http-error', 'all');
-      platform.setProperty('tls-verify', 'no');
       platform.setProperty('prefetch-playlist', 'yes');
       platform.setProperty('cache', 'yes');
       platform.setProperty('cache-pause', 'yes');
