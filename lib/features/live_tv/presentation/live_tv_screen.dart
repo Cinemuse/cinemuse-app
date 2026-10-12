@@ -235,11 +235,6 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
 
     // Escape handling
     if (key == LogicalKeyboardKey.escape) {
-      final isOverlayOpen = ref.read(liveTvChannelOverlayProvider);
-      if (isOverlayOpen) {
-        ref.read(liveTvChannelOverlayProvider.notifier).state = false;
-        return KeyEventResult.handled;
-      }
       _numberInputTimer?.cancel();
       ref.read(numberInputBufferProvider.notifier).state = '';
       return KeyEventResult.ignored;

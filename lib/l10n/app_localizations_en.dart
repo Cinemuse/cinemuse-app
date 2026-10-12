@@ -1430,12 +1430,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get liveTvSelectChannel => 'Select a channel to start watching';
 
   @override
-  String get liveTvNow => 'NOW';
-
-  @override
-  String get liveTvNext => 'NEXT';
-
-  @override
   String get liveTvLive => 'Live';
 
   @override

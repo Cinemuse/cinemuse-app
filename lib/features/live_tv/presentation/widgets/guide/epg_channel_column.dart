@@ -23,8 +23,8 @@ class EpgChannelColumn extends StatelessWidget {
     required this.channels,
     this.selectedChannel,
     this.favoriteIds = const {},
-    this.rowHeight = 68.0,
-    this.columnWidth = 210.0,
+    required this.rowHeight,
+    required this.columnWidth,
     this.controller,
     this.onChannelTap,
     this.onChannelFocus,
@@ -50,7 +50,6 @@ class EpgChannelColumn extends StatelessWidget {
 
           return RepaintBoundary(
             child: _ChannelItemTile(
-              index: index,
               channel: channel,
               isSelected: isSelected,
               isFavorite: isFavorite,
@@ -74,7 +73,6 @@ class EpgChannelColumn extends StatelessWidget {
 }
 
 class _ChannelItemTile extends StatelessWidget {
-  final int index;
   final Channel channel;
   final bool isSelected;
   final bool isFavorite;
@@ -85,7 +83,6 @@ class _ChannelItemTile extends StatelessWidget {
   final VoidCallback? onNavigateRight;
 
   const _ChannelItemTile({
-    required this.index,
     required this.channel,
     required this.isSelected,
     required this.isFavorite,

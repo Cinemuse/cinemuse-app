@@ -10,13 +10,13 @@ import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/epg_cha
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/epg_program_block.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
-/// Highly optimized, fully virtualized 2D timeline grid for the EPG TV Guide.
+/// Timeline grid for the EPG TV Guide.
 ///
-/// Features:
-/// - Virtualized vertical channel column and program rows using synchronized [ListView.builder]
-/// - Isolated repaint boundaries on channel tiles and program rows
-/// - Fast O(1) memoized EPG lookup
-/// - Directional spatial navigation between channel tiles and timeline program blocks
+/// - Rows are virtualized vertically (synchronized [ListView.builder]s), but
+///   each row builds its whole time window
+/// - Repaint boundaries on channel tiles and program rows
+/// - Programs per channel cached until the channels or the guide change
+/// - Arrow-key navigation between channel tiles and program blocks
 class EpgTimelineGrid extends StatefulWidget {
   final List<Channel> channels;
   final Map<String, List<EpgProgram>> epgData;

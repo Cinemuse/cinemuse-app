@@ -530,21 +530,15 @@ void main() {
   });
 
   group('Channel Guide Browser & VideoPlayerScreen Navigation Tests', () {
-    testWidgets('tapping channel with onChannelSelected invokes callback', (
-      tester,
-    ) async {
+    testWidgets('tapping a channel selects it', (tester) async {
       final channel = createMockChannel(name: 'Canale 5 HD', lcn: 5);
-      Channel? selectedChannel;
 
       await tester.pumpWidget(
         buildTestWidget(
           overrides: [
             channelsProvider.overrideWith((ref) => Future.value([channel])),
           ],
-          child: ChannelListPanel(
-            isOverlay: false,
-            onChannelSelected: (ch) => selectedChannel = ch,
-          ),
+          child: const ChannelListPanel(isOverlay: false),
         ),
       );
       await tester.pumpAndSettle();
@@ -552,8 +546,11 @@ void main() {
       await tester.tap(find.text('Canale 5 HD'));
       await tester.pump();
 
-      expect(selectedChannel, isNotNull);
-      expect(selectedChannel!.uniqueId, equals(channel.uniqueId));
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(ChannelListPanel)),
+      );
+      final selectedChannel = container.read(selectedChannelProvider);
+      expect(selectedChannel?.uniqueId, equals(channel.uniqueId));
     });
 
     testWidgets(

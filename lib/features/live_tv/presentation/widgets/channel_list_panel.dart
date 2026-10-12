@@ -20,14 +20,8 @@ import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 class ChannelListPanel extends ConsumerWidget {
   final bool isOverlay;
   final VoidCallback? onClose;
-  final void Function(Channel channel)? onChannelSelected;
 
-  const ChannelListPanel({
-    super.key,
-    this.isOverlay = false,
-    this.onClose,
-    this.onChannelSelected,
-  });
+  const ChannelListPanel({super.key, this.isOverlay = false, this.onClose});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -72,11 +66,7 @@ class ChannelListPanel extends ConsumerWidget {
                   _SearchRow(isOverlay: true, onClose: onClose),
                   const Divider(height: 1, color: Colors.white10),
                   Expanded(
-                    child: _ChannelList(
-                      isOverlay: true,
-                      onClose: onClose,
-                      onChannelSelected: onChannelSelected,
-                    ),
+                    child: _ChannelList(isOverlay: true, onClose: onClose),
                   ),
                 ],
               ),
@@ -99,13 +89,7 @@ class ChannelListPanel extends ConsumerWidget {
               const _SearchRow(),
               const _CategoryChipsRow(),
               const Divider(height: 1, color: Colors.white10),
-              Expanded(
-                child: _ChannelList(
-                  isOverlay: false,
-                  onClose: onClose,
-                  onChannelSelected: onChannelSelected,
-                ),
-              ),
+              Expanded(child: _ChannelList(isOverlay: false, onClose: onClose)),
             ],
           ),
         ),
@@ -196,7 +180,6 @@ class ChannelListPanel extends ConsumerWidget {
   }
 
   BoxBorder? _resolveBorder(BuildContext context) {
-    if (onChannelSelected != null) return null;
     final isMobile = MediaQuery.of(context).size.width < 600;
     if (isMobile) return null;
     return Border(
@@ -730,13 +713,8 @@ class _LiveTvOptionsButton extends StatelessWidget {
 class _ChannelList extends ConsumerStatefulWidget {
   final bool isOverlay;
   final VoidCallback? onClose;
-  final void Function(Channel channel)? onChannelSelected;
 
-  const _ChannelList({
-    this.isOverlay = false,
-    this.onClose,
-    this.onChannelSelected,
-  });
+  const _ChannelList({this.isOverlay = false, this.onClose});
 
   @override
   ConsumerState<_ChannelList> createState() => _ChannelListState();
@@ -982,7 +960,6 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
           selectedChannel: selected,
           isOverlay: widget.isOverlay,
           onClose: widget.onClose,
-          onChannelSelected: widget.onChannelSelected,
           isFirst: index == 0,
           focusNode: (widget.isOverlay && isSelected)
               ? _selectedChannelFocusNode
@@ -1021,7 +998,6 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
             selectedChannel: selected,
             isOverlay: widget.isOverlay,
             onClose: widget.onClose,
-            onChannelSelected: widget.onChannelSelected,
             isFirst: isFirst,
             focusNode: (widget.isOverlay && isSelected)
                 ? _selectedChannelFocusNode
@@ -1084,7 +1060,6 @@ class _ChannelTileWrapper extends ConsumerWidget {
   final Channel? selectedChannel;
   final bool isOverlay;
   final VoidCallback? onClose;
-  final void Function(Channel channel)? onChannelSelected;
   final bool isFirst;
   final FocusNode? focusNode;
   final bool autofocus;
@@ -1094,7 +1069,6 @@ class _ChannelTileWrapper extends ConsumerWidget {
     this.selectedChannel,
     this.isOverlay = false,
     this.onClose,
-    this.onChannelSelected,
     this.isFirst = false,
     this.focusNode,
     this.autofocus = false,
@@ -1115,9 +1089,7 @@ class _ChannelTileWrapper extends ConsumerWidget {
       focusNode: focusNode,
       autofocus: autofocus,
       onTap: () {
-        if (!isOverlay && onChannelSelected != null) {
-          onChannelSelected!(channel);
-        } else if (!isOverlay && isPlaying) {
+        if (!isOverlay && isPlaying) {
           ref.read(liveTvViewModeProvider.notifier).state =
               LiveTvViewMode.fullWindow;
         } else {

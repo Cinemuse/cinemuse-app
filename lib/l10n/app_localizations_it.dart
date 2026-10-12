@@ -1447,12 +1447,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Seleziona un canale per iniziare a guardare';
 
   @override
-  String get liveTvNow => 'ORA';
-
-  @override
-  String get liveTvNext => 'A SEGUIRE';
-
-  @override
   String get liveTvLive => 'Diretta';
 
   @override

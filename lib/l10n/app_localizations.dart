@@ -2654,18 +2654,6 @@ abstract class AppLocalizations {
   /// **'Select a channel to start watching'**
   String get liveTvSelectChannel;
 
-  /// No description provided for @liveTvNow.
-  ///
-  /// In en, this message translates to:
-  /// **'NOW'**
-  String get liveTvNow;
-
-  /// No description provided for @liveTvNext.
-  ///
-  /// In en, this message translates to:
-  /// **'NEXT'**
-  String get liveTvNext;
-
   /// No description provided for @liveTvLive.
   ///
   /// In en, this message translates to:

@@ -16,71 +16,7 @@ import 'package:cinemuse_app/features/settings/presentation/widgets/setting_togg
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 // ---------------------------------------------------------------------------
-// Bottom-sheet wrapper (used from the Live TV channel panel)
-// ---------------------------------------------------------------------------
-
-class PlaylistManagementSheet extends ConsumerWidget {
-  const PlaylistManagementSheet({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor.withValues(alpha: 0.95),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    l10n.liveTvCustomPlaylists,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(LucideIcons.x),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Flexible(
-                child: SingleChildScrollView(child: PlaylistListSection()),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Reusable content section — used in both the sheet and Settings screen
+// Playlist list, shown in Settings and in the Live TV options sheet
 // ---------------------------------------------------------------------------
 
 class PlaylistListSection extends ConsumerWidget {
@@ -104,10 +40,8 @@ class PlaylistListSection extends ConsumerWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: playlists.length,
-              itemBuilder: (context, index) => _PlaylistTile(
-                playlist: playlists[index],
-                isLast: index == playlists.length - 1,
-              ),
+              itemBuilder: (context, index) =>
+                  _PlaylistTile(playlist: playlists[index]),
             ),
           ),
         const SizedBox(height: 20),
@@ -220,9 +154,8 @@ class PlaylistListSection extends ConsumerWidget {
 
 class _PlaylistTile extends ConsumerWidget {
   final LiveTvPlaylist playlist;
-  final bool isLast;
 
-  const _PlaylistTile({required this.playlist, required this.isLast});
+  const _PlaylistTile({required this.playlist});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

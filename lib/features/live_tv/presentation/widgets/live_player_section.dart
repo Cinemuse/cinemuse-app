@@ -5,7 +5,6 @@ import 'package:media_kit_video/media_kit_video.dart' as mkv;
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
-import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_video_controls.dart';
 
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
@@ -21,7 +20,6 @@ class LivePlayerSection extends ConsumerWidget {
   final ValueChanged<String>? onNumberInput;
   final VoidCallback? onConfirmNumber;
   final String numberBuffer;
-  final bool isFullWindow;
   final VoidCallback? onExpand;
   final VoidCallback? onSettingsPressed;
   final FocusNode? focusNode;
@@ -33,7 +31,6 @@ class LivePlayerSection extends ConsumerWidget {
     this.onNumberInput,
     this.onConfirmNumber,
     this.numberBuffer = '',
-    this.isFullWindow = false,
     this.onExpand,
     this.onSettingsPressed,
     this.focusNode,
@@ -42,7 +39,7 @@ class LivePlayerSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final radius = isFullWindow ? BorderRadius.zero : BorderRadius.circular(12);
+    final radius = BorderRadius.circular(12);
 
     final playerWidget = ClipRRect(
       borderRadius: radius,
@@ -50,9 +47,7 @@ class LivePlayerSection extends ConsumerWidget {
         decoration: BoxDecoration(
           color: AppTheme.primary,
           borderRadius: radius,
-          border: isFullWindow
-              ? null
-              : Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         child: playerState == null
             ? _buildPlaceholder(l10n)
@@ -77,16 +72,9 @@ class LivePlayerSection extends ConsumerWidget {
                       videoState: videoState,
                       params: const PlayerParams('livetv_session', 'livetv'),
                       isLive: true,
-                      isFullWindow: isFullWindow,
                       onNumberInput: onNumberInput,
                       onConfirmNumber: onConfirmNumber,
                       numberBuffer: numberBuffer,
-                      onBackPressed: isFullWindow
-                          ? () {
-                              ref.read(liveTvViewModeProvider.notifier).state =
-                                  LiveTvViewMode.split;
-                            }
-                          : null,
                       onSettingsPressed: onSettingsPressed ?? () {},
                     ),
                   );
@@ -94,10 +82,6 @@ class LivePlayerSection extends ConsumerWidget {
               ),
       ),
     );
-
-    if (isFullWindow) {
-      return playerWidget;
-    }
 
     return DpadFocusable(
       focusNode: focusNode,
