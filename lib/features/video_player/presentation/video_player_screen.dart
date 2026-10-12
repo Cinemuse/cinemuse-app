@@ -15,6 +15,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
@@ -51,6 +52,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   SliderOverlayType _activeOverlay = SliderOverlayType.none;
   bool _settingsOpen = false;
 
+  /// The panel previews every change at once; closing it without OK puts
+  /// this back (REV-167).
+  ({SubtitleStyle style, double delay})? _lookBeforeOverlay;
+
   @override
   void initState() {
     super.initState();
@@ -67,6 +72,29 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     }
   }
 
+  void _openOverlay(SliderOverlayType type, PlayerParams params) {
+    final current = ref.read(playerControllerProvider(params)).valueOrNull;
+    if (current != null) {
+      _lookBeforeOverlay = (
+        style:
+            current.customSubtitleStyle ??
+            ref.read(localSettingsProvider).subtitleStyle,
+        delay: current.subtitleDelay,
+      );
+    }
+    setState(() => _activeOverlay = type);
+  }
+
+  void _closeOverlay(bool wasSaved, PlayerParams params) {
+    setState(() => _activeOverlay = SliderOverlayType.none);
+    final before = _lookBeforeOverlay;
+    _lookBeforeOverlay = null;
+    if (wasSaved || before == null) return;
+    ref.read(playerControllerProvider(params).notifier)
+      ..updateSubtitleStyle(before.style)
+      ..updateSubtitleDelay(before.delay);
+  }
+
   void _openSettings(
     CinemaPlayerState state,
     PlayerParams params, {
@@ -78,11 +106,31 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       context,
       state,
       params,
-      (type) => setState(() => _activeOverlay = type),
+      (type) => _openOverlay(type, params),
       initialView: initialView,
     ).then((_) {
       if (mounted) setState(() => _settingsOpen = false);
     });
+  }
+
+  Future<void> _playNextEpisode(
+    CinemaPlayerState state,
+    PlayerParams params,
+  ) async {
+    final player = state.controller.player;
+    // No overlapping audio during the switch.
+    await player.pause();
+    // Ticks the episode when past the threshold, before leaving.
+    await ref
+        .read(playerControllerProvider(params).notifier)
+        .historyManager
+        ?.markCurrentEpisodeCompleted(
+          position: player.state.position.inSeconds,
+          duration: player.state.duration.inSeconds,
+        );
+    // Closed during the save (REV-165).
+    if (!mounted) return;
+    _navigateToNextEpisode(state.nextEpisode!);
   }
 
   void _navigateToNextEpisode(NextEpisodeInfo next) {
@@ -258,42 +306,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                               _activeOverlay != SliderOverlayType.none,
                           onSettingsPressed: () => _openSettings(state, params),
                           onBackPressed: () => Navigator.of(context).pop(),
-                          onOverlayRequested: (type) {
-                            setState(() => _activeOverlay = type);
-                          },
+                          onOverlayRequested: (type) =>
+                              _openOverlay(type, params),
                           onNextEpisode: state.nextEpisode != null
-                              ? () async {
-                                  // Explicitly pause the player to prevent overlapping audio during transition
-                                  await state.controller.player.pause();
-
-                                  // Ensure the current episode is marked as completed if threshold is met
-                                  // and cleanup any stale watching entries before navigating
-                                  await ref
-                                      .read(
-                                        playerControllerProvider(
-                                          params,
-                                        ).notifier,
-                                      )
-                                      .historyManager
-                                      ?.markCurrentEpisodeCompleted(
-                                        position: state
-                                            .controller
-                                            .player
-                                            .state
-                                            .position
-                                            .inSeconds,
-                                        duration: state
-                                            .controller
-                                            .player
-                                            .state
-                                            .duration
-                                            .inSeconds,
-                                      );
-
-                                  // Closed during the save (REV-165).
-                                  if (!mounted) return;
-                                  _navigateToNextEpisode(state.nextEpisode!);
-                                }
+                              ? () => _playNextEpisode(state, params)
                               : null,
                         ),
                         if (_activeOverlay != SliderOverlayType.none)
@@ -302,9 +318,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                             params: params,
                             state: state,
                             onClose: (wasSaved) {
-                              setState(
-                                () => _activeOverlay = SliderOverlayType.none,
-                              );
+                              _closeOverlay(wasSaved, params);
                               if (wasSaved) {
                                 // Return to appearance settings menu
                                 _openSettings(
