@@ -59,8 +59,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
 
   bool _isCompletionLogged = false;
 
-  PlayerHistoryManager get historyManager =>
-      _initializationCoordinator!.historyManager!;
+  /// Null until the title's details loaded (and for live TV / YouTube).
+  PlayerHistoryManager? get historyManager =>
+      _initializationCoordinator?.historyManager;
 
   PlayerController(this.ref, this.params) : super(const AsyncValue.loading()) {
     resolvedParams = params;
@@ -274,9 +275,9 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   Future<void> changeFile(int fileId) => _sourceCoordinator.changeFile(fileId);
 
   void clearError() {
-    if (state.value != null) {
-      state = AsyncValue.data(state.value!.copyWith(error: null));
-    }
+    // valueOrNull: `value` rethrows in the error state (REV-155).
+    final current = state.valueOrNull;
+    if (current != null) state = AsyncValue.data(current.copyWith(error: null));
   }
 
   Future<void> pause() async {
@@ -415,15 +416,14 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     if (format == null) return;
 
     final mimeType = MimeResolver.fromEngineFormat(format);
-    if (mimeType != null && mimeType != state.valueOrNull?.detectedMimeType) {
+    final current = state.valueOrNull;
+    if (mimeType != null && mimeType != current?.detectedMimeType) {
       developer.log(
         'Engine detected format: $format -> $mimeType',
         name: 'VideoPlayer.PlayerController',
       );
-      if (mounted) {
-        state = AsyncValue.data(
-          state.value!.copyWith(detectedMimeType: mimeType),
-        );
+      if (mounted && current != null) {
+        state = AsyncValue.data(current.copyWith(detectedMimeType: mimeType));
       }
     }
   }

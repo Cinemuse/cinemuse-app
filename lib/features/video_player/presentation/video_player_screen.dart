@@ -275,7 +275,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                                         ).notifier,
                                       )
                                       .historyManager
-                                      .markCurrentEpisodeCompleted(
+                                      ?.markCurrentEpisodeCompleted(
                                         position: state
                                             .controller
                                             .player
