@@ -182,8 +182,8 @@ class ProfileCollections extends ConsumerWidget {
                     icon: const Icon(
                       LucideIcons.plus,
                       size: 16,
-                      color: Color(0xFFC026D3),
-                    ), // Matches the purple color in image
+                      color: AppTheme.accentHover,
+                    ),
                     label: Text(
                       l10n.detailsNewCollection,
                       style: const TextStyle(

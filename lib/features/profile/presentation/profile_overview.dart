@@ -103,7 +103,7 @@ class ProfileOverview extends ConsumerWidget {
             ),
             child: Text(
               l10n.profileNoRecentItems,
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(color: AppTheme.textMuted),
             ),
           );
         },

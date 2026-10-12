@@ -522,13 +522,13 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                                     const Icon(
                                       LucideIcons.trash2,
                                       size: 18,
-                                      color: Colors.redAccent,
+                                      color: AppTheme.error,
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
                                       l10n.detailsDeleteList,
                                       style: const TextStyle(
-                                        color: Colors.redAccent,
+                                        color: AppTheme.error,
                                       ),
                                     ),
                                   ],

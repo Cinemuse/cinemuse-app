@@ -115,7 +115,7 @@ class _ProfileHubState extends ConsumerState<ProfileHub>
                               indicatorColor: AppTheme.accent,
                               indicatorWeight: 2,
                               labelColor: Colors.white,
-                              unselectedLabelColor: Colors.grey,
+                              unselectedLabelColor: AppTheme.textMuted,
                               labelStyle: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,

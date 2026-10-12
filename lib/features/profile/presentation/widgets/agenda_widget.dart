@@ -187,7 +187,7 @@ class _AgendaWidgetState extends ConsumerState<AgendaWidget> {
           child: Center(
             child: Text(
               l10n.commonError,
-              style: const TextStyle(color: Colors.redAccent),
+              style: const TextStyle(color: AppTheme.error),
             ),
           ),
         ),
@@ -412,7 +412,7 @@ class _AgendaEventItem extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
                             color: event.type == MediaKind.tv
-                                ? Colors.blue.withValues(alpha: 0.3)
+                                ? AppTheme.info.withValues(alpha: 0.3)
                                 : AppTheme.accent.withValues(alpha: 0.3),
                           ),
                         ),
@@ -425,7 +425,7 @@ class _AgendaEventItem extends StatelessWidget {
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: event.type == MediaKind.tv
-                                ? Colors.blue[300]
+                                ? AppTheme.info
                                 : AppTheme.accent,
                           ),
                         ),

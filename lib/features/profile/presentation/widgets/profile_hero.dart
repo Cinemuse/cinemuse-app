@@ -29,10 +29,7 @@ class ProfileHero extends ConsumerWidget {
                 gradient: const LinearGradient(
                   begin: Alignment.bottomLeft,
                   end: Alignment.topRight,
-                  colors: [
-                    AppTheme.accent,
-                    Color(0xFFE50914),
-                  ], // Example gradient
+                  colors: [AppTheme.accent, AppTheme.favorites],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -76,7 +73,10 @@ class ProfileHero extends ConsumerWidget {
                       l10n.profileMemberSince(
                         profile.createdAt.year.toString(),
                       ),
-                      style: const TextStyle(color: Colors.grey, fontSize: 14),
+                      style: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 14,
+                      ),
                     ),
                 ],
               ),
@@ -90,7 +90,7 @@ class ProfileHero extends ConsumerWidget {
       ),
       error: (err, stack) => Text(
         l10n.profileErrorLoading,
-        style: const TextStyle(color: Colors.red),
+        style: const TextStyle(color: AppTheme.error),
       ),
     );
   }

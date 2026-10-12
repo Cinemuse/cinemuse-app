@@ -115,7 +115,7 @@ class _CreateListSheetState extends State<CreateListSheet> {
                     child: Text(
                       l10n.commonCancel,
                       style: const TextStyle(
-                        color: Colors.grey,
+                        color: AppTheme.textMuted,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

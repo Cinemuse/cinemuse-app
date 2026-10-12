@@ -50,7 +50,7 @@ class TimeBreakdownCard extends StatelessWidget {
     return _BaseCard(
       icon: LucideIcons.clock,
       title: l10n.statsTimeBreakdown.toUpperCase(),
-      iconColor: Colors.blue,
+      iconColor: AppTheme.info,
       child: Column(
         children: [
           // Hero
@@ -76,7 +76,7 @@ class TimeBreakdownCard extends StatelessWidget {
                     Text(
                       l10n.statsAllTime.toUpperCase(),
                       style: const TextStyle(
-                        color: Colors.grey,
+                        color: AppTheme.textMuted,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1,
@@ -181,7 +181,7 @@ class MoviesStatsCard extends StatelessWidget {
                 Text(
                   l10n.statsMovies.toUpperCase(),
                   style: const TextStyle(
-                    color: Colors.grey,
+                    color: AppTheme.textMuted,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1,
@@ -230,7 +230,7 @@ class SeriesStatsCard extends StatelessWidget {
     return _BaseCard(
       icon: LucideIcons.tv,
       title: l10n.statsSeriesStats.toUpperCase(),
-      iconColor: Colors.green,
+      iconColor: AppTheme.success,
       child: Column(
         children: [
           // Hero
@@ -256,7 +256,7 @@ class SeriesStatsCard extends StatelessWidget {
                     Text(
                       l10n.statsEpisodes.toUpperCase(),
                       style: const TextStyle(
-                        color: Colors.grey,
+                        color: AppTheme.textMuted,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1,
@@ -357,7 +357,7 @@ class _BaseCard extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  color: Colors.grey,
+                  color: AppTheme.textMuted,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                   letterSpacing: 1.0,
@@ -395,7 +395,7 @@ class _SubStatItem extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            color: Colors.grey,
+            color: AppTheme.textMuted,
             fontSize: 10,
             fontWeight: FontWeight.bold,
           ),
@@ -443,7 +443,7 @@ class _FooterStat extends StatelessWidget {
               label,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                color: Colors.grey,
+                color: AppTheme.textMuted,
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,
@@ -571,7 +571,7 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay>
             0,
             LucideIcons.clock,
             l10n.statsTime.toUpperCase(),
-            Colors.blue,
+            AppTheme.info,
             _formatTime(l10n, widget.stats, (s) => s.totalMinutesWatched),
           ),
         ),
@@ -591,7 +591,7 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay>
             2,
             LucideIcons.tv,
             l10n.statsSeries.toUpperCase(),
-            Colors.green,
+            AppTheme.success,
             _formatCount(widget.stats, (s) => s.totalSeries),
           ),
         ),
@@ -645,7 +645,7 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay>
             Text(
               title,
               style: const TextStyle(
-                color: Colors.grey,
+                color: AppTheme.textMuted,
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,

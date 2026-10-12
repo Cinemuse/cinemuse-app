@@ -17,8 +17,8 @@ class CollectionCard extends StatelessWidget {
     // Only custom lists use this card; system lists use SystemListCard.
     const borderColor = Colors.white10;
     const borderWidth = 1.0;
-    const iconColor = Colors.grey;
-    const badgeColor = Colors.grey;
+    const iconColor = AppTheme.textMuted;
+    const badgeColor = AppTheme.textMuted;
     const badgeBg = Colors.white10;
     const icon = LucideIcons.list;
     const backgroundGradient = [AppTheme.surface, AppTheme.surface];
@@ -88,9 +88,9 @@ class CollectionCard extends StatelessWidget {
                                     width: double.infinity,
                                     height: double.infinity,
                                     errorWidget: (_, __, ___) =>
-                                        Container(color: Colors.grey[900]),
+                                        Container(color: AppTheme.surface),
                                   )
-                                : Container(color: Colors.grey[900]),
+                                : Container(color: AppTheme.surface),
                           ),
                         );
                       }).toList(),

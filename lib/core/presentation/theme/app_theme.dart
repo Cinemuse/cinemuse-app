@@ -18,6 +18,8 @@ class AppTheme {
   static const Color star = Color(0xFFffc107); // Amber 500
 
   static const Color success = Color(0xFF22c55e); // Green 500
+  static const Color info = Color(0xFF3b82f6); // Blue 500
+  static const Color error = Colors.redAccent;
 
   static const Color surface = secondary;
   static const Color border = Color(0x33d946ef); // rgba(217, 70, 239, 0.2)
@@ -250,7 +252,7 @@ class AppTheme {
         surface: surface,
         surfaceContainer: secondary,
         onSurface: textWhite,
-        error: Colors.redAccent,
+        error: error,
       ),
     );
   }

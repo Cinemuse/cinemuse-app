@@ -21,19 +21,19 @@ class SystemListCard extends StatelessWidget {
         ? AppTheme.watchlist
         : isFavorites
         ? AppTheme.favorites
-        : Colors.grey.shade700;
+        : AppTheme.textMuted;
 
     final Color iconBoxColor = isWatchlist
         ? AppTheme.watchlist.withValues(alpha: 0.2)
         : isFavorites
         ? AppTheme.favorites.withValues(alpha: 0.2)
-        : Colors.grey.shade700.withValues(alpha: 0.2);
+        : AppTheme.textMuted.withValues(alpha: 0.2);
 
     final Color iconColor = isWatchlist
         ? AppTheme.watchlist
         : isFavorites
         ? AppTheme.favorites
-        : Colors.grey.shade400;
+        : AppTheme.textMuted;
 
     final IconData icon = isWatchlist
         ? Icons.bookmark
