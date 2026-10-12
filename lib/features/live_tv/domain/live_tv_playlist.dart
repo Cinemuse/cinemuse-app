@@ -29,6 +29,11 @@ class LiveTvPlaylist {
     this.isEnabled = true,
   }) : id = id ?? const Uuid().v4();
 
+  /// What the UI shows under the name: the file name, or only the site of a
+  /// URL, since IPTV URLs often hold `username=…&password=…` (REV-137).
+  String get displaySource =>
+      isLocal ? p.basename(urlOrPath) : Uri.tryParse(urlOrPath)?.host ?? '';
+
   LiveTvPlaylist copyWith({
     String? name,
     String? urlOrPath,

@@ -1,4 +1,3 @@
-import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path/path.dart' as p;
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/live_tv/data/local_playlist_storage.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
@@ -199,7 +199,7 @@ class _PlaylistTile extends ConsumerWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    playlist.urlOrPath,
+                    playlist.displaySource,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.45),
                       fontSize: 11,
@@ -316,10 +316,11 @@ class _OpenFolderButton extends StatelessWidget {
         await Process.run('xdg-open', [dirPath]);
       }
     } catch (e, s) {
-      developer.log(
-        'Failed to open file location for path: ${playlist.urlOrPath}',
-        name: 'PlaylistManagementSheet',
-        error: e,
+      // Only the error type: the path or URL can hold login details.
+      AppLogger.warn(
+        'PlaylistListSection',
+        'Failed to open the playlist file location',
+        error: e.runtimeType,
         stackTrace: s,
       );
     }
@@ -353,10 +354,10 @@ class _OpenLinkButton extends StatelessWidget {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
     } catch (e, s) {
-      developer.log(
-        'Failed to open external playlist URL: ${playlist.urlOrPath}',
-        name: 'PlaylistManagementSheet',
-        error: e,
+      AppLogger.warn(
+        'PlaylistListSection',
+        'Failed to open the playlist URL',
+        error: e.runtimeType,
         stackTrace: s,
       );
     }
