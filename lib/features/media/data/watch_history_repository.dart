@@ -771,50 +771,6 @@ class WatchHistoryRepository {
     await _cacheReturnedRow(userId, tmdbId, 'tv', rows);
   }
 
-  /// Ensures an episode is marked as watching with 0 progress if not already tracked.
-  /// Used for auto-advancing to new seasons.
-  Future<void> ensureEpisodeWatching({
-    required String userId,
-    required int tmdbId,
-    required int season,
-    required int episode,
-  }) async {
-    final existing = await _titleRow(
-      _client.from('watch_history').select('progress_seconds'),
-      userId,
-      tmdbId,
-      'tv',
-    ).eq('season', season).eq('episode', episode).maybeSingle();
-
-    if (existing == null) {
-      await _db.upsertWatchHistory(
-        LocalWatchHistoriesCompanion(
-          userId: Value(userId),
-          tmdbId: Value(tmdbId),
-          mediaType: Value('tv'),
-          season: Value(season),
-          episode: Value(episode),
-          status: Value('watching'),
-          progressSeconds: Value(0),
-          totalDuration: Value(0),
-          lastWatchedAt: Value(DateTime.now().toUtc()),
-        ),
-      );
-
-      await _client.from('watch_history').upsert({
-        'user_id': userId,
-        'tmdb_id': tmdbId,
-        'media_type': 'tv',
-        'season': season,
-        'episode': episode,
-        'status': 'watching',
-        'progress_seconds': 0,
-        'total_duration': 0,
-        'last_watched_at': DateTime.now().toUtc().toIso8601String(),
-      });
-    }
-  }
-
   /// Removes every watch of a series. Throws an [AppFailure].
   Future<void> deleteAllSeriesLogs({
     required String userId,

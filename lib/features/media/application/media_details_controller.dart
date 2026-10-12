@@ -23,9 +23,10 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
   UserListsNotifier get _listsNotifier => ref.read(userListsProvider.notifier);
   String? get _userId => ref.read(supabaseClientProvider).auth.currentUser?.id;
 
-  /// Resolves the appropriate starting season for a series based on watch history.
-  /// If the current target season is completely watched, advances to the next season
-  /// and marks the next episode as watching in Continue Watching.
+  /// The season the details screen opens on: the history's season, or the
+  /// next one when that season is fully watched. Only reads: opening a page
+  /// must not change Continue Watching (REV-190). Logging an episode already
+  /// moves the show on, and the agenda brings it back for a new season.
   int resolveInitialSeason({
     required int tmdbId,
     required Map<String, dynamic> details,
@@ -61,14 +62,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
           orElse: () => null,
         );
 
-        if (nextSeasonData != null) {
-          targetSeason++;
-          ensureEpisodeWatching(
-            tmdbId: tmdbId,
-            season: targetSeason,
-            episode: 1,
-          );
-        }
+        if (nextSeasonData != null) targetSeason++;
       }
     }
     return targetSeason;
@@ -242,22 +236,6 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     await _repository.deleteAllSeriesLogs(userId: userId, tmdbId: tmdbId);
     ref.invalidate(droppedListProvider);
     ref.invalidate(continueWatchingProvider);
-  }
-
-  Future<void> ensureEpisodeWatching({
-    required int tmdbId,
-    required int season,
-    required int episode,
-  }) async {
-    final userId = _userId;
-    if (userId == null) return;
-
-    await _repository.ensureEpisodeWatching(
-      userId: userId,
-      tmdbId: tmdbId,
-      season: season,
-      episode: episode,
-    );
   }
 
   Future<void> logMovieWatch({required int tmdbId, DateTime? loggedAt}) async {
