@@ -176,21 +176,10 @@ class CastRemoteView extends ConsumerWidget {
                           inactiveTrackColor: AppTheme.borderSubtle,
                           thumbColor: AppTheme.accent,
                         ),
-                        child: Slider(
-                          value: playerState.remotePosition.inSeconds
-                              .toDouble()
-                              .clamp(
-                                0,
-                                playerState.remoteDuration.inSeconds
-                                    .toDouble()
-                                    .clamp(1, double.infinity),
-                              ),
-                          max: playerState.remoteDuration.inSeconds
-                              .toDouble()
-                              .clamp(1, double.infinity),
-                          onChanged: (value) {
-                            notifier.seek(Duration(seconds: value.toInt()));
-                          },
+                        child: _CastSeekbar(
+                          position: playerState.remotePosition,
+                          duration: playerState.remoteDuration,
+                          onSeek: notifier.seek,
                         ),
                       ),
                       Padding(
@@ -238,8 +227,10 @@ class CastRemoteView extends ConsumerWidget {
                         ),
                         onPressed: () {
                           notifier.seek(
-                            playerState.remotePosition -
-                                const Duration(seconds: 10),
+                            _clampToRemote(
+                              playerState.remotePosition -
+                                  const Duration(seconds: 10),
+                            ),
                           );
                         },
                       ),
@@ -271,8 +262,10 @@ class CastRemoteView extends ConsumerWidget {
                         ),
                         onPressed: () {
                           notifier.seek(
-                            playerState.remotePosition +
-                                const Duration(seconds: 10),
+                            _clampToRemote(
+                              playerState.remotePosition +
+                                  const Duration(seconds: 10),
+                            ),
                           );
                         },
                       ),
@@ -302,6 +295,14 @@ class CastRemoteView extends ConsumerWidget {
     );
   }
 
+  /// The ±10 s buttons must not send a negative time or one past the end
+  /// (REV-168). An unknown duration (zero) has no upper bound.
+  Duration _clampToRemote(Duration target) {
+    if (target < Duration.zero) return Duration.zero;
+    final end = playerState.remoteDuration;
+    return end > Duration.zero && target > end ? end : target;
+  }
+
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, "0");
     final String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
@@ -310,5 +311,56 @@ class CastRemoteView extends ConsumerWidget {
       return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
     }
     return "$twoDigitMinutes:$twoDigitSeconds";
+  }
+}
+
+/// Follows the finger while dragging and seeks once on release: a seek per
+/// drag frame flooded the Chromecast, and the thumb jumped back to the last
+/// reported position until the next status update (REV-168).
+class _CastSeekbar extends StatefulWidget {
+  final Duration position;
+  final Duration duration;
+  final ValueChanged<Duration> onSeek;
+
+  const _CastSeekbar({
+    required this.position,
+    required this.duration,
+    required this.onSeek,
+  });
+
+  @override
+  State<_CastSeekbar> createState() => _CastSeekbarState();
+}
+
+class _CastSeekbarState extends State<_CastSeekbar> {
+  double? _shownSeconds;
+  bool _isDragging = false;
+
+  @override
+  void didUpdateWidget(_CastSeekbar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The TV reported a new position: show it again.
+    if (!_isDragging && widget.position != oldWidget.position) {
+      _shownSeconds = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final max = widget.duration.inSeconds.toDouble().clamp(
+      1.0,
+      double.infinity,
+    );
+    final value = _shownSeconds ?? widget.position.inSeconds.toDouble();
+    return Slider(
+      value: value.clamp(0.0, max),
+      max: max,
+      onChangeStart: (_) => _isDragging = true,
+      onChanged: (v) => setState(() => _shownSeconds = v),
+      onChangeEnd: (v) {
+        _isDragging = false;
+        widget.onSeek(Duration(seconds: v.toInt()));
+      },
+    );
   }
 }
