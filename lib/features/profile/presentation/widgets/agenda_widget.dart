@@ -3,6 +3,8 @@ import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/profile/application/agenda_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/agenda_event.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -314,19 +316,38 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 }
 
+const _posterFallback = Icon(LucideIcons.film, size: 20, color: Colors.white24);
+
 class _AgendaEventItem extends StatelessWidget {
   final AgendaEvent event;
 
   const _AgendaEventItem({required this.event});
+
+  /// "S1 E2 • Name". The name is left out when it only repeats the number
+  /// ("Episode 2", "Episodio 2", "2"), in any language (REV-109).
+  String _episodeLabel(AppLocalizations l10n) {
+    final season = event.seasonNumber!;
+    final episode = event.episodeNumber!;
+    final name = event.episodeName?.trim() ?? '';
+    final onlyNumber = RegExp('^(\\p{L}+\\s*)?$episode\$', unicode: true);
+    return name.isEmpty || onlyNumber.hasMatch(name)
+        ? l10n.seasonEpisodeShort(season, episode)
+        : l10n.detailsEpisodeWithSeason(season, episode, name);
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     return InkWell(
-      onTap: () {
-        // TODO: Navigate to details
-      },
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => MediaDetailsScreen(
+            mediaId: event.tmdbId.toString(),
+            mediaType: event.type.name,
+          ),
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         child: Row(
@@ -339,20 +360,18 @@ class _AgendaEventItem extends StatelessWidget {
                 height: 72,
                 color: Colors.white10,
                 child: event.posterPath != null
-                    ? Image.network(
-                        TmdbImageHelper.posterUrl(context, event.posterPath)!,
+                    ? CachedNetworkImage(
+                        imageUrl: TmdbImageHelper.posterUrl(
+                          context,
+                          event.posterPath,
+                        )!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(
-                          LucideIcons.film,
-                          size: 20,
-                          color: Colors.white24,
-                        ),
+                        memCacheWidth:
+                            (48 * MediaQuery.devicePixelRatioOf(context))
+                                .round(),
+                        errorWidget: (_, __, ___) => _posterFallback,
                       )
-                    : const Icon(
-                        LucideIcons.film,
-                        size: 20,
-                        color: Colors.white24,
-                      ),
+                    : _posterFallback,
               ),
             ),
             const SizedBox(width: 16),
@@ -370,37 +389,16 @@ class _AgendaEventItem extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (event.type == MediaKind.tv && event.seasonNumber != null)
-                    Builder(
-                      builder: (context) {
-                        final sLabel = l10n
-                            .detailsSeasonNumber(event.seasonNumber!)
-                            .split(' ')
-                            .first[0]; // 'S'
-                        final eLabel = l10n
-                            .detailsEpisodeNumber(event.episodeNumber!)
-                            .split(' ')
-                            .first; // 'EP' or 'E'
-
-                        // Check if episodeName is redundant
-                        final epName = event.episodeName ?? "";
-                        final isRedundant =
-                            epName.toLowerCase().contains(
-                              'episode ${event.episodeNumber}',
-                            ) ||
-                            epName.toLowerCase() ==
-                                'episode ${event.episodeNumber}' ||
-                            epName.trim() == event.episodeNumber.toString();
-
-                        return Text(
-                          '$sLabel${event.seasonNumber} $eLabel${event.episodeNumber}${!isRedundant && epName.isNotEmpty ? ' • $epName' : ''}',
-                          style: DesktopTypography.captionMeta.copyWith(
-                            fontSize: 12,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        );
-                      },
+                  if (event.type == MediaKind.tv &&
+                      event.seasonNumber != null &&
+                      event.episodeNumber != null)
+                    Text(
+                      _episodeLabel(l10n),
+                      style: DesktopTypography.captionMeta.copyWith(
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   const SizedBox(height: 4),
                   Row(

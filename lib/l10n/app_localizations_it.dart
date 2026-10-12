@@ -2272,8 +2272,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get watchHistoryReplay => 'Rivedi';
 
   @override
-  String watchHistorySeasonEpisode(int season, int episode) {
-    return 'Stagione $season • Episodio $episode';
+  String seasonEpisodeShort(int season, int episode) {
+    return 'S$season E$episode';
   }
 
   @override

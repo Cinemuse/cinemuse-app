@@ -2248,8 +2248,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchHistoryReplay => 'Replay';
 
   @override
-  String watchHistorySeasonEpisode(int season, int episode) {
-    return 'Season $season • Episode $episode';
+  String seasonEpisodeShort(int season, int episode) {
+    return 'S$season E$episode';
   }
 
   @override

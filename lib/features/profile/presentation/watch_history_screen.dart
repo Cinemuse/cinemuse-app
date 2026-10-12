@@ -1460,7 +1460,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     if (eps.length > 1) {
       return l10n.watchHistoryEpisodeRange(season, eps.first, eps.last);
     }
-    return 'S$season E${eps.first}';
+    return l10n.seasonEpisodeShort(season, eps.first);
   }
 
   String _buildTwoSeasonLabel(

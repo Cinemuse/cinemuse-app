@@ -841,8 +841,8 @@
   "watchHistoryDateThisWeek": "This Week",
   "watchHistoryDateThisMonth": "This Month",
   "watchHistoryReplay": "Replay",
-  "watchHistorySeasonEpisode": "Season {season} • Episode {episode}",
-  "@watchHistorySeasonEpisode": {
+  "seasonEpisodeShort": "S{season} E{episode}",
+  "@seasonEpisodeShort": {
     "placeholders": {
       "season": { "type": "int" },
       "episode": { "type": "int" }

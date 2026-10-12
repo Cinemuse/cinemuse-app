@@ -772,8 +772,8 @@
   "watchHistoryDateThisWeek": "Questa settimana",
   "watchHistoryDateThisMonth": "Questo mese",
   "watchHistoryReplay": "Rivedi",
-  "watchHistorySeasonEpisode": "Stagione {season} • Episodio {episode}",
-  "@watchHistorySeasonEpisode": {
+  "seasonEpisodeShort": "S{season} E{episode}",
+  "@seasonEpisodeShort": {
     "placeholders": {
       "season": { "type": "int" },
       "episode": { "type": "int" }

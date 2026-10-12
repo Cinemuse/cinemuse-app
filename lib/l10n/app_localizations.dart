@@ -4021,11 +4021,11 @@ abstract class AppLocalizations {
   /// **'Replay'**
   String get watchHistoryReplay;
 
-  /// No description provided for @watchHistorySeasonEpisode.
+  /// No description provided for @seasonEpisodeShort.
   ///
   /// In en, this message translates to:
-  /// **'Season {season} • Episode {episode}'**
-  String watchHistorySeasonEpisode(int season, int episode);
+  /// **'S{season} E{episode}'**
+  String seasonEpisodeShort(int season, int episode);
 
   /// No description provided for @watchHistoryEmpty.
   ///
