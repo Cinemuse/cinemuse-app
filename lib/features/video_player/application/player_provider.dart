@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:cast/cast.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
-import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver_provider.dart';
@@ -141,6 +140,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       ref: ref,
       player: _player!,
       params: resolvedParams,
+      subtitlesKey: params,
     );
     _applyTrackPreferences();
 
@@ -318,7 +318,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
         state.value!.currentStream!.candidate,
         state.value!.title,
         _player?.state.position ?? Duration.zero,
-        (ResolvedStream resolvedStream) {
+        (resolvedStream) {
           developer.log(
             'Cast stream resolved: ${resolvedStream.url}',
             name: 'VideoPlayer.PlayerController',

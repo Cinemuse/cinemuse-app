@@ -8,12 +8,27 @@ import 'package:cinemuse_app/features/streaming/subtitles/subtitle_service.dart'
 import 'package:cinemuse_app/features/streaming/subtitles/external_subtitle.dart';
 import 'package:media_kit/media_kit.dart';
 
-/// Shared provider for external subtitle search results.
-/// Populated by [TrackManager], consumed by the UI.
-final externalSubtitlesProvider =
-    StateProvider.family<AsyncValue<List<ExternalSubtitle>>, PlayerParams>(
-      (ref, params) => const AsyncValue.loading(),
-    );
+/// External subtitle search results for one player, keyed by the params the
+/// screen opened it with. Filled by [TrackManager], read by the UI.
+class ExternalSubtitlesNotifier
+    extends
+        AutoDisposeFamilyNotifier<
+          AsyncValue<List<ExternalSubtitle>>,
+          PlayerParams
+        > {
+  @override
+  AsyncValue<List<ExternalSubtitle>> build(PlayerParams arg) =>
+      const AsyncValue.loading();
+
+  void setResults(AsyncValue<List<ExternalSubtitle>> value) => state = value;
+}
+
+final externalSubtitlesProvider = NotifierProvider.autoDispose
+    .family<
+      ExternalSubtitlesNotifier,
+      AsyncValue<List<ExternalSubtitle>>,
+      PlayerParams
+    >(ExternalSubtitlesNotifier.new);
 
 /// Manages automatic track (audio & subtitle) selection based on user preferences.
 ///
@@ -23,19 +38,33 @@ final externalSubtitlesProvider =
 class TrackManager {
   final Ref ref;
   final Player player;
+
+  /// Resolved params (with season/episode filled in), used for the search.
   final PlayerParams params;
+
+  /// The params the screen opened the player with: the UI reads
+  /// [externalSubtitlesProvider] with these, so the results go there (REV-142).
+  final PlayerParams subtitlesKey;
 
   TrackManager({
     required this.ref,
     required this.player,
     required this.params,
+    required this.subtitlesKey,
   }) {
     _tracksSubscription = player.stream.tracks.listen(
       (_) => _onTracksChanged(),
     );
+    // Keeps the auto-dispose results alive until the player closes, so they
+    // are still there when the user opens the subtitles panel later.
+    _subtitlesSubscription = ref.listen(
+      externalSubtitlesProvider(subtitlesKey),
+      (_, _) {},
+    );
   }
 
   StreamSubscription? _tracksSubscription;
+  ProviderSubscription? _subtitlesSubscription;
   bool _isAutoSelecting = true;
   bool _isPerformingSelection = false;
   bool _hasFetchedExternal = false;
@@ -44,6 +73,7 @@ class TrackManager {
 
   void dispose() {
     _tracksSubscription?.cancel();
+    _subtitlesSubscription?.close();
     _autoSelectTimeout?.cancel();
   }
 
@@ -306,11 +336,11 @@ class TrackManager {
 
   /// Waits up to 3 seconds for the external subtitles cache to be populated.
   Future<List<ExternalSubtitle>?> _awaitCachedExternalSubtitles() async {
-    var cached = ref.read(externalSubtitlesProvider(params));
+    var cached = ref.read(externalSubtitlesProvider(subtitlesKey));
     if (cached is AsyncData<List<ExternalSubtitle>>) return cached.value;
 
     await Future.delayed(const Duration(seconds: 3));
-    cached = ref.read(externalSubtitlesProvider(params));
+    cached = ref.read(externalSubtitlesProvider(subtitlesKey));
     return (cached is AsyncData<List<ExternalSubtitle>>) ? cached.value : null;
   }
 
@@ -329,6 +359,7 @@ class TrackManager {
   bool _isSubtitleAlreadyLoaded(String url) =>
       player.state.tracks.subtitle.any((t) => t.id == url);
 
-  void _setExternalSubsState(AsyncValue<List<ExternalSubtitle>> value) =>
-      ref.read(externalSubtitlesProvider(params).notifier).state = value;
+  void _setExternalSubsState(AsyncValue<List<ExternalSubtitle>> value) => ref
+      .read(externalSubtitlesProvider(subtitlesKey).notifier)
+      .setResults(value);
 }
