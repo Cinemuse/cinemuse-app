@@ -342,6 +342,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
               child: LivePlayerSection(
                 channel: selectedChannel,
                 playerState: playerState,
+                focusNode: _playerFocusNode,
                 onNumberInput: _handleNumberInput,
                 onConfirmNumber: _confirmNumberInput,
                 numberBuffer: numberBuffer,
