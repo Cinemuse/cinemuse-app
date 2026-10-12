@@ -15,23 +15,19 @@ import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 
-// Family provider to fetch basic details for a specific media item (with local caching)
-final mediaItemProvider =
-    FutureProvider.family<MediaItem?, ({int id, MediaKind type})>((
-      ref,
-      args,
-    ) async {
-      final repo = ref.read(mediaRepositoryProvider);
+// Basic details of a title: local cache first, then TMDB. Every provider
+// here is autoDispose: a title is freed once no screen shows it (REV-191).
+final mediaItemProvider = FutureProvider.autoDispose
+    .family<MediaItem?, ({int id, MediaKind type})>((ref, args) async {
+      // Watched before the first await: the provider may be gone after it.
+      final repo = ref.watch(mediaRepositoryProvider);
+      final connectivity = ref.watch(connectivityProvider).valueOrNull;
+      final tmdbService = ref.watch(tmdbServiceProvider);
 
-      // 1. Check local cache (Memory/Drift)
       final cached = await repo.getMediaItem(args.id, args.type);
       if (cached != null && cached.hasCompleteTitle('en')) return cached;
-
-      final connectivity = ref.watch(connectivityProvider).valueOrNull;
       if (connectivity == ConnectivityResult.none) return cached;
 
-      // 2. Fetch from TMDB
-      final tmdbService = ref.watch(tmdbServiceProvider);
       final details = await tmdbService.getMediaDetails(
         args.id.toString(),
         args.type.name,
@@ -47,8 +43,8 @@ final mediaItemProvider =
     });
 
 // Family provider to fetch full details for a specific media item (e.g. for details screen)
-final mediaDetailsProvider =
-    FutureProvider.family<Map<String, dynamic>?, ({String id, String type})>((
+final mediaDetailsProvider = FutureProvider.autoDispose
+    .family<Map<String, dynamic>?, ({String id, String type})>((
       ref,
       args,
     ) async {
@@ -91,22 +87,18 @@ final mediaDetailsProvider =
     });
 
 /// Strongly-typed provider emitting the rich [MediaItem] with full details (cast, crew, videos, etc.)
-final typedMediaDetailsProvider =
-    FutureProvider.family<MediaItem?, ({String id, String type})>((
-      ref,
-      args,
-    ) async {
+final typedMediaDetailsProvider = FutureProvider.autoDispose
+    .family<MediaItem?, ({String id, String type})>((ref, args) async {
       final raw = await ref.watch(mediaDetailsProvider(args).future);
       if (raw == null) return null;
       return MediaItem.fromTmdbDetails(raw, MediaItem.fromString(args.type));
     });
 
-// Family provider to fetch season details
-final seasonDetailsProvider =
-    FutureProvider.family<
-      Map<String, dynamic>?,
-      ({int tmdbId, int seasonNumber})
-    >((ref, args) async {
+final seasonDetailsProvider = FutureProvider.autoDispose
+    .family<Map<String, dynamic>?, ({int tmdbId, int seasonNumber})>((
+      ref,
+      args,
+    ) async {
       final connectivity = ref.watch(connectivityProvider).valueOrNull;
       if (connectivity == ConnectivityResult.none) return null;
 
@@ -114,12 +106,8 @@ final seasonDetailsProvider =
       return tmdbService.getSeasonDetails(args.tmdbId, args.seasonNumber);
     });
 
-// Family provider to fetch collection details (raw map for compatibility)
-final collectionDetailsProvider =
-    FutureProvider.family<Map<String, dynamic>?, int>((
-      ref,
-      collectionId,
-    ) async {
+final collectionDetailsProvider = FutureProvider.autoDispose
+    .family<Map<String, dynamic>?, int>((ref, collectionId) async {
       final connectivity = ref.watch(connectivityProvider).valueOrNull;
       if (connectivity == ConnectivityResult.none) return null;
 
@@ -128,14 +116,14 @@ final collectionDetailsProvider =
     });
 
 // Family provider to fetch strongly-typed collection domain model
-final collectionModelProvider = FutureProvider.family<MediaCollection?, int>((
-  ref,
-  collectionId,
-) async {
-  final raw = await ref.watch(collectionDetailsProvider(collectionId).future);
-  if (raw == null) return null;
-  return MediaCollection.fromTmdbMap(raw);
-});
+final collectionModelProvider = FutureProvider.autoDispose
+    .family<MediaCollection?, int>((ref, collectionId) async {
+      final raw = await ref.watch(
+        collectionDetailsProvider(collectionId).future,
+      );
+      if (raw == null) return null;
+      return MediaCollection.fromTmdbMap(raw);
+    });
 
 // Notifier for the currently selected season number of a specific series
 class SelectedSeasonNotifier extends AutoDisposeFamilyNotifier<int, String> {
@@ -151,14 +139,15 @@ final selectedSeasonProvider = NotifierProvider.autoDispose
     .family<SelectedSeasonNotifier, int, String>(SelectedSeasonNotifier.new);
 
 // Family provider to fetch watch history for a specific media item (Derived from Store)
-final mediaWatchHistoryProvider =
-    Provider.family<AsyncValue<WatchHistory?>, String>((ref, tmdbId) {
+final mediaWatchHistoryProvider = Provider.autoDispose
+    .family<AsyncValue<WatchHistory?>, String>((ref, tmdbId) {
       final store = ref.watch(watchHistoryStoreProvider);
       return store.whenData((map) => map[tmdbId]);
     });
 
 // StateNotifier for managing series logs with optimistic updates
-class OptimisticSeriesLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
+class OptimisticSeriesLogs
+    extends AutoDisposeFamilyStreamNotifier<List<WatchLog>, int> {
   // Key: "season-episode" -> true (added), false (removed)
   final Map<String, bool> _optimisticUpdates = {};
 
@@ -243,39 +232,34 @@ class OptimisticSeriesLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
   }
 }
 
-// Provider for the optimistic logs
-final seriesWatchLogsProvider =
-    StreamNotifierProvider.family<OptimisticSeriesLogs, List<WatchLog>, int>(
-      () {
-        return OptimisticSeriesLogs();
-      },
-    );
+final seriesWatchLogsProvider = StreamNotifierProvider.autoDispose
+    .family<OptimisticSeriesLogs, List<WatchLog>, int>(() {
+      return OptimisticSeriesLogs();
+    });
 
 // Helper provider to get a map of "season-episode" -> watch_count for the series
-final watchedEpisodesMapProvider = Provider.family<Map<String, int>, int>((
-  ref,
-  tmdbId,
-) {
-  final logsAsync = ref.watch(seriesWatchLogsProvider(tmdbId));
-  return logsAsync.maybeWhen(
-    data: (logs) {
-      final counts = <String, int>{};
-      for (final log in logs) {
-        final s = log.season;
-        final e = log.episode;
-        if (s != null && e != null) {
-          final key = '$s-$e';
-          counts[key] = (counts[key] ?? 0) + 1;
-        }
-      }
-      return counts;
-    },
-    orElse: () => <String, int>{},
-  );
-});
+final watchedEpisodesMapProvider = Provider.autoDispose
+    .family<Map<String, int>, int>((ref, tmdbId) {
+      final logsAsync = ref.watch(seriesWatchLogsProvider(tmdbId));
+      return logsAsync.maybeWhen(
+        data: (logs) {
+          final counts = <String, int>{};
+          for (final log in logs) {
+            final s = log.season;
+            final e = log.episode;
+            if (s != null && e != null) {
+              final key = '$s-$e';
+              counts[key] = (counts[key] ?? 0) + 1;
+            }
+          }
+          return counts;
+        },
+        orElse: () => <String, int>{},
+      );
+    });
 // Helper provider to get global series watch status
-final seriesWatchStatusProvider =
-    Provider.family<
+final seriesWatchStatusProvider = Provider.autoDispose
+    .family<
       ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount}),
       ({int tmdbId, int totalEpisodes})
     >((ref, args) {
@@ -311,8 +295,8 @@ final seriesWatchStatusProvider =
     });
 
 // Helper provider to get a map of "season-episode" -> WatchHistory (progress) for the series
-final episodeProgressMapProvider =
-    StreamProvider.family<Map<String, WatchHistory>, int>((ref, tmdbId) {
+final episodeProgressMapProvider = StreamProvider.autoDispose
+    .family<Map<String, WatchHistory>, int>((ref, tmdbId) {
       final userId = ref.watch(authProvider).asData?.value?.id;
       if (userId == null) return Stream.value({});
 
@@ -339,7 +323,8 @@ final episodeProgressMapProvider =
     });
 
 // StateNotifier for managing movie logs with optimistic updates
-class OptimisticMovieLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
+class OptimisticMovieLogs
+    extends AutoDisposeFamilyStreamNotifier<List<WatchLog>, int> {
   // Sets of normalized "logged_at" strings to manage additions and removals
   final Set<String> _optimisticAdditions = {};
   final Set<String> _optimisticRemovals = {};
@@ -455,20 +440,22 @@ class OptimisticMovieLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
   }
 }
 
-// Provider for the optimistic movie logs
-final movieWatchLogsProvider =
-    StreamNotifierProvider.family<OptimisticMovieLogs, List<WatchLog>, int>(() {
+final movieWatchLogsProvider = StreamNotifierProvider.autoDispose
+    .family<OptimisticMovieLogs, List<WatchLog>, int>(() {
       return OptimisticMovieLogs();
     });
 
 // Helper provider to get global movie watch count
-final movieWatchCountProvider = Provider.family<int, int>((ref, tmdbId) {
+final movieWatchCountProvider = Provider.autoDispose.family<int, int>((
+  ref,
+  tmdbId,
+) {
   final logsAsync = ref.watch(movieWatchLogsProvider(tmdbId));
   return logsAsync.maybeWhen(data: (logs) => logs.length, orElse: () => 0);
 });
 
 // Helper provider to determine if a user is actively rewatching
-final isRewatchingProvider = FutureProvider.family<bool, WatchHistory>((
+final isRewatchingProvider = FutureProvider.autoDispose.family<bool, WatchHistory>((
   ref,
   history,
 ) async {
