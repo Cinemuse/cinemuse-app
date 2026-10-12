@@ -281,14 +281,19 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
         .length;
     final filteredTotalTitles = filteredMovies + filteredSeries;
 
-    // 3. For series: calculate distinct seasons and total episode logs in the filtered scope
+    // 3. Series: distinct seasons and episodes, counted before the grid's
+    // one-card-per-title step and without rewatch duplicates (REV-102).
     final seasonsSet = <String>{};
-    int episodesCount = 0;
-    for (final item in items.where((h) => h.mediaType == MediaKind.tv)) {
+    final episodesSet = <String>{};
+    for (final item in allHistory.where(
+      (h) => h.mediaType == MediaKind.tv && _matchesFilters(h, appLanguage),
+    )) {
       if (item.season != null && item.season! > 0) {
         seasonsSet.add('${item.tmdbId}-${item.season}');
       }
-      episodesCount++;
+      if (item.episode != null) {
+        episodesSet.add('${item.tmdbId}-${item.season}-${item.episode}');
+      }
     }
 
     final subtitle = _buildSubtitleText(
@@ -300,7 +305,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
       filteredMovies: filteredMovies,
       filteredSeries: filteredSeries,
       seasonsCount: seasonsSet.length,
-      episodesCount: episodesCount,
+      episodesCount: episodesSet.length,
     );
 
     final gridItems = _viewMode == HistoryViewMode.grid
@@ -1119,31 +1124,22 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     return computed;
   }
 
+  /// Entries without media are never shown.
+  bool _matchesFilters(WatchHistory h, String appLanguage) =>
+      h.media != null &&
+      (_selectedType == null || h.mediaType == _selectedType) &&
+      (_selectedStatus == null || h.status == _selectedStatus) &&
+      (_searchQuery.isEmpty ||
+          (h.media!.getLocalizedTitle(appLanguage) ?? '')
+              .toLowerCase()
+              .contains(_searchQuery));
+
   List<WatchHistory> _computeFilterAndSortItems(
     List<WatchHistory> source,
     String appLanguage,
   ) {
-    // 1. Filter out entries without media object
-    var list = source.where((h) => h.media != null).toList();
-
-    // 2. Filter by media type
-    if (_selectedType != null) {
-      list = list.where((h) => h.mediaType == _selectedType).toList();
-    }
-
-    // 3. Filter by status
-    if (_selectedStatus != null) {
-      list = list.where((h) => h.status == _selectedStatus).toList();
-    }
-
-    // 4. Filter by search query
-    if (_searchQuery.isNotEmpty) {
-      list = list.where((h) {
-        final title = (h.media?.getLocalizedTitle(appLanguage) ?? '')
-            .toLowerCase();
-        return title.contains(_searchQuery);
-      }).toList();
-    }
+    // 1-4. Type, status and search filters
+    final list = source.where((h) => _matchesFilters(h, appLanguage)).toList();
 
     // 5. In Grid mode, deduplicate by title key so each title appears once with its latest activity.
     // In Timeline mode, retain all entries so they can be grouped and clustered into decks per date window.

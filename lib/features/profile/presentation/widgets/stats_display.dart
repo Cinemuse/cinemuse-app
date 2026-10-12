@@ -592,7 +592,7 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay>
             LucideIcons.tv,
             l10n.statsSeries.toUpperCase(),
             Colors.green,
-            _formatCount(widget.stats, (s) => s.totalEpisodes),
+            _formatCount(widget.stats, (s) => s.totalSeries),
           ),
         ),
       ],
