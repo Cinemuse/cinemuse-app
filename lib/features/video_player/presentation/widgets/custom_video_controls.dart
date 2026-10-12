@@ -41,7 +41,6 @@ class CustomVideoControls extends ConsumerStatefulWidget {
   final String numberBuffer;
   final VoidCallback? onNextChannel;
   final VoidCallback? onPreviousChannel;
-  final VoidCallback? onOpenChannelGuide;
   final bool isFullWindow;
   final VoidCallback? onToggleFullWindow;
 
@@ -65,7 +64,6 @@ class CustomVideoControls extends ConsumerStatefulWidget {
     this.numberBuffer = '',
     this.onNextChannel,
     this.onPreviousChannel,
-    this.onOpenChannelGuide,
     this.isFullWindow = false,
     this.onToggleFullWindow,
     this.onTap,
@@ -101,21 +99,11 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   void initState() {
     super.initState();
     _startHideTimer();
-    _initFullscreenState();
+    _isFullScreen = PlayerWindowCoordinator.isFullscreenSafe(widget.videoState);
     FocusManager.instance.addListener(_onGlobalFocusChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _syncFocusForVisibility();
     });
-  }
-
-  void _initFullscreenState() {
-    if (mounted) {
-      setState(
-        () => _isFullScreen = PlayerWindowCoordinator.isFullscreenSafe(
-          widget.videoState,
-        ),
-      );
-    }
   }
 
   @override
@@ -282,11 +270,12 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       onConfirmNumber: _confirmNumberInput,
       onZapNextChannel: _zapNextChannel,
       onZapPreviousChannel: _zapPreviousChannel,
-      onOpenChannelOverlay: () {
-        ref.read(liveTvChannelOverlayProvider.notifier).state = true;
-      },
+      onOpenChannelOverlay: _openChannelOverlay,
     );
   }
+
+  void _openChannelOverlay() =>
+      ref.read(liveTvChannelOverlayProvider.notifier).state = true;
 
   void _performRealSkip(bool forward, {bool showControls = true}) {
     _seekCoordinator.performRealSkip(
@@ -360,6 +349,10 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       isLive: isLive,
       onPreviousChannel: _zapPreviousChannel,
       onNextChannel: _zapNextChannel,
+      // The mini-player (own onTap) has the channel list below it (REV-160).
+      onOpenChannelGuide: isLive && widget.onTap == null
+          ? _openChannelOverlay
+          : null,
       onResetHideTimer: _startHideTimer,
     );
 

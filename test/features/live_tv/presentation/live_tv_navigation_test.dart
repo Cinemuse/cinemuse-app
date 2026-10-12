@@ -525,40 +525,54 @@ void main() {
       verifyNever(() => mockPlayer.pause());
     });
 
-    testWidgets(
-      'renders channels drawer button in TV row when onOpenChannelGuide is provided',
-      (tester) async {
-        final channel = createMockChannel();
-        final playerState = createTestPlayerState();
-
-        await tester.pumpWidget(
-          buildTestWidget(
-            overrides: [
-              liveTvViewModeProvider.overrideWith(
-                (ref) => LiveTvViewMode.fullWindow,
-              ),
-            ],
-            child: CustomVideoControls(
-              playerState: playerState,
-              channel: channel,
-              videoState: FakeLiveVideoState(),
-              params: const PlayerParams('livetv_session', 'livetv'),
-              isLive: true,
-              onSettingsPressed: () {},
-              onOpenChannelGuide: () {},
-            ),
+    testWidgets('the channel list button opens the drawer (REV-160)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [channelsProvider.overrideWith((ref) => Future.value([]))],
+          child: CustomVideoControls(
+            playerState: createTestPlayerState(),
+            channel: createMockChannel(),
+            videoState: FakeLiveVideoState(),
+            params: const PlayerParams('livetv_session', 'livetv'),
+            isLive: true,
+            onSettingsPressed: () {},
           ),
-        );
-        await tester.pumpAndSettle();
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        // Channel guide button is shown
-        expect(find.byIcon(Icons.list_rounded), findsOneWidget);
-      },
-      // TODO: check the TV layout. Either the guide button was
-      // moved or re-iconed (update this test) or the player refactor lost it
-      // (real regression). See audit/08-testing.md.
-      skip: true,
-    );
+      expect(find.byIcon(Icons.list_rounded), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.list_rounded));
+      await tester.pump(kDoubleTapTimeout);
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(CustomVideoControls)),
+      );
+      expect(container.read(liveTvChannelOverlayProvider), isTrue);
+    });
+
+    testWidgets('the mini-player has no channel list button (REV-160)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          child: CustomVideoControls(
+            playerState: createTestPlayerState(),
+            channel: createMockChannel(),
+            videoState: FakeLiveVideoState(),
+            params: const PlayerParams('livetv_session', 'livetv'),
+            isLive: true,
+            onSettingsPressed: () {},
+            onTap: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.list_rounded), findsNothing);
+    });
   });
 
   group('Channel Guide Browser & VideoPlayerScreen Navigation Tests', () {
