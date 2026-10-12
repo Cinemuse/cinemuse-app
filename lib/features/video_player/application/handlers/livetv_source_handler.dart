@@ -13,12 +13,8 @@ import 'package:media_kit/media_kit.dart';
 
 class LiveTvInitializationResult {
   final ResolvedStream resolvedStream;
-  final String title;
 
-  LiveTvInitializationResult({
-    required this.resolvedStream,
-    required this.title,
-  });
+  LiveTvInitializationResult({required this.resolvedStream});
 }
 
 class LiveTvSourceHandler {
@@ -41,15 +37,17 @@ class LiveTvSourceHandler {
   final Player _player;
   Timer? _stallTimer;
   StreamSubscription? _bufferingSub;
+  bool _isDisposed = false;
 
   LiveTvSourceHandler(this._player);
 
   void dispose() {
+    _isDisposed = true;
     _stallTimer?.cancel();
     _bufferingSub?.cancel();
   }
 
-  Future<LiveTvInitializationResult> initialize(
+  Future<LiveTvInitializationResult?> initialize(
     Channel channel,
     UserSettings settings, {
     VoidCallback? onStall,
@@ -63,7 +61,7 @@ class LiveTvSourceHandler {
     );
   }
 
-  Future<LiveTvInitializationResult> initializeWithLink(
+  Future<LiveTvInitializationResult?> initializeWithLink(
     Channel channel,
     StreamLink link,
     UserSettings settings, {
@@ -78,7 +76,7 @@ class LiveTvSourceHandler {
     );
   }
 
-  Future<LiveTvInitializationResult> _initializeStreamUrl(
+  Future<LiveTvInitializationResult?> _initializeStreamUrl(
     Channel channel,
     String rawUrl,
     String providerLabel,
@@ -86,6 +84,9 @@ class LiveTvSourceHandler {
     VoidCallback? onStall,
   }) async {
     final url = await _resolveIfDynamicRelinker(rawUrl);
+    // Another channel was picked during the lookup: opening this one now
+    // would play it under the new channel's name (REV-146).
+    if (_isDisposed) return null;
     final isPremium =
         url.contains('.ts') ||
         url.contains('extension=ts') ||
@@ -173,10 +174,7 @@ class LiveTvSourceHandler {
       headers: headers,
     );
 
-    return LiveTvInitializationResult(
-      resolvedStream: resolvedStream,
-      title: channel.name,
-    );
+    return LiveTvInitializationResult(resolvedStream: resolvedStream);
   }
 
   /// Seeks to the live edge (duration - 5s) as soon as the DVR window

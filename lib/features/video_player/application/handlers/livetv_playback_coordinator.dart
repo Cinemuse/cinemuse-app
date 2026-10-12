@@ -148,7 +148,7 @@ class LiveTvPlaybackCoordinator {
               onStall: _onStall,
             );
 
-      if (isMounted() && requestId == _activeRequestId) {
+      if (result != null && isMounted() && requestId == _activeRequestId) {
         final current = getCurrentState();
         if (current != null) {
           onStateChanged(
@@ -207,7 +207,7 @@ class LiveTvPlaybackCoordinator {
         onStall: _onStall,
       );
 
-      if (isMounted() && requestId == _activeRequestId) {
+      if (result != null && isMounted() && requestId == _activeRequestId) {
         final current = getCurrentState();
         if (current != null) {
           onStateChanged(
