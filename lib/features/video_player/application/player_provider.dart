@@ -65,7 +65,7 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   PlayerController(this.ref, this.params) : super(const AsyncValue.loading()) {
     resolvedParams = params;
     _resolver = ref.read(unifiedStreamResolverProvider);
-    _castHandler = CastHandler(ref, _resolver);
+    _castHandler = CastHandler(ref);
 
     _castHandler.onStatusSync = (isPlaying, position, duration) {
       final currentState = state.valueOrNull;
@@ -306,28 +306,23 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
   }
 
   Future<void> startCasting(CastDevice device) async {
+    final current = state.valueOrNull;
+    final stream = current?.currentStream;
+    // Nothing to cast while a source is still resolving (REV-155).
+    if (current == null || stream == null) return;
     try {
-      if (state.value == null) return;
-
       state = AsyncValue.data(
-        state.value!.copyWith(isCasting: true, selectedCastDevice: device),
+        current.copyWith(isCasting: true, selectedCastDevice: device),
       );
 
       await _castHandler.startCasting(
         device,
-        state.value!.currentStream!.candidate,
-        state.value!.title,
+        stream,
+        current.title,
         _player?.state.position ?? Duration.zero,
-        (resolvedStream) {
-          developer.log(
-            'Cast stream resolved: ${resolvedStream.url}',
-            name: 'VideoPlayer.PlayerController',
-          );
-        },
         season: resolvedParams.season,
         episode: resolvedParams.episode,
-        absoluteEpisode: state.value!.currentStream?.candidate.absoluteEpisode,
-        detectedMimeType: state.value!.detectedMimeType,
+        detectedMimeType: current.detectedMimeType,
       );
 
       // The cast device plays now; the local pause is best-effort.

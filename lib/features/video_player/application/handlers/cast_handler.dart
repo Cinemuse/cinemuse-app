@@ -3,7 +3,6 @@ import 'dart:developer' as developer;
 import 'package:cast/cast.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
@@ -15,10 +14,7 @@ class CastConstants {
   static const int metadataGeneric = 0;
   static const int metadataMovie = 1;
   static const int metadataTvShow = 2;
-  static const int metadataMusicTrack = 3;
-  static const int metadataPhoto = 4;
   static const String streamTypeBuffered = 'BUFFERED';
-  static const String streamTypeLive = 'LIVE';
   static const String nsReceiver = 'urn:x-cast:com.google.cast.receiver';
   static const String nsMedia = 'urn:x-cast:com.google.cast.media';
   static const String nsConnection = 'urn:x-cast:com.google.cast.tp.connection';
@@ -28,7 +24,6 @@ class CastConstants {
 class CastHandler {
   CastSession? _castSession;
   final Ref _ref;
-  final UnifiedStreamResolver _resolver;
   int _requestId = 1;
   int? _mediaSessionId;
   String? _appSessionId;
@@ -42,19 +37,20 @@ class CastHandler {
   void Function(bool isPlaying, Duration position, Duration duration)?
   onStatusSync;
 
-  CastHandler(this._ref, this._resolver);
+  CastHandler(this._ref);
 
   bool get isCasting => _castSession != null;
 
+  /// Casts [resolvedStream], the stream already playing: resolving it again
+  /// added another RD torrent (STR-03) and lost a file picked with "choose
+  /// file" (REV-151).
   Future<void> startCasting(
     CastDevice device,
-    StreamCandidate candidate,
+    ResolvedStream resolvedStream,
     String title,
-    Duration currentPosition,
-    Function(ResolvedStream) onStreamResolved, {
+    Duration currentPosition, {
     int? season,
     int? episode,
-    int? absoluteEpisode,
     String? detectedMimeType,
   }) async {
     try {
@@ -159,19 +155,7 @@ class CastHandler {
         ),
       );
 
-      // 3. Attempt to resolve the stream
-      final resolvedStream = await _resolver.resolveStream(
-        candidate,
-        season: season,
-        episode: episode,
-      );
-
-      if (resolvedStream == null) {
-        throw Exception("No castable URL found");
-      }
-
       final urlToCasting = resolvedStream.url;
-      onStreamResolved(resolvedStream);
 
       // Determine contentType: Engine Probed > HTTP Sniffing > URL Resolver
       developer.log(
@@ -211,7 +195,7 @@ class CastHandler {
       int metadataType = CastConstants.metadataGeneric;
       if (season != null || episode != null) {
         metadataType = CastConstants.metadataTvShow;
-      } else if (candidate.kind != StreamSourceKind.youtube) {
+      } else if (resolvedStream.candidate.kind != StreamSourceKind.youtube) {
         metadataType = CastConstants.metadataMovie;
       }
 
@@ -220,7 +204,7 @@ class CastHandler {
         'title': title,
       };
 
-      if (metadataType == 2) {
+      if (metadataType == CastConstants.metadataTvShow) {
         if (season != null) mediaMetadata['season'] = season;
         if (episode != null) mediaMetadata['episode'] = episode;
       }
@@ -346,6 +330,8 @@ class CastHandler {
 
         // Short delay to let messages flush before nulling the session
         await Future.delayed(const Duration(milliseconds: 1000));
+        // Closes the socket; it used to stay open after every cast.
+        await _castSession?.close();
       } catch (e, st) {
         developer.log(
           'Error sending stop commands',
@@ -395,8 +381,6 @@ class CastHandler {
   Duration get currentPosition => _currentPosition;
   Duration get duration => _duration;
 
-  // Method _guessMimeType removed in favor of MimeResolver utility.
-
   Future<String?> _sniffMimeType(String url) async {
     try {
       final dio = _ref.read(dioProvider);
@@ -429,13 +413,10 @@ class CastHandler {
     return null;
   }
 
+  /// Leaving the player stops the TV too: it kept playing with no way to
+  /// control it. The player is gone, so it isn't told about the stop.
   void dispose() {
-    _statusTimer?.cancel();
-    _statusTimer = null;
-    _heartbeatTimer?.cancel();
-    _heartbeatTimer = null;
-    _messageSubscription?.cancel();
-    _messageSubscription = null;
-    _castSession = null;
+    onStatusSync = null;
+    unawaited(stopCasting());
   }
 }
