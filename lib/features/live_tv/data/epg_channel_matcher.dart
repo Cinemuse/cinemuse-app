@@ -98,7 +98,12 @@ class EpgChannelMatcher {
       }
     }
 
-    // 2. Normalized Name match
+    // 2. Exact name, then normalized name ("Sky Italia News" would lose
+    // "italia" when normalized).
+    final lowerName = channel.name.toLowerCase().trim();
+    if (lowerName.isNotEmpty && epgData.containsKey(lowerName)) {
+      return epgData[lowerName]!;
+    }
     final normName = _normalizeName(channel.name);
     if (normName.isNotEmpty && epgData.containsKey(normName)) {
       return epgData[normName]!;

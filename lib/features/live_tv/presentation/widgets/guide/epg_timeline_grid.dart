@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/features/live_tv/data/epg_channel_matcher.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/epg_time_ruler.dart';
@@ -58,7 +59,8 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
   bool _isSyncingHorizontal = false;
   bool _isSyncingVertical = false;
 
-  Map<String, List<EpgProgram>> _normalizedEpg = {};
+  // Keyed by the Channel object (no `==`): cleared when the lists change.
+  final Map<Channel, List<EpgProgram>> _programsCache = {};
   final Map<int, FocusNode> _channelFocusNodes = {};
   final Map<String, FocusNode> _programFocusNodes = {};
 
@@ -73,7 +75,6 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
     _verticalChannelsController = ScrollController();
     _verticalProgramsController = ScrollController();
 
-    _normalizeEpg();
     _calculateTimelineWindow();
 
     _horizontalProgramsController.addListener(_onProgramsHorizontalScroll);
@@ -94,17 +95,10 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
         widget.totalHours != oldWidget.totalHours) {
       _calculateTimelineWindow();
     }
-    if (widget.epgData != oldWidget.epgData) {
-      _normalizeEpg();
+    if (widget.epgData != oldWidget.epgData ||
+        widget.channels != oldWidget.channels) {
+      _programsCache.clear();
     }
-  }
-
-  void _normalizeEpg() {
-    final map = <String, List<EpgProgram>>{};
-    for (final entry in widget.epgData.entries) {
-      map[entry.key.toLowerCase().trim()] = entry.value;
-    }
-    _normalizedEpg = map;
   }
 
   void _calculateTimelineWindow() {
@@ -563,13 +557,12 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
     );
   }
 
+  /// Same lookup as the banner and the channel list (REV-128).
   List<EpgProgram> _getProgramsForChannel(Channel channel) {
-    if (_normalizedEpg.isEmpty) return const [];
-    if (channel.epgId != null && channel.epgId!.isNotEmpty) {
-      final direct = _normalizedEpg[channel.epgId!.toLowerCase().trim()];
-      if (direct != null) return direct;
-    }
-    return _normalizedEpg[channel.name.toLowerCase().trim()] ?? const [];
+    return _programsCache.putIfAbsent(
+      channel,
+      () => EpgChannelMatcher.findPrograms(channel, widget.epgData),
+    );
   }
 
   Widget _buildNoEpgPlaceholder(
