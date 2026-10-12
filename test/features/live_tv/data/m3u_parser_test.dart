@@ -34,4 +34,46 @@ http://example.com/rai3.m3u8
       expect(M3uParser.parse(m3u).single.name, 'Rai 3');
     });
   });
+
+  group('M3uParser attributes (REV-123)', () {
+    test('reads attributes in any case and with single quotes', () {
+      const m3u = '''#EXTM3U
+#EXTINF:-1 TVG-ID='rai1.it' Tvg-Logo='http://x/logo.png' GROUP-TITLE='News, Italy',L'Equipe
+http://example.com/rai1.m3u8
+''';
+
+      final channel = M3uParser.parse(m3u).single;
+
+      expect(channel.epgId, 'rai1.it');
+      expect(channel.logo, 'http://x/logo.png');
+      expect(channel.group, 'News, Italy');
+      expect(channel.name, "L'Equipe");
+    });
+
+    test('does not read an attribute from inside a longer name', () {
+      const m3u = '''#EXTM3U
+#EXTINF:-1 x-tvg-id="wrong",Rai 1
+http://example.com/rai1.m3u8
+''';
+
+      expect(M3uParser.parse(m3u).single.epgId, isNull);
+    });
+
+    test('uses #EXTGRP when there is no group-title', () {
+      const m3u = '''#EXTM3U
+#EXTINF:-1,Sky Sport
+#EXTGRP:Sport
+http://example.com/sport.m3u8
+#EXTINF:-1 group-title="News",Rai News
+#EXTGRP:Sport
+http://example.com/news.m3u8
+#EXTINF:-1,Rai 2
+http://example.com/rai2.m3u8
+''';
+
+      final channels = M3uParser.parse(m3u);
+
+      expect(channels.map((c) => c.group), ['Sport', 'News', null]);
+    });
+  });
 }

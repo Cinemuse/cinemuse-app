@@ -5,6 +5,7 @@ import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 /// run [parse] on a background isolate (PERF-01).
 class M3uParser {
   /// Built once: a big playlist has tens of thousands of lines (REV-123).
+  /// Any case, double or single quotes: `TVG-ID='x'` is read too.
   static final _attributeRegexes = {
     for (final name in const [
       'tvg-id',
@@ -17,14 +18,19 @@ class M3uParser {
       'tvg-num',
       'channel-id',
     ])
-      name: RegExp('$name="([^"]*)"'),
+      name: RegExp(
+        '(?:^|\\s)$name=(?:"([^"]*)"|\'([^\']*)\')',
+        caseSensitive: false,
+      ),
   };
 
   /// `#EXTINF:` plus the duration and attributes, up to the comma before the
   /// name. Commas inside quoted values don't end it.
   static final _extinfHeaderRegex = RegExp(
-    r'^#EXTINF:[^,"]*(?:"[^"]*"[^,"]*)*',
+    r'''^#EXTINF:[^,"']*(?:(?:"[^"]*"|'[^']*')[^,"']*)*''',
   );
+
+  static const _extgrpPrefix = '#EXTGRP:';
 
   static List<Channel> parse(String content, {int startLcn = 2000}) {
     final lines = content.split('\n');
@@ -35,6 +41,8 @@ class M3uParser {
     String? currentName;
     String? currentLogo;
     String? currentGroup;
+    // `#EXTGRP:` line, used when there is no `group-title` (REV-123).
+    String? currentExtGrp;
     String? currentEpgId;
     String? currentProvider;
     String? currentQuality;
@@ -56,6 +64,9 @@ class M3uParser {
             _extractAttribute(line, 'tvg-num') ??
             _extractAttribute(line, 'channel-id');
         currentChno = int.tryParse(chnoStr ?? '');
+      } else if (line.startsWith(_extgrpPrefix)) {
+        final group = line.substring(_extgrpPrefix.length).trim();
+        currentExtGrp = group.isEmpty ? null : group;
       } else if (!line.startsWith('#')) {
         if (currentName != null) {
           final key = _buildChannelKey(currentEpgId, currentName);
@@ -81,7 +92,7 @@ class M3uParser {
               lcn: explicitLcn ?? currentLcn++,
               name: currentName,
               logo: currentLogo ?? '',
-              group: currentGroup,
+              group: currentGroup ?? currentExtGrp,
               epgId: currentEpgId,
               initialLink: link,
             );
@@ -93,6 +104,7 @@ class M3uParser {
         currentName = null;
         currentLogo = null;
         currentGroup = null;
+        currentExtGrp = null;
         currentEpgId = null;
         currentProvider = null;
         currentQuality = null;
@@ -155,7 +167,8 @@ class M3uParser {
   }
 
   static String? _extractAttribute(String line, String attributeName) {
-    return _attributeRegexes[attributeName]!.firstMatch(line)?.group(1);
+    final match = _attributeRegexes[attributeName]!.firstMatch(line);
+    return match?.group(1) ?? match?.group(2);
   }
 }
 
