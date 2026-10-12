@@ -7,6 +7,8 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/list_action_feedback.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -196,10 +198,15 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
               loading: () => const Center(
                 child: CircularProgressIndicator(color: AppTheme.accent),
               ),
-              error: (err, _) => Text(
-                'Error: $err',
-                style: const TextStyle(color: Colors.red),
-              ),
+              error: (err, _) {
+                final error = ref.read(errorMapperProvider).map(err);
+                return ErrorCard(
+                  message: error.message,
+                  hint: error.hint,
+                  type: error.type,
+                  onRetry: () => ref.invalidate(userListsProvider),
+                );
+              },
             ),
 
             const SizedBox(height: 16),

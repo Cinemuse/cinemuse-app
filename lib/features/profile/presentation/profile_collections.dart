@@ -9,6 +9,8 @@ import 'package:cinemuse_app/features/profile/presentation/widgets/system_list_c
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -247,12 +249,15 @@ class ProfileCollections extends ConsumerWidget {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(
-        child: Text(
-          '${l10n.commonError}: $err',
-          style: const TextStyle(color: Colors.red),
-        ),
-      ),
+      error: (err, stack) {
+        final error = ref.read(errorMapperProvider).map(err);
+        return ErrorCard(
+          message: error.message,
+          hint: error.hint,
+          type: error.type,
+          onRetry: () => ref.invalidate(userListsProvider),
+        );
+      },
     );
   }
 }

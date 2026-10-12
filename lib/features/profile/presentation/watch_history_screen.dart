@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:cinemuse_app/shared/widgets/error_card.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/refresh_user_data.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -12,7 +15,6 @@ import 'package:intl/intl.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
-import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/watch_history_filter_sheet.dart';
 
 enum HistoryViewMode { grid, timeline }
@@ -159,11 +161,12 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
                 horizontalPadding,
               );
             }
-            return Center(
-              child: Text(
-                '${l10n.commonError}: $err',
-                style: const TextStyle(color: Colors.white70),
-              ),
+            final error = ref.read(errorMapperProvider).map(err);
+            return ErrorCard(
+              message: error.message,
+              hint: error.hint,
+              type: error.type,
+              onRetry: () => ref.invalidate(watchLogsProvider),
             );
           },
         ),
@@ -315,14 +318,9 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
         color: AppTheme.accent,
         backgroundColor: AppTheme.surface,
         onRefresh: () async {
-          final userId = ref.read(userIdProvider);
-          if (userId != null) {
-            await ref
-                .read(watchHistoryRepositoryProvider)
-                .syncWatchHistory(userId);
-          }
+          // A failed sync shows a snackbar; the screen keeps its data.
+          await refreshUserData(context, ref);
           ref.invalidate(watchLogsProvider);
-          await ref.read(watchLogsProvider.future);
         },
         child: CustomScrollView(
           cacheExtent: 600,
