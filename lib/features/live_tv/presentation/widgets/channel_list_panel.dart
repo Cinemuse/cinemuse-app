@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/save_live_tv_change.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_list_tile.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_filter_sheet.dart';
@@ -214,7 +215,8 @@ class _CategoryChipsRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final channelsAsync = ref.watch(channelsProvider);
-    final filter = ref.watch(channelFilterProvider);
+    final selected = ref.watch(channelFilterProvider).selectedCategories;
+    final filters = ref.read(channelFilterProvider.notifier);
     final l10n = AppLocalizations.of(context)!;
 
     final groups =
@@ -238,8 +240,6 @@ class _CategoryChipsRow extends ConsumerWidget {
 
     if (groups.isEmpty) return const SizedBox.shrink();
 
-    final selectedCategories = filter.selectedCategories;
-
     return Container(
       height: 38,
       margin: const EdgeInsets.only(bottom: 6),
@@ -252,19 +252,17 @@ class _CategoryChipsRow extends ConsumerWidget {
           final isAll = index == 0;
           final title = isAll ? l10n.liveTvAllChannels : groups[index - 1];
           final isSelected = isAll
-              ? selectedCategories.isEmpty
-              : selectedCategories.contains(title);
+              ? selected.isEmpty
+              : selected.contains(title);
 
           return _CategoryChip(
             label: title,
             isSelected: isSelected,
-            onTap: () {
-              if (isAll) {
-                ref.read(channelFilterProvider.notifier).selectAll();
-              } else {
-                ref.read(channelFilterProvider.notifier).toggleCategory(title);
-              }
-            },
+            onTap: () => saveLiveTvChange(
+              context,
+              ref,
+              () => isAll ? filters.clear() : filters.toggleCategory(title),
+            ),
           );
         },
       ),
@@ -1162,8 +1160,9 @@ class _ChannelTileWrapper extends ConsumerWidget {
       },
       onFavoriteToggle: () {
         final notifier = ref.read(favoriteChannelIdsProvider.notifier);
-        final wasFavorite = notifier.isFavorite(channel.uniqueId);
-        notifier.toggle(channel.uniqueId);
+        final id = channel.uniqueId;
+        final wasFavorite = notifier.isFavorite(id);
+        unawaited(saveLiveTvChange(context, ref, () => notifier.toggle(id)));
 
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(

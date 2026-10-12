@@ -1,13 +1,14 @@
 // Re-exported so the widgets keep one import.
 export 'package:cinemuse_app/features/live_tv/application/custom_playlists_notifier.dart';
+export 'package:cinemuse_app/features/live_tv/application/channel_prefs_notifiers.dart';
 
 import 'dart:async';
 
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
 import 'package:cinemuse_app/features/live_tv/application/custom_epg_url_notifier.dart';
+import 'package:cinemuse_app/features/live_tv/application/channel_prefs_notifiers.dart';
 import 'package:cinemuse_app/features/live_tv/application/custom_playlists_notifier.dart';
 import 'package:cinemuse_app/features/live_tv/application/minute_clock_provider.dart';
 import 'package:cinemuse_app/features/live_tv/data/epg_channel_matcher.dart';
@@ -75,79 +76,6 @@ enum LiveTvTab { all, favorites, recents }
 /// Which tab is currently active.
 final liveTvTabProvider = StateProvider<LiveTvTab>((ref) => LiveTvTab.all);
 
-/// Filter state applied from the filter sheet.
-class ChannelFilter {
-  final Set<String> selectedCategories;
-
-  const ChannelFilter({this.selectedCategories = const {}});
-
-  bool get isActive => selectedCategories.isNotEmpty;
-}
-
-class ChannelFilterNotifier extends StateNotifier<ChannelFilter> {
-  ChannelFilterNotifier() : super(const ChannelFilter()) {
-    _load();
-  }
-
-  static const _key = 'live_tv_selected_categories';
-
-  Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final cached = prefs.getStringList(_key) ?? [];
-    if (cached.isNotEmpty) {
-      state = ChannelFilter(selectedCategories: cached.toSet());
-    }
-  }
-
-  Future<void> setFilter(ChannelFilter filter) async {
-    state = filter;
-    await _persist(filter);
-  }
-
-  Future<void> toggleCategory(String category) async {
-    final current = Set<String>.from(state.selectedCategories);
-    if (current.contains(category)) {
-      current.remove(category);
-    } else {
-      current.add(category);
-    }
-    final next = ChannelFilter(selectedCategories: current);
-    state = next;
-    await _persist(next);
-  }
-
-  Future<void> selectAll() async {
-    await clear();
-  }
-
-  Future<void> clear() async {
-    state = const ChannelFilter();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_key);
-  }
-
-  Future<void> _persist(ChannelFilter filter) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (filter.selectedCategories.isEmpty) {
-      await prefs.remove(_key);
-    } else {
-      await prefs.setStringList(_key, filter.selectedCategories.toList());
-    }
-  }
-
-  @override
-  set state(ChannelFilter value) {
-    super.state = value;
-    _persist(value);
-  }
-}
-
-/// The current filter state (set via the filter sheet).
-final channelFilterProvider =
-    StateNotifierProvider<ChannelFilterNotifier, ChannelFilter>(
-      (ref) => ChannelFilterNotifier(),
-    );
-
 /// The currently selected / playing channel.
 final selectedChannelProvider = StateProvider<Channel?>((ref) => null);
 
@@ -178,73 +106,6 @@ final liveTvOverlayScrollOffsetProvider = StateProvider<double?>((ref) => null);
 final livePlayerFocusActionProvider = StateProvider<void Function()?>(
   (ref) => null,
 );
-
-// ---------------------------------------------------------------------------
-// Favorites
-// ---------------------------------------------------------------------------
-
-class FavoriteChannelsNotifier extends StateNotifier<Set<String>> {
-  FavoriteChannelsNotifier() : super({}) {
-    _load();
-  }
-
-  static const _key = 'live_tv_favorites';
-
-  Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final ids = prefs.getStringList(_key) ?? [];
-    state = ids.toSet();
-  }
-
-  Future<void> toggle(String channelId) async {
-    final next = Set<String>.from(state);
-    if (next.contains(channelId)) {
-      next.remove(channelId);
-    } else {
-      next.add(channelId);
-    }
-    state = next;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_key, next.toList());
-  }
-
-  bool isFavorite(String channelId) => state.contains(channelId);
-}
-
-final favoriteChannelIdsProvider =
-    StateNotifierProvider<FavoriteChannelsNotifier, Set<String>>((ref) {
-      return FavoriteChannelsNotifier();
-    });
-
-// ---------------------------------------------------------------------------
-// Recently Watched
-// ---------------------------------------------------------------------------
-
-class RecentChannelsNotifier extends StateNotifier<List<String>> {
-  RecentChannelsNotifier() : super([]) {
-    _load();
-  }
-
-  static const _key = 'live_tv_recents';
-  static const _maxRecents = 15;
-
-  Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    state = prefs.getStringList(_key) ?? [];
-  }
-
-  Future<void> push(String channelId) async {
-    final next = [channelId, ...state.where((id) => id != channelId)];
-    state = next.take(_maxRecents).toList();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_key, state);
-  }
-}
-
-final recentChannelIdsProvider =
-    StateNotifierProvider<RecentChannelsNotifier, List<String>>((ref) {
-      return RecentChannelsNotifier();
-    });
 
 // ---------------------------------------------------------------------------
 // Derived: Sectioned channels for the main list

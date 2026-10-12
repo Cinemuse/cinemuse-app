@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/home/domain/sport_tv_event.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/save_live_tv_change.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
@@ -26,7 +29,13 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
   void _navigateToLiveTvSearch(String channelName) {
     ref.read(navIndexProvider.notifier).state = NavTab.liveTv;
     ref.read(liveTvTabProvider.notifier).state = LiveTvTab.all;
-    ref.read(channelFilterProvider.notifier).state = const ChannelFilter();
+    unawaited(
+      saveLiveTvChange(
+        context,
+        ref,
+        ref.read(channelFilterProvider.notifier).clear,
+      ),
+    );
     ref.read(channelSearchQueryProvider.notifier).state = channelName;
   }
 

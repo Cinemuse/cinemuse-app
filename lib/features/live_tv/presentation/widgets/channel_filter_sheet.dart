@@ -7,6 +7,7 @@ import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/playlist_management_sheet.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/save_live_tv_change.dart';
 
 /// Available tabs in the Live TV options bottom sheet.
 enum LiveTvSheetTab { categories, playlists }
@@ -187,7 +188,11 @@ class _FilterSheetContentState extends ConsumerState<_FilterSheetContent> {
             return _FilterListItem(
               label: l10n.liveTvAllChannels,
               isSelected: selectedCategories.isEmpty,
-              onTap: () => ref.read(channelFilterProvider.notifier).selectAll(),
+              onTap: () => saveLiveTvChange(
+                context,
+                ref,
+                ref.read(channelFilterProvider.notifier).clear,
+              ),
             );
           }
 
@@ -197,8 +202,11 @@ class _FilterSheetContentState extends ConsumerState<_FilterSheetContent> {
           return _FilterListItem(
             label: g,
             isSelected: isSelected,
-            onTap: () =>
-                ref.read(channelFilterProvider.notifier).toggleCategory(g),
+            onTap: () => saveLiveTvChange(
+              context,
+              ref,
+              () => ref.read(channelFilterProvider.notifier).toggleCategory(g),
+            ),
           );
         },
       ),

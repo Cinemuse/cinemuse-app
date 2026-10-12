@@ -11,7 +11,7 @@ import 'package:cinemuse_app/features/live_tv/data/local_playlist_storage.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/application/custom_epg_url_notifier.dart';
-import 'package:cinemuse_app/features/live_tv/presentation/widgets/save_playlists.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/save_live_tv_change.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_toggle.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 

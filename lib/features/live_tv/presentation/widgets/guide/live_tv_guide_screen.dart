@@ -9,6 +9,7 @@ import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/channel_filter_sheet.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/epg_details_banner.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/epg_timeline_grid.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/save_live_tv_change.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
@@ -28,6 +29,12 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
       GlobalKey<EpgTimelineGridState>();
 
   Channel? _focusedChannel;
+
+  Future<void> _toggleFavorite(Channel ch) => saveLiveTvChange(
+    context,
+    ref,
+    () => ref.read(favoriteChannelIdsProvider.notifier).toggle(ch.uniqueId),
+  );
   EpgProgram? _focusedProgram;
   late final TextEditingController _searchController;
 
@@ -98,12 +105,7 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                 ? () => widget.onChannelSelected!(effectiveChannel)
                 : null,
             onToggleFavorite: effectiveChannel != null
-                ? () {
-                    final notifier = ref.read(
-                      favoriteChannelIdsProvider.notifier,
-                    );
-                    notifier.toggle(effectiveChannel.uniqueId);
-                  }
+                ? () => _toggleFavorite(effectiveChannel)
                 : null,
           ),
 
@@ -127,11 +129,7 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                   favoriteIds: favoriteIds,
                   onProgramFocused: _onProgramFocused,
                   onChannelSelected: widget.onChannelSelected,
-                  onToggleFavorite: (ch) {
-                    ref
-                        .read(favoriteChannelIdsProvider.notifier)
-                        .toggle(ch.uniqueId);
-                  },
+                  onToggleFavorite: _toggleFavorite,
                 );
               },
               loading: () => const Center(
@@ -428,15 +426,12 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                   return _buildCategoryChip(
                     title: title,
                     isSelected: isSelected,
-                    onTap: () {
-                      if (isAll) {
-                        ref.read(channelFilterProvider.notifier).selectAll();
-                      } else {
-                        ref
-                            .read(channelFilterProvider.notifier)
-                            .toggleCategory(title);
-                      }
-                    },
+                    onTap: () => saveLiveTvChange(context, ref, () {
+                      final filters = ref.read(channelFilterProvider.notifier);
+                      return isAll
+                          ? filters.clear()
+                          : filters.toggleCategory(title);
+                    }),
                   );
                 },
               ),
