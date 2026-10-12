@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:cinemuse_app/features/live_tv/data/m3u_parser.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
@@ -107,85 +105,6 @@ void main() {
         expect(channel.url, 'http://only-choice.akamaized.net/stream.m3u8');
       },
     );
-  });
-
-  group('Channel.isPlayable', () {
-    test('is unplayable if disabled', () {
-      final channel = Channel(
-        lcn: 1,
-        name: 'Test',
-        logo: 'logo',
-        type: 'hls',
-        urlOverride: 'http://test',
-        isDisabled: true,
-      );
-
-      expect(channel.isPlayable, false);
-    });
-
-    test('is unplayable if radio or adult', () {
-      final radioItem = Channel(
-        lcn: 1,
-        name: 'Radio',
-        logo: 'logo',
-        type: 'hls',
-        urlOverride: 'http://test',
-        isRadio: true,
-      );
-
-      final adultItem = Channel(
-        lcn: 2,
-        name: 'Adult',
-        logo: 'logo',
-        type: 'hls',
-        urlOverride: 'http://test',
-        isAdult: true,
-      );
-
-      expect(radioItem.isPlayable, false);
-      expect(adultItem.isPlayable, false);
-    });
-
-    test('is unplayable if url starts with zappr://', () {
-      final channel = Channel(
-        lcn: 1,
-        name: 'Test',
-        logo: 'logo',
-        type: 'hls',
-        urlOverride: 'zappr://fake-stream',
-      );
-
-      expect(channel.isPlayable, false);
-    });
-
-    test('handles HLS streams correctly', () {
-      final channel = Channel(
-        lcn: 1,
-        name: 'HLS Stream',
-        logo: 'logo',
-        type: 'hls',
-        urlOverride: 'http://test.m3u8',
-      );
-
-      expect(channel.isPlayable, true);
-    });
-
-    test('DASH streams are evaluated dynamically based on platform', () {
-      final channel = Channel(
-        lcn: 1,
-        name: 'DASH Stream',
-        logo: 'logo',
-        type: 'dash',
-        urlOverride: 'http://test.mpd',
-      );
-
-      if (Platform.isWindows) {
-        // We expect it to be false on Windows specifically.
-        expect(channel.isPlayable, false);
-      } else {
-        expect(channel.isPlayable, true);
-      }
-    });
   });
 
   group('Channel quality helpers', () {

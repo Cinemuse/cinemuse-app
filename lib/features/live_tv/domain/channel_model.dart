@@ -1,4 +1,3 @@
-import 'dart:io' show Platform;
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 
 /// Model representing a TV channel from zappr.stream.
@@ -113,20 +112,6 @@ class Channel {
         .trim();
     return 'name:$normalized';
   }
-
-  /// Whether this channel can be played by media_kit (HLS/DASH without DRM).
-  ///
-  /// On Windows, DASH streams are excluded because libmpv's DASH demuxer
-  /// corrupts process-global state — after opening a .mpd stream, subsequent
-  /// open() calls crash with an access violation (0xc0000005).
-  bool get isPlayable =>
-      !isDisabled &&
-      !isRadio &&
-      !isAdult &&
-      (type == 'hls' ||
-          (type == 'dash' && !Platform.isWindows) ||
-          links.isNotEmpty) &&
-      !(urlOverride?.startsWith('zappr://') ?? false);
 
   /// Backward compatibility: returns the primary URL (Override or first link)
   String get url {

@@ -136,4 +136,31 @@ http://example.com/c.m3u8
 
     expect(channels.map((c) => c.name), ['one', 'two']);
   });
+
+  test('drops DASH links where they crash the player (REV-118)', () async {
+    await File('${dir.path}/a.m3u').writeAsString('''#EXTM3U
+#EXTINF:-1 tvg-id="dash",Dash only
+http://example.com/live/manifest.MPD?token=1
+#EXTINF:-1 tvg-id="mixed",Mixed
+http://example.com/mixed.mpd
+#EXTINF:-1 tvg-id="mixed",Mixed
+http://example.com/mixed.m3u8
+''');
+    final playlists = [localPlaylist('a.m3u', PlaylistType.m3u)];
+
+    final skipped = await LiveTvRepository(
+      Dio(),
+      defaultEpgUrl: _epgUrl,
+      isDashSkipped: true,
+    ).fetchChannels(customPlaylists: playlists);
+    final kept = await LiveTvRepository(
+      Dio(),
+      defaultEpgUrl: _epgUrl,
+      isDashSkipped: false,
+    ).fetchChannels(customPlaylists: playlists);
+
+    expect(skipped.single.name, 'Mixed');
+    expect(skipped.single.links.single.url, 'http://example.com/mixed.m3u8');
+    expect(kept, hasLength(2));
+  });
 }

@@ -22,11 +22,19 @@ class LiveTvRepository {
   /// The Cinemuse guide, used when the user has no EPG URL of their own.
   final String defaultEpgUrl;
 
+  /// On Windows libmpv's DASH demuxer crashes the app (0xc0000005) on or
+  /// after a `.mpd` stream, so those links are dropped there (REV-118,
+  /// rechecked 2026-10-12). Remove once this is fixed:
+  /// https://github.com/media-kit/media-kit/issues/973
+  final bool _isDashSkipped;
+
   LiveTvRepository(
     this._dio, {
     required this.defaultEpgUrl,
     EpgStorageService? epgStorage,
-  }) : _epgStorage = epgStorage ?? EpgStorageService();
+    bool? isDashSkipped,
+  }) : _epgStorage = epgStorage ?? EpgStorageService(),
+       _isDashSkipped = isDashSkipped ?? Platform.isWindows;
 
   /// Fetches the channel list, filtering to only playable channels.
   Future<List<Channel>> fetchChannels({
@@ -62,7 +70,9 @@ class LiveTvRepository {
           if (ch.lcn >= syntheticLcn) syntheticLcn = ch.lcn + 1;
         }
 
-        for (final ch in playlistChannels) {
+        for (final parsed in playlistChannels) {
+          final ch = _withoutDashLinks(parsed);
+          if (ch.links.isEmpty) continue;
           final key = ch.uniqueId;
           if (channelsByKey.containsKey(key)) {
             final existing = channelsByKey[key]!;
@@ -94,6 +104,16 @@ class LiveTvRepository {
     _sortChannels(channels);
     return channels;
   }
+
+  Channel _withoutDashLinks(Channel channel) {
+    if (!_isDashSkipped) return channel;
+    final links = channel.links.where((l) => !_isDash(l.url)).toList();
+    if (links.length == channel.links.length) return channel;
+    return channel.copyWith(links: links);
+  }
+
+  static bool _isDash(String url) =>
+      Uri.tryParse(url)?.path.toLowerCase().endsWith('.mpd') ?? false;
 
   /// The playlist's text, or `null` when it can't be loaded.
   Future<String?> _tryLoadContent(LiveTvPlaylist playlist) async {
