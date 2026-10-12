@@ -6,6 +6,7 @@ import 'package:cinemuse_app/features/media/presentation/media_details_screen.da
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -406,16 +407,11 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                               .read(pinnedListIdsProvider.notifier)
                               .togglePin(currentList.id);
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                isPinned
-                                    ? l10n.listUnpinnedSuccess
-                                    : l10n.listPinnedSuccess,
-                              ),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: AppTheme.surface,
-                            ),
+                          AppSnackBar.show(
+                            context,
+                            message: isPinned
+                                ? l10n.listUnpinnedSuccess
+                                : l10n.listPinnedSuccess,
                           );
                         },
                         icon: Icon(
