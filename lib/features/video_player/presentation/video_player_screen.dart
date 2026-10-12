@@ -288,6 +288,8 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                                             .inSeconds,
                                       );
 
+                                  // Closed during the save (REV-165).
+                                  if (!mounted) return;
                                   _navigateToNextEpisode(state.nextEpisode!);
                                 }
                               : null,
