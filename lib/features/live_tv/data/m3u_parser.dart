@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 
@@ -9,8 +7,6 @@ class M3uParser {
   /// Built once: a big playlist has tens of thousands of lines (REV-123).
   static final _attributeRegexes = {
     for (final name in const [
-      'url-tvg',
-      'x-tvg-url',
       'tvg-id',
       'tvg-logo',
       'tvg-name',
@@ -29,24 +25,6 @@ class M3uParser {
   static final _extinfHeaderRegex = RegExp(
     r'^#EXTINF:[^,"]*(?:"[^"]*"[^,"]*)*',
   );
-
-  /// Extracts the EPG / TV guide URL from the #EXTM3U header if present.
-  /// Looks for attributes like url-tvg="..." or x-tvg-url="...".
-  static String? extractEpgUrl(String content) {
-    // Lazy split: only the first lines are needed, not the whole playlist.
-    for (final rawLine in LineSplitter.split(content).take(15)) {
-      final line = rawLine.trim();
-      if (line.startsWith('#EXTM3U')) {
-        final urlTvg =
-            _extractAttribute(line, 'url-tvg') ??
-            _extractAttribute(line, 'x-tvg-url');
-        if (urlTvg != null && urlTvg.trim().isNotEmpty) {
-          return urlTvg.trim();
-        }
-      }
-    }
-    return null;
-  }
 
   static List<Channel> parse(String content, {int startLcn = 2000}) {
     final lines = content.split('\n');

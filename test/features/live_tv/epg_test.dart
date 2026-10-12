@@ -4,7 +4,6 @@ import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cinemuse_app/features/live_tv/data/epg_parser.dart';
 import 'package:cinemuse_app/features/live_tv/data/epg_channel_matcher.dart';
-import 'package:cinemuse_app/features/live_tv/data/m3u_parser.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 
@@ -182,28 +181,6 @@ void main() {
       expect(result.current!.name, 'Affari Tuoi');
       expect(result.next, isNotNull);
       expect(result.next!.name, 'Film Serale');
-    });
-  });
-
-  group('M3uParser.extractEpgUrl', () {
-    test('extracts url-tvg from header', () {
-      const m3u =
-          '#EXTM3U url-tvg="https://example.com/epg.xml.gz" x-tvg-url="https://example.com/epg.xml.gz"\n#EXTINF:-1,Channel 1\nhttp://stream';
-      final url = M3uParser.extractEpgUrl(m3u);
-      expect(url, 'https://example.com/epg.xml.gz');
-    });
-
-    test('extracts x-tvg-url when url-tvg is absent', () {
-      const m3u =
-          '#EXTM3U x-tvg-url="https://example.com/tvguide.json"\n#EXTINF:-1,Channel 1\nhttp://stream';
-      final url = M3uParser.extractEpgUrl(m3u);
-      expect(url, 'https://example.com/tvguide.json');
-    });
-
-    test('returns null if no header attributes exist', () {
-      const m3u = '#EXTM3U\n#EXTINF:-1,Channel 1\nhttp://stream';
-      final url = M3uParser.extractEpgUrl(m3u);
-      expect(url, isNull);
     });
   });
 }

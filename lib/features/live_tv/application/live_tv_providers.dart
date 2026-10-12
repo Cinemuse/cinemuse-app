@@ -75,46 +75,13 @@ enum LiveTvTab { all, favorites, recents }
 /// Which tab is currently active.
 final liveTvTabProvider = StateProvider<LiveTvTab>((ref) => LiveTvTab.all);
 
-/// Grouping mode used inside the filter sheet.
-enum LiveTvGroupMode { category, provider }
-
 /// Filter state applied from the filter sheet.
 class ChannelFilter {
-  final LiveTvGroupMode groupMode;
   final Set<String> selectedCategories;
-  final String? _selectedGroup;
-  final String? selectedSubProvider;
 
-  const ChannelFilter({
-    this.groupMode = LiveTvGroupMode.category,
-    this.selectedCategories = const {},
-    String? selectedGroup,
-    this.selectedSubProvider,
-  }) : _selectedGroup = selectedGroup;
+  const ChannelFilter({this.selectedCategories = const {}});
 
-  String? get selectedGroup => _selectedGroup ?? selectedCategories.firstOrNull;
-
-  Set<String> get effectiveCategories => selectedCategories.isNotEmpty
-      ? selectedCategories
-      : (_selectedGroup != null ? {_selectedGroup} : const {});
-
-  bool get isActive => selectedCategories.isNotEmpty || _selectedGroup != null;
-
-  ChannelFilter copyWith({
-    LiveTvGroupMode? groupMode,
-    Set<String>? selectedCategories,
-    String? Function()? selectedGroup,
-    String? Function()? selectedSubProvider,
-  }) {
-    return ChannelFilter(
-      groupMode: groupMode ?? this.groupMode,
-      selectedCategories: selectedCategories ?? this.selectedCategories,
-      selectedGroup: selectedGroup != null ? selectedGroup() : _selectedGroup,
-      selectedSubProvider: selectedSubProvider != null
-          ? selectedSubProvider()
-          : this.selectedSubProvider,
-    );
-  }
+  bool get isActive => selectedCategories.isNotEmpty;
 }
 
 class ChannelFilterNotifier extends StateNotifier<ChannelFilter> {
@@ -138,7 +105,7 @@ class ChannelFilterNotifier extends StateNotifier<ChannelFilter> {
   }
 
   Future<void> toggleCategory(String category) async {
-    final current = Set<String>.from(state.effectiveCategories);
+    final current = Set<String>.from(state.selectedCategories);
     if (current.contains(category)) {
       current.remove(category);
     } else {
@@ -161,10 +128,10 @@ class ChannelFilterNotifier extends StateNotifier<ChannelFilter> {
 
   Future<void> _persist(ChannelFilter filter) async {
     final prefs = await SharedPreferences.getInstance();
-    if (filter.effectiveCategories.isEmpty) {
+    if (filter.selectedCategories.isEmpty) {
       await prefs.remove(_key);
     } else {
-      await prefs.setStringList(_key, filter.effectiveCategories.toList());
+      await prefs.setStringList(_key, filter.selectedCategories.toList());
     }
   }
 
@@ -363,7 +330,7 @@ List<Channel> _resolveRecents(
 List<Channel> _applyGroupFilter(List<Channel> channels, ChannelFilter filter) {
   if (!filter.isActive) return channels;
 
-  final targets = filter.effectiveCategories;
+  final targets = filter.selectedCategories;
   return channels.where((ch) {
     if (ch.group == null) return false;
     return targets.contains(ch.group);
@@ -423,20 +390,6 @@ final currentProgramProvider = Provider.autoDispose
       }
       return null;
     });
-
-/// Full schedule for a given channel.
-final channelScheduleProvider = Provider.family<List<EpgProgram>, Channel>((
-  ref,
-  channel,
-) {
-  final asyncEpg = ref.watch(epgDataProvider);
-  final epgData = asyncEpg.valueOrNull;
-  if (epgData == null || epgData.isEmpty) return const [];
-
-  return ref
-      .watch(liveTvRepositoryProvider)
-      .getChannelSchedule(channel, epgData);
-});
 
 // ---------------------------------------------------------------------------
 // Number Input State

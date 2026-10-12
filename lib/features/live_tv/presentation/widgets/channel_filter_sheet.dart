@@ -100,7 +100,7 @@ class _FilterSheetContentState extends ConsumerState<_FilterSheetContent> {
                         child: _buildGroupList(
                           l10n,
                           groups,
-                          filter.effectiveCategories,
+                          filter.selectedCategories,
                           channelsAsync,
                         ),
                       )

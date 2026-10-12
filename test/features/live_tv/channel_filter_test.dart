@@ -11,22 +11,13 @@ void main() {
       const filter = ChannelFilter();
       expect(filter.isActive, isFalse);
       expect(filter.selectedCategories, isEmpty);
-      expect(filter.effectiveCategories, isEmpty);
-      expect(filter.selectedGroup, isNull);
     });
 
     test('isActive is true when categories are present', () {
       const filter = ChannelFilter(selectedCategories: {'Cinema', 'Sport'});
       expect(filter.isActive, isTrue);
-      expect(filter.effectiveCategories, contains('Cinema'));
-      expect(filter.effectiveCategories, contains('Sport'));
-    });
-
-    test('backwards compatibility: selectedGroup fallback works', () {
-      const filter = ChannelFilter(selectedGroup: 'Entertainment');
-      expect(filter.isActive, isTrue);
-      expect(filter.selectedGroup, 'Entertainment');
-      expect(filter.effectiveCategories, contains('Entertainment'));
+      expect(filter.selectedCategories, contains('Cinema'));
+      expect(filter.selectedCategories, contains('Sport'));
     });
   });
 
@@ -46,7 +37,7 @@ void main() {
         // Toggle 'Cinema' on
         await notifier.toggleCategory('Cinema');
         expect(notifier.state.isActive, isTrue);
-        expect(notifier.state.effectiveCategories, {'Cinema'});
+        expect(notifier.state.selectedCategories, {'Cinema'});
 
         // Check SharedPreferences
         final prefs = await SharedPreferences.getInstance();
@@ -54,7 +45,7 @@ void main() {
 
         // Toggle 'Sport' on (multiselect)
         await notifier.toggleCategory('Sport');
-        expect(notifier.state.effectiveCategories, {'Cinema', 'Sport'});
+        expect(notifier.state.selectedCategories, {'Cinema', 'Sport'});
         expect(
           prefs.getStringList('live_tv_selected_categories'),
           unorderedEquals(['Cinema', 'Sport']),
@@ -62,7 +53,7 @@ void main() {
 
         // Toggle 'Cinema' off
         await notifier.toggleCategory('Cinema');
-        expect(notifier.state.effectiveCategories, {'Sport'});
+        expect(notifier.state.selectedCategories, {'Sport'});
         expect(prefs.getStringList('live_tv_selected_categories'), ['Sport']);
 
         // Toggle 'Sport' off
@@ -82,13 +73,13 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
       expect(notifier.state.isActive, isTrue);
-      expect(notifier.state.effectiveCategories, contains('Cinema'));
-      expect(notifier.state.effectiveCategories, contains('DTT'));
+      expect(notifier.state.selectedCategories, contains('Cinema'));
+      expect(notifier.state.selectedCategories, contains('DTT'));
 
       // Clear
       await notifier.clear();
       expect(notifier.state.isActive, isFalse);
-      expect(notifier.state.effectiveCategories, isEmpty);
+      expect(notifier.state.selectedCategories, isEmpty);
 
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getStringList('live_tv_selected_categories'), isNull);
@@ -107,7 +98,7 @@ void main() {
       const filter = ChannelFilter(selectedCategories: {'Cinema', 'Sport'});
       final filtered = channels.where((ch) {
         if (ch.group == null) return false;
-        return filter.effectiveCategories.contains(ch.group);
+        return filter.selectedCategories.contains(ch.group);
       }).toList();
 
       expect(filtered.length, 2);
@@ -123,7 +114,7 @@ void main() {
       final filtered = !filter.isActive
           ? channels
           : channels
-                .where((ch) => filter.effectiveCategories.contains(ch.group))
+                .where((ch) => filter.selectedCategories.contains(ch.group))
                 .toList();
 
       expect(filtered.length, 4);
@@ -134,7 +125,7 @@ void main() {
       () {
         const filter = ChannelFilter(selectedCategories: {'Cinema'});
         final filtered = channels
-            .where((ch) => filter.effectiveCategories.contains(ch.group))
+            .where((ch) => filter.selectedCategories.contains(ch.group))
             .toList();
 
         final grouped = <String, List<Channel>>{};

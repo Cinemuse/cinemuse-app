@@ -171,7 +171,7 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
       categories.insert(0, 'DTT');
     }
 
-    final selectedCategories = filter.effectiveCategories;
+    final selectedCategories = filter.selectedCategories;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),

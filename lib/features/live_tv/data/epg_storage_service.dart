@@ -67,24 +67,6 @@ class EpgStorageService {
       );
     }
   }
-
-  /// Clears the local disk cache.
-  Future<void> clearCache() async {
-    try {
-      final file = await _getCacheFile();
-      if (file.existsSync()) {
-        await file.delete();
-      }
-    } catch (e, s) {
-      // A stale file is ignored later anyway (TTL and URL check).
-      AppLogger.warn(
-        _tag,
-        'Could not clear the EPG cache',
-        error: e,
-        stackTrace: s,
-      );
-    }
-  }
 }
 
 /// Runs on a background isolate.

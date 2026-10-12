@@ -98,19 +98,13 @@ class EpgChannelMatcher {
       }
     }
 
-    // 2. Source-prefixed match (legacy zappr source:id)
-    if (channel.epgSource != null && epgId != null) {
-      final composite = '${channel.epgSource}:$epgId';
-      if (epgData.containsKey(composite)) return epgData[composite]!;
-    }
-
-    // 3. Normalized Name match
+    // 2. Normalized Name match
     final normName = _normalizeName(channel.name);
     if (normName.isNotEmpty && epgData.containsKey(normName)) {
       return epgData[normName]!;
     }
 
-    // 4. LCN fallback match
+    // 3. LCN fallback match
     if (channel.lcn > 0) {
       final canonicalFromLcn = lcnToCanonicalId[channel.lcn];
       if (canonicalFromLcn != null && epgData.containsKey(canonicalFromLcn)) {

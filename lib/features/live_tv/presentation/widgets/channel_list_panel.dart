@@ -238,7 +238,7 @@ class _CategoryChipsRow extends ConsumerWidget {
 
     if (groups.isEmpty) return const SizedBox.shrink();
 
-    final selectedCategories = filter.effectiveCategories;
+    final selectedCategories = filter.selectedCategories;
 
     return Container(
       height: 38,

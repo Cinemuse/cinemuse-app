@@ -10,7 +10,6 @@ import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 import 'package:cinemuse_app/features/live_tv/data/m3u_parser.dart';
 import 'package:cinemuse_app/features/live_tv/data/epg_parser.dart';
-import 'package:cinemuse_app/features/live_tv/data/epg_channel_matcher.dart';
 import 'package:cinemuse_app/features/live_tv/data/epg_storage_service.dart';
 
 class LiveTvRepository {
@@ -87,7 +86,6 @@ class LiveTvRepository {
               group: existing.group ?? ch.group,
               epgId: existing.epgId ?? ch.epgId,
               provider: existing.provider ?? ch.provider,
-              subProvider: existing.subProvider ?? ch.subProvider,
             );
           } else {
             final lcn = ch.lcn > 0 ? ch.lcn : syntheticLcn++;
@@ -197,7 +195,6 @@ class LiveTvRepository {
           group:
               (entry['group'] ?? entry['category']) as String? ?? fallbackGroup,
           provider: entry['provider'] as String?,
-          subProvider: entry['sub_provider'] as String?,
           epgId: entry['epg_id'] as String?,
         ),
       );
@@ -301,21 +298,5 @@ class LiveTvRepository {
       return 'DioException ${e.type.name}${status != null ? ' $status' : ''}';
     }
     return e.runtimeType.toString();
-  }
-
-  /// Looks up the current and next programs for a given channel using smart matching.
-  ({EpgProgram? current, EpgProgram? next}) getProgramsForChannel(
-    Channel channel,
-    Map<String, List<EpgProgram>> epgData,
-  ) {
-    return EpgChannelMatcher.getNowAndNext(channel, epgData);
-  }
-
-  /// Returns full program schedule for a given channel.
-  List<EpgProgram> getChannelSchedule(
-    Channel channel,
-    Map<String, List<EpgProgram>> epgData,
-  ) {
-    return EpgChannelMatcher.findPrograms(channel, epgData);
   }
 }
