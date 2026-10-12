@@ -56,7 +56,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           if (widget.channel != null) {
-            ref.read(selectedChannelProvider.notifier).state = widget.channel;
+            ref.read(selectedChannelProvider.notifier).select(widget.channel);
           }
           ref.read(liveTvChannelOverlayProvider.notifier).state = false;
           ref.read(liveTvOverlayScrollOffsetProvider.notifier).state = null;

@@ -32,7 +32,7 @@ class PlayerChannelInputCoordinator {
     final current = currentChannel ?? ref.read(selectedChannelProvider);
     final idx = channels.indexWhere((c) => c.uniqueId == current?.uniqueId);
     final nextIdx = idx == -1 ? 0 : (idx + 1) % channels.length;
-    ref.read(selectedChannelProvider.notifier).state = channels[nextIdx];
+    ref.read(selectedChannelProvider.notifier).select(channels[nextIdx]);
   }
 
   void zapPreviousChannel({
@@ -55,7 +55,7 @@ class PlayerChannelInputCoordinator {
     final prevIdx = idx == -1
         ? 0
         : (idx - 1 + channels.length) % channels.length;
-    ref.read(selectedChannelProvider.notifier).state = channels[prevIdx];
+    ref.read(selectedChannelProvider.notifier).select(channels[prevIdx]);
   }
 
   void handleNumberInput({
@@ -96,7 +96,7 @@ class PlayerChannelInputCoordinator {
       final channels = ref.read(channelsProvider).valueOrNull ?? [];
       final match = channels.where((c) => c.lcn == lcn).firstOrNull;
       if (match != null) {
-        ref.read(selectedChannelProvider.notifier).state = match;
+        ref.read(selectedChannelProvider.notifier).select(match);
       }
     }
     ref.read(numberInputBufferProvider.notifier).state = '';

@@ -135,7 +135,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
   }
 
   void _openPlayer(Channel channel) {
-    ref.read(selectedChannelProvider.notifier).state = channel;
+    ref.read(selectedChannelProvider.notifier).select(channel);
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (_) => VideoPlayerScreen(
@@ -154,7 +154,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
       if (!mounted) return;
       final match = channels.where((ch) => ch.lcn == lcn).firstOrNull;
       if (match != null) {
-        ref.read(selectedChannelProvider.notifier).state = match;
+        ref.read(selectedChannelProvider.notifier).select(match);
         final isMobile = MediaQuery.of(context).size.width < 600;
         if (isMobile) {
           _playChannel(match);
@@ -276,13 +276,15 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     ref.listen(channelsProvider, (prev, next) {
       next.whenData((channels) {
         if (channels.isNotEmpty && ref.read(selectedChannelProvider) == null) {
-          ref.read(selectedChannelProvider.notifier).state = channels.first;
+          ref.read(selectedChannelProvider.notifier).select(channels.first);
         }
       });
     });
 
     AsyncValue<CinemaPlayerState>? playerState;
-    if (isMobile && isLiveTvTab) {
+    // No channel (e.g. every playlist removed): not watching the player
+    // disposes it, which stops playback (REV-271).
+    if (isMobile && isLiveTvTab && selectedChannel != null) {
       final ps = ref.watch(playerControllerProvider(_liveTvParams));
       playerState = ps;
 
@@ -290,8 +292,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
       // already selected, kick off playback in a post-frame callback so we
       // don't call setState during build.
       final stateValue = ps.valueOrNull;
-      if (selectedChannel != null &&
-          stateValue != null &&
+      if (stateValue != null &&
           stateValue.currentStream == null &&
           !stateValue.isResolving) {
         WidgetsBinding.instance.addPostFrameCallback((_) {

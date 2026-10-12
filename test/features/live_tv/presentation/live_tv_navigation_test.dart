@@ -210,7 +210,7 @@ void main() {
         addTearDown(container.dispose);
 
         // Set current channel as selected
-        container.read(selectedChannelProvider.notifier).state = channel;
+        container.read(selectedChannelProvider.notifier).select(channel);
         expect(container.read(liveTvViewModeProvider), LiveTvViewMode.split);
 
         await tester.pumpWidget(

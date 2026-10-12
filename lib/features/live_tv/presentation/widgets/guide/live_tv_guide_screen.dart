@@ -94,10 +94,13 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
       if (_searchController.text != next) _searchController.text = next;
     });
 
-    // Initial fallback channel and program if none focused yet
-    final effectiveChannel = _focusedChannel ?? selectedChannel;
+    // A focused channel that left the list (playlist removed) is dropped.
+    final isFocusedListed =
+        channelsAsync.valueOrNull?.contains(_focusedChannel) ?? false;
+    final effectiveChannel =
+        (isFocusedListed ? _focusedChannel : null) ?? selectedChannel;
     final effectiveProgram =
-        _focusedProgram ??
+        (isFocusedListed ? _focusedProgram : null) ??
         (effectiveChannel != null
             ? ref.watch(currentProgramProvider(effectiveChannel))
             : null);
@@ -194,7 +197,6 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
         children: [
           Row(
             children: [
-              // Search input
               Expanded(
                 flex: 3,
                 child: Focus(
@@ -301,7 +303,6 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
               ),
               const SizedBox(width: 12),
 
-              // Jump to Live Button
               DpadFocusable(
                 onTap: () => _gridKey.currentState?.jumpToNow(),
                 onKeyEvent: (node, event) {
@@ -359,7 +360,6 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
 
               const SizedBox(width: 8),
 
-              // Manage Playlists / Settings button
               DpadFocusable(
                 onTap: () => showChannelFilterSheet(context),
                 onKeyEvent: (node, event) {

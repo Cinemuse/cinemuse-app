@@ -437,7 +437,7 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
             final channels = ref.read(filteredChannelsProvider);
             channels.whenData((list) {
               if (list.isNotEmpty) {
-                ref.read(selectedChannelProvider.notifier).state = list.first;
+                ref.read(selectedChannelProvider.notifier).select(list.first);
               }
             });
           });
@@ -1090,7 +1090,7 @@ class _ChannelTileWrapper extends ConsumerWidget {
       autofocus: autofocus,
       // TODO(REV-132): open the big player for the playing channel, with
       // REV-156 (today that starts a second player).
-      onTap: () => ref.read(selectedChannelProvider.notifier).state = channel,
+      onTap: () => ref.read(selectedChannelProvider.notifier).select(channel),
       onKeyEvent: (node, event) {
         if (event is! KeyDownEvent) return KeyEventResult.ignored;
 

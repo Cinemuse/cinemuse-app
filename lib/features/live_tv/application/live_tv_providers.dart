@@ -77,7 +77,29 @@ enum LiveTvTab { all, favorites, recents }
 final liveTvTabProvider = StateProvider<LiveTvTab>((ref) => LiveTvTab.all);
 
 /// The currently selected / playing channel.
-final selectedChannelProvider = StateProvider<Channel?>((ref) => null);
+final selectedChannelProvider =
+    NotifierProvider<SelectedChannelNotifier, Channel?>(
+      SelectedChannelNotifier.new,
+    );
+
+/// Holds the selected channel and drops it when it leaves the channel list
+/// (its playlist was removed or disabled), so no screen keeps showing or
+/// playing it (REV-271).
+class SelectedChannelNotifier extends Notifier<Channel?> {
+  @override
+  Channel? build() {
+    ref.listen(channelsProvider, (_, next) {
+      final channels = next.valueOrNull;
+      final current = state;
+      if (channels == null || current == null) return;
+      final id = current.uniqueId;
+      if (!channels.any((c) => c.uniqueId == id)) state = null;
+    });
+    return null;
+  }
+
+  void select(Channel? channel) => state = channel;
+}
 
 /// The active search query for filtering channels.
 final channelSearchQueryProvider = StateProvider<String>((ref) => '');
