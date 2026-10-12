@@ -5,6 +5,7 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/playlist_management_sheet.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/save_live_tv_change.dart';
@@ -232,27 +233,35 @@ class _ModeToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // DpadFocusable, not a GestureDetector: a remote must reach the
+    // Playlists side (REV-134).
     return Expanded(
-      child: GestureDetector(
+      child: DpadFocusable(
         onTap: onTap,
-        child: AnimatedContainer(
+        borderRadius: BorderRadius.circular(8),
+        builder: (context, isFocused, isHovered, _) => AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected
+            color: isSelected || isHovered
                 ? Colors.white.withValues(alpha: 0.1)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isFocused ? Colors.white : Colors.transparent,
+              width: 1.5,
+            ),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.white60,
+              color: isSelected || isFocused ? Colors.white : Colors.white60,
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
         ),
+        child: const SizedBox.shrink(),
       ),
     );
   }
