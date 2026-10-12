@@ -198,7 +198,7 @@ void main() {
     });
   });
 
-  group('LiveTvViewMode and D-Pad Navigation Integration', () {
+  group('D-Pad Navigation Integration', () {
     testWidgets('tapping the playing channel opens the big player (REV-132)', (
       tester,
     ) async {
@@ -212,7 +212,6 @@ void main() {
 
       // Set current channel as selected
       container.read(selectedChannelProvider.notifier).select(channel);
-      expect(container.read(liveTvViewModeProvider), LiveTvViewMode.split);
       Channel? opened;
 
       await tester.pumpWidget(
@@ -233,9 +232,6 @@ void main() {
       await tester.tap(find.text(channel.name));
       await tester.pump();
 
-      // fullWindow hid the navbar on wide screens and showed nothing on
-      // phones.
-      expect(container.read(liveTvViewModeProvider), LiveTvViewMode.split);
       expect(container.read(selectedChannelProvider), same(channel));
       expect(opened, same(channel));
     });

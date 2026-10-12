@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
+import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
@@ -104,13 +106,18 @@ void main() {
     );
   }
 
-  Widget buildTestableWidget(Widget child, {void Function(Duration)? onSeek}) {
+  Widget buildTestableWidget(
+    Widget child, {
+    void Function(Duration)? onSeek,
+    List<Override> overrides = const [],
+  }) {
     return ProviderScope(
       overrides: [
         settingsProvider.overrideWith(FakeSettingsNotifier.new),
         playerControllerProvider.overrideWith(
           (ref, params) => FakePlayerController(onSeek: onSeek),
         ),
+        ...overrides,
       ],
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -767,23 +774,31 @@ void main() {
         when(() => mockState.volume).thenReturn(50.0);
         when(() => mockState.playing).thenReturn(true);
 
-        bool nextChannelZapped = false;
-        bool prevChannelZapped = false;
+        Channel channel(String name, int lcn) =>
+            Channel(lcn: lcn, name: name, logo: '', group: 'G', links: []);
+        final channels = [channel('A', 1), channel('B', 2), channel('C', 3)];
 
         await tester.pumpWidget(
           buildTestableWidget(
+            overrides: [
+              filteredChannelsProvider.overrideWithValue(
+                AsyncValue.data(channels),
+              ),
+            ],
             CustomVideoControls(
               videoState: fakeVideoState,
               playerState: createDummyPlayerState(),
               params: const PlayerParams('livetv_session', 'livetv'),
+              channel: channels[1],
               isLive: true,
               onSettingsPressed: () {},
               onBackPressed: () {},
               onOverlayRequested: (_) {},
-              onNextChannel: () => nextChannelZapped = true,
-              onPreviousChannel: () => prevChannelZapped = true,
             ),
           ),
+        );
+        final container = ProviderScope.containerOf(
+          tester.element(find.byType(CustomVideoControls)),
         );
         await tester.pumpAndSettle();
 
@@ -800,12 +815,12 @@ void main() {
         // Press ArrowDown to zap next channel
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pumpAndSettle();
-        expect(nextChannelZapped, isTrue);
+        expect(container.read(selectedChannelProvider)?.name, 'C');
 
         // Press ArrowUp to zap previous channel
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pumpAndSettle();
-        expect(prevChannelZapped, isTrue);
+        expect(container.read(selectedChannelProvider)?.name, 'A');
       },
     );
 

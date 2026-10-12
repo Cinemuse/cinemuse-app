@@ -16,7 +16,6 @@ import 'package:cinemuse_app/features/navigation/application/nav_providers.dart'
 import 'package:cinemuse_app/features/navigation/presentation/bottom_navbar.dart';
 import 'package:cinemuse_app/features/settings/presentation/settings_screen.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/live_tv_screen.dart';
-import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/updates/application/update_service.dart';
 import 'package:cinemuse_app/features/updates/presentation/update_overlay.dart';
 import 'package:cinemuse_app/features/streaming/anime/anime_mapping_sync_service.dart';
@@ -74,9 +73,6 @@ class _AppShellState extends ConsumerState<AppShell> {
     int index,
     GlobalKey<NavigatorState> shellNavigatorKey,
   ) {
-    if (ref.read(liveTvViewModeProvider) == LiveTvViewMode.fullWindow) {
-      ref.read(liveTvViewModeProvider.notifier).state = LiveTvViewMode.split;
-    }
     ref.read(navIndexProvider.notifier).state = index;
     final navigator = shellNavigatorKey.currentState;
     if (navigator != null && navigator.canPop()) {
@@ -179,27 +175,22 @@ class _AppShellState extends ConsumerState<AppShell> {
     required bool isCompact,
     required GlobalKey<NavigatorState> shellNavigatorKey,
   }) {
-    final isLiveTvFullWindow =
-        currentIndex == NavTab.liveTv &&
-        ref.watch(liveTvViewModeProvider) == LiveTvViewMode.fullWindow;
-
     return Stack(
       children: [
         Column(
           children: [
-            if (!isLiveTvFullWindow)
-              AppNavbar(
-                currentIndex: currentIndex,
-                isCompact: isCompact,
-                onTap: (index) =>
-                    _onDestinationSelected(index, shellNavigatorKey),
-                onSettingsTap: () => _openSettings(shellNavigatorKey),
-                onLogoutTap: () => ref.read(authProvider.notifier).signOut(),
-                onSearchTap: () => SearchOverlay.show(
-                  context,
-                  navigator: shellNavigatorKey.currentState,
-                ),
+            AppNavbar(
+              currentIndex: currentIndex,
+              isCompact: isCompact,
+              onTap: (index) =>
+                  _onDestinationSelected(index, shellNavigatorKey),
+              onSettingsTap: () => _openSettings(shellNavigatorKey),
+              onLogoutTap: () => ref.read(authProvider.notifier).signOut(),
+              onSearchTap: () => SearchOverlay.show(
+                context,
+                navigator: shellNavigatorKey.currentState,
               ),
+            ),
             Expanded(child: _buildNavigator(shellNavigatorKey)),
           ],
         ),

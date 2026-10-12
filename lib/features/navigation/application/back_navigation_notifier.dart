@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -27,9 +26,9 @@ class BackNavigationNotifier extends Notifier<DateTime?> {
   @override
   DateTime? build() => null;
 
-  /// Runs the first step that applies: close the open page, leave Live TV
-  /// full-window, go back to Home, and on Home ask to exit (only when
-  /// [canExitApp]: Escape on PC must never close the app).
+  /// Runs the first step that applies: close the open page, go back to
+  /// Home, and on Home ask to exit (only when [canExitApp]: Escape on PC
+  /// must never close the app).
   BackOutcome handleBack({required bool canExitApp, DateTime? now}) {
     final navigator = ref.read(shellNavigatorKeyProvider).currentState;
     if (navigator != null && navigator.canPop()) {
@@ -41,12 +40,6 @@ class BackNavigationNotifier extends Notifier<DateTime?> {
     }
 
     final tab = ref.read(navIndexProvider);
-    if (tab == NavTab.liveTv &&
-        ref.read(liveTvViewModeProvider) == LiveTvViewMode.fullWindow) {
-      ref.read(liveTvViewModeProvider.notifier).state = LiveTvViewMode.split;
-      return BackOutcome.handled;
-    }
-
     if (tab != NavTab.home) {
       ref.read(navIndexProvider.notifier).state = NavTab.home;
       return BackOutcome.handled;

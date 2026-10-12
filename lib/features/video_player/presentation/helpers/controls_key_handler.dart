@@ -11,7 +11,6 @@ class ControlsKeyHandler {
     required bool isOverlayOpen,
     required bool isVisible,
     required bool isFullscreen,
-    required bool isFullOrStandalone,
     required String numberBuffer,
     required void Function() onTogglePlayPause,
     required void Function(bool forward, {bool showControls}) onSkip,
@@ -70,7 +69,6 @@ class ControlsKeyHandler {
         key: key,
         isLive: isLive,
         isFullscreen: isFullscreen,
-        isFullOrStandalone: isFullOrStandalone,
         onTogglePlayPause: onTogglePlayPause,
         onSkip: onSkip,
         onShowControls: onShowControls,
@@ -125,7 +123,6 @@ class ControlsKeyHandler {
     required LogicalKeyboardKey key,
     required bool isLive,
     required bool isFullscreen,
-    required bool isFullOrStandalone,
     required void Function() onTogglePlayPause,
     required void Function(bool forward, {bool showControls}) onSkip,
     required void Function() onShowControls,
@@ -180,11 +177,7 @@ class ControlsKeyHandler {
 
     if (key == LogicalKeyboardKey.arrowLeft) {
       if (isLive) {
-        if (event is KeyDownEvent) {
-          if (isFullOrStandalone) {
-            onOpenChannelOverlay();
-          }
-        }
+        if (event is KeyDownEvent) onOpenChannelOverlay();
         return KeyEventResult.handled;
       }
       final now = DateTime.now();

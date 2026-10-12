@@ -18,7 +18,6 @@ void main() {
         isOverlayOpen: false,
         isVisible: false,
         isFullscreen: isFullscreen,
-        isFullOrStandalone: true,
         numberBuffer: '',
         onTogglePlayPause: () => calls.add('playPause'),
         onSkip: (forward, {showControls = true}) => calls.add('skip'),

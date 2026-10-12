@@ -1,4 +1,3 @@
-import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/navigation/application/back_navigation_notifier.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,16 +24,6 @@ void main() {
 
     expect(back(), BackOutcome.handled);
     expect(container.read(navIndexProvider), NavTab.home);
-  });
-
-  test('in Live TV full-window, Back first leaves full-window', () {
-    container.read(navIndexProvider.notifier).state = NavTab.liveTv;
-    container.read(liveTvViewModeProvider.notifier).state =
-        LiveTvViewMode.fullWindow;
-
-    expect(back(), BackOutcome.handled);
-    expect(container.read(liveTvViewModeProvider), LiveTvViewMode.split);
-    expect(container.read(navIndexProvider), NavTab.liveTv);
   });
 
   test('on Home, the first Back asks, the second one in time exits', () {

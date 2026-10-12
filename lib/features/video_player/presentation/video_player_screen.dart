@@ -67,11 +67,6 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   void _openSettings(
     CinemaPlayerState state,
     PlayerParams params, {
@@ -259,7 +254,6 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                                     widget.channel)
                               : null,
                           isLive: widget.type == 'livetv',
-                          isFullWindow: true,
                           onSettingsPressed: () => _openSettings(state, params),
                           onBackPressed: () => Navigator.of(context).pop(),
                           onOverlayRequested: (type) {

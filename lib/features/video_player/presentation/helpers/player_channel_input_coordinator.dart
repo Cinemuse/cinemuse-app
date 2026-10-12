@@ -17,12 +17,7 @@ class PlayerChannelInputCoordinator {
   void zapNextChannel({
     required WidgetRef ref,
     required Channel? currentChannel,
-    VoidCallback? onCustomNextChannel,
   }) {
-    if (onCustomNextChannel != null) {
-      onCustomNextChannel();
-      return;
-    }
     final channels =
         ref.read(filteredChannelsProvider).valueOrNull ??
         ref.read(channelsProvider).valueOrNull ??
@@ -38,12 +33,7 @@ class PlayerChannelInputCoordinator {
   void zapPreviousChannel({
     required WidgetRef ref,
     required Channel? currentChannel,
-    VoidCallback? onCustomPreviousChannel,
   }) {
-    if (onCustomPreviousChannel != null) {
-      onCustomPreviousChannel();
-      return;
-    }
     final channels =
         ref.read(filteredChannelsProvider).valueOrNull ??
         ref.read(channelsProvider).valueOrNull ??

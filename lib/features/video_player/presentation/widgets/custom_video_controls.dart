@@ -39,10 +39,6 @@ class CustomVideoControls extends ConsumerStatefulWidget {
   final ValueChanged<String>? onNumberInput;
   final VoidCallback? onConfirmNumber;
   final String numberBuffer;
-  final VoidCallback? onNextChannel;
-  final VoidCallback? onPreviousChannel;
-  final bool isFullWindow;
-  final VoidCallback? onToggleFullWindow;
 
   /// Replaces the tap's show-controls / play-pause; the Live TV mini-player
   /// opens the big player with it (REV-156).
@@ -62,10 +58,6 @@ class CustomVideoControls extends ConsumerStatefulWidget {
     this.onNumberInput,
     this.onConfirmNumber,
     this.numberBuffer = '',
-    this.onNextChannel,
-    this.onPreviousChannel,
-    this.isFullWindow = false,
-    this.onToggleFullWindow,
     this.onTap,
   });
 
@@ -215,13 +207,11 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   void _zapNextChannel() => _channelCoordinator.zapNextChannel(
     ref: ref,
     currentChannel: widget.channel,
-    onCustomNextChannel: widget.onNextChannel,
   );
 
   void _zapPreviousChannel() => _channelCoordinator.zapPreviousChannel(
     ref: ref,
     currentChannel: widget.channel,
-    onCustomPreviousChannel: widget.onPreviousChannel,
   );
 
   void _handleNumberInput(String digit) =>
@@ -240,11 +230,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
   KeyEventResult _handleKeyEvent(KeyEvent event) {
     final isLive = widget.isLive || widget.params.type == 'livetv';
     final isOverlayOpen = ref.read(liveTvChannelOverlayProvider);
-    final isFullOrStandalone =
-        widget.isFullWindow ||
-        widget.params.type == 'livetv' ||
-        ref.read(liveTvViewModeProvider) == LiveTvViewMode.fullWindow ||
-        _isFullScreen;
     final buffer = widget.numberBuffer.isNotEmpty
         ? widget.numberBuffer
         : ref.read(numberInputBufferProvider);
@@ -255,7 +240,6 @@ class _CustomVideoControlsState extends ConsumerState<CustomVideoControls> {
       isOverlayOpen: isOverlayOpen,
       isVisible: _visible,
       isFullscreen: _isFullscreenSafe(),
-      isFullOrStandalone: isFullOrStandalone,
       numberBuffer: buffer,
       onTogglePlayPause: _togglePlayPause,
       onSkip: _performRealSkip,
