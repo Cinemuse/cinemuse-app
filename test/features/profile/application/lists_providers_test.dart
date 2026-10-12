@@ -33,12 +33,14 @@ UserList _list(String id, {ListType type = ListType.custom}) => UserList(
 // REV-69: deleting a list with Undo.
 void main() {
   late MockListsRepository repo;
+  late MockWatchHistoryRepository historyRepo;
   late StreamController<List<UserList>> dbLists;
   late ProviderContainer container;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     repo = MockListsRepository();
+    historyRepo = MockWatchHistoryRepository();
     dbLists = StreamController<List<UserList>>.broadcast();
     when(() => repo.syncUserLists(any())).thenAnswer((_) async {});
     when(() => repo.watchUserLists(any())).thenAnswer((_) => dbLists.stream);
@@ -65,9 +67,7 @@ void main() {
       overrides: [
         authProvider.overrideWith((ref) => AuthService(client)),
         listsRepositoryProvider.overrideWithValue(repo),
-        watchHistoryRepositoryProvider.overrideWithValue(
-          MockWatchHistoryRepository(),
-        ),
+        watchHistoryRepositoryProvider.overrideWithValue(historyRepo),
       ],
     );
     container.listen(userListsProvider, (_, __) {});
@@ -173,6 +173,42 @@ void main() {
         container.read(userListsProvider.notifier).toggleWatchlist(media),
         throwsA(isA<NotFoundFailure>()),
       );
+    });
+  });
+
+  // REV-106: Dropped list actions go through the notifier.
+  group('dropped list', () {
+    setUp(() {
+      when(
+        () => historyRepo.getDroppedItems(any()),
+      ).thenAnswer((_) async => []);
+    });
+
+    test('a failed restore rethrows and the Dropped list reloads', () async {
+      container.listen(droppedListProvider, (_, __) {});
+      await container.read(droppedListProvider.future);
+      when(
+        () => historyRepo.restoreToContinueWatching('user-a', 7),
+      ).thenThrow(const NetworkFailure('offline'));
+
+      await expectLater(
+        container.read(userListsProvider.notifier).restoreFromDropped(7),
+        throwsA(isA<NetworkFailure>()),
+      );
+      await container.read(droppedListProvider.future);
+      verify(() => historyRepo.getDroppedItems('user-a')).called(2);
+    });
+
+    test('remove deletes the history row of that title', () async {
+      when(
+        () => historyRepo.removeFromDropped(any(), any(), any()),
+      ).thenAnswer((_) async {});
+
+      await container
+          .read(userListsProvider.notifier)
+          .removeFromDropped(7, MediaKind.tv);
+
+      verify(() => historyRepo.removeFromDropped('user-a', 7, 'tv')).called(1);
     });
   });
 }

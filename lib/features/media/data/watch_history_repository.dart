@@ -945,17 +945,16 @@ class WatchHistoryRepository {
 
   Future<void> restoreToContinueWatching(String userId, int tmdbId) async {
     invalidateWatchLogsCache();
-    // Update Local
-    await (_db.update(_db.localWatchHistories)
-          ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
-        .write(const LocalWatchHistoriesCompanion(status: Value('watching')));
-
-    // Update Remote
+    // Server first: if it fails, the local copy stays as it was (REV-106).
     await _client
         .from('watch_history')
         .update({'status': 'watching'})
         .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId);
+        .eq('tmdb_id', tmdbId)
+        .withAppFailure();
+    await (_db.update(_db.localWatchHistories)
+          ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
+        .write(const LocalWatchHistoriesCompanion(status: Value('watching')));
   }
 
   /// Clears a title's progress ("Remove from Continue Watching") in one
@@ -983,13 +982,14 @@ class WatchHistoryRepository {
     String mediaType,
   ) async {
     invalidateWatchLogsCache();
-    await _db.deleteWatchHistoryItem(userId, tmdbId, mediaType);
     await _client
         .from('watch_history')
         .delete()
         .eq('user_id', userId)
         .eq('tmdb_id', tmdbId)
-        .eq('status', 'dropped');
+        .eq('status', 'dropped')
+        .withAppFailure();
+    await _db.deleteWatchHistoryItem(userId, tmdbId, mediaType);
   }
 
   // Simple StreamTransformer to debounce events

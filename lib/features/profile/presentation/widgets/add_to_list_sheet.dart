@@ -5,6 +5,7 @@ import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/list_action_feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -30,6 +31,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
   bool _isCreatingList = false;
   final TextEditingController _listNameController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  final Set<String> _busyListIds = {};
 
   @override
   void dispose() {
@@ -40,13 +42,32 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
 
   Future<void> _handleCreateList() async {
     final name = _listNameController.text.trim();
-    if (name.isNotEmpty) {
-      await ref.read(userListsProvider.notifier).createCustomList(name);
-      setState(() {
-        _isCreatingList = false;
-        _listNameController.clear();
-      });
-    }
+    if (name.isEmpty) return;
+    final created = await runListAction(
+      context,
+      ref,
+      (lists) => lists.createCustomList(name),
+    );
+    if (!mounted || !created) return;
+    setState(() {
+      _isCreatingList = false;
+      _listNameController.clear();
+    });
+  }
+
+  /// Adds or removes the title. Taps on a row are ignored while its change
+  /// runs, so a fast double tap can't add the title twice (REV-106).
+  Future<void> _toggleList(String listId, bool isInList) async {
+    if (!_busyListIds.add(listId)) return;
+    final media = widget.media;
+    await runListAction(
+      context,
+      ref,
+      (lists) => isInList
+          ? lists.removeItemFromList(listId, media.tmdbId, media.mediaType)
+          : lists.addItemToCustomList(listId, media),
+    );
+    _busyListIds.remove(listId);
   }
 
   @override
@@ -136,22 +157,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
                             hoverColor: Colors.white.withValues(alpha: 0.1),
                             focusColor: Colors.white.withValues(alpha: 0.1),
                             splashColor: Colors.white.withValues(alpha: 0.05),
-                            onTap: () async {
-                              if (isInList) {
-                                await ref
-                                    .read(listsRepositoryProvider)
-                                    .removeItemFromList(
-                                      listId: list.id,
-                                      tmdbId: widget.media.tmdbId,
-                                      mediaType: widget.media.mediaType,
-                                    );
-                                ref.invalidate(userListsProvider);
-                              } else {
-                                await ref
-                                    .read(userListsProvider.notifier)
-                                    .addItemToCustomList(list.id, widget.media);
-                              }
-                            },
+                            onTap: () => _toggleList(list.id, isInList),
                             leading: Icon(
                               isInList
                                   ? LucideIcons.checkCircle2

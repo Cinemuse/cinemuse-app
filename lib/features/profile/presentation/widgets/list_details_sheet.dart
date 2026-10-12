@@ -14,9 +14,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
-import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
-import 'package:cinemuse_app/features/auth/application/auth_service.dart';
-import 'package:cinemuse_app/features/home/application/home_providers.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/list_action_feedback.dart';
 import 'package:cinemuse_app/features/search/presentation/search_overlay.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
@@ -703,18 +701,12 @@ class _ListMediaCard extends ConsumerWidget {
           ? null
           : () async {
               if (listId == 'dropped') {
-                final user = ref.read(authProvider).value;
-                if (user != null) {
-                  await ref
-                      .read(watchHistoryRepositoryProvider)
-                      .removeFromDropped(
-                        user.id,
-                        item.tmdbId,
-                        item.mediaType.name,
-                      );
-                  ref.invalidate(droppedListProvider);
-                  ref.invalidate(continueWatchingProvider);
-                }
+                await runListAction(
+                  context,
+                  ref,
+                  (lists) =>
+                      lists.removeFromDropped(item.tmdbId, item.mediaType),
+                );
               } else {
                 // TODO(REV-89): a failed removal is not shown to the user.
                 unawaited(
@@ -726,15 +718,11 @@ class _ListMediaCard extends ConsumerWidget {
             },
       onRestore: listId == 'dropped'
           ? () async {
-              final user = ref.read(authProvider).value;
-              if (user != null) {
-                await ref
-                    .read(watchHistoryRepositoryProvider)
-                    .restoreToContinueWatching(user.id, item.tmdbId);
-                // Also invalidate the dropped items provider to refresh UI
-                ref.invalidate(droppedListProvider);
-                ref.invalidate(continueWatchingProvider);
-              }
+              await runListAction(
+                context,
+                ref,
+                (lists) => lists.restoreFromDropped(item.tmdbId),
+              );
             }
           : null,
       onTap: () {
