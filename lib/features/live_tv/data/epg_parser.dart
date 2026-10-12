@@ -45,6 +45,21 @@ class EpgParser {
   static final _domainSuffixRegex = RegExp(r'\.it$|\.ch$|\.com$|\.eu$');
   static final _nonAlphanumericRegex = RegExp(r'[^a-z0-9]');
 
+  /// `+0200`, `-0130` or `+02:00` after the 14 date digits (LTV-04).
+  static final _offsetRegex = RegExp(r'^([+-])(\d{2}):?(\d{2})');
+
+  /// Named and numeric XML entities, decoded in one pass (LTV-05).
+  static final _entityRegex = RegExp(
+    r'&(?:#x([0-9a-fA-F]+)|#(\d+)|(amp|lt|gt|quot|apos));',
+  );
+  static const _namedEntities = {
+    'amp': '&',
+    'lt': '<',
+    'gt': '>',
+    'quot': '"',
+    'apos': "'",
+  };
+
   /// Parses raw byte data into a unified channel EPG map.
   /// Automatically decompresses GZip if magic bytes are detected.
   static Map<String, List<EpgProgram>> parseBytes(Uint8List bytes) {
@@ -201,10 +216,12 @@ class EpgParser {
       final minute = int.parse(clean.substring(10, 12));
       final second = int.parse(clean.substring(12, 14));
 
-      if (clean.length >= 19 && (clean[15] == '+' || clean[15] == '-')) {
-        final sign = clean[15] == '-' ? -1 : 1;
-        final tzHour = int.parse(clean.substring(16, 18));
-        final tzMinute = int.parse(clean.substring(18, 20));
+      // With or without a space before it (LTV-04).
+      final tz = _offsetRegex.firstMatch(clean.substring(14).trimLeft());
+      if (tz != null) {
+        final sign = tz.group(1) == '-' ? -1 : 1;
+        final tzHour = int.parse(tz.group(2)!);
+        final tzMinute = int.parse(tz.group(3)!);
         final offset = Duration(hours: tzHour, minutes: tzMinute) * sign;
 
         final utcBase = DateTime.utc(year, month, day, hour, minute, second);
@@ -221,13 +238,18 @@ class EpgParser {
     return bytes.length >= 2 && bytes[0] == 0x1F && bytes[1] == 0x8B;
   }
 
+  /// One pass, so `&amp;lt;` stays `&lt;`; numeric ones like `&#232;` too.
   static String _unescapeXml(String text) {
-    return text
-        .replaceAll('&amp;', '&')
-        .replaceAll('&lt;', '<')
-        .replaceAll('&gt;', '>')
-        .replaceAll('&quot;', '"')
-        .replaceAll('&apos;', "'");
+    return text.replaceAllMapped(_entityRegex, (m) {
+      final named = m.group(3);
+      if (named != null) return _namedEntities[named]!;
+      final code = m.group(1) != null
+          ? int.tryParse(m.group(1)!, radix: 16)
+          : int.tryParse(m.group(2)!);
+      // Not a valid character: keep the text as it was.
+      if (code == null || code > 0x10FFFF) return m.group(0)!;
+      return String.fromCharCode(code);
+    });
   }
 
   static String? _cleanOptionalString(String? text) {

@@ -110,6 +110,34 @@ void main() {
       expect(utc.month, 10);
       expect(utc.day, 3);
     });
+
+    test('reads the timezone without a space or with a colon (LTV-04)', () {
+      for (final text in [
+        '20261003120000+0200',
+        '20261003120000 +02:00',
+        '20261003120000+02:00',
+      ]) {
+        expect(EpgParser.parseXmltvDate(text)!.toUtc().hour, 10, reason: text);
+      }
+      expect(
+        EpgParser.parseXmltvDate('20261003120000-0130')!.toUtc(),
+        DateTime.utc(2026, 10, 3, 13, 30),
+      );
+    });
+
+    test('decodes XML entities once, numeric ones too (LTV-05)', () {
+      const xml = '''<tv>
+<programme start="20261003120000 +0000" stop="20261003130000 +0000" channel="c1">
+<title>Caff&#232; &amp; Tom&#x2019;s &amp;lt;b&amp;gt;</title>
+<desc>&#99999999; &bogus; &lt;ok&gt;</desc>
+</programme>
+</tv>''';
+
+      final program = EpgParser.parseXmltv(xml)['c1']!.single;
+
+      expect(program.name, 'Caffè & Tom’s &lt;b&gt;');
+      expect(program.description, '&#99999999; &bogus; <ok>');
+    });
   });
 
   group('EpgChannelMatcher', () {
