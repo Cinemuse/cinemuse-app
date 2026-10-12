@@ -169,7 +169,7 @@ class OptimisticSeriesLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
 
     final repository = ref.watch(watchHistoryRepositoryProvider);
     return repository
-        .watchSeriesLogs(userId, arg)
+        .watchTitleLogs(userId, arg, 'tv')
         .handleError((error) {
           if (error is AppException &&
               error.type == AppExceptionType.realtime) {
@@ -352,7 +352,7 @@ class OptimisticMovieLogs extends FamilyStreamNotifier<List<WatchLog>, int> {
 
     final repository = ref.watch(watchHistoryRepositoryProvider);
     return repository
-        .watchMovieLogs(userId, arg)
+        .watchTitleLogs(userId, arg, 'movie')
         .handleError((error) {
           if (error is AppException &&
               error.type == AppExceptionType.realtime) {

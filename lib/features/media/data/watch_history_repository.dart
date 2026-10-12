@@ -4,6 +4,7 @@ import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 import 'package:cinemuse_app/core/error/supabase_failure.dart';
 import 'package:cinemuse_app/core/utils/app_logger.dart';
+import 'package:cinemuse_app/core/utils/stream_debounce.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
@@ -342,27 +343,12 @@ class WatchHistoryRepository {
     );
   }
 
-  Stream<List<Map<String, dynamic>>> watchMovieLogs(String userId, int tmdbId) {
-    return _client
-        .from('watch_logs')
-        .stream(primaryKey: ['id'])
-        .eq('tmdb_id', tmdbId)
-        .order('logged_at', ascending: false)
-        .withErrorHandling()
-        .transform(_debounceTransformer(const Duration(milliseconds: 300)))
-        .map(
-          (list) => list
-              .where(
-                (item) =>
-                    item['user_id'] == userId && item['media_type'] == 'movie',
-              )
-              .toList(),
-        );
-  }
-
-  Stream<List<Map<String, dynamic>>> watchSeriesLogs(
+  /// Live watch logs of one title, newest first. Debounced, so a batch of
+  /// logs gives one update; cancelling it closes the realtime channel.
+  Stream<List<Map<String, dynamic>>> watchTitleLogs(
     String userId,
     int tmdbId,
+    String mediaType,
   ) {
     return _client
         .from('watch_logs')
@@ -370,12 +356,13 @@ class WatchHistoryRepository {
         .eq('tmdb_id', tmdbId)
         .order('logged_at', ascending: false)
         .withErrorHandling()
-        .transform(_debounceTransformer(const Duration(milliseconds: 300)))
+        .debounce(const Duration(milliseconds: 300))
         .map(
           (list) => list
               .where(
                 (item) =>
-                    item['user_id'] == userId && item['media_type'] == 'tv',
+                    item['user_id'] == userId &&
+                    item['media_type'] == mediaType,
               )
               .toList(),
         );
@@ -929,28 +916,5 @@ class WatchHistoryRepository {
         .withAppFailure();
     invalidateWatchLogsCache();
     await _cacheReturnedRow(userId, tmdbId, mediaType, rows);
-  }
-
-  StreamTransformer<T, T> _debounceTransformer<T>(Duration duration) {
-    return StreamTransformer<T, T>.fromBind((Stream<T> stream) {
-      final controller = StreamController<T>.broadcast();
-      Timer? debounceTimer;
-
-      stream.listen(
-        (data) {
-          debounceTimer?.cancel();
-          debounceTimer = Timer(duration, () {
-            controller.add(data);
-          });
-        },
-        onError: (error) => controller.addError(error),
-        onDone: () {
-          debounceTimer?.cancel();
-          controller.close();
-        },
-      );
-
-      return controller.stream;
-    });
   }
 }
