@@ -62,40 +62,18 @@ class CastRemoteView extends ConsumerWidget {
                         onPressed: onBackPressed,
                       ),
                       const SizedBox(width: 8),
+                      // The title is shown big below, and Stop is the
+                      // labelled button at the bottom (REV-176).
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              playerState.title,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: AppTheme.textWhite,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              AppLocalizations.of(context)!.castCastingTo(
-                                playerState.selectedCastDevice?.name ??
-                                    (AppLocalizations.of(
-                                          context,
-                                        )?.castDefaultDevice ??
-                                        'Chromecast'),
-                              ),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          AppLocalizations.of(context)!.castCastingTo(
+                            playerState.selectedCastDevice?.name ??
+                                AppLocalizations.of(context)!.castDefaultDevice,
+                          ),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppTheme.textSecondary,
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.cast_connected,
-                          color: AppTheme.accent,
-                        ),
-                        onPressed: notifier.stopCasting,
                       ),
                     ],
                   ),

@@ -137,7 +137,8 @@ class SubtitleSliderOverlay extends ConsumerWidget {
                 padding: const EdgeInsets.all(24.0),
                 // No blur: it would be redone on every video frame (REV-138).
                 child: Container(
-                  width: 380,
+                  // Narrower on small phones: 380 px cut "+5" off (REV-176).
+                  constraints: const BoxConstraints(maxWidth: 380),
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: AppTheme.surface.withValues(alpha: 0.8),
@@ -289,8 +290,10 @@ class _SyncButtonControl extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 6,
+          runSpacing: 6,
           children: [
             _StepButton(label: '-5', onTap: () => onChanged(value - 5.0)),
             _StepButton(label: '-1', onTap: () => onChanged(value - 1.0)),
@@ -322,27 +325,24 @@ class _StepButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 3),
-      child: DpadFocusable(
-        onTap: onTap,
-        showFocusRing: true,
-        borderRadius: AppTheme.radiusMd,
-        child: Container(
-          width: 44,
-          height: 40,
-          alignment: Alignment.center,
-          decoration: const BoxDecoration(
-            color: AppTheme.surfaceOverlay,
-            borderRadius: AppTheme.radiusMd,
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: AppTheme.textWhite,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+    return DpadFocusable(
+      onTap: onTap,
+      showFocusRing: true,
+      borderRadius: AppTheme.radiusMd,
+      child: Container(
+        width: 44,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          color: AppTheme.surfaceOverlay,
+          borderRadius: AppTheme.radiusMd,
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: AppTheme.textWhite,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
