@@ -7,7 +7,6 @@ import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
-import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 import 'package:cinemuse_app/core/error/supabase_failure.dart';
 
 final mediaRepositoryProvider = Provider<MediaRepository>((ref) {
@@ -208,8 +207,8 @@ class MediaRepository {
         'genres': item.genres ?? [],
         'cast_members': item.castMembers ?? [],
         'release_date': item.releaseDate?.toIso8601String().split('T')[0],
-        'updated_at': item.updatedAt.toIso8601String(),
-      }).withErrorHandling();
+        'updated_at': item.updatedAt.toUtc().toIso8601String(),
+      }).withAppFailure();
     } catch (e, stackTrace) {
       developer.log(
         'Failed to sync media cache to remote for ${item.tmdbId}',

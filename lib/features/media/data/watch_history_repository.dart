@@ -51,7 +51,7 @@ class WatchHistoryRepository {
         .eq('user_id', userId)
         .eq('status', 'dropped')
         .order('last_watched_at', ascending: false)
-        .withErrorHandling();
+        .withAppFailure();
 
     return (response as List).map((e) => WatchHistory.fromJson(e)).toList();
   }
@@ -220,7 +220,7 @@ class WatchHistoryRepository {
       ),
     );
 
-    await _client.from('watch_history').upsert(entry).withErrorHandling();
+    await _client.from('watch_history').upsert(entry).withAppFailure();
   }
 
   Future<WatchHistory?> getHistoryItem(
@@ -235,7 +235,7 @@ class WatchHistoryRepository {
       userId,
       id,
       mediaType,
-    ).eq('status', 'watching').maybeSingle().withErrorHandling();
+    ).eq('status', 'watching').maybeSingle().withAppFailure();
 
     if (response == null) return null;
     return WatchHistory.fromJson(response);
@@ -286,7 +286,7 @@ class WatchHistoryRepository {
             .select()
             .eq('user_id', userId)
             .range(offset, offset + limit - 1)
-            .withErrorHandling();
+            .withAppFailure();
 
         final dataList = remoteData as List<dynamic>;
         allRemoteData.addAll(dataList);
@@ -438,7 +438,7 @@ class WatchHistoryRepository {
         .eq('user_id', userId)
         .order('logged_at', ascending: false)
         .range(offset, offset + limit - 1)
-        .withErrorHandling();
+        .withAppFailure();
 
     return (response as List<dynamic>).cast<Map<String, dynamic>>();
   }
@@ -510,7 +510,7 @@ class WatchHistoryRepository {
             .from('watch_history')
             .select('tmdb_id, media_type, status')
             .eq('user_id', userId)
-            .withErrorHandling();
+            .withAppFailure();
 
         for (final row in remoteHistory) {
           final tmdbId = row['tmdb_id'] as int? ?? 0;
@@ -823,13 +823,14 @@ class WatchHistoryRepository {
     int tmdbId,
     String mediaType,
   ) async {
-    await _setLocalStatus(userId, tmdbId, mediaType, 'dropped');
+    // Server first: if it fails, the local copy stays as it was.
     await _titleRow(
       _client.from('watch_history').update({'status': 'dropped'}),
       userId,
       tmdbId,
       mediaType,
-    );
+    ).withAppFailure();
+    await _setLocalStatus(userId, tmdbId, mediaType, 'dropped');
   }
 
   Future<void> restoreToContinueWatching(

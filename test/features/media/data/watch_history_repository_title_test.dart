@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:cinemuse_app/core/data/database.dart';
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
@@ -57,6 +59,30 @@ class _RecordingQueryBuilder extends Fake implements SupabaseQueryBuilder {
     upserts.add(values as Map<String, dynamic>);
     return _RecordingFilterBuilder(filters);
   }
+}
+
+/// An `update()` that fails as if offline.
+class _OfflineFilterBuilder extends Fake
+    implements PostgrestFilterBuilder<List<Map<String, dynamic>>> {
+  @override
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> eq(
+    String column,
+    Object value,
+  ) => this;
+
+  @override
+  Future<R> then<R>(
+    FutureOr<R> Function(List<Map<String, dynamic>> value) onValue, {
+    Function? onError,
+  }) => Future<List<Map<String, dynamic>>>.error(
+    const SocketException('offline'),
+  ).then(onValue, onError: onError);
+}
+
+class _OfflineQueryBuilder extends Fake implements SupabaseQueryBuilder {
+  @override
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> update(Map values) =>
+      _OfflineFilterBuilder();
 }
 
 // REV-177: TMDB movie 1399 and TV show 1399 are different titles.
@@ -116,6 +142,19 @@ void main() {
       'tmdb_id': sharedId,
       'media_type': 'movie',
     });
+  });
+
+  // REV-184: the drop had no error handling and changed the local copy first.
+  test('a drop that fails offline throws and changes nothing', () async {
+    when(
+      () => supabase.from('watch_history'),
+    ).thenAnswer((_) => _OfflineQueryBuilder());
+
+    await expectLater(
+      repository.dropFromContinueWatching(userId, sharedId, 'movie'),
+      throwsA(isA<NetworkFailure>()),
+    );
+    expect(await localStatuses(), {'movie': 'watching', 'tv': 'watching'});
   });
 
   test('restoring the show leaves the movie alone', () async {
