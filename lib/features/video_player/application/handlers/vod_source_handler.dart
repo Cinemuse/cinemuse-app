@@ -12,15 +12,11 @@ import 'dart:developer' as developer;
 class VodInitializationResult {
   final List<StreamCandidate> candidates;
   final ResolvedStream resolvedStream;
-  final MediaItem? mediaItem;
-  final Map<String, dynamic>? mediaDetails;
   final bool isAnime;
 
   VodInitializationResult({
     required this.candidates,
     required this.resolvedStream,
-    this.mediaItem,
-    this.mediaDetails,
     this.isAnime = false,
   });
 }
@@ -77,8 +73,6 @@ class VodSourceHandler {
     return VodInitializationResult(
       candidates: searchResult.candidates,
       resolvedStream: resolution.stream,
-      mediaItem: detailsResult.item,
-      mediaDetails: detailsResult.raw,
       isAnime: searchResult.isAnime,
     );
   }

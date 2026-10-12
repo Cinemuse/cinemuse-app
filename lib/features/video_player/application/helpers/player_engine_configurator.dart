@@ -58,7 +58,7 @@ class PlayerEngineConfigurator {
       }
       mpv.setProperty('vd-lavc-threads', '0'); // Auto-pick optimal thread count
 
-      final isMobile = io.Platform.isAndroid || io.Platform.isIOS;
+      final isMobile = io.Platform.isAndroid;
 
       // ── Video Sync & Smoothness ───────────────────────────────────────────
       // display-resample: syncs to the monitor's refresh rate, eliminates judder.

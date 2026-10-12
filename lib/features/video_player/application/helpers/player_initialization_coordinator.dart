@@ -165,13 +165,6 @@ class PlayerInitializationCoordinator {
     PlayerParams resolvedParams,
     VodInitializationResult vodResult,
   ) async {
-    if (vodResult.mediaItem != null) {
-      _mediaItem = vodResult.mediaItem;
-      _rawSeriesDetails = resolvedParams.type == 'tv'
-          ? vodResult.mediaDetails
-          : null;
-    }
-
     if (isMounted()) {
       onStateChanged(
         CinemaPlayerState(

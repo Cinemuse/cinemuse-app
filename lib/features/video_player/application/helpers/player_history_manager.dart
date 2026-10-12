@@ -186,15 +186,12 @@ class PlayerHistoryManager {
     int resolvedStartPosition = params.startPosition ?? 0;
 
     final user = ref.read(authProvider).value;
-    if (user != null &&
-        (params.type == 'movie' ||
-            params.type == 'tv' ||
-            params.type == 'series')) {
+    if (user != null && (params.type == 'movie' || params.type == 'tv')) {
       try {
         final repo = ref.read(watchHistoryRepositoryProvider);
         final history = await repo.getHistoryItem(user.id, params.queryId);
         if (history != null) {
-          if (params.type == 'tv' || params.type == 'series') {
+          if (params.type == 'tv') {
             final hSeason = (history.season == null || history.season! < 1)
                 ? null
                 : history.season;

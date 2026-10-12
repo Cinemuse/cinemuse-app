@@ -30,7 +30,6 @@ class YouTubeSourceHandler {
 
   YouTubeSourceHandler(this._ytService, this._player);
 
-  YoutubeService get service => _ytService;
   Map<String, String> get youtubeHeaders => defaultHeaders;
 
   Future<YouTubeInitializationResult> initialize(PlayerParams params) async {
