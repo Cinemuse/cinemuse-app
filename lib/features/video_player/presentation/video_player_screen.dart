@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
+import 'package:cinemuse_app/features/video_player/application/subtitle_style_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/overlays/resolving_overlay.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_video_controls.dart';
@@ -14,7 +15,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
 import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
@@ -76,9 +76,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     final current = ref.read(playerControllerProvider(params)).valueOrNull;
     if (current != null) {
       _lookBeforeOverlay = (
-        style:
-            current.customSubtitleStyle ??
-            ref.read(localSettingsProvider).subtitleStyle,
+        style: ref.read(effectiveSubtitleStyleProvider(params)),
         delay: current.subtitleDelay,
       );
     }
@@ -229,9 +227,9 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
             );
           }
 
-          final localSettings = ref.watch(localSettingsProvider);
-          final subtitleStyle =
-              state.customSubtitleStyle ?? localSettings.subtitleStyle;
+          final subtitleStyle = ref.watch(
+            effectiveSubtitleStyleProvider(params),
+          );
 
           return AnimatedAlign(
             duration: const Duration(milliseconds: 300),

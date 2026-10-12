@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/features/video_player/application/subtitle_style_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'settings_widgets.dart';
@@ -22,6 +23,7 @@ class SubtitleAppearanceView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final style = ref.watch(effectiveSubtitleStyleProvider(params));
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -46,24 +48,21 @@ class SubtitleAppearanceView extends ConsumerWidget {
                   context,
                   icon: Icons.text_fields_rounded,
                   title: l10n.playerAppearanceFontSize,
-                  value:
-                      '${state.customSubtitleStyle?.fontSize.toInt() ?? 24} px',
+                  value: '${style.fontSize.toInt()} px',
                   overlayType: SliderOverlayType.fontSize,
                 ),
                 _buildTile(
                   context,
                   icon: Icons.vertical_align_bottom_rounded,
                   title: l10n.playerAppearanceBottomPadding,
-                  value:
-                      '${((state.customSubtitleStyle?.verticalPosition ?? 0.05) * 100).toInt()}%',
+                  value: '${(style.verticalPosition * 100).toInt()}%',
                   overlayType: SliderOverlayType.position,
                 ),
                 _buildTile(
                   context,
                   icon: Icons.opacity_rounded,
                   title: l10n.playerAppearanceBackground,
-                  value:
-                      '${((state.customSubtitleStyle?.backgroundColor.a ?? 0) * 100).toInt()}%',
+                  value: '${(style.backgroundColor.a * 100).toInt()}%',
                   overlayType: SliderOverlayType.background,
                 ),
                 _buildTile(

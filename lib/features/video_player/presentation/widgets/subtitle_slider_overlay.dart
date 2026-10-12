@@ -5,6 +5,8 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
+import 'package:cinemuse_app/features/video_player/application/subtitle_style_provider.dart';
+import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
 import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
@@ -29,15 +31,14 @@ class SubtitleSliderOverlay extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final controller = ref.read(playerControllerProvider(params).notifier);
     final localNotifier = ref.read(localSettingsProvider.notifier);
-    final localSettings = ref.watch(localSettingsProvider);
 
     String title = '';
     Widget control = const SizedBox.shrink();
     late final VoidCallback onReset;
     VoidCallback? onSave;
 
-    final currentStyle =
-        state.customSubtitleStyle ?? localSettings.subtitleStyle;
+    final currentStyle = ref.watch(effectiveSubtitleStyleProvider(params));
+    const defaults = SubtitleStyle();
 
     switch (type) {
       case SliderOverlayType.sync:
@@ -59,7 +60,7 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           ),
         );
         onReset = () => controller.updateSubtitleStyle(
-          currentStyle.copyWith(fontSize: 24.0),
+          currentStyle.copyWith(fontSize: defaults.fontSize),
         );
         onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
       case SliderOverlayType.position:
@@ -75,7 +76,7 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           ),
         );
         onReset = () => controller.updateSubtitleStyle(
-          currentStyle.copyWith(verticalPosition: 0.05),
+          currentStyle.copyWith(verticalPosition: defaults.verticalPosition),
         );
         onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
       case SliderOverlayType.background:
@@ -96,11 +97,7 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           },
         );
         onReset = () => controller.updateSubtitleStyle(
-          currentStyle.copyWith(
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.scrim.withValues(alpha: 0),
-          ),
+          currentStyle.copyWith(backgroundColor: defaults.backgroundColor),
         );
         onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
       case SliderOverlayType.color:
@@ -112,7 +109,7 @@ class SubtitleSliderOverlay extends ConsumerWidget {
           ),
         );
         onReset = () => controller.updateSubtitleStyle(
-          currentStyle.copyWith(color: AppTheme.textWhite),
+          currentStyle.copyWith(color: defaults.color),
         );
         onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
       case SliderOverlayType.none:
