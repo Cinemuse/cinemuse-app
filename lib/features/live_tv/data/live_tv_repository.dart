@@ -135,12 +135,24 @@ class LiveTvRepository {
 
   Future<String> _loadPlaylistContent(LiveTvPlaylist playlist) async {
     if (playlist.isLocal) {
-      return File(playlist.urlOrPath).readAsString();
+      return _decodeText(await File(playlist.urlOrPath).readAsBytes());
     }
     final response = await _dio.get(playlist.urlOrPath);
     return response.data is String
         ? response.data as String
         : json.encode(response.data);
+  }
+
+  /// UTF-8, or Latin-1 for older files that aren't valid UTF-8; without the
+  /// byte-order mark some editors add, which breaks JSON (REV-124).
+  static String _decodeText(List<int> bytes) {
+    String text;
+    try {
+      text = utf8.decode(bytes);
+    } on FormatException {
+      text = latin1.decode(bytes);
+    }
+    return text.startsWith('\uFEFF') ? text.substring(1) : text;
   }
 
   /// Parsing a big playlist takes seconds, so it runs on a background
@@ -169,38 +181,60 @@ class LiveTvRepository {
 
     if (jsonData is List) {
       channelsList = jsonData;
-    } else if (jsonData is Map && jsonData.containsKey('channels')) {
+    } else if (jsonData is Map && jsonData['channels'] is List) {
       channelsList = jsonData['channels'] as List<dynamic>;
     }
 
     int currentLcn = startLcn;
     final List<Channel> result = [];
 
+    // A bad value skips only that link or channel, not the whole playlist
+    // (REV-124).
     for (final entry in channelsList) {
       if (entry is! Map<String, dynamic>) continue;
+      final links = entry['links'];
+      if (links is! List) continue;
 
-      final links = entry['links'] as List<dynamic>?;
-      if (links == null || links.isEmpty) continue;
-
-      final streamLinks = links
-          .map((l) => StreamLink.fromJson(l as Map<String, dynamic>))
-          .toList();
+      final streamLinks = <StreamLink>[];
+      for (final l in links) {
+        try {
+          streamLinks.add(StreamLink.fromJson(l as Map<String, dynamic>));
+        } catch (_) {
+          // No URL or a field of the wrong type: skip this link.
+        }
+      }
+      if (streamLinks.isEmpty) continue;
 
       result.add(
         Channel(
-          lcn: (entry['lcn'] as int?) ?? currentLcn++,
-          name: (entry['name'] as String?) ?? 'Unknown',
-          logo: (entry['logo'] as String?) ?? '',
+          lcn: _jsonInt(entry['lcn']) ?? currentLcn++,
+          name: _jsonText(entry['name']) ?? 'Unknown',
+          logo: _jsonText(entry['logo']) ?? '',
           links: streamLinks,
           group:
-              (entry['group'] ?? entry['category']) as String? ?? fallbackGroup,
-          provider: entry['provider'] as String?,
-          epgId: entry['epg_id'] as String?,
+              _jsonText(entry['group']) ??
+              _jsonText(entry['category']) ??
+              fallbackGroup,
+          provider: _jsonText(entry['provider']),
+          epgId: _jsonText(entry['epg_id']),
         ),
       );
     }
     return result;
   }
+
+  /// `5`, `5.0` or `"5"`.
+  static int? _jsonInt(Object? value) => switch (value) {
+    num() => value.toInt(),
+    String() => int.tryParse(value.trim()),
+    _ => null,
+  };
+
+  static String? _jsonText(Object? value) => switch (value) {
+    String() => value,
+    num() => value.toString(),
+    _ => null,
+  };
 
   List<StreamLink> _mergeStreamLinks(
     List<StreamLink> existing,
@@ -253,18 +287,15 @@ class LiveTvRepository {
       );
 
       final bytes = response.data;
-      if (bytes == null || bytes.isEmpty) {
-        return await _epgStorage.loadCachedEpg(
-              expectedUrl: effectiveUrl,
-              ttl: const Duration(days: 7),
-            ) ??
-            {};
+      final epgData = (bytes == null || bytes.isEmpty)
+          ? const <String, List<EpgProgram>>{}
+          : await _parseEpg(bytes);
+      if (epgData.isEmpty) {
+        // E.g. an HTML error page: keep showing the old guide (REV-124).
+        AppLogger.warn(_tag, 'The EPG download has no programs');
+        return await _loadOldEpg(effectiveUrl) ?? {};
       }
-
-      final epgData = await _parseEpg(bytes);
-      if (epgData.isNotEmpty) {
-        await _epgStorage.saveCachedEpg(effectiveUrl, epgData);
-      }
+      await _epgStorage.saveCachedEpg(effectiveUrl, epgData);
       return epgData;
     } catch (e, s) {
       // The URL is not logged: a custom EPG URL can contain credentials.
@@ -274,14 +305,16 @@ class LiveTvRepository {
         error: _describeError(e),
         stackTrace: s,
       );
-      // Fallback to expired cache if available
-      final fallback = await _epgStorage.loadCachedEpg(
-        expectedUrl: effectiveUrl,
-        ttl: const Duration(days: 7),
-      );
-      if (fallback != null) return fallback;
-      return {};
+      return await _loadOldEpg(effectiveUrl) ?? {};
     }
+  }
+
+  /// The cached guide even if expired, up to a week old.
+  Future<Map<String, List<EpgProgram>>?> _loadOldEpg(String url) {
+    return _epgStorage.loadCachedEpg(
+      expectedUrl: url,
+      ttl: const Duration(days: 7),
+    );
   }
 
   /// A guide can be 100 MB, so it is parsed on a background isolate to keep

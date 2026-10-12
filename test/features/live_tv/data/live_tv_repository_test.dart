@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:cinemuse_app/features/live_tv/data/epg_storage_service.dart';
 import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
+import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 
 const _epgUrl = 'https://example.com/epg.json';
@@ -32,6 +35,22 @@ class _TwoAtOnceAdapter implements HttpClientAdapter {
       },
     );
   }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+/// Answers every request with [body].
+class _FixedAdapter implements HttpClientAdapter {
+  final String body;
+  _FixedAdapter(this.body);
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async => ResponseBody.fromString(body, 200);
 
   @override
   void close({bool force = false}) {}
@@ -163,4 +182,90 @@ http://example.com/mixed.m3u8
     expect(skipped.single.links.single.url, 'http://example.com/mixed.m3u8');
     expect(kept, hasLength(2));
   });
+
+  test('a bad value skips only that link or channel (REV-124)', () async {
+    await File('${dir.path}/a.json').writeAsString(
+      jsonEncode({
+        'channels': [
+          {
+            'name': 'Rai 1',
+            'lcn': '5',
+            'links': [
+              {'url': 'http://example.com/rai1.m3u8'},
+              {'quality': 'HD'},
+              'not a link',
+            ],
+          },
+          {'name': 'No links', 'links': 'x'},
+          'not a channel',
+          {
+            'name': 'Rai 2',
+            'epg_id': 102,
+            'links': [
+              {'url': 'http://example.com/rai2.m3u8'},
+            ],
+          },
+        ],
+      }),
+    );
+    final repo = LiveTvRepository(Dio(), defaultEpgUrl: _epgUrl);
+
+    final channels = await repo.fetchChannels(
+      customPlaylists: [localPlaylist('a.json', PlaylistType.json)],
+    );
+
+    expect(channels.map((c) => c.name), ['Rai 1', 'Rai 2']);
+    expect(channels.first.lcn, 5);
+    expect(channels.first.links.single.url, 'http://example.com/rai1.m3u8');
+    expect(channels.last.epgId, '102');
+  });
+
+  test('reads Latin-1 files and files with a BOM (REV-124)', () async {
+    await File('${dir.path}/latin1.m3u').writeAsBytes(
+      latin1.encode('#EXTM3U\n#EXTINF:-1,Rete Città\nhttp://example.com/a\n'),
+    );
+    await File('${dir.path}/bom.json').writeAsBytes(
+      utf8.encode(
+        '\uFEFF[{"name":"Bom","links":[{"url":"http://example.com/b"}]}]',
+      ),
+    );
+    final repo = LiveTvRepository(Dio(), defaultEpgUrl: _epgUrl);
+
+    final channels = await repo.fetchChannels(
+      customPlaylists: [
+        localPlaylist('latin1.m3u', PlaylistType.m3u),
+        localPlaylist('bom.json', PlaylistType.json),
+      ],
+    );
+
+    expect(channels.map((c) => c.name), ['Rete Città', 'Bom']);
+  });
+
+  test(
+    'a guide download with no programs keeps the old guide (REV-124)',
+    () async {
+      final storage = EpgStorageService(cacheDirectory: () async => dir);
+      final now = DateTime.now();
+      await storage.saveCachedEpg(_epgUrl, {
+        'rai1': [
+          EpgProgram(
+            name: 'News',
+            startTime: now,
+            endTime: now.add(const Duration(hours: 1)),
+          ),
+        ],
+      });
+      final dio = Dio()
+        ..httpClientAdapter = _FixedAdapter('<html>Server error</html>');
+      final repo = LiveTvRepository(
+        dio,
+        defaultEpgUrl: _epgUrl,
+        epgStorage: storage,
+      );
+
+      final epg = await repo.fetchEpg(forceRefresh: true);
+
+      expect(epg['rai1']?.single.name, 'News');
+    },
+  );
 }
