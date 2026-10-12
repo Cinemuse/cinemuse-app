@@ -1,3 +1,6 @@
+// Re-exported so the widgets keep one import.
+export 'package:cinemuse_app/features/live_tv/application/custom_playlists_notifier.dart';
+
 import 'dart:async';
 
 import 'package:dio/dio.dart';
@@ -5,11 +8,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
 import 'package:cinemuse_app/features/live_tv/application/custom_epg_url_notifier.dart';
+import 'package:cinemuse_app/features/live_tv/application/custom_playlists_notifier.dart';
 import 'package:cinemuse_app/features/live_tv/application/minute_clock_provider.dart';
 import 'package:cinemuse_app/features/live_tv/data/epg_channel_matcher.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
-import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 import 'package:cinemuse_app/features/live_tv/data/local_playlist_storage.dart';
 
 // ---------------------------------------------------------------------------
@@ -19,63 +22,6 @@ import 'package:cinemuse_app/features/live_tv/data/local_playlist_storage.dart';
 final liveTvRepositoryProvider = Provider<LiveTvRepository>((ref) {
   return LiveTvRepository(Dio());
 });
-
-// ---------------------------------------------------------------------------
-// Custom Playlists
-// ---------------------------------------------------------------------------
-
-class CustomPlaylistsNotifier extends StateNotifier<List<LiveTvPlaylist>> {
-  CustomPlaylistsNotifier() : super([]) {
-    _load();
-  }
-
-  static const _key = 'live_tv_custom_playlists';
-
-  Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonList = prefs.getStringList(_key) ?? [];
-    try {
-      state = jsonList.map(LiveTvPlaylist.decode).toList();
-    } catch (_) {
-      state = [];
-    }
-  }
-
-  Future<void> addPlaylist(LiveTvPlaylist playlist) async {
-    final next = [...state, playlist];
-    state = next;
-    // TODO(REV-222): await the save and restore state on failure.
-    unawaited(_save(next));
-  }
-
-  Future<void> removePlaylist(String id) async {
-    final next = state.where((p) => p.id != id).toList();
-    state = next;
-    // TODO(REV-222): await the save and restore state on failure.
-    unawaited(_save(next));
-  }
-
-  Future<void> togglePlaylistEnabled(String id) async {
-    final next = state.map((p) {
-      if (p.id != id) return p;
-      return p.copyWith(isEnabled: !p.isEnabled);
-    }).toList();
-    state = next;
-    // TODO(REV-222): await the save and restore state on failure.
-    unawaited(_save(next));
-  }
-
-  Future<void> _save(List<LiveTvPlaylist> playlists) async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonList = playlists.map((p) => p.encode()).toList();
-    await prefs.setStringList(_key, jsonList);
-  }
-}
-
-final customPlaylistsProvider =
-    StateNotifierProvider<CustomPlaylistsNotifier, List<LiveTvPlaylist>>((ref) {
-      return CustomPlaylistsNotifier();
-    });
 
 // ---------------------------------------------------------------------------
 // Data Providers
