@@ -188,11 +188,13 @@ void main() {
       container.listen(droppedListProvider, (_, __) {});
       await container.read(droppedListProvider.future);
       when(
-        () => historyRepo.restoreToContinueWatching('user-a', 7),
+        () => historyRepo.restoreToContinueWatching('user-a', 7, 'movie'),
       ).thenThrow(const NetworkFailure('offline'));
 
       await expectLater(
-        container.read(userListsProvider.notifier).restoreFromDropped(7),
+        container
+            .read(userListsProvider.notifier)
+            .restoreFromDropped(7, MediaKind.movie),
         throwsA(isA<NetworkFailure>()),
       );
       await container.read(droppedListProvider.future);

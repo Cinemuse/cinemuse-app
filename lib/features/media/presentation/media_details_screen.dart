@@ -126,7 +126,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         final tmdbId = mediaItem.tmdbId;
         final isTV = typeForTmdb == 'tv';
 
-        // Track list status
         final mediaKind = isTV ? MediaKind.tv : MediaKind.movie;
         final isFavorite = ref
             .watch(userListsProvider.notifier)
@@ -135,7 +134,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             .watch(userListsProvider.notifier)
             .isInWatchlist(tmdbId, mediaKind);
 
-        // Watch history data
         final watchHistory = ref
             .watch(mediaWatchHistoryProvider(widget.mediaId))
             .value;
@@ -198,9 +196,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
 
         final droppedList = ref.watch(droppedListProvider).valueOrNull;
         final isDropped =
-            droppedList?.items.any((i) => i.tmdbId == tmdbId) ?? false;
+            droppedList?.containsTitle(tmdbId, mediaKind) ?? false;
 
-        // Set default tab if not set
         _activeTab ??= isTV ? DetailsTab.episodes : DetailsTab.cast;
 
         return CustomScrollView(
@@ -237,7 +234,11 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                         if (user != null) {
                           await ref
                               .read(watchHistoryRepositoryProvider)
-                              .dropFromContinueWatching(user.id, tmdbId);
+                              .dropFromContinueWatching(
+                                user.id,
+                                tmdbId,
+                                typeForTmdb,
+                              );
                           ref.invalidate(droppedListProvider);
                           ref.invalidate(continueWatchingProvider);
                         }
@@ -261,7 +262,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                     : null,
                 resumeData: (watchHistory != null && !watchHistory.isCompleted)
                     ? {
-                        // map 'tv' mediaType to 'tv' string to ensure DetailsHero picks it up
                         'type':
                             (watchHistory.mediaType == MediaKind.episode ||
                                 watchHistory.mediaType == MediaKind.tv)
@@ -609,13 +609,14 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     if (tmdbId != null) {
       final droppedList = ref.read(droppedListProvider).valueOrNull;
       final isDropped =
-          droppedList?.items.any((i) => i.tmdbId == tmdbId) ?? false;
+          droppedList?.containsTitle(tmdbId, MediaItem.fromString(type)) ??
+          false;
       if (isDropped) {
         final user = ref.read(authProvider).value;
         if (user != null) {
           ref
               .read(watchHistoryRepositoryProvider)
-              .restoreToContinueWatching(user.id, tmdbId)
+              .restoreToContinueWatching(user.id, tmdbId, type)
               .then((_) {
                 ref.invalidate(droppedListProvider);
                 ref.invalidate(continueWatchingProvider);
@@ -691,7 +692,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     int watchCount,
   ) {
     final l10n = AppLocalizations.of(context)!;
-    // Provide a fallback title just in case
     final title = details['title'] ?? details['name'] ?? l10n.agendaMovie;
 
     MovieTrackModal.show(

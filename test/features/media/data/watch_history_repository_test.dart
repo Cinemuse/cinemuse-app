@@ -204,6 +204,7 @@ void main() {
         final result = await repository.getHistoryItem(
           userId,
           'livetv_session',
+          'movie',
         );
         expect(result, isNull);
         verifyNever(() => mockSupabase.from(any()));

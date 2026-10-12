@@ -328,7 +328,6 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
           widget.list;
     }
 
-    // Determine icon and color based on list type
     final isSystemList =
         currentList.type == ListType.watchlist ||
         currentList.type == ListType.favorites;
@@ -714,7 +713,8 @@ class _ListMediaCard extends ConsumerWidget {
               await runListAction(
                 context,
                 ref,
-                (lists) => lists.restoreFromDropped(item.tmdbId),
+                (lists) =>
+                    lists.restoreFromDropped(item.tmdbId, item.mediaType),
               );
             }
           : null,

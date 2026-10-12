@@ -55,6 +55,11 @@ class UserList {
   /// Whether items can be added, removed or the list edited.
   bool get isReadOnly => isCollection;
 
+  /// Whether the list holds this title (REV-177: tmdbId alone can match
+  /// both a movie and a show).
+  bool containsTitle(int tmdbId, MediaKind mediaType) =>
+      items.any((i) => i.tmdbId == tmdbId && i.mediaType == mediaType);
+
   /// A TMDB collection shown as a read-only list (the list details sheet).
   factory UserList.fromCollection(
     MediaCollection collection, {

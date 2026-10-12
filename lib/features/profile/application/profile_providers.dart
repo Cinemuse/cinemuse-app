@@ -118,7 +118,7 @@ final watchHistoryStreamProvider = StreamProvider<List<WatchHistory>>((ref) {
 
   return ref
       .watch(watchHistoryRepositoryProvider)
-      .watchAllHistory(userId)
+      .watchHistory(userId)
       .handleError((error, stackTrace) {
         // On expired JWT or channel errors, return empty list.
         // The session refresh will eventually trigger a rebuild via authProvider.

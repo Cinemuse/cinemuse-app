@@ -182,9 +182,11 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
 
   /// Puts a dropped title back in Continue Watching.
   /// Throws an [AppFailure]; the Dropped list reloads either way.
-  Future<void> restoreFromDropped(int tmdbId) => _changeDropped(
-    (repo, userId) => repo.restoreToContinueWatching(userId, tmdbId),
-  );
+  Future<void> restoreFromDropped(int tmdbId, MediaKind mediaType) =>
+      _changeDropped(
+        (repo, userId) =>
+            repo.restoreToContinueWatching(userId, tmdbId, mediaType.name),
+      );
 
   Future<void> _changeDropped(
     Future<void> Function(WatchHistoryRepository repo, String userId) change,

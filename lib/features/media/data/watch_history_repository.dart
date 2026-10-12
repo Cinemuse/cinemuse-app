@@ -49,19 +49,6 @@ class WatchHistoryRepository {
     this._tmdbService,
   );
 
-  // Get current "Continue Watching" list (status = watching)
-  Future<List<WatchHistory>> getContinueWatching(String userId) async {
-    final response = await _client
-        .from('watch_history')
-        .select() // Join with media_cache removed
-        .eq('user_id', userId)
-        .eq('status', 'watching')
-        .order('last_watched_at', ascending: false)
-        .withErrorHandling();
-
-    return (response as List).map((e) => WatchHistory.fromJson(e)).toList();
-  }
-
   // Get dropped items
   Future<List<WatchHistory>> getDroppedItems(String userId) async {
     final response = await _client
@@ -209,7 +196,6 @@ class WatchHistoryRepository {
     // Watched < 120s AND Watched < 10%
     if (progressSeconds < PlaybackThresholds.peekingSeconds &&
         progressPercentage < PlaybackThresholds.peekingPercentage) {
-      // Do nothing, don't save to history
       return;
     }
 
@@ -227,7 +213,6 @@ class WatchHistoryRepository {
       'last_watched_at': DateTime.now().toIso8601String(),
     };
 
-    // Update Local Cache
     await _db.upsertWatchHistory(
       LocalWatchHistoriesCompanion(
         userId: Value(userId),
@@ -242,24 +227,22 @@ class WatchHistoryRepository {
       ),
     );
 
-    // Update Remote
     await _client.from('watch_history').upsert(entry).withErrorHandling();
   }
 
-  Future<WatchHistory?> getHistoryItem(String userId, String tmdbId) async {
-    if (int.tryParse(tmdbId) == null) {
-      return null;
-    }
-    final response = await _client
-        .from('watch_history')
-        .select()
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId)
-        .eq('status', 'watching')
-        .order('last_watched_at', ascending: false)
-        .limit(1)
-        .maybeSingle()
-        .withErrorHandling();
+  Future<WatchHistory?> getHistoryItem(
+    String userId,
+    String tmdbId,
+    String mediaType,
+  ) async {
+    final id = int.tryParse(tmdbId);
+    if (id == null) return null;
+    final response = await _titleRow(
+      _client.from('watch_history').select(),
+      userId,
+      id,
+      mediaType,
+    ).eq('status', 'watching').maybeSingle().withErrorHandling();
 
     if (response == null) return null;
     return WatchHistory.fromJson(response);
@@ -274,7 +257,6 @@ class WatchHistoryRepository {
           orElse: () => MediaKind.movie,
         );
 
-        // Try to get media metadata (now handles TMDB fallback)
         final media = await _mediaRepo.getMediaItem(local.tmdbId, mediaKind);
 
         return WatchHistory(
@@ -360,13 +342,6 @@ class WatchHistoryRepository {
     );
   }
 
-  Stream<List<WatchHistory>> watchAllHistory(String userId) {
-    // We now prefer watchHistory(userId) which uses Drift.
-    // This is kept for compatibility or specific stream requirement.
-    return watchHistory(userId);
-  }
-
-  // Stream movie logs for a specific user and tmdbId
   Stream<List<Map<String, dynamic>>> watchMovieLogs(String userId, int tmdbId) {
     return _client
         .from('watch_logs')
@@ -385,7 +360,6 @@ class WatchHistoryRepository {
         );
   }
 
-  // Stream series logs for a specific user and tmdbId
   Stream<List<Map<String, dynamic>>> watchSeriesLogs(
     String userId,
     int tmdbId,
@@ -407,11 +381,12 @@ class WatchHistoryRepository {
         );
   }
 
-  // Stream watch_history (progress) for a specific series
   Stream<List<WatchHistory>> watchSeriesHistory(String userId, int tmdbId) {
-    return watchHistory(
-      userId,
-    ).map((list) => list.where((e) => e.tmdbId == tmdbId).toList());
+    return watchHistory(userId).map(
+      (list) => list
+          .where((e) => e.tmdbId == tmdbId && e.mediaType == MediaKind.tv)
+          .toList(),
+    );
   }
 
   /// Fetches all watch log entries for a user, enriched with media metadata.
@@ -804,18 +779,14 @@ class WatchHistoryRepository {
     required int season,
     required int episode,
   }) async {
-    // Check if we already have progress for this episode
-    final existing = await _client
-        .from('watch_history')
-        .select('progress_seconds')
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId)
-        .eq('season', season)
-        .eq('episode', episode)
-        .maybeSingle();
+    final existing = await _titleRow(
+      _client.from('watch_history').select('progress_seconds'),
+      userId,
+      tmdbId,
+      'tv',
+    ).eq('season', season).eq('episode', episode).maybeSingle();
 
     if (existing == null) {
-      // Update Local
       await _db.upsertWatchHistory(
         LocalWatchHistoriesCompanion(
           userId: Value(userId),
@@ -830,7 +801,6 @@ class WatchHistoryRepository {
         ),
       );
 
-      // Update Remote
       await _client.from('watch_history').upsert({
         'user_id': userId,
         'tmdb_id': tmdbId,
@@ -928,34 +898,63 @@ class WatchHistoryRepository {
     );
   }
 
-  Future<void> dropFromContinueWatching(String userId, int tmdbId) async {
+  Future<void> dropFromContinueWatching(
+    String userId,
+    int tmdbId,
+    String mediaType,
+  ) async {
     invalidateWatchLogsCache();
-    // Update Local
-    await (_db.update(_db.localWatchHistories)
-          ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
-        .write(const LocalWatchHistoriesCompanion(status: Value('dropped')));
-
-    // Update Remote
-    await _client
-        .from('watch_history')
-        .update({'status': 'dropped'})
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId);
+    await _setLocalStatus(userId, tmdbId, mediaType, 'dropped');
+    await _titleRow(
+      _client.from('watch_history').update({'status': 'dropped'}),
+      userId,
+      tmdbId,
+      mediaType,
+    );
   }
 
-  Future<void> restoreToContinueWatching(String userId, int tmdbId) async {
+  Future<void> restoreToContinueWatching(
+    String userId,
+    int tmdbId,
+    String mediaType,
+  ) async {
     invalidateWatchLogsCache();
     // Server first: if it fails, the local copy stays as it was (REV-106).
-    await _client
-        .from('watch_history')
-        .update({'status': 'watching'})
-        .eq('user_id', userId)
-        .eq('tmdb_id', tmdbId)
-        .withAppFailure();
-    await (_db.update(_db.localWatchHistories)
-          ..where((t) => t.userId.equals(userId) & t.tmdbId.equals(tmdbId)))
-        .write(const LocalWatchHistoriesCompanion(status: Value('watching')));
+    await _titleRow(
+      _client.from('watch_history').update({'status': 'watching'}),
+      userId,
+      tmdbId,
+      mediaType,
+    ).withAppFailure();
+    await _setLocalStatus(userId, tmdbId, mediaType, 'watching');
   }
+
+  /// Narrows a `watch_history` query to one title. REV-177: a movie and a
+  /// show can share a tmdbId, so the media type is always needed.
+  PostgrestFilterBuilder<T> _titleRow<T>(
+    PostgrestFilterBuilder<T> query,
+    String userId,
+    int tmdbId,
+    String mediaType,
+  ) => query
+      .eq('user_id', userId)
+      .eq('tmdb_id', tmdbId)
+      .eq('media_type', mediaType);
+
+  /// Sets the status of one title's local row (see [_titleRow]).
+  Future<void> _setLocalStatus(
+    String userId,
+    int tmdbId,
+    String mediaType,
+    String status,
+  ) =>
+      (_db.update(_db.localWatchHistories)..where(
+            (t) =>
+                t.userId.equals(userId) &
+                t.tmdbId.equals(tmdbId) &
+                t.mediaType.equals(mediaType),
+          ))
+          .write(LocalWatchHistoriesCompanion(status: Value(status)));
 
   /// Clears a title's progress ("Remove from Continue Watching") in one
   /// `clear_progress` RPC: a title never logged loses its row, a movie seen
@@ -976,10 +975,8 @@ class WatchHistoryRepository {
     await _cacheReturnedRow(userId, tmdbId, mediaType, rows);
   }
 
-  // Simple StreamTransformer to debounce events
   StreamTransformer<T, T> _debounceTransformer<T>(Duration duration) {
     return StreamTransformer<T, T>.fromBind((Stream<T> stream) {
-      // StreamController to manage the debounced stream
       final controller = StreamController<T>.broadcast();
       Timer? debounceTimer;
 

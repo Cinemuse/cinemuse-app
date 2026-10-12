@@ -19,7 +19,7 @@ class ContinueWatchingService {
     if (userId == null) return;
     await _ref
         .read(watchHistoryRepositoryProvider)
-        .dropFromContinueWatching(userId, item.tmdbId);
+        .dropFromContinueWatching(userId, item.tmdbId, item.mediaType.name);
     _ref.invalidate(droppedListProvider);
   }
 

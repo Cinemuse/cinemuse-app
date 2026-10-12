@@ -189,7 +189,11 @@ class PlayerHistoryManager {
     if (user != null && (params.type == 'movie' || params.type == 'tv')) {
       try {
         final repo = ref.read(watchHistoryRepositoryProvider);
-        final history = await repo.getHistoryItem(user.id, params.queryId);
+        final history = await repo.getHistoryItem(
+          user.id,
+          params.queryId,
+          params.type,
+        );
         if (history != null) {
           if (params.type == 'tv') {
             final hSeason = (history.season == null || history.season! < 1)
