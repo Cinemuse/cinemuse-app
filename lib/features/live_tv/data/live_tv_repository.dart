@@ -14,15 +14,19 @@ import 'package:cinemuse_app/features/live_tv/data/epg_channel_matcher.dart';
 import 'package:cinemuse_app/features/live_tv/data/epg_storage_service.dart';
 
 class LiveTvRepository {
-  static const String defaultEpgUrl =
-      'https://enfaqgwmuytoxkxgqqvp.supabase.co/functions/v1/live-tv-resolver/epg.json';
   static const _tag = 'LiveTvRepository';
 
   final Dio _dio;
   final EpgStorageService _epgStorage;
 
-  LiveTvRepository(this._dio, {EpgStorageService? epgStorage})
-    : _epgStorage = epgStorage ?? EpgStorageService();
+  /// The Cinemuse guide, used when the user has no EPG URL of their own.
+  final String defaultEpgUrl;
+
+  LiveTvRepository(
+    this._dio, {
+    required this.defaultEpgUrl,
+    EpgStorageService? epgStorage,
+  }) : _epgStorage = epgStorage ?? EpgStorageService();
 
   /// Fetches the channel list, filtering to only playable channels.
   Future<List<Channel>> fetchChannels({

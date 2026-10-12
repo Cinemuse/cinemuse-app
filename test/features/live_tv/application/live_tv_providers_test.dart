@@ -9,9 +9,11 @@ import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 
+const _defaultUrl = 'https://example.com/default.json';
+
 /// Records which EPG URLs were requested; never calls a server.
 class _RecordingRepository extends LiveTvRepository {
-  _RecordingRepository() : super(Dio());
+  _RecordingRepository() : super(Dio(), defaultEpgUrl: _defaultUrl);
 
   final requestedUrls = <String?>[];
 
@@ -52,7 +54,10 @@ void main() {
   void createContainer() {
     repo = _RecordingRepository();
     container = ProviderContainer(
-      overrides: [liveTvRepositoryProvider.overrideWithValue(repo)],
+      overrides: [
+        liveTvRepositoryProvider.overrideWithValue(repo),
+        defaultEpgUrlProvider.overrideWithValue(_defaultUrl),
+      ],
     );
     addTearDown(container.dispose);
     container.listen(epgDataProvider, (previous, next) {});
@@ -78,10 +83,7 @@ void main() {
     await _settle();
 
     expect(repo.requestedUrls, hasLength(1));
-    expect(
-      container.read(activeEpgUrlProvider),
-      LiveTvRepository.defaultEpgUrl,
-    );
+    expect(container.read(activeEpgUrlProvider), _defaultUrl);
   });
 
   test('changing the URL loads the guide again with the new URL', () async {

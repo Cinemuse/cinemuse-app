@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
-import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
+import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 
 /// The user's own EPG URL, or `null` for the default guide.
 ///
@@ -50,8 +50,13 @@ final customEpgUrlProvider =
       CustomEpgUrlNotifier.new,
     );
 
+/// The Cinemuse guide, from the project URL in `.env` (LTV-06).
+final defaultEpgUrlProvider = Provider<String>(
+  (ref) => '${SupabaseConfig.url}/functions/v1/live-tv-resolver/epg.json',
+);
+
 /// Currently active EPG URL (custom URL if configured, otherwise unified default).
 final activeEpgUrlProvider = Provider<String>((ref) {
   return ref.watch(customEpgUrlProvider).valueOrNull ??
-      LiveTvRepository.defaultEpgUrl;
+      ref.watch(defaultEpgUrlProvider);
 });

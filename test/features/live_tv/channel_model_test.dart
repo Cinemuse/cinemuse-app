@@ -188,26 +188,6 @@ void main() {
     });
   });
 
-  group('Channel.logoUrl', () {
-    test('sanitizes accents and replaces svg with png', () {
-      final channel = Channel(
-        lcn: 1,
-        name: 'Test',
-        logo: 'Caffè_e_TV_Papà.svg',
-        type: 'hls',
-        urlOverride: 'http://test',
-      );
-
-      final url = channel.logoUrl;
-
-      expect(url, contains('.png'));
-      expect(url, isNot(contains('.svg')));
-      expect(url, isNot(contains('è')));
-      expect(url, isNot(contains('à')));
-      expect(url, contains('caffe_e_tv_papa.png'));
-    });
-  });
-
   group('Channel quality helpers', () {
     test('linksByQuality groups links correctly', () {
       final channel = Channel(

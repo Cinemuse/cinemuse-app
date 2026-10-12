@@ -55,7 +55,7 @@ class VideoTopBar extends ConsumerWidget {
                   width: 34,
                   height: 34,
                   child: Image.network(
-                    channel!.logoUrl,
+                    channel!.logo,
                     fit: BoxFit.contain,
                     cacheWidth: 68,
                     cacheHeight: 68,

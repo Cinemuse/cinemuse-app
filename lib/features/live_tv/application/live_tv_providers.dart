@@ -20,7 +20,10 @@ import 'package:cinemuse_app/features/live_tv/data/local_playlist_storage.dart';
 // ---------------------------------------------------------------------------
 
 final liveTvRepositoryProvider = Provider<LiveTvRepository>((ref) {
-  return LiveTvRepository(Dio());
+  return LiveTvRepository(
+    Dio(),
+    defaultEpgUrl: ref.watch(defaultEpgUrlProvider),
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -58,7 +61,7 @@ final epgDataProvider = FutureProvider<Map<String, List<EpgProgram>>>((
   // Wait for the saved URL: starting with the default guide meant two
   // downloads and two parses on every start (REV-115).
   final customUrl = await ref.watch(customEpgUrlProvider.future);
-  return repo.fetchEpg(url: customUrl ?? LiveTvRepository.defaultEpgUrl);
+  return repo.fetchEpg(url: customUrl);
 });
 
 // ---------------------------------------------------------------------------

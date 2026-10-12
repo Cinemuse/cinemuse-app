@@ -165,25 +165,6 @@ class Channel {
   List<StreamQuality> get availableQualities =>
       linksByQuality.keys.toList()..sort((a, b) => b.index.compareTo(a.index));
 
-  /// Full URL to the channel's logo on Supabase Storage.
-  // We force .png extension here because we've uploaded PNGs to fix the black SVG issue.
-  // We also sanitise the filename to remove accented characters which cause upload issues on Supabase.
-  String get logoUrl {
-    final pngLogo = _sanitiseFilename(logo.replaceAll('.svg', '.png'));
-    return 'https://enfaqgwmuytoxkxgqqvp.supabase.co/storage/v1/object/public/channel-logos/$pngLogo';
-  }
-
-  static String _sanitiseFilename(String filename) {
-    return filename
-        .toLowerCase()
-        .replaceAll('à', 'a')
-        .replaceAll('è', 'e')
-        .replaceAll('é', 'e')
-        .replaceAll('ì', 'i')
-        .replaceAll('ò', 'o')
-        .replaceAll('ù', 'u');
-  }
-
   factory Channel.fromJson(Map<String, dynamic> json) {
     final epg = json['epg'] as Map<String, dynamic>?;
     final geoblock = json['geoblock'];

@@ -167,9 +167,9 @@ class _ChannelItemTile extends StatelessWidget {
                   height: 36,
                   color: Colors.white.withValues(alpha: 0.06),
                   alignment: Alignment.center,
-                  child: channel.logoUrl.isNotEmpty
+                  child: channel.logo.isNotEmpty
                       ? Image.network(
-                          channel.logoUrl,
+                          channel.logo,
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) => _buildFallbackIcon(),
                         )

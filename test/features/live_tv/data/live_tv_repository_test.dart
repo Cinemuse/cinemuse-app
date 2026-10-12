@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 
+const _epgUrl = 'https://example.com/epg.json';
+
 void main() {
   late Directory dir;
 
@@ -30,7 +32,7 @@ http://example.com/rai1.m3u8
     await File('${dir.path}/b.json').writeAsString('''[
   {"name": "Rai 2", "lcn": 2, "links": [{"url": "http://example.com/rai2.m3u8"}]}
 ]''');
-    final repo = LiveTvRepository(Dio());
+    final repo = LiveTvRepository(Dio(), defaultEpgUrl: _epgUrl);
 
     final channels = await repo.fetchChannels(
       customPlaylists: [
@@ -49,7 +51,7 @@ http://example.com/rai1.m3u8
 #EXTINF:-1,Rai 1
 http://example.com/rai1.m3u8
 ''');
-    final repo = LiveTvRepository(Dio());
+    final repo = LiveTvRepository(Dio(), defaultEpgUrl: _epgUrl);
 
     final channels = await repo.fetchChannels(
       customPlaylists: [
@@ -74,7 +76,7 @@ http://example.com/b.m3u8
 #EXTINF:-1,Gamma
 http://example.com/c.m3u8
 ''');
-      final repo = LiveTvRepository(Dio());
+      final repo = LiveTvRepository(Dio(), defaultEpgUrl: _epgUrl);
 
       final channels = await repo.fetchChannels(
         customPlaylists: [
