@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import 'package:media_kit_video/media_kit_video.dart' as mkv;
@@ -111,30 +110,27 @@ class LivePlayerSection extends ConsumerWidget {
   }
 
   Widget _buildPlaceholder(AppLocalizations l10n) {
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-      child: Container(
-        color: AppTheme.surface.withValues(alpha: 0.5),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.live_tv_rounded,
-                color: AppTheme.textMuted.withValues(alpha: 0.5),
-                size: 48,
+    return Container(
+      color: AppTheme.surface.withValues(alpha: 0.5),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.live_tv_rounded,
+              color: AppTheme.textMuted.withValues(alpha: 0.5),
+              size: 48,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              l10n.liveTvSelectChannel,
+              style: TextStyle(
+                color: AppTheme.textMuted.withValues(alpha: 0.7),
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
               ),
-              const SizedBox(height: 12),
-              Text(
-                l10n.liveTvSelectChannel,
-                style: TextStyle(
-                  color: AppTheme.textMuted.withValues(alpha: 0.7),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

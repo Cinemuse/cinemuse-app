@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -30,51 +29,44 @@ class EpgDetailsBanner extends StatelessWidget {
     final now = DateTime.now();
     final isLive = program?.isLive ?? false;
 
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.surface.withValues(alpha: 0.85),
-                const Color(0xFF160D27).withValues(alpha: 0.90),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.surface.withValues(alpha: 0.85),
+            const Color(0xFF160D27).withValues(alpha: 0.90),
+          ],
+        ),
+        border: Border(bottom: BorderSide(color: AppTheme.border, width: 1)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Left: Details info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildMetaBadges(context, l10n, isLive),
+                const SizedBox(height: 8),
+                _buildTitle(),
+                const SizedBox(height: 6),
+                _buildDescription(l10n),
+                if (isLive && program != null) ...[
+                  const SizedBox(height: 10),
+                  _buildProgressBar(context, l10n, now),
+                ],
               ],
             ),
-            border: Border(
-              bottom: BorderSide(color: AppTheme.border, width: 1),
-            ),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Left: Details info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildMetaBadges(context, l10n, isLive),
-                    const SizedBox(height: 8),
-                    _buildTitle(),
-                    const SizedBox(height: 6),
-                    _buildDescription(l10n),
-                    if (isLive && program != null) ...[
-                      const SizedBox(height: 10),
-                      _buildProgressBar(context, l10n, now),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 24),
-              // Right: Actions & Clock
-              _buildActions(context, l10n),
-            ],
-          ),
-        ),
+          const SizedBox(width: 24),
+          // Right: Actions & Clock
+          _buildActions(context, l10n),
+        ],
       ),
     );
   }

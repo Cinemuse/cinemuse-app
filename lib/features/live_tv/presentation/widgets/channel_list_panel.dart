@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,62 +36,48 @@ class ChannelListPanel extends ConsumerWidget {
           }
           return KeyEventResult.ignored;
         },
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFA0F0518), Color(0xF71A0B2E)],
-                ),
-                border: Border(
-                  right: BorderSide(color: AppTheme.border, width: 1),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.7),
-                    blurRadius: 32,
-                    spreadRadius: 2,
-                    offset: const Offset(6, 0),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  _buildOverlayHeader(context, ref),
-                  const Divider(height: 1, color: Colors.white10),
-                  _SearchRow(isOverlay: true, onClose: onClose),
-                  const Divider(height: 1, color: Colors.white10),
-                  Expanded(
-                    child: _ChannelList(isOverlay: true, onClose: onClose),
-                  ),
-                ],
-              ),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFA0F0518), Color(0xF71A0B2E)],
             ),
+            border: Border(right: BorderSide(color: AppTheme.border, width: 1)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.7),
+                blurRadius: 32,
+                spreadRadius: 2,
+                offset: const Offset(6, 0),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              _buildOverlayHeader(context, ref),
+              const Divider(height: 1, color: Colors.white10),
+              _SearchRow(isOverlay: true, onClose: onClose),
+              const Divider(height: 1, color: Colors.white10),
+              Expanded(child: _ChannelList(isOverlay: true, onClose: onClose)),
+            ],
           ),
         ),
       );
     }
 
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppTheme.surface.withValues(alpha: 0.6),
-            border: _resolveBorder(context),
-          ),
-          child: Column(
-            children: [
-              const _SearchRow(),
-              const _CategoryChipsRow(),
-              const Divider(height: 1, color: Colors.white10),
-              Expanded(child: _ChannelList(isOverlay: false, onClose: onClose)),
-            ],
-          ),
-        ),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface.withValues(alpha: 0.6),
+        border: _resolveBorder(context),
+      ),
+      child: Column(
+        children: [
+          const _SearchRow(),
+          const _CategoryChipsRow(),
+          const Divider(height: 1, color: Colors.white10),
+          Expanded(child: _ChannelList(isOverlay: false, onClose: onClose)),
+        ],
       ),
     );
   }
