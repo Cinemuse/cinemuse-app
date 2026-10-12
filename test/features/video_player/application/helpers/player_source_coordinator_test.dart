@@ -188,6 +188,51 @@ void main() {
     });
   });
 
+  group('changeFile', () {
+    test('opens the file with the stream headers (REV-150)', () async {
+      final h = _Harness();
+      addTearDown(h.container.dispose);
+      h.resolves(
+        _sourceA,
+        ResolvedStream(
+          url: 'https://a/file3',
+          provider: 'test',
+          candidate: _sourceA,
+          headers: const {'Referer': 'https://host/'},
+        ),
+      );
+
+      await h.coordinator.changeFile(3);
+
+      final media =
+          verify(
+                () => h.player.open(captureAny(), play: any(named: 'play')),
+              ).captured.single
+              as Media;
+      expect(media.httpHeaders, {'Referer': 'https://host/'});
+      expect(h.state.currentStream?.url, 'https://a/file3');
+    });
+
+    test('a failure shows translated text, not the exception', () async {
+      final h = _Harness();
+      addTearDown(h.container.dispose);
+      when(
+        () => h.resolver.resolveStream(
+          _sourceA,
+          season: any(named: 'season'),
+          episode: any(named: 'episode'),
+          fileId: any(named: 'fileId'),
+        ),
+      ).thenThrow(Exception('boom at https://secret'));
+
+      await h.coordinator.changeFile(3);
+
+      expect(h.state.error, isNotNull);
+      expect(h.state.error, isNot(contains('boom')));
+      expect(h.state.isResolving, isFalse);
+    });
+  });
+
   test('a source that never loads ends with an error (REV-148)', () {
     fakeAsync((async) {
       final h = _Harness();

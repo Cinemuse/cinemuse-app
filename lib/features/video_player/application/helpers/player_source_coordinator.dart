@@ -213,40 +213,32 @@ class PlayerSourceCoordinator {
         fileId: fileId,
       );
 
-      if (resolvedStream != null) {
-        await player.open(Media(resolvedStream.url), play: true);
-        unawaited(
-          getTrackManager()?.ensurePreferredTrack(
-                isAnime: getCurrentState()?.isAnime ?? false,
-              ) ??
-              Future.value(),
-        );
-
-        if (isMounted()) {
-          final updated = getCurrentState();
-          if (updated != null) {
-            onStateChanged(
-              updated.copyWith(
-                currentStream: resolvedStream,
-                isResolving: false,
-                error: null,
-              ),
-            );
-          }
-        }
-      } else {
-        if (isMounted()) {
-          final updated = getCurrentState();
-          if (updated != null) {
-            onStateChanged(
-              updated.copyWith(
-                isResolving: false,
-                error: "Failed to resolve the selected file.",
-              ),
-            );
-          }
-        }
+      if (resolvedStream == null) {
+        final message = ref
+            .read(localizationsProvider)
+            .streamingErrorResolutionFailed;
+        _updateState((s) => s.copyWith(isResolving: false, error: message));
+        return;
       }
+      // Same headers as every other open: some hosts refuse without them
+      // (REV-150).
+      await player.open(
+        Media(resolvedStream.url, httpHeaders: resolvedStream.headers),
+        play: true,
+      );
+      unawaited(
+        getTrackManager()?.ensurePreferredTrack(
+              isAnime: getCurrentState()?.isAnime ?? false,
+            ) ??
+            Future.value(),
+      );
+      _updateState(
+        (s) => s.copyWith(
+          currentStream: resolvedStream,
+          isResolving: false,
+          error: null,
+        ),
+      );
     } catch (e, st) {
       developer.log(
         'Error changing file: $e',
@@ -255,17 +247,12 @@ class PlayerSourceCoordinator {
         stackTrace: st,
         level: 900,
       );
-      if (isMounted()) {
-        final updated = getCurrentState();
-        if (updated != null) {
-          onStateChanged(
-            updated.copyWith(
-              isResolving: false,
-              error: "Error changing file: ${e.toString()}",
-            ),
-          );
-        }
-      }
+      _updateState(
+        (s) => s.copyWith(
+          isResolving: false,
+          error: ref.read(errorMapperProvider).map(e).message,
+        ),
+      );
     }
   }
 
