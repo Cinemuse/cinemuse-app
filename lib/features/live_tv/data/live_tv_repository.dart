@@ -48,8 +48,14 @@ class LiveTvRepository {
           syntheticLcn,
         );
 
+        // The next playlist's numbers carry on after this one's, so two
+        // playlists never share numbers (REV-113).
         for (final ch in playlistChannels) {
-          final key = _buildChannelKey(ch.epgId, ch.name);
+          if (ch.lcn >= syntheticLcn) syntheticLcn = ch.lcn + 1;
+        }
+
+        for (final ch in playlistChannels) {
+          final key = ch.uniqueId;
           if (channelsByKey.containsKey(key)) {
             final existing = channelsByKey[key]!;
             final mergedLinks = _mergeStreamLinks(existing.links, ch.links);
@@ -168,19 +174,6 @@ class LiveTvRepository {
       }
     }
     return combined;
-  }
-
-  String _buildChannelKey(String? epgId, String name) {
-    if (epgId != null && epgId.trim().isNotEmpty) {
-      return 'epg:${epgId.trim().toLowerCase()}';
-    }
-    final normalized = name
-        .toLowerCase()
-        .replaceAll(RegExp(r'\b(fhd|uhd|hd|sd|4k|1080p|720p)\b'), '')
-        .replaceAll(RegExp(r'[^\w\s]'), '')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    return 'name:$normalized';
   }
 
   void _sortChannels(List<Channel> channels) {

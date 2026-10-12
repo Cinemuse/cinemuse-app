@@ -60,4 +60,31 @@ http://example.com/rai1.m3u8
 
     expect(channels.single.name, 'Rai 1');
   });
+
+  test(
+    'numbers of a second playlist carry on after the first (REV-113)',
+    () async {
+      await File('${dir.path}/a.m3u').writeAsString('''#EXTM3U
+#EXTINF:-1,Alpha
+http://example.com/a.m3u8
+#EXTINF:-1,Beta
+http://example.com/b.m3u8
+''');
+      await File('${dir.path}/b.m3u').writeAsString('''#EXTM3U
+#EXTINF:-1,Gamma
+http://example.com/c.m3u8
+''');
+      final repo = LiveTvRepository(Dio());
+
+      final channels = await repo.fetchChannels(
+        customPlaylists: [
+          localPlaylist('a.m3u', PlaylistType.m3u),
+          localPlaylist('b.m3u', PlaylistType.m3u),
+        ],
+      );
+
+      expect(channels.map((c) => c.name), ['Alpha', 'Beta', 'Gamma']);
+      expect(channels.map((c) => c.lcn).toSet(), hasLength(3));
+    },
+  );
 }

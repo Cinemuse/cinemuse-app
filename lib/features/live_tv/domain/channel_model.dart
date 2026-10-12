@@ -89,9 +89,30 @@ class Channel {
     );
   }
 
-  /// Unique identifier for this channel.
-  /// Since many IPTV channels lack a unique LCN, we use a combination of name and LCN.
-  String get uniqueId => '${name}_$lcn'.hashCode.toString();
+  /// Stable id, used to merge channels across playlists and to save
+  /// favourites and recents: `epg:<tvg-id>`, or `name:<name without quality
+  /// words>`. Never the number: without `tvg-chno` it is the position in the
+  /// file, so it changes when the provider adds a channel (REV-113).
+  String get uniqueId => _ids[this] ??= _buildId(epgId, name);
+
+  // Cached per object: the id is read for every channel on each list rebuild.
+  static final _ids = Expando<String>();
+  static final _qualityWords = RegExp(r'\b(fhd|uhd|hd|sd|4k|1080p|720p)\b');
+  static final _symbols = RegExp(r'[^\w\s]');
+  static final _spaces = RegExp(r'\s+');
+
+  static String _buildId(String? epgId, String name) {
+    if (epgId != null && epgId.trim().isNotEmpty) {
+      return 'epg:${epgId.trim().toLowerCase()}';
+    }
+    final normalized = name
+        .toLowerCase()
+        .replaceAll(_qualityWords, '')
+        .replaceAll(_symbols, '')
+        .replaceAll(_spaces, ' ')
+        .trim();
+    return 'name:$normalized';
+  }
 
   /// Whether this channel can be played by media_kit (HLS/DASH without DRM).
   ///

@@ -378,4 +378,23 @@ http://stream.com/skysportcalcio.m3u8
       expect(updated.links[1].provider, 'IPTV');
     });
   });
+
+  group('Channel.uniqueId (REV-113)', () {
+    test('does not change when the channel number changes', () {
+      const a = Channel(lcn: 2000, name: 'Rai 1 HD', logo: '');
+      const b = Channel(lcn: 2001, name: 'Rai 1', logo: '');
+      expect(a.uniqueId, b.uniqueId);
+      expect(a.uniqueId, 'name:rai 1');
+    });
+
+    test('uses the guide id when there is one', () {
+      const channel = Channel(
+        lcn: 1,
+        name: 'Rai 1',
+        logo: '',
+        epgId: ' Rai1.it ',
+      );
+      expect(channel.uniqueId, 'epg:rai1.it');
+    });
+  });
 }
