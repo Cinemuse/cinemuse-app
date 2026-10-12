@@ -29,7 +29,7 @@ class EpgTimeRuler extends StatelessWidget {
       height: 42,
       width: totalWidth,
       decoration: BoxDecoration(
-        color: const Color(0xFF120B20),
+        color: AppTheme.primary,
         border: Border(bottom: BorderSide(color: AppTheme.border, width: 1)),
       ),
       child: Stack(

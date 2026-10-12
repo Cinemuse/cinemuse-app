@@ -189,7 +189,7 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F081C),
+        color: AppTheme.primary,
         border: Border(bottom: BorderSide(color: AppTheme.border, width: 1)),
       ),
       child: Column(

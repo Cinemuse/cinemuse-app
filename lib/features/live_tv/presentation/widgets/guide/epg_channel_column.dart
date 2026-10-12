@@ -124,7 +124,7 @@ class _ChannelItemTile extends StatelessWidget {
                       ? Colors.white.withValues(alpha: 0.08)
                       : (isSelected
                             ? AppTheme.accent.withValues(alpha: 0.12)
-                            : const Color(0xFF0F081C))),
+                            : AppTheme.primary)),
             border: Border(
               right: BorderSide(
                 color: isFocused ? AppTheme.accent : AppTheme.border,

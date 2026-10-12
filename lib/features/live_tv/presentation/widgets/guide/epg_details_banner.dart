@@ -37,7 +37,7 @@ class EpgDetailsBanner extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             AppTheme.surface.withValues(alpha: 0.85),
-            const Color(0xFF160D27).withValues(alpha: 0.90),
+            AppTheme.secondary.withValues(alpha: 0.90),
           ],
         ),
         border: Border(bottom: BorderSide(color: AppTheme.border, width: 1)),
@@ -121,11 +121,11 @@ class EpgDetailsBanner extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: const Color(0xFFE50914).withValues(alpha: 0.9),
+              color: AppTheme.favorites.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(6),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFE50914).withValues(alpha: 0.4),
+                  color: AppTheme.favorites.withValues(alpha: 0.4),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),

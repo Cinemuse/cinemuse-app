@@ -38,10 +38,13 @@ class ChannelListPanel extends ConsumerWidget {
         },
         child: Container(
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFA0F0518), Color(0xF71A0B2E)],
+              colors: [
+                AppTheme.primary.withValues(alpha: 0.98),
+                AppTheme.secondary.withValues(alpha: 0.97),
+              ],
             ),
             border: Border(right: BorderSide(color: AppTheme.border, width: 1)),
             boxShadow: [

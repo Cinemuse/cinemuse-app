@@ -58,8 +58,8 @@ class EpgProgramBlock extends StatelessWidget {
                     : (isHovered
                           ? Colors.white.withValues(alpha: 0.12)
                           : (isLive
-                                ? const Color(0xFF1E1136)
-                                : const Color(0xFF140C24))),
+                                ? AppTheme.secondary
+                                : AppTheme.secondary.withValues(alpha: 0.5))),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: isFocused
@@ -88,7 +88,7 @@ class EpgProgramBlock extends StatelessWidget {
                                 height: 5,
                                 margin: const EdgeInsets.only(right: 5),
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFFE50914),
+                                  color: AppTheme.favorites,
                                   shape: BoxShape.circle,
                                 ),
                               ),

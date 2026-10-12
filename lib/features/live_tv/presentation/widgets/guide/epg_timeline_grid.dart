@@ -400,7 +400,7 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       alignment: Alignment.centerLeft,
       decoration: BoxDecoration(
-        color: const Color(0xFF0C0717),
+        color: AppTheme.primary,
         border: Border(
           right: BorderSide(color: AppTheme.border, width: 1),
           bottom: BorderSide(color: AppTheme.border, width: 1),
