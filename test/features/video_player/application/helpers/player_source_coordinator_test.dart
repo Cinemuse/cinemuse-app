@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
@@ -39,6 +42,7 @@ final _sourceB = StreamCandidate(
 /// A coordinator playing [_sourceA], with [_sourceB] as the other source.
 class _Harness {
   final player = _MockPlayer();
+  final stream = _MockPlayerStream();
   final resolver = _MockResolver();
   final errors = <Object?>[];
   late CinemaPlayerState state;
@@ -46,7 +50,6 @@ class _Harness {
   late ProviderContainer container;
 
   _Harness() {
-    final stream = _MockPlayerStream();
     when(() => player.stream).thenReturn(stream);
     when(() => player.state).thenReturn(const PlayerState());
     when(
@@ -138,6 +141,29 @@ void main() {
       await pumpEventQueue();
 
       expect(h.errors, hasLength(1));
+    });
+  });
+
+  test('a source that never loads ends with an error (REV-148)', () {
+    fakeAsync((async) {
+      final h = _Harness();
+      addTearDown(h.container.dispose);
+      // A stream that never sends a duration: the source never loads.
+      when(
+        () => h.stream.duration,
+      ).thenAnswer((_) => StreamController<Duration>().stream);
+      h.resolves(
+        _sourceB,
+        ResolvedStream(url: 'https://b', provider: 'test', candidate: _sourceB),
+      );
+
+      unawaited(h.coordinator.changeSource(_sourceB));
+      async.elapse(const Duration(seconds: 29));
+      expect(h.state.isResolving, isTrue);
+
+      async.elapse(const Duration(seconds: 2));
+      expect(h.state.isResolving, isFalse);
+      expect(h.state.error, isNotNull);
     });
   });
 }

@@ -85,9 +85,7 @@ class PlayerSourceCoordinator {
         stackTrace: st,
         level: 900,
       );
-      if (!isManual) {
-        if (tryNextCandidate()) return;
-      }
+      if (!isManual && tryNextCandidate()) return;
       if (isMounted()) {
         final current = getCurrentState();
         if (current != null) {
@@ -169,9 +167,10 @@ class PlayerSourceCoordinator {
     ResolvedStream resolvedStream,
     Duration position,
   ) async {
-    final newDuration = await player.stream.duration.firstWhere(
-      (d) => d.inSeconds > 0,
-    );
+    // A source that never loads fails like any other error (REV-148).
+    final newDuration = await player.stream.duration
+        .firstWhere((d) => d.inSeconds > 0)
+        .timeout(const Duration(seconds: 30));
     final seekTo = position.inSeconds < newDuration.inSeconds
         ? position
         : Duration(seconds: newDuration.inSeconds - 2);
