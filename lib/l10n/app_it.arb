@@ -461,6 +461,8 @@
   "liveTvNoEpg": "Nessuna informazione sul programma",
   "liveTvLoading": "Caricamento canali...",
   "liveTvError": "Errore caricamento canali",
+  "liveTvStreamUnavailable": "Stream non disponibile",
+  "liveTvStreamUnavailableHint": "Questo canale potrebbe essere offline o non disponibile nel tuo paese.",
   "liveTvAllChannels": "Tutti",
   "liveTvHd": "HD",
   "liveTvNoChannels": "Nessun canale trovato",

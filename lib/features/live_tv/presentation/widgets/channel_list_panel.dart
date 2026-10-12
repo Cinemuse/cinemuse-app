@@ -382,6 +382,8 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
         return KeyEventResult.ignored;
       },
     );
+    // Rebuild so the border shows the accent while focused (REV-139).
+    _searchFocusNode.addListener(() => setState(() {}));
   }
 
   @override
@@ -746,17 +748,25 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
     super.dispose();
   }
 
-  void _scrollToSelected(List<Channel> channels, Channel selected) {
-    if (!_scrollController.hasClients) return;
-    final index = channels.indexWhere((ch) => ch.uniqueId == selected.uniqueId);
-    if (index < 0) return;
+  /// Top of [selected]'s row, counting the 44 px section headers (REV-139).
+  double? _offsetOf(List<ChannelSection> sections, Channel selected) {
+    final hasHeaders = !(sections.length == 1 && sections.first.title.isEmpty);
+    var offset = 0.0;
+    for (final section in sections) {
+      if (hasHeaders) offset += 44.0;
+      for (final ch in section.channels) {
+        if (ch.uniqueId == selected.uniqueId) return offset;
+        offset += 58.0;
+      }
+    }
+    return null;
+  }
 
-    final offset = (index * 58.0).clamp(
-      0.0,
-      _scrollController.position.maxScrollExtent,
-    );
+  void _scrollToSelected(List<ChannelSection> sections, Channel selected) {
+    final offset = _offsetOf(sections, selected);
+    if (offset == null || !_scrollController.hasClients) return;
     _scrollController.animateTo(
-      offset,
+      offset.clamp(0.0, _scrollController.position.maxScrollExtent),
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOutCubic,
     );
@@ -769,40 +779,21 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
     if (selected == null || !_scrollController.hasClients) return;
     _hasCenteredInitial = true;
 
-    final isSingleSection =
-        sections.length == 1 && sections.first.title.isEmpty;
-    double offset = 0.0;
-    bool found = false;
+    final offset = _offsetOf(sections, selected);
+    if (offset == null) return;
+    final viewport = _scrollController.position.viewportDimension;
+    final target = (offset - (viewport / 2) + 29.0).clamp(
+      0.0,
+      _scrollController.position.maxScrollExtent,
+    );
+    _scrollController.jumpTo(target);
+    ref.read(liveTvOverlayScrollOffsetProvider.notifier).state = target;
 
-    for (final section in sections) {
-      if (!isSingleSection) {
-        offset += 44.0;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _selectedChannelFocusNode.canRequestFocus) {
+        _selectedChannelFocusNode.requestFocus();
       }
-      for (final ch in section.channels) {
-        if (ch.uniqueId == selected.uniqueId) {
-          found = true;
-          break;
-        }
-        offset += 58.0;
-      }
-      if (found) break;
-    }
-
-    if (found) {
-      final viewport = _scrollController.position.viewportDimension;
-      final target = (offset - (viewport / 2) + 29.0).clamp(
-        0.0,
-        _scrollController.position.maxScrollExtent,
-      );
-      _scrollController.jumpTo(target);
-      ref.read(liveTvOverlayScrollOffsetProvider.notifier).state = target;
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _selectedChannelFocusNode.canRequestFocus) {
-          _selectedChannelFocusNode.requestFocus();
-        }
-      });
-    }
+    });
   }
 
   @override
@@ -815,8 +806,9 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
     if (!widget.isOverlay) {
       ref.listen(selectedChannelProvider, (_, next) {
         if (next == null) return;
-        final flat = ref.read(filteredChannelsProvider);
-        flat.whenData((channels) => _scrollToSelected(channels, next));
+        ref
+            .read(sectionedChannelsProvider)
+            .whenData((sections) => _scrollToSelected(sections, next));
       });
     }
 

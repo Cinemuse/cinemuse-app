@@ -72,7 +72,7 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
 
   void _onProgramFocused(Channel channel, EpgProgram? program) {
     if (_focusedChannel?.uniqueId != channel.uniqueId ||
-        _focusedProgram?.name != program?.name) {
+        !identical(_focusedProgram, program)) {
       setState(() {
         _focusedChannel = channel;
         _focusedProgram = program;

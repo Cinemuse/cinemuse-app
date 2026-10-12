@@ -1459,6 +1459,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get liveTvError => 'Errore caricamento canali';
 
   @override
+  String get liveTvStreamUnavailable => 'Stream non disponibile';
+
+  @override
+  String get liveTvStreamUnavailableHint =>
+      'Questo canale potrebbe essere offline o non disponibile nel tuo paese.';
+
+  @override
   String get liveTvAllChannels => 'Tutti';
 
   @override

@@ -2678,6 +2678,18 @@ abstract class AppLocalizations {
   /// **'Failed to load channels'**
   String get liveTvError;
 
+  /// No description provided for @liveTvStreamUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Stream unavailable'**
+  String get liveTvStreamUnavailable;
+
+  /// No description provided for @liveTvStreamUnavailableHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This channel may be offline or not available in your country.'**
+  String get liveTvStreamUnavailableHint;
+
   /// No description provided for @liveTvAllChannels.
   ///
   /// In en, this message translates to:

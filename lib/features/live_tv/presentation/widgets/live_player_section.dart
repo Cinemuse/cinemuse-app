@@ -52,14 +52,13 @@ class LivePlayerSection extends ConsumerWidget {
             ? _buildPlaceholder(l10n)
             : playerState!.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, st) => _buildErrorState(l10n, e.toString()),
+                error: (_, __) => _buildErrorState(l10n),
                 data: (state) {
+                  // Error first: a failure with no stream must not spin
+                  // forever (REV-139).
+                  if (state.error != null) return _buildErrorState(l10n);
                   if (state.isResolving || state.currentStream == null) {
                     return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (state.error != null) {
-                    return _buildErrorState(l10n, state.error!);
                   }
 
                   return mkv.Video(
@@ -136,7 +135,8 @@ class LivePlayerSection extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorState(AppLocalizations l10n, String error) {
+  // The raw error is in the log; users get translated text (REV-164).
+  Widget _buildErrorState(AppLocalizations l10n) {
     return Container(
       color: AppTheme.surface.withValues(alpha: 0.8),
       child: Center(
@@ -150,7 +150,7 @@ class LivePlayerSection extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Stream unavailable',
+              l10n.liveTvStreamUnavailable,
               style: TextStyle(
                 color: AppTheme.textWhite,
                 fontSize: 15,
@@ -161,9 +161,7 @@ class LivePlayerSection extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Text(
-                error.contains('Failed to open')
-                    ? 'This channel may be geo-restricted or temporarily offline.'
-                    : error,
+                l10n.liveTvStreamUnavailableHint,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
               ),

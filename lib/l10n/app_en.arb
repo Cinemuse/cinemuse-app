@@ -530,6 +530,8 @@
   "liveTvNoEpg": "No program information available",
   "liveTvLoading": "Loading channels...",
   "liveTvError": "Failed to load channels",
+  "liveTvStreamUnavailable": "Stream unavailable",
+  "liveTvStreamUnavailableHint": "This channel may be offline or not available in your country.",
   "liveTvAllChannels": "All",
   "liveTvHd": "HD",
   "liveTvNoChannels": "No channels found",

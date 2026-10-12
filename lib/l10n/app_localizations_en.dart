@@ -1442,6 +1442,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get liveTvError => 'Failed to load channels';
 
   @override
+  String get liveTvStreamUnavailable => 'Stream unavailable';
+
+  @override
+  String get liveTvStreamUnavailableHint =>
+      'This channel may be offline or not available in your country.';
+
+  @override
   String get liveTvAllChannels => 'All';
 
   @override
