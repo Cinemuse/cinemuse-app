@@ -4,6 +4,7 @@ import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/refresh_user_data.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
@@ -241,8 +242,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     List<WatchHistory> allHistory,
     double horizontalPadding,
   ) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final isDesktop = screenWidth >= 850;
+    final isDesktop = MediaQuery.sizeOf(context).width >= Breakpoints.medium;
 
     // 1. Overall unique items across full history. The header counts only
     // what this screen loaded, never the server stats (REV-269).
@@ -354,7 +354,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
                 sliver: SliverLayoutBuilder(
                   builder: (context, constraints) {
                     final availableWidth = constraints.crossAxisExtent;
-                    final isMobile = availableWidth < 600;
+                    final isMobile = availableWidth < Breakpoints.compact;
                     const spacing = 10.0;
                     final crossAxisCount = isMobile
                         ? 3
@@ -1244,7 +1244,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
         final crossAxisExtent = constraints.crossAxisExtent;
         final availableWidth = (crossAxisExtent - (horizontalPadding * 2))
             .clamp(100.0, double.infinity);
-        final isMobile = availableWidth < 600;
+        final isMobile = availableWidth < Breakpoints.compact;
         const spacing = 10.0;
         final crossAxisCount = isMobile
             ? 3

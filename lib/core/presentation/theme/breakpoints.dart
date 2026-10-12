@@ -7,9 +7,9 @@ abstract final class Breakpoints {
   /// Below this width the app uses the phone layout (bottom bar).
   static const double compact = 600;
 
-  /// Below this width a block (measured with a `LayoutBuilder`, not the whole
-  /// screen) stacks its controls in a column: the Explore header and filter
-  /// panel.
+  /// Below this width a block (usually measured with a `LayoutBuilder`)
+  /// stacks its controls in a column: the Explore header and filter panel,
+  /// the Profile overview and the Watch history header.
   static const double medium = 800;
 
   /// From this width up, TMDB images are loaded in a bigger size. Also the

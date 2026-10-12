@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/stats_display.dart';
@@ -95,7 +96,7 @@ class ProfileOverview extends ConsumerWidget {
         items: cards,
         onHeaderTap: onHeaderTap,
         emptyBuilder: (context) {
-          final isMobile = MediaQuery.of(context).size.width < 600;
+          final isMobile = Breakpoints.isCompact(context);
           return Padding(
             padding: EdgeInsets.symmetric(
               vertical: 24.0,
@@ -119,7 +120,7 @@ class ProfileOverview extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth > 900;
+        final isDesktop = constraints.maxWidth >= Breakpoints.medium;
         final horizontalPadding = AppTheme.getResponsiveHorizontalPadding(
           context,
         );

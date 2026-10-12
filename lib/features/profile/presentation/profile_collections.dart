@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/collection_card.dart';
@@ -79,7 +80,7 @@ class ProfileCollections extends ConsumerWidget {
               // 1. System Lists Top Row
               Builder(
                 builder: (context) {
-                  final isMobile = MediaQuery.of(context).size.width < 600;
+                  final isMobile = Breakpoints.isCompact(context);
 
                   final watchlistCard = watchlist != null
                       ? SystemListCard(

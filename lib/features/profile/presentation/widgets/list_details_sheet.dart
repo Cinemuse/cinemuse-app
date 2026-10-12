@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cinemuse_app/core/constants/app_constants.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
@@ -584,19 +585,18 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                   )
                 : LayoutBuilder(
                     builder: (context, constraints) {
-                      final isMobile = constraints.maxWidth < 600;
+                      final isMobile =
+                          constraints.maxWidth < Breakpoints.compact;
                       final spacing = isMobile ? 10.0 : 16.0;
-                      final horizontalPadding = isMobile ? 16.0 : 24.0;
-                      final verticalPadding = isMobile ? 16.0 : 24.0;
+                      final padding = isMobile ? 16.0 : 24.0;
 
                       return GridView.builder(
                         addAutomaticKeepAlives: true,
                         padding: EdgeInsets.fromLTRB(
-                          horizontalPadding,
-                          verticalPadding,
-                          horizontalPadding,
-                          verticalPadding +
-                              MediaQuery.paddingOf(context).bottom,
+                          padding,
+                          padding,
+                          padding,
+                          padding + MediaQuery.paddingOf(context).bottom,
                         ),
                         gridDelegate: isMobile
                             ? SliverGridDelegateWithFixedCrossAxisCount(
