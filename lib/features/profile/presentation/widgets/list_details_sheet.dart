@@ -40,6 +40,9 @@ class ListDetailsSheet extends ConsumerStatefulWidget {
     AppBottomSheet.show(
       context: context,
       heightFactor: 0.9,
+      // On the shell's navigator, so a title opened from the list keeps the
+      // top bar and Back returns to the sheet (REV-267).
+      useRootNavigator: false,
       child: ListDetailsSheet(
         list: list,
         onUpdate: onUpdate,
@@ -736,7 +739,7 @@ class _ListMediaCard extends ConsumerWidget {
             }
           : null,
       onTap: () {
-        Navigator.of(context, rootNavigator: true).push(
+        Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => MediaDetailsScreen(
               mediaId: item.tmdbId.toString(),
