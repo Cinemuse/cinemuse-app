@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 import 'package:cinemuse_app/features/media/domain/comment.dart';
+import 'package:cinemuse_app/features/media/data/review_json_fields.dart';
 
 /// Service responsible for fetching IMDb user reviews via the lightweight GraphQL endpoint.
 class ImdbService {
@@ -128,8 +129,8 @@ class ImdbService {
     // Normalize IMDb rating from 0-10 scale into 0-5 scale
     final rawRating = node['authorRating'];
     final rating = rawRating is num ? (rawRating / 2.0) : null;
-    final date = _parseDate(node['submissionDate']?.toString());
-    final upVotes = _parseInt(node['helpfulness']?['upVotes']);
+    final date = jsonDate(node['submissionDate']?.toString());
+    final upVotes = jsonInt(node['helpfulness']?['upVotes']);
 
     return Comment(
       id: 'imdb_$id',
@@ -165,17 +166,6 @@ class ImdbService {
         .replaceAll('&apos;', "'")
         .replaceAll('&#27;', "'")
         .replaceAll('&#x2F;', '/');
-  }
-
-  DateTime? _parseDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return null;
-    return DateTime.tryParse(dateStr);
-  }
-
-  int _parseInt(dynamic value) {
-    if (value == null) return 0;
-    if (value is int) return value;
-    return int.tryParse(value.toString()) ?? 0;
   }
 
   static const String _reviewsGraphQLQueryInitial = r'''

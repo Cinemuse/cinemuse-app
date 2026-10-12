@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
+import 'package:cinemuse_app/features/media/data/review_json_fields.dart';
 
 /// Service responsible for communicating with Serializd API endpoints.
 class SerializdService {
@@ -31,7 +32,7 @@ class SerializdService {
 
       final data = response.data;
       if (data != null && data['seasonId'] != null) {
-        final seasonId = _parseInt(data['seasonId']);
+        final seasonId = jsonInt(data['seasonId']);
         if (seasonId > 0) {
           _seasonIdCache[cacheKey] = seasonId;
           return seasonId;
@@ -154,11 +155,5 @@ class SerializdService {
       );
       return [];
     }
-  }
-
-  static int _parseInt(dynamic value) {
-    if (value == null) return 0;
-    if (value is int) return value;
-    return int.tryParse(value.toString()) ?? 0;
   }
 }

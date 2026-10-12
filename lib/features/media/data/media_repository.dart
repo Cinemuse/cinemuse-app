@@ -223,10 +223,7 @@ class MediaRepository {
   MediaItem _mapToMediaItem(CachedMediaItem data) {
     return MediaItem(
       tmdbId: data.tmdbId,
-      mediaType: MediaKind.values.firstWhere(
-        (e) => e.name == data.mediaType,
-        orElse: () => MediaKind.movie,
-      ),
+      mediaType: MediaItem.fromString(data.mediaType),
       titleIt: data.titleIt == null || data.titleIt!.trim().isEmpty
           ? null
           : data.titleIt,

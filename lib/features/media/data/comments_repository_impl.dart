@@ -6,6 +6,7 @@ import 'package:cinemuse_app/features/media/data/serializd_service.dart';
 import 'package:cinemuse_app/features/media/domain/comment.dart';
 import 'package:cinemuse_app/features/media/domain/comments_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/media/data/review_json_fields.dart';
 
 /// Implementation of [CommentsRepository] routing requests to appropriate providers.
 class CommentsRepositoryImpl implements CommentsRepository {
@@ -210,48 +211,39 @@ class CommentsRepositoryImpl implements CommentsRepository {
   }
 
   Comment _mapSerializdReviewToComment(Map<String, dynamic> json) {
-    final authorName = json['author']?.toString() ?? 'User';
-    final avatar = json['authorImageUrl']?.toString();
-
-    final author = CommentAuthor(
-      id: authorName,
-      username: authorName,
-      avatarUrl: _cleanUrl(avatar),
-    );
-
     return Comment(
       id: json['id']?.toString() ?? '',
-      author: author,
+      author: _serializdAuthor(json),
       text: (json['reviewText']?.toString() ?? '').trim(),
       rating: _parseRating(json['rating']),
-      createdAt: _parseDate(
+      createdAt: jsonDate(
         json['dateAdded']?.toString() ?? json['backdate']?.toString(),
       ),
-      likeCount: _parseInt(json['likeCount'] ?? json['numLikes']),
-      replyCount: _parseInt(json['numComments']),
+      likeCount: jsonInt(json['likeCount'] ?? json['numLikes']),
+      replyCount: jsonInt(json['numComments']),
       isSpoiler: json['containsSpoiler'] == true,
       source: CommentSource.serializd,
     );
   }
 
   Comment _mapSerializdReplyToComment(Map<String, dynamic> json) {
-    final authorName = json['author']?.toString() ?? 'User';
-    final avatar = json['authorImageUrl']?.toString();
-
-    final author = CommentAuthor(
-      id: authorName,
-      username: authorName,
-      avatarUrl: _cleanUrl(avatar),
-    );
-
     return Comment(
       id: json['id']?.toString() ?? '',
-      author: author,
+      author: _serializdAuthor(json),
       text: (json['commentText']?.toString() ?? '').trim(),
-      createdAt: _parseDate(json['dateAdded']?.toString()),
-      likeCount: _parseInt(json['numLikes']),
+      createdAt: jsonDate(json['dateAdded']?.toString()),
+      likeCount: jsonInt(json['numLikes']),
       isSpoiler: false,
       source: CommentSource.serializd,
+    );
+  }
+
+  static CommentAuthor _serializdAuthor(Map<String, dynamic> json) {
+    final authorName = json['author']?.toString() ?? 'User';
+    return CommentAuthor(
+      id: authorName,
+      username: authorName,
+      avatarUrl: _cleanUrl(json['authorImageUrl']?.toString()),
     );
   }
 
@@ -259,17 +251,6 @@ class CommentsRepositoryImpl implements CommentsRepository {
     if (value == null) return null;
     if (value is num) return value.toDouble();
     return double.tryParse(value.toString());
-  }
-
-  static int _parseInt(dynamic value) {
-    if (value == null) return 0;
-    if (value is int) return value;
-    return int.tryParse(value.toString()) ?? 0;
-  }
-
-  static DateTime? _parseDate(String? value) {
-    if (value == null || value.isEmpty) return null;
-    return DateTime.tryParse(value);
   }
 
   static String? _cleanUrl(String? value) {

@@ -238,33 +238,26 @@ class WatchHistoryRepository {
   }
 
   Stream<List<WatchHistory>> watchHistory(String userId) {
-    return _db.watchWatchHistory(userId).asyncMap((list) async {
-      final futures = list.map((local) async {
-        final mediaType = MediaItem.fromString(local.mediaType);
-        final mediaKind = MediaKind.values.firstWhere(
-          (e) => e.name == local.mediaType,
-          orElse: () => MediaKind.movie,
-        );
+    return _db
+        .watchWatchHistory(userId)
+        .asyncMap((list) => Future.wait(list.map(_historyFromLocal)));
+  }
 
-        final media = await _mediaRepo.getMediaItem(local.tmdbId, mediaKind);
-
-        return WatchHistory(
-          userId: local.userId,
-          tmdbId: local.tmdbId,
-          mediaType: mediaType,
-          status: WatchStatus.fromJson(local.status),
-          progressSeconds: local.progressSeconds,
-          totalDuration: local.totalDuration,
-          watchCount: 0,
-          lastWatchedAt: local.lastWatchedAt,
-          season: local.season,
-          episode: local.episode,
-          media: media,
-        );
-      });
-
-      return Future.wait(futures);
-    });
+  /// A local Drift row as a [WatchHistory], with its media details.
+  Future<WatchHistory> _historyFromLocal(LocalWatchHistory local) async {
+    final mediaKind = MediaItem.fromString(local.mediaType);
+    return WatchHistory(
+      userId: local.userId,
+      tmdbId: local.tmdbId,
+      mediaType: mediaKind,
+      status: WatchStatus.fromJson(local.status),
+      progressSeconds: local.progressSeconds,
+      totalDuration: local.totalDuration,
+      lastWatchedAt: local.lastWatchedAt,
+      season: local.season,
+      episode: local.episode,
+      media: await _mediaRepo.getMediaItem(local.tmdbId, mediaKind),
+    );
   }
 
   /// Syncs watch history from Supabase to Drift.
@@ -451,7 +444,7 @@ class WatchHistoryRepository {
     for (final log in logs) {
       final tmdbId = log['tmdb_id'] as int? ?? 0;
       final typeStr = log['media_type'] as String? ?? 'movie';
-      final kind = typeStr == 'tv' ? MediaKind.tv : MediaKind.movie;
+      final kind = MediaItem.fromString(typeStr);
       uniqueRequests.putIfAbsent(
         '$typeStr-$tmdbId',
         () => (id: tmdbId, type: kind),
@@ -539,7 +532,7 @@ class WatchHistoryRepository {
   ) {
     final tmdbId = log['tmdb_id'] as int? ?? 0;
     final typeStr = log['media_type'] as String? ?? 'movie';
-    final kind = typeStr == 'tv' ? MediaKind.tv : MediaKind.movie;
+    final kind = MediaItem.fromString(typeStr);
     final loggedAtStr = log['logged_at'] as String?;
     final loggedAt = loggedAtStr != null
         ? DateTime.parse(loggedAtStr)
@@ -562,25 +555,7 @@ class WatchHistoryRepository {
 
   Future<List<WatchHistory>> _getLocalHistoryFallback(String userId) async {
     final list = await _db.getWatchHistory(userId);
-    final futures = list.map((local) async {
-      final mediaKind = local.mediaType == 'tv'
-          ? MediaKind.tv
-          : MediaKind.movie;
-      final media = await _mediaRepo.getMediaItem(local.tmdbId, mediaKind);
-      return WatchHistory(
-        userId: local.userId,
-        tmdbId: local.tmdbId,
-        mediaType: mediaKind,
-        status: WatchStatus.fromJson(local.status),
-        progressSeconds: local.progressSeconds,
-        totalDuration: local.totalDuration,
-        lastWatchedAt: local.lastWatchedAt,
-        season: local.season,
-        episode: local.episode,
-        media: media,
-      );
-    });
-    return Future.wait(futures);
+    return Future.wait(list.map(_historyFromLocal));
   }
 
   /// Removes the newest watch of a movie. Throws an [AppFailure].
