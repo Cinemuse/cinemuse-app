@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 
@@ -64,13 +65,25 @@ class CustomPlaylistsNotifier extends Notifier<List<LiveTvPlaylist>> {
     ]);
   }
 
+  /// Shows [next] at once; if the save fails, puts the old list back and
+  /// throws, so the UI can say so (REV-222).
   Future<void> _update(List<LiveTvPlaylist> next) async {
+    final previous = state;
     state = next;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_key, [
-      ...next.map((p) => p.encode()),
-      ..._unreadable,
-    ]);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_key, [
+        ...next.map((p) => p.encode()),
+        ..._unreadable,
+      ]);
+    } catch (e, s) {
+      state = previous;
+      throw UnknownFailure(
+        'Could not save the playlists',
+        cause: e,
+        stackTrace: s,
+      );
+    }
   }
 }
 

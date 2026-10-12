@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -13,6 +11,7 @@ import 'package:cinemuse_app/features/live_tv/data/local_playlist_storage.dart';
 import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/application/custom_epg_url_notifier.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/save_playlists.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_toggle.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
@@ -163,19 +162,19 @@ class PlaylistListSection extends ConsumerWidget {
   ) {
     showDialog(
       context: context,
-      builder: (context) => _AddRemotePlaylistDialog(
-        onAdd: (name, url, type) {
-          ref
-              .read(customPlaylistsProvider.notifier)
-              .addPlaylist(
-                LiveTvPlaylist(
-                  name: name,
-                  urlOrPath: url,
-                  isLocal: false,
-                  type: type,
-                ),
-              );
-        },
+      builder: (_) => _AddRemotePlaylistDialog(
+        onAdd: (name, url, type) => savePlaylists(
+          context,
+          ref,
+          (playlists) => playlists.addPlaylist(
+            LiveTvPlaylist(
+              name: name,
+              urlOrPath: url,
+              isLocal: false,
+              type: type,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -199,18 +198,18 @@ class PlaylistListSection extends ConsumerWidget {
 
     final destFile = await LocalPlaylistStorage.copyPlaylistFile(sourceFile);
 
-    // TODO(REV-222): the save behind addPlaylist is not awaited either.
-    unawaited(
-      ref
-          .read(customPlaylistsProvider.notifier)
-          .addPlaylist(
-            LiveTvPlaylist(
-              name: result.files.single.name,
-              urlOrPath: destFile.uri.pathSegments.last, // basename only
-              isLocal: true,
-              type: type,
-            ),
-          ),
+    if (!context.mounted) return;
+    await savePlaylists(
+      context,
+      ref,
+      (playlists) => playlists.addPlaylist(
+        LiveTvPlaylist(
+          name: result.files.single.name,
+          urlOrPath: destFile.uri.pathSegments.last, // basename only
+          isLocal: true,
+          type: type,
+        ),
+      ),
     );
   }
 }
@@ -302,15 +301,15 @@ class _PlaylistTile extends ConsumerWidget {
               children: [
                 SettingToggle(
                   value: isEnabled,
-                  onChanged: (_) => ref
-                      .read(customPlaylistsProvider.notifier)
-                      .togglePlaylistEnabled(playlist.id),
+                  onChanged: (_) => savePlaylists(
+                    context,
+                    ref,
+                    (playlists) => playlists.togglePlaylistEnabled(playlist.id),
+                  ),
                 ),
                 const SizedBox(width: 4),
                 if (playlist.isLocal &&
-                    (Platform.isWindows ||
-                        Platform.isLinux ||
-                        Platform.isMacOS))
+                    (Platform.isWindows || Platform.isLinux))
                   _OpenFolderButton(playlist: playlist, l10n: l10n),
                 if (!playlist.isLocal)
                   _OpenLinkButton(playlist: playlist, l10n: l10n),
@@ -319,9 +318,11 @@ class _PlaylistTile extends ConsumerWidget {
                   icon: const Icon(LucideIcons.trash2, size: 17),
                   color: Colors.redAccent,
                   tooltip: l10n.settingsRemove,
-                  onPressed: () => ref
-                      .read(customPlaylistsProvider.notifier)
-                      .removePlaylist(playlist.id),
+                  onPressed: () => savePlaylists(
+                    context,
+                    ref,
+                    (playlists) => playlists.removePlaylist(playlist.id),
+                  ),
                 ),
               ],
             ),
@@ -395,8 +396,6 @@ class _OpenFolderButton extends StatelessWidget {
       } else if (Platform.isLinux) {
         final dirPath = p.dirname(absolutePath);
         await Process.run('xdg-open', [dirPath]);
-      } else if (Platform.isMacOS) {
-        await Process.run('open', ['-R', absolutePath]);
       }
     } catch (e, s) {
       developer.log(
