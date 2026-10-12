@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:cast/cast.dart';
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
-import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver_provider.dart';
@@ -226,8 +226,10 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
       onStateChanged: (newState) {
         if (mounted) state = AsyncValue.data(newState);
       },
+      // Called only when no source is left to try (REV-164).
       onError: (err, st) {
-        if (mounted) state = AsyncValue.error(err, st);
+        final failure = StreamingFailure('No source left: $err', cause: err);
+        if (mounted) state = AsyncValue.error(failure, st);
       },
       saveProgress: _saveProgress,
     );
@@ -428,10 +430,8 @@ class PlayerController extends StateNotifier<AsyncValue<CinemaPlayerState>> {
     }
   }
 
+  // Kept raw: the screen tells "every source failed" apart (REV-164).
   void _handleInitializationError(dynamic e, StackTrace st) {
-    if (mounted) {
-      final mapped = ref.read(errorMapperProvider).map(e);
-      state = AsyncValue.error(mapped.message, st);
-    }
+    if (mounted) state = AsyncValue.error(e, st);
   }
 }

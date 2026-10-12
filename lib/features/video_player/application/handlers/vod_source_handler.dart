@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
+import 'package:cinemuse_app/features/streaming/models/streaming_exceptions.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -110,7 +112,7 @@ class VodSourceHandler {
     );
 
     if (result.candidates.isEmpty) {
-      throw Exception("No streams found for this content.");
+      throw NoResultsFoundException();
     }
     return result;
   }
@@ -143,8 +145,7 @@ class VodSourceHandler {
       }
     }
 
-    throw Exception(
-      "All streams failed to resolve. Please try a different provider or quality.",
-    );
+    // The player screen shows "all sources failed" for this (REV-164).
+    throw const StreamingFailure('All streams failed to resolve');
   }
 }

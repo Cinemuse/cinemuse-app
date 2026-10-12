@@ -1,3 +1,5 @@
+import 'package:cinemuse_app/core/error/app_failure.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/overlays/resolving_overlay.dart';
@@ -27,7 +29,6 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
   final String? episodeTitle;
   final int? startPosition;
   final String? loadingMessage;
-  final String? errorMessage;
   final Channel? channel;
 
   const VideoPlayerScreen({
@@ -39,7 +40,6 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
     this.episodeTitle,
     this.startPosition,
     this.loadingMessage,
-    this.errorMessage,
     this.channel,
   });
 
@@ -320,7 +320,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           );
         },
         error: (err, stack) => PlayerErrorView(
-          message: widget.errorMessage,
+          // StreamingFailure = every source failed: the view's own text.
+          message: err is StreamingFailure
+              ? null
+              : ref.read(errorMapperProvider).map(err).message,
           youtubeVideoId: widget.type == 'youtube' ? widget.queryId : null,
           onRetry: () => ref.invalidate(playerControllerProvider(params)),
         ),

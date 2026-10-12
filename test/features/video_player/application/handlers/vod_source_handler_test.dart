@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
+import 'package:cinemuse_app/features/streaming/models/streaming_exceptions.dart';
 import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
@@ -108,5 +110,27 @@ void main() {
 
     expect((await result)?.resolvedStream.url, 'https://a');
     verify(() => player.open(any(), play: true)).called(1);
+  });
+
+  // The screen tells these two apart from other errors (REV-164).
+  test('no candidates throws NoResultsFoundException', () async {
+    final result = start();
+    search.complete(StreamSearchResult(candidates: []));
+
+    await expectLater(result, throwsA(isA<NoResultsFoundException>()));
+  });
+
+  test('every source failing throws a StreamingFailure', () async {
+    when(
+      () => resolver.resolveStream(
+        any(),
+        season: any(named: 'season'),
+        episode: any(named: 'episode'),
+      ),
+    ).thenAnswer((_) async => null);
+    final result = start();
+    search.complete(StreamSearchResult(candidates: [_candidate]));
+
+    await expectLater(result, throwsA(isA<StreamingFailure>()));
   });
 }
