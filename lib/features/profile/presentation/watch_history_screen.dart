@@ -199,10 +199,10 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
             tmdbId: log.tmdbId,
             mediaType: log.mediaType,
             status: local.status ?? log.status ?? WatchStatus.completed,
-            progressSeconds: log.progressSeconds > 0
-                ? log.progressSeconds
-                : local.progressSeconds,
-            totalDuration: log.totalDuration ?? local.totalDuration,
+            // A log is a finished past watch: the local row's duration
+            // belongs to the episode in progress now (REV-103).
+            progressSeconds: log.progressSeconds,
+            totalDuration: log.totalDuration,
             watchCount: log.watchCount,
             lastWatchedAt: log.lastWatchedAt,
             season: log.season ?? local.season,
@@ -222,16 +222,8 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
         joined.add(local);
       } else if (local.status == WatchStatus.watching &&
           local.progressSeconds > 0) {
-        final hasActiveEntry = joined.any(
-          (j) =>
-              j.titleKey == local.titleKey &&
-              j.season == local.season &&
-              j.episode == local.episode &&
-              j.status == WatchStatus.watching,
-        );
-        if (!hasActiveEntry) {
-          joined.add(local);
-        }
+        // The in-progress watch; logs never carry progress.
+        joined.add(local);
       }
     }
 
