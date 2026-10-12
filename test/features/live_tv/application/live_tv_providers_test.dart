@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/application/custom_epg_url_notifier.dart';
+import 'package:cinemuse_app/features/live_tv/application/minute_clock_provider.dart';
 import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
+import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 
 /// Records which EPG URLs were requested; never calls a server.
@@ -21,6 +23,18 @@ class _RecordingRepository extends LiveTvRepository {
     requestedUrls.add(url);
     return {};
   }
+}
+
+/// A clock the test moves by hand.
+class _FakeClock extends MinuteClockNotifier {
+  _FakeClock(this._start);
+
+  final DateTime _start;
+
+  @override
+  DateTime build() => _start;
+
+  void set(DateTime time) => state = time;
 }
 
 Future<void> _settle() async {
@@ -88,5 +102,40 @@ void main() {
       prefs.getString('live_tv_custom_epg_url'),
       'https://example.com/new.xml',
     );
+  });
+
+  test('"now playing" moves on when the clock passes the end (REV-112)', () {
+    final start = DateTime(2026, 10, 12, 20);
+    const channel = Channel(lcn: 1, name: 'Rai 1', logo: '', epgId: 'rai1');
+    final first = EpgProgram(
+      name: 'News',
+      startTime: start,
+      endTime: start.add(const Duration(minutes: 30)),
+    );
+    final second = EpgProgram(
+      name: 'Film',
+      startTime: start.add(const Duration(minutes: 30)),
+      endTime: start.add(const Duration(hours: 2)),
+    );
+    final clock = _FakeClock(start.add(const Duration(minutes: 10)));
+    final container = ProviderContainer(
+      overrides: [
+        epgDataProvider.overrideWith(
+          (ref) => {
+            'rai1': [first, second],
+          },
+        ),
+        minuteClockProvider.overrideWith(() => clock),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.listen(epgDataProvider, (previous, next) {});
+    final sub = container.listen(currentProgramProvider(channel), (_, __) {});
+
+    return container.read(epgDataProvider.future).then((_) {
+      expect(sub.read(), first);
+      clock.set(start.add(const Duration(minutes: 31)));
+      expect(sub.read(), second);
+    });
   });
 }

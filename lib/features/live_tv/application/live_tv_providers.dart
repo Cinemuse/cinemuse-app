@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
 import 'package:cinemuse_app/features/live_tv/application/custom_epg_url_notifier.dart';
+import 'package:cinemuse_app/features/live_tv/application/minute_clock_provider.dart';
 import 'package:cinemuse_app/features/live_tv/data/epg_channel_matcher.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
@@ -450,57 +451,28 @@ List<ChannelSection> _buildSections(List<Channel> channels) {
 // EPG Helpers
 // ---------------------------------------------------------------------------
 
-/// Current program for a given channel.
-final currentProgramProvider = Provider.family<EpgProgram?, Channel>((
-  ref,
-  channel,
-) {
-  final programs = ref.watch(
-    epgDataProvider.select((asyncEpg) {
-      return asyncEpg.whenOrNull(
-            data: (epgData) => EpgChannelMatcher.findPrograms(channel, epgData),
-          ) ??
-          const <EpgProgram>[];
-    }),
-  );
+/// The program airing now on [channel], re-checked every minute (REV-112).
+/// `autoDispose`: `Channel` has no `==`, so each channel list reload makes
+/// new entries and the unused ones must be freed.
+final currentProgramProvider = Provider.autoDispose
+    .family<EpgProgram?, Channel>((ref, channel) {
+      final programs = ref.watch(
+        epgDataProvider.select((asyncEpg) {
+          return asyncEpg.whenOrNull(
+                data: (epgData) =>
+                    EpgChannelMatcher.findPrograms(channel, epgData),
+              ) ??
+              const <EpgProgram>[];
+        }),
+      );
+      if (programs.isEmpty) return null;
 
-  if (programs.isEmpty) return null;
-  final now = DateTime.now();
-
-  for (int i = 0; i < programs.length; i++) {
-    final p = programs[i];
-    if (now.isAfter(p.startTime) && now.isBefore(p.endTime)) {
-      return p;
-    }
-  }
-  return null;
-});
-
-/// Next program for a given channel.
-final nextProgramProvider = Provider.family<EpgProgram?, Channel>((
-  ref,
-  channel,
-) {
-  final programs = ref.watch(
-    epgDataProvider.select((asyncEpg) {
-      return asyncEpg.whenOrNull(
-            data: (epgData) => EpgChannelMatcher.findPrograms(channel, epgData),
-          ) ??
-          const <EpgProgram>[];
-    }),
-  );
-
-  if (programs.isEmpty) return null;
-  final now = DateTime.now();
-
-  for (int i = 0; i < programs.length; i++) {
-    final p = programs[i];
-    if (now.isAfter(p.startTime) && now.isBefore(p.endTime)) {
-      if (i + 1 < programs.length) return programs[i + 1];
-    }
-  }
-  return null;
-});
+      final now = ref.watch(minuteClockProvider);
+      for (final p in programs) {
+        if (now.isAfter(p.startTime) && now.isBefore(p.endTime)) return p;
+      }
+      return null;
+    });
 
 /// Full schedule for a given channel.
 final channelScheduleProvider = Provider.family<List<EpgProgram>, Channel>((
