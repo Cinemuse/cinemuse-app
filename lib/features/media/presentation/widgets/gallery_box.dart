@@ -38,6 +38,7 @@ class GalleryBox extends StatelessWidget {
       title: l10n.detailsGallery,
       icon: Icons.image_outlined,
       action: HoverScale(
+        tooltip: l10n.detailsGallery,
         onTap: () => _openGallery(context, 0),
         showFocusRing: true,
         borderRadius: AppTheme.radiusMd,

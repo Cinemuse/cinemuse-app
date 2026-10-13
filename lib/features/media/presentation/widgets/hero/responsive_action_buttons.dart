@@ -212,10 +212,6 @@ class _ResponsiveActionButtonsState
   }
 }
 
-// ---------------------------------------------------------------------------
-// Internal data model for dropdown items
-// ---------------------------------------------------------------------------
-
 class _DropdownItem {
   final IconData icon;
   final String label;
@@ -306,16 +302,19 @@ class _SplitPlayButtonState extends State<_SplitPlayButton> {
         );
       }).toList(),
       // The disabled button's InkWell shows the arrow cursor: put the hand back.
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          onTap: () => _popupKey.currentState?.showButtonMenu(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-            child: Icon(
-              Icons.keyboard_arrow_down,
-              color: theme.colorScheme.onPrimary,
-              size: 22,
+      child: Tooltip(
+        message: AppLocalizations.of(context)!.menuMoreOptions,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => _popupKey.currentState?.showButtonMenu(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+              child: Icon(
+                Icons.keyboard_arrow_down,
+                color: theme.colorScheme.onPrimary,
+                size: 22,
+              ),
             ),
           ),
         ),

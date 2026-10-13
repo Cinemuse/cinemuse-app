@@ -349,7 +349,6 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
             child: Column(
@@ -380,9 +379,9 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Actions
                     if (_isEditing)
                       IconButton(
+                        tooltip: l10n.settingsSave,
                         onPressed: _saveChanges,
                         icon: const Icon(
                           LucideIcons.check,
@@ -447,6 +446,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                         ),
                       if (!isSystemList && widget.onUpdate != null)
                         PopupMenuButton<String>(
+                          tooltip: l10n.menuMoreOptions,
                           icon: const Icon(
                             LucideIcons.moreVertical,
                             color: Colors.white54,

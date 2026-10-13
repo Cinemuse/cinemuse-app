@@ -314,7 +314,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
                     _listNameController.clear();
                   });
                 },
-                tooltip: 'Cancel',
+                tooltip: AppLocalizations.of(context)!.commonCancel,
                 splashRadius: 20,
               ),
               IconButton(
@@ -324,7 +324,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
                   color: AppTheme.accent,
                 ),
                 onPressed: _handleCreateList,
-                tooltip: 'Save',
+                tooltip: AppLocalizations.of(context)!.settingsSave,
                 splashRadius: 20,
               ),
               const SizedBox(width: 4),

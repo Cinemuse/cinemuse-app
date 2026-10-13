@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ void main() {
   Future<void> pumpButton(WidgetTester tester, VoidCallback onTap) {
     return tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         home: Scaffold(
           body: Center(child: AppBackButton(onTap: onTap)),
         ),

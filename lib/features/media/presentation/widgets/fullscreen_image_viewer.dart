@@ -187,7 +187,6 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
         backgroundColor: Colors.transparent,
         body: Stack(
           children: [
-            // Swipeable view
             PageView.builder(
               controller: _pageController,
               physics: _imageZoomed
@@ -239,6 +238,7 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
+                    tooltip: l10n.commonGoBack,
                     icon: const Icon(
                       Icons.arrow_back,
                       color: AppTheme.textWhite,

@@ -253,7 +253,6 @@ class _MediaCardState extends ConsumerState<MediaCard> {
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // Main Top Card
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -264,7 +263,6 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        // Image Content (Clipped)
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Stack(
@@ -311,7 +309,6 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                                   ),
                                 ),
 
-                              // Subtle Static Bottom Vignette
                               const DecoratedBox(
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
@@ -326,7 +323,6 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                                 ),
                               ),
 
-                              // Hover Gradient Overlay
                               Builder(
                                 builder: (context) {
                                   final isHighlighted =
@@ -402,23 +398,28 @@ class _MediaCardState extends ConsumerState<MediaCard> {
                           duration: const Duration(milliseconds: 200),
                           child: Material(
                             color: Colors.transparent,
-                            child: InkWell(
-                              canRequestFocus: false,
-                              excludeFromSemantics: true,
-                              onTap: () => _showContextActions(context),
-                              mouseCursor: SystemMouseCursors.click,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                key: _menuKey,
-                                padding: const EdgeInsets.only(
-                                  left: 4,
-                                  top: 2,
-                                  bottom: 2,
-                                ),
-                                child: const Icon(
-                                  Icons.more_vert,
-                                  color: Colors.white60,
-                                  size: 16,
+                            child: Tooltip(
+                              message: AppLocalizations.of(
+                                context,
+                              )!.menuMoreOptions,
+                              child: InkWell(
+                                canRequestFocus: false,
+                                excludeFromSemantics: true,
+                                onTap: () => _showContextActions(context),
+                                mouseCursor: SystemMouseCursors.click,
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  key: _menuKey,
+                                  padding: const EdgeInsets.only(
+                                    left: 4,
+                                    top: 2,
+                                    bottom: 2,
+                                  ),
+                                  child: const Icon(
+                                    Icons.more_vert,
+                                    color: Colors.white60,
+                                    size: 16,
+                                  ),
                                 ),
                               ),
                             ),
@@ -431,7 +432,6 @@ class _MediaCardState extends ConsumerState<MediaCard> {
               },
             ),
             const SizedBox(height: 2),
-            // MetadataRow
             Row(
               children: [
                 if (widget.rating != null && widget.rating! > 0) ...[

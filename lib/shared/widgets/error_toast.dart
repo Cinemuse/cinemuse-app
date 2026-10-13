@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:flutter/material.dart';
 
@@ -75,6 +76,7 @@ class ErrorToast extends StatelessWidget {
               ),
             ),
             IconButton(
+              tooltip: AppLocalizations.of(context)!.commonClose,
               onPressed: onDismiss,
               icon: const Icon(
                 Icons.close_rounded,

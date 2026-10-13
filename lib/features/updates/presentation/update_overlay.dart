@@ -166,6 +166,7 @@ class UpdateOverlay extends ConsumerWidget {
             ),
           ),
           IconButton(
+            tooltip: AppLocalizations.of(context)!.commonClose,
             icon: const Icon(Icons.close, color: Colors.white, size: 18),
             onPressed: () => ref.read(updateProvider.notifier).dismissUpdate(),
             padding: EdgeInsets.zero,
@@ -211,6 +212,7 @@ class UpdateOverlay extends ConsumerWidget {
             ),
           ),
           IconButton(
+            tooltip: AppLocalizations.of(context)!.commonClose,
             icon: const Icon(Icons.close, color: Colors.white, size: 20),
             onPressed: () => ref.read(updateProvider.notifier).dismissUpdate(),
             padding: const EdgeInsets.only(left: 8),

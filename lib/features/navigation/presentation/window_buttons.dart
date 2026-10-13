@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -86,18 +87,27 @@ class _WindowButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isClose = type == _WindowButtonType.close;
+    final l10n = AppLocalizations.of(context)!;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        mouseCursor: AppTheme.clickCursor,
-        onTap: onTap,
-        hoverColor: isClose
-            ? const Color(0xFFE81123) // Standard close red
-            : Colors.white.withValues(alpha: 0.1),
-        child: SizedBox(
-          width: 46, // Standard title bar button width
-          child: Center(child: _buildIcon()),
+    return Tooltip(
+      message: switch (type) {
+        _WindowButtonType.minimize => l10n.windowMinimize,
+        _WindowButtonType.maximize => l10n.windowMaximize,
+        _WindowButtonType.restore => l10n.windowRestore,
+        _WindowButtonType.close => l10n.commonClose,
+      },
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          mouseCursor: AppTheme.clickCursor,
+          onTap: onTap,
+          hoverColor: isClose
+              ? const Color(0xFFE81123) // Standard close red
+              : Colors.white.withValues(alpha: 0.1),
+          child: SizedBox(
+            width: 46, // Standard title bar button width
+            child: Center(child: _buildIcon()),
+          ),
         ),
       ),
     );

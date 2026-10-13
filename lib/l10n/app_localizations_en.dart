@@ -69,6 +69,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonAnonymous => 'Anonymous';
 
   @override
+  String get commonScrollLeft => 'Scroll left';
+
+  @override
+  String get commonScrollRight => 'Scroll right';
+
+  @override
+  String get commonShowPassword => 'Show password';
+
+  @override
+  String get commonHidePassword => 'Hide password';
+
+  @override
+  String get commonClearSearch => 'Clear search';
+
+  @override
+  String get commonRemoveFilter => 'Remove filter';
+
+  @override
+  String get windowMinimize => 'Minimize';
+
+  @override
+  String get windowMaximize => 'Maximize';
+
+  @override
+  String get windowRestore => 'Restore down';
+
+  @override
+  String get liveTvAddToFavorites => 'Add to favorites';
+
+  @override
+  String get liveTvRemoveFromFavorites => 'Remove from favorites';
+
+  @override
   String get filterMax => 'Max';
 
   @override

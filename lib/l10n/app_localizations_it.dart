@@ -69,6 +69,39 @@ class AppLocalizationsIt extends AppLocalizations {
   String get commonAnonymous => 'Anonimo';
 
   @override
+  String get commonScrollLeft => 'Scorri a sinistra';
+
+  @override
+  String get commonScrollRight => 'Scorri a destra';
+
+  @override
+  String get commonShowPassword => 'Mostra password';
+
+  @override
+  String get commonHidePassword => 'Nascondi password';
+
+  @override
+  String get commonClearSearch => 'Cancella ricerca';
+
+  @override
+  String get commonRemoveFilter => 'Rimuovi filtro';
+
+  @override
+  String get windowMinimize => 'Riduci a icona';
+
+  @override
+  String get windowMaximize => 'Ingrandisci';
+
+  @override
+  String get windowRestore => 'Ripristina';
+
+  @override
+  String get liveTvAddToFavorites => 'Aggiungi ai preferiti';
+
+  @override
+  String get liveTvRemoveFromFavorites => 'Rimuovi dai preferiti';
+
+  @override
   String get filterMax => 'Max';
 
   @override

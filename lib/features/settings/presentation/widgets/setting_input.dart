@@ -125,6 +125,9 @@ class _SettingInputState extends ConsumerState<SettingInput> {
               fillColor: Colors.black.withValues(alpha: 0.3),
               suffixIcon: widget.isPassword
                   ? IconButton(
+                      tooltip: _isObscured
+                          ? AppLocalizations.of(context)!.commonShowPassword
+                          : AppLocalizations.of(context)!.commonHidePassword,
                       icon: Icon(
                         _isObscured ? Icons.visibility_off : Icons.visibility,
                         color: AppTheme.textMuted,

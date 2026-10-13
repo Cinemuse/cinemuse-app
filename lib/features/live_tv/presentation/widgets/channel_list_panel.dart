@@ -474,6 +474,7 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
               builder: (context, value, child) {
                 return value.text.isNotEmpty
                     ? IconButton(
+                        tooltip: l10n.commonClose,
                         icon: const Icon(
                           Icons.close,
                           size: 16,
@@ -527,6 +528,7 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
                       builder: (context, value, child) {
                         return value.text.isNotEmpty
                             ? IconButton(
+                                tooltip: l10n.commonClose,
                                 icon: const Icon(
                                   Icons.close,
                                   size: 16,
@@ -546,7 +548,6 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
                 ),
               ),
             ),
-            // Favorites Tab Icon
             IconButton(
               onPressed: () {
                 ref
@@ -566,7 +567,6 @@ class _SearchRowState extends ConsumerState<_SearchRow> {
               ),
               tooltip: l10n.liveTvTabFavorites,
             ),
-            // Recents Tab Icon
             IconButton(
               onPressed: () {
                 ref

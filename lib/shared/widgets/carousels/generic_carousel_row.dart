@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -203,6 +204,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
+              tooltip: AppLocalizations.of(context)!.commonScrollLeft,
               icon: const Icon(Icons.chevron_left, size: 28),
               onPressed: _canScrollLeft ? _scrollLeft : null,
               color: Colors.white,
@@ -213,6 +215,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
             ),
             const SizedBox(width: 8),
             IconButton(
+              tooltip: AppLocalizations.of(context)!.commonScrollRight,
               icon: const Icon(Icons.chevron_right, size: 28),
               onPressed: _canScrollRight ? _scrollRight : null,
               color: Colors.white,
@@ -415,7 +418,6 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
           child: _buildList(),
         );
         break;
-
       case CarouselTheme.profileRow:
         final isMobile = Breakpoints.isCompact(context);
         final horizontalPadding = isMobile ? 16.0 : 24.0;
@@ -503,7 +505,6 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
           ),
         );
         break;
-
       case CarouselTheme.homeRow:
         final isMobile = Breakpoints.isCompact(context);
         final horizontalPadding = widget.padding.left > 0
@@ -582,7 +583,6 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
           ],
         );
         break;
-
       case CarouselTheme.plain:
         content = _buildList();
         break;

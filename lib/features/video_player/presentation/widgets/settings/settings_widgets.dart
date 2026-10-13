@@ -35,6 +35,7 @@ class SubViewHeader extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
+            tooltip: AppLocalizations.of(context)!.commonGoBack,
             icon: const Icon(
               Icons.arrow_back_rounded,
               color: AppTheme.textSecondary,
@@ -208,7 +209,6 @@ class TrackSubtitle extends ConsumerWidget {
               LanguageMapper.isMatch(t, prefLang),
           orElse: () => subs.firstOrNull ?? track,
         );
-
         final name = LanguageMapper.getDisplayLanguage(
           matched.title ?? matched.language ?? matched.id,
         );

@@ -126,7 +126,6 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                           ),
                         ),
                       ),
-
                       if (_filesExpanded) ...[
                         const SizedBox(height: 8),
                         ...sortedFiles.map((file) {
@@ -429,6 +428,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                     ),
                   ),
                   IconButton(
+                    tooltip: l10n.commonClose,
                     icon: const Icon(
                       Icons.close_rounded,
                       color: AppTheme.textSecondary,

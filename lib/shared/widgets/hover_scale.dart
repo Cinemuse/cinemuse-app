@@ -19,6 +19,7 @@ class HoverScale extends StatelessWidget {
   final BorderRadius? borderRadius;
   final Color? focusRingColor;
   final DpadFocusableBuilder? builder;
+  final String? tooltip;
 
   const HoverScale({
     super.key,
@@ -37,6 +38,7 @@ class HoverScale extends StatelessWidget {
     this.borderRadius,
     this.focusRingColor,
     this.builder,
+    this.tooltip,
   });
 
   @override
@@ -56,6 +58,7 @@ class HoverScale extends StatelessWidget {
       borderRadius: borderRadius,
       focusRingColor: focusRingColor,
       builder: builder,
+      tooltip: tooltip,
       child: child,
     );
   }

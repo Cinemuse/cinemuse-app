@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 
@@ -18,6 +19,7 @@ class AppBackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return HoverScale(
+      tooltip: AppLocalizations.of(context)!.commonGoBack,
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.all(padding),

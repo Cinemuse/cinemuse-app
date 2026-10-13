@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
           home: Scaffold(
             body: GenericCarouselRow(
               height: 200,
@@ -53,6 +55,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
             home: Scaffold(
               body: Column(
                 children: [
@@ -148,6 +151,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
           home: Scaffold(
             body: Column(
               children: [
@@ -244,6 +248,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
             home: Scaffold(
               body: Column(
                 children: [
@@ -344,6 +349,7 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
               home: Scaffold(
                 body: GenericCarouselRow(
                   title: 'Movies',
@@ -394,6 +400,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
             home: Scaffold(
               body: SingleChildScrollView(
                 child: Column(

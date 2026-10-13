@@ -55,6 +55,7 @@ class CastRemoteView extends ConsumerWidget {
                   child: Row(
                     children: [
                       IconButton(
+                        tooltip: AppLocalizations.of(context)!.commonGoBack,
                         icon: const Icon(
                           Icons.arrow_back,
                           color: AppTheme.textWhite,
@@ -198,6 +199,9 @@ class CastRemoteView extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       IconButton(
+                        tooltip: AppLocalizations.of(
+                          context,
+                        )!.playerSkipBackward,
                         iconSize: 40,
                         icon: const Icon(
                           Icons.replay_10,
@@ -216,6 +220,9 @@ class CastRemoteView extends ConsumerWidget {
                         radius: 40,
                         backgroundColor: AppTheme.accent,
                         child: IconButton(
+                          tooltip: playerState.remotePlaying
+                              ? AppLocalizations.of(context)!.playerPause
+                              : AppLocalizations.of(context)!.playerPlay,
                           iconSize: 50,
                           icon: Icon(
                             playerState.remotePlaying
@@ -233,6 +240,9 @@ class CastRemoteView extends ConsumerWidget {
                         ),
                       ),
                       IconButton(
+                        tooltip: AppLocalizations.of(
+                          context,
+                        )!.playerSkipForward,
                         iconSize: 40,
                         icon: const Icon(
                           Icons.forward_10,

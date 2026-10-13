@@ -170,8 +170,7 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _IconAction(
-                  icon: Icons.search,
+                _SearchButton(
                   onTap: () => widget.onSearchTap?.call(),
                   size: 24,
                 ),
@@ -252,8 +251,7 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
             ),
           ],
           const _NavDivider(),
-          _IconAction(
-            icon: Icons.search,
+          _SearchButton(
             onTap: () => widget.onSearchTap?.call(),
             focusNode: _pillFocusNodes[4],
             onKeyEvent: (node, event) => _handlePillKeyEvent(4, node, event),
@@ -488,15 +486,13 @@ class _NavItemState extends State<_NavItem> {
   }
 }
 
-class _IconAction extends StatefulWidget {
-  final IconData icon;
+class _SearchButton extends StatefulWidget {
   final VoidCallback onTap;
   final double size;
   final FocusNode? focusNode;
   final FocusOnKeyEventCallback? onKeyEvent;
 
-  const _IconAction({
-    required this.icon,
+  const _SearchButton({
     required this.onTap,
     this.size = 20,
     this.focusNode,
@@ -504,10 +500,10 @@ class _IconAction extends StatefulWidget {
   });
 
   @override
-  State<_IconAction> createState() => _IconActionState();
+  State<_SearchButton> createState() => _SearchButtonState();
 }
 
-class _IconActionState extends State<_IconAction> {
+class _SearchButtonState extends State<_SearchButton> {
   bool _isFocused = false;
 
   @override
@@ -518,28 +514,31 @@ class _IconActionState extends State<_IconAction> {
       focusNode: widget.focusNode,
       onKeyEvent: widget.onKeyEvent,
       onFocusChange: (focused) => setState(() => _isFocused = focused),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          // The Focus above is the only Tab stop (REV-57).
-          canRequestFocus: false,
-          mouseCursor: SystemMouseCursors.click,
-          onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(20),
-          hoverColor: theme.hoverColor,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _isFocused ? theme.focusColor : Colors.transparent,
-            ),
-            child: Icon(
-              widget.icon,
-              color: _isFocused
-                  ? theme.colorScheme.onSurface
-                  : theme.colorScheme.onSurface.withValues(alpha: 0.7),
-              size: widget.size,
+      child: Tooltip(
+        message: AppLocalizations.of(context)!.navSearch,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            // The Focus above is the only Tab stop (REV-57).
+            canRequestFocus: false,
+            mouseCursor: SystemMouseCursors.click,
+            onTap: widget.onTap,
+            borderRadius: BorderRadius.circular(20),
+            hoverColor: theme.hoverColor,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _isFocused ? theme.focusColor : Colors.transparent,
+              ),
+              child: Icon(
+                Icons.search,
+                color: _isFocused
+                    ? theme.colorScheme.onSurface
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                size: widget.size,
+              ),
             ),
           ),
         ),

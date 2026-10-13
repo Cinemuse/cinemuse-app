@@ -41,6 +41,9 @@ class DpadFocusable extends StatefulWidget {
   final DpadFocusableBuilder? builder;
   final FocusOnKeyEventCallback? onKeyEvent;
 
+  /// Shown on mouse hover; required for icon-only buttons (REV-253).
+  final String? tooltip;
+
   const DpadFocusable({
     super.key,
     required this.child,
@@ -61,6 +64,7 @@ class DpadFocusable extends StatefulWidget {
     this.focusRingWidth = 2.0,
     this.builder,
     this.onKeyEvent,
+    this.tooltip,
   });
 
   @override
@@ -272,7 +276,7 @@ class _DpadFocusableState extends State<DpadFocusable> {
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
+    final focusable = Focus(
       focusNode: _effectiveFocusNode,
       autofocus: widget.autofocus,
       onKeyEvent: _handleKeyEvent,
@@ -303,6 +307,9 @@ class _DpadFocusableState extends State<DpadFocusable> {
         ),
       ),
     );
+    final tooltip = widget.tooltip;
+    if (tooltip == null) return focusable;
+    return Tooltip(message: tooltip, child: focusable);
   }
 }
 

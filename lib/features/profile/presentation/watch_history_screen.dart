@@ -57,7 +57,6 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
   String? _lastLanguage;
   List<WatchHistory> _cachedFilteredList = const [];
 
-  // Cache for timeline grouped sections
   List<WatchHistory>? _lastFilteredForTimeline;
   TimelineGranularity? _lastGranularity;
   String? _lastLanguageForTimeline;
@@ -741,6 +740,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
           ),
           if (_searchQuery.isNotEmpty)
             DpadFocusable(
+              tooltip: l10n.commonClearSearch,
               onTap: _searchController.clear,
               showFocusRing: true,
               borderRadius: BorderRadius.circular(12),

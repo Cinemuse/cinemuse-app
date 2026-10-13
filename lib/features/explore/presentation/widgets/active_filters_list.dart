@@ -139,6 +139,7 @@ class _FilterChip extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           HoverScale(
+            tooltip: AppLocalizations.of(context)!.commonRemoveFilter,
             onTap: onDelete,
             scale: 1.2,
             child: Icon(

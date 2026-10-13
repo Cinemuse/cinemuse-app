@@ -304,23 +304,26 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
           duration: const Duration(milliseconds: 200),
           child: Material(
             color: Colors.transparent,
-            child: InkWell(
-              mouseCursor: AppTheme.clickCursor,
-              canRequestFocus: false,
-              excludeFromSemantics: true,
-              onTap: () => _showContextActions(context),
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                key: _menuKey,
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  color: AppTheme.glass,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.more_vert,
-                  color: AppTheme.textWhite,
-                  size: 16,
+            child: Tooltip(
+              message: AppLocalizations.of(context)!.menuMoreOptions,
+              child: InkWell(
+                mouseCursor: AppTheme.clickCursor,
+                canRequestFocus: false,
+                excludeFromSemantics: true,
+                onTap: () => _showContextActions(context),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  key: _menuKey,
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    color: AppTheme.glass,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.more_vert,
+                    color: AppTheme.textWhite,
+                    size: 16,
+                  ),
                 ),
               ),
             ),

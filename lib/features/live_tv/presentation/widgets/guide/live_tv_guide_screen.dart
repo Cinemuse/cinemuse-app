@@ -255,6 +255,7 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                           builder: (context, value, child) {
                             return value.text.isNotEmpty
                                 ? IconButton(
+                                    tooltip: l10n.commonClose,
                                     icon: const Icon(
                                       Icons.close_rounded,
                                       size: 16,
@@ -358,10 +359,9 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                 },
                 child: const SizedBox.shrink(),
               ),
-
               const SizedBox(width: 8),
-
               DpadFocusable(
+                tooltip: l10n.liveTvFilterAndPlaylists,
                 onTap: () => showChannelFilterSheet(context),
                 onKeyEvent: (node, event) {
                   if (event is KeyDownEvent &&

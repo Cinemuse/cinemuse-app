@@ -134,6 +134,7 @@ class _FilterSheetContentState extends ConsumerState<_FilterSheetContent> {
           ),
         ),
         IconButton(
+          tooltip: AppLocalizations.of(context)!.commonClose,
           icon: const Icon(Icons.close, size: 20, color: Colors.white54),
           onPressed: () => Navigator.of(context).pop(),
         ),

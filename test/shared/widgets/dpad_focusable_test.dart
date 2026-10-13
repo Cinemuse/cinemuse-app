@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -131,5 +132,31 @@ void main() {
     expect(find.byType(DecoratedBox), findsOneWidget);
 
     focusNode.dispose();
+  });
+
+  testWidgets('DpadFocusable shows its tooltip on hover (REV-253)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: DpadFocusable(
+              tooltip: 'Remove filter',
+              onTap: () {},
+              child: const Icon(Icons.close),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(tester.getCenter(find.byIcon(Icons.close)));
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+
+    expect(find.text('Remove filter'), findsOneWidget);
   });
 }

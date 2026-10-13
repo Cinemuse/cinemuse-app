@@ -301,22 +301,27 @@ class _BackdropCardState extends State<BackdropCard> {
                           duration: const Duration(milliseconds: 200),
                           child: Material(
                             color: Colors.transparent,
-                            child: InkWell(
-                              canRequestFocus: false,
-                              excludeFromSemantics: true,
-                              onTap: () => _showContextActions(context),
-                              mouseCursor: SystemMouseCursors.click,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                key: _menuKey,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 2,
-                                ),
-                                child: const Icon(
-                                  Icons.more_vert,
-                                  color: Colors.white60,
-                                  size: 18,
+                            child: Tooltip(
+                              message: AppLocalizations.of(
+                                context,
+                              )!.menuMoreOptions,
+                              child: InkWell(
+                                canRequestFocus: false,
+                                excludeFromSemantics: true,
+                                onTap: () => _showContextActions(context),
+                                mouseCursor: SystemMouseCursors.click,
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  key: _menuKey,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 2,
+                                  ),
+                                  child: const Icon(
+                                    Icons.more_vert,
+                                    color: Colors.white60,
+                                    size: 18,
+                                  ),
                                 ),
                               ),
                             ),

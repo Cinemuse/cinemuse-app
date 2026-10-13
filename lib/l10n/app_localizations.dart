@@ -218,6 +218,72 @@ abstract class AppLocalizations {
   /// **'Anonymous'**
   String get commonAnonymous;
 
+  /// No description provided for @commonScrollLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll left'**
+  String get commonScrollLeft;
+
+  /// No description provided for @commonScrollRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll right'**
+  String get commonScrollRight;
+
+  /// No description provided for @commonShowPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get commonShowPassword;
+
+  /// No description provided for @commonHidePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get commonHidePassword;
+
+  /// No description provided for @commonClearSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get commonClearSearch;
+
+  /// No description provided for @commonRemoveFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove filter'**
+  String get commonRemoveFilter;
+
+  /// No description provided for @windowMinimize.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimize'**
+  String get windowMinimize;
+
+  /// No description provided for @windowMaximize.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximize'**
+  String get windowMaximize;
+
+  /// No description provided for @windowRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore down'**
+  String get windowRestore;
+
+  /// No description provided for @liveTvAddToFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favorites'**
+  String get liveTvAddToFavorites;
+
+  /// No description provided for @liveTvRemoveFromFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favorites'**
+  String get liveTvRemoveFromFavorites;
+
   /// No description provided for @filterMax.
   ///
   /// In en, this message translates to:

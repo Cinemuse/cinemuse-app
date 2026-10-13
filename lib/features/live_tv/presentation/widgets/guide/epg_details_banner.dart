@@ -254,6 +254,9 @@ class EpgDetailsBanner extends StatelessWidget {
             if (onToggleFavorite != null && channel != null) ...[
               DpadFocusable(
                 borderRadius: BorderRadius.circular(10),
+                tooltip: isFavorite
+                    ? l10n.liveTvRemoveFromFavorites
+                    : l10n.liveTvAddToFavorites,
                 onTap: onToggleFavorite,
                 builder: (context, isFocused, isHovered, _) {
                   return Container(
