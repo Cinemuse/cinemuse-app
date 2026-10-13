@@ -89,6 +89,26 @@ void main() {
       expect(filmography.map((c) => c.title), ['A Movie', 'A Show']);
     });
 
+    // REV-202: "oscar" / "award" anywhere in a title hid real films.
+    test('the awards filter hides award shows, not films', () {
+      PersonCredit credit(int id, String title) =>
+          PersonCredit(id: id, mediaType: MediaKind.movie, title: title);
+      final titles = PersonDomainService.processFilmography(
+        cast: [
+          credit(1, 'Oscar'),
+          credit(2, 'Oscar and Lucinda'),
+          credit(3, 'The Award Winner'),
+          credit(4, 'The Oscars'),
+          credit(5, 'Golden Globe Awards'),
+          credit(6, 'EE BAFTA Film Awards'),
+        ],
+        crew: [],
+        showHidden: false,
+      ).map((c) => c.title);
+
+      expect(titles, ['Oscar', 'Oscar and Lucinda', 'The Award Winner']);
+    });
+
     test('calculateSeenStats handles empty credits gracefully', () {
       final stats = PersonDomainService.calculateSeenStats(
         cast: [],

@@ -20,16 +20,12 @@ class PersonSeenStats {
 /// Domain service handling person credits, stats, and filmography filtering.
 class PersonDomainService {
   static const Set<int> excludedGenreIds = {99, 10763, 10764, 10767};
-  static const List<String> excludedKeywords = [
-    'academy awards',
-    'golden globe',
-    'oscar',
-    'grammy',
-    'emmy',
-    'mtv movie awards',
-    'bafta',
-    'award',
-  ];
+  // Award shows by whole words ("The Oscars", "Golden Globe Awards"), so
+  // films like "Oscar and Lucinda" stay (REV-202).
+  static final RegExp _awardShowTitle = RegExp(
+    r'\b(awards|oscars|bafta)\b',
+    caseSensitive: false,
+  );
 
   /// Calculates watched statistics across released items in cast and crew
   /// credits. [watchHistory] is keyed by title (`'movie-603'`, `'tv-1399'`).
@@ -110,10 +106,7 @@ class PersonDomainService {
           (id) => excludedGenreIds.contains(id),
         );
 
-        final title = item.title.toLowerCase();
-        final hasExcludedKeyword = excludedKeywords.any(title.contains);
-
-        return !hasExcludedGenre && !hasExcludedKeyword;
+        return !hasExcludedGenre && !_awardShowTitle.hasMatch(item.title);
       }).toList();
     }
 
