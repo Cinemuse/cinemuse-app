@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/media/application/play_target.dart';
 import 'package:cinemuse_app/shared/widgets/action_feedback.dart';
-import 'package:cinemuse_app/core/error/app_exception.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/tracking_modals.dart';
@@ -92,38 +92,30 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     final connectivity = ref.watch(connectivityProvider);
     final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
 
+    // Failed loads get a Retry that loads the details again (REV-206); the
+    // provider still turns errors into null (REV-30), hence the generic text.
+    Widget loadFailed([Object? error]) => isOffline
+        ? OfflinePlaceholder(
+            onRetry: () => ref.invalidate(connectivityProvider),
+          )
+        : OfflinePlaceholder(
+            icon: Icons.error_outline_rounded,
+            title: l10n.commonError,
+            message: error != null
+                ? ref.read(errorMapperProvider).map(error).message
+                : l10n.failureUnknown,
+            onRetry: () => ref.invalidate(
+              mediaDetailsProvider((id: widget.mediaId, type: typeForTmdb)),
+            ),
+          );
+
     final bodyContent = detailsAsync.when(
       loading: () => Center(
         child: CircularProgressIndicator(color: theme.colorScheme.primary),
       ),
-      error: (err, stack) {
-        if (isOffline) {
-          return OfflinePlaceholder(
-            onRetry: () => ref.invalidate(connectivityProvider),
-          );
-        }
-        final message = err is AppException ? err.message : err.toString();
-        return Center(
-          child: Text(
-            '${l10n.commonError}: $message',
-            style: TextStyle(color: theme.colorScheme.onSurface),
-          ),
-        );
-      },
+      error: (err, stack) => loadFailed(err),
       data: (mediaItem) {
-        if (mediaItem == null) {
-          if (isOffline) {
-            return OfflinePlaceholder(
-              onRetry: () => ref.invalidate(connectivityProvider),
-            );
-          }
-          return Center(
-            child: Text(
-              l10n.commonError,
-              style: TextStyle(color: theme.colorScheme.onSurface),
-            ),
-          );
-        }
+        if (mediaItem == null) return loadFailed();
 
         final rawDetails = mediaItem.rawTmdbData ?? {};
         final tmdbId = mediaItem.tmdbId;
