@@ -5,26 +5,23 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/comment.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
-class CommentTile extends StatefulWidget {
+/// One comment. The sheet remembers which spoilers were revealed, so tiles
+/// scrolled away can be freed (no keep-alive, REV-210).
+class CommentTile extends StatelessWidget {
   final Comment comment;
-  const CommentTile({super.key, required this.comment});
+  final bool isSpoilerRevealed;
+  final VoidCallback onRevealSpoiler;
 
-  @override
-  State<CommentTile> createState() => _CommentTileState();
-}
-
-class _CommentTileState extends State<CommentTile>
-    with AutomaticKeepAliveClientMixin {
-  bool _isSpoilerRevealed = false;
-
-  @override
-  bool get wantKeepAlive => true;
+  const CommentTile({
+    super.key,
+    required this.comment,
+    required this.isSpoilerRevealed,
+    required this.onRevealSpoiler,
+  });
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-    final comment = widget.comment;
-    final isSpoiler = comment.isSpoiler && !_isSpoilerRevealed;
+    final isSpoiler = comment.isSpoiler && !isSpoilerRevealed;
 
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -44,7 +41,7 @@ class _CommentTileState extends State<CommentTile>
             _buildContent(comment),
           if (!isSpoiler) ...[
             const SizedBox(height: 12),
-            _buildFooter(comment),
+            _buildFooter(context, comment),
           ],
         ],
       ),
@@ -171,7 +168,7 @@ class _CommentTileState extends State<CommentTile>
     final l10n = AppLocalizations.of(context)!;
 
     return GestureDetector(
-      onTap: () => setState(() => _isSpoilerRevealed = true),
+      onTap: onRevealSpoiler,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 24),
@@ -207,7 +204,7 @@ class _CommentTileState extends State<CommentTile>
     );
   }
 
-  Widget _buildFooter(Comment comment) {
+  Widget _buildFooter(BuildContext context, Comment comment) {
     final l10n = AppLocalizations.of(context)!;
 
     return Row(

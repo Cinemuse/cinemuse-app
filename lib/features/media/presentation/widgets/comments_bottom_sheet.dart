@@ -24,6 +24,7 @@ class CommentsBottomSheet extends ConsumerStatefulWidget {
 
 class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
   final ScrollController _scrollController = ScrollController();
+  final Set<String> _revealedSpoilerIds = {};
 
   @override
   void initState() {
@@ -168,7 +169,13 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
           );
         }
         final comment = comments[index];
-        return CommentTile(key: ValueKey(comment.id), comment: comment);
+        return CommentTile(
+          key: ValueKey(comment.id),
+          comment: comment,
+          isSpoilerRevealed: _revealedSpoilerIds.contains(comment.id),
+          onRevealSpoiler: () =>
+              setState(() => _revealedSpoilerIds.add(comment.id)),
+        );
       },
     );
   }
