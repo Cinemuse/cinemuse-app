@@ -116,21 +116,12 @@ final livePlayerFocusActionProvider = StateProvider<void Function()?>(
 );
 
 // ---------------------------------------------------------------------------
-// Derived: Sectioned channels for the main list
+// Derived: channels shown in the list
 // ---------------------------------------------------------------------------
 
-/// A section header + its channels, used for sticky headers in the flat list.
-class ChannelSection {
-  final String title;
-  final List<Channel> channels;
-  const ChannelSection({required this.title, required this.channels});
-}
-
-/// Channels grouped into sections for sticky-header display.
-/// When a filter is active, returns a single section (no headers needed).
-final sectionedChannelsProvider = Provider<AsyncValue<List<ChannelSection>>>((
-  ref,
-) {
+/// The channels of the active tab, after the chips and the search. Always in
+/// the playlist's LCN order: chips only filter, never group (REV-279).
+final filteredChannelsProvider = Provider<AsyncValue<List<Channel>>>((ref) {
   final tab = ref.watch(liveTvTabProvider);
   final query = ref.watch(channelSearchQueryProvider).trim().toLowerCase();
   final filter = ref.watch(channelFilterProvider);
@@ -161,27 +152,12 @@ final sectionedChannelsProvider = Provider<AsyncValue<List<ChannelSection>>>((
       pool = _applySearch(pool, query);
     }
 
-    // Build sections
-    if (tab != LiveTvTab.all || !filter.isActive) {
-      // Single flat list — no category section headers, preserving natural LCN order
-      return [ChannelSection(title: '', channels: pool)];
-    }
-
-    // Group by category when a specific category filter is active
-    return _buildSections(pool);
-  });
-});
-
-/// Flat filtered channels (convenience for scroll-to-selected logic).
-final filteredChannelsProvider = Provider<AsyncValue<List<Channel>>>((ref) {
-  final sectioned = ref.watch(sectionedChannelsProvider);
-  return sectioned.whenData((sections) {
-    return sections.expand((s) => s.channels).toList();
+    return pool;
   });
 });
 
 // ---------------------------------------------------------------------------
-// Section Building Helpers
+// Filter Helpers
 // ---------------------------------------------------------------------------
 
 List<Channel> _resolveRecents(
@@ -212,25 +188,6 @@ List<Channel> _applySearch(List<Channel> channels, String query) {
     if (asNumber != null && ch.lcn.toString().startsWith(query)) return true;
     return ch.name.toLowerCase().contains(query);
   }).toList();
-}
-
-List<ChannelSection> _buildSections(List<Channel> channels) {
-  final grouped = <String, List<Channel>>{};
-  for (final ch in channels) {
-    final key = ch.group?.isNotEmpty == true ? ch.group! : 'Other';
-    (grouped[key] ??= []).add(ch);
-  }
-
-  // Sort groups, but keep DTT first if present
-  final keys = grouped.keys.toList()..sort();
-  if (keys.contains('DTT')) {
-    keys.remove('DTT');
-    keys.insert(0, 'DTT');
-  }
-
-  return keys
-      .map((k) => ChannelSection(title: k, channels: grouped[k]!))
-      .toList();
 }
 
 // ---------------------------------------------------------------------------

@@ -204,49 +204,29 @@ void main() {
       expect(filtered.length, 4);
     });
 
-    test(
-      'category sections remain grouped and titled when filter is active',
-      () {
-        const filter = ChannelFilter(selectedCategories: {'Cinema'});
-        final filtered = channels
-            .where((ch) => filter.selectedCategories.contains(ch.group))
-            .toList();
+    test('selected chips keep channel-number order (REV-279)', () async {
+      SharedPreferences.setMockInitialValues({
+        _filterKey: ['Sport', 'DTT'],
+      });
+      final container = ProviderContainer(
+        overrides: [
+          channelsProvider.overrideWith(
+            (ref) async => [
+              ...channels,
+              Channel(lcn: 5, name: 'Canale 5', logo: '', group: 'DTT'),
+            ],
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      container.listen(filteredChannelsProvider, (previous, next) {});
+      await _settle();
 
-        final grouped = <String, List<Channel>>{};
-        for (final ch in filtered) {
-          final key = ch.group?.isNotEmpty == true ? ch.group! : 'Other';
-          (grouped[key] ??= []).add(ch);
-        }
-        final sections = grouped.keys
-            .map((k) => ChannelSection(title: k, channels: grouped[k]!))
-            .toList();
-
-        expect(sections.length, 1);
-        expect(sections.first.title, 'Cinema');
-        expect(sections.first.title.isNotEmpty, isTrue);
-      },
-    );
-
-    test(
-      'inactive category filter produces a flat single section with empty title',
-      () {
-        const filter = ChannelFilter();
-        final isFlat = !filter.isActive;
-        expect(isFlat, isTrue);
-
-        final sections = isFlat
-            ? [ChannelSection(title: '', channels: channels)]
-            : <ChannelSection>[];
-
-        expect(sections.length, 1);
-        expect(sections.first.title, isEmpty);
-        expect(sections.first.channels.map((c) => c.lcn).toList(), [
-          1,
-          2,
-          3,
-          4,
-        ]);
-      },
-    );
+      final lcns = container
+          .read(filteredChannelsProvider)
+          .requireValue
+          .map((c) => c.lcn);
+      expect(lcns, [1, 3, 5]);
+    });
   });
 }

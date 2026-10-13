@@ -749,22 +749,14 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
     super.dispose();
   }
 
-  /// Top of [selected]'s row, counting the 44 px section headers (REV-139).
-  double? _offsetOf(List<ChannelSection> sections, Channel selected) {
-    final hasHeaders = !(sections.length == 1 && sections.first.title.isEmpty);
-    var offset = 0.0;
-    for (final section in sections) {
-      if (hasHeaders) offset += 44.0;
-      for (final ch in section.channels) {
-        if (ch.uniqueId == selected.uniqueId) return offset;
-        offset += 58.0;
-      }
-    }
-    return null;
+  /// Top of [selected]'s row (rows are 58 px, REV-139).
+  double? _offsetOf(List<Channel> channels, Channel selected) {
+    final index = channels.indexWhere((ch) => ch.uniqueId == selected.uniqueId);
+    return index < 0 ? null : index * 58.0;
   }
 
-  void _scrollToSelected(List<ChannelSection> sections, Channel selected) {
-    final offset = _offsetOf(sections, selected);
+  void _scrollToSelected(List<Channel> channels, Channel selected) {
+    final offset = _offsetOf(channels, selected);
     if (offset == null || !_scrollController.hasClients) return;
     _scrollController.animateTo(
       offset.clamp(0.0, _scrollController.position.maxScrollExtent),
@@ -773,14 +765,11 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
     );
   }
 
-  void _centerOnCurrentChannelOnce(
-    List<ChannelSection> sections,
-    Channel? selected,
-  ) {
+  void _centerOnCurrentChannelOnce(List<Channel> channels, Channel? selected) {
     if (selected == null || !_scrollController.hasClients) return;
     _hasCenteredInitial = true;
 
-    final offset = _offsetOf(sections, selected);
+    final offset = _offsetOf(channels, selected);
     if (offset == null) return;
     final viewport = _scrollController.position.viewportDimension;
     final target = (offset - (viewport / 2) + 29.0).clamp(
@@ -799,7 +788,7 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
 
   @override
   Widget build(BuildContext context) {
-    final sectionsAsync = ref.watch(sectionedChannelsProvider);
+    final channelsAsync = ref.watch(filteredChannelsProvider);
     final selectedChannel = ref.watch(selectedChannelProvider);
     final tab = ref.watch(liveTvTabProvider);
 
@@ -808,32 +797,25 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
       ref.listen(selectedChannelProvider, (_, next) {
         if (next == null) return;
         ref
-            .read(sectionedChannelsProvider)
-            .whenData((sections) => _scrollToSelected(sections, next));
+            .read(filteredChannelsProvider)
+            .whenData((channels) => _scrollToSelected(channels, next));
       });
     }
 
-    return sectionsAsync.when(
-      data: (sections) {
-        if (sections.isEmpty || sections.every((s) => s.channels.isEmpty)) {
+    return channelsAsync.when(
+      data: (channels) {
+        if (channels.isEmpty) {
           return _buildEmptyState(tab);
         }
 
         if (widget.isOverlay && !_hasCenteredInitial) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted || _hasCenteredInitial) return;
-            _centerOnCurrentChannelOnce(sections, selectedChannel);
+            _centerOnCurrentChannelOnce(channels, selectedChannel);
           });
         }
 
-        final isSingleSection =
-            sections.length == 1 && sections.first.title.isEmpty;
-
-        if (isSingleSection) {
-          return _buildFlatList(sections.first.channels, selectedChannel);
-        }
-
-        return _buildSectionedList(sections, selectedChannel);
+        return _buildFlatList(channels, selectedChannel);
       },
       loading: () =>
           const Center(child: CircularProgressIndicator(color: Colors.white)),
@@ -946,83 +928,6 @@ class _ChannelListState extends ConsumerState<_ChannelList> {
           autofocus: widget.isOverlay && isSelected,
         );
       },
-    );
-  }
-
-  Widget _buildSectionedList(List<ChannelSection> sections, Channel? selected) {
-    final items = <_ListItem>[];
-    for (final section in sections) {
-      items.add(_ListItem.header(section.title));
-      for (final ch in section.channels) {
-        items.add(_ListItem.channel(ch));
-      }
-    }
-
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        if (item.isHeader) {
-          return _SectionHeader(title: item.headerTitle!);
-        }
-        final isFirst = index == 0 || (index == 1 && items[0].isHeader);
-        final channel = item.channel!;
-        final isSelected = selected?.uniqueId == channel.uniqueId;
-        return SizedBox(
-          height: 58.0,
-          child: _ChannelTileWrapper(
-            channel: channel,
-            selectedChannel: selected,
-            isOverlay: widget.isOverlay,
-            onClose: widget.onClose,
-            onOpenPlayer: widget.onOpenPlayer,
-            isFirst: isFirst,
-            focusNode: (widget.isOverlay && isSelected)
-                ? _selectedChannelFocusNode
-                : null,
-            autofocus: widget.isOverlay && isSelected,
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// Lightweight tagged union for list items.
-class _ListItem {
-  final String? headerTitle;
-  final Channel? channel;
-
-  const _ListItem._({this.headerTitle, this.channel});
-
-  factory _ListItem.header(String title) => _ListItem._(headerTitle: title);
-  factory _ListItem.channel(Channel ch) => _ListItem._(channel: ch);
-
-  bool get isHeader => headerTitle != null;
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-
-  const _SectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 44,
-      padding: const EdgeInsets.only(left: 16, bottom: 8, top: 16),
-      alignment: Alignment.bottomLeft,
-      child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.6),
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 1.5,
-        ),
-      ),
     );
   }
 }
