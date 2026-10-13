@@ -82,14 +82,23 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
     String appLanguage,
   ) {
     final l10n = AppLocalizations.of(context)!;
+    final item = widget.historyItem;
     final isRewatching =
-        ref.watch(isRewatchingProvider(widget.historyItem)).valueOrNull ??
+        ref
+            .watch(
+              isRewatchingProvider((
+                tmdbId: item.tmdbId,
+                mediaType: item.mediaType,
+                season: item.season,
+                episode: item.episode,
+              )),
+            )
+            .valueOrNull ??
         false;
 
     final title = media != null && media.hasCompleteTitle(appLanguage)
         ? media.getLocalizedTitle(appLanguage)!
         : l10n.commonUnknown;
-    final item = widget.historyItem;
     final type = item.mediaType.name;
 
     final percentage =

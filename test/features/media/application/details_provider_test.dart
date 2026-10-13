@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -23,6 +24,7 @@ void main() {
   late StreamController<List<Map<String, dynamic>>> showLogs;
   late bool isLogStreamCancelled;
   late ProviderContainer container;
+  late _MockWatchHistoryRepository repository;
 
   setUp(() {
     isLogStreamCancelled = false;
@@ -51,7 +53,7 @@ void main() {
     final client = _MockSupabaseClient();
     when(() => client.auth).thenReturn(auth);
 
-    final repository = _MockWatchHistoryRepository();
+    repository = _MockWatchHistoryRepository();
     when(
       () => repository.watchTitleLogs('user-a', movieId, 'movie'),
     ).thenAnswer((_) => logs.stream);
@@ -157,5 +159,26 @@ void main() {
     logs.add([log('2026-10-13T20:00:00Z')]);
     await pumpEvents();
     expect(container.read(movieWatchCountProvider(movieId)), 1);
+  });
+
+  // REV-194: keyed by a WatchHistory object, every history save made a new
+  // entry and a new query for each Continue Watching card.
+  test('the same show and episode share one rewatch query', () async {
+    when(
+      () => repository.getHighestLoggedEpisode('user-a', showId),
+    ).thenAnswer((_) async => (season: 2, episode: 5));
+    ({int tmdbId, MediaKind mediaType, int? season, int? episode}) title(
+      int episode,
+    ) => (tmdbId: showId, mediaType: MediaKind.tv, season: 2, episode: episode);
+
+    container.listen(isRewatchingProvider(title(1)), (_, __) {});
+    container.listen(isRewatchingProvider(title(1)), (_, __) {});
+    container.listen(isRewatchingProvider(title(5)), (_, __) {});
+
+    expect(await container.read(isRewatchingProvider(title(1)).future), true);
+    expect(await container.read(isRewatchingProvider(title(5)).future), false);
+    verify(
+      () => repository.getHighestLoggedEpisode('user-a', showId),
+    ).called(2);
   });
 }

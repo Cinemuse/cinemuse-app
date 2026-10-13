@@ -14,7 +14,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 
 // Basic details of a title: local cache first, then TMDB. Every provider
 // here is autoDispose: a title is freed once no screen shows it (REV-191).
@@ -453,49 +452,28 @@ final movieWatchCountProvider = Provider.autoDispose.family<int, int>((
   return logsAsync.maybeWhen(data: (logs) => logs.length, orElse: () => 0);
 });
 
-// Helper provider to determine if a user is actively rewatching
-final isRewatchingProvider = FutureProvider.autoDispose.family<bool, WatchHistory>((
-  ref,
-  history,
-) async {
-  if (history.mediaType == MediaKind.movie) {
-    // If it's a movie and there are logs, it's a rewatch
-    final count = ref.watch(movieWatchCountProvider(history.tmdbId));
-    return count > 0;
-  }
+/// Whether the user is watching a title again: a movie with a logged watch,
+/// or a show whose highest logged episode is past the current one.
+/// Keyed by values, not a [WatchHistory]: the history stream makes new
+/// objects on every save, and each one would start a new query (REV-194).
+final isRewatchingProvider = FutureProvider.autoDispose
+    .family<
+      bool,
+      ({int tmdbId, MediaKind mediaType, int? season, int? episode})
+    >((ref, title) async {
+      if (title.mediaType == MediaKind.movie) {
+        return ref.watch(movieWatchCountProvider(title.tmdbId)) > 0;
+      }
 
-  // For TV, we need to check if highest logged episode is > current tracking pointer
-  final authState = ref.read(authProvider).valueOrNull;
-  if (authState == null) return false;
+      final userId = ref.watch(authProvider).valueOrNull?.id;
+      if (userId == null) return false;
 
-  try {
-    final maxLog = await ref
-        .read(supabaseClientProvider)
-        .from('watch_logs')
-        .select('season, episode')
-        .eq('user_id', authState.id)
-        .eq('tmdb_id', history.tmdbId)
-        .eq('media_type', 'tv')
-        .order('season', ascending: false)
-        .order('episode', ascending: false)
-        .limit(1)
-        .maybeSingle();
+      final highest = await ref
+          .watch(watchHistoryRepositoryProvider)
+          .getHighestLoggedEpisode(userId, title.tmdbId);
+      if (highest == null) return false;
 
-    if (maxLog == null) return false;
-
-    final maxS = maxLog['season'] as int? ?? 0;
-    final maxE = maxLog['episode'] as int? ?? 0;
-    final curS = history.season ?? 0;
-    final curE = history.episode ?? 0;
-
-    return maxS > curS || (maxS == curS && maxE > curE);
-  } catch (e, stack) {
-    developer.log(
-      'Failed to query max watch log for series ${history.tmdbId}',
-      name: 'isRewatchingProvider',
-      error: e,
-      stackTrace: stack,
-    );
-    return false;
-  }
-});
+      final season = title.season ?? 0;
+      return highest.season > season ||
+          (highest.season == season && highest.episode > (title.episode ?? 0));
+    });

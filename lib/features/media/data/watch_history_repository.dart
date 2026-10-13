@@ -387,34 +387,19 @@ class WatchHistoryRepository {
     const pageSize = 1000;
     const parallelBatchSize = 4;
 
-    final firstPage = await _fetchLogsPage(userId, 0, pageSize);
-    if (firstPage.length < pageSize) {
-      return firstPage;
-    }
+    final allLogs = [...await _fetchLogsPage(userId, 0, pageSize)];
+    if (allLogs.length < pageSize) return allLogs;
 
-    final allLogs = <Map<String, dynamic>>[...firstPage];
-    int currentOffset = pageSize;
-    bool hasMore = true;
-
-    while (hasMore) {
-      final futures = <Future<List<Map<String, dynamic>>>>[];
-      for (int i = 0; i < parallelBatchSize; i++) {
-        final pageOffset = currentOffset + (i * pageSize);
-        futures.add(_fetchLogsPage(userId, pageOffset, pageSize));
-      }
-
-      final pages = await Future.wait(futures);
+    for (var offset = pageSize; ; offset += parallelBatchSize * pageSize) {
+      final pages = await Future.wait([
+        for (var i = 0; i < parallelBatchSize; i++)
+          _fetchLogsPage(userId, offset + i * pageSize, pageSize),
+      ]);
       for (final page in pages) {
         allLogs.addAll(page);
-        if (page.length < pageSize) {
-          hasMore = false;
-          break;
-        }
+        if (page.length < pageSize) return allLogs;
       }
-      currentOffset += parallelBatchSize * pageSize;
     }
-
-    return allLogs;
   }
 
   Future<List<Map<String, dynamic>>> _fetchLogsPage(
@@ -750,13 +735,13 @@ class WatchHistoryRepository {
     await _cacheReturnedRow(userId, tmdbId, mediaType, rows);
   }
 
-  /// The episode after the show's highest logged one (choosing it needs
-  /// TMDB data). Null when nothing is logged or TMDB can't be reached.
-  Future<({NextEpisodeInfo? next, bool isAired})?> _episodeAfterHighestLog(
+  /// The show's highest logged episode, or null when nothing is logged.
+  /// Throws an [AppFailure].
+  Future<({int season, int episode})?> getHighestLoggedEpisode(
     String userId,
     int tmdbId,
   ) async {
-    final highest = await _client
+    final row = await _client
         .from('watch_logs')
         .select('season, episode')
         .eq('user_id', userId)
@@ -767,6 +752,20 @@ class WatchHistoryRepository {
         .limit(1)
         .maybeSingle()
         .withAppFailure();
+    if (row == null) return null;
+    return (
+      season: row['season'] as int? ?? 0,
+      episode: row['episode'] as int? ?? 0,
+    );
+  }
+
+  /// The episode after the show's highest logged one (choosing it needs
+  /// TMDB data). Null when nothing is logged or TMDB can't be reached.
+  Future<({NextEpisodeInfo? next, bool isAired})?> _episodeAfterHighestLog(
+    String userId,
+    int tmdbId,
+  ) async {
+    final highest = await getHighestLoggedEpisode(userId, tmdbId);
     if (highest == null) return null;
 
     final Map<String, dynamic>? details;
@@ -788,8 +787,8 @@ class WatchHistoryRepository {
 
     return _seriesService.getNextEpisode(
       details,
-      highest['season'] as int? ?? 0,
-      highest['episode'] as int? ?? 0,
+      highest.season,
+      highest.episode,
     );
   }
 
