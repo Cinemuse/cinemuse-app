@@ -63,27 +63,18 @@ class ResponsiveActionButtons extends ConsumerStatefulWidget {
 
 class _ResponsiveActionButtonsState
     extends ConsumerState<ResponsiveActionButtons> {
-  bool _hasCachedStream = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _refreshCacheState();
-  }
-
-  void _refreshCacheState() {
-    if (widget.mediaId.isEmpty) return;
-    final resolver = ref.read(unifiedStreamResolverProvider);
-    final hasCache = resolver.hasCachedStream(
-      widget.mediaId,
-      widget.mediaType,
-      season: widget.season,
-      episode: widget.episode,
-    );
-    if (hasCache != _hasCachedStream) {
-      setState(() => _hasCachedStream = hasCache);
-    }
-  }
+  // Looked up on every build (a map lookup), so it never goes stale when
+  // the card is reused for another episode or after playing (REV-208).
+  bool get _hasCachedStream =>
+      widget.mediaId.isNotEmpty &&
+      ref
+          .read(unifiedStreamResolverProvider)
+          .hasCachedStream(
+            widget.mediaId,
+            widget.mediaType,
+            season: widget.season,
+            episode: widget.episode,
+          );
 
   void _clearCache(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -94,7 +85,7 @@ class _ResponsiveActionButtonsState
       season: widget.season,
       episode: widget.episode,
     );
-    setState(() => _hasCachedStream = false);
+    setState(() {});
     AppSnackBar.show(context, message: l10n.menuRemoveCachedProvider);
   }
 
@@ -187,7 +178,7 @@ class _ResponsiveActionButtonsState
       onPlayClick: widget.onPlayClick,
       label: widget.playButtonLabel,
       isFullWidth: isFullWidth,
-      onDropdownOpened: _refreshCacheState,
+      onDropdownOpened: () => setState(() {}),
       dropdownItems: _buildDropdownItems(context),
     );
   }

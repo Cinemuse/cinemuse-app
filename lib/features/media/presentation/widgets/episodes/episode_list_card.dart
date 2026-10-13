@@ -57,29 +57,20 @@ class EpisodeListCard extends ConsumerStatefulWidget {
 
 class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
   bool _isExpanded = false;
-  bool _hasCachedStream = false;
   Offset? _tapPosition;
 
   int get _epNumber => widget.episode.episodeNumber;
 
-  @override
-  void initState() {
-    super.initState();
-    _refreshCacheState();
-  }
-
-  void _refreshCacheState() {
-    final resolver = ref.read(unifiedStreamResolverProvider);
-    final hasCache = resolver.hasCachedStream(
-      widget.mediaId,
-      'tv',
-      season: widget.seasonNumber,
-      episode: _epNumber,
-    );
-    if (hasCache != _hasCachedStream) {
-      setState(() => _hasCachedStream = hasCache);
-    }
-  }
+  // Looked up on every build (a map lookup), so it never goes stale when
+  // the card is reused for another episode or after playing (REV-208).
+  bool get _hasCachedStream => ref
+      .read(unifiedStreamResolverProvider)
+      .hasCachedStream(
+        widget.mediaId,
+        'tv',
+        season: widget.seasonNumber,
+        episode: _epNumber,
+      );
 
   void _clearCache() {
     final l10n = AppLocalizations.of(context)!;
@@ -90,7 +81,7 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
       season: widget.seasonNumber,
       episode: _epNumber,
     );
-    setState(() => _hasCachedStream = false);
+    setState(() {});
     AppSnackBar.show(
       context,
       message: l10n.menuRemoveCachedProvider,
@@ -103,8 +94,6 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
     final l10n = AppLocalizations.of(context)!;
     final fallbackName = l10n.detailsEpisodeFallback(_epNumber);
     final epName = widget.episode.getTitle(fallbackName);
-
-    _refreshCacheState();
 
     final options = EpisodeMenu.buildEpisodeMenuOptions(
       context: context,

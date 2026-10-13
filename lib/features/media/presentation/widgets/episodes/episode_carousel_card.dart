@@ -61,33 +61,24 @@ class EpisodeCarouselCard extends ConsumerStatefulWidget {
 }
 
 class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
-  bool _hasCachedStream = false;
-
   int get _epNumber => widget.episode.episodeNumber;
   String get _epName {
     final l10n = AppLocalizations.of(context)!;
     return widget.episode.getTitle(l10n.detailsEpisodeFallback(_epNumber));
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _refreshCacheState();
-  }
-
-  void _refreshCacheState() {
-    if (widget.mediaId.isEmpty) return;
-    final resolver = ref.read(unifiedStreamResolverProvider);
-    final hasCache = resolver.hasCachedStream(
-      widget.mediaId,
-      'tv',
-      season: widget.seasonNumber,
-      episode: _epNumber,
-    );
-    if (hasCache != _hasCachedStream) {
-      setState(() => _hasCachedStream = hasCache);
-    }
-  }
+  // Looked up on every build (a map lookup), so it never goes stale when
+  // the card is reused for another episode or after playing (REV-208).
+  bool get _hasCachedStream =>
+      widget.mediaId.isNotEmpty &&
+      ref
+          .read(unifiedStreamResolverProvider)
+          .hasCachedStream(
+            widget.mediaId,
+            'tv',
+            season: widget.seasonNumber,
+            episode: _epNumber,
+          );
 
   void _clearCache() {
     final l10n = AppLocalizations.of(context)!;
@@ -98,7 +89,7 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
       season: widget.seasonNumber,
       episode: _epNumber,
     );
-    setState(() => _hasCachedStream = false);
+    setState(() {});
     AppSnackBar.show(
       context,
       message: l10n.menuRemoveCachedProvider,
@@ -109,8 +100,6 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
 
   void _showContextMenu(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-
-    _refreshCacheState();
 
     final options = EpisodeMenu.buildEpisodeMenuOptions(
       context: context,
