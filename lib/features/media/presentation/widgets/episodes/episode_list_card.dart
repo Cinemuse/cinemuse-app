@@ -57,7 +57,6 @@ class EpisodeListCard extends ConsumerStatefulWidget {
 
 class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
   bool _isExpanded = false;
-  Offset? _tapPosition;
 
   int get _epNumber => widget.episode.episodeNumber;
 
@@ -124,7 +123,6 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
         epName,
       ),
       anchorContext: anchorContext,
-      position: _tapPosition,
     );
   }
 
@@ -476,8 +474,9 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
                     : TextOverflow.ellipsis,
               ),
               if (isOverflowing)
-                GestureDetector(
+                DpadFocusable(
                   onTap: () => setState(() => _isExpanded = !_isExpanded),
+                  showFocusRing: true,
                   child: Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
@@ -515,7 +514,6 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
               builder: (buttonContext) {
                 return HoverScale(
                   onTap: () {
-                    _tapPosition = null;
                     _showContextMenu(context, anchorContext: buttonContext);
                   },
                   child: Container(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/comment.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -167,8 +168,10 @@ class CommentTile extends StatelessWidget {
   Widget _buildSpoilerOverlay(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return GestureDetector(
+    return DpadFocusable(
       onTap: onRevealSpoiler,
+      showFocusRing: true,
+      borderRadius: AppTheme.radiusMd,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 24),

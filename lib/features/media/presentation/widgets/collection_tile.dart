@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
@@ -69,8 +70,10 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
     final title = _getTitle(l10n);
     final backdropPath = _backdropPath;
 
-    return GestureDetector(
+    return DpadFocusable(
       onTap: () => _openCollection(context, ref),
+      showFocusRing: true,
+      borderRadius: AppTheme.radiusLg,
       child: Container(
         height: 120,
         decoration: BoxDecoration(
