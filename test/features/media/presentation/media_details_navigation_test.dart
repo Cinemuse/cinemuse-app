@@ -125,6 +125,75 @@ void main() {
       expect(find.text('The Shawshank Redemption'), findsNothing);
     });
 
+    // REV-219 (b): the chevron was a second focus stop and its popup key
+    // was new on every build.
+    testWidgets('Play chevron is not a focus stop and opens the menu', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        buildTestableWidget(
+          ResponsiveActionButtons(
+            onPlayClick: () {},
+            playButtonLabel: 'Play Now',
+            mediaItem: MediaItem(
+              tmdbId: 123,
+              mediaType: MediaKind.movie,
+              updatedAt: DateTime(2026),
+            ),
+            isFavorite: false,
+            isInWatchlist: false,
+            onListTap: () {},
+            onDropClick: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      final focused = FocusManager.instance.primaryFocus!.context!.widget;
+      expect(
+        find.descendant(
+          of: find.byType(PopupMenuButton<int>),
+          matching: find.byWidget(focused),
+        ),
+        findsNothing,
+      );
+
+      await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
+      await tester.pumpAndSettle();
+      expect(find.text('Stop Watching'), findsOneWidget);
+    });
+
+    // REV-219 (c): no date drew an empty text and a leading "•".
+    testWidgets('hero info line has no leading dot without a date', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        buildTestableWidget(
+          DetailsHero(
+            mediaItem: MediaItem(
+              tmdbId: 1,
+              mediaType: MediaKind.movie,
+              titleEn: 'No Date',
+              voteAverage: 7.5,
+              updatedAt: DateTime(2026),
+            ),
+            onPlayClick: () {},
+            onListTap: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('7.5'), findsOneWidget);
+      expect(find.text('•'), findsNothing);
+    });
+
     testWidgets(
       'ResponsiveActionButtons primary play button receives autofocus',
       (tester) async {

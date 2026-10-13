@@ -203,14 +203,12 @@ class _ResponsiveActionButtonsState
           icon: Icons.cached,
           label: l10n.menuRemoveCachedProvider,
           onTap: () => _clearCache(context),
-          isDestructive: false,
         ),
       if (widget.onDropClick != null)
         _DropdownItem(
           icon: Icons.stop_circle_outlined,
           label: l10n.menuStopWatching,
           onTap: widget.onDropClick!,
-          isDestructive: false,
         ),
     ];
   }
@@ -224,13 +222,11 @@ class _DropdownItem {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final bool isDestructive;
 
   const _DropdownItem({
     required this.icon,
     required this.label,
     required this.onTap,
-    this.isDestructive = false,
   });
 }
 
@@ -238,7 +234,7 @@ class _DropdownItem {
 // Split Play Button — main action + chevron dropdown
 // ---------------------------------------------------------------------------
 
-class _SplitPlayButton extends StatelessWidget {
+class _SplitPlayButton extends StatefulWidget {
   final VoidCallback onPlayClick;
   final String label;
   final bool isFullWidth;
@@ -254,9 +250,17 @@ class _SplitPlayButton extends StatelessWidget {
   });
 
   @override
+  State<_SplitPlayButton> createState() => _SplitPlayButtonState();
+}
+
+// One popup key for the button's life: a new key on every build threw the
+// menu away and lost focus (REV-219).
+class _SplitPlayButtonState extends State<_SplitPlayButton> {
+  final _popupKey = GlobalKey<PopupMenuButtonState<int>>();
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final popupKey = GlobalKey<PopupMenuButtonState<int>>();
 
     final divider = Container(
       width: 1,
@@ -265,8 +269,11 @@ class _SplitPlayButton extends StatelessWidget {
     );
 
     final chevronButton = PopupMenuButton<int>(
-      key: popupKey,
-      onOpened: onDropdownOpened,
+      key: _popupKey,
+      // Disabled: its own InkWell would be a second focus stop inside the
+      // DpadFocusable; the chevron's GestureDetector opens it instead.
+      enabled: false,
+      onOpened: widget.onDropdownOpened,
       tooltip: '',
       color: theme.colorScheme.surface,
       elevation: 10,
@@ -277,27 +284,21 @@ class _SplitPlayButton extends StatelessWidget {
         ),
       ),
       offset: const Offset(0, 48),
-      itemBuilder: (_) => dropdownItems.asMap().entries.map((entry) {
-        final item = entry.value;
+      itemBuilder: (_) => widget.dropdownItems.map((item) {
         return PopupMenuItem<int>(
-          value: entry.key,
           onTap: item.onTap,
           child: Row(
             children: [
               Icon(
                 item.icon,
                 size: 18,
-                color: item.isDestructive
-                    ? AppTheme.favorites
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
               ),
               const SizedBox(width: 12),
               Text(
                 item.label,
                 style: TextStyle(
-                  color: item.isDestructive
-                      ? AppTheme.favorites
-                      : theme.colorScheme.onSurface,
+                  color: theme.colorScheme.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -306,8 +307,8 @@ class _SplitPlayButton extends StatelessWidget {
           ),
         );
       }).toList(),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => _popupKey.currentState?.showButtonMenu(),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
           child: Icon(
@@ -332,11 +333,8 @@ class _SplitPlayButton extends StatelessWidget {
         }
         return KeyEventResult.ignored;
       },
-      onTap: onPlayClick,
-      onLongPress: () {
-        onDropdownOpened();
-        popupKey.currentState?.showButtonMenu();
-      },
+      onTap: widget.onPlayClick,
+      onLongPress: () => _popupKey.currentState?.showButtonMenu(),
       scale: 1.06,
       borderRadius: AppTheme.radius12,
       builder: (context, isFocused, isHovered, child) {
@@ -353,9 +351,9 @@ class _SplitPlayButton extends StatelessWidget {
         );
       },
       child: Row(
-        mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
+        mainAxisSize: widget.isFullWidth ? MainAxisSize.max : MainAxisSize.min,
         children: [
-          isFullWidth
+          widget.isFullWidth
               ? Expanded(child: _buildMainPlayContent())
               : _buildMainPlayContent(),
           divider,
@@ -370,7 +368,7 @@ class _SplitPlayButton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 15),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
+        mainAxisSize: widget.isFullWidth ? MainAxisSize.max : MainAxisSize.min,
         children: [
           const Icon(
             Icons.play_arrow_outlined,
@@ -380,7 +378,7 @@ class _SplitPlayButton extends StatelessWidget {
           const SizedBox(width: 12),
           Flexible(
             child: Text(
-              label,
+              widget.label,
               style: const TextStyle(
                 color: AppTheme.textWhite,
                 fontSize: 16,

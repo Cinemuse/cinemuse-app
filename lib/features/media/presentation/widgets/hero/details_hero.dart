@@ -228,19 +228,17 @@ class DetailsHero extends ConsumerWidget {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   spacing: 12,
                   runSpacing: 8,
-                  children: [
-                    Text(formattedDate, style: DesktopTypography.captionMeta),
-                    if (runtime != null) ...[
-                      const _DotSeparator(),
+                  children: _withDots([
+                    if (formattedDate.isNotEmpty)
+                      Text(formattedDate, style: DesktopTypography.captionMeta),
+                    if (runtime != null)
                       Text(
                         type == 'movie'
                             ? '${(runtime / 60).floor()}h ${runtime % 60}m'
                             : l10n.detailsEpisodeRuntime(runtime),
                         style: DesktopTypography.captionMeta,
                       ),
-                    ],
-                    if (voteAverage != null && voteAverage > 0) ...[
-                      const _DotSeparator(),
+                    if (voteAverage != null && voteAverage > 0)
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -259,8 +257,7 @@ class DetailsHero extends ConsumerWidget {
                           ),
                         ],
                       ),
-                    ],
-                  ],
+                  ]),
                 ),
 
                 // Series Info Row
@@ -377,7 +374,7 @@ class DetailsHero extends ConsumerWidget {
       child: Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
         spacing: 12,
-        children: [
+        children: _withDots([
           Text(
             l10n.detailsSeasonsCount(numSeasons),
             style: TextStyle(
@@ -385,7 +382,6 @@ class DetailsHero extends ConsumerWidget {
               fontSize: 13,
             ),
           ),
-          const _DotSeparator(),
           Text(
             l10n.detailsEpisodesCount(numEpisodes),
             style: TextStyle(
@@ -393,8 +389,7 @@ class DetailsHero extends ConsumerWidget {
               fontSize: 13,
             ),
           ),
-          if (statusStr != null) ...[
-            const _DotSeparator(),
+          if (statusStr != null)
             Text(
               statusStr == 'Returning Series'
                   ? l10n.seriesStatusOngoing
@@ -405,8 +400,7 @@ class DetailsHero extends ConsumerWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-          ],
-        ],
+        ]),
       ),
     );
   }
@@ -436,6 +430,10 @@ class DetailsHero extends ConsumerWidget {
     return playTarget.isResume ? l10n.detailsResume : l10n.detailsPlayNow;
   }
 }
+
+/// A "•" between the parts that are there, none before the first (REV-219).
+List<Widget> _withDots(List<Widget> parts) =>
+    parts.expand((p) => [const _DotSeparator(), p]).skip(1).toList();
 
 class _DotSeparator extends StatelessWidget {
   const _DotSeparator();
