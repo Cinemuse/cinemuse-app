@@ -2,13 +2,25 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 import 'package:cinemuse_app/features/streaming/sources/animeunity_source.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_search_context.dart';
 import 'package:cinemuse_app/features/streaming/anime/models/kitsu_mapping.dart';
 import 'package:cinemuse_app/features/streaming/anime/animeunity_lookup_service.dart';
 
-void main() async {
+// Run with `fvm flutter test scripts/telemetry` (not `dart run`: the
+// sources import Flutter, REV-242). Real network calls; not part of ci.yml,
+// which only runs test/. Fails when every title fails (the scraper broke).
+void main() {
+  test(
+    'AnimeUnity scraper still finds streams',
+    _run,
+    timeout: const Timeout(Duration(minutes: 5)),
+  );
+}
+
+Future<void> _run() async {
   print('Starting AnimeUnity Scraper Telemetry...');
 
   final dio = Dio();
@@ -153,9 +165,9 @@ void main() async {
     'Telemetry completed: $successfulChecks/${testCases.length} successful.',
   );
 
-  // Exit with error if ALL tests failed (scraper is completely broken)
-  if (successfulChecks == 0) {
-    exit(1);
-  }
-  exit(0);
+  expect(
+    successfulChecks,
+    greaterThan(0),
+    reason: 'Every title failed: the scraper is broken.',
+  );
 }

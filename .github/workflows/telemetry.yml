@@ -9,28 +9,34 @@ on:
 jobs:
   run-telemetry:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-      
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          
+          # Keep in sync with .fvmrc, ci.yml and release.yml
+          flutter-version: '3.41.0'
+          cache: true
+
+      # pubspec.yaml lists .env as an asset. The scrapers need no secrets.
+      - name: Create empty .env
+        run: touch .env
+
       - name: Install Dependencies
-        run: flutter pub get
-        
-      - name: Run VixSrc Telemetry Script
-        continue-on-error: true
-        run: dart run scripts/telemetry/vixsrc_telemetry.dart
-        
-      - name: Run AnimeUnity Telemetry Script
-        continue-on-error: true
-        run: dart run scripts/telemetry/animeunity_telemetry.dart
+        run: flutter pub get --enforce-lockfile
+
+      # Run with `flutter test`: the sources import Flutter, so `dart run`
+      # can't compile them (REV-242). A broken scraper fails the job, and
+      # GitHub emails the repo owner about failed scheduled runs (CI-02).
+      - name: Run Scraper Checks
+        run: flutter test scripts/telemetry
+
       - name: Upload Telemetry Report Artifacts
-        if: always() # Upload the artifacts even if a script failed
+        if: always() # Upload the reports even if a check failed
         uses: actions/upload-artifact@v4
         with:
           name: scrapers-telemetry-reports

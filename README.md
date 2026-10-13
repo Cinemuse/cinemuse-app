@@ -38,7 +38,7 @@ CI (`.github/workflows/ci.yml`) runs the format check, analyze and tests on ever
 - `lib/l10n/`: translations (English, Italian). Edit the `.arb` files.
 - `packages/media_kit_video/`: patched copy of `media_kit_video` (see the comment in `pubspec.yaml`).
 - `supabase/`: database migrations and edge functions.
-- `scripts/telemetry/`: scraper health checks, run by `.github/workflows/telemetry.yml`.
+- `scripts/telemetry/`: scraper health checks (real network), run daily by `.github/workflows/telemetry.yml`. By hand: `fvm flutter test scripts/telemetry`.
 
 ## Release
 
