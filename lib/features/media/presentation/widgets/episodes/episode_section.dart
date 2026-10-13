@@ -8,13 +8,13 @@ import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/comments_bottom_sheet.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_carousel_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_list.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/season_selector.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/tracking_modals.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/watch_logs_sheet.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
-import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -160,19 +160,8 @@ class EpisodeSection extends ConsumerWidget {
             if (season == null) {
               return Center(child: Text(l10n.detailsSeasonNotFound));
             }
-            final rawEpisodes = season['episodes'] as List? ?? [];
-            final episodes = rawEpisodes
-                .whereType<Map>()
-                .map(
-                  (e) => EpisodeItem.fromTmdbMap(
-                    Map<String, dynamic>.from(e),
-                    seasonNumber: selectedSeason,
-                  ),
-                )
-                .toList();
-
             return EpisodeList(
-              episodes: episodes,
+              episodes: _episodesOf(season, selectedSeason),
               seasonNumber: selectedSeason,
               mediaId: mediaId,
               watchedEpisodesCount: watchedEpisodesMap,
@@ -213,65 +202,51 @@ class EpisodeSection extends ConsumerWidget {
     required void Function(int season, int ep) onViewHistory,
     required void Function(int s, int e) onShowComments,
   }) {
-    return seasonDetailsAsync.when(
-      loading: () => BentoBox(
-        title: l10n.detailsEpisodes,
-        icon: Icons.tv,
-        action: seasonSelector,
-        child: const SizedBox(
-          height: 230,
-          child: Center(
-            child: CircularProgressIndicator(
+    // One row for every state, so the season selector never moves to another
+    // parent (focus loss, REV-204) and a missing season keeps it (REV-207).
+    return EpisodeCarouselRow(
+      episodes: _episodesOf(seasonDetailsAsync.valueOrNull, selectedSeason),
+      seasonNumber: selectedSeason,
+      mediaId: mediaId,
+      watchedEpisodesCount: watchedEpisodesMap,
+      episodeProgress: episodeProgressMap,
+      seasonSelector: seasonSelector,
+      emptyBuilder: (_) => SizedBox(
+        height: 230,
+        child: Center(
+          child: seasonDetailsAsync.when(
+            loading: () => const CircularProgressIndicator(
               strokeWidth: 2,
               color: AppTheme.accent,
             ),
+            error: (err, _) =>
+                Text(l10n.detailsErrorLoadingSeason(err.toString())),
+            data: (_) => Text(l10n.detailsSeasonNotFound),
           ),
         ),
       ),
-      error: (err, _) => BentoBox(
-        title: l10n.detailsEpisodes,
-        icon: Icons.tv,
-        action: seasonSelector,
-        child: SizedBox(
-          height: 230,
-          child: Center(
-            child: Text(l10n.detailsErrorLoadingSeason(err.toString())),
-          ),
-        ),
-      ),
-      data: (season) {
-        if (season == null) {
-          return const SizedBox.shrink();
-        }
-        final rawEpisodes = season['episodes'] as List? ?? [];
-        final episodes = rawEpisodes
-            .whereType<Map>()
-            .map(
-              (e) => EpisodeItem.fromTmdbMap(
-                Map<String, dynamic>.from(e),
-                seasonNumber: selectedSeason,
-              ),
-            )
-            .toList();
-
-        return EpisodeCarouselRow(
-          episodes: episodes,
-          seasonNumber: selectedSeason,
-          mediaId: mediaId,
-          watchedEpisodesCount: watchedEpisodesMap,
-          episodeProgress: episodeProgressMap,
-          seasonSelector: seasonSelector,
-          onEpisodeTap: onEpisodeTap,
-          onMarkWatched: onMarkWatched,
-          onTrackOptions: onTrackOptions,
-          onFindMissingPreceding: onFindMissingPreceding,
-          onShowMarkPrecedingModal: onShowMarkPrecedingModal,
-          onViewHistory: onViewHistory,
-          onShowComments: onShowComments,
-        );
-      },
+      onEpisodeTap: onEpisodeTap,
+      onMarkWatched: onMarkWatched,
+      onTrackOptions: onTrackOptions,
+      onFindMissingPreceding: onFindMissingPreceding,
+      onShowMarkPrecedingModal: onShowMarkPrecedingModal,
+      onViewHistory: onViewHistory,
+      onShowComments: onShowComments,
     );
   }
+
+  static List<EpisodeItem> _episodesOf(
+    Map<String, dynamic>? season,
+    int seasonNumber,
+  ) => (season?['episodes'] as List? ?? const [])
+      .whereType<Map>()
+      .map(
+        (e) => EpisodeItem.fromTmdbMap(
+          Map<String, dynamic>.from(e),
+          seasonNumber: seasonNumber,
+        ),
+      )
+      .toList();
 
   static void _handleEpisodePlay(
     BuildContext context,
@@ -399,94 +374,5 @@ class EpisodeSection extends ConsumerWidget {
         message: l10n.detailsTvTimeCommentsNotAvailableSeries,
       );
     }
-  }
-}
-
-class SeasonSelector extends ConsumerWidget {
-  final List<SeasonSummary> seasons;
-  final int selectedSeason;
-  final String mediaId;
-
-  const SeasonSelector({
-    super.key,
-    required this.seasons,
-    required this.selectedSeason,
-    required this.mediaId,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
-    final popupKey = GlobalKey<PopupMenuButtonState<int>>();
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 160),
-      child: PopupMenuButton<int>(
-        key: popupKey,
-        initialValue: selectedSeason,
-        onSelected: (val) => ref
-            .read(selectedSeasonProvider(mediaId).notifier)
-            .selectSeason(val),
-        child: DpadFocusable(
-          onTap: () => popupKey.currentState?.showButtonMenu(),
-          borderRadius: AppTheme.radiusMd,
-          builder: (context, isFocused, isHovered, child) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isFocused
-                    ? theme.focusColor
-                    : (isHovered
-                          ? theme.hoverColor
-                          : theme.colorScheme.surfaceContainer.withValues(
-                              alpha: 0.5,
-                            )),
-                borderRadius: AppTheme.radiusMd,
-                border: Border.all(
-                  color: isFocused
-                      ? theme.colorScheme.primary.withValues(alpha: 0.5)
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.1),
-                ),
-              ),
-              child: child,
-            );
-          },
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  l10n.detailsSeasonNumber(selectedSeason),
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.keyboard_arrow_down,
-                size: 14,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-            ],
-          ),
-        ),
-        itemBuilder: (context) => seasons
-            .map(
-              (s) => PopupMenuItem<int>(
-                value: s.seasonNumber,
-                child: Text(
-                  l10n.detailsSeasonNumber(s.seasonNumber),
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ),
-            )
-            .toList(),
-      ),
-    );
   }
 }

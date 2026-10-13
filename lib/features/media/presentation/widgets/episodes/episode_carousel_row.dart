@@ -15,6 +15,9 @@ class EpisodeCarouselRow extends ConsumerWidget {
   final Map<String, int> watchedEpisodesCount;
   final Map<String, WatchHistory>? episodeProgress;
   final Widget? seasonSelector;
+
+  /// Shown inside the row (header kept) when [episodes] is empty.
+  final WidgetBuilder? emptyBuilder;
   final void Function(int season, int episode, String name, {bool restart})?
   onEpisodeTap;
   final Function(int season, int episode, DateTime? date)? onMarkWatched;
@@ -38,6 +41,7 @@ class EpisodeCarouselRow extends ConsumerWidget {
     this.watchedEpisodesCount = const {},
     this.episodeProgress,
     this.seasonSelector,
+    this.emptyBuilder,
     this.onEpisodeTap,
     this.onMarkWatched,
     this.onTrackOptions,
@@ -52,15 +56,12 @@ class EpisodeCarouselRow extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final seriesDomainService = ref.watch(seriesDomainServiceProvider);
 
-    if (episodes.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
     return GenericCarouselRow(
       title: l10n.detailsEpisodes,
       icon: Icons.tv,
       theme: CarouselTheme.bentoBox,
       headerAction: seasonSelector,
+      emptyBuilder: emptyBuilder,
       height: 230,
       itemCount: episodes.length,
       padding: EdgeInsets.zero,
