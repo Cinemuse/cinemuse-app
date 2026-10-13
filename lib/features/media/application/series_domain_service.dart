@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 
@@ -72,28 +74,30 @@ class SeriesDomainService {
     return (next: nextInfo, isAired: true);
   }
 
-  /// Calculates the total count of aired/released episodes for a series.
-  int calculateReleasedEpisodes(Map<String, dynamic> seriesDetails) {
-    int total = 0;
-    final seasons = seriesDetails['seasons'] as List?;
-    if (seasons == null) return 0;
-
+  /// How many regular episodes (no specials) have aired. The one rule for
+  /// the "fully watched" badge and the progress bar (REV-198).
+  int airedEpisodeCount(Map<String, dynamic> details) {
+    final seasons = (details['seasons'] as List?) ?? const [];
+    final lastAired = details['last_episode_to_air'] as Map?;
+    final lastSeason = lastAired?['season_number'] as int? ?? 0;
+    final lastEpisode = lastAired?['episode_number'] as int? ?? 0;
+    final status = details['status'] as String?;
+    final isEnded = status == 'Ended' || status == 'Canceled';
     final now = DateTime.now();
-    final lastAired = seriesDetails['last_episode_to_air'];
 
+    var total = 0;
     for (final season in seasons) {
-      final seasonNum = season['season_number'] as int? ?? 0;
-      if (seasonNum > 0 && season['episode_count'] != null) {
-        if (season['air_date'] == null) continue;
-        final airDate = DateTime.tryParse(season['air_date'].toString());
-        if (airDate == null || airDate.isAfter(now)) continue;
-
-        if (lastAired != null && seasonNum == lastAired['season_number']) {
-          total += (lastAired['episode_number'] as int? ?? 0);
-        } else if (lastAired == null ||
-            seasonNum < (lastAired['season_number'] as int? ?? 0)) {
-          total += (season['episode_count'] as int? ?? 0);
-        }
+      final number = season['season_number'] as int? ?? 0;
+      final count = season['episode_count'] as int? ?? 0;
+      if (number <= 0) continue;
+      if (lastAired != null) {
+        if (number < lastSeason) total += count;
+        if (number == lastSeason) total += min(count, lastEpisode);
+      } else if (isEnded) {
+        total += count;
+      } else {
+        final airDate = DateTime.tryParse('${season['air_date'] ?? ''}');
+        if (airDate != null && !airDate.isAfter(now)) total += count;
       }
     }
     return total;
@@ -114,54 +118,7 @@ class SeriesDomainService {
 
     final resolvedWatchedMap = watchedEpisodesMap ?? watchedMap ?? const {};
 
-    int totalEpisodes = 0;
-    final now = DateTime.now();
-    final lastAired = showDetails['last_episode_to_air'];
-    final status = showDetails['status'] as String?;
-    final isEnded = status == 'Ended' || status == 'Canceled';
-
-    if (isEnded) {
-      final numberOfEpisodes = showDetails['number_of_episodes'] as int?;
-      if (numberOfEpisodes != null && numberOfEpisodes > 0) {
-        totalEpisodes = numberOfEpisodes;
-      } else {
-        for (final season in seasons) {
-          final seasonNum = season['season_number'] as int? ?? 0;
-          if (seasonNum > 0 && season['episode_count'] != null) {
-            totalEpisodes += (season['episode_count'] as int);
-          }
-        }
-      }
-    } else {
-      for (final season in seasons) {
-        final seasonNum = season['season_number'] as int? ?? 0;
-        if (seasonNum <= 0 || season['episode_count'] == null) continue;
-
-        final episodeCount = season['episode_count'] as int;
-
-        if (lastAired != null) {
-          final lastAiredSeason = lastAired['season_number'] as int? ?? 0;
-          final lastAiredEp = lastAired['episode_number'] as int? ?? 0;
-
-          if (seasonNum < lastAiredSeason) {
-            totalEpisodes += episodeCount;
-          } else if (seasonNum == lastAiredSeason) {
-            if (lastAiredEp > episodeCount) {
-              totalEpisodes += episodeCount;
-            } else {
-              totalEpisodes += lastAiredEp;
-            }
-          }
-        } else {
-          if (season['air_date'] != null) {
-            final airDate = DateTime.tryParse(season['air_date'].toString());
-            if (airDate != null && !airDate.isAfter(now)) {
-              totalEpisodes += episodeCount;
-            }
-          }
-        }
-      }
-    }
+    final totalEpisodes = airedEpisodeCount(showDetails);
 
     final watchedEpisodesCount = resolvedWatchedMap.entries.where((entry) {
       final seasonNum = int.tryParse(entry.key.split('-').first) ?? 0;

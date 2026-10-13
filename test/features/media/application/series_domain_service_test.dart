@@ -27,12 +27,28 @@ void main() {
           'last_episode_to_air': {'season_number': 2, 'episode_number': 4},
         };
 
-        final count = service.calculateReleasedEpisodes(details);
+        final count = service.airedEpisodeCount(details);
 
         // Season 1 has 10 released. Season 2 has 4 aired. Total = 14.
         expect(count, 14);
       },
     );
+
+    // REV-198: the badge's count skipped a season with no air_date even
+    // when TMDB said its episodes had aired; the progress bar didn't.
+    test('airedEpisodeCount trusts the last aired episode over air dates', () {
+      final details = {
+        'status': 'Returning Series',
+        'seasons': [
+          {'season_number': 1, 'episode_count': 10},
+          {'season_number': 2, 'episode_count': 8},
+        ],
+        'last_episode_to_air': {'season_number': 2, 'episode_number': 3},
+      };
+
+      expect(service.airedEpisodeCount(details), 13);
+      expect(service.calculateSeriesProgress(details: details)!.totalCount, 13);
+    });
 
     test(
       'calculateSeriesProgress computes status and progress ratio accurately',

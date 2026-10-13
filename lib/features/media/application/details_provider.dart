@@ -276,7 +276,8 @@ final seriesWatchStatusProvider = Provider.autoDispose
       int minCount = -1;
 
       counts.forEach((key, count) {
-        if (count > 0) {
+        // Specials aren't in the aired total either (REV-198).
+        if (count > 0 && !key.startsWith('0-')) {
           watchedInSeries++;
           if (minCount == -1 || count < minCount) {
             minCount = count;

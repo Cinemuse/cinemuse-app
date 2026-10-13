@@ -134,6 +134,27 @@ void main() {
     },
   );
 
+  // REV-198: watched specials counted against a total without specials.
+  test('watched specials don\'t make a show fully watched', () async {
+    Map<String, dynamic> log(int season, int episode) => {
+      'tmdb_id': showId,
+      'media_type': 'tv',
+      'season': season,
+      'episode': episode,
+      'logged_at': '2026-10-12T20:00:00Z',
+    };
+    final status = seriesWatchStatusProvider((
+      tmdbId: showId,
+      totalEpisodes: 2,
+    ));
+    container.listen(status, (_, __) {});
+    showLogs.add([log(0, 1), log(0, 2), log(1, 1)]);
+    await pumpEvents();
+
+    expect(container.read(status).isFullyWatched, false);
+    expect(container.read(status).isPartiallyWatched, true);
+  });
+
   // REV-196: a failed save dropped the pending changes of every episode of
   // the show, also the ones still saving.
   test('a failed episode save keeps the other pending episodes', () async {

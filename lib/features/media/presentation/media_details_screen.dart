@@ -186,7 +186,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             ? ref.watch(
                 seriesWatchStatusProvider((
                   tmdbId: tmdbId,
-                  totalEpisodes: _calculateReleasedEpisodes(rawDetails),
+                  totalEpisodes: ref
+                      .read(seriesDomainServiceProvider)
+                      .airedEpisodeCount(rawDetails),
                 )),
               )
             : null;
@@ -748,12 +750,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       episodes: episodesToMark,
       loggedAt: date,
     );
-  }
-
-  int _calculateReleasedEpisodes(Map<String, dynamic> details) {
-    return ref
-        .read(seriesDomainServiceProvider)
-        .calculateReleasedEpisodes(details);
   }
 
   String? _resolveEnglishOrOriginalTitle(Map<String, dynamic> details) {
