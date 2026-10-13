@@ -173,6 +173,7 @@ class SettingsTile extends StatelessWidget {
         Material(
           color: Colors.transparent,
           child: InkWell(
+            mouseCursor: AppTheme.clickCursor,
             onTap: onTap,
             borderRadius: BorderRadius.circular(
               16,

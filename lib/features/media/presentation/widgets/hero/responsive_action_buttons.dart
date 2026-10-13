@@ -305,14 +305,18 @@ class _SplitPlayButtonState extends State<_SplitPlayButton> {
           ),
         );
       }).toList(),
-      child: GestureDetector(
-        onTap: () => _popupKey.currentState?.showButtonMenu(),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-          child: Icon(
-            Icons.keyboard_arrow_down,
-            color: theme.colorScheme.onPrimary,
-            size: 22,
+      // The disabled button's InkWell shows the arrow cursor: put the hand back.
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () => _popupKey.currentState?.showButtonMenu(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+            child: Icon(
+              Icons.keyboard_arrow_down,
+              color: theme.colorScheme.onPrimary,
+              size: 22,
+            ),
           ),
         ),
       ),
@@ -466,10 +470,6 @@ class _PlayButton extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Track Button
-// ---------------------------------------------------------------------------
-
 class _TrackButton extends StatelessWidget {
   final VoidCallback onTrackTap;
   final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})?
@@ -569,10 +569,6 @@ class _TrackButton extends StatelessWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Comments Button
-// ---------------------------------------------------------------------------
 
 class _CommentsButton extends StatelessWidget {
   final VoidCallback onCommentsTap;

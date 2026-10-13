@@ -319,14 +319,12 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
           return KeyEventResult.ignored;
         }
 
-        // 1. Left boundary: if at leftmost focusable card and pressing arrowLeft
         if (event.logicalKey == LogicalKeyboardKey.arrowLeft &&
             _isFirstFocusableIndex(index)) {
           // Always consume arrowLeft at leftmost focusable item so it NEVER escapes or jumps between rows
           return KeyEventResult.handled;
         }
 
-        // 2. Right boundary: if at rightmost focusable card and pressing arrowRight, clamp focus
         if (event.logicalKey == LogicalKeyboardKey.arrowRight &&
             _isLastFocusableIndex(index, totalCount)) {
           return KeyEventResult.handled;
@@ -450,6 +448,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
                           children: [
                             if (widget.onHeaderTap != null)
                               InkWell(
+                                mouseCursor: AppTheme.clickCursor,
                                 onTap: widget.onHeaderTap,
                                 borderRadius: BorderRadius.circular(8),
                                 child: Padding(
@@ -527,6 +526,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
                       children: [
                         if (widget.onHeaderTap != null)
                           InkWell(
+                            mouseCursor: AppTheme.clickCursor,
                             onTap: widget.onHeaderTap,
                             borderRadius: BorderRadius.circular(8),
                             child: Padding(

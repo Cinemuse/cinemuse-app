@@ -340,6 +340,7 @@ class _AgendaEventItem extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return InkWell(
+      mouseCursor: AppTheme.clickCursor,
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => MediaDetailsScreen(
@@ -352,7 +353,6 @@ class _AgendaEventItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         child: Row(
           children: [
-            // Poster Small
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: Container(

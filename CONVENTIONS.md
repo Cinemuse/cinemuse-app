@@ -71,6 +71,7 @@ Rules for every change. Old code that breaks a rule is fixed only when a fix tou
 - All text users see is in the `.arb` files (English + Italian). Includes error messages and titles (REV-15, REV-215).
 - Screen sizes: use the shared breakpoint constants (REV-51); never write a new pixel number such as 600 / 768. Use `MediaQuery.sizeOf(context)`, not `MediaQuery.of(context).size`.
 - **Works with a remote and a keyboard**: every control can be reached with the arrow keys and activated with Enter; exactly one tap handler per control (REV-39); the main button of a screen or dialog has `autofocus: true`. Check on Windows with arrows + Enter.
+- **Hand cursor on everything clickable** (REV-246). `DpadFocusable` and the theme's buttons and menu items set it; a raw `InkWell` gets `mouseCursor: AppTheme.clickCursor`, and anything else clickable gets a `MouseRegion(cursor: SystemMouseCursors.click)`.
 - No hard-coded colors or text styles: use the theme.
 
 ## Tests

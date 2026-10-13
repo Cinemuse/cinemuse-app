@@ -87,6 +87,12 @@ class AppTheme {
     ),
   ];
 
+  /// Hand cursor on everything clickable, arrow when disabled. Flutter's
+  /// desktop default is the arrow (native style); the app uses the hand
+  /// everywhere, like its cards (REV-246).
+  static const WidgetStateMouseCursor clickCursor =
+      WidgetStateMouseCursor.clickable;
+
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
@@ -144,6 +150,7 @@ class AppTheme {
       // ElevatedButton Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ButtonStyle(
+          mouseCursor: clickCursor,
           backgroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.hovered) ||
                 states.contains(WidgetState.focused)) {
@@ -184,6 +191,7 @@ class AppTheme {
       // OutlinedButton Theme
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: ButtonStyle(
+          mouseCursor: clickCursor,
           foregroundColor: const WidgetStatePropertyAll(textWhite),
           side: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.focused) ||
@@ -239,8 +247,15 @@ class AppTheme {
             fontFamily: 'Outfit',
             fontWeight: FontWeight.w600,
           ),
-        ),
+        ).copyWith(mouseCursor: clickCursor),
       ),
+      filledButtonTheme: const FilledButtonThemeData(
+        style: ButtonStyle(mouseCursor: clickCursor),
+      ),
+      iconButtonTheme: const IconButtonThemeData(
+        style: ButtonStyle(mouseCursor: clickCursor),
+      ),
+      popupMenuTheme: const PopupMenuThemeData(mouseCursor: clickCursor),
 
       // Icon Theme
       iconTheme: const IconThemeData(color: textWhite),

@@ -48,7 +48,6 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
   int _visibleSectionCount = 30;
   int _visibleGridCount = 60;
 
-  // Cache for filtered/sorted items
   List<WatchHistory>? _lastRawList;
   MediaKind? _lastType;
   WatchStatus? _lastStatus;
@@ -551,6 +550,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
+        mouseCursor: AppTheme.clickCursor,
         onTap: () => _openFilterSheet(context),
         borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(

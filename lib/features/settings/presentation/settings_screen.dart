@@ -93,6 +93,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ? Colors.white.withValues(alpha: 0.05)
                         : Colors.transparent,
                     child: InkWell(
+                      mouseCursor: AppTheme.clickCursor,
                       onTap: () {
                         setState(() {
                           _activeCategory = category['id'] as String;

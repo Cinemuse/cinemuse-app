@@ -238,7 +238,6 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Back Button
                   IconButton(
                     icon: const Icon(
                       Icons.arrow_back,
@@ -363,6 +362,7 @@ class _NavigationArrowState extends State<_NavigationArrow> {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
+              mouseCursor: AppTheme.clickCursor,
               onTap: widget.onTap,
               borderRadius: AppTheme.radiusFull,
               hoverColor: Colors.transparent,

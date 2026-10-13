@@ -280,6 +280,7 @@ class _FilterListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      mouseCursor: AppTheme.clickCursor,
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(

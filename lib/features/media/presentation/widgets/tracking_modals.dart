@@ -22,8 +22,7 @@ class _ModalContentWithPicker extends StatefulWidget {
 class _ModalContentWithPickerState extends State<_ModalContentWithPicker> {
   DateTime? _selectedDate;
 
-  // The Material calendar works with arrow keys; the old wheel didn't
-  // (REV-216).
+  // The Material calendar works with arrow keys, the wheel didn't (REV-216).
   Future<void> _pickDate() async {
     final picked = await EpisodeMenu.selectWatchDate(
       context,
@@ -482,6 +481,7 @@ class _ModalButton extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return InkWell(
+      mouseCursor: AppTheme.clickCursor,
       onTap: onTap,
       borderRadius: AppTheme.radius12,
       child: Container(

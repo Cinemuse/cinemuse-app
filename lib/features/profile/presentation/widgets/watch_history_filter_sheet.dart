@@ -320,6 +320,7 @@ class _WatchHistoryFilterSheetState extends State<WatchHistoryFilterSheet> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
+        mouseCursor: AppTheme.clickCursor,
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
         child: AnimatedContainer(

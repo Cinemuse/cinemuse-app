@@ -305,6 +305,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
+              mouseCursor: AppTheme.clickCursor,
               canRequestFocus: false,
               excludeFromSemantics: true,
               onTap: () => _showContextActions(context),

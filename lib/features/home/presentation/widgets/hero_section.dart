@@ -624,7 +624,6 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     return FocusTraversalGroup(
       child: Row(
         children: [
-          // Prominent Capsule Play Button
           ElevatedButton.icon(
             onPressed: () => _navigateToPlayer(context, item),
             icon: const Icon(Icons.play_arrow_rounded, size: 24),
@@ -726,6 +725,7 @@ class _HeroIndicatorDot extends StatelessWidget {
     final height = isMobile ? 5.0 : 6.0;
 
     return InkWell(
+      mouseCursor: AppTheme.clickCursor,
       onTap: onTap,
       borderRadius: BorderRadius.circular(4),
       child: Padding(

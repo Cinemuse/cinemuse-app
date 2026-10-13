@@ -313,48 +313,52 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
   }
 
   Widget _buildFilterChip(String label, IconData icon, bool isMobile) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppTheme.textWhite.withValues(alpha: 0.05),
-        borderRadius: AppTheme.radius12,
-        border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        mainAxisSize: isMobile ? MainAxisSize.max : MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 18,
-                  color: AppTheme.textWhite.withValues(alpha: 0.8),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    label,
-                    overflow: TextOverflow.ellipsis,
-                    style: DesktopTypography.bodySecondary.copyWith(
-                      fontSize: 14,
-                      color: AppTheme.textWhite,
-                      fontWeight: FontWeight.w600,
+    // The menu button's own InkWell has no cursor option (REV-246).
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.textWhite.withValues(alpha: 0.05),
+          borderRadius: AppTheme.radius12,
+          border: Border.all(color: AppTheme.textWhite.withValues(alpha: 0.1)),
+        ),
+        child: Row(
+          mainAxisSize: isMobile ? MainAxisSize.max : MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    size: 18,
+                    color: AppTheme.textWhite.withValues(alpha: 0.8),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      label,
+                      overflow: TextOverflow.ellipsis,
+                      style: DesktopTypography.bodySecondary.copyWith(
+                        fontSize: 14,
+                        color: AppTheme.textWhite,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          if (isMobile) const SizedBox(width: 4),
-          Icon(
-            Icons.unfold_more_rounded,
-            size: 18,
-            color: AppTheme.textWhite.withValues(alpha: 0.5),
-          ),
-        ],
+            if (isMobile) const SizedBox(width: 4),
+            Icon(
+              Icons.unfold_more_rounded,
+              size: 18,
+              color: AppTheme.textWhite.withValues(alpha: 0.5),
+            ),
+          ],
+        ),
       ),
     );
   }

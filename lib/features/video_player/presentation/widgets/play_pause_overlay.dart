@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/utils/platform_info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -120,6 +121,7 @@ class _SeekButton extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
+        mouseCursor: AppTheme.clickCursor,
         borderRadius: BorderRadius.circular(40),
         onTap: onSkip,
         child: Container(

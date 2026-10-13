@@ -252,6 +252,7 @@ class _LiveTvSeekbarState extends State<LiveTvSeekbar> {
         ),
         const SizedBox(width: 12),
         InkWell(
+          mouseCursor: AppTheme.clickCursor,
           onTap: isAtLive
               ? null
               : () {

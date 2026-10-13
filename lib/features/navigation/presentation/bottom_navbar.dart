@@ -86,6 +86,7 @@ class _BottomNavItem extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
+        mouseCursor: AppTheme.clickCursor,
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         splashColor: Colors.transparent,

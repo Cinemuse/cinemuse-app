@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -89,6 +90,7 @@ class _WindowButton extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
+        mouseCursor: AppTheme.clickCursor,
         onTap: onTap,
         hoverColor: isClose
             ? const Color(0xFFE81123) // Standard close red

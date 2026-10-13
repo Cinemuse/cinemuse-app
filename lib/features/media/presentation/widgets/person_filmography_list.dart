@@ -39,6 +39,7 @@ class PersonFilmographyList extends StatelessWidget {
             : null;
 
         return InkWell(
+          mouseCursor: AppTheme.clickCursor,
           onTap: () => onMediaTap(item),
           borderRadius: AppTheme.radius12,
           child: Container(
