@@ -31,13 +31,10 @@ class ProfileCollections extends ConsumerWidget {
   }
 
   void _showListDetails(BuildContext context, WidgetRef ref, UserList list) {
-    final isSystemList =
-        list.type == ListType.watchlist || list.type == ListType.favorites;
-
     ListDetailsSheet.show(
       context,
       list: list,
-      onUpdate: isSystemList
+      onUpdate: list.isSystemList
           ? null
           : (name, description) async {
               await ref

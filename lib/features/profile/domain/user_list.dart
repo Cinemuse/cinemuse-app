@@ -55,6 +55,13 @@ class UserList {
   /// Whether items can be added, removed or the list edited.
   bool get isReadOnly => isCollection;
 
+  /// Watchlist, Favorites and Dropped: built in, so they can't be renamed or
+  /// deleted (REV-277).
+  bool get isSystemList =>
+      type == ListType.watchlist ||
+      type == ListType.favorites ||
+      type == ListType.dropped;
+
   /// Whether the list holds this title (REV-177: tmdbId alone can match
   /// both a movie and a show).
   bool containsTitle(int tmdbId, MediaKind mediaType) =>

@@ -59,7 +59,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
   bool _isEditing = false;
   bool _isDescExpanded = false;
 
-  bool _isSystemList(UserList list) =>
+  bool _hasFixedSubtitle(UserList list) =>
       list.type == ListType.watchlist || list.type == ListType.favorites;
 
   String _displayTitle(UserList list) {
@@ -219,7 +219,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
     }
 
     final hasDescription =
-        _isSystemList(list) ||
+        _hasFixedSubtitle(list) ||
         _descController.text.isNotEmpty ||
         (list.description?.isNotEmpty ?? false);
 
@@ -328,9 +328,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
           widget.list;
     }
 
-    final isSystemList =
-        currentList.type == ListType.watchlist ||
-        currentList.type == ListType.favorites;
+    final isSystemList = currentList.isSystemList;
     final isReadOnly = currentList.isReadOnly;
     final icon = currentList.type == ListType.watchlist
         ? LucideIcons.bookmark

@@ -67,13 +67,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _showListDetails(BuildContext context, UserList list) {
-    final isSystemList =
-        list.type == ListType.watchlist || list.type == ListType.favorites;
-
     ListDetailsSheet.show(
       context,
       list: list,
-      onUpdate: isSystemList
+      onUpdate: list.isSystemList
           ? null
           : (name, description) async {
               await ref
