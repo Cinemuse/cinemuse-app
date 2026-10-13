@@ -1,4 +1,3 @@
-import 'dart:developer' as developer;
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -6,9 +5,7 @@ import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
-import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/features/media/data/media_repository.dart';
 
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 
@@ -114,7 +111,13 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       ref.invalidate(droppedListProvider);
       ref.invalidate(continueWatchingProvider);
     } catch (e, stack) {
-      _rollbackSeriesOptimistic(tmdbId, 'deleteLatestEpisodeLog', e, stack);
+      _rollbackSeriesOptimistic(
+        tmdbId,
+        [(season: season, episode: episode)],
+        'deleteLatestEpisodeLog',
+        e,
+        stack,
+      );
       rethrow;
     }
   }
@@ -142,7 +145,13 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       ref.invalidate(droppedListProvider);
       ref.invalidate(continueWatchingProvider);
     } catch (e, stack) {
-      _rollbackSeriesOptimistic(tmdbId, 'deleteAllEpisodeLogs', e, stack);
+      _rollbackSeriesOptimistic(
+        tmdbId,
+        [(season: season, episode: episode)],
+        'deleteAllEpisodeLogs',
+        e,
+        stack,
+      );
       rethrow;
     }
   }
@@ -173,35 +182,33 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       // A dropped show becomes "watching" again (REV-227).
       ref.invalidate(droppedListProvider);
     } catch (e, stack) {
-      _rollbackSeriesOptimistic(tmdbId, 'logMultipleEpisodes', e, stack);
+      _rollbackSeriesOptimistic(
+        tmdbId,
+        episodes,
+        'logMultipleEpisodes',
+        e,
+        stack,
+      );
       rethrow;
     }
   }
 
-  /// The show's TMDB details (needed to pick the next episode), also saved
-  /// to the media cache. Null when they can't be loaded.
+  /// The show's TMDB details (needed to pick the next episode), taken from
+  /// the details page when it's open instead of downloading them again
+  /// (REV-196); that provider also saves them to the media cache.
   Future<Map<String, dynamic>?> _loadSeriesDetails(int tmdbId) async {
-    try {
-      final details = await ref
-          .read(tmdbServiceProvider)
-          .getMediaDetails(tmdbId.toString(), 'tv');
-      if (details != null) {
-        await ref
-            .read(mediaRepositoryProvider)
-            .saveMediaItem(MediaItem.fromTmdbDetails(details, MediaKind.tv));
-      }
-      return details;
-    } catch (e, stack) {
+    final details = await ref.read(
+      mediaDetailsProvider((id: '$tmdbId', type: 'tv')).future,
+    );
+    if (details == null) {
       // Safe to go on: the episodes still get logged, Continue Watching just
       // stays on the highest marked one instead of the next.
       AppLogger.warn(
         'MediaDetailsController',
         'Could not load series $tmdbId to find the next episode',
-        error: e,
-        stackTrace: stack,
       );
-      return null;
     }
+    return details;
   }
 
   /// Deletes all logs for a series.
@@ -243,9 +250,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     // saved one.
     final now = loggedAt ?? DateTime.now();
 
-    ref
-        .read(movieWatchLogsProvider(tmdbId).notifier)
-        .addOptimisticLog(now.toIso8601String());
+    ref.read(movieWatchLogsProvider(tmdbId).notifier).addOptimisticLog(now);
 
     try {
       await _repository.logMovieWatch(
@@ -297,17 +302,20 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
 
   void _rollbackSeriesOptimistic(
     int tmdbId,
+    List<({int season, int episode})> episodes,
     String action,
     Object error,
     StackTrace stack,
   ) {
-    developer.log(
-      'Failed $action for series $tmdbId: $error',
-      name: 'MediaDetailsController',
+    AppLogger.error(
+      'MediaDetailsController',
+      'Failed $action for series $tmdbId',
       error: error,
       stackTrace: stack,
     );
-    ref.read(seriesWatchLogsProvider(tmdbId).notifier).clearOptimisticUpdates();
+    ref
+        .read(seriesWatchLogsProvider(tmdbId).notifier)
+        .forgetEpisodeChanges(episodes);
   }
 
   void _rollbackMovieOptimistic(
@@ -316,9 +324,9 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     Object error,
     StackTrace stack,
   ) {
-    developer.log(
-      'Failed $action for movie $tmdbId: $error',
-      name: 'MediaDetailsController',
+    AppLogger.error(
+      'MediaDetailsController',
+      'Failed $action for movie $tmdbId',
       error: error,
       stackTrace: stack,
     );

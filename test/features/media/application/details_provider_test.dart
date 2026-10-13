@@ -134,6 +134,21 @@ void main() {
     },
   );
 
+  // REV-196: a failed save dropped the pending changes of every episode of
+  // the show, also the ones still saving.
+  test('a failed episode save keeps the other pending episodes', () async {
+    container.listen(watchedEpisodesMapProvider(showId), (_, __) {});
+    showLogs.add([]);
+    await pumpEvents();
+
+    container.read(seriesWatchLogsProvider(showId).notifier)
+      ..changeEpisodeCount(1, 1, (shown) => shown + 1)
+      ..changeEpisodeCount(1, 2, (shown) => shown + 1)
+      ..forgetEpisodeChanges([(season: 1, episode: 1)]);
+
+    expect(container.read(watchedEpisodesMapProvider(showId)), {'1-2': 1});
+  });
+
   // REV-193: after "Delete all" every later watch stayed hidden until the
   // page was closed.
   test('a movie watched again after "Delete all" shows up', () async {

@@ -191,9 +191,13 @@ class OptimisticSeriesLogs
     state = AsyncValue.data(_applyOptimisticUpdates(_serverLogs));
   }
 
-  void clearOptimisticUpdates() {
-    _expectedCounts.clear();
-    ref.invalidateSelf();
+  /// Drops the pending changes of [episodes] only (their save failed), so
+  /// other episodes still saving keep theirs (REV-196).
+  void forgetEpisodeChanges(Iterable<({int season, int episode})> episodes) {
+    for (final ep in episodes) {
+      _expectedCounts.remove('${ep.season}-${ep.episode}');
+    }
+    state = AsyncValue.data(_applyOptimisticUpdates(_serverLogs));
   }
 
   List<WatchLog> _applyOptimisticUpdates(List<WatchLog> serverLogs) {
@@ -352,10 +356,8 @@ class OptimisticMovieLogs
         .map(_applyOptimisticUpdates);
   }
 
-  void addOptimisticLog(String loggedAt) {
-    final date = DateTime.tryParse(loggedAt);
-    if (date == null) return;
-    final normalized = WatchLog.timestampKey(date);
+  void addOptimisticLog(DateTime loggedAt) {
+    final normalized = WatchLog.timestampKey(loggedAt);
     _optimisticRemovals.remove(normalized);
     _optimisticAdditions.add(normalized);
     _forceRebuild();
