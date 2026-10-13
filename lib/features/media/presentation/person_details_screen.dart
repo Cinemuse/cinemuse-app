@@ -1,11 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/application/person_domain_service.dart';
-import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
+import 'package:cinemuse_app/features/media/application/person_providers.dart';
 import 'package:cinemuse_app/features/media/domain/person.dart';
-import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/external_links.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/person_filmography_list.dart';
@@ -16,16 +14,6 @@ import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-
-final personDetailsProvider = FutureProvider.family<PersonDetails?, int>((
-  ref,
-  id,
-) async {
-  final tmdbService = ref.watch(tmdbServiceProvider);
-  final map = await tmdbService.getPersonDetails(id);
-  if (map == null) return null;
-  return PersonDetails.fromTmdbMap(map);
-});
 
 class PersonDetailsScreen extends ConsumerStatefulWidget {
   final int personId;
@@ -43,8 +31,8 @@ class _PersonDetailsScreenState extends ConsumerState<PersonDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final detailsAsync = ref.watch(personDetailsProvider(widget.personId));
-    final watchHistoryAsync = ref.watch(watchHistoryStoreProvider);
+    final id = widget.personId;
+    final detailsAsync = ref.watch(personDetailsProvider(id));
     final l10n = AppLocalizations.of(context)!;
 
     final responsivePadding = AppTheme.getResponsiveHorizontalPadding(context);
@@ -53,11 +41,13 @@ class _PersonDetailsScreenState extends ConsumerState<PersonDetailsScreen> {
       data: (details) {
         if (details == null) return Center(child: Text(l10n.commonError));
 
-        final watchHistory =
-            watchHistoryAsync.value ?? const <String, WatchHistory>{};
         return _PersonDetailsContent(
           details: details,
-          watchHistory: watchHistory,
+          seenStats: ref.watch(personSeenStatsProvider(id)),
+          topKnownFor: ref.watch(personKnownForProvider(id)),
+          filmography: ref.watch(
+            personFilmographyProvider((personId: id, showHidden: _showHidden)),
+          ),
           responsivePadding: responsivePadding,
           visibleCredits: _visibleCredits,
           showHidden: _showHidden,
@@ -78,7 +68,9 @@ class _PersonDetailsScreenState extends ConsumerState<PersonDetailsScreen> {
 
 class _PersonDetailsContent extends StatelessWidget {
   final PersonDetails details;
-  final Map<String, WatchHistory> watchHistory;
+  final PersonSeenStats seenStats;
+  final List<PersonCredit> topKnownFor;
+  final List<PersonCredit> filmography;
   final double responsivePadding;
   final int visibleCredits;
   final bool showHidden;
@@ -87,7 +79,9 @@ class _PersonDetailsContent extends StatelessWidget {
 
   const _PersonDetailsContent({
     required this.details,
-    required this.watchHistory,
+    required this.seenStats,
+    required this.topKnownFor,
+    required this.filmography,
     required this.responsivePadding,
     required this.visibleCredits,
     required this.showHidden,
@@ -103,21 +97,6 @@ class _PersonDetailsContent extends StatelessWidget {
     final String? biography = details.biography;
     final String? birthday = details.birthday;
     final String? placeOfBirth = details.placeOfBirth;
-
-    final cast = details.cast;
-    final crew = details.crew;
-
-    final seenStats = PersonDomainService.calculateSeenStats(
-      cast: cast,
-      crew: crew,
-      watchHistory: watchHistory,
-    );
-    final topKnownFor = PersonDomainService.extractTopKnownFor(cast);
-    final filmography = PersonDomainService.processFilmography(
-      cast: cast,
-      crew: crew,
-      showHidden: showHidden,
-    );
 
     return CustomScrollView(
       slivers: [

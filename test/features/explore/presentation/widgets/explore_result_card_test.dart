@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cinemuse_app/features/explore/presentation/widgets/explore_result_card.dart';
 import 'package:cinemuse_app/features/explore/presentation/widgets/media_type_selector.dart';
+import 'package:cinemuse_app/features/media/application/person_providers.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/person.dart';
