@@ -85,18 +85,12 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
     }
 
     if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-      if (index > 0) {
-        _pillFocusNodes[index - 1].requestFocus();
-        return KeyEventResult.handled;
-      }
+      if (index > 0) _pillFocusNodes[index - 1].requestFocus();
       return KeyEventResult.handled;
     }
 
     if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-      if (index < _pillFocusNodes.length - 1) {
-        _pillFocusNodes[index + 1].requestFocus();
-        return KeyEventResult.handled;
-      }
+      _pillFocusNodes.elementAtOrNull(index + 1)?.requestFocus();
       return KeyEventResult.handled;
     }
 
@@ -161,11 +155,7 @@ class _AppNavbarState extends ConsumerState<AppNavbar> {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () => widget.onTap(0),
-        child: Image.asset(
-          'assets/wordmark.png',
-          height: 32,
-          fit: BoxFit.contain,
-        ),
+        child: Image.asset('assets/wordmark.png', height: 32),
       ),
     );
 
@@ -470,13 +460,22 @@ class _NavItemState extends State<_NavItem> {
                 width: 1,
               ),
             ),
+            // On top: shows on the active tab, never resizes it (REV-249/250).
+            foregroundDecoration: _isFocused
+                ? BoxDecoration(
+                    borderRadius: effectiveRadius,
+                    border: Border.all(color: AppTheme.focusRing, width: 2),
+                    boxShadow: AppTheme.shadowFocusGlow,
+                  )
+                : null,
             child: Text(
               widget.label,
               style: TextStyle(
                 color: (widget.isSelected || _isFocused)
                     ? theme.colorScheme.onSurface
                     : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                fontWeight: (widget.isSelected || _isFocused)
+                // Not bold on focus: wider text made the bar move (REV-250).
+                fontWeight: widget.isSelected
                     ? FontWeight.bold
                     : FontWeight.w500,
                 fontSize: 14,
