@@ -9,6 +9,7 @@
         android:label="Cinemuse"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
+        android:banner="@drawable/banner"
         android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
