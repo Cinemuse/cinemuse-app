@@ -50,4 +50,37 @@ void main() {
     await turnPage(tester);
     expect(find.text('1 / 2'), findsOneWidget);
   });
+
+  // REV-217: a zoomed image couldn't be dragged sideways on phones.
+  testWidgets('a zoomed image locks the page swipe', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const FullscreenImageViewer(
+          imageUrls: ['https://example.com/a.jpg', 'https://example.com/b.jpg'],
+          initialIndex: 0,
+        ),
+      ),
+    );
+    await tester.pump();
+    ScrollPhysics? physics() =>
+        tester.widget<PageView>(find.byType(PageView)).physics;
+    expect(physics(), isNull);
+
+    final image = find.byType(InteractiveViewer);
+    await tester.tap(image);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(image);
+    await tester.pump();
+    expect(physics(), isA<NeverScrollableScrollPhysics>());
+
+    // Double tap again: zoom back out, swiping turns pages again.
+    await tester.tap(image);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(image);
+    await tester.pump();
+    expect(physics(), isNull);
+    await tester.pump(const Duration(milliseconds: 500)); // double-tap timer
+  });
 }

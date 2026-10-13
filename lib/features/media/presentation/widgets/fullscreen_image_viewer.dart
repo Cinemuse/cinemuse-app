@@ -31,6 +31,8 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
   late int _currentIndex;
   final FocusNode _focusNode = FocusNode();
   bool _isDownloading = false;
+  // While the image is zoomed, a swipe moves it instead of turning the page.
+  bool _imageZoomed = false;
 
   @override
   void initState() {
@@ -188,15 +190,19 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
             // Swipeable view
             PageView.builder(
               controller: _pageController,
+              physics: _imageZoomed
+                  ? const NeverScrollableScrollPhysics()
+                  : null,
               itemCount: widget.imageUrls.length,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              itemBuilder: (context, index) {
-                return _ZoomableImage(imageUrl: widget.imageUrls[index]);
-              },
+              onPageChanged: (index) => setState(() {
+                _currentIndex = index;
+                _imageZoomed = false;
+              }),
+              itemBuilder: (context, index) => _ZoomableImage(
+                imageUrl: widget.imageUrls[index],
+                onZoomChanged: (zoomed) =>
+                    setState(() => _imageZoomed = zoomed),
+              ),
             ),
             // Navigation arrow - Left
             if (widget.imageUrls.length > 1)
@@ -400,28 +406,22 @@ class _NavigationArrowState extends State<_NavigationArrow> {
 
 class _ZoomableImage extends StatefulWidget {
   final String imageUrl;
+  final ValueChanged<bool> onZoomChanged;
 
-  const _ZoomableImage({required this.imageUrl});
+  const _ZoomableImage({required this.imageUrl, required this.onZoomChanged});
 
   @override
   State<_ZoomableImage> createState() => _ZoomableImageState();
 }
 
 class _ZoomableImageState extends State<_ZoomableImage> {
-  late TransformationController _transformationController;
+  late final _transformationController = TransformationController()
+    ..addListener(_handleTransformationChanged);
   TapDownDetails? _doubleTapDetails;
   bool _isZoomed = false;
 
   @override
-  void initState() {
-    super.initState();
-    _transformationController = TransformationController();
-    _transformationController.addListener(_handleTransformationChanged);
-  }
-
-  @override
   void dispose() {
-    _transformationController.removeListener(_handleTransformationChanged);
     _transformationController.dispose();
     super.dispose();
   }
@@ -431,9 +431,8 @@ class _ZoomableImageState extends State<_ZoomableImage> {
     final scale = matrix.getMaxScaleOnAxis();
     final isZoomed = scale > 1.001;
     if (isZoomed != _isZoomed) {
-      setState(() {
-        _isZoomed = isZoomed;
-      });
+      _isZoomed = isZoomed;
+      widget.onZoomChanged(isZoomed); // REV-217
     }
   }
 
