@@ -1,4 +1,4 @@
-import 'dart:developer' as developer;
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/media/data/comments_repository_provider.dart';
 import 'package:cinemuse_app/features/media/domain/comment.dart';
@@ -15,7 +15,9 @@ class CommentsState {
   final int currentPage;
   final bool hasAnyComments;
   final List<Comment> comments;
-  final String? error;
+
+  /// Shown through the error mapper, never as raw text (REV-201).
+  final Object? error;
   final CommentSortType sortType;
   final CommentSourceFilter sourceFilter;
   final Set<CommentSource> availableSources;
@@ -40,7 +42,7 @@ class CommentsState {
     int? currentPage,
     bool? hasAnyComments,
     List<Comment>? comments,
-    String? error,
+    Object? error,
     CommentSortType? sortType,
     CommentSourceFilter? sourceFilter,
     Set<CommentSource>? availableSources,
@@ -77,8 +79,9 @@ class CommentsNotifier
 
     try {
       final repository = ref.read(commentsRepositoryProvider);
+      // One after the other: IMDb's page 2 needs the cursor page 1 returns.
       final p1 = await repository.fetchComments(arg, page: 1);
-      final p2 = await repository.fetchComments(arg, page: 2);
+      final p2 = await _fetchSecondPage(repository);
 
       final combined = <Comment>[];
       final seenIds = <String>{};
@@ -93,13 +96,29 @@ class CommentsNotifier
       _applySortAndFilter();
       state = state.copyWith(hasMore: p2.isNotEmpty, currentPage: _currentPage);
     } catch (e, stack) {
-      developer.log(
+      AppLogger.error(
+        'CommentsNotifier',
         'Failed to load initial comments for $arg',
-        name: 'CommentsNotifier',
         error: e,
         stackTrace: stack,
       );
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: e);
+    }
+  }
+
+  /// Page 2, or none when it fails: page 1 is still worth showing
+  /// (REV-201). No more pages are asked for then.
+  Future<List<Comment>> _fetchSecondPage(CommentsRepository repository) async {
+    try {
+      return await repository.fetchComments(arg, page: 2);
+    } catch (e, stack) {
+      AppLogger.warn(
+        'CommentsNotifier',
+        'Page 2 of the comments for $arg failed; showing page 1 only',
+        error: e,
+        stackTrace: stack,
+      );
+      return const [];
     }
   }
 
@@ -147,9 +166,10 @@ class CommentsNotifier
         availableSources: _allComments.map((c) => c.source).toSet(),
       );
     } catch (e, stack) {
-      developer.log(
+      // Safe to go on: the comments already shown stay.
+      AppLogger.warn(
+        'CommentsNotifier',
         'Failed to load next comments page for $arg',
-        name: 'CommentsNotifier',
         error: e,
         stackTrace: stack,
       );

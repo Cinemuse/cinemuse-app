@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/application/comments_provider.dart';
 import 'package:cinemuse_app/features/media/domain/comment.dart';
@@ -119,7 +120,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     if (state.error != null) {
       return Center(
         child: Text(
-          '${l10n.tvTimeCommentsError} (${state.error})',
+          '${l10n.tvTimeCommentsError} (${ref.watch(errorMapperProvider).map(state.error!).message})',
           style: const TextStyle(color: AppTheme.favorites),
         ),
       );

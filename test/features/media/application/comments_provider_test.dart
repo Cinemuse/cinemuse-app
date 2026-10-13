@@ -73,6 +73,28 @@ void main() {
       sub.close();
     });
 
+    // REV-201: a failed page 2 threw page 1 away and showed an error.
+    test('a failed page 2 keeps page 1', () async {
+      when(
+        () => mockRepo.fetchComments(testRequest, page: any(named: 'page')),
+      ).thenAnswer((invocation) async {
+        final page = invocation.namedArguments[#page] as int? ?? 1;
+        if (page == 2) throw Exception('offline');
+        return [sampleComment1];
+      });
+
+      final sub = container.listen(commentsProvider(testRequest), (_, __) {});
+      while (container.read(commentsProvider(testRequest)).isLoading) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+
+      final state = container.read(commentsProvider(testRequest));
+      expect(state.error, isNull);
+      expect(state.comments.map((c) => c.id), ['1']);
+      expect(state.hasMore, false);
+      sub.close();
+    });
+
     test('re-sorts comments when highestRating is selected', () async {
       when(
         () => mockRepo.fetchComments(testRequest, page: any(named: 'page')),
