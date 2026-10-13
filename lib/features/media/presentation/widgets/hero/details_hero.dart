@@ -3,14 +3,16 @@ import 'package:cinemuse_app/features/media/application/play_target.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/hero/responsive_action_buttons.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/hero/series_progress_bar.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 
-class DetailsHero extends StatelessWidget {
+class DetailsHero extends ConsumerWidget {
   final MediaItem? mediaItem;
   final Map<String, dynamic>? media;
   final Map<String, dynamic>? details;
@@ -50,9 +52,9 @@ class DetailsHero extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-
+    final language = ref.watch(settingsProvider.select((s) => s.appLanguage));
     final resolvedItem =
         mediaItem ??
         (media != null && details != null
@@ -61,15 +63,13 @@ class DetailsHero extends StatelessWidget {
                 MediaItem.fromString(media!['type']?.toString() ?? 'movie'),
               )
             : null);
-
     final type =
         resolvedItem?.mediaType.name ??
         media?['type'] ??
         (details?['title'] != null ? 'movie' : 'series');
-
     final String title =
-        resolvedItem?.titleEn ??
-        MediaItem.extractTitleFromTmdb(details ?? {}, 'en') ??
+        resolvedItem?.getLocalizedTitle(language) ??
+        MediaItem.extractTitleFromTmdb(details ?? {}, language) ??
         media?['title'] ??
         '';
 

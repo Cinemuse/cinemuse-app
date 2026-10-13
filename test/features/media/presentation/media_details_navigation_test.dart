@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver_provider.dart';
 import 'package:cinemuse_app/features/media/domain/episode_item.dart';
@@ -18,6 +19,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockUnifiedStreamResolver extends Mock implements UnifiedStreamResolver {}
+
+class FakeSettingsNotifier extends SettingsNotifier {
+  FakeSettingsNotifier([this.initial = const UserSettings()]);
+
+  final UserSettings initial;
+
+  @override
+  UserSettings build() => initial;
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +53,7 @@ void main() {
     return ProviderScope(
       overrides: [
         unifiedStreamResolverProvider.overrideWithValue(mockResolver),
+        settingsProvider.overrideWith(FakeSettingsNotifier.new),
         ...overrides.cast(),
       ],
       child: MaterialApp(
@@ -74,6 +85,44 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AppBackButton), findsOneWidget);
+    });
+
+    // REV-215: the hero title was always the English one.
+    testWidgets('hero title follows the app language', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            unifiedStreamResolverProvider.overrideWithValue(mockResolver),
+            settingsProvider.overrideWith(
+              () => FakeSettingsNotifier(const UserSettings(appLanguage: 'it')),
+            ),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: DetailsHero(
+                mediaItem: MediaItem(
+                  tmdbId: 278,
+                  mediaType: MediaKind.movie,
+                  titleEn: 'The Shawshank Redemption',
+                  titleIt: 'Le ali della libertà',
+                  updatedAt: DateTime(2026),
+                ),
+                onPlayClick: () {},
+                onListTap: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Le ali della libertà'), findsOneWidget);
+      expect(find.text('The Shawshank Redemption'), findsNothing);
     });
 
     testWidgets(
