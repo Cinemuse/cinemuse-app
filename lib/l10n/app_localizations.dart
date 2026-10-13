@@ -3338,6 +3338,12 @@ abstract class AppLocalizations {
   /// **'No comments yet.'**
   String get tvTimeNoComments;
 
+  /// No description provided for @commentsLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more comments'**
+  String get commentsLoadMore;
+
   /// No description provided for @tvTimeReplies.
   ///
   /// In en, this message translates to:

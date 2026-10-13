@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
@@ -125,30 +127,44 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
         ),
       );
     }
-    if (state.comments.isEmpty) {
+    final comments = state.comments;
+    // Shown when the list can't reach the scroll trigger (empty or short
+    // after a filter) but more pages exist (REV-209).
+    final Widget? listEnd = state.isLoadingMore
+        ? const Center(child: CircularProgressIndicator(color: AppTheme.accent))
+        : state.hasMore
+        ? Center(
+            child: TextButton.icon(
+              onPressed: () => ref
+                  .read(commentsProvider(widget.request).notifier)
+                  .loadNextPage(),
+              icon: const Icon(Icons.expand_more),
+              label: Text(l10n.commentsLoadMore),
+            ),
+          )
+        : null;
+
+    if (comments.isEmpty) {
       return Center(
-        child: Text(
-          l10n.tvTimeNoComments,
-          style: const TextStyle(color: AppTheme.textMuted),
-        ),
+        child:
+            listEnd ??
+            Text(
+              l10n.tvTimeNoComments,
+              style: const TextStyle(color: AppTheme.textMuted),
+            ),
       );
     }
-
-    final comments = state.comments;
-    final bool showLoader = state.isLoadingMore;
 
     return ListView.separated(
       controller: _scrollController,
       padding: const EdgeInsets.only(bottom: 24),
-      itemCount: comments.length + (showLoader ? 1 : 0),
+      itemCount: comments.length + (listEnd != null ? 1 : 0),
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         if (index >= comments.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24.0),
-            child: Center(
-              child: CircularProgressIndicator(color: AppTheme.accent),
-            ),
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24.0),
+            child: listEnd,
           );
         }
         final comment = comments[index];
@@ -185,9 +201,12 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       position: PopupMenuPosition.under,
       shape: const RoundedRectangleBorder(borderRadius: AppTheme.radius12),
       onSelected: (val) {
-        ref
-            .read(commentsProvider(widget.request).notifier)
-            .setSourceFilter(val);
+        // Not awaited: it may load a few pages to fill the filtered list.
+        unawaited(
+          ref
+              .read(commentsProvider(widget.request).notifier)
+              .setSourceFilter(val),
+        );
         if (_scrollController.hasClients) {
           _scrollController.jumpTo(0);
         }

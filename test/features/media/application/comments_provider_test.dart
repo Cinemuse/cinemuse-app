@@ -219,27 +219,77 @@ void main() {
       });
 
       // Filter for Letterboxd only
-      notifier.setSourceFilter(CommentSourceFilter.letterboxd);
+      await notifier.setSourceFilter(CommentSourceFilter.letterboxd);
       var state = container.read(commentsProvider(testRequest));
       expect(state.comments.length, 1);
       expect(state.comments.first.id, 'lb_1');
 
       // Filter for Serializd only
-      notifier.setSourceFilter(CommentSourceFilter.serializd);
+      await notifier.setSourceFilter(CommentSourceFilter.serializd);
       state = container.read(commentsProvider(testRequest));
       expect(state.comments.length, 1);
       expect(state.comments.first.id, '1');
 
       // Filter for IMDb only
-      notifier.setSourceFilter(CommentSourceFilter.imdb);
+      await notifier.setSourceFilter(CommentSourceFilter.imdb);
       state = container.read(commentsProvider(testRequest));
       expect(state.comments.length, 1);
       expect(state.comments.first.id, 'imdb_1');
 
       // Reset to all
-      notifier.setSourceFilter(CommentSourceFilter.all);
+      await notifier.setSourceFilter(CommentSourceFilter.all);
       state = container.read(commentsProvider(testRequest));
       expect(state.comments.length, 3);
+      sub.close();
+    });
+
+    // REV-209: a filter only hid loaded comments, and more pages loaded only
+    // on scroll, so an empty filtered list said "No comments" for good.
+    test('a filter that leaves few comments loads more pages', () async {
+      Comment comment(String id, CommentSource source) => Comment(
+        id: id,
+        author: const CommentAuthor(id: 'u', username: 'u'),
+        text: id,
+        likeCount: 1,
+        source: source,
+      );
+      final pages = <int, List<Comment>>{
+        1: [
+          for (var i = 0; i < 6; i++) comment('s$i', CommentSource.serializd),
+        ],
+        2: [
+          for (var i = 6; i < 12; i++) comment('s$i', CommentSource.serializd),
+        ],
+        3: [
+          comment('i1', CommentSource.imdb),
+          comment('i2', CommentSource.imdb),
+        ],
+        4: [comment('i3', CommentSource.imdb)],
+      };
+      when(
+        () => mockRepo.fetchComments(testRequest, page: any(named: 'page')),
+      ).thenAnswer(
+        (invocation) async =>
+            pages[invocation.namedArguments[#page] as int] ?? const [],
+      );
+
+      final sub = container.listen(commentsProvider(testRequest), (_, __) {});
+      final notifier = container.read(commentsProvider(testRequest).notifier);
+      while (container.read(commentsProvider(testRequest)).isLoading ||
+          container.read(commentsProvider(testRequest)).isLoadingMore) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(
+        container.read(commentsProvider(testRequest)).comments,
+        hasLength(12),
+      );
+
+      await notifier.setSourceFilter(CommentSourceFilter.imdb);
+
+      final state = container.read(commentsProvider(testRequest));
+      expect(state.comments.map((c) => c.id), containsAll(['i1', 'i2', 'i3']));
+      expect(state.comments, hasLength(3));
+      expect(state.hasMore, isFalse);
       sub.close();
     });
 

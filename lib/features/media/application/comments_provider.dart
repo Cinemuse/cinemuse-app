@@ -67,6 +67,12 @@ class CommentsNotifier
   List<Comment> _allComments = [];
   int _currentPage = 1;
 
+  // A filter only hides loaded comments, and the sheet loads more only on
+  // scroll: with fewer than this left, load a few pages by itself (REV-209).
+  // After that the sheet offers "Load more" while [CommentsState.hasMore].
+  static const _minFilteredComments = 10;
+  static const _maxAutoPages = 3;
+
   @override
   CommentsState build(CommentsRequest arg) {
     Future.microtask(_fetchComments);
@@ -159,10 +165,19 @@ class CommentsNotifier
     _applySortAndFilter();
   }
 
-  void setSourceFilter(CommentSourceFilter filter) {
+  Future<void> setSourceFilter(CommentSourceFilter filter) async {
     if (state.sourceFilter == filter) return;
     state = state.copyWith(sourceFilter: filter);
     _applySortAndFilter();
+    for (var i = 0; i < _maxAutoPages; i++) {
+      if (state.comments.length >= _minFilteredComments ||
+          !state.hasMore ||
+          state.isLoading ||
+          state.isLoadingMore) {
+        return;
+      }
+      await loadNextPage();
+    }
   }
 
   List<Comment> _filterAndSortBatch(List<Comment> batch) {

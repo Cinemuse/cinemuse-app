@@ -1788,6 +1788,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tvTimeNoComments => 'No comments yet.';
 
   @override
+  String get commentsLoadMore => 'Load more comments';
+
+  @override
   String tvTimeReplies(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

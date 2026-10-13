@@ -573,6 +573,7 @@
 
   "tvTimeComments": "Commenti",
   "tvTimeNoComments": "Ancora nessun commento.",
+  "commentsLoadMore": "Carica altri commenti",
   "tvTimeReplies": "{count, plural, one{{count} risposta} other{{count} risposte}}",
   "@tvTimeReplies": {
     "placeholders": {
