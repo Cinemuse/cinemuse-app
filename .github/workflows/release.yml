@@ -67,8 +67,9 @@ jobs:
             $buildName = $tag
             $buildNumber = 1
           } else {
-            $buildName = "1.0.0"
-            $buildNumber = 1
+            # A 1.0.0 fallback would publish a release no device updates to (CI-04)
+            Write-Output "::error::Tag '${{ github.ref_name }}' is not vX.Y.Z or vX.Y.Z+N"
+            exit 1
           }
           Write-Output "BUILD_NAME=$buildName" >> $env:GITHUB_OUTPUT
           Write-Output "BUILD_NUMBER=$buildNumber" >> $env:GITHUB_OUTPUT
@@ -136,8 +137,9 @@ jobs:
             BUILD_NAME="$TAG"
             BUILD_NUMBER=1
           else
-            BUILD_NAME="1.0.0"
-            BUILD_NUMBER=1
+            # A 1.0.0 fallback would publish a release no device updates to (CI-04)
+            echo "::error::Tag '${GITHUB_REF_NAME}' is not vX.Y.Z or vX.Y.Z+N"
+            exit 1
           fi
           echo "BUILD_NAME=${BUILD_NAME}" >> "$GITHUB_OUTPUT"
           echo "BUILD_NUMBER=${BUILD_NUMBER}" >> "$GITHUB_OUTPUT"
