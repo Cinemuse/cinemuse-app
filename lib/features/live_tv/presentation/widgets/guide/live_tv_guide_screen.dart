@@ -31,13 +31,14 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
       GlobalKey<EpgTimelineGridState>();
 
   Channel? _focusedChannel;
+  // null = the program on air now, re-read each minute (REV-278).
+  EpgProgram? _focusedProgram;
 
   Future<void> _toggleFavorite(Channel ch) => saveLiveTvChange(
     context,
     ref,
     () => ref.read(favoriteChannelIdsProvider.notifier).toggle(ch.uniqueId),
   );
-  EpgProgram? _focusedProgram;
   late final TextEditingController _searchController;
   Timer? _searchDebounce;
 
@@ -71,11 +72,12 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
   }
 
   void _onProgramFocused(Channel channel, EpgProgram? program) {
+    final kept = (program?.isLive ?? false) ? null : program;
     if (_focusedChannel?.uniqueId != channel.uniqueId ||
-        !identical(_focusedProgram, program)) {
+        !identical(_focusedProgram, kept)) {
       setState(() {
         _focusedChannel = channel;
-        _focusedProgram = program;
+        _focusedProgram = kept;
       });
     }
   }
@@ -271,7 +273,6 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
               ),
               const SizedBox(width: 12),
 
-              // Filter Tabs (All / Favorites / Recents)
               _buildTabButton(
                 focusNode: widget.focusNode,
                 icon: Icons.grid_view_rounded,
@@ -405,7 +406,6 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
             ],
           ),
 
-          // Category Chips Row (if categories available)
           if (categories.isNotEmpty) ...[
             const SizedBox(height: 10),
             SizedBox(
