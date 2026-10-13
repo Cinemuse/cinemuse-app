@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
@@ -48,6 +49,38 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
     _pageController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _turnPage(int delta) {
+    final target = _currentIndex + delta;
+    if (target < 0 || target >= widget.imageUrls.length) return;
+    _pageController.animateToPage(
+      target,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  /// On the image: ← / → turn the page, ↑ reaches the top buttons. On a
+  /// button: arrows move between buttons, ↓ goes back to the image (REV-216).
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.escape) {
+      Navigator.of(context).pop();
+    } else if (!_focusNode.hasPrimaryFocus) {
+      if (key != LogicalKeyboardKey.arrowDown) return KeyEventResult.ignored;
+      _focusNode.requestFocus();
+    } else if (key == LogicalKeyboardKey.arrowLeft) {
+      _turnPage(-1);
+    } else if (key == LogicalKeyboardKey.arrowRight) {
+      _turnPage(1);
+    } else if (key == LogicalKeyboardKey.arrowUp) {
+      _focusNode.nextFocus();
+    } else {
+      return KeyEventResult.ignored;
+    }
+    return KeyEventResult.handled;
   }
 
   Future<void> _downloadImage(String url) async {
@@ -147,33 +180,7 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
     return Focus(
       focusNode: _focusNode,
       autofocus: true,
-      descendantsAreFocusable: false,
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent) {
-          final key = event.logicalKey;
-          if (key == LogicalKeyboardKey.arrowLeft) {
-            if (_currentIndex > 0) {
-              _pageController.previousPage(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-              );
-            }
-            return KeyEventResult.handled;
-          } else if (key == LogicalKeyboardKey.arrowRight) {
-            if (_currentIndex < widget.imageUrls.length - 1) {
-              _pageController.nextPage(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-              );
-            }
-            return KeyEventResult.handled;
-          } else if (key == LogicalKeyboardKey.escape) {
-            Navigator.of(context).pop();
-            return KeyEventResult.handled;
-          }
-        }
-        return KeyEventResult.ignored;
-      },
+      onKeyEvent: _onKey,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Stack(
@@ -199,14 +206,7 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
                   padding: const EdgeInsets.only(left: 24),
                   child: _NavigationArrow(
                     isLeft: true,
-                    onTap: _currentIndex > 0
-                        ? () {
-                            _pageController.previousPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          }
-                        : null,
+                    onTap: _currentIndex > 0 ? () => _turnPage(-1) : null,
                   ),
                 ),
               ),
@@ -219,12 +219,7 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
                   child: _NavigationArrow(
                     isLeft: false,
                     onTap: _currentIndex < widget.imageUrls.length - 1
-                        ? () {
-                            _pageController.nextPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          }
+                        ? () => _turnPage(1)
                         : null,
                   ),
                 ),
@@ -244,6 +239,7 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
                       color: AppTheme.textWhite,
                       size: 28,
                     ),
+                    focusColor: AppTheme.accent.withValues(alpha: 0.3),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   // Indicator: e.g. "3 / 15"
@@ -265,29 +261,33 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
                       ),
                     ),
                   ),
-                  // Download Button
-                  _isDownloading
-                      ? const SizedBox(
-                          width: 48,
-                          height: 48,
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppTheme.accent,
-                            ),
-                          ),
-                        )
-                      : IconButton(
-                          icon: const Icon(
-                            Icons.download,
-                            color: AppTheme.textWhite,
-                            size: 28,
-                          ),
-                          tooltip: l10n.detailsGalleryDownload,
-                          onPressed: () =>
-                              _downloadImage(widget.imageUrls[_currentIndex]),
-                        ),
+                  // Download Button: stays in place while downloading, so
+                  // a remote doesn't lose focus.
+                  Tooltip(
+                    message: l10n.detailsGalleryDownload,
+                    child: HoverScale(
+                      onTap: () =>
+                          _downloadImage(widget.imageUrls[_currentIndex]),
+                      showFocusRing: true,
+                      borderRadius: AppTheme.radiusFull,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: _isDownloading
+                            ? const SizedBox.square(
+                                dimension: 28,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppTheme.accent,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.download,
+                                color: AppTheme.textWhite,
+                                size: 28,
+                              ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

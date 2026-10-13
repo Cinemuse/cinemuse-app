@@ -4,6 +4,7 @@ import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/fullscreen_image_viewer.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class GalleryBottomSheet extends StatelessWidget {
@@ -142,8 +143,11 @@ class GalleryBottomSheet extends StatelessWidget {
       itemCount: items.length,
       itemBuilder: (context, index) {
         final url = _getImageUrl(items[index], previewSize);
-        return GestureDetector(
+        // Focusable so a remote can open an image (REV-216).
+        return DpadFocusable(
           onTap: () => _openFullscreenViewer(context, items, index),
+          showFocusRing: true,
+          borderRadius: AppTheme.radiusMd,
           child: ClipRRect(
             borderRadius: AppTheme.radiusMd,
             child: CachedNetworkImage(
@@ -195,8 +199,10 @@ class GalleryBottomSheet extends StatelessWidget {
       itemCount: logos.length,
       itemBuilder: (context, index) {
         final url = _getImageUrl(logos[index], 'w500');
-        return GestureDetector(
+        return DpadFocusable(
           onTap: () => _openFullscreenViewer(context, logos, index),
+          showFocusRing: true,
+          borderRadius: AppTheme.radiusMd,
           child: Container(
             decoration: BoxDecoration(
               color: AppTheme.secondary.withValues(alpha: 0.3),

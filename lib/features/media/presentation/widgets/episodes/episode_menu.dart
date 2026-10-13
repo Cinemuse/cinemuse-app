@@ -6,10 +6,13 @@ import 'package:flutter/material.dart';
 class EpisodeMenu {
   const EpisodeMenu._();
 
-  static Future<DateTime?> selectWatchDate(BuildContext context) {
+  static Future<DateTime?> selectWatchDate(
+    BuildContext context, {
+    DateTime? initialDate,
+  }) {
     return showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: initialDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
       builder: (context, child) {

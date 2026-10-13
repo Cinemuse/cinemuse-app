@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_menu.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 
@@ -21,96 +21,20 @@ class _ModalContentWithPicker extends StatefulWidget {
 
 class _ModalContentWithPickerState extends State<_ModalContentWithPicker> {
   DateTime? _selectedDate;
-  bool _isPickingDate = false;
+
+  // The Material calendar works with arrow keys; the old wheel didn't
+  // (REV-216).
+  Future<void> _pickDate() async {
+    final picked = await EpisodeMenu.selectWatchDate(
+      context,
+      initialDate: _selectedDate,
+    );
+    if (picked != null && mounted) setState(() => _selectedDate = picked);
+  }
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: _isPickingDate
-            ? Column(
-                key: const ValueKey('date_picker'),
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back),
-                        color: AppTheme.textWhite,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () => setState(() => _isPickingDate = false),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        l10n.detailsSelectDate,
-                        style: const TextStyle(
-                          color: AppTheme.textWhite,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 200,
-                    child: CupertinoTheme(
-                      data: const CupertinoThemeData(
-                        textTheme: CupertinoTextThemeData(
-                          dateTimePickerTextStyle: TextStyle(
-                            color: AppTheme.textWhite,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ),
-                      child: CupertinoDatePicker(
-                        mode: CupertinoDatePickerMode.date,
-                        initialDateTime: _selectedDate ?? DateTime.now(),
-                        maximumDate: DateTime.now(),
-                        onDateTimeChanged: (date) {
-                          _selectedDate = date;
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accent,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: AppTheme.radius12,
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    onPressed: () => setState(() => _isPickingDate = false),
-                    child: Text(
-                      l10n.detailsConfirm,
-                      style: const TextStyle(
-                        color: AppTheme.textWhite,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            : KeyedSubtree(
-                key: const ValueKey('main_content'),
-                child: widget.builder(
-                  context,
-                  _selectedDate,
-                  () => setState(() => _isPickingDate = true),
-                ),
-              ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      widget.builder(context, _selectedDate, _pickDate);
 }
 
 /// Modal for managing whole series tracking (Mark Remaining, Mark All, Remove All).

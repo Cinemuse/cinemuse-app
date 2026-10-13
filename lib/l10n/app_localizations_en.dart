@@ -489,9 +489,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailsSelectDate => 'Select Date';
 
   @override
-  String get detailsConfirm => 'Confirm';
-
-  @override
   String get detailsMarkEntireSeriesPrompt =>
       'Mark the entire series as watched?';
 

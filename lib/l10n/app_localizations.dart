@@ -950,12 +950,6 @@ abstract class AppLocalizations {
   /// **'Select Date'**
   String get detailsSelectDate;
 
-  /// No description provided for @detailsConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm'**
-  String get detailsConfirm;
-
   /// No description provided for @detailsMarkEntireSeriesPrompt.
   ///
   /// In en, this message translates to:
