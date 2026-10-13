@@ -65,23 +65,11 @@ final continueWatchingProvider = Provider<AsyncValue<List<WatchHistory>>>((
   final historyMapAsync = ref.watch(watchHistoryStoreProvider);
 
   return historyMapAsync.whenData((historyMap) {
-    // 1. Group by tmdbId and find the latest entry for each
-    final latestByTmdbId = <int, WatchHistory>{};
-
-    for (final item in historyMap.values) {
-      final existing = latestByTmdbId[item.tmdbId];
-      if (existing == null ||
-          item.lastWatchedAt.isAfter(existing.lastWatchedAt)) {
-        latestByTmdbId[item.tmdbId] = item;
-      }
-    }
-
-    // 2. Filter these LATEST entries to only keep those currently being watched
-    final list = latestByTmdbId.values
+    // One row per title already (REV-195): a movie and a show sharing a
+    // tmdbId are both kept.
+    final list = historyMap.values
         .where((item) => item.status == WatchStatus.watching)
         .toList();
-
-    // 3. Sort by last watched (descending)
     list.sort((a, b) => b.lastWatchedAt.compareTo(a.lastWatchedAt));
     return list;
   });

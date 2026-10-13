@@ -31,7 +31,8 @@ class PersonDomainService {
     'award',
   ];
 
-  /// Calculates watched statistics across released items in cast and crew credits.
+  /// Calculates watched statistics across released items in cast and crew
+  /// credits. [watchHistory] is keyed by title (`'movie-603'`, `'tv-1399'`).
   static PersonSeenStats calculateSeenStats({
     required List<PersonCredit> cast,
     required List<PersonCredit> crew,
@@ -43,17 +44,17 @@ class PersonDomainService {
     final now = referenceDate ?? DateTime.now();
 
     final allCredits = [...cast, ...crew];
-    final seenIds = <int>{};
+    final seenKeys = <String>{};
 
     for (final item in allCredits) {
-      final id = item.id;
-      if (id <= 0 || seenIds.contains(id)) continue;
-      seenIds.add(id);
+      // A title is type + id: a movie and a show can share an id (REV-195).
+      final key = _titleKey(item);
+      if (item.id <= 0 || !seenKeys.add(key)) continue;
 
       final releaseDate = item.releaseDate;
       if (releaseDate != null && releaseDate.isBefore(now)) {
         totalReleased++;
-        if (watchHistory.containsKey(id.toString())) {
+        if (watchHistory.containsKey(key)) {
           watchedCount++;
         }
       }
@@ -86,13 +87,11 @@ class PersonDomainService {
     required List<PersonCredit> crew,
     required bool showHidden,
   }) {
-    final uniqueCreditsMap = <int, PersonCredit>{};
+    final uniqueCreditsMap = <String, PersonCredit>{};
 
     for (final item in [...cast, ...crew]) {
-      final id = item.id;
-      if (id > 0 && !uniqueCreditsMap.containsKey(id)) {
-        uniqueCreditsMap[id] = item;
-      }
+      if (item.id <= 0) continue;
+      uniqueCreditsMap.putIfAbsent(_titleKey(item), () => item);
     }
 
     var filmography = uniqueCreditsMap.values.toList();
@@ -120,4 +119,7 @@ class PersonDomainService {
 
     return filmography;
   }
+
+  static String _titleKey(PersonCredit credit) =>
+      '${credit.mediaType.name}-${credit.id}';
 }

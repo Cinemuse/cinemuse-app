@@ -137,11 +137,15 @@ class SelectedSeasonNotifier extends AutoDisposeFamilyNotifier<int, String> {
 final selectedSeasonProvider = NotifierProvider.autoDispose
     .family<SelectedSeasonNotifier, int, String>(SelectedSeasonNotifier.new);
 
-// Family provider to fetch watch history for a specific media item (Derived from Store)
+// One title's history row. A title is id + type: a movie and a show can
+// share a tmdbId (REV-195).
 final mediaWatchHistoryProvider = Provider.autoDispose
-    .family<AsyncValue<WatchHistory?>, String>((ref, tmdbId) {
-      final store = ref.watch(watchHistoryStoreProvider);
-      return store.whenData((map) => map[tmdbId]);
+    .family<AsyncValue<WatchHistory?>, ({String id, String type})>((
+      ref,
+      title,
+    ) {
+      final key = '${MediaItem.fromString(title.type).name}-${title.id}';
+      return ref.watch(watchHistoryStoreProvider).whenData((map) => map[key]);
     });
 
 // A show's watch logs, with not-yet-saved changes shown at once.

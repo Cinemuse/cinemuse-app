@@ -80,6 +80,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final typeForTmdb = widget.mediaType == 'series' ? 'tv' : widget.mediaType;
+    final historyKey = (id: widget.mediaId, type: typeForTmdb);
     final detailsAsync = ref.watch(
       typedMediaDetailsProvider((id: widget.mediaId, type: typeForTmdb)),
     );
@@ -135,7 +136,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             .isInWatchlist(tmdbId, mediaKind);
 
         final watchHistory = ref
-            .watch(mediaWatchHistoryProvider(widget.mediaId))
+            .watch(mediaWatchHistoryProvider(historyKey))
             .value;
 
         final collection = mediaItem.collection;
@@ -148,9 +149,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             )
             .toList();
 
-        // Auto-select season based on history
         ref.listen<AsyncValue<WatchHistory?>>(
-          mediaWatchHistoryProvider(widget.mediaId),
+          mediaWatchHistoryProvider(historyKey),
           (previous, next) {
             final nextHistory = next.value;
             if (!_hasInitializedSeason && nextHistory != null && isTV) {
@@ -366,7 +366,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             ref.invalidate(
               mediaDetailsProvider((id: widget.mediaId, type: typeForTmdb)),
             );
-            ref.invalidate(mediaWatchHistoryProvider(widget.mediaId));
+            ref.invalidate(mediaWatchHistoryProvider(historyKey));
           },
           child: bodyContent,
         ),

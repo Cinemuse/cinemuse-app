@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
+import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -159,6 +161,32 @@ void main() {
     logs.add([log('2026-10-13T20:00:00Z')]);
     await pumpEvents();
     expect(container.read(movieWatchCountProvider(movieId)), 1);
+  });
+
+  // REV-195: the history store was keyed by tmdbId only, so a movie and a
+  // show sharing one overwrote each other.
+  test('a movie and a show with the same id keep their own history', () async {
+    WatchHistory history(MediaKind type, int progress) => WatchHistory(
+      userId: 'user-a',
+      tmdbId: 1399,
+      mediaType: type,
+      status: WatchStatus.watching,
+      progressSeconds: progress,
+      lastWatchedAt: DateTime.utc(2026, 10, progress),
+    );
+    when(() => repository.syncWatchHistory('user-a')).thenAnswer((_) async {});
+    when(() => repository.watchHistory('user-a')).thenAnswer(
+      (_) =>
+          Stream.value([history(MediaKind.movie, 1), history(MediaKind.tv, 2)]),
+    );
+    final movie = mediaWatchHistoryProvider((id: '1399', type: 'movie'));
+    final show = mediaWatchHistoryProvider((id: '1399', type: 'tv'));
+    container.listen(movie, (_, __) {});
+    container.listen(show, (_, __) {});
+    await container.read(watchHistoryStoreProvider.future);
+
+    expect(container.read(movie).value?.progressSeconds, 1);
+    expect(container.read(show).value?.progressSeconds, 2);
   });
 
   // REV-194: keyed by a WatchHistory object, every history save made a new

@@ -39,7 +39,7 @@ void main() {
       ];
 
       final watchHistory = {
-        '101': {'watched': true},
+        'movie-101': {'watched': true},
       };
 
       final stats = PersonDomainService.calculateSeenStats(
@@ -53,6 +53,40 @@ void main() {
       expect(stats.totalReleased, 2);
       expect(stats.watchedCount, 1);
       expect(stats.watchedPercent, 50);
+    });
+
+    // REV-195: a movie and a show can share a TMDB id.
+    test('a movie and a show with the same id are two titles', () {
+      final credits = [
+        PersonCredit(
+          id: 1399,
+          mediaType: MediaKind.movie,
+          title: 'A Movie',
+          releaseDate: DateTime(2020, 1, 1),
+        ),
+        PersonCredit(
+          id: 1399,
+          mediaType: MediaKind.tv,
+          title: 'A Show',
+          releaseDate: DateTime(2011, 4, 17),
+        ),
+      ];
+
+      final stats = PersonDomainService.calculateSeenStats(
+        cast: credits,
+        crew: [],
+        watchHistory: {'tv-1399': true},
+        referenceDate: referenceDate,
+      );
+      final filmography = PersonDomainService.processFilmography(
+        cast: credits,
+        crew: [],
+        showHidden: true,
+      );
+
+      expect(stats.totalReleased, 2);
+      expect(stats.watchedCount, 1);
+      expect(filmography.map((c) => c.title), ['A Movie', 'A Show']);
     });
 
     test('calculateSeenStats handles empty credits gracefully', () {
