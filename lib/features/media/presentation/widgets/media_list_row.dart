@@ -30,11 +30,9 @@ class MediaListRow extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final mediaItems = items;
-
     final appLanguage = ref.watch(settingsProvider).appLanguage;
 
-    final cards = mediaItems.map((item) {
+    final cards = items.map((item) {
       return MediaCard(
         title: item.getLocalizedTitle(appLanguage) ?? 'Unknown',
         posterPath: item.posterPath,

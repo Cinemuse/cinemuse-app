@@ -75,8 +75,12 @@ void main() {
       await tester.pumpWidget(
         buildTestableWidget(
           DetailsHero(
-            media: const {'id': '123', 'type': 'movie', 'title': 'Test Movie'},
-            details: const {'title': 'Test Movie'},
+            mediaItem: MediaItem(
+              tmdbId: 123,
+              mediaType: MediaKind.movie,
+              titleEn: 'Test Movie',
+              updatedAt: DateTime(2026),
+            ),
             onPlayClick: () {},
             onListTap: () {},
           ),

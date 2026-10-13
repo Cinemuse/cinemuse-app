@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver_provider.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -22,7 +23,6 @@ class ResponsiveActionButtons extends ConsumerStatefulWidget {
   final ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})?
   seriesWatchStatus;
   final int? movieWatchCount;
-  final double mobileBreakpoint;
   final VoidCallback? onDropClick;
   final VoidCallback? onClearProgress;
 
@@ -46,7 +46,6 @@ class ResponsiveActionButtons extends ConsumerStatefulWidget {
     this.onCommentsTap,
     this.seriesWatchStatus,
     this.movieWatchCount,
-    this.mobileBreakpoint = 600.0,
     this.onDropClick,
     this.onClearProgress,
     this.hasResumeProgress = false,
@@ -98,8 +97,7 @@ class _ResponsiveActionButtonsState
 
   @override
   Widget build(BuildContext context) {
-    final isMobile =
-        MediaQuery.of(context).size.width < widget.mobileBreakpoint;
+    final isMobile = MediaQuery.sizeOf(context).width < Breakpoints.compact;
 
     if (isMobile) {
       return Column(

@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/external_links.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/gallery_box.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/media_info_row.dart';
@@ -87,7 +88,13 @@ void main() {
     ) async {
       await tester.pumpWidget(
         buildTestableWidget(
-          MediaInfoRow(details: sampleDetailsFull, typeForTmdb: 'movie'),
+          MediaInfoRow(
+            mediaItem: MediaItem.fromTmdbDetails(
+              sampleDetailsFull,
+              MediaKind.movie,
+            ),
+            typeForTmdb: 'movie',
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -112,7 +119,13 @@ void main() {
       (tester) async {
         await tester.pumpWidget(
           buildTestableWidget(
-            MediaInfoRow(details: sampleDetailsNoLinks, typeForTmdb: 'tv'),
+            MediaInfoRow(
+              mediaItem: MediaItem.fromTmdbDetails(
+                sampleDetailsNoLinks,
+                MediaKind.tv,
+              ),
+              typeForTmdb: 'tv',
+            ),
           ),
         );
         await tester.pumpAndSettle();
@@ -137,7 +150,13 @@ void main() {
       (tester) async {
         await tester.pumpWidget(
           buildTestableWidget(
-            MediaInfoRow(details: sampleDetailsFull, typeForTmdb: 'movie'),
+            MediaInfoRow(
+              mediaItem: MediaItem.fromTmdbDetails(
+                sampleDetailsFull,
+                MediaKind.movie,
+              ),
+              typeForTmdb: 'movie',
+            ),
             surfaceSize: const Size(400, 800),
           ),
         );
@@ -160,7 +179,13 @@ void main() {
       (tester) async {
         await tester.pumpWidget(
           buildTestableWidget(
-            MediaInfoRow(details: sampleDetailsFull, typeForTmdb: 'movie'),
+            MediaInfoRow(
+              mediaItem: MediaItem.fromTmdbDetails(
+                sampleDetailsFull,
+                MediaKind.movie,
+              ),
+              typeForTmdb: 'movie',
+            ),
           ),
         );
         await tester.pumpAndSettle();

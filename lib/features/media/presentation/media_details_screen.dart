@@ -210,7 +210,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             SliverToBoxAdapter(
               child: DetailsHero(
                 mediaItem: mediaItem,
-                media: {'id': widget.mediaId, 'type': typeForTmdb},
                 details: rawDetails,
                 isFavorite: isFavorite,
                 isInWatchlist: isInWatchlist,
@@ -383,11 +382,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
           ),
         ],
         const SizedBox(height: 32),
-        MediaInfoRow(
-          mediaItem: mediaItem,
-          details: details,
-          typeForTmdb: typeForTmdb,
-        ),
+        MediaInfoRow(mediaItem: mediaItem, typeForTmdb: typeForTmdb),
         if (collection != null) ...[
           const SizedBox(height: 32),
           BentoBox(
@@ -474,7 +469,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
               VideosRow(videos: mediaItem.videos),
               const SizedBox(height: 24),
             ],
-            GalleryBox(images: mediaItem.images, details: details),
+            if (mediaItem.images != null) GalleryBox(images: mediaItem.images!),
           ],
         );
       case DetailsTab.links:

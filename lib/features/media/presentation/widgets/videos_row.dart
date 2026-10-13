@@ -21,10 +21,10 @@ class VideosRow extends StatelessWidget {
     final trailers = videos!.where((v) => v.isYouTubeTrailer).toList();
     if (trailers.isEmpty) return const SizedBox.shrink();
 
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return GenericCarouselRow(
-      title: l10n?.sectionVisualArchives ?? 'Visual Archives',
+      title: l10n.sectionVisualArchives,
       icon: Icons.movie_filter,
       theme: CarouselTheme.bentoBox,
       itemCount: trailers.length,
@@ -48,7 +48,7 @@ class VideosRow extends StatelessWidget {
                     queryId: key,
                     type: 'youtube',
                     episodeTitle: name,
-                    loadingMessage: l10n?.playerResolvingYoutube,
+                    loadingMessage: l10n.playerResolvingYoutube,
                   ),
                 ),
               );

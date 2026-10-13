@@ -9,61 +9,44 @@ import 'package:cinemuse_app/features/media/presentation/widgets/gallery_box.dar
 /// Automatically flexes into a 2-column or 1-column layout if any section is absent,
 /// or stacks vertically on narrow viewports to avoid overflows.
 class MediaInfoRow extends StatelessWidget {
-  final MediaItem? mediaItem;
-  final Map<String, dynamic>? details;
+  final MediaItem mediaItem;
   final String typeForTmdb;
   final double spacing;
 
   const MediaInfoRow({
     super.key,
-    this.mediaItem,
-    this.details,
+    required this.mediaItem,
     required this.typeForTmdb,
     this.spacing = 24.0,
   });
 
   @override
   Widget build(BuildContext context) {
-    final images = mediaItem?.images;
-    final backdrops =
-        images?.backdrops ?? (details?['images']?['backdrops'] as List?) ?? [];
-    final posters =
-        images?.posters ?? (details?['images']?['posters'] as List?) ?? [];
-    final logos =
-        images?.logos ?? (details?['images']?['logos'] as List?) ?? [];
+    final images = mediaItem.images;
     final hasGallery =
-        backdrops.isNotEmpty || posters.isNotEmpty || logos.isNotEmpty;
+        images != null &&
+        (images.backdrops.isNotEmpty ||
+            images.posters.isNotEmpty ||
+            images.logos.isNotEmpty);
 
-    final extIds =
-        mediaItem?.externalIds ??
-        (details?['external_ids'] != null
-            ? ExternalIds.fromTmdbMap(
-                Map<String, dynamic>.from(details!['external_ids']),
-              )
-            : null);
-    final homepage = mediaItem?.homepage ?? (details?['homepage'] as String?);
+    final extIds = mediaItem.externalIds;
+    final homepage = mediaItem.homepage;
     final hasLinks =
         extIds != null || (homepage != null && homepage.trim().isNotEmpty);
 
     final columns = <Widget>[];
 
     if (hasGallery) {
-      columns.add(GalleryBox(images: images, details: details));
+      columns.add(GalleryBox(images: images));
     }
 
     if (hasLinks) {
-      final tmdbId =
-          mediaItem?.tmdbId ??
-          (details?['id'] is int
-              ? details!['id'] as int
-              : int.tryParse(details?['id']?.toString() ?? '') ?? 0);
-
       columns.add(
         ExternalLinks(
           ids: extIds,
           homepage: homepage,
           type: typeForTmdb,
-          tmdbId: tmdbId,
+          tmdbId: mediaItem.tmdbId,
         ),
       );
     }
