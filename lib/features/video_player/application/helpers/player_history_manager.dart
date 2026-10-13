@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/core/constants/playback_constants.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
@@ -6,10 +7,11 @@ import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
-import 'dart:developer' as developer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class PlayerHistoryManager {
+  static const _logTag = 'PlayerHistoryManager';
+
   final Ref ref;
   final PlayerParams params;
   final MediaItem? mediaItem;
@@ -69,13 +71,9 @@ class PlayerHistoryManager {
         }
       }
     } catch (e, st) {
-      developer.log(
-        'Error saving progress',
-        name: 'VideoPlayer.PlayerHistoryManager',
-        error: e,
-        stackTrace: st,
-        level: 900,
-      );
+      // Not shown to the user yet: that waits for DATA-03 (outbox or
+      // online-only), or every 15 s save would show a message offline.
+      AppLogger.error(_logTag, 'Progress not saved', error: e, stackTrace: st);
     }
   }
 
@@ -116,12 +114,11 @@ class PlayerHistoryManager {
 
       return true;
     } catch (e, st) {
-      developer.log(
-        'Error marking episode completed',
-        name: 'VideoPlayer.PlayerHistoryManager',
+      AppLogger.error(
+        _logTag,
+        'Episode not marked as watched',
         error: e,
         stackTrace: st,
-        level: 900,
       );
       return false;
     }
@@ -220,12 +217,11 @@ class PlayerHistoryManager {
           }
         }
       } catch (e, st) {
-        developer.log(
-          'Failed to fetch watch history for initial playback position',
-          name: 'VideoPlayer.PlayerHistoryManager',
+        AppLogger.warn(
+          _logTag,
+          'No resume position: history not loaded',
           error: e,
           stackTrace: st,
-          level: 700,
         );
       }
     }
