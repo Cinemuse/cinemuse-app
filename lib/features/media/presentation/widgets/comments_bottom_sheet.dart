@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -57,7 +58,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final bool isMobile = width < 600;
+        final bool isMobile = width < Breakpoints.compact;
 
         return AppBottomSheet(
           backgroundColor: AppTheme.primary,
@@ -378,13 +379,10 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
 }
 
 void showCommentsBottomSheet(BuildContext context, CommentsRequest request) {
-  final screenWidth = MediaQuery.of(context).size.width;
   AppBottomSheet.show(
     context: context,
     heightFactor: 0.85,
-    constraints: BoxConstraints(
-      maxWidth: screenWidth > 680 ? 680 : screenWidth,
-    ),
+    constraints: const BoxConstraints(maxWidth: Breakpoints.compact),
     child: CommentsBottomSheet(request: request),
   );
 }

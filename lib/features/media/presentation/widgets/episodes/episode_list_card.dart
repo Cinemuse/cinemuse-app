@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -140,8 +141,7 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
             Localizations.localeOf(context).languageCode,
           ).format(airDate)
         : null;
-
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isMobile = Breakpoints.isCompact(context);
 
     return DpadFocusable(
       onTap: () =>

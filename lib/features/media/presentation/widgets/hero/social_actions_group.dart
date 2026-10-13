@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
@@ -116,9 +117,7 @@ class _SocialIconState extends State<_SocialIcon>
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    // Use 600px breakpoint to match mobile layout switching
-    final horizontalPadding = screenWidth < 600 ? 12.0 : 18.0;
+    final horizontalPadding = Breakpoints.isCompact(context) ? 12.0 : 18.0;
 
     final theme = Theme.of(context);
     final effectiveColor = widget.color ?? theme.colorScheme.onSurface;

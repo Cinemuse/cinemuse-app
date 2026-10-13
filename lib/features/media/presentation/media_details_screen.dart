@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'dart:async';
 
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
@@ -77,10 +78,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     );
     final controller = ref.read(mediaDetailsControllerProvider.notifier);
     final responsivePadding = AppTheme.getResponsiveHorizontalPadding(context);
-    final isMobile = MediaQuery.of(context).size.width < 600;
-    final connectivity = ref.watch(connectivityProvider);
-    final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
-
+    final isMobile = Breakpoints.isCompact(context);
+    final isOffline =
+        ref.watch(connectivityProvider).valueOrNull == ConnectivityResult.none;
     // Failed loads get a Retry that loads the details again (REV-206); the
     // provider still turns errors into null (REV-30), hence the generic text.
     Widget loadFailed([Object? error]) => isOffline

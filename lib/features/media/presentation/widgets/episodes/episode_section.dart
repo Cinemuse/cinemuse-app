@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
@@ -49,7 +50,7 @@ class EpisodeSection extends ConsumerWidget {
         .map((s) => SeasonSummary.fromTmdbMap(Map<String, dynamic>.from(s)))
         .where((s) => s.seasonNumber > 0)
         .toList();
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isMobile = Breakpoints.isCompact(context);
 
     void onEpisodeTap(int s, int e, String name, {bool restart = false}) =>
         _handleEpisodePlay(

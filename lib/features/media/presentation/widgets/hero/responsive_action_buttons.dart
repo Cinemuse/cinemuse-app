@@ -97,7 +97,7 @@ class _ResponsiveActionButtonsState
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.sizeOf(context).width < Breakpoints.compact;
+    final isMobile = Breakpoints.isCompact(context);
 
     if (isMobile) {
       return Column(
@@ -492,7 +492,7 @@ class _TrackButton extends StatelessWidget {
     final minWatchCount =
         seriesWatchStatus?.minWatchCount ?? (movieWatchCount ?? 0);
 
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isMobile = Breakpoints.isCompact(context);
     final horizontalPadding = isMobile ? 12.0 : 24.0;
 
     return DpadFocusable(
