@@ -216,27 +216,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     final userId = _userId;
     if (userId == null) return;
 
-    // Optimistic Update: Retrieve current logs to determine what to "remove" locally
-    // Or just clear everything. Since we don't have easy access to "all episodes",
-    // we might need a "clearAll" optimistic action or just let it be.
-    // For now, let's rely on the fast server response or clear local cache if possible.
-    // However, since we are moving to optimistic, let's just clear the optimistic state
-    // and rely on invalidation, but to be truly optimistic we'd need to know what to remove.
-    // Simpler approach for "Remove All": Just clear the provider stream locally?
-    // Let's stick to standard behavior for "Remove All" as it's a destructive action
-    // and user might expect a spinner or it's fast enough.
-    // Actually, we can just clear optimistic updates and let the invalidation handle it.
-
-    // BUT, to be consistent, let's try to clear.
-    // Since we don't have the list of all episodes to pass to 'addOptimisticUpdate(..., false)',
-    // we'll rely on the server for this one bulk action, OR we can implement a 'clearAll' in notifier.
-    // Let's implement 'clearAll' in notifier if needed, but for now let's just do standard call.
-    // Wait, the user asked for instant feedback.
-    // Let's add a `clearAllOptimistic` to the notifier.
-    // ref.read(seriesWatchLogsProvider(tmdbId).notifier).optimisticClearAll(); // TODO: Implement if needed.
-
-    // For now, let's keep it simple and just await. The debounce removal will help speed it up anyway.
-
+    // Not optimistic: the shown episodes reload once the server confirms.
     await _repository.deleteAllSeriesLogs(userId: userId, tmdbId: tmdbId);
     ref.invalidate(droppedListProvider);
     ref.invalidate(continueWatchingProvider);

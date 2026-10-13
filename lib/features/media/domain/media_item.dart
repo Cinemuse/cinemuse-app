@@ -305,41 +305,6 @@ class MediaItem {
       overview: json['overview'] as String?,
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'tmdb_id': tmdbId,
-      'media_type': mediaType.name,
-      'title_it': titleIt,
-      'title_en': titleEn,
-      'poster_path': posterPath,
-      'backdrop_path': backdropPath,
-      'runtime_minutes': runtimeMinutes,
-      'genres': genres,
-      'cast_members': castMembers,
-      'release_date': releaseDate?.toIso8601String().split('T').first,
-      'vote_average': voteAverage,
-      'updated_at': updatedAt.toIso8601String(),
-      'overview': overview,
-    };
-  }
-
-  /// JSON for database persistence (matches media_cache schema)
-  Map<String, dynamic> toDbJson() {
-    return {
-      'tmdb_id': tmdbId,
-      'media_type': mediaType.name,
-      'title_it': titleIt,
-      'title_en': titleEn,
-      'poster_path': posterPath,
-      'backdrop_path': backdropPath,
-      'runtime_minutes': runtimeMinutes,
-      'genres': genres,
-      'cast_members': castMembers,
-      'release_date': releaseDate?.toIso8601String().split('T').first,
-      'updated_at': updatedAt.toIso8601String(),
-    };
-  }
 }
 
 /// Strongly-typed domain entity representing a TMDB movie collection (franchise).
@@ -531,13 +496,6 @@ class ExternalIds {
     this.instagramId,
     this.twitterId,
   });
-
-  bool get hasAnyId =>
-      (imdbId != null && imdbId!.trim().isNotEmpty) ||
-      (wikidataId != null && wikidataId!.trim().isNotEmpty) ||
-      (facebookId != null && facebookId!.trim().isNotEmpty) ||
-      (instagramId != null && instagramId!.trim().isNotEmpty) ||
-      (twitterId != null && twitterId!.trim().isNotEmpty);
 
   factory ExternalIds.fromTmdbMap(Map<String, dynamic> map) {
     return ExternalIds(

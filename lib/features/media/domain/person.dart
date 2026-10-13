@@ -58,20 +58,6 @@ class PersonCredit {
       genreIds: genreIds,
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'media_type': mediaType.name,
-      'title': title,
-      'poster_path': posterPath,
-      'role': role,
-      'release_date': releaseDate?.toIso8601String(),
-      'vote_average': voteAverage,
-      'vote_count': voteCount,
-      'genre_ids': genreIds,
-    };
-  }
 }
 
 /// Strongly-typed domain entity representing full biographical details of a person.

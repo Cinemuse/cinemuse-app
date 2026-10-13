@@ -101,22 +101,6 @@ void main() {
       },
     );
 
-    test('calculateResumePercentage parses map data correctly', () {
-      final percent = service.calculateResumePercentage(
-        seasonNumber: 1,
-        episodeNumber: 2,
-        episodeProgressMap: {
-          '1-2': {
-            'progress_seconds': 1500,
-            'total_duration': 6000,
-            'status': 'watching',
-          },
-        },
-      );
-
-      expect(percent, 0.25);
-    });
-
     test(
       'findMissingPrecedingEpisodes detects unwatched preceding episodes',
       () {

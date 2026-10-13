@@ -107,25 +107,17 @@ class SeriesDomainService {
   ({int percentage, int watchedCount, int totalCount})?
   calculateSeriesProgress({
     Map<String, dynamic>? details,
-    Map<String, dynamic>? seriesDetails,
-    Map<String, int>? watchedEpisodesMap,
-    Map<String, int>? watchedMap,
+    Map<String, int> watchedEpisodesMap = const {},
   }) {
-    final showDetails = seriesDetails ?? details;
-    if (showDetails == null) return null;
-    final seasons = showDetails['seasons'] as List?;
-    if (seasons == null) return null;
+    if (details == null || details['seasons'] is! List) return null;
 
-    final resolvedWatchedMap = watchedEpisodesMap ?? watchedMap ?? const {};
+    final totalEpisodes = airedEpisodeCount(details);
+    if (totalEpisodes == 0) return null;
 
-    final totalEpisodes = airedEpisodeCount(showDetails);
-
-    final watchedEpisodesCount = resolvedWatchedMap.entries.where((entry) {
+    final watchedEpisodesCount = watchedEpisodesMap.entries.where((entry) {
       final seasonNum = int.tryParse(entry.key.split('-').first) ?? 0;
       return seasonNum > 0 && entry.value > 0;
     }).length;
-
-    if (totalEpisodes == 0) return null;
 
     return (
       percentage: ((watchedEpisodesCount / totalEpisodes) * 100).round().clamp(
@@ -142,65 +134,24 @@ class SeriesDomainService {
     required int seasonNumber,
     required int episodeNumber,
     Map<String, WatchHistory>? episodeProgress,
-    Map<String, dynamic>? episodeProgressMap,
-    Map<String, dynamic>? watchedData,
   }) {
-    final epKey = '$seasonNumber-$episodeNumber';
-    if (episodeProgress != null && episodeProgress.containsKey(epKey)) {
-      final history = episodeProgress[epKey]!;
-      if (history.status == WatchStatus.watching &&
-          history.totalDuration != null &&
-          history.totalDuration! > 0) {
-        return history.progressSeconds / history.totalDuration!;
-      }
-    }
-
-    if (episodeProgressMap != null && episodeProgressMap.containsKey(epKey)) {
-      final dynamic history = episodeProgressMap[epKey];
-      if (history is WatchHistory) {
-        if (history.status == WatchStatus.watching &&
-            history.totalDuration != null &&
-            history.totalDuration! > 0) {
-          return history.progressSeconds / history.totalDuration!;
-        }
-      } else if (history is Map) {
-        final progressSeconds = history['progress_seconds'] as int? ?? 0;
-        final totalDuration = history['total_duration'] as int? ?? 0;
-        final status = history['status']?.toString();
-        if (status == 'watching' && totalDuration > 0) {
-          return progressSeconds / totalDuration;
-        }
-      }
-    }
-
-    if (watchedData != null) {
-      final lastSeason = watchedData['season'] as int?;
-      final lastEpisode = watchedData['episode'] as int?;
-      if (lastSeason == seasonNumber && lastEpisode == episodeNumber) {
-        final progress = watchedData['progress_seconds'] as int? ?? 0;
-        final total = watchedData['total_duration'] as int? ?? 0;
-        if (total > 0) {
-          return progress / total;
-        }
-      }
-    }
-
-    return null;
+    final history = episodeProgress?['$seasonNumber-$episodeNumber'];
+    final total = history?.totalDuration ?? 0;
+    if (history == null || history.status != WatchStatus.watching) return null;
+    if (total <= 0) return null;
+    return history.progressSeconds / total;
   }
 
   /// Returns list of un-watched episodes preceding the targeted episode in the series.
   List<({int season, int episode})> findMissingPrecedingEpisodes({
-    Map<String, dynamic>? seriesDetails,
-    List<dynamic>? seasons,
+    required List<dynamic> seasons,
     required int currentSeason,
     required int currentEpisode,
-    Map<String, int>? watchedEpisodesCount,
+    Map<String, int> watchedEpisodesCount = const {},
   }) {
     final List<({int season, int episode})> missing = [];
-    final seasonList = seasons ?? (seriesDetails?['seasons'] as List? ?? []);
-    final resolvedWatched = watchedEpisodesCount ?? const {};
 
-    for (final season in seasonList) {
+    for (final season in seasons) {
       final sNum = season['season_number'] as int? ?? 0;
       if (sNum == 0) continue;
       if (sNum > currentSeason) break;
@@ -209,8 +160,7 @@ class SeriesDomainService {
       final maxE = (sNum == currentSeason) ? currentEpisode - 1 : epCount;
 
       for (int e = 1; e <= maxE; e++) {
-        final key = '$sNum-$e';
-        if ((resolvedWatched[key] ?? 0) == 0) {
+        if ((watchedEpisodesCount['$sNum-$e'] ?? 0) == 0) {
           missing.add((season: sNum, episode: e));
         }
       }
