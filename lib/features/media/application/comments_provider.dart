@@ -79,22 +79,10 @@ class CommentsNotifier
 
     try {
       final repository = ref.read(commentsRepositoryProvider);
-      // One after the other: IMDb's page 2 needs the cursor page 1 returns.
-      final p1 = await repository.fetchComments(arg, page: 1);
-      final p2 = await _fetchSecondPage(repository);
-
-      final combined = <Comment>[];
-      final seenIds = <String>{};
-      for (final c in [...p1, ...p2]) {
-        if (seenIds.add(c.id)) {
-          combined.add(c);
-        }
-      }
-
-      _allComments = combined;
-      _currentPage = p2.isNotEmpty ? 2 : 1;
+      final firstPage = await repository.fetchComments(arg, page: 1);
+      _allComments = {for (final c in firstPage) c.id: c}.values.toList();
       _applySortAndFilter();
-      state = state.copyWith(hasMore: p2.isNotEmpty, currentPage: _currentPage);
+      state = state.copyWith(hasMore: firstPage.isNotEmpty, currentPage: 1);
     } catch (e, stack) {
       AppLogger.error(
         'CommentsNotifier',
@@ -103,23 +91,11 @@ class CommentsNotifier
         stackTrace: stack,
       );
       state = state.copyWith(isLoading: false, error: e);
+      return;
     }
-  }
-
-  /// Page 2, or none when it fails: page 1 is still worth showing
-  /// (REV-201). No more pages are asked for then.
-  Future<List<Comment>> _fetchSecondPage(CommentsRepository repository) async {
-    try {
-      return await repository.fetchComments(arg, page: 2);
-    } catch (e, stack) {
-      AppLogger.warn(
-        'CommentsNotifier',
-        'Page 2 of the comments for $arg failed; showing page 1 only',
-        error: e,
-        stackTrace: stack,
-      );
-      return const [];
-    }
+    // Page 1 shows at once; page 2 is added below it (user, REV-201). Not
+    // both at once: IMDb's page 2 needs the cursor page 1 returns.
+    await loadNextPage();
   }
 
   Future<void> loadNextPage() async {

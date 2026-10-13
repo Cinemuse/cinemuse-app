@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -88,10 +90,43 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 10));
       }
 
+      while (container.read(commentsProvider(testRequest)).isLoadingMore) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+
       final state = container.read(commentsProvider(testRequest));
       expect(state.error, isNull);
       expect(state.comments.map((c) => c.id), ['1']);
-      expect(state.hasMore, false);
+      sub.close();
+    });
+
+    // REV-201 (user choice): page 1 shows at once, page 2 is added below.
+    test('page 1 shows before page 2 arrives', () async {
+      final secondPage = Completer<List<Comment>>();
+      when(
+        () => mockRepo.fetchComments(testRequest, page: any(named: 'page')),
+      ).thenAnswer((invocation) {
+        final page = invocation.namedArguments[#page] as int? ?? 1;
+        if (page == 1) return Future.value([sampleComment2]);
+        if (page == 2) return secondPage.future;
+        return Future.value(<Comment>[]);
+      });
+
+      final sub = container.listen(commentsProvider(testRequest), (_, __) {});
+      while (container.read(commentsProvider(testRequest)).isLoading) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      var state = container.read(commentsProvider(testRequest));
+      expect(state.comments.map((c) => c.id), ['2']);
+      expect(state.isLoadingMore, true);
+
+      secondPage.complete([sampleComment1]);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      state = container.read(commentsProvider(testRequest));
+      // Added below page 1, even with more likes.
+      expect(state.comments.map((c) => c.id), ['2', '1']);
+      expect(state.isLoadingMore, false);
       sub.close();
     });
 
