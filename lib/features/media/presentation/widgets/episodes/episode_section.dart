@@ -22,13 +22,11 @@ import 'package:lucide_icons/lucide_icons.dart';
 class EpisodeSection extends ConsumerWidget {
   final String mediaId;
   final Map<String, dynamic> details;
-  final ScrollController? mainScrollController;
 
   const EpisodeSection({
     super.key,
     required this.mediaId,
     required this.details,
-    this.mainScrollController,
   });
 
   @override

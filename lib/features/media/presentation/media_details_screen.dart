@@ -61,17 +61,6 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
   final ScrollController _mainScrollController = ScrollController();
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_mainScrollController.hasClients &&
-          _mainScrollController.offset > 0) {
-        _mainScrollController.jumpTo(0.0);
-      }
-    });
-  }
-
-  @override
   void dispose() {
     _mainScrollController.dispose();
     super.dispose();
@@ -372,11 +361,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         if (isTV &&
             (mediaItem.numberOfSeasons ?? details['number_of_seasons'] ?? 0) >
                 0) ...[
-          EpisodeSection(
-            mediaId: widget.mediaId,
-            details: details,
-            mainScrollController: _mainScrollController,
-          ),
+          EpisodeSection(mediaId: widget.mediaId, details: details),
           const SizedBox(height: 32),
         ],
         CastRow(
@@ -472,11 +457,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     switch (_activeTab) {
       case DetailsTab.episodes:
         return isTV
-            ? EpisodeSection(
-                mediaId: widget.mediaId,
-                details: details,
-                mainScrollController: _mainScrollController,
-              )
+            ? EpisodeSection(mediaId: widget.mediaId, details: details)
             : const SizedBox.shrink();
       case DetailsTab.cast:
         return CastRow(

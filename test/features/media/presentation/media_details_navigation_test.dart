@@ -239,7 +239,8 @@ void main() {
               episode: episode,
               seasonNumber: 2,
               mediaId: '456',
-              onTap: () => episodeTapped = true,
+              onEpisodeTap: (s, e, n, {restart = false}) =>
+                  episodeTapped = true,
             ),
           ),
         );

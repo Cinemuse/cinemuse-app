@@ -19,9 +19,7 @@ class EpisodeCarouselCard extends ConsumerStatefulWidget {
   final int seasonNumber;
   final String mediaId;
   final bool isWatched;
-  final int watchCount;
   final double? resumePercentage;
-  final VoidCallback? onTap;
   final void Function(int season, int episode, String name, {bool restart})?
   onEpisodeTap;
   final Function(int season, int episode, DateTime? date)? onMarkWatched;
@@ -43,9 +41,7 @@ class EpisodeCarouselCard extends ConsumerStatefulWidget {
     required this.seasonNumber,
     required this.mediaId,
     this.isWatched = false,
-    this.watchCount = 0,
     this.resumePercentage,
-    this.onTap,
     this.onEpisodeTap,
     this.onMarkWatched,
     this.onTrackOptions,
@@ -142,13 +138,8 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
     final formattedAirDate = _formatAirDate(context);
 
     return DpadFocusable(
-      onTap: () {
-        if (widget.onTap != null) {
-          widget.onTap!();
-        } else {
-          widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, _epName);
-        }
-      },
+      onTap: () =>
+          widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, _epName),
       onLongPress: () => _showContextMenu(context),
       onSecondaryTap: () => _showContextMenu(context),
       scale: 1.04,

@@ -82,7 +82,6 @@ class EpisodeCarouselRow extends ConsumerWidget {
           seasonNumber: seasonNumber,
           mediaId: mediaId,
           isWatched: isWatched,
-          watchCount: watchCount,
           resumePercentage: resumePercentage,
           onEpisodeTap: onEpisodeTap,
           onMarkWatched: onMarkWatched,

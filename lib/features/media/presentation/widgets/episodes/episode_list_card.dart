@@ -596,14 +596,12 @@ class MarkWatchedButton extends StatelessWidget {
   final bool isWatched;
   final int watchCount;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
 
   const MarkWatchedButton({
     super.key,
     required this.isWatched,
     this.watchCount = 0,
     required this.onTap,
-    this.onLongPress,
   });
 
   @override
@@ -615,7 +613,6 @@ class MarkWatchedButton extends StatelessWidget {
           : l10n.detailsTooltipMarkWatched,
       child: HoverScale(
         onTap: onTap,
-        onLongPress: onLongPress,
         child: Container(
           padding: EdgeInsets.symmetric(
             horizontal: watchCount > 1 ? 12 : 8,

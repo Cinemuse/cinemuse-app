@@ -47,11 +47,8 @@ class DetailsTabNav extends StatelessWidget {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 0),
-          child: Row(
-            children: tabs.map((tab) => _buildTab(context, tab)).toList(),
-          ),
+        child: Row(
+          children: tabs.map((tab) => _buildTab(context, tab)).toList(),
         ),
       ),
     );
