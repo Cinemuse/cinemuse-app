@@ -51,6 +51,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
   void _showContextActions(
     BuildContext context, {
     BuildContext? anchorContext,
+    Offset? at,
   }) {
     if (widget.event.channels.isEmpty) return;
     final l10n = AppLocalizations.of(context);
@@ -73,6 +74,7 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
           ? localizedSport
           : (l10n?.sportChannelsTitle ?? 'Channels'),
       anchorContext: anchorContext ?? _menuKey.currentContext,
+      position: at,
     );
   }
 
@@ -143,7 +145,8 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
     return DpadFocusable(
       onTap: _handleTap,
       onLongPress: () => _showContextActions(context),
-      onSecondaryTap: () => _showContextActions(context),
+      onSecondaryTapDown: (d) =>
+          _showContextActions(context, at: d.globalPosition),
       scale: 1.02,
       showFocusRing: false,
       borderRadius: BorderRadius.circular(8),

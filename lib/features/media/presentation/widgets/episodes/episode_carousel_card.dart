@@ -94,7 +94,7 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
     );
   }
 
-  void _showContextMenu(BuildContext context) {
+  void _showContextMenu(BuildContext context, {Offset? at}) {
     final l10n = AppLocalizations.of(context)!;
 
     final options = EpisodeMenu.buildEpisodeMenuOptions(
@@ -127,6 +127,7 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
         _epName,
       ),
       options: options,
+      position: at,
     );
   }
 
@@ -141,7 +142,8 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
       onTap: () =>
           widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, _epName),
       onLongPress: () => _showContextMenu(context),
-      onSecondaryTap: () => _showContextMenu(context),
+      onSecondaryTapDown: (d) =>
+          _showContextMenu(context, at: d.globalPosition),
       scale: 1.04,
       borderRadius: AppTheme.radiusLg,
       builder: (context, isFocused, isHovered, child) {
@@ -268,7 +270,6 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
   Widget _buildBadges(AppLocalizations l10n, dynamic runtime) {
     return Stack(
       children: [
-        // Episode badge top-left
         Positioned(
           top: 6,
           left: 6,
@@ -291,7 +292,6 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
             ),
           ),
         ),
-        // Watched indicator badge top-right
         if (widget.isWatched)
           Positioned(
             top: 6,

@@ -29,7 +29,6 @@ class MediaCard extends ConsumerStatefulWidget {
   final VoidCallback? onRemoveFromList;
   final VoidCallback? onRestore;
 
-  // New props for centralized logic
   final int? tmdbId;
   final MediaKind? mediaType;
 
@@ -87,10 +86,10 @@ class _MediaCardState extends ConsumerState<MediaCard> {
   void _showContextActions(
     BuildContext context, {
     BuildContext? anchorContext,
+    Offset? at,
   }) {
     final l10n = AppLocalizations.of(context)!;
 
-    // Determine if already watchlisted to show toggle correctly
     bool isWatchlisted = false;
     if (widget.tmdbId != null && widget.mediaType != null) {
       isWatchlisted = ref.read(
@@ -165,6 +164,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
       options: options,
       title: widget.title,
       anchorContext: anchorContext ?? _menuKey.currentContext,
+      position: at,
     );
   }
 
@@ -239,7 +239,8 @@ class _MediaCardState extends ConsumerState<MediaCard> {
       onKeyEvent: widget.onKeyEvent,
       onTap: widget.onTap,
       onLongPress: () => _showContextActions(context),
-      onSecondaryTap: () => _showContextActions(context),
+      onSecondaryTapDown: (d) =>
+          _showContextActions(context, at: d.globalPosition),
       scale: 1.05,
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
@@ -248,7 +249,6 @@ class _MediaCardState extends ConsumerState<MediaCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Poster Image
             Expanded(
               child: Stack(
                 clipBehavior: Clip.none,

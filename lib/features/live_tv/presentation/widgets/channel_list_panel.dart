@@ -599,13 +599,14 @@ class _LiveTvOptionsButton extends StatelessWidget {
 
   Future<void> _showQuickMenu(BuildContext context, Offset position) async {
     final l10n = AppLocalizations.of(context)!;
+    // fromLTRB's right/bottom are insets, not coordinates (REV-248).
+    final overlay =
+        Overlay.of(context).context.findRenderObject()! as RenderBox;
     final selected = await showMenu<LiveTvSheetTab>(
       context: context,
-      position: RelativeRect.fromLTRB(
-        position.dx,
-        position.dy,
-        position.dx + 1,
-        position.dy + 1,
+      position: RelativeRect.fromRect(
+        overlay.globalToLocal(position) & Size.zero,
+        Offset.zero & overlay.size,
       ),
       color: AppTheme.surface,
       shape: RoundedRectangleBorder(

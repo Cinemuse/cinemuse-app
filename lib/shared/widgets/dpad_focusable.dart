@@ -24,6 +24,9 @@ class DpadFocusable extends StatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onSecondaryTap;
+
+  /// Right-click with its position, e.g. to open a menu there (REV-248).
+  final GestureTapDownCallback? onSecondaryTapDown;
   final ValueChanged<bool>? onFocusChange;
   final FocusNode? focusNode;
   final bool autofocus;
@@ -44,6 +47,7 @@ class DpadFocusable extends StatefulWidget {
     this.onTap,
     this.onLongPress,
     this.onSecondaryTap,
+    this.onSecondaryTapDown,
     this.onFocusChange,
     this.focusNode,
     this.autofocus = false,
@@ -290,6 +294,7 @@ class _DpadFocusableState extends State<DpadFocusable> {
                 },
           onLongPress: widget.onLongPress,
           onSecondaryTap: widget.onSecondaryTap,
+          onSecondaryTapDown: widget.onSecondaryTapDown,
           child: DpadFocusScope(
             isFocused: _isFocused,
             isHovered: _isHovered,

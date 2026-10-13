@@ -59,6 +59,7 @@ class _BackdropCardState extends State<BackdropCard> {
   void _showContextActions(
     BuildContext context, {
     BuildContext? anchorContext,
+    Offset? at,
   }) {
     final l10n = AppLocalizations.of(context)!;
 
@@ -134,6 +135,7 @@ class _BackdropCardState extends State<BackdropCard> {
       options: options,
       title: widget.title,
       anchorContext: anchorContext ?? _menuKey.currentContext,
+      position: at,
     );
   }
 
@@ -153,7 +155,8 @@ class _BackdropCardState extends State<BackdropCard> {
     return DpadFocusable(
       onTap: widget.onTap,
       onLongPress: () => _showContextActions(context),
-      onSecondaryTap: () => _showContextActions(context),
+      onSecondaryTapDown: (d) =>
+          _showContextActions(context, at: d.globalPosition),
       scale: 1.02,
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,

@@ -116,12 +116,11 @@ class AppMenu {
     final RelativeRect relativePosition;
 
     if (position != null) {
-      // Prioritize explicit position
-      relativePosition = RelativeRect.fromLTRB(
-        position.dx,
-        position.dy,
-        overlay.size.width - position.dx,
-        overlay.size.height - position.dy,
+      // A global position (e.g. a right-click), in the overlay's coordinates.
+      final local = overlay.globalToLocal(position);
+      relativePosition = RelativeRect.fromRect(
+        local & Size.zero,
+        Offset.zero & overlay.size,
       );
     } else if (anchorContext != null) {
       // Anchor to the trigger widget

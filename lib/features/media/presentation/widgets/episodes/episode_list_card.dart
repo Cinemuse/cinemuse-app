@@ -90,7 +90,11 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
     );
   }
 
-  void _showContextMenu(BuildContext context, {BuildContext? anchorContext}) {
+  void _showContextMenu(
+    BuildContext context, {
+    BuildContext? anchorContext,
+    Offset? at,
+  }) {
     final l10n = AppLocalizations.of(context)!;
     final fallbackName = l10n.detailsEpisodeFallback(_epNumber);
     final epName = widget.episode.getTitle(fallbackName);
@@ -124,6 +128,7 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
         epName,
       ),
       anchorContext: anchorContext,
+      position: at,
     );
   }
 
@@ -147,7 +152,8 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
       onTap: () =>
           widget.onEpisodeTap?.call(widget.seasonNumber, _epNumber, name),
       onLongPress: () => _showContextMenu(context),
-      onSecondaryTap: () => _showContextMenu(context),
+      onSecondaryTapDown: (d) =>
+          _showContextMenu(context, at: d.globalPosition),
       scale: 1.01,
       borderRadius: AppTheme.radiusLg,
       builder: (context, isFocused, isHovered, child) {
@@ -283,7 +289,6 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
             ),
           ),
 
-          // Play Overlay
           Positioned.fill(
             child: Center(
               child: Container(
@@ -301,7 +306,6 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
             ),
           ),
 
-          // Cache indicator dot
           if (_hasCachedStream)
             Positioned(
               top: 6,
@@ -316,7 +320,6 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
               ),
             ),
 
-          // Episode Number badge
           Positioned(
             top: 6,
             left: 6,
@@ -340,7 +343,6 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
             ),
           ),
 
-          // Runtime badge
           if (runtime != null)
             Positioned(
               bottom: 6,
@@ -371,7 +373,6 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
               ),
             ),
 
-          // Progress Bar
           if (!widget.isWatched &&
               widget.resumePercentage != null &&
               widget.resumePercentage! > 0)
@@ -554,7 +555,6 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
                 ),
               ),
             ),
-          // Mark Watched Button
           MarkWatchedButton(
             isWatched: widget.isWatched,
             watchCount: widget.watchCount,
