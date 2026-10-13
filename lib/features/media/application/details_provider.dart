@@ -328,7 +328,7 @@ class OptimisticMovieLogs
   // Sets of normalized "logged_at" strings to manage additions and removals
   final Set<String> _optimisticAdditions = {};
   final Set<String> _optimisticRemovals = {};
-  bool _clearAll = false;
+  List<WatchLog> _serverLogs = const [];
 
   @override
   Stream<List<WatchLog>> build(int arg) {
@@ -345,7 +345,7 @@ class OptimisticMovieLogs
           }
           throw error;
         })
-        .map((list) => list.map(WatchLog.fromJson).toList())
+        .map((list) => _serverLogs = list.map(WatchLog.fromJson).toList())
         .map(_applyOptimisticUpdates);
   }
 
@@ -355,7 +355,6 @@ class OptimisticMovieLogs
     final normalized = WatchLog.timestampKey(date);
     _optimisticRemovals.remove(normalized);
     _optimisticAdditions.add(normalized);
-    _clearAll = false;
     _forceRebuild();
   }
 
@@ -378,29 +377,29 @@ class OptimisticMovieLogs
     });
   }
 
-  void clearOptimisticOffset() {
+  /// Hides the logs the server has now, not later ones: a watch logged
+  /// after "Delete all" must show (REV-193).
+  void optimisticClearAll() {
     _optimisticAdditions.clear();
-    _optimisticRemovals.clear();
-    _clearAll = true;
+    _optimisticRemovals.addAll(
+      _serverLogs.map((l) => WatchLog.timestampKey(l.loggedAt)),
+    );
     _forceRebuild();
   }
 
   void clearOptimisticUpdates() {
     _optimisticAdditions.clear();
     _optimisticRemovals.clear();
-    _clearAll = false;
     ref.invalidateSelf();
   }
 
+  // Always applied to the server list: the shown one already has them.
   void _forceRebuild() {
-    state.whenData((logs) {
-      state = AsyncValue.data(_applyOptimisticUpdates(logs));
-    });
+    if (!state.hasValue) return;
+    state = AsyncValue.data(_applyOptimisticUpdates(_serverLogs));
   }
 
   List<WatchLog> _applyOptimisticUpdates(List<WatchLog> currentLogs) {
-    if (_clearAll) return [];
-
     final Set<String> serverKeys = currentLogs
         .map((l) => WatchLog.timestampKey(l.loggedAt))
         .toSet();

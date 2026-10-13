@@ -129,4 +129,33 @@ void main() {
       expect(container.read(watchedEpisodesMapProvider(showId))['1-3'], 2);
     },
   );
+
+  // REV-193: after "Delete all" every later watch stayed hidden until the
+  // page was closed.
+  test('a movie watched again after "Delete all" shows up', () async {
+    Map<String, dynamic> log(String at) => {
+      'tmdb_id': movieId,
+      'media_type': 'movie',
+      'logged_at': at,
+    };
+    container.listen(movieWatchCountProvider(movieId), (_, __) {});
+    logs.add([log('2026-10-01T20:00:00Z'), log('2026-10-12T20:00:00Z')]);
+    await pumpEvents();
+
+    container
+        .read(movieWatchLogsProvider(movieId).notifier)
+        .optimisticClearAll();
+    expect(container.read(movieWatchCountProvider(movieId)), 0);
+
+    // An old event still holding the logs keeps them hidden.
+    logs.add([log('2026-10-01T20:00:00Z'), log('2026-10-12T20:00:00Z')]);
+    await pumpEvents();
+    expect(container.read(movieWatchCountProvider(movieId)), 0);
+
+    logs.add([]);
+    await pumpEvents();
+    logs.add([log('2026-10-13T20:00:00Z')]);
+    await pumpEvents();
+    expect(container.read(movieWatchCountProvider(movieId)), 1);
+  });
 }

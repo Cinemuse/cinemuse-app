@@ -283,7 +283,7 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
     final userId = _userId;
     if (userId == null) return;
 
-    ref.read(movieWatchLogsProvider(tmdbId).notifier).clearOptimisticOffset();
+    ref.read(movieWatchLogsProvider(tmdbId).notifier).optimisticClearAll();
 
     try {
       await _repository.deleteAllMovieLogs(userId: userId, tmdbId: tmdbId);
