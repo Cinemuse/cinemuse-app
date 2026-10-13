@@ -431,43 +431,14 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                           onPressed: () {
                             SearchOverlay.show(
                               context,
-                              onItemSelected: (media) {
-                                final mediaItem = MediaItem.fromTmdbMap(media);
-                                if (currentList.type == ListType.custom) {
-                                  ref
-                                      .read(userListsProvider.notifier)
-                                      .addItemToCustomList(
-                                        currentList.id,
-                                        mediaItem,
-                                      );
-                                } else if (currentList.type ==
-                                    ListType.watchlist) {
-                                  // Ensure it's added
-                                  if (!ref
-                                      .read(userListsProvider.notifier)
-                                      .isInWatchlist(
-                                        mediaItem.tmdbId,
-                                        mediaItem.mediaType,
-                                      )) {
-                                    ref
-                                        .read(userListsProvider.notifier)
-                                        .toggleWatchlist(mediaItem);
-                                  }
-                                } else if (currentList.type ==
-                                    ListType.favorites) {
-                                  // Ensure it's added
-                                  if (!ref
-                                      .read(userListsProvider.notifier)
-                                      .isFavorite(
-                                        mediaItem.tmdbId,
-                                        mediaItem.mediaType,
-                                      )) {
-                                    ref
-                                        .read(userListsProvider.notifier)
-                                        .toggleFavorite(mediaItem);
-                                  }
-                                }
-                              },
+                              onItemSelected: (media) => runListAction(
+                                context,
+                                ref,
+                                (lists) => lists.addFromSearch(
+                                  currentList,
+                                  MediaItem.fromTmdbMap(media),
+                                ),
+                              ),
                             );
                           },
                           icon: const Icon(

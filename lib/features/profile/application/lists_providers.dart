@@ -118,6 +118,21 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
     await toggleSystemList(media, ListType.favorites);
   }
 
+  /// Adds a title picked in a list's search: a custom list adds it, the
+  /// Watchlist / Favorites add it only if it isn't there yet.
+  Future<void> addFromSearch(UserList list, MediaItem media) async {
+    switch (list.type) {
+      case ListType.custom:
+        await addItemToCustomList(list.id, media);
+      case ListType.watchlist || ListType.favorites:
+        if (!_isInList(list.type, media.tmdbId, media.mediaType)) {
+          await toggleSystemList(media, list.type);
+        }
+      default:
+        break;
+    }
+  }
+
   Future<void> createCustomList(String name, {String? description}) async {
     final user = ref.read(authProvider).value;
     if (user == null) return;
@@ -260,6 +275,21 @@ class UserListsNotifier extends StreamNotifier<List<UserList>> {
 final userListsProvider =
     StreamNotifierProvider<UserListsNotifier, List<UserList>>(() {
       return UserListsNotifier();
+    });
+
+/// Whether a title is in the Watchlist or Favorites. Watches the lists, so a
+/// heart / bookmark icon follows every change and the first load (REV-203).
+final isInSystemListProvider = Provider.autoDispose
+    .family<bool, ({int tmdbId, MediaKind mediaType, ListType type})>((
+      ref,
+      key,
+    ) {
+      final lists = ref.watch(userListsProvider).valueOrNull ?? const [];
+      final list = lists.where((l) => l.type == key.type).firstOrNull;
+      return list?.items.any(
+            (i) => i.tmdbId == key.tmdbId && i.mediaType == key.mediaType,
+          ) ??
+          false;
     });
 
 final droppedListProvider = FutureProvider<UserList?>((ref) async {

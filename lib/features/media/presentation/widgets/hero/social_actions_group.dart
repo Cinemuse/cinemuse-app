@@ -3,7 +3,7 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/list_action_feedback.dart';
 
 class SocialActionsGroup extends ConsumerWidget {
   final MediaItem mediaItem;
@@ -42,9 +42,11 @@ class SocialActionsGroup extends ConsumerWidget {
               color: isFavorite
                   ? AppTheme.favorites
                   : theme.colorScheme.onSurface,
-              onTap: () => ref
-                  .read(mediaDetailsControllerProvider.notifier)
-                  .toggleFavorite(mediaItem),
+              onTap: () => runListAction(
+                context,
+                ref,
+                (lists) => lists.toggleFavorite(mediaItem),
+              ),
             ),
           ),
           const _VerticalDivider(),
@@ -54,9 +56,11 @@ class SocialActionsGroup extends ConsumerWidget {
               color: isInWatchlist
                   ? AppTheme.watchlist
                   : theme.colorScheme.onSurface,
-              onTap: () => ref
-                  .read(mediaDetailsControllerProvider.notifier)
-                  .toggleWatchlist(mediaItem),
+              onTap: () => runListAction(
+                context,
+                ref,
+                (lists) => lists.toggleWatchlist(mediaItem),
+              ),
             ),
           ),
           const _VerticalDivider(),
@@ -88,7 +92,6 @@ class _SocialIconState extends State<_SocialIcon>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  bool? _isOptimisticActive;
 
   @override
   void initState() {
@@ -106,22 +109,10 @@ class _SocialIconState extends State<_SocialIcon>
   }
 
   @override
-  void didUpdateWidget(_SocialIcon oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.icon != widget.icon || oldWidget.color != widget.color) {
-      _isOptimisticActive = null;
-    }
-  }
-
-  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
-  bool get isActive =>
-      _isOptimisticActive ??
-      (widget.color != null && widget.color != AppTheme.textWhite);
 
   @override
   Widget build(BuildContext context) {
@@ -129,45 +120,12 @@ class _SocialIconState extends State<_SocialIcon>
     // Use 600px breakpoint to match mobile layout switching
     final horizontalPadding = screenWidth < 600 ? 12.0 : 18.0;
 
-    IconData effectiveIcon = widget.icon;
-    if (_isOptimisticActive != null) {
-      if (widget.icon == Icons.favorite ||
-          widget.icon == Icons.favorite_border) {
-        effectiveIcon = _isOptimisticActive!
-            ? Icons.favorite
-            : Icons.favorite_border;
-      } else if (widget.icon == Icons.bookmark ||
-          widget.icon == Icons.bookmark_border) {
-        effectiveIcon = _isOptimisticActive!
-            ? Icons.bookmark
-            : Icons.bookmark_border;
-      }
-    }
-
     final theme = Theme.of(context);
-    Color effectiveColor = widget.color ?? theme.colorScheme.onSurface;
-    if (_isOptimisticActive != null) {
-      if (widget.icon == Icons.favorite ||
-          widget.icon == Icons.favorite_border) {
-        effectiveColor = _isOptimisticActive!
-            ? AppTheme.favorites
-            : theme.colorScheme.onSurface;
-      } else if (widget.icon == Icons.bookmark ||
-          widget.icon == Icons.bookmark_border) {
-        effectiveColor = _isOptimisticActive!
-            ? AppTheme.watchlist
-            : theme.colorScheme.onSurface;
-      }
-    }
+    final effectiveColor = widget.color ?? theme.colorScheme.onSurface;
 
     return DpadFocusable(
       autoScroll: false,
       onTap: () {
-        if (widget.icon != Icons.format_list_bulleted) {
-          setState(() {
-            _isOptimisticActive = !isActive;
-          });
-        }
         _controller.forward(from: 0.0);
         widget.onTap();
       },
@@ -204,8 +162,8 @@ class _SocialIconState extends State<_SocialIcon>
                   transitionBuilder: (child, anim) =>
                       FadeTransition(opacity: anim, child: child),
                   child: Icon(
-                    effectiveIcon,
-                    key: ValueKey(effectiveIcon),
+                    widget.icon,
+                    key: ValueKey(widget.icon),
                     color: effectiveColor,
                     size: 24,
                   ),

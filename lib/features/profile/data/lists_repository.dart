@@ -247,7 +247,8 @@ class ListsRepository {
     }
   }
 
-  /// Add an item to a specific list.
+  /// Add an item to a specific list. Shown at once; if the server refuses,
+  /// the local row goes back to what it was and the error is rethrown.
   Future<void> addItemToList({
     required String listId,
     required int tmdbId,
@@ -255,7 +256,7 @@ class ListsRepository {
     required Map<String, dynamic> meta,
     int? sortOrder,
   }) async {
-    // Update Local
+    final previous = await _localItem(listId, tmdbId, mediaType);
     await _db.upsertListItem(
       CachedListItemsCompanion(
         listId: Value(listId),
@@ -267,33 +268,65 @@ class ListsRepository {
       ),
     );
 
-    // Update Remote
-    await _client.from('list_items').upsert({
-      'list_id': listId,
-      'tmdb_id': tmdbId,
-      'media_type': mediaType.name,
-      'sort_order': sortOrder ?? 0,
-    }, onConflict: 'list_id,tmdb_id,media_type').withErrorHandling();
+    try {
+      await _client.from('list_items').upsert({
+        'list_id': listId,
+        'tmdb_id': tmdbId,
+        'media_type': mediaType.name,
+        'sort_order': sortOrder ?? 0,
+      }, onConflict: 'list_id,tmdb_id,media_type').withErrorHandling();
+    } catch (_) {
+      await _restoreListItem(listId, tmdbId, mediaType, previous);
+      rethrow;
+    }
   }
 
-  /// Remove an item from a list.
+  /// Remove an item from a list. Same undo on failure as [addItemToList].
   Future<void> removeItemFromList({
     required String listId,
     required int tmdbId,
     required MediaKind mediaType,
   }) async {
-    // Update Local
+    final previous = await _localItem(listId, tmdbId, mediaType);
     await _db.deleteListItem(listId, tmdbId, mediaType.name);
 
-    // Update Remote
-    await _client
-        .from('list_items')
-        .delete()
-        .eq('list_id', listId)
-        .eq('tmdb_id', tmdbId)
-        .eq('media_type', mediaType.name)
-        .withErrorHandling();
+    try {
+      await _client
+          .from('list_items')
+          .delete()
+          .eq('list_id', listId)
+          .eq('tmdb_id', tmdbId)
+          .eq('media_type', mediaType.name)
+          .withErrorHandling();
+    } catch (_) {
+      await _restoreListItem(listId, tmdbId, mediaType, previous);
+      rethrow;
+    }
   }
+
+  Future<CachedListItem?> _localItem(
+    String listId,
+    int tmdbId,
+    MediaKind mediaType,
+  ) =>
+      (_db.select(_db.cachedListItems)..where(
+            (t) =>
+                t.listId.equals(listId) &
+                t.tmdbId.equals(tmdbId) &
+                t.mediaType.equals(mediaType.name),
+          ))
+          .getSingleOrNull();
+
+  // Puts the local row back after a failed server write, so the lists (and
+  // the heart / bookmark icons) show what the server really has (REV-203).
+  Future<void> _restoreListItem(
+    String listId,
+    int tmdbId,
+    MediaKind mediaType,
+    CachedListItem? previous,
+  ) => previous == null
+      ? _db.deleteListItem(listId, tmdbId, mediaType.name)
+      : _db.upsertListItem(previous.toCompanion(true));
 
   /// Delete a list.
   Future<void> deleteList(String listId) async {

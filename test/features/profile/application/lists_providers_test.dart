@@ -84,6 +84,47 @@ void main() {
   List<String> visibleIds() =>
       container.read(userListsProvider).value!.map((l) => l.id).toList();
 
+  // REV-203: the heart icon read the notifier, so it never followed changes.
+  test('isInSystemListProvider follows the lists as they change', () async {
+    final key = (tmdbId: 7, mediaType: MediaKind.tv, type: ListType.favorites);
+    final seen = <bool>[];
+    container.listen(
+      isInSystemListProvider(key),
+      (_, next) => seen.add(next),
+      fireImmediately: true,
+    );
+
+    UserList favorites({required bool withItem}) => UserList(
+      id: 'fav',
+      userId: 'user-a',
+      name: 'fav',
+      type: ListType.favorites,
+      createdAt: DateTime(2026),
+      items: [
+        if (withItem)
+          UserListItem(
+            listId: 'fav',
+            tmdbId: 7,
+            mediaType: MediaKind.tv,
+            addedAt: DateTime(2026),
+          ),
+        // Same id, other type: must not count (REV-177).
+        UserListItem(
+          listId: 'fav',
+          tmdbId: 7,
+          mediaType: MediaKind.movie,
+          addedAt: DateTime(2026),
+        ),
+      ],
+    );
+    dbLists.add([favorites(withItem: true)]);
+    await pumpEventQueue();
+    dbLists.add([favorites(withItem: false)]);
+    await pumpEventQueue();
+
+    expect(seen, [false, true, false]);
+  });
+
   test('undo brings the list back; a refresh meanwhile does not', () async {
     final undone = Completer<bool>();
     final delete = container

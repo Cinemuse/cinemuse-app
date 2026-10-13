@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/list_action_feedback.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
@@ -170,7 +171,7 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
       },
       onWatchlistToggle: () {
         if (media != null) {
-          ref.read(userListsProvider.notifier).toggleWatchlist(media);
+          runListAction(context, ref, (lists) => lists.toggleWatchlist(media));
         }
       },
       onAddToList: media != null

@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/media/application/play_target.dart';
 import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
@@ -129,12 +130,15 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         final isTV = typeForTmdb == 'tv';
 
         final mediaKind = isTV ? MediaKind.tv : MediaKind.movie;
-        final isFavorite = ref
-            .watch(userListsProvider.notifier)
-            .isFavorite(tmdbId, mediaKind);
-        final isInWatchlist = ref
-            .watch(userListsProvider.notifier)
-            .isInWatchlist(tmdbId, mediaKind);
+        bool inList(ListType type) => ref.watch(
+          isInSystemListProvider((
+            tmdbId: tmdbId,
+            mediaType: mediaKind,
+            type: type,
+          )),
+        );
+        final isFavorite = inList(ListType.favorites);
+        final isInWatchlist = inList(ListType.watchlist);
 
         final watchHistory = ref
             .watch(mediaWatchHistoryProvider(historyKey))

@@ -1,6 +1,5 @@
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/core/utils/app_logger.dart';
-import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
@@ -17,7 +16,6 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
 
   WatchHistoryRepository get _repository =>
       ref.read(watchHistoryRepositoryProvider);
-  UserListsNotifier get _listsNotifier => ref.read(userListsProvider.notifier);
   String? get _userId => ref.read(supabaseClientProvider).auth.currentUser?.id;
 
   /// The season the details screen opens on: the history's season, or the
@@ -63,16 +61,6 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       }
     }
     return targetSeason;
-  }
-
-  /// Toggles favorite status for a media item.
-  Future<void> toggleFavorite(MediaItem item) async {
-    await _listsNotifier.toggleFavorite(item);
-  }
-
-  /// Toggles watchlist status for a media item.
-  Future<void> toggleWatchlist(MediaItem item) async {
-    await _listsNotifier.toggleWatchlist(item);
   }
 
   /// Logs a single episode watch (see [logMultipleEpisodes]).

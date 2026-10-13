@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/profile/data/lists_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:drift/drift.dart';
@@ -53,6 +54,37 @@ class FakeQueryBuilder extends Fake implements SupabaseQueryBuilder {
   }) {
     return FakeFilterBuilder<List<Map<String, dynamic>>>([]);
   }
+}
+
+/// Every write fails, as when the device is offline (REV-203).
+class _FailingFilterBuilder<T> extends Fake
+    implements PostgrestFilterBuilder<T> {
+  @override
+  PostgrestFilterBuilder<T> eq(String column, Object value) => this;
+
+  @override
+  Future<R> then<R>(
+    FutureOr<R> Function(T value) onValue, {
+    Function? onError,
+  }) {
+    return Future<T>.error(
+      const PostgrestException(message: 'offline'),
+    ).then(onValue, onError: onError);
+  }
+}
+
+class _FailingQueryBuilder extends Fake implements SupabaseQueryBuilder {
+  @override
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> upsert(
+    Object values, {
+    String? onConflict,
+    bool ignoreDuplicates = false,
+    bool defaultToNull = true,
+  }) => _FailingFilterBuilder<List<Map<String, dynamic>>>();
+
+  @override
+  PostgrestFilterBuilder<dynamic> delete({CountOption? count}) =>
+      _FailingFilterBuilder<dynamic>();
 }
 
 void main() {
@@ -166,6 +198,55 @@ void main() {
       expect(result.first.name, 'My List');
       expect(result.first.items.length, 1);
       expect(result.first.items.first.tmdbId, 555);
+    });
+
+    group('a failed server write is undone locally (REV-203)', () {
+      Future<List<CachedListItem>> localItems() =>
+          database.select(database.cachedListItems).get();
+
+      setUp(() {
+        when(
+          () => mockSupabase.from('list_items'),
+        ).thenAnswer((_) => _FailingQueryBuilder());
+      });
+
+      test('add: the item is gone again and the error is rethrown', () async {
+        await expectLater(
+          repository.addItemToList(
+            listId: 'fav',
+            tmdbId: 7,
+            mediaType: MediaKind.movie,
+            meta: const {},
+          ),
+          throwsA(anything),
+        );
+
+        expect(await localItems(), isEmpty);
+      });
+
+      test('remove: the item is back and the error is rethrown', () async {
+        await database.upsertListItem(
+          const CachedListItemsCompanion(
+            listId: Value('fav'),
+            tmdbId: Value(7),
+            mediaType: Value('movie'),
+            sortOrder: Value(3),
+          ),
+        );
+
+        await expectLater(
+          repository.removeItemFromList(
+            listId: 'fav',
+            tmdbId: 7,
+            mediaType: MediaKind.movie,
+          ),
+          throwsA(anything),
+        );
+
+        final items = await localItems();
+        expect(items.single.tmdbId, 7);
+        expect(items.single.sortOrder, 3);
+      });
     });
   });
 }

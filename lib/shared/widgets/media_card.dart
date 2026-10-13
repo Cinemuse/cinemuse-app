@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/features/profile/presentation/widgets/list_action_feedback.dart';
 import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
@@ -92,19 +93,13 @@ class _MediaCardState extends ConsumerState<MediaCard> {
     // Determine if already watchlisted to show toggle correctly
     bool isWatchlisted = false;
     if (widget.tmdbId != null && widget.mediaType != null) {
-      isWatchlisted =
-          ref
-              .read(userListsProvider)
-              .valueOrNull
-              ?.where((l) => l.type == ListType.watchlist)
-              .firstOrNull
-              ?.items
-              .any(
-                (i) =>
-                    i.tmdbId == widget.tmdbId &&
-                    i.mediaType == widget.mediaType,
-              ) ??
-          false;
+      isWatchlisted = ref.read(
+        isInSystemListProvider((
+          tmdbId: widget.tmdbId!,
+          mediaType: widget.mediaType!,
+          type: ListType.watchlist,
+        )),
+      );
     } else if (widget.onWatchlistToggle != null) {
       isWatchlisted = widget.isWatchlisted;
     }
@@ -135,9 +130,11 @@ class _MediaCardState extends ConsumerState<MediaCard> {
             if (widget.onWatchlistToggle != null) {
               widget.onWatchlistToggle!.call();
             } else {
-              ref
-                  .read(userListsProvider.notifier)
-                  .toggleWatchlist(_toMediaItem());
+              runListAction(
+                context,
+                ref,
+                (lists) => lists.toggleWatchlist(_toMediaItem()),
+              );
             }
           },
         ),
