@@ -1,6 +1,9 @@
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/core/utils/app_logger.dart';
+import 'package:cinemuse_app/features/home/application/continue_watching_service.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
+import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
@@ -61,6 +64,52 @@ class MediaDetailsController extends AutoDisposeNotifier<void> {
       }
     }
     return targetSeason;
+  }
+
+  // The actions below read what they need before awaiting: nothing watches
+  // this autoDispose controller, so its ref may be gone after the await.
+
+  /// Moves the title to Dropped. Throws an [AppFailure].
+  Future<void> dropTitle(WatchHistory history) =>
+      ref.read(continueWatchingServiceProvider).drop(history);
+
+  /// Clears the resume point ("Clear progress"). Throws an [AppFailure].
+  Future<void> clearProgress(WatchHistory history) =>
+      ref.read(continueWatchingServiceProvider).clearProgress(history);
+
+  /// Takes a dropped title out of Dropped (pressing Play on it). Does
+  /// nothing if it isn't dropped. Throws an [AppFailure].
+  Future<void> restoreIfDropped(int tmdbId, MediaKind mediaType) async {
+    final dropped = ref.read(droppedListProvider).valueOrNull;
+    if (dropped?.containsTitle(tmdbId, mediaType) != true) return;
+    await ref
+        .read(userListsProvider.notifier)
+        .restoreFromDropped(tmdbId, mediaType);
+  }
+
+  /// Logs every aired episode, or only the unwatched ones with
+  /// [onlyRemaining] (the series "mark all" sheet).
+  Future<void> markAllEpisodes({
+    required int tmdbId,
+    required Map<String, dynamic> details,
+    required bool onlyRemaining,
+    DateTime? loggedAt,
+  }) async {
+    final watched = ref.read(watchedEpisodesMapProvider(tmdbId));
+    final episodes = ref
+        .read(seriesDomainServiceProvider)
+        .airedEpisodes(details)
+        .where(
+          (e) =>
+              !onlyRemaining || (watched['${e.season}-${e.episode}'] ?? 0) == 0,
+        )
+        .toList();
+    if (episodes.isEmpty) return;
+    await logMultipleEpisodes(
+      tmdbId: tmdbId,
+      episodes: episodes,
+      loggedAt: loggedAt,
+    );
   }
 
   /// Logs a single episode watch (see [logMultipleEpisodes]).

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/media/application/play_target.dart';
+import 'package:cinemuse_app/shared/widgets/action_feedback.dart';
 import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
@@ -34,9 +37,6 @@ import 'package:cinemuse_app/features/media/presentation/widgets/media_list_row.
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/gallery_box.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/media_info_row.dart';
-import 'package:cinemuse_app/features/auth/application/auth_service.dart';
-import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
-import 'package:cinemuse_app/features/home/application/home_providers.dart';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -237,36 +237,19 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                     (watchHistory != null &&
                         !isDropped &&
                         !watchHistory.isCompleted)
-                    ? () async {
-                        final user = ref.read(authProvider).value;
-                        if (user != null) {
-                          await ref
-                              .read(watchHistoryRepositoryProvider)
-                              .dropFromContinueWatching(
-                                user.id,
-                                tmdbId,
-                                typeForTmdb,
-                              );
-                          ref.invalidate(droppedListProvider);
-                          ref.invalidate(continueWatchingProvider);
-                        }
-                      }
+                    ? () => runShowingErrors(
+                        context,
+                        ref,
+                        () => controller.dropTitle(watchHistory),
+                      )
                     : null,
                 onClearProgress:
                     (watchHistory != null && watchHistory.progressSeconds > 0)
-                    ? () async {
-                        final user = ref.read(authProvider).value;
-                        if (user != null) {
-                          await ref
-                              .read(watchHistoryRepositoryProvider)
-                              .clearProgress(
-                                userId: user.id,
-                                tmdbId: tmdbId,
-                                mediaType: typeForTmdb,
-                              );
-                          ref.invalidate(continueWatchingProvider);
-                        }
-                      }
+                    ? () => runShowingErrors(
+                        context,
+                        ref,
+                        () => controller.clearProgress(watchHistory),
+                      )
                     : null,
                 playTarget: playTarget,
                 seriesWatchStatus: seriesWatchStatus,
@@ -593,25 +576,17 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     String type, {
     bool restart = false,
   }) {
-    // Implicit restore if dropped
     final tmdbId = int.tryParse(widget.mediaId);
     if (tmdbId != null) {
-      final droppedList = ref.read(droppedListProvider).valueOrNull;
-      final isDropped =
-          droppedList?.containsTitle(tmdbId, MediaItem.fromString(type)) ??
-          false;
-      if (isDropped) {
-        final user = ref.read(authProvider).value;
-        if (user != null) {
-          ref
-              .read(watchHistoryRepositoryProvider)
-              .restoreToContinueWatching(user.id, tmdbId, type)
-              .then((_) {
-                ref.invalidate(droppedListProvider);
-                ref.invalidate(continueWatchingProvider);
-              });
-        }
-      }
+      final controller = ref.read(mediaDetailsControllerProvider.notifier);
+      // Not awaited: the player opens at once; a failure still shows.
+      unawaited(
+        runShowingErrors(
+          context,
+          ref,
+          () => controller.restoreIfDropped(tmdbId, MediaItem.fromString(type)),
+        ),
+      );
     }
 
     Navigator.of(context, rootNavigator: true).push(
@@ -655,20 +630,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       context: context,
       title: details['name'] ?? l10n.searchSeries,
       status: status,
-      onMarkRemaining: (date) => _markAllEpisodes(
-        controller,
-        tmdbId,
-        details,
-        date,
-        onlyRemaining: true,
-      ),
-      onMarkAll: (date) => _markAllEpisodes(
-        controller,
-        tmdbId,
-        details,
-        date,
-        onlyRemaining: false,
-      ),
+      onMarkRemaining: (date) => _markAll(controller, tmdbId, details, date),
+      onMarkAll: (date) =>
+          _markAll(controller, tmdbId, details, date, onlyRemaining: false),
       onRemoveAll: () => controller.deleteAllSeriesLogs(tmdbId: tmdbId),
     );
   }
@@ -695,49 +659,22 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     );
   }
 
-  void _markAllEpisodes(
+  Future<bool> _markAll(
     MediaDetailsController controller,
     int tmdbId,
     Map<String, dynamic> details,
     DateTime? date, {
-    required bool onlyRemaining,
-  }) {
-    final List<({int season, int episode})> episodesToMark = [];
-    final seasons = details['seasons'] as List? ?? [];
-
-    final watchedMap = ref.read(watchedEpisodesMapProvider(tmdbId));
-    final now = DateTime.now();
-    final lastAired = details['last_episode_to_air'];
-
-    for (var season in seasons) {
-      final sNum = season['season_number'] as int? ?? 0;
-      if (sNum == 0) continue;
-
-      if (season['air_date'] == null) continue;
-      final airDate = DateTime.tryParse(season['air_date'].toString());
-      if (airDate == null || airDate.isAfter(now)) continue;
-
-      int epCount = 0;
-      if (lastAired != null && sNum == lastAired['season_number']) {
-        epCount = (lastAired['episode_number'] as int? ?? 0);
-      } else if (lastAired == null ||
-          sNum < (lastAired['season_number'] as int? ?? 0)) {
-        epCount = season['episode_count'] as int? ?? 0;
-      }
-
-      for (int e = 1; e <= epCount; e++) {
-        if (onlyRemaining && (watchedMap['$sNum-$e'] ?? 0) > 0) continue;
-        episodesToMark.add((season: sNum, episode: e));
-      }
-    }
-
-    if (episodesToMark.isEmpty) return;
-    controller.logMultipleEpisodes(
+    bool onlyRemaining = true,
+  }) => runShowingErrors(
+    context,
+    ref,
+    () => controller.markAllEpisodes(
       tmdbId: tmdbId,
-      episodes: episodesToMark,
+      details: details,
+      onlyRemaining: onlyRemaining,
       loggedAt: date,
-    );
-  }
+    ),
+  );
 
   String? _resolveEnglishOrOriginalTitle(Map<String, dynamic> details) {
     return MediaItem.extractTitleFromTmdb(details, 'en') ??

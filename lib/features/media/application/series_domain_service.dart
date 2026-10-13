@@ -76,7 +76,15 @@ class SeriesDomainService {
 
   /// How many regular episodes (no specials) have aired. The one rule for
   /// the "fully watched" badge and the progress bar (REV-198).
-  int airedEpisodeCount(Map<String, dynamic> details) {
+  int airedEpisodeCount(Map<String, dynamic> details) =>
+      airedEpisodes(details).length;
+
+  /// The regular episodes (no specials) that have aired, in order: what
+  /// "mark all" logs (REV-205). Same rule as [airedEpisodeCount], so marking
+  /// all makes the show fully watched.
+  List<({int season, int episode})> airedEpisodes(
+    Map<String, dynamic> details,
+  ) {
     final seasons = (details['seasons'] as List?) ?? const [];
     final lastAired = details['last_episode_to_air'] as Map?;
     final lastSeason = lastAired?['season_number'] as int? ?? 0;
@@ -85,22 +93,26 @@ class SeriesDomainService {
     final isEnded = status == 'Ended' || status == 'Canceled';
     final now = DateTime.now();
 
-    var total = 0;
+    final aired = <({int season, int episode})>[];
     for (final season in seasons) {
       final number = season['season_number'] as int? ?? 0;
       final count = season['episode_count'] as int? ?? 0;
       if (number <= 0) continue;
+      var airedCount = 0;
       if (lastAired != null) {
-        if (number < lastSeason) total += count;
-        if (number == lastSeason) total += min(count, lastEpisode);
+        if (number < lastSeason) airedCount = count;
+        if (number == lastSeason) airedCount = min(count, lastEpisode);
       } else if (isEnded) {
-        total += count;
+        airedCount = count;
       } else {
         final airDate = DateTime.tryParse('${season['air_date'] ?? ''}');
-        if (airDate != null && !airDate.isAfter(now)) total += count;
+        if (airDate != null && !airDate.isAfter(now)) airedCount = count;
+      }
+      for (var e = 1; e <= airedCount; e++) {
+        aired.add((season: number, episode: e));
       }
     }
-    return total;
+    return aired;
   }
 
   /// Calculates percentage and episode watch counts for a series.

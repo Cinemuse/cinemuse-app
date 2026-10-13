@@ -50,6 +50,32 @@ void main() {
       expect(service.calculateSeriesProgress(details: details)!.totalCount, 13);
     });
 
+    // REV-205: "mark all" had its own loop that skipped seasons with no
+    // air_date, so marking all could leave the show not fully watched.
+    test('airedEpisodes lists what airedEpisodeCount counts', () {
+      final details = {
+        'status': 'Returning Series',
+        'seasons': [
+          {'season_number': 0, 'episode_count': 2, 'air_date': '2019-01-01'},
+          {'season_number': 1, 'episode_count': 2},
+          {'season_number': 2, 'episode_count': 5, 'air_date': '2021-01-01'},
+          {'season_number': 3, 'episode_count': 6, 'air_date': '2099-01-01'},
+        ],
+        'last_episode_to_air': {'season_number': 2, 'episode_number': 3},
+      };
+
+      final aired = service.airedEpisodes(details);
+
+      expect(aired, [
+        (season: 1, episode: 1),
+        (season: 1, episode: 2),
+        (season: 2, episode: 1),
+        (season: 2, episode: 2),
+        (season: 2, episode: 3),
+      ]);
+      expect(service.airedEpisodeCount(details), aired.length);
+    });
+
     test(
       'calculateSeriesProgress computes status and progress ratio accurately',
       () {
