@@ -1082,6 +1082,12 @@ abstract class AppLocalizations {
   /// **'Links'**
   String get detailsLinks;
 
+  /// No description provided for @detailsLinkOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open this link.'**
+  String get detailsLinkOpenFailed;
+
   /// No description provided for @detailsMore.
   ///
   /// In en, this message translates to:

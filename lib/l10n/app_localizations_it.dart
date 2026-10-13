@@ -566,6 +566,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailsLinks => 'Link';
 
   @override
+  String get detailsLinkOpenFailed => 'Impossibile aprire il link.';
+
+  @override
   String get detailsMore => 'Altro';
 
   @override

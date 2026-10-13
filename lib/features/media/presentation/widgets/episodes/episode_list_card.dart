@@ -438,21 +438,21 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
   ) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final textSpan = TextSpan(
-          text: overview,
-          style: TextStyle(
-            color: AppTheme.textMuted,
-            fontSize: 12,
-            height: 1.4,
-          ),
+        final style = TextStyle(
+          color: AppTheme.textMuted,
+          fontSize: 12,
+          height: 1.4,
         );
+        // Measured like the Text below draws it (user text size, direction),
+        // so "Read more" shows whenever the text is cut (REV-214).
         final textPainter = TextPainter(
-          text: textSpan,
+          text: TextSpan(text: overview, style: style),
           maxLines: 2,
-          textDirection: TextDirection.ltr,
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
         )..layout(maxWidth: constraints.maxWidth);
-
         final isOverflowing = textPainter.didExceedMaxLines;
+        textPainter.dispose();
 
         return AnimatedSize(
           duration: const Duration(milliseconds: 300),
@@ -463,11 +463,7 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
             children: [
               Text(
                 overview,
-                style: TextStyle(
-                  color: AppTheme.textMuted,
-                  fontSize: 12,
-                  height: 1.4,
-                ),
+                style: style,
                 maxLines: _isExpanded ? null : 2,
                 overflow: _isExpanded
                     ? TextOverflow.visible

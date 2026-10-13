@@ -210,6 +210,7 @@
   "detailsOfficialWebsite": "Official Website",
   "detailsMedia": "Media",
   "detailsLinks": "Links",
+  "detailsLinkOpenFailed": "Couldn't open this link.",
   "detailsMore": "More",
   "seasonLabel": "Season {number}",
   "detailsEpisodeNumber": "EP {num}",

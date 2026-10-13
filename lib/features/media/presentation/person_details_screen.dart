@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -95,7 +96,12 @@ class _PersonDetailsContent extends StatelessWidget {
     final String name = details.name.isEmpty ? 'Unknown' : details.name;
     final String? profilePath = details.profilePath;
     final String? biography = details.biography;
-    final String? birthday = details.birthday;
+    final birthDate = DateTime.tryParse(details.birthday ?? '');
+    final String? birthday = birthDate != null
+        ? DateFormat.yMMMd(
+            Localizations.localeOf(context).languageCode,
+          ).format(birthDate)
+        : details.birthday;
     final String? placeOfBirth = details.placeOfBirth;
 
     return CustomScrollView(

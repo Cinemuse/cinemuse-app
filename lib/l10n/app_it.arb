@@ -172,6 +172,7 @@
   "detailsOfficialWebsite": "Sito Ufficiale",
   "detailsMedia": "Media",
   "detailsLinks": "Link",
+  "detailsLinkOpenFailed": "Impossibile aprire il link.",
   "detailsMore": "Altro",
   "seasonLabel": "Stagione {number}",
   "detailsEpisodeNumber": "EP {num}",

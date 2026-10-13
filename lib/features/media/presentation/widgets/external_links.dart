@@ -1,3 +1,5 @@
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
@@ -8,6 +10,26 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 const Color _kImdbBrandColor = Color(0xFFF5C518);
+
+/// Opens [url] outside the app; a link that can't open shows a message
+/// instead of doing nothing (REV-214).
+Future<void> _openUrl(BuildContext context, String url) async {
+  final message = AppLocalizations.of(context)!.detailsLinkOpenFailed;
+  final uri = Uri.tryParse(url);
+  var opened = false;
+  if (uri != null) {
+    try {
+      opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      // Safe to go on: the snackbar below tells the user.
+      AppLogger.warn('ExternalLinks', 'Could not open a link', error: e);
+    }
+  }
+  if (!opened && context.mounted) {
+    AppSnackBar.show(context, message: message, isError: true);
+  }
+}
+
 const Color _kTmdbBrandColor = Color(0xFF01B4E4);
 
 class ExternalLinks extends StatelessWidget {
@@ -146,13 +168,6 @@ class _ThemedBrandButton extends StatelessWidget {
     required this.brandColor,
   });
 
-  Future<void> _handleTap() async {
-    final uri = Uri.tryParse(url);
-    if (uri != null) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return HoverScale(
@@ -160,7 +175,7 @@ class _ThemedBrandButton extends StatelessWidget {
       showFocusRing: true,
       focusRingColor: brandColor,
       borderRadius: AppTheme.radius12,
-      onTap: _handleTap,
+      onTap: () => _openUrl(context, url),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         decoration: BoxDecoration(
@@ -203,13 +218,6 @@ class _SquareIconButton extends StatelessWidget {
     required this.tooltip,
   });
 
-  Future<void> _handleTap() async {
-    final uri = Uri.tryParse(url);
-    if (uri != null) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Tooltip(
@@ -219,7 +227,7 @@ class _SquareIconButton extends StatelessWidget {
         showFocusRing: true,
         focusRingColor: AppTheme.accent,
         borderRadius: AppTheme.radius12,
-        onTap: _handleTap,
+        onTap: () => _openUrl(context, url),
         child: Container(
           width: 38,
           height: 38,
