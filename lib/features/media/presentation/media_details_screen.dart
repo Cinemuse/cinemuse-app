@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/features/media/application/play_target.dart';
 import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
@@ -138,6 +139,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         final watchHistory = ref
             .watch(mediaWatchHistoryProvider(historyKey))
             .value;
+        final playTarget = PlayTarget.fromHistory(watchHistory, isTV: isTV);
 
         final collection = mediaItem.collection;
         final recommendations =
@@ -262,24 +264,13 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                         }
                       }
                     : null,
-                resumeData: (watchHistory != null && !watchHistory.isCompleted)
-                    ? {
-                        'type':
-                            (watchHistory.mediaType == MediaKind.episode ||
-                                watchHistory.mediaType == MediaKind.tv)
-                            ? 'tv'
-                            : 'movie',
-                        'season': watchHistory.season,
-                        'episode': watchHistory.episode,
-                        'progress': watchHistory.progressSeconds,
-                      }
-                    : null,
+                playTarget: playTarget,
                 seriesWatchStatus: seriesWatchStatus,
                 onPlayClick: () =>
-                    _handlePlay(context, watchHistory, typeForTmdb),
+                    _handlePlay(context, playTarget, typeForTmdb),
                 onRestartClick: () => _handlePlay(
                   context,
-                  watchHistory,
+                  playTarget,
                   typeForTmdb,
                   restart: true,
                 ),
@@ -594,18 +585,10 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
 
   void _handlePlay(
     BuildContext context,
-    WatchHistory? watchHistory,
+    PlayTarget target,
     String type, {
     bool restart = false,
   }) {
-    int? season;
-    int? episode;
-
-    if (type == 'tv') {
-      season = watchHistory?.season ?? 1;
-      episode = watchHistory?.episode ?? 1;
-    }
-
     // Implicit restore if dropped
     final tmdbId = int.tryParse(widget.mediaId);
     if (tmdbId != null) {
@@ -632,9 +615,9 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
         builder: (_) => VideoPlayerScreen(
           queryId: widget.mediaId,
           type: type,
-          season: season,
-          episode: episode,
-          startPosition: restart ? 0 : (watchHistory?.progressSeconds ?? 0),
+          season: target.season,
+          episode: target.episode,
+          startPosition: restart ? 0 : target.startSeconds,
         ),
       ),
     );

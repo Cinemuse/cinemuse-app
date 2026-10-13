@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cinemuse_app/features/media/application/play_target.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/hero/responsive_action_buttons.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/hero/series_progress_bar.dart';
@@ -13,7 +14,7 @@ class DetailsHero extends StatelessWidget {
   final MediaItem? mediaItem;
   final Map<String, dynamic>? media;
   final Map<String, dynamic>? details;
-  final Map<String, dynamic>? resumeData;
+  final PlayTarget playTarget;
   final VoidCallback onPlayClick;
   final VoidCallback? onRestartClick;
   final double contentPadding;
@@ -33,7 +34,7 @@ class DetailsHero extends StatelessWidget {
     this.mediaItem,
     this.media,
     this.details,
-    this.resumeData,
+    this.playTarget = const PlayTarget(),
     required this.onPlayClick,
     this.onRestartClick,
     this.onClearProgress,
@@ -325,11 +326,7 @@ class DetailsHero extends StatelessWidget {
                   child: ResponsiveActionButtons(
                     onPlayClick: onPlayClick,
                     onRestartClick: onRestartClick,
-                    playButtonLabel: _getPlayButtonLabel(
-                      l10n,
-                      type,
-                      resumeData,
-                    ),
+                    playButtonLabel: _getPlayButtonLabel(l10n, type),
                     mediaItem: effectiveMediaItem,
                     isFavorite: isFavorite,
                     isInWatchlist: isInWatchlist,
@@ -340,15 +337,14 @@ class DetailsHero extends StatelessWidget {
                     onClearProgress: onClearProgress,
                     seriesWatchStatus: seriesWatchStatus,
                     movieWatchCount: movieWatchCount,
-                    hasResumeProgress:
-                        (resumeData?['progress'] as int? ?? 0) > 0,
+                    hasResumeProgress: playTarget.isResume,
                     mediaId:
                         resolvedItem?.tmdbId.toString() ??
                         media?['id']?.toString() ??
                         '',
                     mediaType: type == 'series' ? 'tv' : type,
-                    season: resumeData?['season'] as int?,
-                    episode: resumeData?['episode'] as int?,
+                    season: playTarget.season,
+                    episode: playTarget.episode,
                   ),
                 ),
 
@@ -428,31 +424,16 @@ class DetailsHero extends StatelessWidget {
     }
   }
 
-  String _getPlayButtonLabel(
-    AppLocalizations l10n,
-    String type,
-    Map<String, dynamic>? resumeData,
-  ) {
-    if (resumeData != null) {
-      if (resumeData['type'] == 'tv') {
-        // AppLocalizations generates arguments alphabetically: (episode, season)
-        final progress = resumeData['progress'] as int? ?? 0;
-        final season = resumeData['season'] as int? ?? 1;
-        final episode = resumeData['episode'] as int? ?? 1;
-        final label = progress > 0
-            ? l10n.detailsResumeEpisode(episode, season)
-            : l10n.detailsPlaySeasonEpisode(episode, season);
-        return label;
-      }
-      return l10n.detailsResume;
-    }
-
-    // If no resume data, check if it's a series to show "Play S1 E1" (or localized Play)
+  String _getPlayButtonLabel(AppLocalizations l10n, String type) {
     if (type == 'series' || type == 'tv') {
-      return l10n.detailsPlaySeasonEpisode(1, 1);
+      // AppLocalizations generates arguments alphabetically: (episode, season)
+      final season = playTarget.season ?? 1;
+      final episode = playTarget.episode ?? 1;
+      return playTarget.isResume
+          ? l10n.detailsResumeEpisode(episode, season)
+          : l10n.detailsPlaySeasonEpisode(episode, season);
     }
-
-    return l10n.detailsPlayNow;
+    return playTarget.isResume ? l10n.detailsResume : l10n.detailsPlayNow;
   }
 }
 
