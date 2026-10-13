@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 
 import 'dart:developer' as developer;
-import 'package:cinemuse_app/core/error/app_exception.dart';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
@@ -165,13 +164,7 @@ class OptimisticSeriesLogs
     final repository = ref.watch(watchHistoryRepositoryProvider);
     return repository
         .watchTitleLogs(userId, arg, 'tv')
-        .handleError((error) {
-          if (error is AppException &&
-              error.type == AppExceptionType.realtime) {
-            return <Map<String, dynamic>>[];
-          }
-          throw error;
-        })
+        .realtimeErrorsAs(const [])
         .map((list) => _serverLogs = list.map(WatchLog.fromJson).toList())
         .map(_applyOptimisticUpdates);
   }
@@ -320,13 +313,7 @@ final episodeProgressMapProvider = StreamProvider.autoDispose
             }
             return map;
           })
-          .handleError((error) {
-            if (error is AppException &&
-                error.type == AppExceptionType.realtime) {
-              return <String, WatchHistory>{};
-            }
-            throw error;
-          });
+          .realtimeErrorsAs(const {});
     });
 
 // StateNotifier for managing movie logs with optimistic updates
@@ -345,13 +332,7 @@ class OptimisticMovieLogs
     final repository = ref.watch(watchHistoryRepositoryProvider);
     return repository
         .watchTitleLogs(userId, arg, 'movie')
-        .handleError((error) {
-          if (error is AppException &&
-              error.type == AppExceptionType.realtime) {
-            return <Map<String, dynamic>>[];
-          }
-          throw error;
-        })
+        .realtimeErrorsAs(const [])
         .map((list) => _serverLogs = list.map(WatchLog.fromJson).toList())
         .map(_applyOptimisticUpdates);
   }
