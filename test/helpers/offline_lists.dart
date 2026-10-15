@@ -27,8 +27,9 @@ final offlineWatchlist = UserList(
   createdAt: DateTime.utc(2026),
 );
 
-/// Signed in, with an empty Watchlist, and every list save failing as if
-/// offline (the real repository has already undone its local change then).
+/// Signed in, with an empty Watchlist and no Dropped titles, and every list
+/// and Continue Watching save failing as if offline (the real repositories
+/// have already undone their local change then).
 List<Override> offlineListsOverrides() {
   final user = User(
     id: 'user-a',
@@ -74,6 +75,17 @@ List<Override> offlineListsOverrides() {
   );
   final history = _MockWatchHistoryRepository();
   when(() => history.saveMediaItem(any())).thenAnswer((_) async {});
+  when(() => history.getDroppedItems(any())).thenAnswer((_) async => []);
+  when(
+    () => history.dropFromContinueWatching(any(), any(), any()),
+  ).thenThrow(offline);
+  when(
+    () => history.clearProgress(
+      userId: any(named: 'userId'),
+      tmdbId: any(named: 'tmdbId'),
+      mediaType: any(named: 'mediaType'),
+    ),
+  ).thenThrow(offline);
 
   return [
     authProvider.overrideWith((ref) => AuthService(client)),
