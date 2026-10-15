@@ -9,6 +9,7 @@ import 'package:cinemuse_app/features/live_tv/application/custom_epg_url_notifie
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
+import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/playlist_management_sheet.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
@@ -33,8 +34,13 @@ class _SlowEpgRepository extends LiveTvRepository {
 void main() {
   late _SlowEpgRepository repository;
 
-  Future<void> pumpSection(WidgetTester tester) async {
-    SharedPreferences.setMockInitialValues({});
+  Future<void> pumpSection(
+    WidgetTester tester, {
+    List<LiveTvPlaylist> playlists = const [],
+  }) async {
+    SharedPreferences.setMockInitialValues({
+      'live_tv_custom_playlists': [for (final p in playlists) p.encode()],
+    });
     tester.view.physicalSize = const Size(1280, 1600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -80,6 +86,27 @@ void main() {
     await tester.pumpAndSettle();
     expect(isEnabled(tester, 'Refresh Guide'), isTrue);
     expect(find.text('EPG guide refreshed successfully'), findsOneWidget);
+  });
+
+  testWidgets('a playlist row shows only the site, not the login (REV-137)', (
+    tester,
+  ) async {
+    await pumpSection(
+      tester,
+      playlists: [
+        LiveTvPlaylist(
+          name: 'My IPTV',
+          urlOrPath:
+              'http://example.com:8080/get.php?username=me&password=secret',
+          isLocal: false,
+          type: PlaylistType.m3u,
+        ),
+      ],
+    );
+
+    expect(find.text('My IPTV'), findsOneWidget);
+    expect(find.text('example.com'), findsOneWidget);
+    expect(find.textContaining('secret'), findsNothing);
   });
 
   for (final (url, canCreate) in [
