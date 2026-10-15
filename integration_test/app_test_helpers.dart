@@ -6,6 +6,8 @@
 /// interaction needed, which allows running in profile mode.
 library;
 
+import 'dart:async' hide TimeoutException;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +17,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/core/data/sqlite_workaround.dart';
+import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/navigation/presentation/app_shell.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -145,6 +149,93 @@ Future<void> pumpUntil(
     }
     await tester.pump(const Duration(milliseconds: 250));
   }
+}
+
+/// Opens a title's details page on the shell navigator, as tapping its card
+/// does.
+void openDetails(ProviderContainer container, int tmdbId, String mediaType) {
+  unawaited(
+    container
+        .read(shellNavigatorKeyProvider)
+        .currentState!
+        .push(
+          MaterialPageRoute<void>(
+            builder: (_) =>
+                MediaDetailsScreen(mediaId: '$tmdbId', mediaType: mediaType),
+          ),
+        ),
+  );
+}
+
+/// The dev account's `watch_history` row for a title on the server, or null.
+Future<Map<String, dynamic>?> serverHistoryRow(
+  ProviderContainer container,
+  int tmdbId,
+  String mediaType,
+) => container
+    .read(supabaseClientProvider)
+    .from('watch_history')
+    .select('status, season, episode, progress_seconds')
+    .eq('tmdb_id', tmdbId)
+    .eq('media_type', mediaType)
+    .maybeSingle();
+
+/// How many `watch_logs` the dev account has for a title on the server.
+Future<int> serverLogCount(
+  ProviderContainer container,
+  int tmdbId,
+  String mediaType,
+) async {
+  final rows = await container
+      .read(supabaseClientProvider)
+      .from('watch_logs')
+      .select('id')
+      .eq('tmdb_id', tmdbId)
+      .eq('media_type', mediaType);
+  return rows.length;
+}
+
+/// Stops the test unless the dev account has never touched the title, so a
+/// test never changes real history.
+Future<void> expectUntouched(
+  ProviderContainer container,
+  int tmdbId,
+  String mediaType,
+) async {
+  expect(
+    await serverLogCount(container, tmdbId, mediaType),
+    0,
+    reason: 'dev account already logged $mediaType $tmdbId',
+  );
+  expect(
+    await serverHistoryRow(container, tmdbId, mediaType),
+    isNull,
+    reason: '$mediaType $tmdbId is in its history',
+  );
+}
+
+/// Deletes every log and the history row of a title, on the server and in
+/// the local cache. Directly, not through undo_watch: that keeps a dropped
+/// row on purpose (DATA-05).
+Future<void> eraseTitle(
+  ProviderContainer container,
+  int tmdbId,
+  String mediaType,
+) async {
+  final client = container.read(supabaseClientProvider);
+  await client
+      .from('watch_logs')
+      .delete()
+      .eq('tmdb_id', tmdbId)
+      .eq('media_type', mediaType);
+  await client
+      .from('watch_history')
+      .delete()
+      .eq('tmdb_id', tmdbId)
+      .eq('media_type', mediaType);
+  await container
+      .read(appDatabaseProvider)
+      .deleteWatchHistoryItem(client.auth.currentUser!.id, tmdbId, mediaType);
 }
 
 /// Minimal app shell for performance tests.
