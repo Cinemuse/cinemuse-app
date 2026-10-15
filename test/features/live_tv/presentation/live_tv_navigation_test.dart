@@ -54,6 +54,15 @@ class FakeLivePlayerController
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+/// The small player on the Live TV tab tunes to the channel it shows.
+class TuningLivePlayerController extends FakeLivePlayerController {
+  @override
+  Future<void> changeChannel(
+    Channel channel, {
+    bool isFailover = false,
+  }) async {}
+}
+
 Channel createMockChannel({
   String name = 'Test Channel',
   int lcn = 1,
@@ -347,6 +356,63 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
       expect(find.byType(VideoPlayerScreen), findsOneWidget);
+    });
+
+    // REV-132: after tapping the playing channel on a phone, a wider window
+    // showed Live TV in a full-window mode with no navbar.
+    testWidgets('phone: tap the playing channel, Back, widen: the guide on '
+        'the Live TV tab', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      // The small player's spinner never stops: no pumpAndSettle.
+      Future<void> wait(WidgetTester tester) async {
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+      }
+
+      final container = ProviderContainer(
+        overrides: [
+          playerControllerProvider.overrideWith(
+            (ref, params) => TuningLivePlayerController(),
+          ),
+          channelsProvider.overrideWith(
+            (ref) => Future.value([createMockChannel()]),
+          ),
+          epgDataProvider.overrideWith((ref) => Future.value({})),
+          navIndexProvider.overrideWith((ref) => NavTab.liveTv),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            // The app's font and theme: the guide's top bar is measured.
+            theme: AppTheme.darkTheme,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(body: LiveTvScreen()),
+          ),
+        ),
+      );
+      await wait(tester);
+
+      // The first channel plays by itself; tapping it opens the big player.
+      await tester.tap(find.text('Test Channel'));
+      await wait(tester);
+      expect(find.byType(VideoPlayerScreen), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await wait(tester);
+      expect(find.byType(VideoPlayerScreen), findsNothing);
+
+      tester.view.physicalSize = const Size(1280, 800);
+      await wait(tester);
+      expect(find.byType(LiveTvGuideScreen), findsOneWidget);
+      expect(container.read(navIndexProvider), NavTab.liveTv);
     });
 
     testWidgets('ArrowLeft in overlay mode invokes onClose', (tester) async {
