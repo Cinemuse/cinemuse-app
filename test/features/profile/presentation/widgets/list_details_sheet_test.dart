@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
@@ -18,6 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../helpers/cursor_helpers.dart';
 import '../../../../helpers/offline_lists.dart';
 
 class MockTmdbService extends Mock implements TmdbService {}
@@ -168,6 +170,7 @@ void main() {
             settingsProvider.overrideWith(FakeSettingsNotifier.new),
           ],
           child: MaterialApp(
+            theme: AppTheme.darkTheme,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
@@ -227,6 +230,19 @@ void main() {
 
       expect(updates, ['Best Films']);
       expect(deletes, 0);
+    });
+
+    // REV-246: the sheet's top-right icons showed the arrow cursor.
+    testWidgets('a custom list: the top-right icons and the menu options '
+        'show the hand (REV-246)', (tester) async {
+      await openSheet(tester, listOf(ListType.custom, 'my-list', 'My List'));
+
+      await expectHandOver(tester, find.byTooltip(l10n.listPinToHome));
+      await expectHandOver(tester, find.byTooltip(l10n.menuMoreOptions));
+      await tester.tap(find.byTooltip(l10n.menuMoreOptions));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await expectHandOver(tester, find.text(l10n.detailsEditList));
     });
 
     testWidgets('a custom list: Delete closes the sheet and deletes it', (

@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../../helpers/app_font.dart';
+import '../../../../helpers/cursor_helpers.dart';
 import '../../../../helpers/focus_helpers.dart';
 
 class MockCommentsRepository extends Mock implements CommentsRepository {}
@@ -340,5 +341,41 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(l10n.commentsSpoilerWarning), findsOneWidget);
     expect(find.text('Big twist'), findsNothing);
+  });
+
+  // REV-246: the two filters (source and order) showed the arrow cursor.
+  testWidgets('the source and order filters: the hand', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repository = MockCommentsRepository();
+    when(
+      () => repository.fetchComments(request, page: any(named: 'page')),
+    ).thenAnswer(
+      (_) async => [
+        Comment(
+          id: 'c1',
+          author: const CommentAuthor(id: 'u1', username: 'alice'),
+          text: 'Nice episode',
+          createdAt: DateTime.utc(2024),
+          source: CommentSource.imdb,
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [commentsRepositoryProvider.overrideWithValue(repository)],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(body: CommentsBottomSheet(request: request)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Nice episode'), findsOneWidget);
+    await expectHandOver(tester, find.byIcon(Icons.layers_outlined));
+    await expectHandOver(tester, find.byIcon(Icons.sort));
   });
 }

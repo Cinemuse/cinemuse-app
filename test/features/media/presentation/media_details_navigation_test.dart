@@ -20,6 +20,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../../helpers/cursor_helpers.dart';
+
 class MockUnifiedStreamResolver extends Mock implements UnifiedStreamResolver {}
 
 class FakeSettingsNotifier extends SettingsNotifier {
@@ -190,6 +192,32 @@ void main() {
       await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
       await tester.pumpAndSettle();
       expect(find.text('Stop Watching'), findsOneWidget);
+    });
+
+    // REV-246: the ▾ next to Play showed the arrow cursor.
+    testWidgets('Play ▾: the hand', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        buildTestableWidget(
+          ResponsiveActionButtons(
+            onPlayClick: () {},
+            playButtonLabel: 'Play Now',
+            mediaItem: MediaItem(
+              tmdbId: 123,
+              mediaType: MediaKind.movie,
+              updatedAt: DateTime(2026),
+            ),
+            isFavorite: false,
+            isInWatchlist: false,
+            onListTap: () {},
+            onDropClick: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await expectHandOver(tester, find.byIcon(Icons.keyboard_arrow_down));
     });
 
     // REV-253: the ▾ next to Play has a tooltip in the app's language.

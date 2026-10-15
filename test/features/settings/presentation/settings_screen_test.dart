@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../helpers/app_font.dart';
+import '../../../helpers/cursor_helpers.dart';
 
 class _FakeSettingsNotifier extends SettingsNotifier {
   @override
@@ -132,5 +133,34 @@ void main() {
       expect(find.text('Player page'), findsNothing);
       expect(find.text('Home tab'), findsOneWidget);
     });
+  });
+
+  // REV-246: the Settings rows showed the arrow cursor.
+  testWidgets('every Settings category row: the hand', (tester) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [settingsProvider.overrideWith(_FakeSettingsNotifier.new)],
+        child: MaterialApp(
+          theme: AppTheme.darkTheme,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(body: SettingsScreen()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final categories = find.descendant(
+      of: find.byType(ListView).first,
+      matching: find.byType(InkWell),
+    );
+    // Identity, Customization, Live TV, Integrations.
+    expect(categories, findsNWidgets(4));
+    for (var i = 0; i < 4; i++) {
+      await expectHandOver(tester, categories.at(i));
+    }
   });
 }

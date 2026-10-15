@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../helpers/cursor_helpers.dart';
+
 class FakeSettingsNotifier extends SettingsNotifier {
   @override
   UserSettings build() => const UserSettings();
@@ -80,5 +82,18 @@ void main() {
 
     expect(find.text(l10n.failureNetwork), findsOneWidget);
     expect(find.text('Some Movie'), findsWidgets);
+  });
+
+  // REV-246: the phone's filters and order button showed the arrow cursor.
+  testWidgets('phone: the filters and order button shows the hand', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(590, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+
+    await expectHandOver(tester, find.text(l10n.watchHistoryFiltersTitle));
   });
 }

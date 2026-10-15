@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:cinemuse_app/l10n/app_localizations_it.dart';
@@ -7,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+
+import '../../helpers/cursor_helpers.dart';
 
 void main() {
   testWidgets('Pressing arrowLeft on the first card keeps focus there', (
@@ -520,6 +523,45 @@ void main() {
       expect(find.byTooltip(l10n.commonScrollRight), findsOneWidget);
     });
   }
+
+  // REV-246: the row title and the ← / → arrows showed the arrow cursor.
+  testWidgets('row title and →: the hand; ← at the start: the arrow', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final l10n = AppLocalizationsEn();
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: AppTheme.darkTheme,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: GenericCarouselRow(
+              title: 'My List',
+              onHeaderTap: _noop,
+              height: 200,
+              itemCount: 20,
+              itemBuilder: (context, index) => SizedBox(
+                width: 200,
+                child: DpadFocusable(onTap: _noop, child: Text('Card $index')),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await expectHandOver(tester, find.text('My List'));
+    await expectHandOver(tester, find.byTooltip(l10n.commonScrollRight));
+    expect(
+      await cursorOver(tester, find.byTooltip(l10n.commonScrollLeft)),
+      SystemMouseCursors.basic,
+    );
+  });
 }
 
 // Real cards always have an action (open details); without one a
