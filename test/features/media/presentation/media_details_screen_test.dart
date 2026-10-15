@@ -144,6 +144,133 @@ void main() {
     });
   }
 
+  // REV-195: a movie and a show can share a TMDB id; each page uses its own
+  // history row. The other title's newer row is finished, so mixing them up
+  // would show "Play".
+  group('a movie and a show share id 1 (REV-195)', () {
+    WatchHistory row(
+      MediaKind type, {
+      required WatchStatus status,
+      required int day,
+    }) => WatchHistory(
+      userId: 'user-a',
+      tmdbId: 1,
+      mediaType: type,
+      status: status,
+      season: type == MediaKind.tv ? 2 : null,
+      episode: type == MediaKind.tv ? 4 : null,
+      progressSeconds: 600,
+      totalDuration: 6000,
+      lastWatchedAt: DateTime.utc(2026, 10, day),
+    );
+
+    // The seasons the episode list asked TMDB for.
+    late List<int> loadedSeasons;
+
+    Future<void> pumpPage(
+      WidgetTester tester, {
+      required String type,
+      required List<WatchHistory> rows,
+    }) async {
+      loadedSeasons = [];
+      // Tall, so the episode list is built too.
+      tester.view.physicalSize = const Size(1280, 2000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final resolver = MockUnifiedStreamResolver();
+      when(
+        () => resolver.hasCachedStream(
+          any(),
+          any(),
+          season: any(named: 'season'),
+          episode: any(named: 'episode'),
+        ),
+      ).thenReturn(false);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            ...offlineListsOverrides(),
+            unifiedStreamResolverProvider.overrideWithValue(resolver),
+            settingsProvider.overrideWith(FakeSettingsNotifier.new),
+            watchHistoryStoreProvider.overrideWith(
+              (ref) => Stream.value({for (final r in rows) r.titleKey: r}),
+            ),
+            movieWatchCountProvider.overrideWith((ref, id) => 0),
+            watchedEpisodesMapProvider.overrideWith((ref, id) => const {}),
+            episodeProgressMapProvider.overrideWith(
+              (ref, id) => Stream.value(const {}),
+            ),
+            seasonDetailsProvider.overrideWith((ref, args) async {
+              loadedSeasons.add(args.seasonNumber);
+              return null;
+            }),
+            connectivityProvider.overrideWith(
+              (ref) => Stream.value(ConnectivityResult.wifi),
+            ),
+            mediaDetailsProvider.overrideWith(
+              (ref, args) async => args.type == 'tv'
+                  ? {
+                      'id': 1,
+                      'name': 'Some Show',
+                      'number_of_seasons': 2,
+                      // Typed like decoded JSON.
+                      'seasons': <dynamic>[
+                        <String, dynamic>{
+                          'season_number': 1,
+                          'episode_count': 5,
+                        },
+                        <String, dynamic>{
+                          'season_number': 2,
+                          'episode_count': 5,
+                        },
+                      ],
+                    }
+                  : {'id': 1, 'title': 'Some Movie'},
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.darkTheme,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: MediaDetailsScreen(mediaId: '1', mediaType: type),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+    }
+
+    testWidgets('the movie page resumes the movie', (tester) async {
+      await pumpPage(
+        tester,
+        type: 'movie',
+        rows: [
+          row(MediaKind.movie, status: WatchStatus.watching, day: 1),
+          row(MediaKind.tv, status: WatchStatus.completed, day: 2),
+        ],
+      );
+
+      expect(find.text(l10n.detailsResume), findsOneWidget);
+      expect(find.text(l10n.detailsPlayNow), findsNothing);
+    });
+
+    testWidgets('the show page opens on its season and resumes its episode', (
+      tester,
+    ) async {
+      await pumpPage(
+        tester,
+        type: 'tv',
+        rows: [
+          row(MediaKind.tv, status: WatchStatus.watching, day: 1),
+          row(MediaKind.movie, status: WatchStatus.completed, day: 2),
+        ],
+      );
+
+      expect(find.text(l10n.detailsResumeEpisode(4, 2)), findsOneWidget);
+      expect(loadedSeasons.last, 2);
+    });
+  });
+
   // REV-206: a failed load showed an endless spinner or "not found".
   group('the page fails to load', () {
     late MockTmdbService tmdb;

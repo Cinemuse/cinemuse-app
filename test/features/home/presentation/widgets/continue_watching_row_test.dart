@@ -172,8 +172,8 @@ void main() {
     ),
   );
 
-  // Continue Watching with the real rewatch check, then the card menu open.
-  Future<void> pumpShowCard(
+  // Continue Watching with the real rewatch check.
+  Future<void> pumpRow(
     WidgetTester tester,
     Stream<Map<String, WatchHistory>> store,
   ) async {
@@ -196,6 +196,7 @@ void main() {
           watchHistoryRepositoryProvider.overrideWithValue(repo),
           listsRepositoryProvider.overrideWithValue(lists),
           watchHistoryStoreProvider.overrideWith((ref) => store),
+          movieWatchCountProvider.overrideWith((ref, id) => 0),
           unifiedStreamResolverProvider.overrideWithValue(resolver),
           settingsProvider.overrideWith(FakeSettingsNotifier.new),
         ],
@@ -210,6 +211,14 @@ void main() {
     );
     await tester.pump();
     await tester.pump();
+  }
+
+  // Continue Watching with one show, then the card menu open.
+  Future<void> pumpShowCard(
+    WidgetTester tester,
+    Stream<Map<String, WatchHistory>> store,
+  ) async {
+    await pumpRow(tester, store);
     await tester.longPress(find.byType(BackdropCard));
     await tester.pumpAndSettle();
   }
@@ -277,5 +286,41 @@ void main() {
 
     expect(find.text(l10n.menuCancelRewatch), findsOneWidget);
     verify(() => repo.getHighestLoggedEpisode('user-a', 2)).called(1);
+  });
+
+  testWidgets('a movie and a show with the same id: both cards (REV-195)', (
+    tester,
+  ) async {
+    when(
+      () => repo.getHighestLoggedEpisode('user-a', 1399),
+    ).thenAnswer((_) async => null);
+    WatchHistory row(MediaKind type, String title, int day) => WatchHistory(
+      userId: 'user-a',
+      tmdbId: 1399,
+      mediaType: type,
+      season: type == MediaKind.tv ? 1 : null,
+      episode: type == MediaKind.tv ? 1 : null,
+      status: WatchStatus.watching,
+      progressSeconds: 600,
+      totalDuration: 6000,
+      lastWatchedAt: DateTime.utc(2026, 10, day),
+      media: MediaItem(
+        tmdbId: 1399,
+        mediaType: type,
+        titleEn: title,
+        titleIt: title,
+        updatedAt: DateTime.utc(2026),
+      ),
+    );
+    final movie = row(MediaKind.movie, 'Some Movie', 1);
+    final show = row(MediaKind.tv, 'Some Show', 2);
+    await pumpRow(
+      tester,
+      Stream.value({movie.titleKey: movie, show.titleKey: show}),
+    );
+
+    expect(find.byType(BackdropCard), findsNWidgets(2));
+    expect(find.text('Some Movie'), findsWidgets);
+    expect(find.text('Some Show'), findsWidgets);
   });
 }
