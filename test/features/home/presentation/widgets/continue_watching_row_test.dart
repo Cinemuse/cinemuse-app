@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/continue_watching_row.dart';
@@ -150,29 +152,31 @@ void main() {
     });
   }
 
-  testWidgets('a show with a later episode logged is a rewatch: the card '
-      'menu offers "Cancel rewatch" (REV-191)', (tester) async {
-    final show = WatchHistory(
-      userId: 'user-a',
+  // A show in Continue Watching at S1 E3, after [progressSeconds].
+  WatchHistory showAt({int progressSeconds = 600}) => WatchHistory(
+    userId: 'user-a',
+    tmdbId: 2,
+    mediaType: MediaKind.tv,
+    season: 1,
+    episode: 3,
+    status: WatchStatus.watching,
+    progressSeconds: progressSeconds,
+    totalDuration: 2400,
+    lastWatchedAt: DateTime.utc(2026, 10, 1),
+    media: MediaItem(
       tmdbId: 2,
       mediaType: MediaKind.tv,
-      season: 1,
-      episode: 3,
-      status: WatchStatus.watching,
-      progressSeconds: 600,
-      totalDuration: 2400,
-      lastWatchedAt: DateTime.utc(2026, 10, 1),
-      media: MediaItem(
-        tmdbId: 2,
-        mediaType: MediaKind.tv,
-        titleEn: 'Some Show',
-        titleIt: 'Some Show',
-        updatedAt: DateTime.utc(2026),
-      ),
-    );
-    when(
-      () => repo.getHighestLoggedEpisode('user-a', 2),
-    ).thenAnswer((_) async => (season: 1, episode: 5));
+      titleEn: 'Some Show',
+      titleIt: 'Some Show',
+      updatedAt: DateTime.utc(2026),
+    ),
+  );
+
+  // Continue Watching with the real rewatch check, then the card menu open.
+  Future<void> pumpShowCard(
+    WidgetTester tester,
+    Stream<Map<String, WatchHistory>> store,
+  ) async {
     final resolver = MockUnifiedStreamResolver();
     when(
       () => resolver.hasCachedStream(
@@ -191,9 +195,7 @@ void main() {
           authProvider.overrideWith((ref) => signedIn()),
           watchHistoryRepositoryProvider.overrideWithValue(repo),
           listsRepositoryProvider.overrideWithValue(lists),
-          watchHistoryStoreProvider.overrideWith(
-            (ref) => Stream.value({show.titleKey: show}),
-          ),
+          watchHistoryStoreProvider.overrideWith((ref) => store),
           unifiedStreamResolverProvider.overrideWithValue(resolver),
           settingsProvider.overrideWith(FakeSettingsNotifier.new),
         ],
@@ -208,10 +210,72 @@ void main() {
     );
     await tester.pump();
     await tester.pump();
-
     await tester.longPress(find.byType(BackdropCard));
     await tester.pumpAndSettle();
+  }
+
+  testWidgets('a show with a later episode logged is a rewatch: the card '
+      'menu offers "Cancel rewatch" (REV-191)', (tester) async {
+    when(
+      () => repo.getHighestLoggedEpisode('user-a', 2),
+    ).thenAnswer((_) async => (season: 1, episode: 5));
+    final show = showAt();
+    await pumpShowCard(tester, Stream.value({show.titleKey: show}));
+
     expect(find.text(l10n.menuCancelRewatch), findsOneWidget);
     expect(find.text(l10n.menuStopWatching), findsNothing);
+  });
+
+  // The card is at S1 E3; the highest episode the user has logged:
+  for (final (logged, isRewatch) in [
+    ((season: 1, episode: 5), true),
+    ((season: 2, episode: 1), true),
+    ((season: 1, episode: 3), false),
+    ((season: 1, episode: 2), false),
+    (null, false),
+  ]) {
+    testWidgets('logged up to $logged: rewatch $isRewatch (REV-194)', (
+      tester,
+    ) async {
+      when(
+        () => repo.getHighestLoggedEpisode('user-a', 2),
+      ).thenAnswer((_) async => logged);
+      final show = showAt();
+      await pumpShowCard(tester, Stream.value({show.titleKey: show}));
+
+      expect(
+        find.text(l10n.menuCancelRewatch),
+        isRewatch ? findsOneWidget : findsNothing,
+      );
+      expect(
+        find.text(l10n.menuStopWatching),
+        isRewatch ? findsNothing : findsOneWidget,
+      );
+    });
+  }
+
+  testWidgets('playing on saves the progress: still a rewatch, asked once '
+      '(REV-194)', (tester) async {
+    when(
+      () => repo.getHighestLoggedEpisode('user-a', 2),
+    ).thenAnswer((_) async => (season: 1, episode: 5));
+    final store = StreamController<Map<String, WatchHistory>>();
+    addTearDown(store.close);
+    final show = showAt();
+    store.add({show.titleKey: show});
+    await pumpShowCard(tester, store.stream);
+    await tester.tapAt(Offset.zero);
+    await tester.pumpAndSettle();
+
+    // The player saves the new spot: a new history entry, same episode.
+    final later = showAt(progressSeconds: 900);
+    store.add({later.titleKey: later});
+    await tester.pump();
+    await tester.pump();
+    await tester.longPress(find.byType(BackdropCard));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.menuCancelRewatch), findsOneWidget);
+    verify(() => repo.getHighestLoggedEpisode('user-a', 2)).called(1);
   });
 }
