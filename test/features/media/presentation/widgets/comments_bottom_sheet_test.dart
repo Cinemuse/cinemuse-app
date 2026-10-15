@@ -255,4 +255,90 @@ void main() {
       expect(find.textContaining('Serializd'), findsNothing);
     });
   });
+
+  // REV-210: tiles were kept alive only to remember a revealed spoiler; now
+  // the sheet remembers it, for as long as it is open.
+  testWidgets('a revealed spoiler stays revealed as more pages load; '
+      'reopened, it is hidden again (REV-210)', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repository = MockCommentsRepository();
+    when(
+      () => repository.fetchComments(request, page: any(named: 'page')),
+    ).thenAnswer((call) async {
+      final page = call.namedArguments[#page] as int;
+      if (page > 5) return const [];
+      return [
+        if (page == 1)
+          Comment(
+            id: 'spoiler',
+            author: const CommentAuthor(id: 'u1', username: 'alice'),
+            text: 'Big twist',
+            isSpoiler: true,
+            createdAt: DateTime.utc(2024),
+            source: CommentSource.serializd,
+          ),
+        for (var i = 1; i <= 6; i++)
+          Comment(
+            id: 'c$page.$i',
+            author: const CommentAuthor(id: 'u1', username: 'alice'),
+            text: 'Comment $page.$i',
+            createdAt: DateTime.utc(2024),
+            source: CommentSource.serializd,
+          ),
+      ];
+    });
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [commentsRepositoryProvider.overrideWithValue(repository)],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => showCommentsBottomSheet(context, request),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    final l10n = AppLocalizationsEn();
+    final list = find.descendant(
+      of: find.byType(CommentsBottomSheet),
+      matching: find.byType(Scrollable),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Big twist'), findsNothing);
+    await tester.tap(find.text(l10n.commentsSpoilerWarning));
+    await tester.pumpAndSettle();
+    expect(find.text('Big twist'), findsOneWidget);
+
+    // Down to the last page (the spoiler's tile scrolls away), then back up.
+    await tester.scrollUntilVisible(
+      find.text('Comment 5.6'),
+      500,
+      scrollable: list.first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Big twist'), findsNothing);
+    await tester.drag(list.first, const Offset(0, 100000));
+    await tester.pumpAndSettle();
+    expect(find.text('Big twist'), findsOneWidget);
+    expect(find.text(l10n.commentsSpoilerWarning), findsNothing);
+
+    // Closed and opened again: hidden.
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+    expect(find.byType(CommentsBottomSheet), findsNothing);
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.commentsSpoilerWarning), findsOneWidget);
+    expect(find.text('Big twist'), findsNothing);
+  });
 }
