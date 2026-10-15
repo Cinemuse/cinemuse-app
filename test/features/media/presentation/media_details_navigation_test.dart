@@ -92,42 +92,59 @@ void main() {
     });
 
     // REV-215: the hero title was always the English one.
-    testWidgets('hero title follows the app language', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(1280, 800));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+    const titleCases = [
+      (
+        language: 'it',
+        shown: 'Le ali della libertà',
+        hidden: 'The Shawshank Redemption',
+      ),
+      (
+        language: 'en',
+        shown: 'The Shawshank Redemption',
+        hidden: 'Le ali della libertà',
+      ),
+    ];
+    for (final c in titleCases) {
+      testWidgets('hero title follows the app language: ${c.language}', (
+        tester,
+      ) async {
+        await tester.binding.setSurfaceSize(const Size(1280, 800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            unifiedStreamResolverProvider.overrideWithValue(mockResolver),
-            settingsProvider.overrideWith(
-              () => FakeSettingsNotifier(const UserSettings(appLanguage: 'it')),
-            ),
-          ],
-          child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: DetailsHero(
-                mediaItem: MediaItem(
-                  tmdbId: 278,
-                  mediaType: MediaKind.movie,
-                  titleEn: 'The Shawshank Redemption',
-                  titleIt: 'Le ali della libertà',
-                  updatedAt: DateTime(2026),
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              unifiedStreamResolverProvider.overrideWithValue(mockResolver),
+              settingsProvider.overrideWith(
+                () =>
+                    FakeSettingsNotifier(UserSettings(appLanguage: c.language)),
+              ),
+            ],
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: DetailsHero(
+                  mediaItem: MediaItem(
+                    tmdbId: 278,
+                    mediaType: MediaKind.movie,
+                    titleEn: 'The Shawshank Redemption',
+                    titleIt: 'Le ali della libertà',
+                    updatedAt: DateTime(2026),
+                  ),
+                  onPlayClick: () {},
+                  onListTap: () {},
                 ),
-                onPlayClick: () {},
-                onListTap: () {},
               ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('Le ali della libertà'), findsOneWidget);
-      expect(find.text('The Shawshank Redemption'), findsNothing);
-    });
+        expect(find.text(c.shown), findsOneWidget);
+        expect(find.text(c.hidden), findsNothing);
+      });
+    }
 
     // REV-219 (b): the chevron was a second focus stop and its popup key
     // was new on every build.
