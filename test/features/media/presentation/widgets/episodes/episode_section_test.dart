@@ -203,6 +203,26 @@ void main() {
     expect(find.widgetWithText(SeasonSelector, 'Season 2'), findsOneWidget);
   });
 
+  // REV-20: below 600 px the episodes are a list, from 600 px a carousel.
+  for (final (width, isPhone) in const [(599.0, true), (600.0, false)]) {
+    testWidgets('${width}px: episodes as a ${isPhone ? 'list' : 'carousel'}', (
+      tester,
+    ) async {
+      await setWindow(tester, Size(width, 900));
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byType(EpisodeListCard),
+        isPhone ? findsNWidgets(2) : findsNothing,
+      );
+      expect(
+        find.byType(EpisodeCarouselCard),
+        isPhone ? findsNothing : findsNWidgets(2),
+      );
+    });
+  }
+
   for (final size in const [Size(1280, 800), Size(400, 900)]) {
     testWidgets('${size.width}px: a season that fails keeps the selector', (
       tester,

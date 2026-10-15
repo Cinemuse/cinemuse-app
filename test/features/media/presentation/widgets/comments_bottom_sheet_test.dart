@@ -12,10 +12,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../../../helpers/app_font.dart';
+
 class MockCommentsRepository extends Mock implements CommentsRepository {}
 
 // REV-201: offline, the sheet showed the raw "Exception: …" text.
 void main() {
+  setUpAll(loadAppFont);
+
   const request = EpisodeCommentsRequest(
     tmdbShowId: 100,
     seasonNumber: 1,
@@ -97,6 +101,65 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(l10n.commentsLoadMore), findsOneWidget);
+    });
+  }
+
+  // REV-20: on a wide window the sheet is 600 px wide with the filters beside
+  // the title; on a phone it fills the width with the filters under it.
+  for (final (width, isPhone) in const [(400.0, true), (1280.0, false)]) {
+    testWidgets('${width}px window: ${isPhone ? 'phone' : 'wide'} sheet', (
+      tester,
+    ) async {
+      final l10n = AppLocalizationsEn();
+      tester.view.physicalSize = Size(width, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final repository = MockCommentsRepository();
+      when(
+        () => repository.fetchComments(request, page: any(named: 'page')),
+      ).thenAnswer(
+        (_) async => [
+          Comment(
+            id: 'c1',
+            author: const CommentAuthor(id: 'u1', username: 'alice'),
+            text: 'Great episode',
+            createdAt: DateTime.utc(2024),
+            source: CommentSource.serializd,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [commentsRepositoryProvider.overrideWithValue(repository)],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => showCommentsBottomSheet(context, request),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getSize(find.byType(CommentsBottomSheet)).width,
+        isPhone ? width : 600,
+      );
+      final title = tester.getCenter(find.text(l10n.detailsTvTimeComments));
+      final filter = tester.getCenter(find.byIcon(Icons.layers_outlined));
+      if (isPhone) {
+        expect(filter.dy, greaterThan(title.dy + 20));
+      } else {
+        expect(filter.dy, moreOrLessEquals(title.dy, epsilon: 4));
+      }
     });
   }
 }

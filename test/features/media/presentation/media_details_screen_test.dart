@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
@@ -7,6 +8,7 @@ import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/details_tab_nav.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver_provider.dart';
@@ -18,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../../helpers/app_font.dart';
 import '../../../helpers/offline_lists.dart';
 
 class MockUnifiedStreamResolver extends Mock implements UnifiedStreamResolver {}
@@ -32,6 +35,8 @@ class FakeSettingsNotifier extends SettingsNotifier {
 }
 
 void main() {
+  setUpAll(loadAppFont);
+
   final l10n = AppLocalizationsEn();
 
   // A movie half watched.
@@ -66,10 +71,11 @@ void main() {
         movieWatchCountProvider.overrideWith((ref, id) => 0),
         ...overrides,
       ],
-      child: const MaterialApp(
+      child: MaterialApp(
+        theme: AppTheme.darkTheme,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: MediaDetailsScreen(mediaId: '1', mediaType: 'movie'),
+        home: const MediaDetailsScreen(mediaId: '1', mediaType: 'movie'),
       ),
     );
   }
@@ -104,6 +110,37 @@ void main() {
 
       expect(find.text(l10n.failureNetwork), findsOneWidget);
       expect(find.textContaining('Exception'), findsNothing);
+    });
+  }
+
+  // REV-20: below 600 px the page and its hero buttons use the phone layout.
+  // Wide is checked at 700 px: from 600 to ~650 px the hero buttons overflow
+  // (REV-301).
+  for (final (width, isPhone) in const [(599.0, true), (700.0, false)]) {
+    testWidgets('${width}px wide: ${isPhone ? 'phone' : 'wide'} layout', (
+      tester,
+    ) async {
+      tester.view.physicalSize = Size(width, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(app(overrides: loaded));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      // Phone: the sections are tabs.
+      expect(
+        find.byType(DetailsTabNav),
+        isPhone ? findsOneWidget : findsNothing,
+      );
+      // Phone: Track sits under the Play button; wide: beside it.
+      final playMenu = tester.getCenter(find.byIcon(Icons.keyboard_arrow_down));
+      final track = tester.getCenter(find.text(l10n.detailsTrack));
+      if (isPhone) {
+        expect(track.dy, greaterThan(playMenu.dy + 20));
+      } else {
+        expect(track.dy, moreOrLessEquals(playMenu.dy, epsilon: 4));
+        expect(track.dx, greaterThan(playMenu.dx));
+      }
     });
   }
 
