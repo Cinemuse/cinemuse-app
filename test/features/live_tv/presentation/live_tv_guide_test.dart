@@ -8,6 +8,7 @@ import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:cinemuse_app/l10n/app_localizations_it.dart';
 import 'package:cinemuse_app/features/live_tv/application/custom_epg_url_notifier.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
+import 'package:cinemuse_app/features/live_tv/application/minute_clock_provider.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/live_tv_guide_screen.dart';
@@ -16,6 +17,18 @@ import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/epg_tim
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 
 import '../../../helpers/focus_helpers.dart';
+
+/// The guide's minute clock, moved by the test.
+class _FakeMinuteClock extends MinuteClockNotifier {
+  _FakeMinuteClock(this._start);
+
+  final DateTime _start;
+
+  @override
+  DateTime build() => _start;
+
+  void set(DateTime time) => state = time;
+}
 
 Channel createMockChannel({int lcn = 1, String name = 'Rai 1 HD'}) {
   return Channel(lcn: lcn, name: name, logo: 'rai1.png', group: 'National');
@@ -471,6 +484,67 @@ void main() {
       await tester.pumpAndSettle();
       expect(bannerText(second.timeRange), findsOneWidget);
       expect(bannerText(first.timeRange), findsNothing);
+    });
+
+    testWidgets('the banner moves on when the focused program ends, but '
+        'stays on a later program (REV-278)', (tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final now = DateTime.now();
+      DateTime at(int minutes) => now.add(Duration(minutes: minutes));
+      final clock = _FakeMinuteClock(now);
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            minuteClockProvider.overrideWith(() => clock),
+            channelsProvider.overrideWith(
+              (ref) => Future.value([createMockChannel()]),
+            ),
+            epgDataProvider.overrideWith(
+              (ref) => Future.value({
+                'rai 1 hd': [
+                  createMockProgram(
+                    name: 'Ending Show',
+                    startTime: at(-15),
+                    endTime: at(5),
+                  ),
+                  createMockProgram(
+                    name: 'Next Show',
+                    startTime: at(5),
+                    endTime: at(60),
+                  ),
+                  createMockProgram(
+                    name: 'Later Show',
+                    startTime: at(60),
+                    endTime: at(120),
+                  ),
+                ],
+              }),
+            ),
+          ],
+          child: const LiveTvGuideScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      Finder inBanner(String text) => find.descendant(
+        of: find.byType(EpgDetailsBanner),
+        matching: find.text(text),
+      );
+
+      await tabTo(tester, find.text('Ending Show').last);
+      expect(inBanner('Ending Show'), findsOneWidget);
+      clock.set(at(6));
+      await tester.pumpAndSettle();
+      expect(inBanner('Next Show'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(inBanner('Later Show'), findsOneWidget);
+      clock.set(at(30));
+      await tester.pumpAndSettle();
+      expect(inBanner('Later Show'), findsOneWidget);
     });
 
     testWidgets('renders empty state when channel list is empty', (
