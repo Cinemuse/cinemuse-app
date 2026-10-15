@@ -18,6 +18,7 @@ import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_v
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/live_tv_screen.dart';
+import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/live_tv_guide_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
@@ -306,6 +307,41 @@ void main() {
       await tester.pump();
 
       expect(find.text('Added to favorites'), findsOneWidget);
+    });
+
+    testWidgets('phone: Right from a channel focuses the small player, '
+        'Enter opens the big one (REV-135)', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            channelsProvider.overrideWith(
+              (ref) => Future.value([createMockChannel()]),
+            ),
+          ],
+          // Another tab is active, so the small player shows its
+          // placeholder instead of playing.
+          child: const LiveTvScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tabTo(tester, find.text('Test Channel'));
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      expect(
+        isFocused(find.text('Select a channel to start watching')),
+        isTrue,
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.byType(VideoPlayerScreen), findsOneWidget);
     });
 
     testWidgets('ArrowLeft in overlay mode invokes onClose', (tester) async {
