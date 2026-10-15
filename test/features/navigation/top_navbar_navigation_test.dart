@@ -6,6 +6,8 @@ import 'package:cinemuse_app/features/navigation/presentation/navbar.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
+import '../../helpers/focus_helpers.dart';
+
 void main() {
   Widget buildTestableNavbar({
     required WidgetRef ref,
@@ -151,6 +153,102 @@ void main() {
       expect(selectedDestination, equals(1));
     },
   );
+
+  testWidgets('the focused tab shows its outline and nothing moves '
+      '(REV-249, REV-250)', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    late WidgetRef testRef;
+    final opened = <int>[];
+    var searchOpened = false;
+    await tester.pumpWidget(
+      ProviderScope(
+        child: Consumer(
+          builder: (context, ref, _) {
+            testRef = ref;
+            return buildTestableNavbar(
+              ref: ref,
+              currentIndex: 0,
+              onTap: opened.add,
+              onSearchTap: () => searchOpened = true,
+            );
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final items = [
+      find.text('Home'),
+      find.text('Explore'),
+      find.text('Live TV'),
+      find.text('Library'),
+      find.byIcon(Icons.search),
+      find.byIcon(Icons.person_rounded),
+    ];
+    final tabs = items.take(4).toList();
+    List<Rect> rects() => [for (final f in items) tester.getRect(f)];
+    // The outline is the look being checked: the pill's foreground ring.
+    bool hasOutline(Finder tab) =>
+        tester
+            .widget<AnimatedContainer>(
+              find.ancestor(of: tab, matching: find.byType(AnimatedContainer)),
+            )
+            .foregroundDecoration !=
+        null;
+    // Bold labels made the bar move, but the test font is as wide in bold,
+    // so the weight is checked too.
+    FontWeight? weight(Finder tab) =>
+        tester.widget<Text>(tab).style?.fontWeight;
+    final weights = [for (final t in tabs) weight(t)];
+    final before = rects();
+
+    // Up from a page focuses the active tab.
+    testRef.read(topNavbarFocusActionProvider)!();
+    await tester.pumpAndSettle();
+    expect(isFocused(tabs[0]), isTrue);
+    expect(hasOutline(tabs[0]), isTrue);
+
+    // Left on the first tab does nothing.
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pumpAndSettle();
+    expect(isFocused(tabs[0]), isTrue);
+
+    for (var i = 1; i < items.length; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(isFocused(items[i]), isTrue, reason: 'item $i');
+      for (var t = 0; t < tabs.length; t++) {
+        expect(hasOutline(tabs[t]), t == i, reason: 'outline on tab $t');
+      }
+      expect(rects(), before, reason: 'the bar moved at item $i');
+      expect([for (final t in tabs) weight(t)], weights, reason: 'item $i');
+    }
+
+    // Right on the last item (profile) does nothing.
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    expect(isFocused(items[5]), isTrue);
+
+    // Enter opens the profile menu, the search and a tab.
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.text('Log out'), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await tabTo(tester, items[4]);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(searchOpened, isTrue);
+
+    await tabTo(tester, tabs[2]);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(opened, [2]);
+  });
 
   testWidgets('Tab stops once on each navbar button (REV-57)', (tester) async {
     tester.view.physicalSize = const Size(1920, 1080);
