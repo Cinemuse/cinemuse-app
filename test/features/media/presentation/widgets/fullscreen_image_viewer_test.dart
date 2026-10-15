@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../../helpers/focus_helpers.dart';
+
 // Lets the 300 ms page animation run frame by frame.
 Future<void> turnPage(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {
@@ -49,6 +51,65 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await turnPage(tester);
     expect(find.text('1 / 2'), findsOneWidget);
+  });
+
+  // REV-216: the download button swapped for a spinner, so focus was lost.
+  testWidgets('download keeps the focus while saving', (tester) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const FullscreenImageViewer(
+          imageUrls: ['https://example.com/a.jpg', 'https://example.com/b.jpg'],
+          initialIndex: 0,
+        ),
+      ),
+    );
+    await tester.pump();
+    final imageFocus = FocusManager.instance.primaryFocus;
+    final spinner = find.descendant(
+      of: find.byTooltip('Download Image'),
+      matching: find.byType(CircularProgressIndicator),
+    );
+    bool downloadFocused() =>
+        isFocused(find.byIcon(Icons.download)) || isFocused(spinner);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.pump();
+    // TODO(REV-297): reach it with → once → stops landing on the image.
+    for (var i = 0; i < 6 && !downloadFocused(); i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+    }
+    expect(downloadFocused(), isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(spinner, findsOneWidget);
+    expect(downloadFocused(), isTrue);
+
+    // The test HTTP client answers 400: the download fails and ends.
+    // Not pumpAndSettle: the image's own spinner never settles.
+    for (
+      var i = 0;
+      i < 5 && find.byIcon(Icons.download).evaluate().isEmpty;
+      i++
+    ) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.byIcon(Icons.download), findsOneWidget);
+    expect(downloadFocused(), isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(FocusManager.instance.primaryFocus, imageFocus);
   });
 
   // REV-217: a zoomed image couldn't be dragged sideways on phones.
