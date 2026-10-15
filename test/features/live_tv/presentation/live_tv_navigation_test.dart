@@ -214,6 +214,100 @@ void main() {
       await tester.pump();
       expect(closed, isTrue);
     });
+
+    testWidgets('two chips: channels in number order, no headings '
+        '(REV-279)', (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'live_tv_selected_categories': ['Sport', 'DTT'],
+      });
+      // Later tests in this file expect no chip.
+      addTearDown(() => SharedPreferences.setMockInitialValues({}));
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            channelsProvider.overrideWith(
+              (ref) => Future.value(const [
+                Channel(lcn: 1, name: 'Rai 1', logo: '', group: 'DTT'),
+                Channel(lcn: 3, name: 'Sky Sport', logo: '', group: 'Sport'),
+                Channel(lcn: 4, name: 'Tg24', logo: '', group: 'News'),
+                Channel(lcn: 5, name: 'Canale 5', logo: '', group: 'DTT'),
+                Channel(lcn: 6, name: 'Eurosport', logo: '', group: 'Sport'),
+              ]),
+            ),
+          ],
+          child: const ChannelListPanel(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tg24'), findsNothing);
+      final tops = [
+        for (final name in ['Rai 1', 'Sky Sport', 'Canale 5', 'Eurosport'])
+          tester.getTopLeft(find.text(name)).dy,
+      ];
+      // Each row right under the one before: no heading in between.
+      for (var i = 1; i < tops.length; i++) {
+        expect(tops[i] - tops[i - 1], 58.0);
+      }
+    });
+
+    testWidgets('two chips: the drawer reopens on a far-down channel '
+        '(REV-279)', (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'live_tv_selected_categories': ['Sport', 'DTT'],
+      });
+      // Later tests in this file expect no chip.
+      addTearDown(() => SharedPreferences.setMockInitialValues({}));
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final channels = [
+        for (var i = 1; i <= 60; i++)
+          Channel(
+            lcn: i,
+            name: 'Channel $i',
+            logo: '',
+            group: const ['News', 'DTT', 'Sport'][i % 3],
+          ),
+      ];
+      final container = ProviderContainer(
+        overrides: [
+          playerControllerProvider.overrideWith(
+            (ref, params) => FakeLivePlayerController(),
+          ),
+          channelsProvider.overrideWith((ref) => Future.value(channels)),
+        ],
+      );
+      addTearDown(container.dispose);
+      // The chips were picked earlier; the user is now on channel 59.
+      container.listen(filteredChannelsProvider, (_, __) {});
+      await container.read(channelsProvider.future);
+      await tester.pump();
+      container.read(selectedChannelProvider.notifier).select(channels[58]);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: ChannelListPanel(isOverlay: true, onClose: () {}),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Channel 59'), findsOneWidget);
+      final row = tester.getRect(find.text('Channel 59'));
+      expect(row.top, greaterThanOrEqualTo(0));
+      expect(row.bottom, lessThanOrEqualTo(800));
+      expect(isFocused(find.text('Channel 59')), isTrue);
+    });
   });
 
   group('D-Pad Navigation Integration', () {

@@ -547,6 +547,41 @@ void main() {
       expect(inBanner('Later Show'), findsOneWidget);
     });
 
+    testWidgets('two chips: the guide rows are in number order (REV-279)', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({
+        'live_tv_selected_categories': ['Sport', 'DTT'],
+      });
+      // Later tests in this file expect no chip.
+      addTearDown(() => SharedPreferences.setMockInitialValues({}));
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            channelsProvider.overrideWith(
+              (ref) => Future.value(const [
+                Channel(lcn: 1, name: 'Rai 1', logo: '', group: 'DTT'),
+                Channel(lcn: 3, name: 'Sky Sport', logo: '', group: 'Sport'),
+                Channel(lcn: 4, name: 'Tg24', logo: '', group: 'News'),
+                Channel(lcn: 5, name: 'Canale 5', logo: '', group: 'DTT'),
+              ]),
+            ),
+            epgDataProvider.overrideWith((ref) => Future.value({})),
+          ],
+          child: const LiveTvGuideScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tg24'), findsNothing);
+      double top(String name) => tester.getTopLeft(find.text(name).last).dy;
+      expect(top('Rai 1'), lessThan(top('Sky Sport')));
+      expect(top('Sky Sport'), lessThan(top('Canale 5')));
+    });
+
     testWidgets('renders empty state when channel list is empty', (
       tester,
     ) async {
