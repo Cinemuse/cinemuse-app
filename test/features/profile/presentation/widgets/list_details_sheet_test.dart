@@ -139,4 +139,112 @@ void main() {
     expect(find.text('Found Movie'), findsOneWidget);
     expect(find.text(l10n.commonUnknown), findsNothing);
   });
+
+  // REV-277: the Dropped list had a ⋮ menu with Rename / Delete.
+  group('the ⋮ menu (REV-277)', () {
+    late List<String> updates;
+    late int deletes;
+
+    setUp(() {
+      updates = [];
+      deletes = 0;
+    });
+
+    // Opens the sheet the way Home and Collections do, always passing
+    // Rename / Delete: the sheet itself must hide them on built-in lists.
+    Future<void> openSheet(WidgetTester tester, UserList list) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            ...offlineListsOverrides(),
+            tmdbServiceProvider.overrideWithValue(MockTmdbService()),
+            userIdProvider.overrideWithValue('user-a'),
+            connectivityProvider.overrideWith(
+              (ref) => Stream.value(ConnectivityResult.wifi),
+            ),
+            settingsProvider.overrideWith(FakeSettingsNotifier.new),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => ListDetailsSheet.show(
+                    context,
+                    list: list,
+                    onUpdate: (name, description) => updates.add(name),
+                    onDelete: () => deletes++,
+                  ),
+                  child: const Text('Open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open'));
+      // Not pumpAndSettle: the empty list's animation never settles.
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+    }
+
+    UserList listOf(ListType type, String id, String name) => UserList(
+      id: id,
+      userId: 'user-a',
+      name: name,
+      type: type,
+      createdAt: DateTime.utc(2026),
+    );
+
+    for (final (type, id, name) in [
+      (ListType.dropped, UserList.droppedId, 'Dropped'),
+      (ListType.watchlist, 'watchlist', 'Watchlist'),
+      (ListType.favorites, 'favorites', 'Favorites'),
+    ]) {
+      testWidgets('$name: no ⋮ menu', (tester) async {
+        await openSheet(tester, listOf(type, id, name));
+
+        expect(find.byType(ListDetailsSheet), findsOneWidget);
+        expect(find.byTooltip(l10n.menuMoreOptions), findsNothing);
+      });
+    }
+
+    testWidgets('a custom list: Rename saves the new name', (tester) async {
+      await openSheet(tester, listOf(ListType.custom, 'my-list', 'My List'));
+
+      await tester.tap(find.byTooltip(l10n.menuMoreOptions));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.text(l10n.detailsEditList));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.enterText(find.byType(TextField).first, 'Best Films');
+      await tester.tap(find.byTooltip(l10n.settingsSave));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(updates, ['Best Films']);
+      expect(deletes, 0);
+    });
+
+    testWidgets('a custom list: Delete closes the sheet and deletes it', (
+      tester,
+    ) async {
+      await openSheet(tester, listOf(ListType.custom, 'my-list', 'My List'));
+
+      await tester.tap(find.byTooltip(l10n.menuMoreOptions));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.text(l10n.detailsDeleteList));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(deletes, 1);
+      expect(updates, isEmpty);
+      expect(find.byType(ListDetailsSheet), findsNothing);
+    });
+  });
 }
