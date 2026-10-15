@@ -14,6 +14,7 @@ import 'package:cinemuse_app/features/media/presentation/widgets/tracking_modals
 import 'package:cinemuse_app/features/media/presentation/widgets/watch_logs_sheet.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/action_feedback.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
 import 'package:flutter/material.dart';
@@ -63,16 +64,21 @@ class EpisodeSection extends ConsumerWidget {
           restart: restart,
         );
 
-    void onMarkWatched(int season, int ep, DateTime? date) =>
-        controller.logEpisodeWatch(
-          tmdbId: tmdbId,
-          season: season,
-          episode: ep,
-          loggedAt: date,
-        );
+    // The tick is undone by the controller; the error shows here (REV-298).
+    void onMarkWatched(int season, int ep, DateTime? date) => runShowingErrors(
+      context,
+      ref,
+      () => controller.logEpisodeWatch(
+        tmdbId: tmdbId,
+        season: season,
+        episode: ep,
+        loggedAt: date,
+      ),
+    );
 
     void onTrackOptions(int season, int ep) => showTrackOptions(
       context: context,
+      ref: ref,
       controller: controller,
       tmdbId: tmdbId,
       season: season,
@@ -97,6 +103,7 @@ class EpisodeSection extends ConsumerWidget {
       List<({int season, int episode})> missing,
     ) => showMarkPrecedingModal(
       context: context,
+      ref: ref,
       controller: controller,
       tmdbId: tmdbId,
       season: season,
@@ -289,6 +296,7 @@ class EpisodeSection extends ConsumerWidget {
 
   static void showMarkPrecedingModal({
     required BuildContext context,
+    required WidgetRef ref,
     required MediaDetailsController controller,
     required int tmdbId,
     required int season,
@@ -299,47 +307,57 @@ class EpisodeSection extends ConsumerWidget {
       markAll,
     ) {
       if (markAll == null) return;
-      if (markAll) {
-        final allToMark = [...missing, (season: season, episode: episode)];
-        controller.logMultipleEpisodes(tmdbId: tmdbId, episodes: allToMark);
-      } else {
-        controller.logEpisodeWatch(
-          tmdbId: tmdbId,
-          season: season,
-          episode: episode,
-        );
-      }
+      if (!context.mounted) return;
+      final allToMark = [
+        if (markAll) ...missing,
+        (season: season, episode: episode),
+      ];
+      runShowingErrors(
+        context,
+        ref,
+        () =>
+            controller.logMultipleEpisodes(tmdbId: tmdbId, episodes: allToMark),
+      );
     });
   }
 
   static void showTrackOptions({
     required BuildContext context,
+    required WidgetRef ref,
     required MediaDetailsController controller,
     required int tmdbId,
     required int season,
     required int episode,
     required int watchCount,
   }) {
+    void save(Future<void> Function() action) =>
+        runShowingErrors(context, ref, action);
     TrackOptionsModal.show(
       context: context,
       season: season,
       episode: episode,
       watchCount: watchCount,
-      onRewatch: (date) => controller.logEpisodeWatch(
-        tmdbId: tmdbId,
-        season: season,
-        episode: episode,
-        loggedAt: date,
+      onRewatch: (date) => save(
+        () => controller.logEpisodeWatch(
+          tmdbId: tmdbId,
+          season: season,
+          episode: episode,
+          loggedAt: date,
+        ),
       ),
-      onRemoveOne: () => controller.deleteLatestEpisodeLog(
-        tmdbId: tmdbId,
-        season: season,
-        episode: episode,
+      onRemoveOne: () => save(
+        () => controller.deleteLatestEpisodeLog(
+          tmdbId: tmdbId,
+          season: season,
+          episode: episode,
+        ),
       ),
-      onRemoveAll: () => controller.deleteAllEpisodeLogs(
-        tmdbId: tmdbId,
-        season: season,
-        episode: episode,
+      onRemoveAll: () => save(
+        () => controller.deleteAllEpisodeLogs(
+          tmdbId: tmdbId,
+          season: season,
+          episode: episode,
+        ),
       ),
       onViewHistory: () => WatchLogsSheet.show(
         context,

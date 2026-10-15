@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:cinemuse_app/core/error/app_failure.dart';
+import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
+import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_carousel_card.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_list_card.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_section.dart';
@@ -9,13 +11,22 @@ import 'package:cinemuse_app/features/media/presentation/widgets/episodes/season
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver_provider.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _MockResolver extends Mock implements UnifiedStreamResolver {}
+
+class _MockWatchHistoryRepository extends Mock
+    implements WatchHistoryRepository {}
+
+class _MockSupabaseClient extends Mock implements SupabaseClient {}
+
+class _MockGoTrueClient extends Mock implements GoTrueClient {}
 
 // REV-204, REV-207: picking a season moved the selector to another parent
 // (focus lost) and a missing season dropped the whole box with its selector.
@@ -52,8 +63,36 @@ void main() {
     ).thenReturn(false);
   });
 
-  Widget app() => ProviderScope(
+  /// Signed in, the ticks saved through [repository] (else no ticks).
+  List<Override> tracking(_MockWatchHistoryRepository repository) {
+    final user = User(
+      id: 'user-a',
+      appMetadata: {},
+      userMetadata: {},
+      aud: '',
+      createdAt: '',
+    );
+    final auth = _MockGoTrueClient();
+    when(() => auth.currentUser).thenReturn(user);
+    when(() => auth.currentSession).thenReturn(
+      Session(accessToken: 'token', tokenType: 'bearer', user: user),
+    );
+    when(() => auth.onAuthStateChange).thenAnswer((_) => const Stream.empty());
+    final client = _MockSupabaseClient();
+    when(() => client.auth).thenReturn(auth);
+    when(
+      () => repository.watchTitleLogs(any(), any(), any()),
+    ).thenAnswer((_) => Stream.value(const []));
+    return [
+      supabaseClientProvider.overrideWithValue(client),
+      watchHistoryRepositoryProvider.overrideWithValue(repository),
+      mediaDetailsProvider.overrideWith((ref, args) async => details),
+    ];
+  }
+
+  Widget app({List<Override> signedIn = const []}) => ProviderScope(
     overrides: [
+      ...signedIn,
       unifiedStreamResolverProvider.overrideWithValue(resolver),
       seasonDetailsProvider.overrideWith((ref, args) async {
         if (failing.contains(args.seasonNumber)) {
@@ -63,7 +102,8 @@ void main() {
         if (completer != null) return completer.future;
         return season(args.seasonNumber);
       }),
-      watchedEpisodesMapProvider.overrideWith((ref, id) => const {}),
+      if (signedIn.isEmpty)
+        watchedEpisodesMapProvider.overrideWith((ref, id) => const {}),
       episodeProgressMapProvider.overrideWith(
         (ref, id) => Stream.value(const {}),
       ),
@@ -190,4 +230,46 @@ void main() {
       expect(find.textContaining('S1 episode 1'), findsOneWidget);
     });
   }
+
+  // REV-196, REV-298: a failed tick undid every pending episode of the show,
+  // and no message said it failed.
+  testWidgets('offline tick: an error, only that episode un-ticks', (
+    tester,
+  ) async {
+    final l10n = AppLocalizationsEn();
+    final markWatched = find.byTooltip(l10n.detailsTooltipMarkWatched);
+    final watched = find.byTooltip(l10n.detailsTooltipWatched);
+    final repository = _MockWatchHistoryRepository();
+    final firstSave = Completer<void>();
+    when(
+      () => repository.logMultipleEpisodes(
+        userId: any(named: 'userId'),
+        tmdbId: any(named: 'tmdbId'),
+        episodes: any(named: 'episodes'),
+        seriesDetails: any(named: 'seriesDetails'),
+        loggedAt: any(named: 'loggedAt'),
+      ),
+    ).thenAnswer((call) {
+      final episodes =
+          call.namedArguments[#episodes] as List<({int season, int episode})>;
+      return episodes.single.episode == 1
+          ? firstSave.future
+          : Future.error(const NetworkFailure('offline'));
+    });
+    await setWindow(tester, const Size(400, 900));
+    await tester.pumpWidget(app(signedIn: tracking(repository)));
+    await tester.pumpAndSettle();
+    expect(markWatched, findsNWidgets(2));
+
+    // Episode 1 still saving when episode 2 fails.
+    await tester.tap(markWatched.first);
+    await tester.pump();
+    await tester.tap(markWatched.first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text(l10n.failureNetwork), findsOneWidget);
+    expect(watched, findsOneWidget);
+    expect(markWatched, findsOneWidget);
+  });
 }
