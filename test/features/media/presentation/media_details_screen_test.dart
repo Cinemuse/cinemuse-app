@@ -1,6 +1,9 @@
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
+import 'package:cinemuse_app/features/media/data/media_repository.dart';
+import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
@@ -18,6 +21,10 @@ import 'package:mocktail/mocktail.dart';
 import '../../../helpers/offline_lists.dart';
 
 class MockUnifiedStreamResolver extends Mock implements UnifiedStreamResolver {}
+
+class MockTmdbService extends Mock implements TmdbService {}
+
+class MockMediaRepository extends Mock implements MediaRepository {}
 
 class FakeSettingsNotifier extends SettingsNotifier {
   @override
@@ -99,4 +106,84 @@ void main() {
       expect(find.textContaining('Exception'), findsNothing);
     });
   }
+
+  // REV-206: a failed load showed an endless spinner or "not found".
+  group('the page fails to load', () {
+    late MockTmdbService tmdb;
+    late bool isOnline;
+
+    // The real details provider, with TMDB and the connection faked.
+    List<Override> loading() {
+      final cache = MockMediaRepository();
+      registerFallbackValue(
+        MediaItem(
+          tmdbId: 0,
+          mediaType: MediaKind.movie,
+          updatedAt: DateTime(0),
+        ),
+      );
+      when(() => cache.saveMediaItem(any())).thenAnswer((_) async {});
+      return [
+        tmdbServiceProvider.overrideWithValue(tmdb),
+        mediaRepositoryProvider.overrideWithValue(cache),
+        connectivityProvider.overrideWith(
+          (ref) => Stream.value(
+            isOnline ? ConnectivityResult.wifi : ConnectivityResult.none,
+          ),
+        ),
+      ];
+    }
+
+    setUp(() {
+      tmdb = MockTmdbService();
+      isOnline = true;
+    });
+
+    // The connection, then the details, each arrive a frame later.
+    Future<void> settle(WidgetTester tester) async {
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+    }
+
+    testWidgets('online: "Error", a translated message, Retry reloads', (
+      tester,
+    ) async {
+      var isTmdbDown = true;
+      when(() => tmdb.getMediaDetails('1', 'movie')).thenAnswer((_) async {
+        if (isTmdbDown) throw const ServerFailure('TMDB is down');
+        return {'id': 1, 'title': 'Some Movie'};
+      });
+      await tester.pumpWidget(app(overrides: loading()));
+      await settle(tester);
+
+      expect(find.byIcon(Icons.error_outline_rounded), findsOneWidget);
+      expect(find.text(l10n.commonError), findsOneWidget);
+      expect(find.text(l10n.failureUnknown), findsOneWidget);
+
+      isTmdbDown = false;
+      await tester.tap(find.text(l10n.commonRetry));
+      await settle(tester);
+      expect(find.text('Some Movie'), findsWidgets);
+    });
+
+    testWidgets('offline: "Connection Required"; back online, Retry loads', (
+      tester,
+    ) async {
+      when(
+        () => tmdb.getMediaDetails('1', 'movie'),
+      ).thenAnswer((_) async => {'id': 1, 'title': 'Some Movie'});
+      isOnline = false;
+      await tester.pumpWidget(app(overrides: loading()));
+      await settle(tester);
+
+      expect(find.text(l10n.offlineScreenTitle), findsOneWidget);
+
+      isOnline = true;
+      await tester.tap(find.text(l10n.commonRetry));
+      await settle(tester);
+      expect(find.text(l10n.offlineScreenTitle), findsNothing);
+      expect(find.text('Some Movie'), findsWidgets);
+    });
+  });
 }
