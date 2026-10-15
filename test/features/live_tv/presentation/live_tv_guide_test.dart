@@ -13,6 +13,7 @@ import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/live_tv_guide_screen.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/epg_details_banner.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/epg_timeline_grid.dart';
+import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 
 import '../../../helpers/focus_helpers.dart';
 
@@ -201,6 +202,35 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
       expect(find.text('Custom Playlists'), findsOneWidget);
+    });
+
+    // REV-20: on a wide window the options sheet is as wide as the phone
+    // layout (600 px), not the whole window.
+    testWidgets('wide window: the options sheet is 600 px wide', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            channelsProvider.overrideWith(
+              (ref) => Future.value([createMockChannel()]),
+            ),
+            epgDataProvider.overrideWith((ref) => Future.value({})),
+            defaultEpgUrlProvider.overrideWithValue('https://example.com/epg'),
+          ],
+          child: const LiveTvGuideScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.tune_rounded));
+      await tester.pumpAndSettle();
+
+      expect(tester.getSize(find.byType(AppBottomSheet)).width, 600);
     });
 
     testWidgets('renders empty state when channel list is empty', (

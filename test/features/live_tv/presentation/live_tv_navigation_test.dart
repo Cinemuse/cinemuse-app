@@ -23,6 +23,7 @@ import 'package:cinemuse_app/features/video_player/presentation/video_player_scr
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/live_tv_guide_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
+import '../../../helpers/app_font.dart';
 import '../../../helpers/focus_helpers.dart';
 
 class MockLivePlayer extends Mock implements Player {}
@@ -72,6 +73,7 @@ Channel createMockChannel({
 Widget buildTestWidget({
   required Widget child,
   List<Override> overrides = const [],
+  ThemeData? theme,
 }) {
   return ProviderScope(
     overrides: [
@@ -81,6 +83,7 @@ Widget buildTestWidget({
       ...overrides,
     ],
     child: MaterialApp(
+      theme: theme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: child),
@@ -90,6 +93,7 @@ Widget buildTestWidget({
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(loadAppFont);
 
   group('ChannelListTile Widget Tests', () {
     testWidgets('renders channel details correctly', (tester) async {
@@ -773,6 +777,44 @@ void main() {
         expect(find.text('Manage Playlists'), findsOneWidget);
       },
     );
+
+    // REV-20: below 600 px a small player over the channel list, from 600 px
+    // the guide.
+    for (final (width, isPhone) in const [(599.0, true), (600.0, false)]) {
+      testWidgets('${width}px: ${isPhone ? 'small player + list' : 'guide'}', (
+        tester,
+      ) async {
+        SharedPreferences.setMockInitialValues({});
+        tester.view.physicalSize = Size(width, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+
+        await tester.pumpWidget(
+          buildTestWidget(
+            overrides: [
+              channelsProvider.overrideWith(
+                (ref) => Future.value([createMockChannel()]),
+              ),
+              epgDataProvider.overrideWith((ref) => Future.value({})),
+            ],
+            // The app's font and theme: the guide's top bar is measured.
+            theme: AppTheme.darkTheme,
+            // Another tab is active, so the small player shows its
+            // placeholder instead of playing.
+            child: const LiveTvScreen(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final phoneOnly = isPhone ? findsOneWidget : findsNothing;
+        expect(find.text('Select a channel to start watching'), phoneOnly);
+        expect(find.byType(ChannelListPanel), phoneOnly);
+        expect(
+          find.byType(LiveTvGuideScreen),
+          isPhone ? findsNothing : findsOneWidget,
+        );
+      });
+    }
   });
 
   group('Top Navbar to LiveTvScreen Navigation Integration', () {
