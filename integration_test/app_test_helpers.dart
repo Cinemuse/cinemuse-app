@@ -126,6 +126,27 @@ Future<void> waitForHomeData(
   );
 }
 
+/// Pumps frames until [condition] is true, for real network data that
+/// `pumpAndSettle` can't wait for (it stops at the first idle frame).
+///
+/// Throws a [TimeoutException] naming [what] after [timeout].
+Future<void> pumpUntil(
+  WidgetTester tester,
+  bool Function() condition, {
+  required String what,
+  Duration timeout = const Duration(seconds: 30),
+}) async {
+  final stopwatch = Stopwatch()..start();
+  while (!condition()) {
+    if (stopwatch.elapsed > timeout) {
+      throw TimeoutException(
+        '$what did not happen within ${timeout.inSeconds}s',
+      );
+    }
+    await tester.pump(const Duration(milliseconds: 250));
+  }
+}
+
 /// Minimal app shell for performance tests.
 ///
 /// Replicates [CinemuseApp] structure without debug-only features

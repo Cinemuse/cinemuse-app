@@ -29,7 +29,21 @@ fvm dart format lib test integration_test test_driver scripts  # CI fails if cod
 
 CI (`.github/workflows/ci.yml`) runs format check + `flutter analyze` + `flutter test` on every push to `main`, and `release.yml` only builds if they pass. Analyze must report 0 issues (lint rules in `analysis_options.yaml`). `pubspec.lock` is committed: after changing `pubspec.yaml`, commit the updated lock file too.
 
-`fvm flutter test` must pass with 0 failures (266 pass, 1 skipped: the Live TV channel-guide button test, pending a check of the TV layout; see `../audit/08-testing.md`).
+`fvm flutter test` must pass with 0 failures (618 pass on 2026-10-15).
+
+## Tests
+
+A fix that changes what the user sees or does comes with an automatic test, written and run by Claude (rules in `../PROJECT.md` → Tests, the list still to write in `../AUTO-TESTS.md`).
+
+- **Widget test** (`test/`, same path as the file in `lib/`): one screen or widget in memory, no network. Override the providers with fakes (`ProviderScope(overrides: [...])`); Italian via `MaterialApp(locale: Locale('it'))` (+ `initializeDateFormatting` for dates); window size via `tester.view.physicalSize`. Example: `test/features/media/presentation/person_details_screen_test.dart`. Runs with `fvm flutter test` and in CI.
+- **Real-app test** (`integration_test/`): the real app on Windows, real Supabase + TMDB, signed in as the **dev account** from `dev_login.json`. `pumpAppAndLogin` (in `app_test_helpers.dart`) starts the app and signs in; `pumpUntil` waits for network data. Each test first checks the account has nothing for the title it uses (stops otherwise), then undoes what it did with `addTearDown`. Example: `integration_test/episode_tick_test.dart`. Not run by `fvm flutter test` or CI; run each file by hand:
+
+```powershell
+fvm flutter test integration_test/episode_tick_test.dart -d windows --dart-define-from-file=dev_login.json
+```
+
+It builds the Windows app first (~1 min) and opens a window that may stay white (it only draws when the test pumps a frame): don't click in it. The `perf_*` files are performance benchmarks run with `flutter drive` (see their header), not checks.
+- Check a new test catches the bug: break the code on purpose (or stash the fix), run it, see it fail, restore.
 
 ## Git
 

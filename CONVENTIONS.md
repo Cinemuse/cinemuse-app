@@ -78,7 +78,7 @@ Rules for every change. Old code that breaks a rule is fixed only when a fix tou
 ## Tests
 
 - A fix to logic (`data/`, `domain/`, `application/`, providers) adds a test that **fails before the fix** and passes after. It goes in `test/`, at the same path as the file in `lib/`.
-- UI, platform, config and SQL-only fixes and code deletions need no test: write in the chat how it was checked by hand.
+- A fix that changes what the user sees or does adds an automatic test too: a widget test in `test/`, or a real-app test in `integration_test/` for real data flows (how: `CLAUDE.md` → Tests). Only looks, real video and device checks stay manual. Code deletions and config-only fixes need no test.
 - Tests never call the real Supabase or TMDB: override providers with fakes (`ProviderContainer(overrides: […])`).
 
 ## Before every commit
