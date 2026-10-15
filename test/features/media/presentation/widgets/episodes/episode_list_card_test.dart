@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../../../helpers/focus_helpers.dart';
+import '../../../../../helpers/menu_helpers.dart';
 
 class _MockResolver extends Mock implements UnifiedStreamResolver {}
 
@@ -62,6 +63,44 @@ void main() {
       ),
     );
   }
+
+  // REV-248: the right-click menu opened away from the pointer.
+  group('the menu (REV-248)', () {
+    Future<void> pumpWide(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(card(repeat: 1));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('right-click: it opens at the pointer', (tester) async {
+      await pumpWide(tester);
+      final cardRect = tester.getRect(find.byType(EpisodeListCard));
+      final at = Offset(cardRect.width * 0.75, cardRect.center.dy);
+      await rightClickAt(tester, at);
+
+      expect(menuItems, findsWidgets);
+      expectMenuAt(tester, at);
+    });
+
+    testWidgets('the ⋮ button: it opens under the button', (tester) async {
+      await pumpWide(tester);
+      final button = find.byTooltip('More Options');
+      final buttonRect = tester.getRect(button);
+      await tester.tap(button);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      final first = tester.getRect(menuItems.first);
+      expect(first.top - buttonRect.bottom, inInclusiveRange(0, 16));
+      expect(
+        first.left == buttonRect.left || first.right == buttonRect.right,
+        isTrue,
+        reason: 'menu $first, button $buttonRect',
+      );
+    });
+  });
 
   Future<void> narrowWindow(WidgetTester tester) async {
     tester.view.physicalSize = const Size(400, 900);

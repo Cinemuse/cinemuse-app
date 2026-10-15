@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/menu_helpers.dart';
 import '../../helpers/offline_lists.dart';
 
 // REV-203: offline, "Add to Watchlist" from a card's menu failed silently.
@@ -86,4 +87,40 @@ void main() {
       expect(find.byTooltip(l10n.menuMoreOptions), findsOneWidget);
     });
   }
+
+  testWidgets('right-click: the menu opens at the pointer (REV-248)', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: offlineListsOverrides(),
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment(0.5, -0.9),
+              child: SizedBox(
+                width: 160,
+                child: MediaCard(
+                  title: 'Some Movie',
+                  tmdbId: 1,
+                  mediaType: MediaKind.movie,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final at = tester.getCenter(find.byType(MediaCard));
+    await rightClickAt(tester, at);
+    expect(find.text(l10n.menuAddToWatchlist), findsOneWidget);
+    expectMenuAt(tester, at);
+  });
 }

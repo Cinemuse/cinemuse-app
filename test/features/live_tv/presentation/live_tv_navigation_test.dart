@@ -25,6 +25,7 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 import '../../../helpers/app_font.dart';
 import '../../../helpers/focus_helpers.dart';
+import '../../../helpers/menu_helpers.dart';
 
 class MockLivePlayer extends Mock implements Player {}
 
@@ -179,6 +180,25 @@ void main() {
   });
 
   group('ChannelListPanel Split vs Overlay Presentation Tests', () {
+    testWidgets('right-click the options button: the menu opens at the '
+        'pointer (REV-248)', (tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        buildTestWidget(
+          child: const ChannelListPanel(isOverlay: false),
+          overrides: [channelsProvider.overrideWith((ref) => Future.value([]))],
+        ),
+      );
+      await tester.pump();
+
+      final at = tester.getCenter(find.byIcon(Icons.tune_rounded));
+      await rightClickAt(tester, at);
+      expect(menuItems, findsWidgets);
+      expectMenuAt(tester, at);
+    });
+
     testWidgets('renders standard split mode without overlay header', (
       tester,
     ) async {
