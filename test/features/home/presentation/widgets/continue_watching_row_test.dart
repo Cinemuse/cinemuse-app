@@ -149,4 +149,69 @@ void main() {
       expect(find.byType(BackdropCard), findsOneWidget);
     });
   }
+
+  testWidgets('a show with a later episode logged is a rewatch: the card '
+      'menu offers "Cancel rewatch" (REV-191)', (tester) async {
+    final show = WatchHistory(
+      userId: 'user-a',
+      tmdbId: 2,
+      mediaType: MediaKind.tv,
+      season: 1,
+      episode: 3,
+      status: WatchStatus.watching,
+      progressSeconds: 600,
+      totalDuration: 2400,
+      lastWatchedAt: DateTime.utc(2026, 10, 1),
+      media: MediaItem(
+        tmdbId: 2,
+        mediaType: MediaKind.tv,
+        titleEn: 'Some Show',
+        titleIt: 'Some Show',
+        updatedAt: DateTime.utc(2026),
+      ),
+    );
+    when(
+      () => repo.getHighestLoggedEpisode('user-a', 2),
+    ).thenAnswer((_) async => (season: 1, episode: 5));
+    final resolver = MockUnifiedStreamResolver();
+    when(
+      () => resolver.hasCachedStream(
+        any(),
+        any(),
+        season: any(named: 'season'),
+        episode: any(named: 'episode'),
+      ),
+    ).thenReturn(false);
+    final lists = MockListsRepository();
+    when(() => lists.syncUserLists(any())).thenAnswer((_) async {});
+    when(() => lists.watchUserLists(any())).thenAnswer((_) => Stream.value([]));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authProvider.overrideWith((ref) => signedIn()),
+          watchHistoryRepositoryProvider.overrideWithValue(repo),
+          listsRepositoryProvider.overrideWithValue(lists),
+          watchHistoryStoreProvider.overrideWith(
+            (ref) => Stream.value({show.titleKey: show}),
+          ),
+          unifiedStreamResolverProvider.overrideWithValue(resolver),
+          settingsProvider.overrideWith(FakeSettingsNotifier.new),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SingleChildScrollView(child: ContinueWatchingRow()),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.longPress(find.byType(BackdropCard));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.menuCancelRewatch), findsOneWidget);
+    expect(find.text(l10n.menuStopWatching), findsNothing);
+  });
 }
