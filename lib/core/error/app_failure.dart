@@ -1,5 +1,4 @@
-/// The error type that services and repositories throw (see CONVENTIONS.md →
-/// Errors).
+/// The error type that services and repositories throw.
 ///
 /// Sealed, so a `switch` over a failure must handle every subclass.
 /// [message] is English text for developers and logs; the UI shows translated

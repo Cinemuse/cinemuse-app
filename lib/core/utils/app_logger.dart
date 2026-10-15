@@ -27,7 +27,7 @@ class LogEntry {
       '${time.toIso8601String()} ${level.name.toUpperCase()} [$tag] $message';
 }
 
-/// The app's only logger (see CONVENTIONS.md → Logging).
+/// The app's only logger.
 ///
 /// Every message is passed through [redact] before it is printed or stored,
 /// as a safety net. Callers must still never log secrets on purpose.
