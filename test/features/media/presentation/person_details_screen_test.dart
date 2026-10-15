@@ -109,4 +109,57 @@ void main() {
     expect(inFilmography('A Movie'), findsOneWidget);
     expect(inFilmography('A Show'), findsOneWidget);
   });
+
+  testWidgets('a film with "Oscar" in its name stays; award shows only with '
+      '"Show Hidden" (REV-202)', (tester) async {
+    PersonCredit credit(int id, String title, MediaKind type) => PersonCredit(
+      id: id,
+      mediaType: type,
+      title: title,
+      releaseDate: DateTime(2000 + id, 1, 1),
+    );
+    tester.view.physicalSize = const Size(1280, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          personDetailsProvider.overrideWith(
+            (ref, id) async => PersonDetails(
+              id: 1,
+              name: 'Someone',
+              cast: [
+                credit(1, 'Oscar and Lucinda', MediaKind.movie),
+                credit(2, 'The Oscars', MediaKind.tv),
+                credit(3, 'Golden Globe Awards', MediaKind.tv),
+              ],
+            ),
+          ),
+          watchHistoryStoreProvider.overrideWith(
+            (ref) => Stream.value(const {}),
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const PersonDetailsScreen(personId: 1),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    Finder inFilmography(String title) => find.descendant(
+      of: find.byType(PersonFilmographyList),
+      matching: find.text(title),
+    );
+
+    expect(inFilmography('Oscar and Lucinda'), findsOneWidget);
+    expect(inFilmography('The Oscars'), findsNothing);
+    expect(inFilmography('Golden Globe Awards'), findsNothing);
+
+    await tester.tap(find.text('Show Hidden'));
+    await tester.pumpAndSettle();
+    expect(inFilmography('Oscar and Lucinda'), findsOneWidget);
+    expect(inFilmography('The Oscars'), findsOneWidget);
+    expect(inFilmography('Golden Globe Awards'), findsOneWidget);
+  });
 }
