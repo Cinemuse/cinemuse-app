@@ -415,6 +415,58 @@ void main() {
       expect(container.read(navIndexProvider), NavTab.liveTv);
     });
 
+    testWidgets('phone: playlist off stops the channel, back on picks the '
+        'first one again (REV-271)', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      Future<void> wait(WidgetTester tester) async {
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+      }
+
+      final first = createMockChannel(name: 'First', lcn: 1);
+      final second = createMockChannel(name: 'Second', lcn: 2);
+      // The playlist's channels; empty = the playlist is off.
+      final shown = StateProvider<List<Channel>>((ref) => [first, second]);
+      final container = ProviderContainer(
+        overrides: [
+          playerControllerProvider.overrideWith(
+            (ref, params) => TuningLivePlayerController(),
+          ),
+          channelsProvider.overrideWith((ref) async => ref.watch(shown)),
+          epgDataProvider.overrideWith((ref) => Future.value({})),
+          navIndexProvider.overrideWith((ref) => NavTab.liveTv),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(body: LiveTvScreen()),
+          ),
+        ),
+      );
+      await wait(tester);
+      container.read(selectedChannelProvider.notifier).select(second);
+      await wait(tester);
+      expect(find.text('Select a channel to start watching'), findsNothing);
+
+      container.read(shown.notifier).state = [];
+      await wait(tester);
+      expect(container.read(selectedChannelProvider), isNull);
+      expect(find.text('Select a channel to start watching'), findsOneWidget);
+
+      container.read(shown.notifier).state = [first, second];
+      await wait(tester);
+      expect(container.read(selectedChannelProvider), first);
+      expect(find.text('Select a channel to start watching'), findsNothing);
+    });
+
     testWidgets('ArrowLeft in overlay mode invokes onClose', (tester) async {
       final channel = createMockChannel();
       bool overlayClosed = false;

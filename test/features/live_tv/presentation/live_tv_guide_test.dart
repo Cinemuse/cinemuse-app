@@ -385,6 +385,45 @@ void main() {
       expect(find.text('Sky Sport'), findsNothing);
     });
 
+    testWidgets('a focused channel whose playlist goes off leaves the banner '
+        '(REV-271)', (tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final kept = createMockChannel(lcn: 1, name: 'Kept Channel');
+      final gone = createMockChannel(lcn: 2, name: 'Gone Channel');
+      // The channels of the playlists that are on.
+      final shown = StateProvider<List<Channel>>((ref) => [kept, gone]);
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            channelsProvider.overrideWith((ref) async => ref.watch(shown)),
+            epgDataProvider.overrideWith(
+              (ref) => Future.value({
+                'kept channel': [createMockProgram(name: 'Kept Show')],
+                'gone channel': [createMockProgram(name: 'Gone Show')],
+              }),
+            ),
+          ],
+          child: const LiveTvGuideScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tabTo(tester, find.text('Gone Show'));
+      // Banner + program block.
+      expect(find.text('Gone Show'), findsNWidgets(2));
+
+      ProviderScope.containerOf(
+        tester.element(find.byType(LiveTvGuideScreen)),
+      ).read(shown.notifier).state = [
+        kept,
+      ];
+      await tester.pumpAndSettle();
+      expect(find.text('Gone Channel'), findsNothing);
+      expect(find.text('Gone Show'), findsNothing);
+    });
+
     testWidgets('renders empty state when channel list is empty', (
       tester,
     ) async {
