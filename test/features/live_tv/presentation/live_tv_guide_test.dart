@@ -337,6 +337,54 @@ void main() {
       });
     }
 
+    testWidgets('a search set elsewhere shows in the box with ×, × clears it, '
+        'typing filters once (REV-129)', (tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            channelsProvider.overrideWith(
+              (ref) => Future.value([
+                createMockChannel(lcn: 1, name: 'Rai 1 HD'),
+                createMockChannel(lcn: 2, name: 'Sky Sport'),
+              ]),
+            ),
+            epgDataProvider.overrideWith((ref) => Future.value({})),
+          ],
+          child: const LiveTvGuideScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(LiveTvGuideScreen)),
+      );
+
+      // A sport card on Home sets the search.
+      container.read(channelSearchQueryProvider.notifier).state = 'Sky Sport';
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(TextField, 'Sky Sport'), findsOneWidget);
+      expect(find.text('Rai 1 HD'), findsNothing);
+
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+      expect(find.text('Rai 1 HD'), findsOneWidget);
+      expect(find.byTooltip('Close'), findsNothing);
+
+      var searches = 0;
+      container.listen(channelSearchQueryProvider, (_, __) => searches++);
+      for (final text in ['R', 'Ra', 'Rai']) {
+        await tester.enterText(find.byType(TextField), text);
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(searches, 0);
+      expect(find.text('Sky Sport'), findsOneWidget);
+      await tester.pumpAndSettle(const Duration(milliseconds: 300));
+      expect(searches, 1);
+      expect(find.text('Sky Sport'), findsNothing);
+    });
+
     testWidgets('renders empty state when channel list is empty', (
       tester,
     ) async {
