@@ -1,10 +1,14 @@
+import 'package:cinemuse_app/core/utils/platform_info.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_video_controls.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/overlays/seek_feedback_hud.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/play_pause_overlay.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/vod_seekbar.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
@@ -164,6 +168,77 @@ void main() {
 
       await tapAndSettle(tester, tester.getCenter(stop));
       expect(backPresses, 1);
+    }, variant: touchLayout);
+  });
+
+  group('seek count (REV-163)', () {
+    final centreBadge = find.byType(SeekFeedbackHud);
+    Finder centre(IconData icon) => find.descendant(
+      of: find.byType(PlayPauseOverlay),
+      matching: find.byIcon(icon),
+    );
+    final forward10 = centre(Icons.forward_10_rounded);
+
+    Future<void> hideControls(WidgetTester tester) async {
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      expect(stop, findsNothing);
+    }
+
+    testWidgets('touch, controls showing: a double-tap on the right shows '
+        '+10s in the right button only', (tester) async {
+      await pumpControls(tester);
+      final rightButton = tester.getCenter(forward10);
+
+      await tester.tapAt(const Offset(700, 200));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tapAt(const Offset(700, 200));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.text('+10s'), findsOneWidget);
+      expect(tester.getCenter(find.text('+10s')).dx, rightButton.dx);
+      expect(centreBadge, findsNothing);
+      expect(seeks, [const Duration(seconds: 10)]);
+    }, variant: touchLayout);
+
+    testWidgets(
+      'touch, controls hidden: arrow right shows the centre badge',
+      (tester) async {
+        await pumpControls(tester);
+        await hideControls(tester);
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(centreBadge, findsOneWidget);
+        expect(
+          find.descendant(of: centreBadge, matching: find.text('+10s')),
+          findsOneWidget,
+        );
+      },
+      variant: touchLayout,
+    );
+
+    testWidgets('desktop, controls hidden: arrow right shows the centre '
+        'badge', (tester) async {
+      await pumpControls(tester);
+      await hideControls(tester);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(centreBadge, findsOneWidget);
+      expect(find.text('+10s'), findsOneWidget);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+
+    testWidgets('Android TV: no centre play or ±10 buttons', (tester) async {
+      PlatformInfo.setTvForTesting(true);
+      addTearDown(() => PlatformInfo.setTvForTesting(null));
+      await pumpControls(tester);
+
+      expect(forward10, findsNothing);
+      expect(centre(Icons.replay_10_rounded), findsNothing);
+      expect(centre(Icons.pause_rounded), findsNothing);
     }, variant: touchLayout);
   });
 }
