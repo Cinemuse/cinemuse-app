@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/subtitle_slider_overlay.dart';
@@ -9,6 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../helpers/app_font.dart';
 
 class _MockVideoController extends Mock implements VideoController {}
 
@@ -26,10 +29,13 @@ void main() {
   const params = PlayerParams('550', 'movie');
   late List<bool> closes;
 
+  setUpAll(loadAppFont);
+
   Future<void> pumpOverlay(
     WidgetTester tester, {
     SliderOverlayType type = SliderOverlayType.sync,
     Locale? locale,
+    ThemeData? theme,
   }) async {
     SharedPreferences.setMockInitialValues({});
     closes = [];
@@ -42,6 +48,7 @@ void main() {
         ],
         child: MaterialApp(
           locale: locale,
+          theme: theme,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
@@ -97,4 +104,29 @@ void main() {
       expect(reset.right, lessThanOrEqualTo(screen.right));
     });
   }
+
+  // REV-176 b: the panel was a fixed 380 px and the sync row needs ~308 px,
+  // so "+5" was cut off on a phone.
+  testWidgets('phone in portrait: the sync panel fits and shows all six '
+      'buttons, on two lines', (tester) async {
+    tester.view.physicalSize = const Size(360, 740);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await pumpOverlay(tester, theme: AppTheme.darkTheme);
+
+    expect(tester.takeException(), isNull);
+    final screen = tester.getRect(find.byType(SubtitleSliderOverlay));
+    final labels = ['-5', '-1', '-.1', '+.1', '+1', '+5'];
+    for (final label in labels) {
+      final button = tester.getRect(find.text(label));
+      expect(screen.contains(button.topLeft), isTrue, reason: label);
+      expect(screen.contains(button.bottomRight), isTrue, reason: label);
+    }
+    // Too narrow for one line: the buttons wrap.
+    expect(
+      tester.getRect(find.text('+5')).top,
+      greaterThan(tester.getRect(find.text('-5')).bottom),
+    );
+  });
 }
