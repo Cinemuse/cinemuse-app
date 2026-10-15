@@ -289,6 +289,54 @@ void main() {
       expect(prefs.getStringList('live_tv_selected_categories'), isNull);
     });
 
+    // REV-128: the grid finds a channel's programs the way the banner does.
+    for (final (channel, epgKey) in [
+      (
+        const Channel(lcn: 0, name: 'Rai Uno', logo: '', epgId: 'Rai1.it'),
+        'Rai1.it',
+      ),
+      (
+        const Channel(lcn: 0, name: 'Sky Italia News', logo: ''),
+        'sky italia news',
+      ),
+      (const Channel(lcn: 0, name: 'Rai 2 HD', logo: ''), 'rai2'),
+      (const Channel(lcn: 7, name: 'La Sette', logo: ''), 'la7'),
+    ]) {
+      testWidgets('${channel.name}: the banner\'s program is in the guide row, '
+          '→ lands on it (REV-128)', (tester) async {
+        tester.view.physicalSize = const Size(1280, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(
+          buildTestWidget(
+            overrides: [
+              channelsProvider.overrideWith((ref) => Future.value([channel])),
+              epgDataProvider.overrideWith(
+                (ref) => Future.value({
+                  epgKey: [createMockProgram(name: 'On Air')],
+                }),
+              ),
+            ],
+            child: const LiveTvGuideScreen(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        ProviderScope.containerOf(
+          tester.element(find.byType(LiveTvGuideScreen)),
+        ).read(selectedChannelProvider.notifier).select(channel);
+        await tester.pumpAndSettle();
+
+        // Banner + program block.
+        expect(find.text('On Air'), findsNWidgets(2));
+        expect(find.text('No program information available'), findsNothing);
+
+        await tabTo(tester, find.text(channel.name));
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pumpAndSettle();
+        expect(isFocused(find.text('On Air')), isTrue);
+      });
+    }
+
     testWidgets('renders empty state when channel list is empty', (
       tester,
     ) async {
