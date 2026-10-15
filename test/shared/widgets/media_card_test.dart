@@ -1,0 +1,54 @@
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/l10n/app_localizations_en.dart';
+import 'package:cinemuse_app/shared/widgets/media_card.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import '../../helpers/offline_lists.dart';
+
+// REV-203: offline, "Add to Watchlist" from a card's menu failed silently.
+void main() {
+  final l10n = AppLocalizationsEn();
+
+  testWidgets('offline "Add to Watchlist": a red message, not added', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: offlineListsOverrides(),
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 160,
+                child: MediaCard(
+                  title: 'Some Movie',
+                  tmdbId: 1,
+                  mediaType: MediaKind.movie,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.byType(MediaCard));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.menuAddToWatchlist));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text(l10n.failureNetwork), findsOneWidget);
+
+    // The menu still offers to add it: it isn't in the Watchlist.
+    await tester.longPress(find.byType(MediaCard));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.menuAddToWatchlist), findsOneWidget);
+  });
+}
