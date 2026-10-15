@@ -647,6 +647,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.list_rounded), findsOneWidget);
+      // Right of the channel buttons.
+      expect(
+        tester.getCenter(find.byIcon(Icons.list_rounded)).dx,
+        greaterThan(tester.getCenter(find.byIcon(Icons.skip_next_rounded)).dx),
+      );
       await tester.tap(find.byIcon(Icons.list_rounded));
       await tester.pump(kDoubleTapTimeout);
 
@@ -654,6 +659,54 @@ void main() {
         tester.element(find.byType(CustomVideoControls)),
       );
       expect(container.read(liveTvChannelOverlayProvider), isTrue);
+    });
+
+    testWidgets('the channel list button works by keys and picks a channel '
+        '(REV-160)', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.view.physicalSize = const Size(1280, 720);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final playing = createMockChannel();
+      final other = createMockChannel(name: 'Other Channel', lcn: 2);
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            channelsProvider.overrideWith(
+              (ref) => Future.value([playing, other]),
+            ),
+          ],
+          child: CustomVideoControls(
+            playerState: createTestPlayerState(),
+            channel: playing,
+            videoState: FakeLiveVideoState(),
+            params: const PlayerParams('livetv_session', 'livetv'),
+            isLive: true,
+            onSettingsPressed: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(CustomVideoControls)),
+      );
+      // The big player selects the channel it opens with.
+      container.read(selectedChannelProvider.notifier).select(playing);
+
+      await tabTo(tester, find.byIcon(Icons.list_rounded));
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(isFocused(find.text('Test Channel')), isTrue);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      expect(isFocused(find.text('Other Channel')), isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+
+      // The big player plays whatever channel is selected.
+      expect(container.read(selectedChannelProvider), same(other));
     });
 
     testWidgets('the mini-player has no channel list button (REV-160)', (
