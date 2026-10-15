@@ -467,6 +467,56 @@ void main() {
       expect(find.text('Select a channel to start watching'), findsNothing);
     });
 
+    testWidgets('phone: typing a far channel number scrolls the list to it '
+        '(REV-139)', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final container = ProviderContainer(
+        overrides: [
+          playerControllerProvider.overrideWith(
+            (ref, params) => TuningLivePlayerController(),
+          ),
+          channelsProvider.overrideWith(
+            (ref) async => [
+              for (var i = 1; i <= 60; i++)
+                createMockChannel(name: 'Channel $i', lcn: i),
+            ],
+          ),
+          epgDataProvider.overrideWith((ref) => Future.value({})),
+          navIndexProvider.overrideWith((ref) => NavTab.liveTv),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(body: LiveTvScreen()),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('Channel 50'), findsNothing);
+
+      await tabTo(tester, find.text('Channel 1'));
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit5);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit0);
+      // The number tunes by itself after 1.5 s.
+      await tester.pump(const Duration(milliseconds: 1600));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(container.read(selectedChannelProvider)?.lcn, 50);
+      expect(find.text('Channel 50'), findsOneWidget);
+      final row = tester.getRect(find.text('Channel 50'));
+      expect(row.top, greaterThanOrEqualTo(0));
+      expect(row.bottom, lessThanOrEqualTo(800));
+    });
+
     testWidgets('ArrowLeft in overlay mode invokes onClose', (tester) async {
       final channel = createMockChannel();
       bool overlayClosed = false;

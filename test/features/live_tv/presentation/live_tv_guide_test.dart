@@ -424,6 +424,55 @@ void main() {
       expect(find.text('Gone Show'), findsNothing);
     });
 
+    testWidgets('two same-name programs in a row: → changes the banner '
+        'times (REV-139)', (tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final now = DateTime.now();
+      // Later programs: the one on air now shows in the banner anyway.
+      final first = createMockProgram(
+        name: 'News',
+        startTime: now.add(const Duration(minutes: 30)),
+        endTime: now.add(const Duration(minutes: 90)),
+      );
+      final second = createMockProgram(
+        name: 'News',
+        startTime: now.add(const Duration(minutes: 90)),
+        endTime: now.add(const Duration(minutes: 150)),
+      );
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            channelsProvider.overrideWith(
+              (ref) => Future.value([createMockChannel()]),
+            ),
+            epgDataProvider.overrideWith(
+              (ref) => Future.value({
+                'rai 1 hd': [createMockProgram(name: 'On Air'), first, second],
+              }),
+            ),
+          ],
+          child: const LiveTvGuideScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      Finder bannerText(String text) => find.descendant(
+        of: find.byType(EpgDetailsBanner),
+        matching: find.text(text),
+      );
+
+      await tabTo(tester, find.text('On Air').last);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(bannerText(first.timeRange), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(bannerText(second.timeRange), findsOneWidget);
+      expect(bannerText(first.timeRange), findsNothing);
+    });
+
     testWidgets('renders empty state when channel list is empty', (
       tester,
     ) async {
