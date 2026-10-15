@@ -26,7 +26,11 @@ void main() {
   const params = PlayerParams('550', 'movie');
   late List<bool> closes;
 
-  Future<void> pumpOverlay(WidgetTester tester) async {
+  Future<void> pumpOverlay(
+    WidgetTester tester, {
+    SliderOverlayType type = SliderOverlayType.sync,
+    Locale? locale,
+  }) async {
     SharedPreferences.setMockInitialValues({});
     closes = [];
     await tester.pumpWidget(
@@ -37,11 +41,12 @@ void main() {
           ),
         ],
         child: MaterialApp(
+          locale: locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SubtitleSliderOverlay(
-              type: SliderOverlayType.sync,
+              type: type,
               params: params,
               state: CinemaPlayerState(
                 controller: _MockVideoController(),
@@ -74,4 +79,22 @@ void main() {
 
     expect(closes, [true]);
   });
+
+  // REV-166: a long Italian title pushed "Ripristina Predefiniti" off the
+  // panel.
+  for (final type in SliderOverlayType.values.where(
+    (t) => t != SliderOverlayType.none,
+  )) {
+    testWidgets('Italian, ${type.name}: the title leaves room for Reset', (
+      tester,
+    ) async {
+      await pumpOverlay(tester, type: type, locale: const Locale('it'));
+
+      // An overflow would fail the test by itself; Reset is also fully shown.
+      expect(tester.takeException(), isNull);
+      final reset = tester.getRect(find.text('Ripristina Predefiniti'));
+      final screen = tester.getRect(find.byType(SubtitleSliderOverlay));
+      expect(reset.right, lessThanOrEqualTo(screen.right));
+    });
+  }
 }
