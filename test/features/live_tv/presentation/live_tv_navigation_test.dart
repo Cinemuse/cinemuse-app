@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart' as mkv;
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
@@ -19,6 +20,8 @@ import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/live_tv_screen.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/live_tv_guide_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+
+import '../../../helpers/focus_helpers.dart';
 
 class MockLivePlayer extends Mock implements Player {}
 
@@ -277,6 +280,33 @@ void main() {
         expect(playerFocused, isTrue);
       },
     );
+
+    testWidgets('the menu key on a channel adds it to favourites (REV-134)', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            channelsProvider.overrideWith(
+              (ref) => Future.value([createMockChannel()]),
+            ),
+          ],
+          child: const ChannelListPanel(isOverlay: false),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tabTo(tester, find.text('Test Channel'));
+      await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
+      await tester.pump();
+
+      expect(find.text('Added to favorites'), findsOneWidget);
+    });
 
     testWidgets('ArrowLeft in overlay mode invokes onClose', (tester) async {
       final channel = createMockChannel();

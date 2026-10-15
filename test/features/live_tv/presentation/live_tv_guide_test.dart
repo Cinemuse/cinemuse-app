@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/features/live_tv/application/custom_epg_url_notifier.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/epg_program.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/live_tv_guide_screen.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/epg_details_banner.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/guide/epg_timeline_grid.dart';
+
+import '../../../helpers/focus_helpers.dart';
 
 Channel createMockChannel({int lcn = 1, String name = 'Rai 1 HD'}) {
   return Channel(lcn: lcn, name: name, logo: 'rai1.png', group: 'National');
@@ -147,6 +152,51 @@ void main() {
       await tester.pump();
 
       expect(selectedChannel?.name, equals('Rai 1 HD'));
+    });
+
+    testWidgets('the options sheet and its switch work with keys (REV-134)', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            channelsProvider.overrideWith(
+              (ref) => Future.value([createMockChannel()]),
+            ),
+            epgDataProvider.overrideWith((ref) => Future.value({})),
+            // The real one reads the Supabase URL from `.env`.
+            defaultEpgUrlProvider.overrideWithValue('https://example.com/epg'),
+          ],
+          child: const LiveTvGuideScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tabTo(tester, find.byIcon(Icons.tune_rounded));
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(find.text('Filter Channels'), findsOneWidget);
+
+      // Up from the list reaches the Categories / Playlists switch.
+      bool onSwitch() =>
+          isFocused(find.text('Categories')) ||
+          isFocused(find.text('Playlists'));
+      for (var i = 0; i < 5 && !onSwitch(); i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pump();
+      }
+      expect(onSwitch(), isTrue);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pump();
+      expect(isFocused(find.text('Categories')), isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      expect(isFocused(find.text('Playlists')), isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(find.text('Custom Playlists'), findsOneWidget);
     });
 
     testWidgets('renders empty state when channel list is empty', (
