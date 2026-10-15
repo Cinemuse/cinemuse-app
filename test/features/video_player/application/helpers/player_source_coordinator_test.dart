@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
@@ -9,7 +10,9 @@ import 'package:cinemuse_app/features/video_player/application/handlers/youtube_
 import 'package:cinemuse_app/features/video_player/application/helpers/player_source_coordinator.dart';
 import 'package:cinemuse_app/features/video_player/application/helpers/stream_fallback_manager.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
+import 'package:cinemuse_app/l10n/app_localizations_it.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
@@ -39,7 +42,8 @@ final _sourceB = StreamCandidate(
   provider: 'test',
 );
 
-/// A coordinator playing [_sourceA], with [_sourceB] as the other source.
+/// A coordinator playing [_sourceA], with [_sourceB] as the other source,
+/// in the app language of [l10n] (English by default).
 class _Harness {
   final player = _MockPlayer();
   final stream = _MockPlayerStream();
@@ -49,7 +53,7 @@ class _Harness {
   late PlayerSourceCoordinator coordinator;
   late ProviderContainer container;
 
-  _Harness() {
+  _Harness([AppLocalizations? l10n]) {
     when(() => player.stream).thenReturn(stream);
     when(() => player.state).thenReturn(const PlayerState());
     when(
@@ -91,7 +95,7 @@ class _Harness {
     );
     container = ProviderContainer(
       overrides: [
-        localizationsProvider.overrideWithValue(AppLocalizationsEn()),
+        localizationsProvider.overrideWithValue(l10n ?? AppLocalizationsEn()),
       ],
     );
     coordinator = container.read(provider);
@@ -231,6 +235,28 @@ void main() {
       expect(h.state.error, isNot(contains('boom')));
       expect(h.state.isResolving, isFalse);
     });
+
+    for (final l10n in [AppLocalizationsEn(), AppLocalizationsIt()]) {
+      test(
+        'offline: a short "no connection" text (${l10n.localeName})',
+        () async {
+          final h = _Harness(l10n);
+          addTearDown(h.container.dispose);
+          when(
+            () => h.resolver.resolveStream(
+              _sourceA,
+              season: any(named: 'season'),
+              episode: any(named: 'episode'),
+              fileId: any(named: 'fileId'),
+            ),
+          ).thenThrow(const NetworkFailure('offline'));
+
+          await h.coordinator.changeFile(3);
+
+          expect(h.state.error, l10n.failureNetwork);
+        },
+      );
+    }
   });
 
   test('a source that never loads ends with an error (REV-148)', () {
