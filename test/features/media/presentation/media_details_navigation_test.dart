@@ -11,6 +11,8 @@ import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episod
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_carousel_row.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/hero/responsive_action_buttons.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/l10n/app_localizations_en.dart';
+import 'package:cinemuse_app/l10n/app_localizations_it.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -49,6 +51,7 @@ void main() {
   Widget buildTestableWidget(
     Widget child, {
     List<dynamic> overrides = const [],
+    Locale? locale,
   }) {
     return ProviderScope(
       overrides: [
@@ -57,6 +60,7 @@ void main() {
         ...overrides.cast(),
       ],
       child: MaterialApp(
+        locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(body: child),
@@ -187,6 +191,38 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Stop Watching'), findsOneWidget);
     });
+
+    // REV-253: the ▾ next to Play has a tooltip in the app's language.
+    for (final (locale, l10n) in [
+      (const Locale('en'), AppLocalizationsEn()),
+      (const Locale('it'), AppLocalizationsIt()),
+    ]) {
+      testWidgets('Play ▾ tooltip in ${locale.languageCode}', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(1280, 800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          buildTestableWidget(
+            ResponsiveActionButtons(
+              onPlayClick: () {},
+              playButtonLabel: 'Play Now',
+              mediaItem: MediaItem(
+                tmdbId: 123,
+                mediaType: MediaKind.movie,
+                updatedAt: DateTime(2026),
+              ),
+              isFavorite: false,
+              isInWatchlist: false,
+              onListTap: () {},
+              onDropClick: () {},
+            ),
+            locale: locale,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byTooltip(l10n.menuMoreOptions), findsOneWidget);
+      });
+    }
 
     // REV-219 (c): no date drew an empty text and a leading "•".
     testWidgets('hero info line has no leading dot without a date', (

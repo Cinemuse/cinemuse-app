@@ -1,4 +1,6 @@
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/l10n/app_localizations_en.dart';
+import 'package:cinemuse_app/l10n/app_localizations_it.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -482,6 +484,42 @@ void main() {
       expect(isCardFocused('R0C0'), isTrue);
     },
   );
+
+  // REV-253: the row's scroll arrows have tooltips in the app's language.
+  for (final (locale, l10n) in [
+    (const Locale('en'), AppLocalizationsEn()),
+    (const Locale('it'), AppLocalizationsIt()),
+  ]) {
+    testWidgets('scroll arrow tooltips in ${locale.languageCode}', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            locale: locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: GenericCarouselRow(
+                title: 'Row',
+                height: 200,
+                itemCount: 20,
+                itemBuilder: (context, index) => SizedBox(
+                  width: 100,
+                  height: 150,
+                  child: DpadFocusable(onTap: _noop, child: Text('$index')),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip(l10n.commonScrollLeft), findsOneWidget);
+      expect(find.byTooltip(l10n.commonScrollRight), findsOneWidget);
+    });
+  }
 }
 
 // Real cards always have an action (open details); without one a

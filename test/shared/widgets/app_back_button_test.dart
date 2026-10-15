@@ -1,14 +1,22 @@
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/l10n/app_localizations_en.dart';
+import 'package:cinemuse_app/l10n/app_localizations_it.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  Future<void> pumpButton(WidgetTester tester, VoidCallback onTap) {
+  Future<void> pumpButton(
+    WidgetTester tester,
+    VoidCallback onTap, {
+    Locale? locale,
+  }) {
     return tester.pumpWidget(
       MaterialApp(
+        locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: Center(child: AppBackButton(onTap: onTap)),
         ),
@@ -38,4 +46,16 @@ void main() {
 
     expect(calls, 1);
   });
+
+  // REV-253: the tooltip is in the app's language.
+  for (final (locale, l10n) in [
+    (const Locale('en'), AppLocalizationsEn()),
+    (const Locale('it'), AppLocalizationsIt()),
+  ]) {
+    testWidgets('tooltip in ${locale.languageCode}', (tester) async {
+      await pumpButton(tester, () {}, locale: locale);
+
+      expect(find.byTooltip(l10n.commonGoBack), findsOneWidget);
+    });
+  }
 }

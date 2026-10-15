@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
+import 'package:cinemuse_app/l10n/app_localizations_it.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,4 +52,38 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(l10n.menuAddToWatchlist), findsOneWidget);
   });
+
+  // REV-253: the card's ⋮ button has a tooltip in the app's language.
+  for (final (locale, l10n) in [
+    (const Locale('en'), AppLocalizationsEn()),
+    (const Locale('it'), AppLocalizationsIt()),
+  ]) {
+    testWidgets('⋮ tooltip in ${locale.languageCode}', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: offlineListsOverrides(),
+          child: MaterialApp(
+            locale: locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 160,
+                  child: MediaCard(
+                    title: 'Some Movie',
+                    tmdbId: 1,
+                    mediaType: MediaKind.movie,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip(l10n.menuMoreOptions), findsOneWidget);
+    });
+  }
 }

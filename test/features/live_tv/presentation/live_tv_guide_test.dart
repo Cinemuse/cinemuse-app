@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/l10n/app_localizations_en.dart';
+import 'package:cinemuse_app/l10n/app_localizations_it.dart';
 import 'package:cinemuse_app/features/live_tv/application/custom_epg_url_notifier.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
@@ -38,10 +40,12 @@ EpgProgram createMockProgram({
 Widget buildTestWidget({
   required Widget child,
   List<Override> overrides = const [],
+  Locale? locale,
 }) {
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
+      locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: child),
@@ -245,4 +249,64 @@ void main() {
       },
     );
   });
+
+  // REV-253: the guide's filter button and the banner star have tooltips in
+  // the app's language; the star's follows its state.
+  for (final (locale, l10n) in [
+    (const Locale('en'), AppLocalizationsEn()),
+    (const Locale('it'), AppLocalizationsIt()),
+  ]) {
+    testWidgets('filter button tooltip in ${locale.languageCode}', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        buildTestWidget(
+          locale: locale,
+          overrides: [
+            channelsProvider.overrideWith(
+              (ref) => Future.value([createMockChannel()]),
+            ),
+            epgDataProvider.overrideWith((ref) => Future.value({})),
+            defaultEpgUrlProvider.overrideWithValue('https://example.com/epg'),
+          ],
+          child: const LiveTvGuideScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip(l10n.liveTvFilterAndPlaylists), findsOneWidget);
+    });
+
+    for (final isFavorite in [false, true]) {
+      testWidgets('banner star tooltip in ${locale.languageCode}, '
+          'favourite: $isFavorite', (tester) async {
+        // A desktop window: the test font is wider than the app's.
+        await tester.binding.setSurfaceSize(const Size(1280, 800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          buildTestWidget(
+            locale: locale,
+            child: EpgDetailsBanner(
+              channel: createMockChannel(),
+              program: createMockProgram(),
+              onWatch: () {},
+              isFavorite: isFavorite,
+              onToggleFavorite: () {},
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byTooltip(
+            isFavorite
+                ? l10n.liveTvRemoveFromFavorites
+                : l10n.liveTvAddToFavorites,
+          ),
+          findsOneWidget,
+        );
+      });
+    }
+  }
 }

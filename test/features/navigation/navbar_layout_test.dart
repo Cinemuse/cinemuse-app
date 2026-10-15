@@ -1,6 +1,8 @@
 import 'package:cinemuse_app/features/navigation/presentation/navbar.dart';
 import 'package:cinemuse_app/features/navigation/presentation/window_buttons.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/l10n/app_localizations_en.dart';
+import 'package:cinemuse_app/l10n/app_localizations_it.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +15,7 @@ void main() {
     required Size size,
     required bool isCompact,
     VoidCallback? onSettingsTap,
+    Locale? locale,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
@@ -22,6 +25,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
+          locale: locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
@@ -75,4 +79,25 @@ void main() {
     },
     variant: TargetPlatformVariant.only(TargetPlatform.android),
   );
+
+  // REV-253: the search icon has a tooltip in the app's language.
+  for (final (locale, l10n) in [
+    (const Locale('en'), AppLocalizationsEn()),
+    (const Locale('it'), AppLocalizationsIt()),
+  ]) {
+    testWidgets(
+      'search tooltip in ${locale.languageCode}',
+      (tester) async {
+        await pumpNavbar(
+          tester,
+          size: const Size(1280, 720),
+          isCompact: false,
+          locale: locale,
+        );
+
+        expect(find.byTooltip(l10n.navSearch), findsOneWidget);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.android),
+    );
+  }
 }
