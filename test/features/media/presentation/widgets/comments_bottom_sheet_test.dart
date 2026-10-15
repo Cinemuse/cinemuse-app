@@ -8,11 +8,13 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:cinemuse_app/l10n/app_localizations_it.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../../helpers/app_font.dart';
+import '../../../../helpers/focus_helpers.dart';
 
 class MockCommentsRepository extends Mock implements CommentsRepository {}
 
@@ -162,4 +164,95 @@ void main() {
       }
     });
   }
+
+  // REV-209: a source filter only hid the loaded comments, and more pages
+  // loaded only on scroll, so a filtered list said "No comments" for good.
+  group('source filter (REV-209)', () {
+    final l10n = AppLocalizationsEn();
+
+    Comment comment(String text, CommentSource source) => Comment(
+      id: text,
+      author: const CommentAuthor(id: 'u1', username: 'alice'),
+      text: text,
+      createdAt: DateTime.utc(2024),
+      source: source,
+    );
+    List<Comment> serializd(int page) => [
+      for (var i = 1; i <= 6; i++)
+        comment('Serializd $page.$i', CommentSource.serializd),
+    ];
+
+    Future<void> pumpSheet(
+      WidgetTester tester,
+      Map<int, List<Comment>> pages,
+    ) async {
+      tester.view.physicalSize = const Size(1280, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final repository = MockCommentsRepository();
+      when(
+        () => repository.fetchComments(request, page: any(named: 'page')),
+      ).thenAnswer(
+        (call) async => pages[call.namedArguments[#page] as int] ?? const [],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [commentsRepositoryProvider.overrideWithValue(repository)],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(body: CommentsBottomSheet(request: request)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.layers_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.commentsSourceImdb).last);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('IMDb: its comments from later pages show, then "Load more" '
+        'works with Enter', (tester) async {
+      await pumpSheet(tester, {
+        1: serializd(1),
+        2: serializd(2),
+        3: [
+          comment('IMDb 1', CommentSource.imdb),
+          comment('IMDb 2', CommentSource.imdb),
+        ],
+        4: [comment('IMDb 3', CommentSource.imdb)],
+        5: serializd(5),
+        6: [comment('IMDb 4', CommentSource.imdb)],
+      });
+
+      for (final text in ['IMDb 1', 'IMDb 2', 'IMDb 3']) {
+        expect(find.text(text), findsOneWidget);
+      }
+      expect(find.textContaining('Serializd'), findsNothing);
+      expect(find.text(l10n.tvTimeNoComments), findsNothing);
+      expect(find.text('IMDb 4'), findsNothing);
+
+      final loadMore = find.text(l10n.commentsLoadMore);
+      expect(loadMore, findsOneWidget);
+      // At the bottom, under the last comment.
+      expect(
+        tester.getTopLeft(loadMore).dy,
+        greaterThan(tester.getBottomLeft(find.text('IMDb 3')).dy),
+      );
+      await tabTo(tester, loadMore);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(find.text('IMDb 4'), findsOneWidget);
+    });
+
+    testWidgets('a source with no comments: "No comments yet." once the '
+        'pages ran out', (tester) async {
+      await pumpSheet(tester, {1: serializd(1), 2: serializd(2)});
+
+      expect(find.text(l10n.tvTimeNoComments), findsOneWidget);
+      expect(find.text(l10n.commentsLoadMore), findsNothing);
+      expect(find.textContaining('Serializd'), findsNothing);
+    });
+  });
 }
