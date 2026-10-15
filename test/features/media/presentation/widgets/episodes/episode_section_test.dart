@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:cinemuse_app/core/error/app_failure.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
+import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_carousel_card.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_list_card.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_section.dart';
@@ -90,7 +92,10 @@ void main() {
     ];
   }
 
-  Widget app({List<Override> signedIn = const []}) => ProviderScope(
+  Widget app({
+    List<Override> signedIn = const [],
+    Stream<Map<String, WatchHistory>>? progress,
+  }) => ProviderScope(
     overrides: [
       ...signedIn,
       unifiedStreamResolverProvider.overrideWithValue(resolver),
@@ -105,7 +110,7 @@ void main() {
       if (signedIn.isEmpty)
         watchedEpisodesMapProvider.overrideWith((ref, id) => const {}),
       episodeProgressMapProvider.overrideWith(
-        (ref, id) => Stream.value(const {}),
+        (ref, id) => progress ?? Stream.value(const {}),
       ),
     ],
     child: MaterialApp(
@@ -292,4 +297,86 @@ void main() {
     expect(watched, findsOneWidget);
     expect(markWatched, findsOneWidget);
   });
+
+  // REV-208: the "cached" dot was worked out once per card, so it was missing
+  // after playing and stayed on the old episode when the card was reused.
+  for (final size in const [Size(1280, 800), Size(400, 900)]) {
+    testWidgets('${size.width}px: the cached dot shows at once, only on its '
+        'episode, and the menu removes it', (tester) async {
+      final l10n = AppLocalizationsEn();
+      final cached = <(int?, int?)>{};
+      (int?, int?) episodeOf(Invocation call) => (
+        call.namedArguments[#season] as int?,
+        call.namedArguments[#episode] as int?,
+      );
+      when(
+        () => resolver.hasCachedStream(
+          any(),
+          any(),
+          season: any(named: 'season'),
+          episode: any(named: 'episode'),
+        ),
+      ).thenAnswer((call) => cached.contains(episodeOf(call)));
+      when(
+        () => resolver.clearCachedStream(
+          any(),
+          any(),
+          season: any(named: 'season'),
+          episode: any(named: 'episode'),
+        ),
+      ).thenAnswer((call) => cached.remove(episodeOf(call)));
+      final progress = StreamController<Map<String, WatchHistory>>.broadcast();
+      addTearDown(progress.close);
+      final dot = find.byWidgetPredicate(
+        (w) =>
+            w is Container &&
+            w.decoration ==
+                const BoxDecoration(
+                  color: AppTheme.accent,
+                  shape: BoxShape.circle,
+                ) &&
+            w.constraints == const BoxConstraints.tightFor(width: 8, height: 8),
+      );
+      Finder dotOn(String episode) => find.descendant(
+        of: find.ancestor(
+          of: find.textContaining(episode),
+          matching: find.byType(
+            size.width < 600 ? EpisodeListCard : EpisodeCarouselCard,
+          ),
+        ),
+        matching: dot,
+      );
+      Future<void> pickSeason(int n) async {
+        await tester.tap(find.byType(SeasonSelector));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Season $n').last);
+        await tester.pumpAndSettle();
+      }
+
+      await setWindow(tester, size);
+      await tester.pumpWidget(app(progress: progress.stream));
+      await tester.pumpAndSettle();
+      expect(dot, findsNothing);
+
+      // S1 E2 played: its stream is cached and the progress saved.
+      cached.add((1, 2));
+      progress.add(const {});
+      await tester.pumpAndSettle();
+      expect(dotOn('S1 episode 2'), findsOneWidget);
+      expect(dot, findsOneWidget);
+
+      await pickSeason(2);
+      expect(dot, findsNothing);
+      await pickSeason(1);
+      expect(dotOn('S1 episode 2'), findsOneWidget);
+      expect(dot, findsOneWidget);
+
+      await tester.longPress(find.textContaining('S1 episode 2'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.menuRemoveCachedProvider));
+      await tester.pumpAndSettle();
+      expect(cached, isEmpty);
+      expect(dot, findsNothing);
+    });
+  }
 }
