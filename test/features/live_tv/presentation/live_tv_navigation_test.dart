@@ -8,6 +8,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart' as mkv;
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
@@ -420,6 +421,46 @@ void main() {
       await tester.pump();
 
       expect(overlayClosed, isTrue);
+    });
+
+    testWidgets('drawer: Up into the search box turns its border accent '
+        '(REV-139)', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            channelsProvider.overrideWith(
+              (ref) => Future.value([createMockChannel()]),
+            ),
+          ],
+          child: ChannelListPanel(isOverlay: true, onClose: () {}),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The look is the check here, so read the search box's border.
+      Color borderColor() {
+        final box = tester.widget<Container>(
+          find
+              .ancestor(
+                of: find.byType(TextField),
+                matching: find.byWidgetPredicate(
+                  (w) => w is Container && w.decoration is BoxDecoration,
+                ),
+              )
+              .first,
+        );
+        return ((box.decoration! as BoxDecoration).border! as Border).top.color;
+      }
+
+      expect(borderColor(), isNot(AppTheme.accent));
+      await tabTo(tester, find.text('Test Channel'));
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+
+      // The field's focus sits inside it, so isFocused can't see it.
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.focusNode!.hasPrimaryFocus, isTrue);
+      expect(borderColor(), AppTheme.accent);
     });
 
     testWidgets('does not render category filter chips in overlay mode', (
