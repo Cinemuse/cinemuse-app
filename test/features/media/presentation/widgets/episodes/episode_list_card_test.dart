@@ -15,7 +15,11 @@ class _MockResolver extends Mock implements UnifiedStreamResolver {}
 
 // REV-211: "Read more" was a plain GestureDetector: no remote or keyboard.
 void main() {
-  Widget card() {
+  Widget card({
+    String overview = 'A very long summary that goes on and on. ',
+    int repeat = 12,
+    double textScale = 1.0,
+  }) {
     final resolver = _MockResolver();
     when(
       () => resolver.hasCachedStream(
@@ -30,6 +34,12 @@ void main() {
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
         home: Scaffold(
           body: SingleChildScrollView(
             child: EpisodeListCard(
@@ -37,7 +47,7 @@ void main() {
                 episodeNumber: 1,
                 seasonNumber: 1,
                 name: 'Pilot',
-                overview: 'A very long summary that goes on and on. ' * 12,
+                overview: overview * repeat,
               ),
               seasonNumber: 1,
               mediaId: '1429',
@@ -85,6 +95,23 @@ void main() {
     expect(find.text('Show less'), findsOneWidget);
 
     await tester.tap(find.text('Show less'));
+    await tester.pumpAndSettle();
+    expect(find.text('Read more'), findsOneWidget);
+  });
+
+  // REV-214: "Read more" was measured at text size 1, so a summary cut only
+  // by a bigger text size had no way to open it.
+  testWidgets('text size 1.5: a summary cut at 2 lines shows "Read more"', (
+    tester,
+  ) async {
+    await narrowWindow(tester);
+    await tester.pumpWidget(card(overview: 'word ', repeat: 10));
+    await tester.pumpAndSettle();
+    expect(find.text('Read more'), findsNothing);
+
+    await tester.pumpWidget(
+      card(overview: 'word ', repeat: 10, textScale: 1.5),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Read more'), findsOneWidget);
   });
