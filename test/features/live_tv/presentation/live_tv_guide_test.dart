@@ -233,6 +233,62 @@ void main() {
       expect(tester.getSize(find.byType(AppBottomSheet)).width, 600);
     });
 
+    testWidgets('banner star, channel long-press and chips save the choices '
+        '(REV-122)', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final rai = Channel(lcn: 1, name: 'Rai 1 HD', logo: '', group: 'DTT');
+      final sky = Channel(lcn: 2, name: 'Sky Sport', logo: '', group: 'Sport');
+      await tester.pumpWidget(
+        buildTestWidget(
+          overrides: [
+            channelsProvider.overrideWith((ref) => Future.value([rai, sky])),
+            epgDataProvider.overrideWith((ref) => Future.value({})),
+          ],
+          child: const LiveTvGuideScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(LiveTvGuideScreen)),
+      );
+      container.read(selectedChannelProvider.notifier).select(rai);
+      await tester.pumpAndSettle();
+      final prefs = await SharedPreferences.getInstance();
+
+      // The banner's star.
+      await tester.tap(find.byTooltip('Add to favorites'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Remove from favorites'), findsOneWidget);
+
+      // A long press on a channel in the grid adds it, a second removes it.
+      await tester.longPress(find.text('Sky Sport'));
+      await tester.pumpAndSettle();
+      expect(prefs.getStringList('live_tv_favorites'), [
+        rai.uniqueId,
+        sky.uniqueId,
+      ]);
+      await tester.longPress(find.text('Sky Sport'));
+      await tester.pumpAndSettle();
+      expect(prefs.getStringList('live_tv_favorites'), [rai.uniqueId]);
+
+      // The chips: two selected, then "All" = none.
+      await tester.tap(find.text('Sport'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('DTT'));
+      await tester.pumpAndSettle();
+      expect(
+        prefs.getStringList('live_tv_selected_categories'),
+        unorderedEquals(['Sport', 'DTT']),
+      );
+      // The tab and the first chip are both "All": the chip is below.
+      await tester.tap(find.text('All').last);
+      await tester.pumpAndSettle();
+      expect(prefs.getStringList('live_tv_selected_categories'), isNull);
+    });
+
     testWidgets('renders empty state when channel list is empty', (
       tester,
     ) async {

@@ -155,6 +155,39 @@ void main() {
       expect(prefs.getStringList('live_tv_recents'), ['b', 'a', 'c']);
     });
 
+    test('the choices survive a restart', () async {
+      SharedPreferences.setMockInitialValues({});
+      final before = ProviderContainer();
+      before.listen(channelFilterProvider, (previous, next) {});
+      final filter = before.read(channelFilterProvider.notifier);
+      final favorites = before.read(favoriteChannelIdsProvider.notifier);
+      final recents = before.read(recentChannelIdsProvider.notifier);
+      await filter.toggleCategory('DTT');
+      await filter.toggleCategory('Sport');
+      await favorites.toggle('kept');
+      await favorites.toggle('removed');
+      await favorites.toggle('removed');
+      await recents.push('old');
+      await recents.push('new');
+      before.dispose();
+
+      // Fresh providers on the same storage, like after a restart.
+      final after = _createContainer();
+      await _settle();
+      expect(after.read(channelFilterProvider).selectedCategories, {
+        'DTT',
+        'Sport',
+      });
+      expect(after.read(favoriteChannelIdsProvider), {'kept'});
+      expect(after.read(recentChannelIdsProvider), ['new', 'old']);
+
+      // "All channels" = no chip, also after the next restart.
+      await after.read(channelFilterProvider.notifier).selectAll();
+      final again = _createContainer();
+      await _settle();
+      expect(again.read(channelFilterProvider).isActive, isFalse);
+    });
+
     test('recents keep at most 15 channels', () async {
       SharedPreferences.setMockInitialValues({
         'live_tv_recents': [for (var i = 0; i < 15; i++) '$i'],
