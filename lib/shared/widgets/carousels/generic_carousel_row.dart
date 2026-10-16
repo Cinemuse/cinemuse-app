@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/carousel_arrow_step.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/carousel_header.dart';
 
 enum CarouselTheme {
@@ -56,6 +57,9 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
   bool _canScrollLeft = false;
   bool _canScrollRight = false;
   bool _isHoveringList = false;
+
+  // The list's left padding, where an arrow step lines an item up.
+  double _listLeadingPadding = 0;
 
   @override
   void initState() {
@@ -162,23 +166,16 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
     }
   }
 
-  void _scrollLeft() {
+  void _scrollPage({required bool isForward}) {
     if (!_controller.hasClients) return;
-    final viewportWidth = _controller.position.viewportDimension;
-    final offset = _controller.position.pixels - (viewportWidth * 0.8);
-    _controller.animateTo(
-      offset.clamp(0.0, _controller.position.maxScrollExtent),
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic,
+    final target = carouselArrowTarget(
+      position: _controller.position,
+      items: _trackedNodes.values.map((n) => n.context?.findRenderObject()),
+      leadingPadding: _listLeadingPadding,
+      isForward: isForward,
     );
-  }
-
-  void _scrollRight() {
-    if (!_controller.hasClients) return;
-    final viewportWidth = _controller.position.viewportDimension;
-    final offset = _controller.position.pixels + (viewportWidth * 0.8);
     _controller.animateTo(
-      offset.clamp(0.0, _controller.position.maxScrollExtent),
+      target,
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeOutCubic,
     );
@@ -207,7 +204,9 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
             IconButton(
               tooltip: AppLocalizations.of(context)!.commonScrollLeft,
               icon: const Icon(Icons.chevron_left, size: 28),
-              onPressed: _canScrollLeft ? _scrollLeft : null,
+              onPressed: _canScrollLeft
+                  ? () => _scrollPage(isForward: false)
+                  : null,
               color: Colors.white,
               disabledColor: Colors.white24,
               padding: EdgeInsets.zero,
@@ -218,7 +217,9 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
             IconButton(
               tooltip: AppLocalizations.of(context)!.commonScrollRight,
               icon: const Icon(Icons.chevron_right, size: 28),
-              onPressed: _canScrollRight ? _scrollRight : null,
+              onPressed: _canScrollRight
+                  ? () => _scrollPage(isForward: true)
+                  : null,
               color: Colors.white,
               disabledColor: Colors.white24,
               padding: EdgeInsets.zero,
@@ -347,6 +348,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
     if (widget.itemCount == 0) return const SizedBox.shrink();
 
     final padding = overridePadding ?? widget.padding;
+    _listLeadingPadding = padding.left;
     final effectivePadding = padding.copyWith(bottom: padding.bottom + 16);
 
     final count = widget.itemCount;

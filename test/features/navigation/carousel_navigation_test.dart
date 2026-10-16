@@ -588,6 +588,77 @@ void main() {
     });
   }
 
+  // REV-247: the arrows stopped with a card cut on the left.
+  for (final hasDayMarkers in [false, true]) {
+    testWidgets(
+      'arrows stop with an item on the left padding (day markers: $hasDayMarkers)',
+      (tester) async {
+        tester.view.physicalSize = const Size(1000, 600);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final l10n = AppLocalizationsEn();
+        final controller = ScrollController();
+        addTearDown(controller.dispose);
+        bool isMarker(int i) => hasDayMarkers && i % 4 == 0;
+        String label(int i) => isMarker(i) ? 'Day $i' : 'Card $i';
+
+        await tester.pumpWidget(
+          ProviderScope(
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              home: Scaffold(
+                body: GenericCarouselRow(
+                  title: 'Row',
+                  controller: controller,
+                  height: 200,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  itemCount: 30,
+                  separatorBuilder: (_, __) => const SizedBox(width: 16),
+                  itemBuilder: (context, i) => isMarker(i)
+                      ? SizedBox(width: 72, child: Text(label(i)))
+                      : SizedBox(
+                          width: 150,
+                          child: DpadFocusable(
+                            onTap: _noop,
+                            child: Text(label(i)),
+                          ),
+                        ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        void expectItemOnLeftPadding() {
+          final lefts = [
+            for (var i = 0; i < 30; i++)
+              if (find.text(label(i)).evaluate().isNotEmpty)
+                tester.getTopLeft(find.text(label(i))).dx,
+          ];
+          expect(
+            lefts.any((x) => (x - 24).abs() < 0.5),
+            isTrue,
+            reason: 'offset ${controller.offset}',
+          );
+        }
+
+        for (var press = 0; press < 3; press++) {
+          await tester.tap(find.byTooltip(l10n.commonScrollRight));
+          await tester.pumpAndSettle();
+          expectItemOnLeftPadding();
+        }
+        final afterRight = controller.offset;
+        expect(afterRight, greaterThan(0));
+
+        await tester.tap(find.byTooltip(l10n.commonScrollLeft));
+        await tester.pumpAndSettle();
+        expectItemOnLeftPadding();
+        expect(controller.offset, lessThan(afterRight));
+      },
+    );
+  }
+
   // REV-246: the row title and the ← / → arrows showed the arrow cursor.
   testWidgets('row title and →: the hand; ← at the start: the arrow', (
     tester,
