@@ -250,4 +250,105 @@ void main() {
 
     expect(find.text('Remove filter'), findsOneWidget);
   });
+
+  // REV-251: Item 0 has the keyboard focus, then the mouse wheel scrolls the
+  // page down. Focus handed back to Item 0 must not jump the page up again;
+  // a key that moves the focus still scrolls to it.
+  final restoreCases = <(String, Future<void> Function(WidgetTester), bool)>[
+    (
+      'menu closed by a click',
+      (tester) async {
+        await tester.tap(find.text('Item 16'), buttons: kSecondaryButton);
+        await tester.pumpAndSettle();
+        expect(find.text('Menu entry'), findsOneWidget);
+        await tester.tapAt(const Offset(780, 580));
+        await tester.pumpAndSettle();
+        expect(find.text('Menu entry'), findsNothing);
+      },
+      false,
+    ),
+    (
+      'window back after Alt+Tab',
+      (tester) async {
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.inactive,
+        );
+        await tester.pumpAndSettle();
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.pumpAndSettle();
+      },
+      false,
+    ),
+    (
+      'Tab to the next item',
+      (tester) async {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pumpAndSettle();
+      },
+      true,
+    ),
+  ];
+  for (final (name, action, shouldScroll) in restoreCases) {
+    testWidgets(
+      'DpadFocusable: page scroll after $name (REV-251)',
+      (tester) async {
+        final controller = ScrollController();
+        addTearDown(controller.dispose);
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                controller: controller,
+                child: Column(
+                  children: [
+                    for (var i = 0; i < 30; i++)
+                      Builder(
+                        builder: (context) => DpadFocusable(
+                          onTap: () {},
+                          onSecondaryTapDown: (d) => showMenu<void>(
+                            context: context,
+                            position: RelativeRect.fromLTRB(
+                              d.globalPosition.dx,
+                              d.globalPosition.dy,
+                              0,
+                              0,
+                            ),
+                            items: const [
+                              PopupMenuItem(child: Text('Menu entry')),
+                            ],
+                          ),
+                          child: SizedBox(height: 100, child: Text('Item $i')),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+        FocusRing.debugWatchKeys();
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pumpAndSettle();
+        expect(
+          FocusManager.instance.primaryFocus?.context
+              ?.findAncestorWidgetOfExactType<DpadFocusable>()
+              ?.child,
+          isA<SizedBox>(),
+        );
+
+        // The mouse wheel: scrolls without moving the focus.
+        controller.jumpTo(1500);
+        await tester.pumpAndSettle();
+        expect(controller.offset, 1500);
+
+        await action(tester);
+
+        expect(controller.offset, shouldScroll ? lessThan(1500) : 1500);
+        // Flutter hands the focus back after Alt+Tab on desktop only.
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.windows),
+    );
+  }
 }

@@ -95,9 +95,23 @@ class _DpadFocusableState extends State<DpadFocusable> {
   Timer? _keyLongPressTimer;
   LogicalKeyboardKey? _heldActivationKey;
 
+  /// True while Flutter gives the focus back to the item that had it before
+  /// the app window lost focus: it does so in a microtask, so the flag is
+  /// cleared by the next event-loop task.
+  static bool _isResuming = false;
+
+  // Lives as long as the app, like the window it watches.
+  static final _resumeListener = AppLifecycleListener(
+    onResume: () {
+      _isResuming = true;
+      Timer.run(() => _isResuming = false);
+    },
+  );
+
   @override
   void initState() {
     super.initState();
+    _resumeListener; // Static fields start on first use: start it now.
     _effectiveFocusNode.addListener(_handleFocusChanged);
   }
 
@@ -127,7 +141,13 @@ class _DpadFocusableState extends State<DpadFocusable> {
     setState(() => _isFocused = hasFocus);
     widget.onFocusChange?.call(hasFocus);
 
-    if (hasFocus && widget.autoScroll) {
+    // Only focus moved by a key scrolls. Focus handed back after a click
+    // closed a menu, or after Alt+Tab, would jump the page to an item the
+    // mouse wheel had scrolled away from (REV-251).
+    if (hasFocus &&
+        widget.autoScroll &&
+        FocusRing.isKeyInput.value &&
+        !_isResuming) {
       _autoScrollIntoView();
     }
   }
