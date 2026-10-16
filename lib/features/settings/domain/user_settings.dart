@@ -71,7 +71,7 @@ class UserSettings {
   /// rule for the resolver and the settings switch (REV-80).
   bool get isAnimeToshoActive => enableAnimeTosho && hasDebrid;
 
-  /// Reads the stored settings from the profile and the [secrets] row. A
+  /// Reads the stored settings from the profile and the [secrets] object. A
   /// value of the wrong type (e.g. `"true"` as a string) falls back to its
   /// default instead of failing the whole load, which would block every save
   /// for that user (REV-82).
@@ -86,8 +86,8 @@ class UserSettings {
         prefs[key] is bool ? prefs[key] as bool : fallback;
     String readString(String key, String fallback) =>
         prefs[key] is String ? prefs[key] as String : fallback;
-    String readSecret(String column) =>
-        secrets[column] is String ? secrets[column] as String : '';
+    String readSecret(String key) =>
+        secrets[key] is String ? secrets[key] as String : '';
 
     final bufferSize = prefs['liveTvBufferSize'];
     return UserSettings(
@@ -118,19 +118,19 @@ class UserSettings {
       enableVixSrc: readBool('enableVixSrc', d.enableVixSrc),
       enableAnimeUnity: readBool('enableAnimeUnity', d.enableAnimeUnity),
       enableRealDebrid: readBool('enableRealDebrid', d.enableRealDebrid),
-      realDebridKey: readSecret('real_debrid_key'),
+      realDebridKey: readSecret('realDebridKey'),
       enableTorBox: readBool('enableTorBox', d.enableTorBox),
-      torBoxKey: readSecret('torbox_key'),
+      torBoxKey: readSecret('torBoxKey'),
       preferredDebridProvider: readString(
         'preferredDebridProvider',
         d.preferredDebridProvider,
       ),
-      openSubtitlesKey: readSecret('opensubtitles_key'),
+      openSubtitlesKey: readSecret('openSubtitlesKey'),
       autoDownloadMissingSubtitles: readBool(
         'autoDownloadMissingSubtitles',
         d.autoDownloadMissingSubtitles,
       ),
-      installedAddons: _readAddons(secrets['installed_addons']),
+      installedAddons: _readAddons(secrets['installedAddons']),
       liveTvBufferSize: bufferSize is num
           ? bufferSize.toInt()
           : d.liveTvBufferSize,
@@ -231,7 +231,7 @@ class UserSettings {
   Map<String, dynamic> preferencesChangedSince(UserSettings previous) =>
       _changedEntries(toPreferencesJson(), previous.toPreferencesJson());
 
-  /// The `user_secrets` columns whose value differs from [previous].
+  /// The `user_secrets.secrets` keys whose value differs from [previous].
   Map<String, dynamic> secretsChangedSince(UserSettings previous) =>
       _changedEntries(toSecretsJson(), previous.toSecretsJson());
 
@@ -272,13 +272,13 @@ class UserSettings {
     };
   }
 
-  /// The `user_secrets` row (SEC-04): never in `profiles.preferences`.
+  /// The `user_secrets.secrets` object (SEC-04): never in `profiles.preferences`.
   Map<String, dynamic> toSecretsJson() {
     return {
-      'real_debrid_key': realDebridKey,
-      'torbox_key': torBoxKey,
-      'opensubtitles_key': openSubtitlesKey,
-      'installed_addons': installedAddons.map((e) => e.toJson()).toList(),
+      'realDebridKey': realDebridKey,
+      'torBoxKey': torBoxKey,
+      'openSubtitlesKey': openSubtitlesKey,
+      'installedAddons': installedAddons.map((e) => e.toJson()).toList(),
     };
   }
 }

@@ -51,7 +51,7 @@ void main() {
     ).thenAnswer((_) async {});
     secretsRepo = MockUserSecretsRepository();
     when(() => secretsRepo.getSecrets(any())).thenAnswer((_) async => {});
-    when(() => secretsRepo.patchSecrets(any(), any())).thenAnswer((_) async {});
+    when(() => secretsRepo.patchSecrets(any())).thenAnswer((_) async {});
 
     final auth = MockGoTrueClient();
     when(() => auth.currentSession).thenReturn(_session('user-a'));
@@ -90,7 +90,7 @@ void main() {
     when(() => profileRepo.getProfile('user-a')).thenAnswer((_) => load.future);
     when(
       () => secretsRepo.getSecrets('user-a'),
-    ).thenAnswer((_) async => {'real_debrid_key': 'stored-key'});
+    ).thenAnswer((_) async => {'realDebridKey': 'stored-key'});
 
     final notifier = container.read(settingsProvider.notifier);
     final update = notifier.updateSettings(
@@ -114,8 +114,8 @@ void main() {
     ).thenAnswer((_) async => _profile('user-a', {'showSubtitles': true}));
     when(() => secretsRepo.getSecrets('user-a')).thenAnswer(
       (_) async => {
-        'real_debrid_key': 'stored-key',
-        'installed_addons': [
+        'realDebridKey': 'stored-key',
+        'installedAddons': [
           {'id': 'a', 'name': 'A', 'transportUrl': 'https://a', 'version': '1'},
         ],
       },
@@ -130,7 +130,7 @@ void main() {
       () => profileRepo.patchPreferences('user-a', {'showSubtitles': false}),
     ).called(1);
     verifyNever(() => profileRepo.updateUsername(any(), any()));
-    verifyNever(() => secretsRepo.patchSecrets(any(), any()));
+    verifyNever(() => secretsRepo.patchSecrets(any()));
   });
 
   // SEC-04: keys go only to the owner-only secrets row.
@@ -139,7 +139,7 @@ void main() {
       () => profileRepo.getProfile('user-a'),
     ).thenAnswer((_) async => _profile('user-a', {}));
     when(() => secretsRepo.getSecrets('user-a')).thenAnswer(
-      (_) async => {'real_debrid_key': 'old-key', 'torbox_key': 'tb-key'},
+      (_) async => {'realDebridKey': 'old-key', 'torBoxKey': 'tb-key'},
     );
 
     final notifier = container.read(settingsProvider.notifier);
@@ -147,7 +147,7 @@ void main() {
     await notifier.updateSettings((s) => s.copyWith(realDebridKey: 'new-key'));
 
     verify(
-      () => secretsRepo.patchSecrets('user-a', {'real_debrid_key': 'new-key'}),
+      () => secretsRepo.patchSecrets({'realDebridKey': 'new-key'}),
     ).called(1);
     verifyNever(() => profileRepo.patchPreferences(any(), any()));
   });
@@ -171,7 +171,7 @@ void main() {
         throwsA(isA<NetworkFailure>()),
       );
       verifyNever(() => profileRepo.patchPreferences(any(), any()));
-      verifyNever(() => secretsRepo.patchSecrets(any(), any()));
+      verifyNever(() => secretsRepo.patchSecrets(any()));
     },
   );
 
@@ -181,7 +181,7 @@ void main() {
     ).thenAnswer((_) async => _profile('user-a', {}));
     when(
       () => secretsRepo.getSecrets('user-a'),
-    ).thenAnswer((_) async => {'real_debrid_key': 'key-of-a'});
+    ).thenAnswer((_) async => {'realDebridKey': 'key-of-a'});
     when(() => profileRepo.getProfile('user-b')).thenAnswer((_) async => null);
 
     final notifier = container.read(settingsProvider.notifier);

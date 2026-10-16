@@ -130,7 +130,7 @@ class SettingsNotifier extends Notifier<UserSettings> {
       if (secretsPatch.isNotEmpty) {
         await ref
             .read(userSecretsRepositoryProvider)
-            .patchSecrets(user.id, secretsPatch);
+            .patchSecrets(secretsPatch);
       }
     } catch (e, st) {
       AppLogger.warn(

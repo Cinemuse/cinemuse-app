@@ -21,7 +21,7 @@ void main() {
         final settings = UserSettings.fromProfile(
           _profile(const {}),
           secrets: {
-            'installed_addons': [
+            'installedAddons': [
               {
                 'id': 'torrentio',
                 'name': 'Torrentio',
@@ -42,7 +42,7 @@ void main() {
         final settings = UserSettings.fromProfile(
           _profile(const {}),
           secrets: {
-            'installed_addons': [
+            'installedAddons': [
               jsonEncode({
                 'id': 'torrentio',
                 'name': 'Torrentio',
@@ -61,7 +61,7 @@ void main() {
       final settings = UserSettings.fromProfile(
         _profile(const {}),
         secrets: {
-          'installed_addons': [
+          'installedAddons': [
             {
               'id': 'map_addon',
               'name': 'Map Addon',
@@ -155,8 +155,8 @@ void main() {
       final settings = UserSettings.fromProfile(
         profile,
         secrets: {
-          'torbox_key': 7,
-          'installed_addons': [
+          'torBoxKey': 7,
+          'installedAddons': [
             42,
             {
               'id': 'torrentio',
@@ -189,7 +189,7 @@ void main() {
 
       final settings = UserSettings.fromProfile(
         profile,
-        secrets: {'torbox_key': 'test_tb_key'},
+        secrets: {'torBoxKey': 'test_tb_key'},
       );
       expect(settings.enableTorBox, isTrue);
       expect(settings.torBoxKey, equals('test_tb_key'));
@@ -198,7 +198,7 @@ void main() {
       final json = settings.toPreferencesJson();
       expect(json['enableTorBox'], isTrue);
       expect(json['preferredDebridProvider'], equals('torbox'));
-      expect(settings.toSecretsJson()['torbox_key'], equals('test_tb_key'));
+      expect(settings.toSecretsJson()['torBoxKey'], equals('test_tb_key'));
     });
 
     // SEC-04: keys and addons are saved only to the owner-only row.
@@ -218,10 +218,10 @@ void main() {
         isNot(contains('secret')),
       );
       expect(settings.secretsChangedSince(const UserSettings()).keys, [
-        'real_debrid_key',
-        'torbox_key',
-        'opensubtitles_key',
-        'installed_addons',
+        'realDebridKey',
+        'torBoxKey',
+        'openSubtitlesKey',
+        'installedAddons',
       ]);
     });
   });
