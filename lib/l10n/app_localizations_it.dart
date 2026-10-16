@@ -1663,6 +1663,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get menuRemoveFromWatchlist => 'Rimuovi dalla Watchlist';
 
   @override
+  String get menuAddToFavorites => 'Aggiungi ai Preferiti';
+
+  @override
+  String get menuRemoveFromFavorites => 'Rimuovi dai Preferiti';
+
+  @override
   String get menuRemoveFromList => 'Rimuovi dalla Lista';
 
   @override

@@ -40,6 +40,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     final container = await pumpAppAndLogin(tester);
+    final l10n = AppLocalizations.of(tester.element(find.byType(AppShell)))!;
     final client = container.read(supabaseClientProvider);
     final lists = container.read(userListsProvider.notifier);
     Future<bool> inServerWatchlist() async {
@@ -74,7 +75,7 @@ void main() {
     openDetails(container, _movieId, 'movie');
     final bookmark = find.descendant(
       of: find.byType(DetailsHero),
-      matching: find.byIcon(Icons.bookmark_border),
+      matching: find.byTooltip(l10n.menuAddToWatchlist),
     );
     await pumpUntil(
       tester,
@@ -93,7 +94,7 @@ void main() {
       () => find
           .descendant(
             of: find.byType(DetailsHero),
-            matching: find.byIcon(Icons.bookmark),
+            matching: find.byTooltip(l10n.menuRemoveFromWatchlist),
           )
           .evaluate()
           .isNotEmpty,
@@ -103,7 +104,6 @@ void main() {
     // Profile → Overview: the movie in the recent movies.
     container.read(shellNavigatorKeyProvider).currentState!.pop();
     container.read(navIndexProvider.notifier).state = NavTab.profile;
-    final l10n = AppLocalizations.of(tester.element(find.byType(AppShell)))!;
     await pumpUntil(
       tester,
       () => find

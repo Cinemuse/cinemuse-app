@@ -536,6 +536,8 @@
   "menuMoreOptions": "Altre Opzioni",
   "menuAddToWatchlist": "Aggiungi alla Watchlist",
   "menuRemoveFromWatchlist": "Rimuovi dalla Watchlist",
+  "menuAddToFavorites": "Aggiungi ai Preferiti",
+  "menuRemoveFromFavorites": "Rimuovi dai Preferiti",
   "menuRemoveFromList": "Rimuovi dalla Lista",
   "menuMarkAsWatched": "Segna come Visto",
   "menuMarkAsUnwatched": "Segna come Non Visto",

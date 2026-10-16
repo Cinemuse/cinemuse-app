@@ -3056,6 +3056,18 @@ abstract class AppLocalizations {
   /// **'Remove from Watchlist'**
   String get menuRemoveFromWatchlist;
 
+  /// No description provided for @menuAddToFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Favorites'**
+  String get menuAddToFavorites;
+
+  /// No description provided for @menuRemoveFromFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Favorites'**
+  String get menuRemoveFromFavorites;
+
   /// No description provided for @menuRemoveFromList.
   ///
   /// In en, this message translates to:

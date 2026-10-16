@@ -599,6 +599,8 @@
   "menuMoreOptions": "More Options",
   "menuAddToWatchlist": "Add to Watchlist",
   "menuRemoveFromWatchlist": "Remove from Watchlist",
+  "menuAddToFavorites": "Add to Favorites",
+  "menuRemoveFromFavorites": "Remove from Favorites",
   "menuRemoveFromList": "Remove from List",
   "menuMarkAsWatched": "Mark as Watched",
   "menuMarkAsUnwatched": "Mark as Unwatched",

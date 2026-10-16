@@ -1644,6 +1644,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuRemoveFromWatchlist => 'Remove from Watchlist';
 
   @override
+  String get menuAddToFavorites => 'Add to Favorites';
+
+  @override
+  String get menuRemoveFromFavorites => 'Remove from Favorites';
+
+  @override
   String get menuRemoveFromList => 'Remove from List';
 
   @override

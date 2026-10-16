@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +27,7 @@ class SocialActionsGroup extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
@@ -40,6 +42,9 @@ class SocialActionsGroup extends ConsumerWidget {
           _buildIcon(
             _SocialIcon(
               icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+              tooltip: isFavorite
+                  ? l10n.menuRemoveFromFavorites
+                  : l10n.menuAddToFavorites,
               color: isFavorite
                   ? AppTheme.favorites
                   : theme.colorScheme.onSurface,
@@ -54,6 +59,9 @@ class SocialActionsGroup extends ConsumerWidget {
           _buildIcon(
             _SocialIcon(
               icon: isInWatchlist ? Icons.bookmark : Icons.bookmark_border,
+              tooltip: isInWatchlist
+                  ? l10n.menuRemoveFromWatchlist
+                  : l10n.menuAddToWatchlist,
               color: isInWatchlist
                   ? AppTheme.watchlist
                   : theme.colorScheme.onSurface,
@@ -66,7 +74,11 @@ class SocialActionsGroup extends ConsumerWidget {
           ),
           const _VerticalDivider(),
           _buildIcon(
-            _SocialIcon(icon: Icons.format_list_bulleted, onTap: onListTap),
+            _SocialIcon(
+              icon: Icons.format_list_bulleted,
+              tooltip: l10n.detailsAddToList,
+              onTap: onListTap,
+            ),
           ),
         ],
       ),
@@ -80,10 +92,16 @@ class SocialActionsGroup extends ConsumerWidget {
 
 class _SocialIcon extends StatefulWidget {
   final IconData icon;
+  final String tooltip;
   final Color? color;
   final VoidCallback onTap;
 
-  const _SocialIcon({required this.icon, this.color, required this.onTap});
+  const _SocialIcon({
+    required this.icon,
+    required this.tooltip,
+    this.color,
+    required this.onTap,
+  });
 
   @override
   State<_SocialIcon> createState() => _SocialIconState();
@@ -123,6 +141,7 @@ class _SocialIconState extends State<_SocialIcon>
     final effectiveColor = widget.color ?? theme.colorScheme.onSurface;
 
     return DpadFocusable(
+      tooltip: widget.tooltip,
       autoScroll: false,
       onTap: () {
         _controller.forward(from: 0.0);

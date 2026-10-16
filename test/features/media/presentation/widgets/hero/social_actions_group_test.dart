@@ -8,13 +8,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../../helpers/offline_lists.dart';
 
-// REV-203: offline, the bookmark failed with no message.
 void main() {
   final l10n = AppLocalizationsEn();
 
-  testWidgets('offline bookmark: a red message, still not bookmarked', (
-    tester,
-  ) async {
+  Future<void> pumpGroup(
+    WidgetTester tester, {
+    bool isFavorite = false,
+    bool isInWatchlist = false,
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: offlineListsOverrides(),
@@ -29,8 +30,8 @@ void main() {
                 titleEn: 'Some Movie',
                 updatedAt: DateTime.utc(2026),
               ),
-              isFavorite: false,
-              isInWatchlist: false,
+              isFavorite: isFavorite,
+              isInWatchlist: isInWatchlist,
               onListTap: () {},
             ),
           ),
@@ -38,6 +39,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+  }
+
+  // REV-203: offline, the bookmark failed with no message.
+  testWidgets('offline bookmark: a red message, still not bookmarked', (
+    tester,
+  ) async {
+    await pumpGroup(tester);
 
     await tester.tap(find.byIcon(Icons.bookmark_border));
     await tester.pump();
@@ -46,4 +54,30 @@ void main() {
     expect(find.text(l10n.failureNetwork), findsOneWidget);
     expect(find.byIcon(Icons.bookmark_border), findsOneWidget);
   });
+
+  // REV-304: the three icons had no tooltip.
+  for (final (saved, tooltips) in [
+    (
+      false,
+      [l10n.menuAddToFavorites, l10n.menuAddToWatchlist, l10n.detailsAddToList],
+    ),
+    (
+      true,
+      [
+        l10n.menuRemoveFromFavorites,
+        l10n.menuRemoveFromWatchlist,
+        l10n.detailsAddToList,
+      ],
+    ),
+  ]) {
+    testWidgets('${saved ? 'saved' : 'not saved'}: tooltips $tooltips', (
+      tester,
+    ) async {
+      await pumpGroup(tester, isFavorite: saved, isInWatchlist: saved);
+
+      for (final tooltip in tooltips) {
+        expect(find.byTooltip(tooltip), findsOneWidget);
+      }
+    });
+  }
 }
