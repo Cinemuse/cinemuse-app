@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/menu/menu_focus_ring.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 
@@ -156,7 +157,7 @@ class AppMenu {
       ),
       items: options
           .map(
-            (option) => PopupMenuItem(
+            (option) => AppPopupMenuItem(
               onTap: option.onTap,
               child: Row(
                 children: [

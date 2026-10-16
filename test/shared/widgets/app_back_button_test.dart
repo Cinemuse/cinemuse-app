@@ -1,7 +1,9 @@
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:cinemuse_app/l10n/app_localizations_it.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -45,6 +47,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(calls, 1);
+  });
+
+  // REV-252: the round button gets a round ring.
+  testWidgets('focused button shows a round ring', (tester) async {
+    await pumpButton(tester, () {});
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pumpAndSettle();
+
+    final ring = tester.widget<FocusRing>(find.byType(FocusRing));
+    expect(ring.isVisible, isTrue);
+    expect(ring.borderRadius, AppTheme.radiusFull);
   });
 
   // REV-253: the tooltip is in the app's language.

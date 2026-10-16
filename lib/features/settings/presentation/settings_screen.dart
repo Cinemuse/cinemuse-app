@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
@@ -88,61 +89,66 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   final category = categories[index];
                   final isActive = _activeCategory == category['id'];
                   final showHighlight = isActive && !isMobile;
-                  return Material(
-                    color: showHighlight
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.transparent,
-                    child: InkWell(
-                      mouseCursor: AppTheme.clickCursor,
-                      onTap: () {
-                        setState(() {
-                          _activeCategory = category['id'] as String;
-                          if (isMobile) _showMobileContent = true;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          border: showHighlight
-                              ? const Border(
-                                  right: BorderSide(
-                                    color: AppTheme.accent,
-                                    width: 2,
-                                  ),
-                                )
-                              : null,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              category['icon'] as IconData,
-                              size: 20,
-                              color: showHighlight
-                                  ? Colors.white
-                                  : AppTheme.textMuted,
-                            ),
-                            const SizedBox(width: 16),
-                            Text(
-                              category['label'] as String,
-                              style: TextStyle(
+                  // Rows sit edge to edge: the ring goes on the row's edge.
+                  return FocusRingFollower(
+                    borderRadius: BorderRadius.zero,
+                    isInside: true,
+                    child: Material(
+                      color: showHighlight
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.transparent,
+                      child: InkWell(
+                        mouseCursor: AppTheme.clickCursor,
+                        onTap: () {
+                          setState(() {
+                            _activeCategory = category['id'] as String;
+                            if (isMobile) _showMobileContent = true;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            border: showHighlight
+                                ? const Border(
+                                    right: BorderSide(
+                                      color: AppTheme.accent,
+                                      width: 2,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                category['icon'] as IconData,
+                                size: 20,
                                 color: showHighlight
                                     ? Colors.white
                                     : AppTheme.textMuted,
-                                fontWeight: FontWeight.w500,
                               ),
-                            ),
-                            if (isMobile) ...[
-                              const Spacer(),
-                              const Icon(
-                                Icons.chevron_right,
-                                color: AppTheme.textMuted,
-                                size: 20,
+                              const SizedBox(width: 16),
+                              Text(
+                                category['label'] as String,
+                                style: TextStyle(
+                                  color: showHighlight
+                                      ? Colors.white
+                                      : AppTheme.textMuted,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
+                              if (isMobile) ...[
+                                const Spacer(),
+                                const Icon(
+                                  Icons.chevron_right,
+                                  color: AppTheme.textMuted,
+                                  size: 20,
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
                     ),

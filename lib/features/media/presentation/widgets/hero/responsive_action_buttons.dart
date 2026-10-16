@@ -7,6 +7,7 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/menu/menu_focus_ring.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -278,7 +279,7 @@ class _SplitPlayButtonState extends State<_SplitPlayButton> {
       ),
       offset: const Offset(0, 48),
       itemBuilder: (_) => widget.dropdownItems.map((item) {
-        return PopupMenuItem<int>(
+        return AppPopupMenuItem<int>(
           onTap: item.onTap,
           child: Row(
             children: [

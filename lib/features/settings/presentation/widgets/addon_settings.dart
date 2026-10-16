@@ -11,6 +11,7 @@ import 'package:cinemuse_app/features/settings/presentation/widgets/settings_wid
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_toggle.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/menu/menu_focus_ring.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -164,7 +165,7 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                       mouseCursor: AppTheme.clickCursor,
                       dropdownMenuItemMouseCursor: AppTheme.clickCursor,
                       underline: const SizedBox(),
-                      items: const [
+                      items: withMenuFocusRings(const [
                         DropdownMenuItem(
                           value: 'realdebrid',
                           child: Text(
@@ -179,7 +180,7 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
-                      ],
+                      ]),
                       onChanged: (val) {
                         if (val != null) {
                           saveSettings(context, ref, {

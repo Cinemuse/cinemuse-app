@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 
 class SettingsSection extends StatelessWidget {
@@ -168,19 +169,28 @@ class SettingsTile extends StatelessWidget {
       ),
     );
 
+    final tile = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        mouseCursor: AppTheme.clickCursor,
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16), // Matches the card
+        child: content,
+      ),
+    );
+
     return Column(
       children: [
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            mouseCursor: AppTheme.clickCursor,
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(
-              16,
-            ), // Increased from 8 to match card
-            child: content,
-          ),
-        ),
+        // Without onTap the row can't take focus; its trailing control
+        // shows its own ring.
+        if (onTap != null)
+          FocusRingFollower(
+            borderRadius: BorderRadius.circular(16),
+            isInside: true,
+            child: tile,
+          )
+        else
+          tile,
         if (showDivider)
           Divider(
             height: 1,

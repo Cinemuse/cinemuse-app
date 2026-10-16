@@ -12,6 +12,7 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
 
 class HeroSection extends ConsumerStatefulWidget {
   final List<MediaItem> items;
@@ -505,43 +506,48 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOutCubic,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-      decoration: BoxDecoration(
-        color: _isHeroFocused
-            ? theme.focusColor
-            : AppTheme.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
+    // The hero's own ring is off: the pill shows it (REV-252).
+    return FocusRing(
+      isVisible: _isHeroFocused,
+      borderRadius: BorderRadius.circular(24),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(
           color: _isHeroFocused
-              ? primary.withValues(alpha: 0.5)
-              : AppTheme.border,
-          width: 1.0,
+              ? theme.focusColor
+              : AppTheme.surface.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: _isHeroFocused
+                ? primary.withValues(alpha: 0.5)
+                : AppTheme.border,
+            width: 1.0,
+          ),
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.info_outline_rounded,
-            size: 20,
-            color: _isHeroFocused ? primary : AppTheme.textSecondary,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            l10n.homeMoreInfo,
-            style: TextStyle(
-              color: _isHeroFocused
-                  ? AppTheme.textWhite
-                  : AppTheme.textSecondary,
-              fontSize: 15,
-              fontWeight: _isHeroFocused ? FontWeight.bold : FontWeight.w500,
-              letterSpacing: 0.5,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.info_outline_rounded,
+              size: 20,
+              color: _isHeroFocused ? primary : AppTheme.textSecondary,
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Text(
+              l10n.homeMoreInfo,
+              style: TextStyle(
+                color: _isHeroFocused
+                    ? AppTheme.textWhite
+                    : AppTheme.textSecondary,
+                fontSize: 15,
+                fontWeight: _isHeroFocused ? FontWeight.bold : FontWeight.w500,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

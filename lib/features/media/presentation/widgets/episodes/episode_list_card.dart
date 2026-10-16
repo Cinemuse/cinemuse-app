@@ -174,7 +174,6 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
             Positioned.fill(
               child: CardFocusBorder(
                 isFocused: isFocused,
-                isHovered: isHovered,
                 borderRadius: AppTheme.radiusLg,
               ),
             ),
@@ -504,6 +503,7 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
             child: Builder(
               builder: (buttonContext) {
                 return HoverScale(
+                  borderRadius: AppTheme.radiusFull,
                   onTap: () {
                     _showContextMenu(context, anchorContext: buttonContext);
                   },
@@ -531,6 +531,7 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
             Tooltip(
               message: l10n.detailsTvTimeComments,
               child: HoverScale(
+                borderRadius: AppTheme.radiusFull,
                 onTap: widget.onShowComments,
                 child: Container(
                   padding: const EdgeInsets.all(8),
@@ -602,6 +603,7 @@ class MarkWatchedButton extends StatelessWidget {
           ? l10n.detailsTooltipWatched
           : l10n.detailsTooltipMarkWatched,
       child: HoverScale(
+        borderRadius: AppTheme.radiusFull,
         onTap: onTap,
         child: Container(
           padding: EdgeInsets.symmetric(

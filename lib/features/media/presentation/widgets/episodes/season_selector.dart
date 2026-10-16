@@ -4,6 +4,7 @@ import 'package:cinemuse_app/features/media/domain/episode_item.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/menu/menu_focus_ring.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The "Season N" dropdown above a show's episodes.
@@ -89,7 +90,7 @@ class _SeasonSelectorState extends ConsumerState<SeasonSelector> {
         ),
         itemBuilder: (context) => widget.seasons
             .map(
-              (s) => PopupMenuItem<int>(
+              (s) => AppPopupMenuItem<int>(
                 value: s.seasonNumber,
                 child: Text(
                   l10n.detailsSeasonNumber(s.seasonNumber),

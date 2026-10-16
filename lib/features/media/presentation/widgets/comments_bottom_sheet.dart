@@ -2,6 +2,7 @@ import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/menu/menu_focus_ring.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -369,7 +370,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     T currentValue,
   ) {
     final isSelected = value == currentValue;
-    return PopupMenuItem<T>(
+    return AppPopupMenuItem<T>(
       value: value,
       child: Text(
         label,

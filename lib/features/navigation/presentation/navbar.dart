@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/menu/menu_focus_ring.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -362,7 +363,7 @@ class _ProfileMenu extends StatelessWidget {
     required Color iconColor,
     Color? textColor,
   }) {
-    return PopupMenuItem(
+    return AppPopupMenuItem(
       value: action,
       // Taller rows on touch screens.
       height: isCompact ? 48 : 40,

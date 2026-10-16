@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -6,33 +7,11 @@ import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
 
 void main() {
-  testWidgets('CardFocusBorder renders inactive border when unfocused', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.darkTheme,
-        home: const Scaffold(body: CardFocusBorder()),
-      ),
-    );
-
-    final containerFinder = find.byType(AnimatedContainer);
-    expect(containerFinder, findsOneWidget);
-
-    final container = tester.widget<AnimatedContainer>(containerFinder);
-    final decoration = container.decoration as BoxDecoration;
-    final border = decoration.border as Border;
-
-    expect(border.top.color, equals(Colors.white.withValues(alpha: 0.1)));
-    expect(border.top.width, equals(1.0));
-    expect(decoration.boxShadow, isNull);
-  });
-
-  // REV-252: mouse and remote get the same pink border; only the remote
-  // adds the ring, drawn around the picture (the card's DpadFocusable has
+  // REV-252: no frame on hover or focus, only the subtle outline; the
+  // remote adds the ring around the picture (the card's DpadFocusable has
   // its own ring off).
   for (final isViaRemote in [true, false]) {
-    testWidgets('CardFocusBorder: pink border, ring only via remote '
+    testWidgets('CardFocusBorder: no frame, ring only via remote '
         '(${isViaRemote ? 'remote' : 'mouse'})', (tester) async {
       final focusNode = FocusNode();
       addTearDown(focusNode.dispose);
@@ -41,30 +20,45 @@ void main() {
         MaterialApp(
           theme: AppTheme.darkTheme,
           home: Scaffold(
-            body: isViaRemote
-                ? DpadFocusable(
-                    focusNode: focusNode,
-                    autofocus: true,
-                    showFocusRing: false,
-                    child: const CardFocusBorder(),
-                  )
-                : const CardFocusBorder(isHovered: true),
+            body: Center(
+              child: DpadFocusable(
+                focusNode: focusNode,
+                autofocus: isViaRemote,
+                showFocusRing: false,
+                onTap: () {},
+                child: const SizedBox(
+                  width: 100,
+                  height: 150,
+                  child: CardFocusBorder(),
+                ),
+              ),
+            ),
           ),
         ),
       );
+      if (!isViaRemote) {
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        addTearDown(mouse.removePointer);
+        await mouse.addPointer(location: Offset.zero);
+        await mouse.moveTo(tester.getCenter(find.byType(CardFocusBorder)));
+      }
       await tester.pumpAndSettle();
 
-      final container = tester.widget<AnimatedContainer>(
-        find.byType(AnimatedContainer),
+      final scope = tester.widget<DpadFocusScope>(find.byType(DpadFocusScope));
+      final outline = tester.widget<Container>(
+        find.descendant(
+          of: find.byType(CardFocusBorder),
+          matching: find.byType(Container),
+        ),
       );
-      final decoration = container.decoration as BoxDecoration;
-      final border = decoration.border as Border;
+      final border = (outline.decoration as BoxDecoration).border as Border;
       final shownRings = tester
           .widgetList<FocusRing>(find.byType(FocusRing))
           .where((ring) => ring.isVisible);
 
-      expect(border.top.color, equals(AppTheme.accent));
-      expect(border.top.width, equals(2.0));
+      expect(isViaRemote ? scope.isFocused : scope.isHovered, isTrue);
+      expect(border.top.color, Colors.white.withValues(alpha: 0.1));
+      expect(border.top.width, 1.0);
       expect(shownRings, hasLength(isViaRemote ? 1 : 0));
     });
   }

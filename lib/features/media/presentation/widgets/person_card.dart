@@ -68,7 +68,6 @@ class PersonCard extends StatelessWidget {
                       Positioned.fill(
                         child: CardFocusBorder(
                           isFocused: isFocused,
-                          isHovered: isHovered,
                           borderRadius: AppTheme.radiusLg,
                         ),
                       ),

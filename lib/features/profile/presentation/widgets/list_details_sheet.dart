@@ -9,6 +9,7 @@ import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/menu/menu_focus_ring.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -465,7 +466,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                             }
                           },
                           itemBuilder: (context) => [
-                            PopupMenuItem(
+                            AppPopupMenuItem(
                               value: 'edit',
                               child: Row(
                                 children: [
@@ -483,7 +484,7 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                               ),
                             ),
                             if (widget.onDelete != null)
-                              PopupMenuItem(
+                              AppPopupMenuItem(
                                 value: 'delete',
                                 child: Row(
                                   children: [

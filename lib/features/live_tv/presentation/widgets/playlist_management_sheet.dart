@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/menu/menu_focus_ring.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:file_picker/file_picker.dart';
@@ -434,14 +435,16 @@ class _AddRemotePlaylistDialogState extends State<_AddRemotePlaylistDialog> {
               mouseCursor: AppTheme.clickCursor,
               dropdownMenuItemMouseCursor: AppTheme.clickCursor,
               decoration: InputDecoration(labelText: l10n.liveTvPlaylistFormat),
-              items: PlaylistType.values
-                  .map(
-                    (e) => DropdownMenuItem(
-                      value: e,
-                      child: Text(e.name.toUpperCase()),
-                    ),
-                  )
-                  .toList(),
+              items: withMenuFocusRings(
+                PlaylistType.values
+                    .map(
+                      (e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(e.name.toUpperCase()),
+                      ),
+                    )
+                    .toList(),
+              ),
               onChanged: (val) {
                 if (val != null) setState(() => _type = val);
               },

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/menu/menu_focus_ring.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/refresh_user_data.dart';
@@ -919,7 +920,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
               });
             }
           },
-          items: [
+          items: withMenuFocusRings([
             DropdownMenuItem(
               value: HistorySortOption.recentlyWatched,
               child: Row(
@@ -980,7 +981,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
                 ],
               ),
             ),
-          ],
+          ]),
         ),
       ),
     );

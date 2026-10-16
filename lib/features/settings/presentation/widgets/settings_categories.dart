@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
+import 'package:cinemuse_app/shared/widgets/menu/menu_focus_ring.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -276,35 +278,37 @@ Widget buildSmallDropdown<T>({
   required List<DropdownMenuItem<T>> items,
   required ValueChanged<T?> onChanged,
 }) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12),
-    height: 38, // Slightly more height for better text centering
-    decoration: BoxDecoration(
-      color: Colors.white.withAlpha(18), // 0.07 * 255
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.white.withAlpha(25)), // 0.1 * 255
-    ),
-    child: DropdownButtonHideUnderline(
-      child: DropdownButton<T>(
-        value: value,
-        items: items,
-        onChanged: onChanged,
-        mouseCursor: AppTheme.clickCursor,
-        dropdownMenuItemMouseCursor: AppTheme.clickCursor,
-        dropdownColor: AppTheme.surface,
+  return FocusRingFollower(
+    borderRadius: BorderRadius.circular(16),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: 38, // Slightly more height for better text centering
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(18), // 0.07 * 255
         borderRadius: BorderRadius.circular(16),
-        isDense: true, // Crucial to remove internal padding
-        alignment: Alignment.center,
-        underline: const SizedBox.shrink(),
-        icon: const Icon(
-          Icons.keyboard_arrow_down,
-          color: AppTheme.textMuted,
-          size: 18,
-        ),
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 14,
-          fontWeight: FontWeight.w600, // Make text a bit bolder
+        border: Border.all(color: Colors.white.withAlpha(25)), // 0.1 * 255
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          items: withMenuFocusRings(items),
+          onChanged: onChanged,
+          mouseCursor: AppTheme.clickCursor,
+          dropdownMenuItemMouseCursor: AppTheme.clickCursor,
+          dropdownColor: AppTheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          isDense: true, // Crucial to remove internal padding
+          alignment: Alignment.center,
+          icon: const Icon(
+            Icons.keyboard_arrow_down,
+            color: AppTheme.textMuted,
+            size: 18,
+          ),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w600, // Make text a bit bolder
+          ),
         ),
       ),
     ),
