@@ -21,6 +21,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/cursor_helpers.dart';
+import '../../../helpers/focus_helpers.dart';
 
 class MockUnifiedStreamResolver extends Mock implements UnifiedStreamResolver {}
 
@@ -419,16 +420,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final focusWidget = tester.widget<Focus>(
-        find
-            .descendant(
-              of: find.byType(EpisodeListCard),
-              matching: find.byType(Focus),
-            )
-            .first,
-      );
-      focusWidget.focusNode?.requestFocus();
-      await tester.pumpAndSettle();
+      await tabTo(tester, find.text('Pilot'));
 
       await tester.sendKeyEvent(LogicalKeyboardKey.select);
       await tester.pumpAndSettle();
@@ -452,16 +444,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final focusWidget = tester.widget<Focus>(
-          find
-              .descendant(
-                of: find.byType(PersonCard),
-                matching: find.byType(Focus),
-              )
-              .first,
-        );
-        focusWidget.focusNode?.requestFocus();
-        await tester.pumpAndSettle();
+        await tabTo(tester, find.text('Actor Name'));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         await tester.pumpAndSettle();
@@ -486,16 +469,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final focusWidget = tester.widget<Focus>(
-          find
-              .descendant(
-                of: find.byType(VideoCard),
-                matching: find.byType(Focus),
-              )
-              .first,
-        );
-        focusWidget.focusNode?.requestFocus();
-        await tester.pumpAndSettle();
+        await tabTo(tester, find.text('Official Trailer'));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         await tester.pumpAndSettle();
@@ -533,16 +507,7 @@ void main() {
         expect(find.text('EP 3'), findsOneWidget);
         expect(find.text('52m'), findsOneWidget);
 
-        final focusWidget = tester.widget<Focus>(
-          find
-              .descendant(
-                of: find.byType(EpisodeCarouselCard),
-                matching: find.byType(Focus),
-              )
-              .first,
-        );
-        focusWidget.focusNode?.requestFocus();
-        await tester.pumpAndSettle();
+        await tabTo(tester, find.text('3. The Great Escape'));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         await tester.pumpAndSettle();
@@ -635,30 +600,18 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Focus the second card (index 1)
-        final focusWidgets = tester
-            .widgetList<Focus>(
-              find.descendant(
-                of: find.byType(EpisodeCarouselCard),
-                matching: find.byType(Focus),
-              ),
-            )
-            .toList();
-        // Wait for initial row focus (which focuses the first card at index 0)
-        focusWidgets[0].focusNode?.requestFocus();
-        await tester.pumpAndSettle();
-        expect(FocusManager.instance.primaryFocus, focusWidgets[0].focusNode);
+        await tabTo(tester, find.text('1. Episode 1'));
 
-        // Navigate right to index 1
+        // Navigate right to the second card
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await tester.pumpAndSettle();
-        expect(FocusManager.instance.primaryFocus, focusWidgets[1].focusNode);
+        expect(isFocused(find.text('2. Episode 2')), isTrue);
 
-        // Press arrowLeft from index 1: should move focus to index 0
+        // Press arrowLeft from the second card: back to the first
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
         await tester.pumpAndSettle();
 
-        expect(FocusManager.instance.primaryFocus, focusWidgets[0].focusNode);
+        expect(isFocused(find.text('1. Episode 1')), isTrue);
       },
     );
 
@@ -681,24 +634,13 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final focusWidgets = tester
-            .widgetList<Focus>(
-              find.descendant(
-                of: find.byType(EpisodeCarouselCard),
-                matching: find.byType(Focus),
-              ),
-            )
-            .toList();
+        await tabTo(tester, find.text('1. Episode 1'));
 
-        focusWidgets[0].focusNode?.requestFocus();
-        await tester.pumpAndSettle();
-        expect(FocusManager.instance.primaryFocus, focusWidgets[0].focusNode);
-
-        // Press arrowLeft from index 0: focus must not escape the row
+        // Press arrowLeft from the first card: focus must not escape the row
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
         await tester.pumpAndSettle();
 
-        expect(FocusManager.instance.primaryFocus, focusWidgets[0].focusNode);
+        expect(isFocused(find.text('1. Episode 1')), isTrue);
       },
     );
 
