@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/features/home/presentation/widgets/hero/hero_indicator_dot.dart';
 import 'package:cinemuse_app/features/home/presentation/widgets/hero_section.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -41,9 +42,7 @@ void main() {
     );
     await tester.pump(const Duration(seconds: 1));
 
-    final dots = find.byWidgetPredicate(
-      (w) => w.runtimeType.toString() == '_HeroIndicatorDot',
-    );
+    final dots = find.byType(HeroIndicatorDot);
     expect(dots, findsNWidgets(3));
     for (var i = 0; i < 3; i++) {
       await expectHandOver(tester, dots.at(i));

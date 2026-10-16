@@ -5,25 +5,22 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/features/home/presentation/widgets/hero/hero_controls_row.dart';
+import 'package:cinemuse_app/features/home/presentation/widgets/hero/hero_slide.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
-import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
-import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
 
+/// The Home hero carousel: endless paging, auto-advance, arrow keys and
+/// navigation. Each page is a [HeroSlide].
 class HeroSection extends ConsumerStatefulWidget {
   final List<MediaItem> items;
   final FocusNode? focusNode;
 
-  HeroSection({
-    super.key,
-    List<MediaItem>? items,
-    MediaItem? media,
-    this.focusNode,
-  }) : items = items ?? (media != null ? [media] : const []);
+  const HeroSection({super.key, required this.items, this.focusNode});
 
   /// Responsive hero height: 46% of screen height on mobile, 75% on desktop/TV.
   static double getHeroHeight(BuildContext context) {
@@ -205,7 +202,6 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     final isMobile = Breakpoints.isCompact(context);
     final isWidescreen = !isMobile;
     final heroHeight = HeroSection.getHeroHeight(context);
-    final l10n = AppLocalizations.of(context)!;
     final hasMultipleItems = widget.items.length > 1;
     final itemCount = hasMultipleItems
         ? widget.items.length * _infiniteMultiplier
@@ -224,29 +220,43 @@ class _HeroSectionState extends ConsumerState<HeroSection>
             onPageChanged: _onPageChanged,
             itemBuilder: (context, index) {
               final item = widget.items[index % widget.items.length];
-              return _buildSlide(
-                context,
-                item,
-                isMobile,
-                isWidescreen,
-                heroHeight,
+              return HeroSlide(
+                item: item,
+                isMobile: isMobile,
+                isWidescreen: isWidescreen,
+                isHeroFocused: _isHeroFocused,
+                heroHeight: heroHeight,
+                onPlay: () => _navigateToPlayer(context, item),
+                onDetails: () => _navigateToDetails(context, item),
               );
             },
           ),
 
           // 2. Bottom Seal (prevents hairline backdrop leaks during scrolling)
-          _buildBottomSeal(context),
+          Positioned(
+            bottom: -1,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 2,
+              color: Theme.of(context).scaffoldBackgroundColor,
+            ),
+          ),
 
           // 3. Carousel Controls (Indicators + Pause/Play Toggle)
           if (widget.items.length > 1)
             Positioned(
               right: AppTheme.getResponsiveHorizontalPadding(context),
               bottom: isMobile ? 48 : 84,
-              child: _buildControlsRow(
-                l10n,
-                widget.items.length,
-                isMobile,
-                isWidescreen,
+              child: HeroControlsRow(
+                total: widget.items.length,
+                currentIndex: _currentIndex,
+                isMobile: isMobile,
+                isWidescreen: isWidescreen,
+                isAutoPlayEnabled: _isAutoPlayEnabled,
+                onDotTap: (index) =>
+                    _onIndicatorTap(index, widget.items.length),
+                onToggleAutoPlay: _toggleAutoPlay,
               ),
             ),
         ],
@@ -307,387 +317,6 @@ class _HeroSectionState extends ConsumerState<HeroSection>
     return KeyEventResult.ignored;
   }
 
-  Widget _buildSlide(
-    BuildContext context,
-    MediaItem item,
-    bool isMobile,
-    bool isWidescreen,
-    double heroHeight,
-  ) {
-    final backdrop = item.backdropPath;
-    final imageUrl = TmdbImageHelper.backdropUrl(context, backdrop);
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        _buildBackgroundImage(context, imageUrl, heroHeight),
-        ..._buildGradients(context, isMobile),
-        // Ambient dimming when hero is not focused in widescreen mode
-        if (isWidescreen)
-          Positioned.fill(
-            child: IgnorePointer(
-              child: AnimatedOpacity(
-                opacity: _isHeroFocused ? 0.0 : 0.4,
-                duration: const Duration(milliseconds: 300),
-                child: Container(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                ),
-              ),
-            ),
-          ),
-        Positioned(
-          left: AppTheme.getResponsiveHorizontalPadding(context),
-          bottom: isMobile ? 36 : 80,
-          right: isMobile ? 90 : 180, // Leave room for indicators on the right
-          child: _buildContent(context, item, isMobile, isWidescreen),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBackgroundImage(
-    BuildContext context,
-    String? imageUrl,
-    double heroHeight,
-  ) {
-    final surfaceColor = Theme.of(context).colorScheme.surface;
-    if (imageUrl != null) {
-      final pixelRatio = MediaQuery.devicePixelRatioOf(context);
-      final cacheHeight = (heroHeight * pixelRatio).round();
-
-      return CachedNetworkImage(
-        imageUrl: imageUrl,
-        fit: BoxFit.cover,
-        alignment: Alignment.topCenter,
-        memCacheHeight: cacheHeight,
-        placeholder: (context, url) => Container(color: surfaceColor),
-        errorWidget: (context, url, error) => Container(color: surfaceColor),
-      );
-    }
-    return Container(color: surfaceColor);
-  }
-
-  List<Widget> _buildGradients(BuildContext context, bool isMobile) {
-    final bgColor = Theme.of(context).scaffoldBackgroundColor;
-    return [
-      // Left to Right (Primary -> Transparent)
-      Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [
-              bgColor,
-              bgColor.withValues(alpha: isMobile ? 0.35 : 0.4),
-              Colors.transparent,
-            ],
-            stops: isMobile ? const [0.0, 0.3, 0.85] : const [0.0, 0.4, 1.0],
-          ),
-        ),
-      ),
-
-      // Bottom to Top (Primary -> Transparent)
-      Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-            colors: [
-              bgColor,
-              bgColor,
-              bgColor.withValues(alpha: isMobile ? 0.45 : 0.6),
-              Colors.transparent,
-            ],
-            stops: isMobile
-                ? const [0.0, 0.08, 0.35, 1.0]
-                : const [0.0, 0.05, 0.3, 1.0],
-          ),
-        ),
-      ),
-    ];
-  }
-
-  Widget _buildBottomSeal(BuildContext context) {
-    return Positioned(
-      bottom: -1,
-      left: 0,
-      right: 0,
-      child: Container(
-        height: 2,
-        color: Theme.of(context).scaffoldBackgroundColor,
-      ),
-    );
-  }
-
-  Widget _buildControlsRow(
-    AppLocalizations l10n,
-    int total,
-    bool isMobile,
-    bool isWidescreen,
-  ) {
-    if (isWidescreen) {
-      return _buildIndicators(total, isMobile);
-    }
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        _buildIndicators(total, isMobile),
-        const SizedBox(width: 4),
-        _buildAutoPlayToggleButton(l10n, isMobile),
-      ],
-    );
-  }
-
-  Widget _buildAutoPlayToggleButton(AppLocalizations l10n, bool isMobile) {
-    final tooltip = _isAutoPlayEnabled
-        ? l10n.homeHeroPauseCarousel
-        : l10n.homeHeroResumeCarousel;
-
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: _toggleAutoPlay,
-      iconSize: isMobile ? 20 : 22,
-      color: AppTheme.textWhite.withValues(alpha: 0.85),
-      icon: Icon(
-        _isAutoPlayEnabled ? Icons.pause_rounded : Icons.play_arrow_rounded,
-      ),
-    );
-  }
-
-  Widget _buildIndicators(int total, bool isMobile) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(total, (index) {
-        return _HeroIndicatorDot(
-          isActive: index == _currentIndex,
-          isMobile: isMobile,
-          onTap: () => _onIndicatorTap(index, total),
-        );
-      }),
-    );
-  }
-
-  Widget _buildContent(
-    BuildContext context,
-    MediaItem item,
-    bool isMobile,
-    bool isWidescreen,
-  ) {
-    final l10n = AppLocalizations.of(context)!;
-    final locale = Localizations.localeOf(context);
-    final title =
-        item.getLocalizedTitle(locale.languageCode) ?? l10n.commonUnknown;
-    final overview = item.overview ?? '';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildFeaturedTag(context, l10n, isMobile),
-        SizedBox(height: isMobile ? 8 : 16),
-        _buildTitle(title, isMobile),
-        if (!isMobile) ...[
-          const SizedBox(height: 16),
-          _buildOverview(context, overview),
-        ],
-        if (isWidescreen) ...[
-          const SizedBox(height: 20),
-          _buildTvInfoPill(context, l10n),
-        ] else ...[
-          const SizedBox(height: 16),
-          _buildActionButtons(context, item, l10n),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildTvInfoPill(BuildContext context, AppLocalizations l10n) {
-    final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
-
-    // The hero's own ring is off: the pill shows it (REV-252).
-    return FocusRing(
-      isVisible: _isHeroFocused,
-      borderRadius: BorderRadius.circular(24),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        decoration: BoxDecoration(
-          color: _isHeroFocused
-              ? theme.focusColor
-              : AppTheme.surface.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: _isHeroFocused
-                ? primary.withValues(alpha: 0.5)
-                : AppTheme.border,
-            width: 1.0,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.info_outline_rounded,
-              size: 20,
-              color: _isHeroFocused ? primary : AppTheme.textSecondary,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              l10n.homeMoreInfo,
-              style: TextStyle(
-                color: _isHeroFocused
-                    ? AppTheme.textWhite
-                    : AppTheme.textSecondary,
-                fontSize: 15,
-                fontWeight: _isHeroFocused ? FontWeight.bold : FontWeight.w500,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeaturedTag(
-    BuildContext context,
-    AppLocalizations l10n,
-    bool isMobile,
-  ) {
-    final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
-
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 8 : 12,
-        vertical: isMobile ? 4 : 6,
-      ),
-      decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: primary.withValues(alpha: 0.5)),
-      ),
-      child: Text(
-        l10n.commonFeatured,
-        style: TextStyle(
-          color: primary,
-          fontWeight: FontWeight.bold,
-          letterSpacing: isMobile ? 1.5 : 2,
-          fontSize: isMobile ? 10 : 12,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTitle(String title, bool isMobile) {
-    final style = isMobile
-        ? const TextStyle(
-            fontFamily: 'Outfit',
-            fontSize: 24,
-            fontWeight: FontWeight.w800,
-            height: 1.15,
-            color: AppTheme.textWhite,
-          )
-        : DesktopTypography.heroTitle;
-
-    return Text(
-      title,
-      style: style,
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-
-  Widget _buildOverview(BuildContext context, String overview) {
-    return SizedBox(
-      width: 600,
-      child: Text(
-        overview,
-        maxLines: 3,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-          color: AppTheme.textSecondary,
-          fontSize: 18,
-          fontWeight: FontWeight.w500,
-          height: 1.5,
-          letterSpacing: 0.0,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButtons(
-    BuildContext context,
-    MediaItem item,
-    AppLocalizations l10n,
-  ) {
-    final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
-
-    return FocusTraversalGroup(
-      child: Row(
-        children: [
-          ElevatedButton.icon(
-            onPressed: () => _navigateToPlayer(context, item),
-            icon: const Icon(Icons.play_arrow_rounded, size: 24),
-            label: Text(l10n.detailsPlayNow),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primary,
-              foregroundColor: AppTheme.textWhite,
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-              textStyle: theme.textTheme.bodyMedium!.copyWith(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-              ),
-              shape: const StadiumBorder(),
-              elevation: 6,
-              shadowColor: primary.withValues(alpha: 0.35),
-            ),
-          ),
-          const SizedBox(width: 14),
-
-          // Sleek Circular Glass Info Button
-          Tooltip(
-            message: l10n.homeMoreInfo,
-            child: DpadFocusable(
-              onTap: () => _navigateToDetails(context, item),
-              borderRadius: AppTheme.radiusFull,
-              child: const SizedBox.shrink(),
-              builder: (context, isFocused, isHovered, _) {
-                final isHighlighted = isFocused || isHovered;
-                return Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isHighlighted
-                        ? theme.focusColor
-                        : AppTheme.accent.withValues(alpha: 0.12),
-                    border: Border.all(
-                      color: isHighlighted
-                          ? primary.withValues(alpha: 0.5)
-                          : AppTheme.border,
-                      width: 1.0,
-                    ),
-                    boxShadow: AppTheme.shadowCard,
-                  ),
-                  child: const Icon(
-                    Icons.info_outline_rounded,
-                    color: AppTheme.textWhite,
-                    size: 22,
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _navigateToPlayer(BuildContext context, MediaItem item) {
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
@@ -705,58 +334,6 @@ class _HeroSectionState extends ConsumerState<HeroSection>
         builder: (_) => MediaDetailsScreen(
           mediaId: item.tmdbId.toString(),
           mediaType: item.mediaType.name,
-        ),
-      ),
-    );
-  }
-}
-
-class _HeroIndicatorDot extends StatelessWidget {
-  final bool isActive;
-  final bool isMobile;
-  final VoidCallback onTap;
-
-  const _HeroIndicatorDot({
-    required this.isActive,
-    required this.isMobile,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final width = isActive ? (isMobile ? 18.0 : 24.0) : (isMobile ? 6.0 : 8.0);
-    final height = isMobile ? 5.0 : 6.0;
-
-    return InkWell(
-      mouseCursor: AppTheme.clickCursor,
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: isMobile ? 4 : 6,
-          vertical: 14,
-        ),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(3),
-            color: isActive
-                ? theme.colorScheme.primary
-                : AppTheme.textMuted.withValues(alpha: 0.4),
-            boxShadow: isActive
-                ? [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.6),
-                      blurRadius: 6,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
-          ),
         ),
       ),
     );
