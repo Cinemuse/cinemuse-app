@@ -3,6 +3,7 @@ import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/profile/data/profile_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/profile.dart';
+import 'package:cinemuse_app/features/settings/data/user_secrets_repository.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/settings_categories.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
@@ -15,6 +16,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MockProfileRepository extends Mock implements ProfileRepository {}
+
+class MockUserSecretsRepository extends Mock implements UserSecretsRepository {}
 
 class MockSupabaseClient extends Mock implements SupabaseClient {}
 
@@ -62,12 +65,15 @@ void main() {
       when(
         () => profiles.updateUsername(any(), any()),
       ).thenThrow(const NetworkFailure('offline'));
+      final secrets = MockUserSecretsRepository();
+      when(() => secrets.getSecrets('user-a')).thenAnswer((_) async => {});
 
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             authProvider.overrideWith((ref) => AuthService(client)),
             profileRepositoryProvider.overrideWithValue(profiles),
+            userSecretsRepositoryProvider.overrideWithValue(secrets),
             localeProvider.overrideWith(
               (ref) => LocaleNotifier()..setLocale(locale.languageCode),
             ),

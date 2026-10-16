@@ -6,17 +6,22 @@ import 'package:cinemuse_app/features/streaming/models/stremio_addon.dart';
 import 'package:cinemuse_app/core/utils/url_utils.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+Profile _profile(Map<String, dynamic> preferences) => Profile(
+  id: 'user1',
+  createdAt: DateTime(2026),
+  updatedAt: DateTime(2026),
+  preferences: preferences,
+);
+
 void main() {
   group('UserSettings Parsing', () {
     test(
       'UserSettings.fromProfile handles installedAddons as List of Maps',
       () {
-        final profile = Profile(
-          id: 'user1',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          preferences: {
-            'installedAddons': [
+        final settings = UserSettings.fromProfile(
+          _profile(const {}),
+          secrets: {
+            'installed_addons': [
               {
                 'id': 'torrentio',
                 'name': 'Torrentio',
@@ -26,8 +31,6 @@ void main() {
             ],
           },
         );
-
-        final settings = UserSettings.fromProfile(profile);
         expect(settings.installedAddons.length, 1);
         expect(settings.installedAddons[0].id, 'torrentio');
       },
@@ -36,12 +39,10 @@ void main() {
     test(
       'UserSettings.fromProfile handles installedAddons as List of JSON Strings',
       () {
-        final profile = Profile(
-          id: 'user1',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          preferences: {
-            'installedAddons': [
+        final settings = UserSettings.fromProfile(
+          _profile(const {}),
+          secrets: {
+            'installed_addons': [
               jsonEncode({
                 'id': 'torrentio',
                 'name': 'Torrentio',
@@ -51,20 +52,16 @@ void main() {
             ],
           },
         );
-
-        final settings = UserSettings.fromProfile(profile);
         expect(settings.installedAddons.length, 1);
         expect(settings.installedAddons[0].id, 'torrentio');
       },
     );
 
     test('UserSettings.fromProfile handles mixed Maps and Strings', () {
-      final profile = Profile(
-        id: 'user1',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        preferences: {
-          'installedAddons': [
+      final settings = UserSettings.fromProfile(
+        _profile(const {}),
+        secrets: {
+          'installed_addons': [
             {
               'id': 'map_addon',
               'name': 'Map Addon',
@@ -80,8 +77,6 @@ void main() {
           ],
         },
       );
-
-      final settings = UserSettings.fromProfile(profile);
       expect(settings.installedAddons.length, 2);
       expect(settings.installedAddons.any((a) => a.id == 'map_addon'), isTrue);
       expect(
@@ -153,7 +148,15 @@ void main() {
           'appLanguage': 7,
           'liveTvBufferSize': '1024',
           'liveTvQuality': true,
-          'installedAddons': [
+          'enableTorBox': true,
+        },
+      );
+
+      final settings = UserSettings.fromProfile(
+        profile,
+        secrets: {
+          'torbox_key': 7,
+          'installed_addons': [
             42,
             {
               'id': 'torrentio',
@@ -161,17 +164,15 @@ void main() {
               'baseUrl': 'https://torrentio.strem.io',
             },
           ],
-          'enableTorBox': true,
         },
       );
-
-      final settings = UserSettings.fromProfile(profile);
       expect(settings.showSubtitles, isTrue);
       expect(settings.appLanguage, 'en');
       expect(settings.liveTvBufferSize, 512);
       expect(settings.liveTvQuality, StreamQuality.hd);
       expect(settings.installedAddons.map((a) => a.id), ['torrentio']);
       expect(settings.enableTorBox, isTrue);
+      expect(settings.torBoxKey, '');
     });
 
     test('UserSettings handles TorBox preferences and serialization', () {
@@ -181,20 +182,47 @@ void main() {
         updatedAt: DateTime.now(),
         preferences: {
           'enableTorBox': true,
-          'torBoxKey': 'test_tb_key',
+          'torBoxKey': 'stale_key_in_preferences',
           'preferredDebridProvider': 'torbox',
         },
       );
 
-      final settings = UserSettings.fromProfile(profile);
+      final settings = UserSettings.fromProfile(
+        profile,
+        secrets: {'torbox_key': 'test_tb_key'},
+      );
       expect(settings.enableTorBox, isTrue);
       expect(settings.torBoxKey, equals('test_tb_key'));
       expect(settings.preferredDebridProvider, equals('torbox'));
 
       final json = settings.toPreferencesJson();
       expect(json['enableTorBox'], isTrue);
-      expect(json['torBoxKey'], equals('test_tb_key'));
       expect(json['preferredDebridProvider'], equals('torbox'));
+      expect(settings.toSecretsJson()['torbox_key'], equals('test_tb_key'));
+    });
+
+    // SEC-04: keys and addons are saved only to the owner-only row.
+    test('keys and addons never go into the preferences', () {
+      final settings = const UserSettings().copyWith(
+        realDebridKey: 'secret-rd',
+        torBoxKey: 'secret-tb',
+        openSubtitlesKey: 'secret-os',
+        installedAddons: [
+          StremioAddon.fromJson(const {'id': 'secret-addon'}),
+        ],
+      );
+
+      expect(settings.preferencesChangedSince(const UserSettings()), isEmpty);
+      expect(
+        jsonEncode(settings.toPreferencesJson()),
+        isNot(contains('secret')),
+      );
+      expect(settings.secretsChangedSince(const UserSettings()).keys, [
+        'real_debrid_key',
+        'torbox_key',
+        'opensubtitles_key',
+        'installed_addons',
+      ]);
     });
   });
 

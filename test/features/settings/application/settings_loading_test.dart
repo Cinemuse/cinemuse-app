@@ -5,12 +5,15 @@ import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/profile/data/profile_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/profile.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/data/user_secrets_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MockProfileRepository extends Mock implements ProfileRepository {}
+
+class MockUserSecretsRepository extends Mock implements UserSecretsRepository {}
 
 class MockSupabaseClient extends Mock implements SupabaseClient {}
 
@@ -33,6 +36,7 @@ Profile _profile(String id, Map<String, dynamic> preferences) => Profile(
 // are loaded, or the defaults overwrite their keys and addons.
 void main() {
   late MockProfileRepository profileRepo;
+  late MockUserSecretsRepository secretsRepo;
   late StreamController<AuthState> authEvents;
   late ProviderContainer container;
 
@@ -45,6 +49,9 @@ void main() {
     when(
       () => profileRepo.updateUsername(any(), any()),
     ).thenAnswer((_) async {});
+    secretsRepo = MockUserSecretsRepository();
+    when(() => secretsRepo.getSecrets(any())).thenAnswer((_) async => {});
+    when(() => secretsRepo.patchSecrets(any(), any())).thenAnswer((_) async {});
 
     final auth = MockGoTrueClient();
     when(() => auth.currentSession).thenReturn(_session('user-a'));
@@ -56,6 +63,7 @@ void main() {
       overrides: [
         authProvider.overrideWith((ref) => AuthService(client)),
         profileRepositoryProvider.overrideWithValue(profileRepo),
+        userSecretsRepositoryProvider.overrideWithValue(secretsRepo),
       ],
     );
   });
@@ -80,13 +88,16 @@ void main() {
   test('a change made while loading waits for the stored settings', () async {
     final load = Completer<Profile?>();
     when(() => profileRepo.getProfile('user-a')).thenAnswer((_) => load.future);
+    when(
+      () => secretsRepo.getSecrets('user-a'),
+    ).thenAnswer((_) async => {'real_debrid_key': 'stored-key'});
 
     final notifier = container.read(settingsProvider.notifier);
     final update = notifier.updateSettings(
       (s) => s.copyWith(showSubtitles: false),
     );
 
-    load.complete(_profile('user-a', {'realDebridKey': 'stored-key'}));
+    load.complete(_profile('user-a', {}));
     await update;
 
     expect(container.read(settingsProvider).realDebridKey, 'stored-key');
@@ -98,13 +109,16 @@ void main() {
   // DATA-02b: a save writes only what changed, so values another device
   // saved meanwhile (or this one never loaded right) stay as stored.
   test('a save sends only the changed keys', () async {
-    when(() => profileRepo.getProfile('user-a')).thenAnswer(
-      (_) async => _profile('user-a', {
-        'realDebridKey': 'stored-key',
-        'installedAddons': [
+    when(
+      () => profileRepo.getProfile('user-a'),
+    ).thenAnswer((_) async => _profile('user-a', {'showSubtitles': true}));
+    when(() => secretsRepo.getSecrets('user-a')).thenAnswer(
+      (_) async => {
+        'real_debrid_key': 'stored-key',
+        'installed_addons': [
           {'id': 'a', 'name': 'A', 'transportUrl': 'https://a', 'version': '1'},
         ],
-      }),
+      },
     );
 
     final notifier = container.read(settingsProvider.notifier);
@@ -116,12 +130,58 @@ void main() {
       () => profileRepo.patchPreferences('user-a', {'showSubtitles': false}),
     ).called(1);
     verifyNever(() => profileRepo.updateUsername(any(), any()));
+    verifyNever(() => secretsRepo.patchSecrets(any(), any()));
   });
 
-  test('switching account drops the previous user\'s settings', () async {
-    when(() => profileRepo.getProfile('user-a')).thenAnswer(
-      (_) async => _profile('user-a', {'realDebridKey': 'key-of-a'}),
+  // SEC-04: keys go only to the owner-only secrets row.
+  test('a new key is saved to the secrets row only', () async {
+    when(
+      () => profileRepo.getProfile('user-a'),
+    ).thenAnswer((_) async => _profile('user-a', {}));
+    when(() => secretsRepo.getSecrets('user-a')).thenAnswer(
+      (_) async => {'real_debrid_key': 'old-key', 'torbox_key': 'tb-key'},
     );
+
+    final notifier = container.read(settingsProvider.notifier);
+    await notifier.initSettings();
+    await notifier.updateSettings((s) => s.copyWith(realDebridKey: 'new-key'));
+
+    verify(
+      () => secretsRepo.patchSecrets('user-a', {'real_debrid_key': 'new-key'}),
+    ).called(1);
+    verifyNever(() => profileRepo.patchPreferences(any(), any()));
+  });
+
+  test(
+    'when the keys fail to load, the rest loads but nothing saves',
+    () async {
+      when(
+        () => profileRepo.getProfile('user-a'),
+      ).thenAnswer((_) async => _profile('user-a', {'showSubtitles': false}));
+      when(
+        () => secretsRepo.getSecrets('user-a'),
+      ).thenThrow(const NetworkFailure('offline'));
+
+      final notifier = container.read(settingsProvider.notifier);
+      await notifier.initSettings();
+      expect(container.read(settingsProvider).showSubtitles, isFalse);
+
+      await expectLater(
+        notifier.updateSettings((s) => s.copyWith(enableVixSrc: false)),
+        throwsA(isA<NetworkFailure>()),
+      );
+      verifyNever(() => profileRepo.patchPreferences(any(), any()));
+      verifyNever(() => secretsRepo.patchSecrets(any(), any()));
+    },
+  );
+
+  test('switching account drops the previous user\'s settings', () async {
+    when(
+      () => profileRepo.getProfile('user-a'),
+    ).thenAnswer((_) async => _profile('user-a', {}));
+    when(
+      () => secretsRepo.getSecrets('user-a'),
+    ).thenAnswer((_) async => {'real_debrid_key': 'key-of-a'});
     when(() => profileRepo.getProfile('user-b')).thenAnswer((_) async => null);
 
     final notifier = container.read(settingsProvider.notifier);
@@ -160,12 +220,9 @@ void main() {
   test(
     'a stored value of the wrong type still lets the user save (REV-82)',
     () async {
-      when(() => profileRepo.getProfile('user-a')).thenAnswer(
-        (_) async => _profile('user-a', {
-          'showSubtitles': 'true',
-          'realDebridKey': 'stored-key',
-        }),
-      );
+      when(
+        () => profileRepo.getProfile('user-a'),
+      ).thenAnswer((_) async => _profile('user-a', {'showSubtitles': 'true'}));
 
       final notifier = container.read(settingsProvider.notifier);
       await notifier.initSettings();

@@ -5,7 +5,8 @@ import 'package:cinemuse_app/features/profile/domain/profile.dart';
 import 'package:cinemuse_app/features/streaming/models/stremio_addon.dart';
 
 /// The user's synced settings, stored in `profiles.preferences` (plus the
-/// display name in `profiles.username`).
+/// display name in `profiles.username`); the API keys and addons are in the
+/// owner-only `user_secrets` row (SEC-04).
 class UserSettings {
   final String displayName;
   final String appLanguage;
@@ -70,10 +71,14 @@ class UserSettings {
   /// rule for the resolver and the settings switch (REV-80).
   bool get isAnimeToshoActive => enableAnimeTosho && hasDebrid;
 
-  /// Reads the stored settings. A value of the wrong type (e.g. `"true"` as
-  /// a string) falls back to its default instead of failing the whole load,
-  /// which would block every save for that user (REV-82).
-  factory UserSettings.fromProfile(Profile profile) {
+  /// Reads the stored settings from the profile and the [secrets] row. A
+  /// value of the wrong type (e.g. `"true"` as a string) falls back to its
+  /// default instead of failing the whole load, which would block every save
+  /// for that user (REV-82).
+  factory UserSettings.fromProfile(
+    Profile profile, {
+    Map<String, dynamic> secrets = const {},
+  }) {
     final prefs = profile.preferences;
     const d = UserSettings();
 
@@ -81,6 +86,8 @@ class UserSettings {
         prefs[key] is bool ? prefs[key] as bool : fallback;
     String readString(String key, String fallback) =>
         prefs[key] is String ? prefs[key] as String : fallback;
+    String readSecret(String column) =>
+        secrets[column] is String ? secrets[column] as String : '';
 
     final bufferSize = prefs['liveTvBufferSize'];
     return UserSettings(
@@ -111,19 +118,19 @@ class UserSettings {
       enableVixSrc: readBool('enableVixSrc', d.enableVixSrc),
       enableAnimeUnity: readBool('enableAnimeUnity', d.enableAnimeUnity),
       enableRealDebrid: readBool('enableRealDebrid', d.enableRealDebrid),
-      realDebridKey: readString('realDebridKey', d.realDebridKey),
+      realDebridKey: readSecret('real_debrid_key'),
       enableTorBox: readBool('enableTorBox', d.enableTorBox),
-      torBoxKey: readString('torBoxKey', d.torBoxKey),
+      torBoxKey: readSecret('torbox_key'),
       preferredDebridProvider: readString(
         'preferredDebridProvider',
         d.preferredDebridProvider,
       ),
-      openSubtitlesKey: readString('openSubtitlesKey', d.openSubtitlesKey),
+      openSubtitlesKey: readSecret('opensubtitles_key'),
       autoDownloadMissingSubtitles: readBool(
         'autoDownloadMissingSubtitles',
         d.autoDownloadMissingSubtitles,
       ),
-      installedAddons: _readAddons(prefs['installedAddons']),
+      installedAddons: _readAddons(secrets['installed_addons']),
       liveTvBufferSize: bufferSize is num
           ? bufferSize.toInt()
           : d.liveTvBufferSize,
@@ -219,13 +226,22 @@ class UserSettings {
     );
   }
 
-  /// The stored keys whose value differs from [previous], for a save that
+  /// The preferences whose value differs from [previous], for a save that
   /// writes only what changed (DATA-02b).
-  Map<String, dynamic> preferencesChangedSince(UserSettings previous) {
-    final before = previous.toPreferencesJson();
+  Map<String, dynamic> preferencesChangedSince(UserSettings previous) =>
+      _changedEntries(toPreferencesJson(), previous.toPreferencesJson());
+
+  /// The `user_secrets` columns whose value differs from [previous].
+  Map<String, dynamic> secretsChangedSince(UserSettings previous) =>
+      _changedEntries(toSecretsJson(), previous.toSecretsJson());
+
+  static Map<String, dynamic> _changedEntries(
+    Map<String, dynamic> now,
+    Map<String, dynamic> before,
+  ) {
     // jsonEncode compares the addon lists by content, not by identity.
     return {
-      for (final entry in toPreferencesJson().entries)
+      for (final entry in now.entries)
         if (jsonEncode(entry.value) != jsonEncode(before[entry.key]))
           entry.key: entry.value,
     };
@@ -247,16 +263,22 @@ class UserSettings {
       'enableVixSrc': enableVixSrc,
       'enableAnimeUnity': enableAnimeUnity,
       'enableRealDebrid': enableRealDebrid,
-      'realDebridKey': realDebridKey,
       'enableTorBox': enableTorBox,
-      'torBoxKey': torBoxKey,
       'preferredDebridProvider': preferredDebridProvider,
-      'openSubtitlesKey': openSubtitlesKey,
       'autoDownloadMissingSubtitles': autoDownloadMissingSubtitles,
-      'installedAddons': installedAddons.map((e) => e.toJson()).toList(),
       'liveTvBufferSize': liveTvBufferSize,
       'enableLiveTvDiskCache': enableLiveTvDiskCache,
       'liveTvQuality': liveTvQuality.name,
+    };
+  }
+
+  /// The `user_secrets` row (SEC-04): never in `profiles.preferences`.
+  Map<String, dynamic> toSecretsJson() {
+    return {
+      'real_debrid_key': realDebridKey,
+      'torbox_key': torBoxKey,
+      'opensubtitles_key': openSubtitlesKey,
+      'installed_addons': installedAddons.map((e) => e.toJson()).toList(),
     };
   }
 }

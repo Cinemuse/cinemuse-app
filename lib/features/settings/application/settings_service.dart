@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/profile/data/profile_repository.dart';
+import 'package:cinemuse_app/features/settings/data/user_secrets_repository.dart';
 import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/core/application/locale_service.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
@@ -47,12 +48,30 @@ class SettingsNotifier extends Notifier<UserSettings> {
           .read(profileRepositoryProvider)
           .getProfile(user.id);
 
+      // The profile has an offline copy, the secrets don't: offline, the
+      // language and other settings still load, with blank keys and addons.
+      Map<String, dynamic>? secrets;
+      try {
+        secrets = await ref
+            .read(userSecretsRepositoryProvider)
+            .getSecrets(user.id);
+      } catch (e, st) {
+        // Safe to continue: without `secrets` the load doesn't count as done
+        // (below), so nothing is saved and the next save retries the load.
+        AppLogger.warn(
+          _tag,
+          'Failed to load the keys',
+          error: e,
+          stackTrace: st,
+        );
+      }
+
       // Ignore a slow load that finishes after an account switch.
       if (ref.read(authProvider).value?.id != user.id) return;
 
       if (profile != null) {
-        state = UserSettings.fromProfile(profile);
-        _loadedUserId = user.id;
+        state = UserSettings.fromProfile(profile, secrets: secrets ?? const {});
+        if (secrets != null) _loadedUserId = user.id;
         // Sync initial app language to localeProvider
         ref.read(localeProvider.notifier).setLocale(state.appLanguage);
       }
@@ -101,12 +120,18 @@ class SettingsNotifier extends Notifier<UserSettings> {
     final profiles = ref.read(profileRepositoryProvider);
     // Only the changed keys: another device's newer values stay (DATA-02b).
     final patch = updated.preferencesChangedSince(previous);
+    final secretsPatch = updated.secretsChangedSince(previous);
 
     try {
       if (updated.displayName != previous.displayName) {
         await profiles.updateUsername(user.id, updated.displayName);
       }
       if (patch.isNotEmpty) await profiles.patchPreferences(user.id, patch);
+      if (secretsPatch.isNotEmpty) {
+        await ref
+            .read(userSecretsRepositoryProvider)
+            .patchSecrets(user.id, secretsPatch);
+      }
     } catch (e, st) {
       AppLogger.warn(
         _tag,
