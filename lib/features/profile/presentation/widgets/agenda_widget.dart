@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -10,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/error_card.dart';
 
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -77,38 +79,17 @@ class _AgendaWidgetState extends ConsumerState<AgendaWidget> {
     final isOffline = connectivity.valueOrNull == ConnectivityResult.none;
 
     Widget buildContent() {
+      void retry() => ref.invalidate(agendaProvider);
       if (isOffline) {
         return Padding(
-          padding: const EdgeInsets.all(32),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.wifi_off_rounded,
-                  size: 48,
-                  color: AppTheme.textMuted.withValues(alpha: 0.5),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.offlineScreenTitle,
-                  style: const TextStyle(
-                    color: AppTheme.textWhite,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.offlineScreenMessage,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
+          padding: const EdgeInsets.all(24),
+          child: ErrorCard(
+            error: UserFriendlyError(
+              message: l10n.offlineScreenTitle,
+              hint: l10n.offlineScreenMessage,
+              kind: ErrorKind.network,
             ),
+            onRetry: retry,
           ),
         );
       }
@@ -184,11 +165,9 @@ class _AgendaWidgetState extends ConsumerState<AgendaWidget> {
         ),
         error: (err, stack) => Padding(
           padding: const EdgeInsets.all(24),
-          child: Center(
-            child: Text(
-              l10n.commonError,
-              style: const TextStyle(color: AppTheme.error),
-            ),
+          child: ErrorCard(
+            error: ref.read(errorMapperProvider).map(err),
+            onRetry: retry,
           ),
         ),
       );
