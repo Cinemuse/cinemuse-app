@@ -127,13 +127,15 @@ void main() {
       logs = await serverLogCount(container, _showId, 'tv');
     }
     expect(logs, aired, reason: 'one log per aired episode');
-    // The label itself is REV-303 (a show says "Watched", not "Up to date").
     await pumpUntil(
       tester,
       () => inHero(find.byIcon(Icons.check_circle)).evaluate().isNotEmpty,
       what: 'the "fully watched" badge',
     );
     expect(inHero(find.text(l10n.detailsFinishSeries)), findsNothing);
+    // REV-303: a fully watched show said "Watched".
+    expect(inHero(find.text(l10n.detailsUpToDate)), findsOneWidget);
+    expect(inHero(find.text(l10n.detailsWatched)), findsNothing);
     expect(
       (await serverHistoryRow(container, _showId, 'tv'))?['status'],
       'completed',
@@ -165,7 +167,8 @@ void main() {
     )!;
     Finder inHero(Finder finder) =>
         find.descendant(of: find.byType(DetailsHero), matching: finder);
-    final track = inHero(find.text(l10n.detailsTrack));
+    // Hidden behind a spinner until the count loads (REV-287).
+    final track = inHero(find.text(l10n.detailsTrack)).hitTestable();
     await pumpUntil(
       tester,
       () => track.evaluate().isNotEmpty,

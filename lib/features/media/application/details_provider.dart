@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'dart:developer' as developer;
+import 'package:cinemuse_app/core/application/keep_alive_for.dart';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
@@ -160,6 +161,7 @@ class OptimisticSeriesLogs
   Stream<List<WatchLog>> build(int arg) {
     final userId = ref.watch(authProvider).asData?.value?.id;
     if (userId == null) return Stream.value([]);
+    ref.keepAliveFor(const Duration(minutes: 5)); // reopen at once (REV-287)
 
     final repository = ref.watch(watchHistoryRepositoryProvider);
     return repository
@@ -233,9 +235,9 @@ class OptimisticSeriesLogs
 }
 
 final seriesWatchLogsProvider = StreamNotifierProvider.autoDispose
-    .family<OptimisticSeriesLogs, List<WatchLog>, int>(() {
-      return OptimisticSeriesLogs();
-    });
+    .family<OptimisticSeriesLogs, List<WatchLog>, int>(
+      OptimisticSeriesLogs.new,
+    );
 
 // Helper provider to get a map of "season-episode" -> watch_count for the series
 final watchedEpisodesMapProvider = Provider.autoDispose
@@ -245,33 +247,27 @@ final watchedEpisodesMapProvider = Provider.autoDispose
         data: (logs) {
           final counts = <String, int>{};
           for (final log in logs) {
-            final s = log.season;
-            final e = log.episode;
-            if (s != null && e != null) {
-              final key = '$s-$e';
-              counts[key] = (counts[key] ?? 0) + 1;
-            }
+            if (log.season == null || log.episode == null) continue;
+            final key = '${log.season}-${log.episode}';
+            counts[key] = (counts[key] ?? 0) + 1;
           }
           return counts;
         },
         orElse: () => <String, int>{},
       );
     });
-// Helper provider to get global series watch status
+
+/// A show's watch status; null while its logs first load (REV-287).
 final seriesWatchStatusProvider = Provider.autoDispose
     .family<
-      ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount}),
+      ({bool isFullyWatched, bool isPartiallyWatched, int minWatchCount})?,
       ({int tmdbId, int totalEpisodes})
     >((ref, args) {
+      final isLoading = ref.watch(
+        seriesWatchLogsProvider(args.tmdbId).select(_isFirstLoad),
+      );
+      if (isLoading) return null;
       final counts = ref.watch(watchedEpisodesMapProvider(args.tmdbId));
-      if (counts.isEmpty) {
-        return (
-          isFullyWatched: false,
-          isPartiallyWatched: false,
-          minWatchCount: 0,
-        );
-      }
-
       int watchedInSeries = 0;
       int minCount = -1;
 
@@ -285,7 +281,8 @@ final seriesWatchStatusProvider = Provider.autoDispose
         }
       });
 
-      final isFullyWatched = watchedInSeries >= args.totalEpisodes;
+      final isFullyWatched =
+          watchedInSeries > 0 && watchedInSeries >= args.totalEpisodes;
       final isPartiallyWatched = watchedInSeries > 0 && !isFullyWatched;
 
       return (
@@ -329,6 +326,7 @@ class OptimisticMovieLogs
   Stream<List<WatchLog>> build(int arg) {
     final userId = ref.watch(authProvider).asData?.value?.id;
     if (userId == null) return Stream.value([]);
+    ref.keepAliveFor(const Duration(minutes: 5)); // reopen at once (REV-287)
 
     final repository = ref.watch(watchHistoryRepositoryProvider);
     return repository
@@ -427,17 +425,18 @@ class OptimisticMovieLogs
 }
 
 final movieWatchLogsProvider = StreamNotifierProvider.autoDispose
-    .family<OptimisticMovieLogs, List<WatchLog>, int>(() {
-      return OptimisticMovieLogs();
-    });
+    .family<OptimisticMovieLogs, List<WatchLog>, int>(OptimisticMovieLogs.new);
 
-// Helper provider to get global movie watch count
-final movieWatchCountProvider = Provider.autoDispose.family<int, int>((
+bool _isFirstLoad(AsyncValue<Object?> v) => v.isLoading && !v.hasValue;
+
+/// Times a movie was watched; null while its logs first load (REV-287).
+final movieWatchCountProvider = Provider.autoDispose.family<int?, int>((
   ref,
   tmdbId,
 ) {
   final logsAsync = ref.watch(movieWatchLogsProvider(tmdbId));
-  return logsAsync.maybeWhen(data: (logs) => logs.length, orElse: () => 0);
+  if (_isFirstLoad(logsAsync)) return null;
+  return logsAsync.valueOrNull?.length ?? 0;
 });
 
 /// Whether the user is watching a title again: a movie with a logged watch,
@@ -450,7 +449,7 @@ final isRewatchingProvider = FutureProvider.autoDispose
       ({int tmdbId, MediaKind mediaType, int? season, int? episode})
     >((ref, title) async {
       if (title.mediaType == MediaKind.movie) {
-        return ref.watch(movieWatchCountProvider(title.tmdbId)) > 0;
+        return (ref.watch(movieWatchCountProvider(title.tmdbId)) ?? 0) > 0;
       }
 
       final userId = ref.watch(authProvider).valueOrNull?.id;

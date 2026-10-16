@@ -181,7 +181,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
             : null;
         final movieWatchCount = !isTV
             ? ref.watch(movieWatchCountProvider(tmdbId))
-            : 0;
+            : null;
 
         final droppedList = ref.watch(droppedListProvider).valueOrNull;
         final isDropped =
@@ -256,7 +256,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                         controller,
                         tmdbId,
                         rawDetails,
-                        movieWatchCount,
+                        movieWatchCount ?? 0,
                       ),
                 onCommentsTap: () =>
                     _handleShowComments(context, rawDetails, isTV, l10n),

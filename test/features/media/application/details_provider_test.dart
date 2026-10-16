@@ -6,6 +6,7 @@ import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -77,28 +78,71 @@ void main() {
     await Future<void>.delayed(Duration.zero);
   }
 
+  const movieLog = {
+    'tmdb_id': movieId,
+    'media_type': 'movie',
+    'logged_at': '2026-10-12T20:00:00Z',
+  };
+
   // REV-191: the log providers were never disposed, so every title opened
-  // kept a Supabase realtime channel open for the whole session.
-  test('the movie log stream closes once nothing watches it', () async {
-    final subscription = container.listen(
-      movieWatchCountProvider(movieId),
-      (_, __) {},
-    );
-    logs.add([
-      {
-        'tmdb_id': movieId,
-        'media_type': 'movie',
-        'logged_at': '2026-10-12T20:00:00Z',
-      },
-    ]);
-    await container.pump();
-    await Future<void>.delayed(Duration.zero);
-    expect(container.read(movieWatchCountProvider(movieId)), 1);
+  // kept a Supabase realtime channel open for the whole session. REV-287:
+  // they stay 5 minutes, so reopening the page shows the count at once.
+  test('the movie log stream closes 5 minutes after nothing watches it', () {
+    fakeAsync((async) {
+      final subscription = container.listen(
+        movieWatchCountProvider(movieId),
+        (_, __) {},
+      );
+      logs.add([movieLog]);
+      async.flushMicrotasks();
+      expect(container.read(movieWatchCountProvider(movieId)), 1);
 
-    subscription.close();
-    await container.pump();
+      subscription.close();
+      async.elapse(const Duration(minutes: 4));
+      expect(isLogStreamCancelled, isFalse);
 
-    expect(isLogStreamCancelled, isTrue);
+      async.elapse(const Duration(minutes: 2));
+      expect(isLogStreamCancelled, isTrue);
+    });
+  });
+
+  // REV-287: while loading, the count read as 0 and Track said "Track"
+  // for a watched title.
+  test('the counts are unknown while loading, known when reopened', () {
+    fakeAsync((async) {
+      final status = seriesWatchStatusProvider((
+        tmdbId: showId,
+        totalEpisodes: 1,
+      ));
+      final movie = container.listen(
+        movieWatchCountProvider(movieId),
+        (_, __) {},
+      );
+      final show = container.listen(status, (_, __) {});
+      async.flushMicrotasks();
+      expect(container.read(movieWatchCountProvider(movieId)), isNull);
+      expect(container.read(status), isNull);
+
+      logs.add([movieLog]);
+      showLogs.add([
+        {
+          'tmdb_id': showId,
+          'media_type': 'tv',
+          'season': 1,
+          'episode': 1,
+          'logged_at': '2026-10-12T20:00:00Z',
+        },
+      ]);
+      async.flushMicrotasks();
+      movie.close();
+      show.close();
+      async.elapse(const Duration(minutes: 1));
+
+      container.listen(movieWatchCountProvider(movieId), (_, __) {});
+      container.listen(status, (_, __) {});
+      expect(container.read(movieWatchCountProvider(movieId)), 1);
+      expect(container.read(status)!.isFullyWatched, isTrue);
+    });
   });
 
   // REV-192: "Remove one" on a rewatched episode hid every log of it, and
@@ -151,8 +195,8 @@ void main() {
     showLogs.add([log(0, 1), log(0, 2), log(1, 1)]);
     await pumpEvents();
 
-    expect(container.read(status).isFullyWatched, false);
-    expect(container.read(status).isPartiallyWatched, true);
+    expect(container.read(status)!.isFullyWatched, false);
+    expect(container.read(status)!.isPartiallyWatched, true);
   });
 
   // REV-196: a failed save dropped the pending changes of every episode of

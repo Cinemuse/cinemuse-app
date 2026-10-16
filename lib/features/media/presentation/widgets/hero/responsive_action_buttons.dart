@@ -121,6 +121,7 @@ class _ResponsiveActionButtonsState
                 Expanded(
                   child: _TrackButton(
                     onTrackTap: widget.onTrackTap!,
+                    isMovie: widget.mediaItem.mediaType == MediaKind.movie,
                     seriesWatchStatus: widget.seriesWatchStatus,
                     movieWatchCount: widget.movieWatchCount,
                   ),
@@ -151,6 +152,7 @@ class _ResponsiveActionButtonsState
           const SizedBox(width: 16),
           _TrackButton(
             onTrackTap: widget.onTrackTap!,
+            isMovie: widget.mediaItem.mediaType == MediaKind.movie,
             seriesWatchStatus: widget.seriesWatchStatus,
             movieWatchCount: widget.movieWatchCount,
           ),
@@ -224,10 +226,7 @@ class _DropdownItem {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Split Play Button — main action + chevron dropdown
-// ---------------------------------------------------------------------------
-
+/// Play with a ▾ menu (Restart, Clear progress…) next to it.
 class _SplitPlayButton extends StatefulWidget {
   final VoidCallback onPlayClick;
   final String label;
@@ -324,16 +323,7 @@ class _SplitPlayButtonState extends State<_SplitPlayButton> {
     return DpadFocusable(
       autofocus: true,
       autoScroll: false,
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent || event is KeyRepeatEvent) {
-          // Play is the first button in its row: keep focus on it instead
-          // of letting the arrow jump to an unrelated control.
-          if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-            return KeyEventResult.handled;
-          }
-        }
-        return KeyEventResult.ignored;
-      },
+      onKeyEvent: _stayOnLeft,
       onTap: widget.onPlayClick,
       onLongPress: () => _popupKey.currentState?.showButtonMenu(),
       scale: 1.06,
@@ -365,39 +355,56 @@ class _SplitPlayButtonState extends State<_SplitPlayButton> {
   }
 
   Widget _buildMainPlayContent() {
-    return Container(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 15),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: widget.isFullWidth ? MainAxisSize.max : MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.play_arrow_outlined,
-            color: AppTheme.textWhite,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Flexible(
-            child: Text(
-              widget.label,
-              style: const TextStyle(
-                color: AppTheme.textWhite,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
+      child: _PlayLabel(label: widget.label, isFullWidth: widget.isFullWidth),
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// Plain Play Button (no dropdown)
-// ---------------------------------------------------------------------------
+/// Play is the first button in its row: Left keeps focus on it instead of
+/// letting the arrow jump to an unrelated control.
+KeyEventResult _stayOnLeft(FocusNode node, KeyEvent event) =>
+    event is! KeyUpEvent && event.logicalKey == LogicalKeyboardKey.arrowLeft
+    ? KeyEventResult.handled
+    : KeyEventResult.ignored;
 
+/// The ▶ icon and label shared by both Play buttons.
+class _PlayLabel extends StatelessWidget {
+  final String label;
+  final bool isFullWidth;
+
+  const _PlayLabel({required this.label, required this.isFullWidth});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
+      children: [
+        const Icon(
+          Icons.play_arrow_outlined,
+          color: AppTheme.textWhite,
+          size: 24,
+        ),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: AppTheme.textWhite,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Play alone, when its menu would be empty.
 class _PlayButton extends StatelessWidget {
   final VoidCallback onPlayClick;
   final String label;
@@ -416,15 +423,7 @@ class _PlayButton extends StatelessWidget {
     return DpadFocusable(
       autofocus: true,
       autoScroll: false,
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent || event is KeyRepeatEvent) {
-          // Same as the split button: Left stays on Play.
-          if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-            return KeyEventResult.handled;
-          }
-        }
-        return KeyEventResult.ignored;
-      },
+      onKeyEvent: _stayOnLeft,
       onTap: onPlayClick,
       scale: 1.06,
       borderRadius: AppTheme.radius12,
@@ -442,29 +441,7 @@ class _PlayButton extends StatelessWidget {
           child: child,
         );
       },
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.play_arrow_outlined,
-            color: AppTheme.textWhite,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Flexible(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: AppTheme.textWhite,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
+      child: _PlayLabel(label: label, isFullWidth: isFullWidth),
     );
   }
 }
@@ -475,8 +452,12 @@ class _TrackButton extends StatelessWidget {
   seriesWatchStatus;
   final int? movieWatchCount;
 
+  /// From the title's type: a show has no movie count (REV-303).
+  final bool isMovie;
+
   const _TrackButton({
     required this.onTrackTap,
+    required this.isMovie,
     this.seriesWatchStatus,
     this.movieWatchCount,
   });
@@ -484,9 +465,12 @@ class _TrackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isMovie = movieWatchCount != null;
+    // Not known yet: a spinner, not a wrong "Track" (REV-287).
+    final isLoading = isMovie
+        ? movieWatchCount == null
+        : seriesWatchStatus == null;
     final isFullyWatched =
-        seriesWatchStatus?.isFullyWatched ?? (isMovie && movieWatchCount! > 0);
+        seriesWatchStatus?.isFullyWatched ?? (movieWatchCount ?? 0) > 0;
     final isPartiallyWatched = seriesWatchStatus?.isPartiallyWatched ?? false;
     final minWatchCount =
         seriesWatchStatus?.minWatchCount ?? (movieWatchCount ?? 0);
@@ -496,7 +480,7 @@ class _TrackButton extends StatelessWidget {
 
     return DpadFocusable(
       autoScroll: false,
-      onTap: onTrackTap,
+      onTap: isLoading ? null : onTrackTap,
       scale: 1.0,
       borderRadius: AppTheme.radius12,
       builder: (context, isFocused, isHovered, child) {
@@ -532,35 +516,48 @@ class _TrackButton extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            isFullyWatched
-                ? Icons.check_circle
-                : (isPartiallyWatched
-                      ? Icons.check_circle_outline
-                      : Icons.add_task),
-            color: isFullyWatched ? AppTheme.success : AppTheme.textWhite,
-            size: 24,
-          ),
+          if (isLoading)
+            const SizedBox.square(
+              dimension: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            Icon(
+              isFullyWatched
+                  ? Icons.check_circle
+                  : (isPartiallyWatched
+                        ? Icons.check_circle_outline
+                        : Icons.add_task),
+              color: isFullyWatched ? AppTheme.success : AppTheme.textWhite,
+              size: 24,
+            ),
           const SizedBox(width: 12),
           Flexible(
-            child: Text(
-              isFullyWatched
-                  ? (isMovie
-                        ? (minWatchCount > 1
-                              ? l10n.detailsWatchedCount(minWatchCount)
-                              : l10n.detailsWatched)
-                        : (minWatchCount > 1
-                              ? l10n.detailsUpToDateCount(minWatchCount)
-                              : l10n.detailsUpToDate))
-                  : (isPartiallyWatched
-                        ? l10n.detailsFinishSeries
-                        : l10n.detailsTrack),
-              style: TextStyle(
-                color: isFullyWatched ? AppTheme.success : AppTheme.textWhite,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            // Hidden, not removed: the button keeps its size while loading.
+            child: Visibility(
+              visible: !isLoading,
+              maintainSize: true,
+              maintainAnimation: true,
+              maintainState: true,
+              child: Text(
+                isFullyWatched
+                    ? (isMovie
+                          ? (minWatchCount > 1
+                                ? l10n.detailsWatchedCount(minWatchCount)
+                                : l10n.detailsWatched)
+                          : (minWatchCount > 1
+                                ? l10n.detailsUpToDateCount(minWatchCount)
+                                : l10n.detailsUpToDate))
+                    : (isPartiallyWatched
+                          ? l10n.detailsFinishSeries
+                          : l10n.detailsTrack),
+                style: TextStyle(
+                  color: isFullyWatched ? AppTheme.success : AppTheme.textWhite,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

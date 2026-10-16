@@ -240,6 +240,40 @@ void main() {
       expect(drops, 0);
     });
 
+    // REV-287: while the watch count loaded, a watched title said "Track".
+    for (final kind in [MediaKind.movie, MediaKind.tv]) {
+      testWidgets('Track shows a spinner while the ${kind.name} count loads', (
+        tester,
+      ) async {
+        await tester.binding.setSurfaceSize(const Size(1280, 800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        var tracks = 0;
+        await tester.pumpWidget(
+          buildTestableWidget(
+            ResponsiveActionButtons(
+              onPlayClick: () {},
+              playButtonLabel: 'Play Now',
+              mediaItem: MediaItem(
+                tmdbId: 123,
+                mediaType: kind,
+                updatedAt: DateTime(2026),
+              ),
+              isFavorite: false,
+              isInWatchlist: false,
+              onListTap: () {},
+              onTrackTap: () => tracks++,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.text('Track').hitTestable(), findsNothing);
+        await tester.tap(find.byType(CircularProgressIndicator));
+        expect(tracks, 0);
+      });
+    }
+
     // REV-246: the ▾ next to Play showed the arrow cursor.
     testWidgets('Play ▾: the hand', (tester) async {
       await tester.binding.setSurfaceSize(const Size(1280, 800));
@@ -566,6 +600,7 @@ void main() {
               isInWatchlist: false,
               onListTap: () {},
               onTrackTap: () {},
+              movieWatchCount: 0,
             ),
           ),
         );
@@ -687,6 +722,7 @@ void main() {
               isInWatchlist: false,
               onListTap: () {},
               onTrackTap: () {},
+              movieWatchCount: 0,
               onCommentsTap: () => commentsTapped = true,
             ),
           ),
