@@ -12,6 +12,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../helpers/app_font.dart';
+import '../../../../helpers/focus_helpers.dart';
 
 class _MockVideoController extends Mock implements VideoController {}
 
@@ -86,6 +87,41 @@ void main() {
 
     expect(closes, [true]);
   });
+
+  // REV-282: â†‘ / â†“ changed the slider's value like â† / â†’, so the keyboard
+  // could never leave it.
+  for (final type in const [
+    SliderOverlayType.fontSize,
+    SliderOverlayType.position,
+    SliderOverlayType.background,
+  ]) {
+    testWidgets('${type.name}: â†‘ / â†“ leave the slider', (tester) async {
+      await pumpOverlay(tester, type: type);
+      bool sliderFocused() =>
+          FocusManager.instance.primaryFocus?.context
+              ?.findAncestorWidgetOfExactType<Slider>() !=
+          null;
+      for (var i = 0; i < 10 && !sliderFocused(); i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+      }
+      expect(sliderFocused(), isTrue);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      expect(
+        isFocused(find.text('OK')) || isFocused(find.text('CANCEL')),
+        isTrue,
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      expect(sliderFocused(), isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      expect(isFocused(find.text('Reset to Default')), isTrue);
+    });
+  }
 
   // REV-166: a long Italian title pushed "Ripristina Predefiniti" off the
   // panel.

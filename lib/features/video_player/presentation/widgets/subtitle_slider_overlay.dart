@@ -35,10 +35,12 @@ class SubtitleSliderOverlay extends ConsumerWidget {
     String title = '';
     Widget control = const SizedBox.shrink();
     late final VoidCallback onReset;
-    VoidCallback? onSave;
 
     final currentStyle = ref.watch(effectiveSubtitleStyleProvider(params));
     const defaults = SubtitleStyle();
+    final VoidCallback? onSave = type == SliderOverlayType.sync
+        ? null
+        : () => localNotifier.updateSubtitleStyle(currentStyle);
 
     switch (type) {
       case SliderOverlayType.sync:
@@ -62,7 +64,6 @@ class SubtitleSliderOverlay extends ConsumerWidget {
         onReset = () => controller.updateSubtitleStyle(
           currentStyle.copyWith(fontSize: defaults.fontSize),
         );
-        onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
       case SliderOverlayType.position:
         title = l10n.playerAppearanceBottomPadding;
         control = _SliderControl(
@@ -78,7 +79,6 @@ class SubtitleSliderOverlay extends ConsumerWidget {
         onReset = () => controller.updateSubtitleStyle(
           currentStyle.copyWith(verticalPosition: defaults.verticalPosition),
         );
-        onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
       case SliderOverlayType.background:
         title = l10n.playerAppearanceBackground;
         control = _SliderControl(
@@ -99,7 +99,6 @@ class SubtitleSliderOverlay extends ConsumerWidget {
         onReset = () => controller.updateSubtitleStyle(
           currentStyle.copyWith(backgroundColor: defaults.backgroundColor),
         );
-        onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
       case SliderOverlayType.color:
         title = l10n.playerAppearanceTextColor;
         control = _ColorControl(
@@ -111,7 +110,6 @@ class SubtitleSliderOverlay extends ConsumerWidget {
         onReset = () => controller.updateSubtitleStyle(
           currentStyle.copyWith(color: defaults.color),
         );
-        onSave = () => localNotifier.updateSubtitleStyle(currentStyle);
       case SliderOverlayType.none:
         break;
     }
@@ -219,6 +217,13 @@ class SubtitleSliderOverlay extends ConsumerWidget {
   }
 }
 
+/// The big value above a slider or the sync buttons.
+const _valueStyle = TextStyle(
+  color: AppTheme.accent,
+  fontSize: 32,
+  fontWeight: FontWeight.bold,
+);
+
 class _SliderControl extends StatelessWidget {
   final double value;
   final double min;
@@ -240,14 +245,7 @@ class _SliderControl extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(
-          labelBuilder(value),
-          style: const TextStyle(
-            color: AppTheme.accent,
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        Text(labelBuilder(value), style: _valueStyle),
         const SizedBox(height: 8),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
@@ -258,12 +256,18 @@ class _SliderControl extends StatelessWidget {
             inactiveTrackColor: AppTheme.borderSubtle,
             thumbColor: AppTheme.textWhite,
           ),
-          child: Slider(
-            value: value,
-            min: min,
-            max: max,
-            divisions: divisions,
-            onChanged: onChanged,
+          // Directional: only ← / → change it; ↑ / ↓ leave it (REV-282).
+          child: MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(navigationMode: NavigationMode.directional),
+            child: Slider(
+              value: value,
+              min: min,
+              max: max,
+              divisions: divisions,
+              onChanged: onChanged,
+            ),
           ),
         ),
       ],
@@ -283,11 +287,7 @@ class _SyncButtonControl extends StatelessWidget {
       children: [
         Text(
           '${value >= 0 ? '+' : ''}${value.toStringAsFixed(1)}s',
-          style: const TextStyle(
-            color: AppTheme.accent,
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-          ),
+          style: _valueStyle,
         ),
         const SizedBox(height: 16),
         Wrap(
