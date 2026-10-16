@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
+import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
@@ -877,6 +878,44 @@ void main() {
       expect(find.text('Test Movie'), findsOneWidget);
       expect(find.byType(IconButton), findsNothing);
     });
+
+    // REV-291: the hero's Play button passes no episode name.
+    for (final (passed, shown) in const [
+      ('Passed Name', ' - Passed Name'),
+      (null, ' - From TMDB'),
+    ]) {
+      testWidgets('episode name ${passed ?? 'looked up'}: "$shown"', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          buildTestableWidget(
+            VideoTopBar(
+              playerState: createDummyPlayerState(),
+              params: PlayerParams(
+                '1',
+                'tv',
+                season: 2,
+                episode: 4,
+                episodeTitle: passed,
+              ),
+            ),
+            overrides: [
+              seasonDetailsProvider.overrideWith(
+                (ref, args) async => {
+                  'episodes': <dynamic>[
+                    <String, dynamic>{'episode_number': 3, 'name': 'Other'},
+                    <String, dynamic>{'episode_number': 4, 'name': 'From TMDB'},
+                  ],
+                },
+              ),
+            ],
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining(shown), findsOneWidget);
+      });
+    }
   });
 
   group('MainSettingsView TV Navigation Tests', () {

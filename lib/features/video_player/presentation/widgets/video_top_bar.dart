@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/features/video_player/application/episode_name_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/application/l10n_provider.dart';
@@ -192,16 +193,7 @@ class VideoTopBar extends ConsumerWidget {
                       params.season != null &&
                       params.episode != null) ...[
                     const SizedBox(height: 2),
-                    Text(
-                      '${l10n.detailsSeasonNumber(params.season!)}, ${l10n.detailsEpisodeNumber(params.episode!)}${params.episodeTitle != null ? ' - ${params.episodeTitle}' : ''}',
-                      style: TextStyle(
-                        color: AppTheme.textWhite.withValues(alpha: 0.7),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    _EpisodeLine(params: params),
                   ],
                 ],
               ),
@@ -209,6 +201,43 @@ class VideoTopBar extends ConsumerWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// "Season 2, Episode 4 - Name". A name the caller didn't pass is looked up
+/// on TMDB (REV-291).
+class _EpisodeLine extends ConsumerWidget {
+  final PlayerParams params;
+
+  const _EpisodeLine({required this.params});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(localizationsProvider);
+    final tmdbId = int.tryParse(params.queryId);
+    final name =
+        params.episodeTitle ??
+        (tmdbId == null
+            ? null
+            : ref
+                  .watch(
+                    episodeNameProvider((
+                      tmdbId: tmdbId,
+                      season: params.season!,
+                      episode: params.episode!,
+                    )),
+                  )
+                  .valueOrNull);
+    return Text(
+      '${l10n.detailsSeasonNumber(params.season!)}, ${l10n.detailsEpisodeNumber(params.episode!)}${name != null ? ' - $name' : ''}',
+      style: TextStyle(
+        color: AppTheme.textWhite.withValues(alpha: 0.7),
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }
