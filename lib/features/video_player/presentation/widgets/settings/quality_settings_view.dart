@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
@@ -27,6 +29,13 @@ class QualitySettingsView extends ConsumerStatefulWidget {
 class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
   bool _filesExpanded = false;
 
+  /// Picking a source or a file closes the sheet, so the keys go back to the
+  /// player (REV-283). The player shows a failed switch itself.
+  void _pickAndClose(Future<void> Function(PlayerController) pick) {
+    unawaited(pick(ref.read(playerControllerProvider(widget.params).notifier)));
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final params = widget.params;
@@ -44,6 +53,11 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
             (a, b) =>
                 a.filename.toLowerCase().compareTo(b.filename.toLowerCase()),
           );
+
+    final currentId = currentState.currentStream?.candidate.uniqueId;
+    final hasSelectedInList = currentState.availableStreams.any(
+      (s) => s.uniqueId == currentId,
+    );
 
     return Stack(
       children: [
@@ -141,11 +155,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                               onTap: () {
                                 // Would restart at 0:00 (REV-172).
                                 if (isSelected) return;
-                                ref
-                                    .read(
-                                      playerControllerProvider(params).notifier,
-                                    )
-                                    .changeFile(file.id);
+                                _pickAndClose((c) => c.changeFile(file.id));
                               },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
@@ -238,18 +248,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                       index,
                     ) {
                       final stream = currentState.availableStreams[index];
-                      final isSelected =
-                          currentState.currentStream?.candidate.uniqueId ==
-                          stream.uniqueId;
-                      final hasSelectedInList = currentState.availableStreams
-                          .any(
-                            (s) =>
-                                currentState
-                                    .currentStream
-                                    ?.candidate
-                                    .uniqueId ==
-                                s.uniqueId,
-                          );
+                      final isSelected = stream.uniqueId == currentId;
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
@@ -260,9 +259,7 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                           borderRadius: AppTheme.radiusLg,
                           onTap: () {
                             if (isSelected) return;
-                            ref
-                                .read(playerControllerProvider(params).notifier)
-                                .changeSource(stream);
+                            _pickAndClose((c) => c.changeSource(stream));
                           },
                           builder: (context, isFocused, isHovered, child) {
                             final isHighlighted = isFocused || isHovered;
