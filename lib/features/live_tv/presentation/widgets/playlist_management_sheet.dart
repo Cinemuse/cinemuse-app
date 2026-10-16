@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:cinemuse_app/shared/widgets/menu/menu_focus_ring.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:file_picker/file_picker.dart';
@@ -13,6 +12,8 @@ import 'package:cinemuse_app/features/live_tv/domain/live_tv_playlist.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/application/custom_epg_url_notifier.dart';
 import 'package:cinemuse_app/features/live_tv/application/epg_refresh_notifier.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/add_remote_playlist_dialog.dart';
+import 'package:cinemuse_app/features/live_tv/presentation/widgets/configure_epg_dialog.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/widgets/save_live_tv_change.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_toggle.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -96,18 +97,20 @@ class PlaylistListSection extends ConsumerWidget {
   ) {
     showDialog(
       context: context,
-      builder: (_) => _AddRemotePlaylistDialog(
-        onAdd: (name, url, type) => savePlaylists(
+      builder: (_) => AddRemotePlaylistDialog(
+        onAdd: (name, url, type) => saveLiveTvChangeError(
           context,
           ref,
-          (playlists) => playlists.addPlaylist(
-            LiveTvPlaylist(
-              name: name,
-              urlOrPath: url,
-              isLocal: false,
-              type: type,
-            ),
-          ),
+          () => ref
+              .read(customPlaylistsProvider.notifier)
+              .addPlaylist(
+                LiveTvPlaylist(
+                  name: name,
+                  urlOrPath: url,
+                  isLocal: false,
+                  type: type,
+                ),
+              ),
         ),
       ),
     );
@@ -374,108 +377,6 @@ class _OpenLinkButton extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Dialog for adding a remote playlist
-// ---------------------------------------------------------------------------
-
-class _AddRemotePlaylistDialog extends StatefulWidget {
-  final void Function(String name, String url, PlaylistType type) onAdd;
-
-  const _AddRemotePlaylistDialog({required this.onAdd});
-
-  @override
-  State<_AddRemotePlaylistDialog> createState() =>
-      _AddRemotePlaylistDialogState();
-}
-
-class _AddRemotePlaylistDialogState extends State<_AddRemotePlaylistDialog> {
-  final _nameController = TextEditingController();
-  final _urlController = TextEditingController();
-  PlaylistType _type = PlaylistType.m3u;
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _urlController.dispose();
-    super.dispose();
-  }
-
-  bool get _canSubmit {
-    final uri = Uri.tryParse(_urlController.text.trim());
-    return _nameController.text.trim().isNotEmpty &&
-        uri != null &&
-        uri.host.isNotEmpty &&
-        (uri.scheme == 'http' || uri.scheme == 'https');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return AlertDialog(
-      title: Text(l10n.liveTvAddRemotePlaylist),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(labelText: l10n.liveTvPlaylistName),
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _urlController,
-              decoration: InputDecoration(labelText: l10n.liveTvPlaylistUrl),
-              keyboardType: TextInputType.url,
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<PlaylistType>(
-              initialValue: _type,
-              mouseCursor: AppTheme.clickCursor,
-              dropdownMenuItemMouseCursor: AppTheme.clickCursor,
-              decoration: InputDecoration(labelText: l10n.liveTvPlaylistFormat),
-              items: withMenuFocusRings(
-                PlaylistType.values
-                    .map(
-                      (e) => DropdownMenuItem(
-                        value: e,
-                        child: Text(e.name.toUpperCase()),
-                      ),
-                    )
-                    .toList(),
-              ),
-              onChanged: (val) {
-                if (val != null) setState(() => _type = val);
-              },
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l10n.commonCancel),
-        ),
-        FilledButton(
-          onPressed: _canSubmit
-              ? () {
-                  widget.onAdd(
-                    _nameController.text.trim(),
-                    _urlController.text.trim(),
-                    _type,
-                  );
-                  Navigator.pop(context);
-                }
-              : null,
-          child: Text(l10n.commonCreate),
-        ),
-      ],
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
 // EPG / TV Guide Section
 // ---------------------------------------------------------------------------
 
@@ -619,15 +520,19 @@ class _EpgSection extends ConsumerWidget {
   ) {
     showDialog(
       context: context,
-      builder: (context) => _ConfigureEpgDialog(
+      builder: (context) => ConfigureEpgDialog(
         initialUrl: currentUrl ?? '',
-        onSave: (url) {
-          // Changing the URL reloads the guide by itself (REV-115).
-          ref.read(customEpgUrlProvider.notifier).setUrl(url);
-        },
-        onReset: () {
-          ref.read(customEpgUrlProvider.notifier).reset();
-        },
+        // Changing the URL reloads the guide by itself (REV-115).
+        onSave: (url) => saveLiveTvChangeError(
+          context,
+          ref,
+          () => ref.read(customEpgUrlProvider.notifier).setUrl(url),
+        ),
+        onReset: () => saveLiveTvChangeError(
+          context,
+          ref,
+          () => ref.read(customEpgUrlProvider.notifier).reset(),
+        ),
       ),
     );
   }
@@ -648,90 +553,5 @@ class _EpgSection extends ConsumerWidget {
         ),
       );
     }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Dialog for configuring EPG guide URL
-// ---------------------------------------------------------------------------
-
-class _ConfigureEpgDialog extends StatefulWidget {
-  final String initialUrl;
-  final ValueChanged<String> onSave;
-  final VoidCallback onReset;
-
-  const _ConfigureEpgDialog({
-    required this.initialUrl,
-    required this.onSave,
-    required this.onReset,
-  });
-
-  @override
-  State<_ConfigureEpgDialog> createState() => _ConfigureEpgDialogState();
-}
-
-class _ConfigureEpgDialogState extends State<_ConfigureEpgDialog> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialUrl);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return AlertDialog(
-      title: Text(l10n.liveTvEpgDialogTitle),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                labelText: l10n.liveTvEpgUrl,
-                hintText: l10n.liveTvEpgDialogHint,
-              ),
-              keyboardType: TextInputType.url,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        if (widget.initialUrl.isNotEmpty)
-          TextButton(
-            onPressed: () {
-              widget.onReset();
-              Navigator.pop(context);
-            },
-            child: Text(
-              l10n.liveTvResetEpg,
-              style: const TextStyle(color: Colors.redAccent),
-            ),
-          ),
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l10n.commonCancel),
-        ),
-        FilledButton(
-          onPressed: () {
-            widget.onSave(_controller.text);
-            Navigator.pop(context);
-          },
-          child: Text(l10n.settingsSave),
-        ),
-      ],
-    );
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/live_tv/application/custom_epg_url_notifier.dart';
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/live_tv/data/live_tv_repository.dart';
@@ -31,12 +32,27 @@ class _SlowEpgRepository extends LiveTvRepository {
   }
 }
 
+/// Saving a playlist fails, as it would offline.
+class _FailingPlaylists extends CustomPlaylistsNotifier {
+  @override
+  Future<void> addPlaylist(LiveTvPlaylist playlist) async =>
+      throw const UnknownFailure('save failed');
+}
+
+/// Saving the guide address fails.
+class _FailingEpgUrl extends CustomEpgUrlNotifier {
+  @override
+  Future<void> setUrl(String url) async =>
+      throw const UnknownFailure('save failed');
+}
+
 void main() {
   late _SlowEpgRepository repository;
 
   Future<void> pumpSection(
     WidgetTester tester, {
     List<LiveTvPlaylist> playlists = const [],
+    List<Override> overrides = const [],
   }) async {
     SharedPreferences.setMockInitialValues({
       'live_tv_custom_playlists': [for (final p in playlists) p.encode()],
@@ -50,6 +66,7 @@ void main() {
         overrides: [
           liveTvRepositoryProvider.overrideWithValue(repository),
           defaultEpgUrlProvider.overrideWithValue(_defaultUrl),
+          ...overrides,
         ],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -130,6 +147,60 @@ void main() {
       await tester.pump();
 
       expect(isEnabled(tester, 'Create'), canCreate);
+    });
+  }
+  // REV-261: a failed save shows under the box, the dialog stays open.
+  const saveError = 'Error saving: Something went wrong.';
+  for (final (name, override, fill) in [
+    (
+      'Add URL',
+      customPlaylistsProvider.overrideWith(_FailingPlaylists.new),
+      (WidgetTester tester) async {
+        await tester.tap(find.text('Add URL'));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.widgetWithText(TextField, 'Playlist Name'),
+          'My list',
+        );
+        await tester.enterText(
+          find.widgetWithText(TextField, 'Playlist URL'),
+          'https://example.com/x.m3u',
+        );
+        await tester.pump();
+        await tester.tap(find.text('Create'));
+      },
+    ),
+    (
+      'Guide address',
+      customEpgUrlProvider.overrideWith(_FailingEpgUrl.new),
+      (WidgetTester tester) async {
+        await tester.tap(find.text('Configure EPG'));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byType(TextField),
+          'https://example.com/guide.xml',
+        );
+        await tester.tap(find.text('Save'));
+      },
+    ),
+  ]) {
+    testWidgets('$name: a failed save shows under the box', (tester) async {
+      await pumpSection(tester, overrides: [override]);
+      await fill(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+      final error = find.descendant(
+        of: find.byType(TextField),
+        matching: find.text(saveError),
+      );
+      expect(error, findsOneWidget);
+      expect(find.byType(SnackBar), findsNothing);
+
+      // Typing again clears it.
+      await tester.enterText(find.byType(TextField).last, 'https://e.com/y');
+      await tester.pump();
+      expect(error, findsNothing);
     });
   }
 }
