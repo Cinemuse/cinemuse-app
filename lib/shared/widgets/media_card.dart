@@ -1,12 +1,12 @@
-import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
-import 'package:cinemuse_app/shared/widgets/premium_hover_text.dart';
+import 'package:cinemuse_app/shared/widgets/card_bottom_vignette.dart';
 import 'package:cinemuse_app/shared/widgets/card_list_actions.dart';
+import 'package:cinemuse_app/shared/widgets/card_title_row.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 import 'package:cinemuse_app/shared/widgets/card_progress_bar.dart';
@@ -66,8 +66,6 @@ class _MediaCardState extends State<MediaCard> {
     Offset? at,
   }) {
     final l10n = AppLocalizations.of(context)!;
-    final listActions = widget.listActions;
-    final isWatchlisted = listActions?.isWatchlisted ?? false;
 
     final options = [
       if (widget.onPlay != null)
@@ -82,22 +80,7 @@ class _MediaCardState extends State<MediaCard> {
           label: l10n.homeMoreInfo,
           onTap: widget.onTap!,
         ),
-      if (listActions != null) ...[
-        AppMenuOption(
-          icon: isWatchlisted
-              ? Icons.bookmark_remove
-              : Icons.bookmark_add_outlined,
-          label: isWatchlisted
-              ? l10n.menuRemoveFromWatchlist
-              : l10n.menuAddToWatchlist,
-          onTap: listActions.toggleWatchlist,
-        ),
-        AppMenuOption(
-          icon: Icons.playlist_add,
-          label: l10n.detailsAddToList,
-          onTap: listActions.addToList,
-        ),
-      ],
+      ...cardListMenuOptions(l10n, widget.listActions),
       if (widget.onRemoveFromList != null)
         AppMenuOption(
           icon: Icons.remove_circle_outline,
@@ -262,19 +245,7 @@ class _MediaCardState extends State<MediaCard> {
                                   ),
                                 ),
 
-                              const DecoratedBox(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.bottomCenter,
-                                    end: Alignment.center,
-                                    colors: [
-                                      Color(0x73000000),
-                                      Colors.transparent,
-                                    ],
-                                    stops: [0.0, 0.4],
-                                  ),
-                                ),
-                              ),
+                              const CardBottomVignette(),
 
                               Builder(
                                 builder: (context) {
@@ -321,68 +292,11 @@ class _MediaCardState extends State<MediaCard> {
               ),
             ),
             const SizedBox(height: 8),
-            // Title + Options Row
-            Builder(
-              builder: (context) {
-                final isHighlighted =
-                    DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
-                final theme = Theme.of(context);
-
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: PremiumHoverText(
-                        text: widget.title,
-                        style: theme.textTheme.bodyMedium!.copyWith(
-                          color: isHighlighted
-                              ? theme.colorScheme.primary
-                              : Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    Builder(
-                      builder: (context) {
-                        final isMobile = Breakpoints.isCompact(context);
-                        return AnimatedOpacity(
-                          opacity: (isHighlighted || isMobile) ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 200),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: Tooltip(
-                              message: AppLocalizations.of(
-                                context,
-                              )!.menuMoreOptions,
-                              child: InkWell(
-                                canRequestFocus: false,
-                                excludeFromSemantics: true,
-                                onTap: () => _showContextActions(context),
-                                mouseCursor: SystemMouseCursors.click,
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  key: _menuKey,
-                                  padding: const EdgeInsets.only(
-                                    left: 4,
-                                    top: 2,
-                                    bottom: 2,
-                                  ),
-                                  child: const Icon(
-                                    Icons.more_vert,
-                                    color: Colors.white60,
-                                    size: 16,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                );
-              },
+            CardTitleRow(
+              title: widget.title,
+              onMenu: () => _showContextActions(context),
+              menuAnchorKey: _menuKey,
+              showsFullTitleOnHover: true,
             ),
             const SizedBox(height: 2),
             Row(

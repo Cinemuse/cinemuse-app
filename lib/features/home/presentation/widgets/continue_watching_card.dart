@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cinemuse_app/features/profile/presentation/widgets/list_action_feedback.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/title_list_actions.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
-import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver_provider.dart';
@@ -12,7 +11,6 @@ import 'package:cinemuse_app/shared/widgets/backdrop_card.dart';
 import 'package:cinemuse_app/shared/widgets/skeleton_box.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_sheet.dart';
 
 class ContinueWatchingCard extends ConsumerStatefulWidget {
   final WatchHistory historyItem;
@@ -127,12 +125,9 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
       infoText: widget.historyItem.mediaType == MediaKind.tv
           ? "S${widget.historyItem.season} E${widget.historyItem.episode}"
           : l10n.personMovie,
-      isWatchlistedCallback: () => ref
-          .read(userListsProvider.notifier)
-          .isInWatchlist(
-            widget.historyItem.tmdbId,
-            widget.historyItem.mediaType,
-          ),
+      // Offline with no saved details (media null): no list entries, rather
+      // than saving an "Unknown" title.
+      listActions: media == null ? null : TitleListActions(context, ref, media),
       onTap: () {
         Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute(
@@ -169,16 +164,6 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
           ),
         );
       },
-      onWatchlistToggle: () {
-        if (media != null) {
-          runListAction(context, ref, (lists) => lists.toggleWatchlist(media));
-        }
-      },
-      onAddToList: media != null
-          ? () {
-              AddToListSheet.show(context, media);
-            }
-          : null,
       onDrop: isRewatching ? null : widget.onDrop,
       onCancelRewatch: isRewatching ? widget.onCancelRewatch : null,
       onClearProgress: widget.onClearProgress,

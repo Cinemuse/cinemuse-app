@@ -1,5 +1,7 @@
-import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/card_bottom_vignette.dart';
+import 'package:cinemuse_app/shared/widgets/card_list_actions.dart';
+import 'package:cinemuse_app/shared/widgets/card_title_row.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -20,12 +22,11 @@ class BackdropCard extends StatefulWidget {
   final VoidCallback? onCancelRewatch;
   final VoidCallback? onDetails;
   final VoidCallback? onRestart;
-  final VoidCallback? onWatchlistToggle;
   final VoidCallback? onClearCache;
   final VoidCallback? onClearProgress;
-  final VoidCallback? onAddToList;
-  final bool isWatchlisted;
-  final bool Function()? isWatchlistedCallback;
+
+  /// The menu's "Watchlist" and "Add to list" entries; null hides them.
+  final CardListActions? listActions;
   final double? width;
 
   const BackdropCard({
@@ -40,12 +41,9 @@ class BackdropCard extends StatefulWidget {
     this.onCancelRewatch,
     this.onDetails,
     this.onRestart,
-    this.onWatchlistToggle,
     this.onClearCache,
     this.onClearProgress,
-    this.onAddToList,
-    this.isWatchlisted = false,
-    this.isWatchlistedCallback,
+    this.listActions,
     this.width,
   });
 
@@ -89,27 +87,7 @@ class _BackdropCardState extends State<BackdropCard> {
           label: l10n.homeMoreInfo,
           onTap: widget.onDetails!,
         ),
-      if (widget.onWatchlistToggle != null) ...[
-        () {
-          final inWatchlist =
-              widget.isWatchlistedCallback?.call() ?? widget.isWatchlisted;
-          return AppMenuOption(
-            icon: inWatchlist
-                ? Icons.bookmark_remove
-                : Icons.bookmark_add_outlined,
-            label: inWatchlist
-                ? l10n.menuRemoveFromWatchlist
-                : l10n.menuAddToWatchlist,
-            onTap: widget.onWatchlistToggle!,
-          );
-        }(),
-      ],
-      if (widget.onAddToList != null)
-        AppMenuOption(
-          icon: Icons.playlist_add,
-          label: l10n.detailsAddToList,
-          onTap: widget.onAddToList!,
-        ),
+      ...cardListMenuOptions(l10n, widget.listActions),
       if (widget.onClearCache != null)
         AppMenuOption(
           icon: Icons.cached,
@@ -195,18 +173,7 @@ class _BackdropCardState extends State<BackdropCard> {
                           : _buildPlaceholder(),
                     ),
 
-                    // Subtle Static Bottom Vignette
-                    const DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.all(Radius.circular(8)),
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.center,
-                          colors: [Color(0x73000000), Colors.transparent],
-                          stops: [0.0, 0.4],
-                        ),
-                      ),
-                    ),
+                    const CardBottomVignette(),
 
                     // Play Icon
                     Builder(
@@ -270,69 +237,11 @@ class _BackdropCardState extends State<BackdropCard> {
               ),
             ),
             const SizedBox(height: 8),
-            // Title + Options Row
-            Builder(
-              builder: (context) {
-                final isHighlighted =
-                    DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
-                final theme = Theme.of(context);
-
-                return Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        widget.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium!.copyWith(
-                          color: isHighlighted
-                              ? theme.colorScheme.primary
-                              : Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Builder(
-                      builder: (context) {
-                        final isMobile = Breakpoints.isCompact(context);
-                        return AnimatedOpacity(
-                          opacity: (isHighlighted || isMobile) ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 200),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: Tooltip(
-                              message: AppLocalizations.of(
-                                context,
-                              )!.menuMoreOptions,
-                              child: InkWell(
-                                canRequestFocus: false,
-                                excludeFromSemantics: true,
-                                onTap: () => _showContextActions(context),
-                                mouseCursor: SystemMouseCursors.click,
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  key: _menuKey,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                    vertical: 2,
-                                  ),
-                                  child: const Icon(
-                                    Icons.more_vert,
-                                    color: Colors.white60,
-                                    size: 18,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                );
-              },
+            CardTitleRow(
+              title: widget.title,
+              onMenu: () => _showContextActions(context),
+              menuAnchorKey: _menuKey,
+              menuIconSize: 18,
             ),
           ],
         ),
