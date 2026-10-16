@@ -209,15 +209,11 @@ class TrackSubtitle extends ConsumerWidget {
               LanguageMapper.isMatch(t, prefLang),
           orElse: () => subs.firstOrNull ?? track,
         );
-        final name = LanguageMapper.getDisplayLanguage(
-          matched.title ?? matched.language ?? matched.id,
-        );
+        final name = LanguageMapper.trackLabel(matched);
         return Text(name, style: const TextStyle(color: AppTheme.textMuted));
       }
 
-      final name = LanguageMapper.getDisplayLanguage(
-        track.title ?? track.language ?? track.id,
-      );
+      final name = LanguageMapper.trackLabel(track);
       return Text(
         name,
         style: const TextStyle(color: AppTheme.textMuted),
@@ -247,15 +243,11 @@ class TrackSubtitle extends ConsumerWidget {
           orElse: () => audio.firstOrNull ?? track,
         );
 
-        final name = LanguageMapper.getDisplayLanguage(
-          matched.title ?? matched.language ?? matched.id,
-        );
+        final name = LanguageMapper.trackLabel(matched);
         return Text(name, style: const TextStyle(color: AppTheme.textMuted));
       }
 
-      final name = LanguageMapper.getDisplayLanguage(
-        track.title ?? track.language ?? track.id,
-      );
+      final name = LanguageMapper.trackLabel(track);
       return Text(
         name,
         style: const TextStyle(color: AppTheme.textMuted),
@@ -292,11 +284,7 @@ class TrackTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title =
-        customTitle ??
-        LanguageMapper.getDisplayLanguage(
-          track.title ?? track.language ?? track.id,
-        );
+    final title = customTitle ?? LanguageMapper.trackLabel(track);
 
     return DpadFocusable(
       autofocus: autofocus,

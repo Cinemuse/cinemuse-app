@@ -120,4 +120,41 @@ class LanguageMapper {
     }
     return langCode;
   }
+
+  /// The label of an audio / subtitle row: the language first, then the
+  /// title when it says more than the language, then (audio only) the
+  /// channels and codec, e.g. "English · Non udenti" or "Italiano · 5.1 · EAC3".
+  /// Titles are the uploader's free text, so alone they mislabel or repeat
+  /// tracks (REV-281).
+  static String trackLabel(dynamic track) {
+    final language = (track.language as String? ?? '').trim();
+    final title = (track.title as String? ?? '').trim();
+    final parts = <String>[];
+    if (language.isEmpty) {
+      parts.add(getDisplayLanguage(title.isEmpty ? track.id as String : title));
+    } else {
+      final languageName = getDisplayLanguage(language);
+      parts.add(languageName);
+      final isJustTheLanguage =
+          title.toLowerCase() == languageName.toLowerCase() ||
+          getDisplayLanguage(title) == languageName;
+      if (title.isNotEmpty && !isJustTheLanguage) parts.add(title);
+    }
+    if (track is AudioTrack) {
+      final channels = _channelsLabel(track.channelscount);
+      if (channels != null) parts.add(channels);
+      final codec = track.codec?.trim();
+      if (codec != null && codec.isNotEmpty) parts.add(codec.toUpperCase());
+    }
+    return parts.join(' · ');
+  }
+
+  static String? _channelsLabel(int? count) => switch (count) {
+    null || <= 0 => null,
+    1 => 'Mono',
+    2 => 'Stereo',
+    6 => '5.1',
+    8 => '7.1',
+    _ => '${count}ch',
+  };
 }

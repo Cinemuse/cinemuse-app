@@ -143,5 +143,46 @@ void main() {
       expect(LanguageMapper.isMatch(track, ''), isFalse);
       expect(LanguageMapper.isMatch(null, 'en'), isFalse);
     });
+
+    // REV-281: the language first, the title only when it adds something,
+    // and the channels / codec so two audio tracks of one language differ.
+    final labelCases = <(String, dynamic, String)>[
+      (
+        'title in another language',
+        SubtitleTrack('1', 'NON UDENTI', 'eng'),
+        'English · NON UDENTI',
+      ),
+      (
+        'title repeats the language',
+        SubtitleTrack('2', 'English', 'eng'),
+        'English',
+      ),
+      (
+        'title is the language code',
+        SubtitleTrack('3', 'ita', 'ita'),
+        'Italiano',
+      ),
+      ('no language: the title', SubtitleTrack('4', 'Forced', null), 'Forced'),
+      (
+        'no language, no title: the id',
+        SubtitleTrack('5', null, null),
+        'Track 5',
+      ),
+      (
+        'audio channels + codec',
+        AudioTrack('1', 'Italiano', 'ita', channelscount: 6, codec: 'eac3'),
+        'Italiano · 5.1 · EAC3',
+      ),
+      (
+        'audio stereo, no codec',
+        AudioTrack('2', null, 'eng', channelscount: 2),
+        'English · Stereo',
+      ),
+    ];
+    for (final (name, track, expected) in labelCases) {
+      test('trackLabel: $name', () {
+        expect(LanguageMapper.trackLabel(track), expected);
+      });
+    }
   });
 }

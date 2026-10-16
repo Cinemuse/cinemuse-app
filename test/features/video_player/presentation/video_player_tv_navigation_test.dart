@@ -393,6 +393,25 @@ void main() {
       expect(backCalled, isTrue);
     });
 
+    testWidgets('TrackTile shows the language before the title (REV-281)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestableWidget(
+          TrackTile(
+            player: mockPlayer,
+            track: SubtitleTrack('3', 'NON UDENTI', 'eng'),
+            isSelected: false,
+            isSubtitle: true,
+            onBack: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('English · NON UDENTI'), findsOneWidget);
+    });
+
     testWidgets(
       'VideoBottomBar provides focusable Slider and wires playPauseFocusNode',
       (tester) async {
