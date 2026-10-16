@@ -80,9 +80,9 @@ void main() {
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
     await tester.pump();
-    // TODO(REV-297): reach it with → once → stops landing on the image.
+    // REV-297: → once landed back on the image.
     for (var i = 0; i < 6 && !downloadFocused(); i++) {
-      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await tester.pump();
     }
     expect(downloadFocused(), isTrue);

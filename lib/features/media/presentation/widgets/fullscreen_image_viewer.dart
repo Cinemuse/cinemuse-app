@@ -29,7 +29,8 @@ class FullscreenImageViewer extends StatefulWidget {
 class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
   late PageController _pageController;
   late int _currentIndex;
-  final FocusNode _focusNode = FocusNode();
+  // No arrow-key target, so → moves along the top buttons (REV-297).
+  final FocusNode _focusNode = FocusNode(skipTraversal: true);
   bool _isDownloading = false;
   // While the image is zoomed, a swipe moves it instead of turning the page.
   bool _imageZoomed = false;
@@ -40,9 +41,7 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _focusNode.requestFocus();
-      }
+      if (mounted) _focusNode.requestFocus();
     });
   }
 
