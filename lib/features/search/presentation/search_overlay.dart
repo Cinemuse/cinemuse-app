@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/media/presentation/person_details_screen.dart';
@@ -15,7 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -593,9 +593,9 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
     }
 
     if (state.status == SearchStatus.error) {
+      final message = state.errorMessage ?? l10n.commonUnexpectedError;
       return ErrorViewState(
-        title: l10n.commonError,
-        message: state.errorMessage ?? l10n.commonUnexpectedError,
+        error: UserFriendlyError(message: message),
         onRetry: () => ref.read(searchProvider.notifier).search(state.query),
       );
     }

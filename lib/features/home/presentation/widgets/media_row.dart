@@ -41,11 +41,7 @@ class MediaRow extends ConsumerWidget {
             padding: EdgeInsets.symmetric(
               horizontal: AppTheme.getResponsiveHorizontalPadding(context),
             ),
-            child: ErrorCard(
-              message: mapped.message,
-              hint: mapped.hint,
-              type: mapped.type,
-            ),
+            child: ErrorCard(error: mapped),
           ),
         ],
       );

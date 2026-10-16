@@ -95,8 +95,7 @@ class _SportScheduleRowState extends ConsumerState<SportScheduleRow> {
           vertical: 16,
         ),
         child: ErrorCard(
-          message: mapped.message,
-          type: mapped.type,
+          error: mapped,
           onRetry: () => ref.refresh(sportScheduleProvider),
         ),
       );

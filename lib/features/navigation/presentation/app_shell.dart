@@ -21,7 +21,6 @@ import 'package:cinemuse_app/features/updates/presentation/update_overlay.dart';
 import 'package:cinemuse_app/features/streaming/anime/anime_mapping_sync_service.dart';
 import 'package:cinemuse_app/core/error/error_service.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
-import 'package:cinemuse_app/shared/widgets/error_toast.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -96,22 +95,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     // Global Error Listener
     ref.listen(errorServiceProvider, (previous, next) {
       if (next != null) {
-        final scaffoldMessenger = ScaffoldMessenger.of(context);
-        scaffoldMessenger.hideCurrentSnackBar();
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: ErrorToast(
-              message: next.message,
-              type: next.type,
-              onDismiss: scaffoldMessenger.hideCurrentSnackBar,
-            ),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
-            padding: EdgeInsets.zero,
-          ),
-        );
+        AppSnackBar.show(context, message: next.message, isError: true);
         // Consume the error so it doesn't re-trigger
         ref.read(errorServiceProvider.notifier).consume();
       }

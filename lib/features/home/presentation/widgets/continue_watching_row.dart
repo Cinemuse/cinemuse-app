@@ -77,7 +77,7 @@ class _ContinueWatchingRowState extends ConsumerState<ContinueWatchingRow> {
           horizontal: AppTheme.getResponsiveHorizontalPadding(context),
           vertical: 16,
         ),
-        child: ErrorCard(message: mapped.message, type: mapped.type),
+        child: ErrorCard(error: mapped),
       );
     }
 

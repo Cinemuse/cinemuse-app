@@ -12,31 +12,31 @@ void main() {
   final mapper = GlobalErrorMapper(l10n);
 
   group('GlobalErrorMapper with AppFailure', () {
-    final cases = <AppFailure, (String, AppExceptionType)>{
+    final cases = <AppFailure, (String, ErrorKind)>{
       const NetworkFailure('dev text'): (
         l10n.failureNetwork,
-        AppExceptionType.network,
+        ErrorKind.network,
       ),
-      const AuthFailure('dev text'): (l10n.failureAuth, AppExceptionType.auth),
+      const AuthFailure('dev text'): (l10n.failureAuth, ErrorKind.auth),
       const ServerFailure('dev text', statusCode: 500): (
         l10n.failureServer,
-        AppExceptionType.database,
+        ErrorKind.server,
       ),
       const NotFoundFailure('dev text'): (
         l10n.failureNotFound,
-        AppExceptionType.unknown,
+        ErrorKind.unknown,
       ),
       const StreamingFailure('dev text'): (
         l10n.failureStreaming,
-        AppExceptionType.streaming,
+        ErrorKind.streaming,
       ),
       const ValidationFailure('dev text'): (
         l10n.failureValidation,
-        AppExceptionType.validation,
+        ErrorKind.validation,
       ),
       const UnknownFailure('dev text'): (
         l10n.failureUnknown,
-        AppExceptionType.unknown,
+        ErrorKind.unknown,
       ),
     };
 
@@ -45,7 +45,7 @@ void main() {
         final result = mapper.map(failure);
 
         expect(result.message, expected.$1);
-        expect(result.type, expected.$2);
+        expect(result.kind, expected.$2);
         // The developer message must never reach the user (REV-164).
         expect(result.message, isNot(contains('dev text')));
       });
@@ -63,15 +63,18 @@ void main() {
   });
 
   group('GlobalErrorMapper with AppException', () {
-    final cases = <AppExceptionType, String>{
-      AppExceptionType.network: l10n.failureNetwork,
-      AppExceptionType.auth: l10n.failureAuth,
-      AppExceptionType.database: l10n.failureServer,
-      AppExceptionType.streaming: l10n.failureStreaming,
-      AppExceptionType.validation: l10n.failureValidation,
-      AppExceptionType.realtime: l10n.failureUnknown,
-      AppExceptionType.system: l10n.failureUnknown,
-      AppExceptionType.unknown: l10n.failureUnknown,
+    final cases = <AppExceptionType, (String, ErrorKind)>{
+      AppExceptionType.network: (l10n.failureNetwork, ErrorKind.network),
+      AppExceptionType.auth: (l10n.failureAuth, ErrorKind.auth),
+      AppExceptionType.database: (l10n.failureServer, ErrorKind.server),
+      AppExceptionType.streaming: (l10n.failureStreaming, ErrorKind.streaming),
+      AppExceptionType.validation: (
+        l10n.failureValidation,
+        ErrorKind.validation,
+      ),
+      AppExceptionType.realtime: (l10n.failureUnknown, ErrorKind.unknown),
+      AppExceptionType.system: (l10n.failureUnknown, ErrorKind.unknown),
+      AppExceptionType.unknown: (l10n.failureUnknown, ErrorKind.unknown),
     };
 
     cases.forEach((type, expected) {
@@ -80,8 +83,8 @@ void main() {
           AppException(message: 'raw database text', type: type),
         );
 
-        expect(result.message, expected);
-        expect(result.type, type);
+        expect(result.message, expected.$1);
+        expect(result.kind, expected.$2);
       });
     });
   });
@@ -131,14 +134,14 @@ void main() {
       final result = mapper.map(CapabilityMissingException('anime'));
 
       expect(result.message, l10n.streamingErrorCapabilityMissing('anime'));
-      expect(result.type, AppExceptionType.streaming);
+      expect(result.kind, ErrorKind.streaming);
     });
 
     test('other StreamingExceptions show their own message', () {
       final result = mapper.map(StreamResolutionFailedException('timeout'));
 
       expect(result.message, 'Stream resolution failed: timeout');
-      expect(result.type, AppExceptionType.streaming);
+      expect(result.kind, ErrorKind.streaming);
     });
 
     test('a plain string is shown as is', () {

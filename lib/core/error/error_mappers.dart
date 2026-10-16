@@ -7,17 +7,21 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
+/// What went wrong, as the error widgets show it (one icon per kind).
+enum ErrorKind { network, auth, server, streaming, validation, unknown }
+
+/// An error ready for the UI: translated text plus its [kind].
 class UserFriendlyError {
   final String message;
   final String? title;
   final String? hint;
-  final AppExceptionType type;
+  final ErrorKind kind;
 
   UserFriendlyError({
     required this.message,
     this.title,
     this.hint,
-    this.type = AppExceptionType.unknown,
+    this.kind = ErrorKind.unknown,
   });
 }
 
@@ -35,14 +39,14 @@ class NetworkErrorMapper implements BaseErrorMapper {
         case DioExceptionType.receiveTimeout:
           return UserFriendlyError(
             message: l10n.errorTimeout,
-            type: AppExceptionType.network,
+            kind: ErrorKind.network,
           );
         case DioExceptionType.badResponse:
           return UserFriendlyError(
             message: l10n.errorServerStatus(
               '${error.response?.statusCode ?? '?'}',
             ),
-            type: AppExceptionType.network,
+            kind: ErrorKind.network,
           );
         default:
           final underlying = error.error?.toString() ?? '';
@@ -54,7 +58,7 @@ class NetworkErrorMapper implements BaseErrorMapper {
           return UserFriendlyError(
             message: l10n.failureNetwork,
             hint: isCertificateProblem ? l10n.errorCertificateHint : null,
-            type: AppExceptionType.network,
+            kind: ErrorKind.network,
           );
       }
     }
@@ -71,24 +75,24 @@ class AppFailureMapper implements BaseErrorMapper {
     return switch (error) {
       NetworkFailure() => UserFriendlyError(
         message: l10n.failureNetwork,
-        type: AppExceptionType.network,
+        kind: ErrorKind.network,
       ),
       AuthFailure() => UserFriendlyError(
         message: l10n.failureAuth,
-        type: AppExceptionType.auth,
+        kind: ErrorKind.auth,
       ),
       ServerFailure() => UserFriendlyError(
         message: l10n.failureServer,
-        type: AppExceptionType.database,
+        kind: ErrorKind.server,
       ),
       NotFoundFailure() => UserFriendlyError(message: l10n.failureNotFound),
       StreamingFailure() => UserFriendlyError(
         message: l10n.failureStreaming,
-        type: AppExceptionType.streaming,
+        kind: ErrorKind.streaming,
       ),
       ValidationFailure() => UserFriendlyError(
         message: l10n.failureValidation,
-        type: AppExceptionType.validation,
+        kind: ErrorKind.validation,
       ),
       UnknownFailure() => UserFriendlyError(message: l10n.failureUnknown),
     };
@@ -115,7 +119,7 @@ class AuthErrorMapper implements BaseErrorMapper {
         : text.contains('already exists') || text.contains('already registered')
         ? l10n.authErrorUserExists
         : l10n.authErrorGeneric;
-    return UserFriendlyError(message: message, type: AppExceptionType.auth);
+    return UserFriendlyError(message: message, kind: ErrorKind.auth);
   }
 }
 
@@ -134,10 +138,7 @@ class StreamingErrorMapper implements BaseErrorMapper {
         l10n.streamingErrorProviderSearchFailed(providerName),
       _ => error.message,
     };
-    return UserFriendlyError(
-      message: message,
-      type: AppExceptionType.streaming,
-    );
+    return UserFriendlyError(message: message, kind: ErrorKind.streaming);
   }
 }
 
@@ -159,24 +160,38 @@ class GlobalErrorMapper {
     }
     // Never show `message` / `toString()`: raw English developer text (REV-164).
     return switch (error) {
-      AppException() => UserFriendlyError(
-        message: _messageForType(error.type),
-        type: error.type,
-      ),
+      AppException() => _forType(error.type),
       String() => UserFriendlyError(message: error),
       _ => UserFriendlyError(message: _l10n.failureUnknown),
     };
   }
 
-  String _messageForType(AppExceptionType type) => switch (type) {
-    AppExceptionType.network => _l10n.failureNetwork,
-    AppExceptionType.auth => _l10n.failureAuth,
-    AppExceptionType.database => _l10n.failureServer,
-    AppExceptionType.streaming => _l10n.failureStreaming,
-    AppExceptionType.validation => _l10n.failureValidation,
+  UserFriendlyError _forType(AppExceptionType type) => switch (type) {
+    AppExceptionType.network => UserFriendlyError(
+      message: _l10n.failureNetwork,
+      kind: ErrorKind.network,
+    ),
+    AppExceptionType.auth => UserFriendlyError(
+      message: _l10n.failureAuth,
+      kind: ErrorKind.auth,
+    ),
+    AppExceptionType.database => UserFriendlyError(
+      message: _l10n.failureServer,
+      kind: ErrorKind.server,
+    ),
+    AppExceptionType.streaming => UserFriendlyError(
+      message: _l10n.failureStreaming,
+      kind: ErrorKind.streaming,
+    ),
+    AppExceptionType.validation => UserFriendlyError(
+      message: _l10n.failureValidation,
+      kind: ErrorKind.validation,
+    ),
     AppExceptionType.realtime ||
     AppExceptionType.system ||
-    AppExceptionType.unknown => _l10n.failureUnknown,
+    AppExceptionType.unknown => UserFriendlyError(
+      message: _l10n.failureUnknown,
+    ),
   };
 }
 

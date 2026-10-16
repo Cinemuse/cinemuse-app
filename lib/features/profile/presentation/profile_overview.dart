@@ -112,9 +112,7 @@ class ProfileOverview extends ConsumerWidget {
     }
 
     Widget statsErrorCard(UserFriendlyError error) => ErrorCard(
-      message: error.message,
-      hint: error.hint,
-      type: error.type,
+      error: error,
       onRetry: () => ref.invalidate(profileStatsProvider),
     );
 

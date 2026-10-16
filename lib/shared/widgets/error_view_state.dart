@@ -1,138 +1,131 @@
-import 'package:cinemuse_app/core/error/app_exception.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/error_action.dart';
+import 'package:cinemuse_app/shared/widgets/error_kind_icon.dart';
 import 'package:flutter/material.dart';
 
+/// Full-screen error: icon, title, message, then the buttons in this order:
+/// [extraActions], Retry ([onRetry]), [mainAction]. The main button
+/// ([mainAction], else Retry) takes the focus so a remote can press it at once.
 class ErrorViewState extends StatelessWidget {
-  final String title;
-  final String message;
-  final String? hint;
-  final AppExceptionType type;
+  final UserFriendlyError error;
+
+  /// Shown above the message; defaults to [UserFriendlyError.title].
+  final String? title;
   final VoidCallback? onRetry;
+  final ErrorAction? mainAction;
+  final List<ErrorAction> extraActions;
 
   const ErrorViewState({
     super.key,
-    required this.title,
-    required this.message,
-    this.hint,
-    this.type = AppExceptionType.unknown,
+    required this.error,
+    this.title,
     this.onRetry,
+    this.mainAction,
+    this.extraActions = const [],
   });
 
   @override
   Widget build(BuildContext context) {
-    IconData icon;
-    Color color;
-
-    switch (type) {
-      case AppExceptionType.network:
-        icon = Icons.wifi_off_rounded;
-        color = Colors.orangeAccent;
-        break;
-      case AppExceptionType.streaming:
-        icon = Icons.movie_filter_rounded;
-        color = Colors.blueAccent;
-        break;
-      case AppExceptionType.auth:
-        icon = Icons.lock_person_rounded;
-        color = Colors.purpleAccent;
-        break;
-      case AppExceptionType.realtime:
-        icon = Icons.sync_problem_rounded;
-        color = Colors.tealAccent;
-        break;
-      default:
-        icon = Icons.error_outline_rounded;
-        color = Colors.redAccent;
-    }
+    final textTheme = Theme.of(context).textTheme;
+    final title = this.title ?? error.title;
+    final hint = error.hint;
+    final retry = onRetry;
+    final main = mainAction;
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(24),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Icon with Glow
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.05),
-                    blurRadius: 16,
-                  ),
-                ],
+            Icon(error.kind.icon, color: AppTheme.error, size: 48),
+            const SizedBox(height: 16),
+            if (title != null) ...[
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              child: Icon(icon, color: color, size: 64),
-            ),
-            const SizedBox(height: 24),
-
-            // Title
+              const SizedBox(height: 8),
+            ],
             Text(
-              title,
+              error.message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+              style: textTheme.bodyLarge?.copyWith(
+                color: AppTheme.textSecondary,
               ),
             ),
-            const SizedBox(height: 12),
-
-            // Message
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                color: Colors.white70,
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-
             if (hint != null) ...[
               const SizedBox(height: 8),
               Text(
-                hint!,
+                hint,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: color.withValues(alpha: 0.8),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  fontStyle: FontStyle.italic,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.textMuted,
                 ),
               ),
             ],
-
-            const SizedBox(height: 32),
-
-            if (onRetry != null)
-              ElevatedButton.icon(
-                onPressed: onRetry,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: color.withValues(alpha: 0.2),
-                  foregroundColor: color,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+            const SizedBox(height: 24),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                for (final action in extraActions)
+                  _ErrorButton(action: action, isMain: false),
+                if (retry != null)
+                  _ErrorButton(
+                    action: ErrorAction(
+                      label: AppLocalizations.of(context)!.commonRetry,
+                      icon: Icons.refresh_rounded,
+                      onPressed: retry,
+                    ),
+                    isMain: main == null,
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: color.withValues(alpha: 0.4)),
-                  ),
-                ),
-                icon: const Icon(Icons.refresh_rounded),
-                label: Text(
-                  AppLocalizations.of(context)!.commonRetry,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ),
+                if (main != null) _ErrorButton(action: main, isMain: true),
+              ],
+            ),
           ],
         ),
       ),
     );
+  }
+}
+
+class _ErrorButton extends StatelessWidget {
+  final ErrorAction action;
+  final bool isMain;
+
+  const _ErrorButton({required this.action, required this.isMain});
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = action.icon;
+    final label = Text(action.label);
+    if (isMain) {
+      return icon == null
+          ? ElevatedButton(
+              autofocus: true,
+              onPressed: action.onPressed,
+              child: label,
+            )
+          : ElevatedButton.icon(
+              autofocus: true,
+              onPressed: action.onPressed,
+              icon: Icon(icon),
+              label: label,
+            );
+    }
+    return icon == null
+        ? OutlinedButton(onPressed: action.onPressed, child: label)
+        : OutlinedButton.icon(
+            onPressed: action.onPressed,
+            icon: Icon(icon),
+            label: label,
+          );
   }
 }

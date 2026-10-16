@@ -192,9 +192,7 @@ class _HomeHeroSection extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(32.0),
                 child: ErrorCard(
-                  message: mapped.message,
-                  hint: mapped.hint,
-                  type: mapped.type,
+                  error: mapped,
                   onRetry: () => ref.refresh(trendingProvider),
                 ),
               ),

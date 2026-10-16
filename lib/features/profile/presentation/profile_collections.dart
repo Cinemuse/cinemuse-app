@@ -250,9 +250,7 @@ class ProfileCollections extends ConsumerWidget {
       error: (err, stack) {
         final error = ref.read(errorMapperProvider).map(err);
         return ErrorCard(
-          message: error.message,
-          hint: error.hint,
-          type: error.type,
+          error: error,
           onRetry: () => ref.invalidate(userListsProvider),
         );
       },
