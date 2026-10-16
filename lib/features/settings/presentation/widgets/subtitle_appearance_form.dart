@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_slider.dart';
+import 'package:cinemuse_app/features/settings/presentation/widgets/subtitle_text_colors.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
@@ -48,14 +49,7 @@ class SubtitleAppearanceForm extends StatelessWidget {
         _ColorSelectorTile(
           label: l10n.playerAppearanceTextColor,
           selectedColor: style.color,
-          colors: const [
-            Colors.white,
-            Colors.yellow,
-            Colors.lightGreenAccent,
-            Colors.cyanAccent,
-            Colors.blueAccent,
-            Colors.redAccent,
-          ],
+          colors: subtitleTextColors,
           onColorSelected: (color) => onChangeEnd(style.copyWith(color: color)),
         ),
 

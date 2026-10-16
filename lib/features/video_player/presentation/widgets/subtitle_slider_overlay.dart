@@ -7,6 +7,7 @@ import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/application/subtitle_style_provider.dart';
 import 'package:cinemuse_app/features/settings/domain/subtitle_style.dart';
+import 'package:cinemuse_app/features/settings/presentation/widgets/subtitle_text_colors.dart';
 import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
@@ -361,22 +362,11 @@ class _ColorControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = const [
-      AppTheme.textWhite,
-      AppTheme.watchlist,
-      AppTheme.success,
-      AppTheme.badgeSize,
-      AppTheme.badgeResolution,
-      AppTheme.badgeAudio,
-      AppTheme.favorites,
-      AppTheme.badgeHdr,
-    ];
-
     return Wrap(
       spacing: 12,
       runSpacing: 12,
       alignment: WrapAlignment.center,
-      children: colors.map((color) {
+      children: subtitleTextColors.map((color) {
         final isSelected = color.toARGB32() == selectedColor.toARGB32();
         return DpadFocusable(
           onTap: () => onColorSelected(color),
