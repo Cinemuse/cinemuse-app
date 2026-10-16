@@ -35,4 +35,27 @@ void main() {
       expect(isNewerRelease('v1.3.2', 'dev', '20'), isFalse);
     });
   });
+
+  group('isBelowMinimumVersion (REV-306)', () {
+    test('an older x.y.z is below the minimum', () {
+      expect(isBelowMinimumVersion('1.4.0', '1.3.9', '20'), isTrue);
+      expect(isBelowMinimumVersion('2.0.0', '1.9.9', '20'), isTrue);
+    });
+
+    test('the same or a newer version is not below', () {
+      expect(isBelowMinimumVersion('1.4.0', '1.4.0', '20'), isFalse);
+      expect(isBelowMinimumVersion('1.4.0', '1.5.0', '1'), isFalse);
+      expect(isBelowMinimumVersion('0.0.0', '1.0.0', '0'), isFalse);
+    });
+
+    test('a minimum with a build number: the build decides', () {
+      expect(isBelowMinimumVersion('1.4.0+21', '1.4.0', '20'), isTrue);
+      expect(isBelowMinimumVersion('1.4.0+21', '1.4.0', '21'), isFalse);
+    });
+
+    test('an unreadable version never blocks the app', () {
+      expect(isBelowMinimumVersion('', '1.3.2', '20'), isFalse);
+      expect(isBelowMinimumVersion('1.4.0', 'dev', '20'), isFalse);
+    });
+  });
 }

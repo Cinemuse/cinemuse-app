@@ -10,7 +10,11 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'dart:io';
 
 class UpdateOverlay extends ConsumerWidget {
-  const UpdateOverlay({super.key});
+  /// Off under `UpdateRequiredScreen`, which shows "update available" and
+  /// errors itself: only the download progress is drawn on top (REV-306).
+  final bool showsBanners;
+
+  const UpdateOverlay({super.key, this.showsBanners = true});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -114,6 +118,8 @@ class UpdateOverlay extends ConsumerWidget {
         ),
       );
     }
+
+    if (!showsBanners) return const SizedBox.shrink();
 
     final isMobile = Breakpoints.isCompact(context);
     final double topOffset = isMobile
@@ -312,7 +318,6 @@ class UpdateOverlay extends ConsumerWidget {
 
 /// The translated text for the update error in [state] (REV-29). An unknown
 /// key falls back to the generic "update failed".
-@visibleForTesting
 String updateErrorMessage(AppLocalizations l10n, UpdateState state) =>
     switch (state.errorKey) {
       'updateNoCompatibleApk' => l10n.updateNoCompatibleApk(

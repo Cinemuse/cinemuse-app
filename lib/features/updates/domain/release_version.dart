@@ -62,3 +62,17 @@ bool isNewerRelease(String latestTag, String currentName, String currentBuild) {
   if (latest == null || current == null) return false;
   return latest.compareTo(current) > 0;
 }
+
+/// Whether the installed app ([currentName] + [currentBuild] from
+/// `PackageInfo`) is older than [minimum], the oldest version the database
+/// still supports (REV-306). An unreadable version never blocks the app.
+bool isBelowMinimumVersion(
+  String minimum,
+  String currentName,
+  String currentBuild,
+) {
+  final min = ReleaseVersion.tryParse(minimum);
+  final current = ReleaseVersion.tryParse(currentName, build: currentBuild);
+  if (min == null || current == null) return false;
+  return current.compareTo(min) < 0;
+}

@@ -3056,6 +3056,24 @@ abstract class AppLocalizations {
   /// **'Cinemuse needs permission to install apps. Allow it in Settings, then try again.'**
   String get updatePermissionDenied;
 
+  /// No description provided for @updateRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update required'**
+  String get updateRequiredTitle;
+
+  /// No description provided for @updateRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This version of Cinemuse is too old to work with your account. Update the app to keep using it.'**
+  String get updateRequiredMessage;
+
+  /// No description provided for @updateRequiredLinux.
+  ///
+  /// In en, this message translates to:
+  /// **'Download the new version from the Cinemuse releases page on GitHub and install it.'**
+  String get updateRequiredLinux;
+
   /// No description provided for @menuMoreOptions.
   ///
   /// In en, this message translates to:

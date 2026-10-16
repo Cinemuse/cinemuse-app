@@ -1669,6 +1669,17 @@ class AppLocalizationsIt extends AppLocalizations {
       'Cinemuse ha bisogno del permesso di installare app. Concedilo nelle Impostazioni, poi riprova.';
 
   @override
+  String get updateRequiredTitle => 'Aggiornamento necessario';
+
+  @override
+  String get updateRequiredMessage =>
+      'Questa versione di Cinemuse è troppo vecchia per funzionare con il tuo account. Aggiorna l\'app per continuare a usarla.';
+
+  @override
+  String get updateRequiredLinux =>
+      'Scarica la nuova versione dalla pagina delle release di Cinemuse su GitHub e installala.';
+
+  @override
   String get menuMoreOptions => 'Altre Opzioni';
 
   @override

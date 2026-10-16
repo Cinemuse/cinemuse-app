@@ -17,7 +17,9 @@ import 'package:cinemuse_app/features/navigation/presentation/bottom_navbar.dart
 import 'package:cinemuse_app/features/settings/presentation/settings_screen.dart';
 import 'package:cinemuse_app/features/live_tv/presentation/live_tv_screen.dart';
 import 'package:cinemuse_app/features/updates/application/update_service.dart';
+import 'package:cinemuse_app/features/updates/application/update_required_provider.dart';
 import 'package:cinemuse_app/features/updates/presentation/update_overlay.dart';
+import 'package:cinemuse_app/features/updates/presentation/update_required_screen.dart';
 import 'package:cinemuse_app/features/streaming/anime/anime_mapping_sync_service.dart';
 import 'package:cinemuse_app/core/error/error_service.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
@@ -100,6 +102,19 @@ class _AppShellState extends ConsumerState<AppShell> {
         ref.read(errorServiceProvider.notifier).consume();
       }
     });
+
+    // Release builds only: a debug build carries pubspec's placeholder
+    // version, not the release's (same as the update banner).
+    final isUpdateRequired =
+        !kDebugMode && (ref.watch(updateRequiredProvider).valueOrNull ?? false);
+    if (isUpdateRequired) {
+      return const Stack(
+        children: [
+          UpdateRequiredScreen(),
+          Positioned.fill(child: UpdateOverlay(showsBanners: false)),
+        ],
+      );
+    }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
