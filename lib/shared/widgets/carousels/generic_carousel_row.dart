@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/carousel_header.dart';
 
 enum CarouselTheme {
   homeRow, // Title + chevron right (no box)
@@ -392,6 +393,26 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
     );
   }
 
+  /// The row title (profile rows: with their icon) and the scroll arrows.
+  Widget _buildTitleLine({required bool isSmall}) {
+    return Row(
+      children: [
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: CarouselHeader(
+              title: widget.title ?? '',
+              icon: isSmall ? widget.icon : null,
+              isSmall: isSmall,
+              onTap: widget.onHeaderTap,
+            ),
+          ),
+        ),
+        _buildArrowButtons(),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.itemCount == 0 && widget.emptyBuilder == null) {
@@ -439,64 +460,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
               children: [
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  child: Row(
-                    children: [
-                      if (widget.icon != null) ...[
-                        Icon(widget.icon, size: 20, color: Colors.grey),
-                        const SizedBox(width: 8),
-                      ],
-                      Expanded(
-                        child: Row(
-                          children: [
-                            if (widget.onHeaderTap != null)
-                              InkWell(
-                                mouseCursor: AppTheme.clickCursor,
-                                onTap: widget.onHeaderTap,
-                                borderRadius: BorderRadius.circular(8),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        widget.title ?? '',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Icon(
-                                        Icons.chevron_right,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withValues(alpha: 0.6),
-                                        size: 20,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            else
-                              Text(
-                                widget.title ?? '',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      _buildArrowButtons(),
-                    ],
-                  ),
+                  child: _buildTitleLine(isSmall: true),
                 ),
                 const SizedBox(height: 16),
                 _buildList(overridePadding: listPadding),
@@ -520,64 +484,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
                 horizontalPadding,
                 isMobile ? 8 : 16,
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        if (widget.onHeaderTap != null)
-                          InkWell(
-                            mouseCursor: AppTheme.clickCursor,
-                            onTap: widget.onHeaderTap,
-                            borderRadius: BorderRadius.circular(8),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    widget.title ?? '',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium!
-                                        .copyWith(
-                                          color: Colors.white,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withValues(alpha: 0.6),
-                                    size: 24,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        else
-                          Text(
-                            widget.title ?? '',
-                            style: Theme.of(context).textTheme.bodyMedium!
-                                .copyWith(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  _buildArrowButtons(),
-                ],
-              ),
+              child: _buildTitleLine(isSmall: false),
             ),
             _buildList(),
           ],

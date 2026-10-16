@@ -4,6 +4,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/carousel_header.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/poster_carousel_row.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
@@ -141,37 +142,7 @@ class MediaRow extends ConsumerWidget {
       padding: EdgeInsets.symmetric(
         horizontal: AppTheme.getResponsiveHorizontalPadding(context),
       ),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onHeaderTap,
-        child: MouseRegion(
-          cursor: onHeaderTap != null
-              ? SystemMouseCursors.click
-              : SystemMouseCursors.basic,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: AppTheme.textWhite,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (onHeaderTap != null) ...[
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
+      child: CarouselHeader(title: title, onTap: onHeaderTap),
     );
   }
 }

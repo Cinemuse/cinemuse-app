@@ -2,6 +2,8 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:cinemuse_app/l10n/app_localizations_it.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -392,6 +394,68 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         await tester.pumpAndSettle();
         expect(headerTaps, 2);
+      },
+    );
+
+    // REV-243: the clickable title showed no hover or focus style.
+    testWidgets(
+      'Row title turns pink on hover and focus, ring only on focus (${theme.name})',
+      (tester) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            child: MaterialApp(
+              theme: AppTheme.darkTheme,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              home: Scaffold(
+                body: GenericCarouselRow(
+                  title: 'Movies',
+                  theme: theme,
+                  height: 200,
+                  itemCount: 2,
+                  onHeaderTap: _noop,
+                  itemBuilder: (context, index) => SizedBox(
+                    width: 100,
+                    height: 150,
+                    child: DpadFocusable(
+                      onTap: _noop,
+                      child: Text('Movie $index'),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final pink = AppTheme.darkTheme.colorScheme.primary;
+        Color? titleColor() =>
+            tester.widget<Text>(find.text('Movies')).style?.color;
+        bool isTitleRingShown() => tester
+            .widgetList<FocusRing>(
+              find.ancestor(
+                of: find.text('Movies'),
+                matching: find.byType(FocusRing),
+              ),
+            )
+            .any((ring) => ring.isVisible);
+
+        expect(titleColor(), isNot(pink));
+
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        await mouse.addPointer(location: tester.getCenter(find.text('Movies')));
+        await tester.pumpAndSettle();
+        expect(titleColor(), pink);
+        expect(isTitleRingShown(), isFalse);
+        await mouse.removePointer();
+        await tester.pumpAndSettle();
+        expect(titleColor(), isNot(pink));
+
+        await tester.tap(find.text('Movie 0'));
+        await tester.pumpAndSettle();
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pumpAndSettle();
+        expect(titleColor(), pink);
+        expect(isTitleRingShown(), isTrue);
       },
     );
   }
