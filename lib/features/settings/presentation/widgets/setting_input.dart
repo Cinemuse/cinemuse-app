@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
 
 class SettingInput extends ConsumerStatefulWidget {
@@ -33,6 +32,7 @@ class _SettingInputState extends ConsumerState<SettingInput> {
   bool _isDirty = false;
   bool _isSaving = false;
   bool _showSuccess = false;
+  String? _error;
   late bool _isObscured;
 
   @override
@@ -76,6 +76,7 @@ class _SettingInputState extends ConsumerState<SettingInput> {
           _isSaving = false;
           _isDirty = false;
           _showSuccess = true;
+          _error = null;
         });
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
@@ -89,15 +90,12 @@ class _SettingInputState extends ConsumerState<SettingInput> {
       if (mounted) {
         setState(() {
           _isSaving = false;
-        });
-        // Translated text, never e.toString() (REV-86, REV-164).
-        AppSnackBar.show(
-          context,
-          message: AppLocalizations.of(
+          // Under the box, not a snackbar (REV-261). Translated text, never
+          // e.toString() (REV-86, REV-164).
+          _error = AppLocalizations.of(
             context,
-          )!.settingsErrorSaving(ref.read(errorMapperProvider).map(e).message),
-          isError: true,
-        );
+          )!.settingsErrorSaving(ref.read(errorMapperProvider).map(e).message);
+        });
       }
     }
   }
@@ -114,13 +112,19 @@ class _SettingInputState extends ConsumerState<SettingInput> {
     final l10n = AppLocalizations.of(context)!;
 
     final input = Row(
+      // The error text makes the box taller: keep Save level with the box.
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: SettingsTextField(
             controller: _controller,
             obscureText: _isObscured,
+            onChanged: (_) {
+              if (_error != null) setState(() => _error = null);
+            },
             decoration: settingsInputDecoration(
               hintText: widget.placeholder,
+              errorText: _error,
               suffixIcon: widget.isPassword
                   ? IconButton(
                       tooltip: _isObscured
@@ -219,6 +223,7 @@ class SettingsTextField extends StatelessWidget {
   final TextEditingController controller;
   final InputDecoration decoration;
   final bool obscureText;
+  final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
 
   const SettingsTextField({
@@ -226,6 +231,7 @@ class SettingsTextField extends StatelessWidget {
     required this.controller,
     required this.decoration,
     this.obscureText = false,
+    this.onChanged,
     this.onSubmitted,
   });
 
@@ -238,6 +244,7 @@ class SettingsTextField extends StatelessWidget {
         obscureText: obscureText,
         style: const TextStyle(color: Colors.white),
         decoration: decoration,
+        onChanged: onChanged,
         onSubmitted: onSubmitted,
       ),
     );

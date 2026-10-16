@@ -97,12 +97,20 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(
-        find.text(l10n.settingsErrorSaving(l10n.failureNetwork)),
-        findsOneWidget,
+      // REV-261: the error is red text under the box, not a snackbar.
+      final error = find.descendant(
+        of: find.byType(TextField),
+        matching: find.text(l10n.settingsErrorSaving(l10n.failureNetwork)),
       );
+      expect(error, findsOneWidget);
+      expect(find.byType(SnackBar), findsNothing);
       expect(find.textContaining('Exception'), findsNothing);
       expect(find.textContaining('Failure'), findsNothing);
+
+      // Typing again clears it.
+      await tester.enterText(find.byType(TextField), 'Newer name');
+      await tester.pump();
+      expect(error, findsNothing);
     });
   }
 }
