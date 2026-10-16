@@ -5,6 +5,7 @@ import 'package:media_kit_video/media_kit_video.dart' as mkv;
 import 'package:mocktail/mocktail.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/presentation/widgets/settings/live_tv_quality_view.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';

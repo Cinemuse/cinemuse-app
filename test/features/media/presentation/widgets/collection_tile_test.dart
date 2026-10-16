@@ -5,6 +5,7 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/collection_tile.dart';
 import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';

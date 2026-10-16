@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver_provider.dart';
 import 'package:cinemuse_app/features/media/domain/episode_item.dart';

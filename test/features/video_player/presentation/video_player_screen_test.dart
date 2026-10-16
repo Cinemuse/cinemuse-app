@@ -1,6 +1,7 @@
 import 'package:cinemuse_app/core/application/locale_service.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';

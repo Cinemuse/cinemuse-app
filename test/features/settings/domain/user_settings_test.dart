@@ -1,4 +1,4 @@
-import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // REV-80: AnimeTosho is on only with a debrid service that has a key.

@@ -1,20 +1,21 @@
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Saves [updates] and says so in a snackbar if the save fails (REV-78).
-Future<void> saveSettings(
-  BuildContext context,
-  WidgetRef ref,
-  Map<String, dynamic> updates,
-) => runSettingsSave(
-  context,
-  ref,
-  (settings) => settings.updateSettings(updates),
-);
+/// Returns a function that saves the settings its change returns
+/// (`save((s) => s.copyWith(...))`) and says so in a snackbar if the save
+/// fails (REV-78). Built once per section's `build`.
+Future<void> Function(UserSettings Function(UserSettings current) change)
+settingsSaver(BuildContext context, WidgetRef ref) =>
+    (change) => runSettingsSave(
+      context,
+      ref,
+      (settings) => settings.updateSettings(change),
+    );
 
 /// Runs [save] and shows "Error saving" if it fails. By then the notifier
 /// has already logged the error and put the old values back.

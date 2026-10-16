@@ -5,6 +5,7 @@ import 'package:cinemuse_app/features/profile/application/profile_providers.dart
 import 'package:cinemuse_app/features/profile/application/user_data_sync_service.dart';
 import 'package:cinemuse_app/features/profile/presentation/watch_history_screen.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:flutter/material.dart';

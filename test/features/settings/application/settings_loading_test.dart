@@ -68,7 +68,7 @@ void main() {
     final notifier = container.read(settingsProvider.notifier);
 
     await expectLater(
-      notifier.updateSettings({'showSubtitles': false}),
+      notifier.updateSettings((s) => s.copyWith(showSubtitles: false)),
       throwsException,
     );
     verifyNever(() => profileRepo.updateProfile(any(), any()));
@@ -79,7 +79,9 @@ void main() {
     when(() => profileRepo.getProfile('user-a')).thenAnswer((_) => load.future);
 
     final notifier = container.read(settingsProvider.notifier);
-    final update = notifier.updateSettings({'showSubtitles': false});
+    final update = notifier.updateSettings(
+      (s) => s.copyWith(showSubtitles: false),
+    );
 
     load.complete(_profile('user-a', {'realDebridKey': 'stored-key'}));
     await update;
@@ -109,7 +111,7 @@ void main() {
 
     expect(container.read(settingsProvider).realDebridKey, '');
     await expectLater(
-      notifier.updateSettings({'showSubtitles': false}),
+      notifier.updateSettings((s) => s.copyWith(showSubtitles: false)),
       throwsException,
     );
     verifyNever(() => profileRepo.updateProfile('user-b', any()));
@@ -127,9 +129,52 @@ void main() {
     await notifier.initSettings();
 
     await expectLater(
-      notifier.updateSettings({'showSubtitles': false}),
+      notifier.updateSettings((s) => s.copyWith(showSubtitles: false)),
       throwsA(isA<NetworkFailure>()),
     );
     expect(container.read(settingsProvider).showSubtitles, true);
+  });
+
+  test(
+    'a stored value of the wrong type still lets the user save (REV-82)',
+    () async {
+      when(() => profileRepo.getProfile('user-a')).thenAnswer(
+        (_) async => _profile('user-a', {
+          'showSubtitles': 'true',
+          'realDebridKey': 'stored-key',
+        }),
+      );
+
+      final notifier = container.read(settingsProvider.notifier);
+      await notifier.initSettings();
+      await notifier.updateSettings((s) => s.copyWith(enableVixSrc: false));
+
+      final saved =
+          verify(
+                () => profileRepo.updateProfile('user-a', captureAny()),
+              ).captured.single
+              as Map<String, dynamic>;
+      final prefs = saved['preferences'] as Map<String, dynamic>;
+      expect(prefs['realDebridKey'], 'stored-key');
+      expect(prefs['enableVixSrc'], false);
+      expect(saved.containsKey('username'), isFalse);
+    },
+  );
+
+  test('a new display name is saved as the username', () async {
+    when(
+      () => profileRepo.getProfile('user-a'),
+    ).thenAnswer((_) async => _profile('user-a', {}));
+
+    final notifier = container.read(settingsProvider.notifier);
+    await notifier.initSettings();
+    await notifier.updateSettings((s) => s.copyWith(displayName: 'Ste'));
+
+    final saved =
+        verify(
+              () => profileRepo.updateProfile('user-a', captureAny()),
+            ).captured.single
+            as Map<String, dynamic>;
+    expect(saved['username'], 'Ste');
   });
 }

@@ -199,9 +199,9 @@ class LiveTvQualityView extends ConsumerWidget {
         scale: 1.02,
         borderRadius: AppTheme.radius12,
         onTap: () {
-          ref.read(settingsProvider.notifier).updateSettings({
-            'liveTvQuality': quality,
-          });
+          ref
+              .read(settingsProvider.notifier)
+              .updateSettings((s) => s.copyWith(liveTvQuality: quality));
           onBack();
         },
         builder: (context, isFocused, isHovered, child) {

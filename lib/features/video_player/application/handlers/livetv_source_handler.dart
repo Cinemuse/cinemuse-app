@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
-import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_metadata.dart';

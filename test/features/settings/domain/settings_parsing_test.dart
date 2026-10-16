@@ -1,6 +1,7 @@
 import 'dart:convert';
+import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
 import 'package:cinemuse_app/features/profile/domain/profile.dart';
-import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/features/streaming/models/stremio_addon.dart';
 import 'package:cinemuse_app/core/utils/url_utils.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -138,6 +139,39 @@ void main() {
       final addon = StremioAddon.fromJson(json);
       expect(addon.queryParams, equals('apikey=123&user=456'));
       expect(addon.baseUrl, equals('https://test.io/config'));
+    });
+
+    // REV-82: one stored value of the wrong type must not fail the whole
+    // load (that blocked every save); it falls back to its default.
+    test('UserSettings.fromProfile ignores values of the wrong type', () {
+      final profile = Profile(
+        id: 'user_bad',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        preferences: {
+          'showSubtitles': 'false',
+          'appLanguage': 7,
+          'liveTvBufferSize': '1024',
+          'liveTvQuality': true,
+          'installedAddons': [
+            42,
+            {
+              'id': 'torrentio',
+              'name': 'Torrentio',
+              'baseUrl': 'https://torrentio.strem.io',
+            },
+          ],
+          'enableTorBox': true,
+        },
+      );
+
+      final settings = UserSettings.fromProfile(profile);
+      expect(settings.showSubtitles, isTrue);
+      expect(settings.appLanguage, 'en');
+      expect(settings.liveTvBufferSize, 512);
+      expect(settings.liveTvQuality, StreamQuality.hd);
+      expect(settings.installedAddons.map((a) => a.id), ['torrentio']);
+      expect(settings.enableTorBox, isTrue);
     });
 
     test('UserSettings handles TorBox preferences and serialization', () {

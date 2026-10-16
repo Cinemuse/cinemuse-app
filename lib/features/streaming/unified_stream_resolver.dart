@@ -4,7 +4,7 @@ import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
-import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/features/streaming/anime/kitsu_mapping_service.dart';
 import 'package:cinemuse_app/features/streaming/debrid/composite_debrid_service.dart';
 import 'package:cinemuse_app/features/streaming/models/provider_search_status.dart';

@@ -12,7 +12,7 @@ import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/streaming/anime/kitsu_mapping_service.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
 import 'package:cinemuse_app/features/streaming/models/streaming_exceptions.dart';
-import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/features/streaming/models/provider_search_status.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_metadata.dart';
 

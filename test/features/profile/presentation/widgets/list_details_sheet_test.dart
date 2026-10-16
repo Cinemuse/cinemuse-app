@@ -9,6 +9,7 @@ import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_
 import 'package:cinemuse_app/features/search/application/search_provider.dart';
 import 'package:cinemuse_app/features/search/application/search_state.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';

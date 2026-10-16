@@ -94,6 +94,7 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
 
   @override
   Widget build(BuildContext context) {
+    final save = settingsSaver(context, ref);
     final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider);
     final addons = settings.installedAddons;
@@ -113,7 +114,7 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   trailing: SettingToggle(
                     value: settings.enableRealDebrid,
                     onChanged: (val) =>
-                        saveSettings(context, ref, {'enableRealDebrid': val}),
+                        save((s) => s.copyWith(enableRealDebrid: val)),
                   ),
                 ),
                 if (settings.enableRealDebrid)
@@ -125,7 +126,9 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                       isPassword: true,
                       onSave: (val) => ref
                           .read(settingsProvider.notifier)
-                          .updateSettings({'realDebridKey': val.trim()}),
+                          .updateSettings(
+                            (s) => s.copyWith(realDebridKey: val.trim()),
+                          ),
                     ),
                   ),
                 SettingsTile(
@@ -135,7 +138,7 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   trailing: SettingToggle(
                     value: settings.enableTorBox,
                     onChanged: (val) =>
-                        saveSettings(context, ref, {'enableTorBox': val}),
+                        save((s) => s.copyWith(enableTorBox: val)),
                   ),
                 ),
                 if (settings.enableTorBox)
@@ -147,7 +150,9 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                       isPassword: true,
                       onSave: (val) => ref
                           .read(settingsProvider.notifier)
-                          .updateSettings({'torBoxKey': val.trim()}),
+                          .updateSettings(
+                            (s) => s.copyWith(torBoxKey: val.trim()),
+                          ),
                     ),
                   ),
                 if (settings.enableRealDebrid && settings.enableTorBox)
@@ -183,9 +188,7 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                       ]),
                       onChanged: (val) {
                         if (val != null) {
-                          saveSettings(context, ref, {
-                            'preferredDebridProvider': val,
-                          });
+                          save((s) => s.copyWith(preferredDebridProvider: val));
                         }
                       },
                     ),
@@ -194,7 +197,6 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
             ),
           ],
         ),
-
         SettingsSection(
           title: l10n.settingsOpenSubtitlesTitle,
           children: [
@@ -214,7 +216,9 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                     isPassword: true,
                     onSave: (val) => ref
                         .read(settingsProvider.notifier)
-                        .updateSettings({'openSubtitlesKey': val.trim()}),
+                        .updateSettings(
+                          (s) => s.copyWith(openSubtitlesKey: val.trim()),
+                        ),
                   ),
                 ),
                 Padding(
@@ -226,11 +230,9 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                     label: l10n.settingsOpenSubtitlesAutoDownloadTitle,
                     description: l10n.settingsOpenSubtitlesAutoDownloadDesc,
                     value: settings.autoDownloadMissingSubtitles,
-                    onChanged: (val) {
-                      saveSettings(context, ref, {
-                        'autoDownloadMissingSubtitles': val,
-                      });
-                    },
+                    onChanged: (val) => save(
+                      (s) => s.copyWith(autoDownloadMissingSubtitles: val),
+                    ),
                   ),
                 ),
               ],
@@ -252,9 +254,8 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   trailing: SettingToggle(
                     value: settings.isAnimeToshoActive,
                     onChanged: settings.hasDebrid
-                        ? (val) => saveSettings(context, ref, {
-                            'enableAnimeTosho': val,
-                          })
+                        ? (val) =>
+                              save((s) => s.copyWith(enableAnimeTosho: val))
                         : null,
                   ),
                 ),
@@ -298,7 +299,7 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   trailing: SettingToggle(
                     value: settings.enableVixSrc,
                     onChanged: (val) =>
-                        saveSettings(context, ref, {'enableVixSrc': val}),
+                        save((s) => s.copyWith(enableVixSrc: val)),
                   ),
                 ),
                 SettingsTile(
@@ -309,7 +310,7 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   trailing: SettingToggle(
                     value: settings.enableAnimeUnity,
                     onChanged: (val) =>
-                        saveSettings(context, ref, {'enableAnimeUnity': val}),
+                        save((s) => s.copyWith(enableAnimeUnity: val)),
                   ),
                 ),
               ],
@@ -331,7 +332,7 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   trailing: SettingToggle(
                     value: settings.smartSearchFilter,
                     onChanged: (val) =>
-                        saveSettings(context, ref, {'smartSearchFilter': val}),
+                        save((s) => s.copyWith(smartSearchFilter: val)),
                   ),
                 ),
                 SettingsTile(
@@ -341,9 +342,8 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                   showDivider: false,
                   trailing: SettingToggle(
                     value: settings.enableAutoSkipProviders,
-                    onChanged: (val) => saveSettings(context, ref, {
-                      'enableAutoSkipProviders': val,
-                    }),
+                    onChanged: (val) =>
+                        save((s) => s.copyWith(enableAutoSkipProviders: val)),
                   ),
                 ),
               ],

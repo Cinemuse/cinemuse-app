@@ -36,8 +36,9 @@ class IdentitySettings extends ConsumerWidget {
               value: userSettings.displayName,
               placeholder: l10n.settingsEnterName,
               // SettingInput shows its own error, so it needs the throw.
-              onSave: (val) =>
-                  settingsNotifier.updateSettings({'displayName': val}),
+              onSave: (val) => settingsNotifier.updateSettings(
+                (s) => s.copyWith(displayName: val),
+              ),
             ),
           ],
         ),
@@ -51,6 +52,7 @@ class CustomizationSettings extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final save = settingsSaver(context, ref);
     final l10n = AppLocalizations.of(context)!;
     final userSettings = ref.watch(settingsProvider);
     final localSettings = ref.watch(localSettingsProvider);
@@ -82,7 +84,7 @@ class CustomizationSettings extends ConsumerWidget {
                       ),
                     ],
                     onChanged: (lang) =>
-                        saveSettings(context, ref, {'appLanguage': lang}),
+                        save((s) => s.copyWith(appLanguage: lang)),
                   ),
                 ),
               ],
@@ -107,7 +109,7 @@ class CustomizationSettings extends ConsumerWidget {
                       ),
                     ],
                     onChanged: (lang) =>
-                        saveSettings(context, ref, {'playerLanguage': lang}),
+                        save((s) => s.copyWith(playerLanguage: lang)),
                   ),
                 ),
                 SettingsTile(
@@ -117,7 +119,7 @@ class CustomizationSettings extends ConsumerWidget {
                   trailing: SettingToggle(
                     value: userSettings.showSubtitles,
                     onChanged: (val) =>
-                        saveSettings(context, ref, {'showSubtitles': val}),
+                        save((s) => s.copyWith(showSubtitles: val)),
                   ),
                 ),
                 if (userSettings.showSubtitles)
@@ -137,9 +139,8 @@ class CustomizationSettings extends ConsumerWidget {
                           child: Text(l10n.settingsItalian),
                         ),
                       ],
-                      onChanged: (lang) => saveSettings(context, ref, {
-                        'subtitleLanguage': lang,
-                      }),
+                      onChanged: (lang) =>
+                          save((s) => s.copyWith(subtitleLanguage: lang)),
                     ),
                   ),
                 SettingsTile(
@@ -149,9 +150,8 @@ class CustomizationSettings extends ConsumerWidget {
                   showDivider: userSettings.splitAnimePreferences,
                   trailing: SettingToggle(
                     value: userSettings.splitAnimePreferences,
-                    onChanged: (val) => saveSettings(context, ref, {
-                      'splitAnimePreferences': val,
-                    }),
+                    onChanged: (val) =>
+                        save((s) => s.copyWith(splitAnimePreferences: val)),
                   ),
                 ),
                 SettingsTile(
@@ -221,9 +221,8 @@ class CustomizationSettings extends ConsumerWidget {
                               child: Text(l10n.settingsItalian),
                             ),
                           ],
-                          onChanged: (lang) => saveSettings(context, ref, {
-                            'animeAudioLanguage': lang,
-                          }),
+                          onChanged: (lang) =>
+                              save((s) => s.copyWith(animeAudioLanguage: lang)),
                         ),
                       ),
                       SettingsTile(
@@ -232,9 +231,8 @@ class CustomizationSettings extends ConsumerWidget {
                         icon: Icons.subtitles,
                         trailing: SettingToggle(
                           value: userSettings.animeShowSubtitles,
-                          onChanged: (val) => saveSettings(context, ref, {
-                            'animeShowSubtitles': val,
-                          }),
+                          onChanged: (val) =>
+                              save((s) => s.copyWith(animeShowSubtitles: val)),
                         ),
                       ),
                       if (userSettings.animeShowSubtitles)
@@ -255,9 +253,9 @@ class CustomizationSettings extends ConsumerWidget {
                                 child: Text(l10n.settingsItalian),
                               ),
                             ],
-                            onChanged: (lang) => saveSettings(context, ref, {
-                              'animeSubtitleLanguage': lang,
-                            }),
+                            onChanged: (lang) => save(
+                              (s) => s.copyWith(animeSubtitleLanguage: lang),
+                            ),
                           ),
                         ),
                     ],
@@ -320,6 +318,7 @@ class LiveTvSettings extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final save = settingsSaver(context, ref);
     final l10n = AppLocalizations.of(context)!;
     final userSettings = ref.watch(settingsProvider);
 
@@ -344,7 +343,7 @@ class LiveTvSettings extends ConsumerWidget {
                       DropdownMenuItem(value: 2048, child: Text('2 GB')),
                     ],
                     onChanged: (val) =>
-                        saveSettings(context, ref, {'liveTvBufferSize': val}),
+                        save((s) => s.copyWith(liveTvBufferSize: val)),
                   ),
                 ),
                 SettingsTile(
@@ -354,9 +353,8 @@ class LiveTvSettings extends ConsumerWidget {
                   showDivider: false,
                   trailing: SettingToggle(
                     value: userSettings.enableLiveTvDiskCache,
-                    onChanged: (val) => saveSettings(context, ref, {
-                      'enableLiveTvDiskCache': val,
-                    }),
+                    onChanged: (val) =>
+                        save((s) => s.copyWith(enableLiveTvDiskCache: val)),
                   ),
                 ),
               ],

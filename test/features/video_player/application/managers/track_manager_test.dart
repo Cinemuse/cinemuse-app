@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/features/streaming/subtitles/external_subtitle.dart';
 import 'package:cinemuse_app/features/streaming/subtitles/subtitle_service.dart';
 import 'package:cinemuse_app/features/video_player/application/managers/track_manager.dart';

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
 import 'package:cinemuse_app/features/live_tv/domain/stream_link.dart';
-import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/features/video_player/application/handlers/livetv_playback_coordinator.dart';
 import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
 import 'package:fake_async/fake_async.dart';
