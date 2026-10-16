@@ -12,6 +12,7 @@ import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart'
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 
 import '../../helpers/cursor_helpers.dart';
+import '../../helpers/focus_helpers.dart';
 
 void main() {
   testWidgets('Pressing arrowLeft on the first card keeps focus there', (
@@ -696,6 +697,101 @@ void main() {
       await cursorOver(tester, find.byTooltip(l10n.commonScrollLeft)),
       SystemMouseCursors.basic,
     );
+  });
+
+  // REV-41: every row built all its cards, and hovering a row rebuilt them.
+  group('long rows', () {
+    Widget longRow({
+      required String name,
+      ScrollController? controller,
+      void Function(int index)? onBuild,
+    }) => GenericCarouselRow(
+      title: name,
+      controller: controller,
+      height: 200,
+      itemCount: 100,
+      separatorBuilder: (_, _) => const SizedBox(width: 16),
+      itemBuilder: (context, i) {
+        onBuild?.call(i);
+        return SizedBox(
+          width: 150,
+          child: DpadFocusable(onTap: _noop, child: Text('$name $i')),
+        );
+      },
+    );
+
+    Future<void> pumpRows(WidgetTester tester, List<Widget> rows) async {
+      tester.view.physicalSize = const Size(1000, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            home: Scaffold(body: Column(children: rows)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('builds only the cards near the view', (tester) async {
+      await pumpRows(tester, [longRow(name: 'A')]);
+      expect(find.text('A 0'), findsOneWidget);
+      // One screen width is built on each side, not all 100 cards.
+      expect(find.text('A 30', skipOffstage: false), findsNothing);
+    });
+
+    testWidgets('the mouse over a row does not rebuild its cards', (
+      tester,
+    ) async {
+      var builds = 0;
+      await pumpRows(tester, [longRow(name: 'A', onBuild: (_) => builds++)]);
+      final before = builds;
+
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: tester.getCenter(find.text('A 0')));
+      await tester.pumpAndSettle();
+      await mouse.moveTo(const Offset(500, 790));
+      await tester.pumpAndSettle();
+      await mouse.removePointer();
+
+      expect(builds, before);
+    });
+
+    testWidgets('the remote walks to cards that were not built yet', (
+      tester,
+    ) async {
+      await pumpRows(tester, [longRow(name: 'A')]);
+      await tester.tap(find.text('A 0'));
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 40; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pumpAndSettle();
+      }
+      expect(isFocused(find.text('A 40')), isTrue);
+    });
+
+    testWidgets('first Down into a row scrolled far starts on its first card', (
+      tester,
+    ) async {
+      final controller = ScrollController();
+      addTearDown(controller.dispose);
+      await pumpRows(tester, [
+        longRow(name: 'A'),
+        longRow(name: 'B', controller: controller),
+      ]);
+      controller.jumpTo(5000);
+      await tester.pumpAndSettle();
+      expect(find.text('B 0'), findsNothing);
+
+      await tester.tap(find.text('A 0'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      expect(isFocused(find.text('B 0')), isTrue);
+      expect(controller.offset, 0);
+    });
   });
 }
 

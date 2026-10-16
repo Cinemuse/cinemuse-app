@@ -1,18 +1,12 @@
-import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
-import 'package:cinemuse_app/shared/widgets/bento_box.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/carousel_arrow_buttons.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/carousel_arrow_step.dart';
-import 'package:cinemuse_app/shared/widgets/carousels/carousel_header.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/carousel_row_frame.dart';
 
-enum CarouselTheme {
-  homeRow, // Title + chevron right (no box)
-  profileRow, // Icon + Title + chevron right inside a container with surface color
-  bentoBox, // BentoBox with title and icon
-  plain, // No header
-}
+export 'package:cinemuse_app/shared/widgets/carousels/carousel_row_frame.dart'
+    show CarouselTheme;
 
 class GenericCarouselRow extends StatefulWidget {
   final String? title;
@@ -54,9 +48,8 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
   final Map<int, FocusNode> _trackedNodes = {};
   FocusNode? _lastFocusedNode;
   bool _wasFocused = false;
-  bool _canScrollLeft = false;
-  bool _canScrollRight = false;
-  bool _isHoveringList = false;
+  // A notifier, not state: hovering must not rebuild the row's cards (REV-41).
+  final ValueNotifier<bool> _isHovering = ValueNotifier(false);
 
   // The list's left padding, where an arrow step lines an item up.
   double _listLeadingPadding = 0;
@@ -71,23 +64,14 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
     );
     _rowFocusNode.addListener(_handleRowFocusChange);
     _controller = widget.controller ?? ScrollController();
-    _controller.addListener(_updateScrollButtons);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateScrollButtons();
-    });
   }
 
   @override
   void didUpdateWidget(GenericCarouselRow oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.controller != oldWidget.controller) {
-      _controller.removeListener(_updateScrollButtons);
       if (oldWidget.controller == null) _controller.dispose();
       _controller = widget.controller ?? ScrollController();
-      _controller.addListener(_updateScrollButtons);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _updateScrollButtons();
-      });
     }
     if (widget.itemCount < oldWidget.itemCount) {
       final removed = _trackedNodes.keys
@@ -111,7 +95,7 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
     _trackedNodes.clear();
     _rowFocusNode.removeListener(_handleRowFocusChange);
     _rowFocusNode.dispose();
-    _controller.removeListener(_updateScrollButtons);
+    _isHovering.dispose();
     if (widget.controller == null) {
       _controller.dispose();
     }
@@ -133,15 +117,14 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
         });
       } else if (_lastFocusedNode == null) {
         // First time reaching this row: start from the first card on the left!
+        // Scroll back first: only the cards near the view are built (REV-41).
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted || !_rowFocusNode.hasFocus) return;
-          final firstFocusable = _getFirstFocusableNode();
-          if (firstFocusable != null) {
-            firstFocusable.requestFocus();
-            _lastFocusedNode = firstFocusable;
-            if (_controller.hasClients && _controller.position.pixels > 0) {
-              _controller.jumpTo(0.0);
-            }
+          if (_controller.hasClients && _controller.position.pixels > 0) {
+            _controller.jumpTo(0.0);
+            WidgetsBinding.instance.addPostFrameCallback((_) => _focusFirst());
+          } else {
+            _focusFirst();
           }
         });
       }
@@ -151,26 +134,23 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
     }
   }
 
-  void _updateScrollButtons() {
-    if (!mounted || !_controller.hasClients) return;
-
-    final canLeft = _controller.position.pixels > 0;
-    final canRight =
-        _controller.position.pixels < _controller.position.maxScrollExtent;
-
-    if (canLeft != _canScrollLeft || canRight != _canScrollRight) {
-      setState(() {
-        _canScrollLeft = canLeft;
-        _canScrollRight = canRight;
-      });
-    }
+  void _focusFirst() {
+    if (!mounted) return;
+    final firstFocusable = _getFirstFocusableNode();
+    if (firstFocusable == null) return;
+    firstFocusable.requestFocus();
+    _lastFocusedNode = firstFocusable;
   }
 
   void _scrollPage({required bool isForward}) {
     if (!_controller.hasClients) return;
     final target = carouselArrowTarget(
       position: _controller.position,
-      items: _trackedNodes.values.map((n) => n.context?.findRenderObject()),
+      // Cards scrolled far away are no longer built: their context is gone.
+      items: [
+        for (final n in _trackedNodes.values)
+          if (n.context?.mounted ?? false) n.context!.findRenderObject(),
+      ],
       leadingPadding: _listLeadingPadding,
       isForward: isForward,
     );
@@ -178,57 +158,6 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
       target,
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeOutCubic,
-    );
-  }
-
-  Widget _buildArrowButtons() {
-    if (_controller.hasClients && _controller.position.maxScrollExtent == 0) {
-      return const SizedBox.shrink();
-    }
-
-    final isMobile = Breakpoints.isCompact(context);
-    if (isMobile) {
-      return const SizedBox.shrink(); // mobile scrolls by swiping
-    }
-
-    return AnimatedOpacity(
-      opacity: (_canScrollLeft || _canScrollRight) && _isHoveringList
-          ? 1.0
-          : 0.0,
-      duration: const Duration(milliseconds: 200),
-      // Mouse-only buttons: the D-pad scrolls by moving between cards.
-      child: ExcludeFocus(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              tooltip: AppLocalizations.of(context)!.commonScrollLeft,
-              icon: const Icon(Icons.chevron_left, size: 28),
-              onPressed: _canScrollLeft
-                  ? () => _scrollPage(isForward: false)
-                  : null,
-              color: Colors.white,
-              disabledColor: Colors.white24,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              splashRadius: 20,
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              tooltip: AppLocalizations.of(context)!.commonScrollRight,
-              icon: const Icon(Icons.chevron_right, size: 28),
-              onPressed: _canScrollRight
-                  ? () => _scrollPage(isForward: true)
-                  : null,
-              color: Colors.white,
-              disabledColor: Colors.white24,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              splashRadius: 20,
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -298,83 +227,80 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
     final item = widget.itemBuilder(context, index);
     final node = _getOrCreateTrackedNode(index);
 
-    return Focus(
-      focusNode: node,
-      canRequestFocus: false,
-      skipTraversal: true,
-      onFocusChange: (hasFocus) {
-        if (hasFocus) {
-          if (_wasFocused) {
-            _lastFocusedNode = FocusManager.instance.primaryFocus;
-          }
-          if (_isFirstFocusableIndex(index)) {
-            // Reveal leading headers (e.g. "Today" marker in sport schedule)
-            if (_controller.hasClients && _controller.position.pixels > 0) {
-              _controller.animateTo(
-                0.0,
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOutCubic,
-              );
+    return _KeepAliveWhileFocused(
+      node: node,
+      child: Focus(
+        focusNode: node,
+        canRequestFocus: false,
+        skipTraversal: true,
+        onFocusChange: (hasFocus) {
+          if (hasFocus) {
+            if (_wasFocused) {
+              _lastFocusedNode = FocusManager.instance.primaryFocus;
+            }
+            if (_isFirstFocusableIndex(index)) {
+              // Reveal leading headers (e.g. "Today" marker in sport schedule)
+              if (_controller.hasClients && _controller.position.pixels > 0) {
+                _controller.animateTo(
+                  0.0,
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                );
+              }
             }
           }
-        }
-      },
-      onKeyEvent: (node, event) {
-        if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+        },
+        onKeyEvent: (node, event) {
+          if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+            return KeyEventResult.ignored;
+          }
+
+          if (event.logicalKey == LogicalKeyboardKey.arrowLeft &&
+              _isFirstFocusableIndex(index)) {
+            // Always consume arrowLeft at leftmost focusable item so it NEVER escapes or jumps between rows
+            return KeyEventResult.handled;
+          }
+
+          if (event.logicalKey == LogicalKeyboardKey.arrowRight &&
+              _isLastFocusableIndex(index, totalCount)) {
+            return KeyEventResult.handled;
+          }
+
           return KeyEventResult.ignored;
-        }
-
-        if (event.logicalKey == LogicalKeyboardKey.arrowLeft &&
-            _isFirstFocusableIndex(index)) {
-          // Always consume arrowLeft at leftmost focusable item so it NEVER escapes or jumps between rows
-          return KeyEventResult.handled;
-        }
-
-        if (event.logicalKey == LogicalKeyboardKey.arrowRight &&
-            _isLastFocusableIndex(index, totalCount)) {
-          return KeyEventResult.handled;
-        }
-
-        return KeyEventResult.ignored;
-      },
-      child: item,
+        },
+        child: item,
+      ),
     );
   }
 
-  Widget _buildList({EdgeInsets? overridePadding}) {
+  Widget _buildList(EdgeInsets padding) {
     if (widget.itemCount == 0 && widget.emptyBuilder != null) {
       return widget.emptyBuilder!(context);
     }
     if (widget.itemCount == 0) return const SizedBox.shrink();
 
-    final padding = overridePadding ?? widget.padding;
     _listLeadingPadding = padding.left;
     final effectivePadding = padding.copyWith(bottom: padding.bottom + 16);
 
     final count = widget.itemCount;
 
-    final list = widget.separatorBuilder != null
-        ? ListView.separated(
-            controller: _controller,
-            scrollDirection: Axis.horizontal,
-            clipBehavior: Clip.none,
-            padding: effectivePadding,
-            cacheExtent: 9999,
-            itemCount: count,
-            separatorBuilder: widget.separatorBuilder!,
-            itemBuilder: (context, index) =>
-                _buildTrackedItem(context, index, count),
-          )
-        : ListView.builder(
-            controller: _controller,
-            scrollDirection: Axis.horizontal,
-            clipBehavior: Clip.none,
-            padding: effectivePadding,
-            cacheExtent: 9999,
-            itemCount: count,
-            itemBuilder: (context, index) =>
-                _buildTrackedItem(context, index, count),
-          );
+    // One screen width built on each side, not every card (REV-41): enough
+    // for the D-pad to reach the next card and for an arrow step to measure a
+    // page back (carouselArrowTarget sees only built items).
+    final list = LayoutBuilder(
+      builder: (context, constraints) => ListView.separated(
+        controller: _controller,
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        padding: effectivePadding,
+        cacheExtent: constraints.maxWidth,
+        itemCount: count,
+        separatorBuilder:
+            widget.separatorBuilder ?? (_, _) => const SizedBox.shrink(),
+        itemBuilder: (context, index) =>
+            _buildTrackedItem(context, index, count),
+      ),
+    );
 
     return SizedBox(
       height: widget.height,
@@ -395,112 +321,76 @@ class _GenericCarouselRowState extends State<GenericCarouselRow> {
     );
   }
 
-  /// The row title (profile rows: with their icon) and the scroll arrows.
-  Widget _buildTitleLine({required bool isSmall}) {
-    return Row(
-      children: [
-        Expanded(
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: CarouselHeader(
-              title: widget.title ?? '',
-              icon: isSmall ? widget.icon : null,
-              isSmall: isSmall,
-              onTap: widget.onHeaderTap,
-            ),
-          ),
-        ),
-        _buildArrowButtons(),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     if (widget.itemCount == 0 && widget.emptyBuilder == null) {
       return const SizedBox.shrink();
     }
-
-    Widget content;
-
-    switch (widget.theme) {
-      case CarouselTheme.bentoBox:
-        content = BentoBox(
-          title: widget.title ?? '',
-          icon: widget.icon,
-          action: widget.headerAction != null
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    widget.headerAction!,
-                    const SizedBox(width: 8),
-                    _buildArrowButtons(),
-                  ],
-                )
-              : _buildArrowButtons(),
-          child: _buildList(),
-        );
-        break;
-      case CarouselTheme.profileRow:
-        final isMobile = Breakpoints.isCompact(context);
-        final horizontalPadding = isMobile ? 16.0 : 24.0;
-        final listPadding = widget.padding != EdgeInsets.zero
-            ? widget.padding
-            : EdgeInsets.symmetric(horizontal: horizontalPadding);
-
-        content = ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.only(top: 24, bottom: 8),
-            decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white10),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  child: _buildTitleLine(isSmall: true),
-                ),
-                const SizedBox(height: 16),
-                _buildList(overridePadding: listPadding),
-              ],
-            ),
-          ),
-        );
-        break;
-      case CarouselTheme.homeRow:
-        final isMobile = Breakpoints.isCompact(context);
-        final horizontalPadding = widget.padding.left > 0
-            ? widget.padding.left
-            : (isMobile ? 16.0 : 24.0);
-        content = Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                horizontalPadding,
-                isMobile ? 4 : 8,
-                horizontalPadding,
-                isMobile ? 8 : 16,
-              ),
-              child: _buildTitleLine(isSmall: false),
-            ),
-            _buildList(),
-          ],
-        );
-        break;
-      case CarouselTheme.plain:
-        content = _buildList();
-        break;
-    }
+    final content = CarouselRowFrame(
+      theme: widget.theme,
+      title: widget.title,
+      icon: widget.icon,
+      headerAction: widget.headerAction,
+      onHeaderTap: widget.onHeaderTap,
+      padding: widget.padding,
+      arrows: CarouselArrowButtons(
+        controller: _controller,
+        isHovering: _isHovering,
+        onStep: _scrollPage,
+      ),
+      buildList: _buildList,
+    );
 
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHoveringList = true),
-      onExit: (_) => setState(() => _isHoveringList = false),
+      onEnter: (_) => _isHovering.value = true,
+      onExit: (_) => _isHovering.value = false,
       child: content,
     );
+  }
+}
+
+/// Keeps a focused card built when it scrolls far out of view (REV-41):
+/// thrown away, its focus would jump back to the row above.
+class _KeepAliveWhileFocused extends StatefulWidget {
+  final FocusNode node;
+  final Widget child;
+
+  const _KeepAliveWhileFocused({required this.node, required this.child});
+
+  @override
+  State<_KeepAliveWhileFocused> createState() => _KeepAliveWhileFocusedState();
+}
+
+class _KeepAliveWhileFocusedState extends State<_KeepAliveWhileFocused>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => widget.node.hasFocus;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.node.addListener(updateKeepAlive);
+  }
+
+  @override
+  void didUpdateWidget(_KeepAliveWhileFocused oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.node != oldWidget.node) {
+      oldWidget.node.removeListener(updateKeepAlive);
+      widget.node.addListener(updateKeepAlive);
+      updateKeepAlive();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.node.removeListener(updateKeepAlive);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }
