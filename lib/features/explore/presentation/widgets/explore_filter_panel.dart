@@ -1,501 +1,58 @@
 import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cinemuse_app/l10n/app_localizations.dart';
-import '../../../../core/presentation/theme/app_theme.dart';
-import '../../../../core/constants/tmdb_constants.dart';
-import '../../../../core/constants/tmdb_image_helper.dart';
-import 'explore_filters.dart';
-import 'filter_range_slider.dart';
-import 'media_type_selector.dart';
 
-import 'package:cinemuse_app/features/explore/application/explore_providers.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../shared/widgets/premium_hover_text.dart';
-import '../../../../shared/widgets/dpad_focusable.dart';
+import 'genre_filter_section.dart';
+import 'language_filter_section.dart';
+import 'range_filters_section.dart';
+import 'sort_filter_section.dart';
+import 'watch_provider_filter_section.dart';
 
-class ExploreFilterPanel extends ConsumerStatefulWidget {
+/// The Explore filters sheet: three columns on a wide sheet, one under the
+/// other on a narrow one.
+class ExploreFilterPanel extends StatelessWidget {
   const ExploreFilterPanel({super.key});
 
   @override
-  ConsumerState<ExploreFilterPanel> createState() => _ExploreFilterPanelState();
-}
-
-class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
-  final TextEditingController _langSearchController = TextEditingController();
-  bool _isLangOpen = false;
-
-  void _updateFilters(ExploreFilters newFilters) {
-    ref.read(exploreFiltersProvider.notifier).state = newFilters;
-  }
-
-  void _toggleGenre(int genreId) {
-    final filters = ref.read(exploreFiltersProvider);
-    final newGenres = List<int>.from(filters.genres);
-    if (newGenres.contains(genreId)) {
-      newGenres.remove(genreId);
-    } else {
-      newGenres.add(genreId);
-    }
-    _updateFilters(filters.copyWith(genres: newGenres));
-  }
-
-  void _handleLanguageSelect(String code) {
-    final filters = ref.read(exploreFiltersProvider);
-    if (!filters.languages.contains(code)) {
-      final newLangs = List<String>.from(filters.languages)..add(code);
-      _updateFilters(filters.copyWith(languages: newLangs));
-    }
-    _langSearchController.clear();
-    setState(() => _isLangOpen = false);
-  }
-
-  void _removeLanguage(String code) {
-    final filters = ref.read(exploreFiltersProvider);
-    final newLangs = List<String>.from(filters.languages)..remove(code);
-    _updateFilters(filters.copyWith(languages: newLangs));
-  }
-
-  void _toggleWatchProvider(int providerId) {
-    final filters = ref.read(exploreFiltersProvider);
-    final newProviders = List<int>.from(filters.watchProviders);
-    if (newProviders.contains(providerId)) {
-      newProviders.remove(providerId);
-    } else {
-      newProviders.add(providerId);
-    }
-    _updateFilters(filters.copyWith(watchProviders: newProviders));
-  }
-
-  @override
-  void dispose() {
-    _langSearchController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final filters = ref.watch(exploreFiltersProvider);
-    final mediaType = ref.watch(exploreMediaTypeProvider);
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Column(
-        children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth >= Breakpoints.medium;
-              return Wrap(
-                spacing: 32,
-                runSpacing: 32,
-                children: [
-                  // Sort & Languages
-                  SizedBox(
-                    width: isWide
-                        ? (constraints.maxWidth - 64) / 3
-                        : constraints.maxWidth,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionLabel(l10n.searchSortBy),
-                        const SizedBox(height: 12),
-                        _buildSortOption(
-                          l10n.searchMostPopular,
-                          ExploreFilters.defaultSortBy,
-                          filters,
-                        ),
-                        const SizedBox(height: 8),
-                        _buildSortOption(
-                          l10n.searchHighestRated,
-                          'vote_average.desc',
-                          filters,
-                        ),
-                        const SizedBox(height: 8),
-                        _buildSortOption(
-                          l10n.searchNewestReleases,
-                          ExploreFilters.newestSortFor(mediaType),
-                          filters,
-                        ),
-                        const SizedBox(height: 32),
-                        _buildSectionLabel(
-                          l10n.searchLanguages,
-                          subtitle: l10n.searchMatchAny,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildLanguageSearch(),
-                        const SizedBox(height: 12),
-                        _buildSelectedLanguages(filters),
-                      ],
-                    ),
-                  ),
-
-                  // Genres
-                  SizedBox(
-                    width: isWide
-                        ? (constraints.maxWidth - 64) / 3
-                        : constraints.maxWidth,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionLabel(
-                          l10n.searchGenres,
-                          subtitle: l10n.searchMatchAll,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildGenreGrid(filters, mediaType),
-                        const SizedBox(height: 32),
-                        _buildSectionLabel(l10n.searchWatchProviders),
-                        const SizedBox(height: 12),
-                        _buildWatchProviders(filters),
-                      ],
-                    ),
-                  ),
-
-                  // Sliders
-                  SizedBox(
-                    width: isWide
-                        ? (constraints.maxWidth - 64) / 3
-                        : constraints.maxWidth,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        FilterRangeSlider(
-                          min: ExploreFilters.ratingLimits.start,
-                          max: ExploreFilters.ratingLimits.end,
-                          values: filters.rating,
-                          onChanged: (v) =>
-                              _updateFilters(filters.copyWith(rating: v)),
-                          label: l10n.searchRating,
-                          formatValue: (v) =>
-                              '${v.start.round()} - ${v.end.round()}',
-                          icon: Icons.whatshot,
-                        ),
-                        const SizedBox(height: 32),
-                        FilterRangeSlider(
-                          min: ExploreFilters.yearLimits.start,
-                          max: ExploreFilters.yearLimits.end,
-                          values: filters.year,
-                          onChanged: (v) =>
-                              _updateFilters(filters.copyWith(year: v)),
-                          label: l10n.searchYearRange,
-                          formatValue: (v) =>
-                              '${v.start.round()} - ${v.end.round()}',
-                          icon: Icons.calendar_today_outlined,
-                        ),
-                        const SizedBox(height: 32),
-                        FilterRangeSlider(
-                          min: ExploreFilters.voteCountLimits.start,
-                          max: ExploreFilters.voteCountLimits.end,
-                          values: filters.voteCount,
-                          onChanged: (v) =>
-                              _updateFilters(filters.copyWith(voteCount: v)),
-                          label: l10n.searchVoteCount,
-                          formatValue: (v) =>
-                              '${v.start.round()} - ${v.end >= ExploreFilters.voteCountLimits.end ? l10n.filterMax : v.end.round()}',
-                          icon: Icons.thumb_up_outlined,
-                        ),
-                        const SizedBox(height: 32),
-                        FilterRangeSlider(
-                          min: ExploreFilters.runtimeLimits.start,
-                          max: ExploreFilters.runtimeLimits.end,
-                          values: filters.runtime,
-                          onChanged: (v) =>
-                              _updateFilters(filters.copyWith(runtime: v)),
-                          label: l10n.searchRuntime,
-                          formatValue: (v) =>
-                              '${v.start.round()}m - ${v.end >= ExploreFilters.runtimeLimits.end ? l10n.filterMax : '${v.end.round()}m'}',
-                          icon: Icons.access_time,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionLabel(String label, {String? subtitle}) {
-    return Row(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppTheme.textWhite,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        if (subtitle != null) ...[
-          const SizedBox(width: 8),
-          Text(
-            subtitle,
-            style: TextStyle(
-              color: AppTheme.textWhite.withValues(alpha: 0.4),
-              fontSize: 12,
-              fontWeight: FontWeight.normal,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildSortOption(String label, String value, ExploreFilters filters) {
-    final isSelected = filters.sortBy == value;
-    return DpadFocusable(
-      onTap: () => _updateFilters(filters.copyWith(sortBy: value)),
-      scale: 1.02,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppTheme.textWhite
-              : AppTheme.textWhite.withValues(alpha: 0.02),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected
-                ? AppTheme.textWhite
-                : AppTheme.textWhite.withValues(alpha: 0.1),
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppTheme.textWhite.withValues(alpha: 0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected
-                ? AppTheme.primary
-                : AppTheme.textWhite.withValues(alpha: 0.6),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGenreGrid(ExploreFilters filters, MediaType mediaType) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: ExploreFilters.genreIdsFor(mediaType).map((genreId) {
-        final isSelected = filters.genres.contains(genreId);
-        return DpadFocusable(
-          onTap: () => _toggleGenre(genreId),
-          scale: 1.08,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? Colors.white
-                  : Colors.white.withValues(alpha: 0.02),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isSelected
-                    ? Colors.white
-                    : Colors.white.withValues(alpha: 0.1),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  AppLocalizations.of(context)!.genreName(genreId),
-                  style: TextStyle(
-                    color: isSelected
-                        ? AppTheme.primary
-                        : AppTheme.textWhite.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= Breakpoints.medium;
+          final columnWidth = isWide
+              ? (constraints.maxWidth - 64) / 3
+              : constraints.maxWidth;
+          return Wrap(
+            spacing: 32,
+            runSpacing: 32,
+            children: [
+              SizedBox(
+                width: columnWidth,
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SortFilterSection(),
+                    SizedBox(height: 32),
+                    LanguageFilterSection(),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildLanguageSearch() {
-    return Column(
-      children: [
-        TextField(
-          controller: _langSearchController,
-          onTap: () => setState(() => _isLangOpen = true),
-          onChanged: (v) => setState(() {}),
-          style: const TextStyle(color: AppTheme.textWhite, fontSize: 14),
-          decoration: InputDecoration(
-            hintText: AppLocalizations.of(context)!.searchLanguagePlaceholder,
-            prefixIcon: const Icon(Icons.search, size: 20),
-            filled: false,
-            contentPadding: const EdgeInsets.symmetric(vertical: 8),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.white24),
-            ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: AppTheme.textWhite),
-            ),
-          ),
-        ),
-        if (_isLangOpen) ...[
-          const SizedBox(height: 8),
-          Container(
-            constraints: const BoxConstraints(maxHeight: 200),
-            decoration: BoxDecoration(
-              color: AppTheme.secondary,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.border),
-            ),
-            child: _buildFilteredLanguages(),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildFilteredLanguages() {
-    final l10n = AppLocalizations.of(context)!;
-    final query = _langSearchController.text.toLowerCase();
-    final filtered = TmdbConstants.languageCodes
-        .where((c) => l10n.languageName(c).toLowerCase().contains(query))
-        .toList();
-
-    if (filtered.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Text(
-          l10n.searchNoLanguagesFound,
-          style: TextStyle(color: AppTheme.textMuted),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      itemCount: filtered.length,
-      itemBuilder: (context, index) {
-        final code = filtered[index];
-        return ListTile(
-          dense: true,
-          title: Text(
-            l10n.languageName(code),
-            style: const TextStyle(color: AppTheme.textSecondary),
-          ),
-          onTap: () => _handleLanguageSelect(code),
-          hoverColor: AppTheme.textWhite.withValues(alpha: 0.05),
-        );
-      },
-    );
-  }
-
-  Widget _buildSelectedLanguages(ExploreFilters filters) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: filters.languages.map((code) {
-        return Chip(
-          label: Text(
-            AppLocalizations.of(context)!.languageName(code),
-            style: const TextStyle(fontSize: 12),
-          ),
-          backgroundColor: AppTheme.textWhite.withValues(alpha: 0.1),
-          side: BorderSide(color: AppTheme.textWhite.withValues(alpha: 0.1)),
-          deleteIcon: const Icon(Icons.close, size: 14),
-          onDeleted: () => _removeLanguage(code),
-          labelStyle: const TextStyle(color: AppTheme.textWhite),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildWatchProviders(ExploreFilters filters) {
-    final providersAsync = ref.watch(watchProvidersListProvider);
-
-    return providersAsync.when(
-      data: (providers) {
-        return Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: providers.map((p) {
-            final id = p['provider_id'] as int;
-            final isSelected = filters.watchProviders.contains(id);
-            final imageUrl = TmdbImageHelper.logoUrl(p['logo_path']) ?? '';
-
-            return DpadFocusable(
-              onTap: () => _toggleWatchProvider(id),
-              scale: 1.15,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: isSelected
-                          ? AppTheme.textWhite.withValues(alpha: 0.05)
-                          : Colors.transparent,
-                      border: Border.all(
-                        color: isSelected
-                            ? AppTheme.accent
-                            : AppTheme.textWhite.withValues(alpha: 0.1),
-                        width: 2,
-                      ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: CachedNetworkImage(
-                        imageUrl: imageUrl,
-                        width: 48,
-                        height: 48,
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) =>
-                            const Icon(Icons.broken_image, size: 24),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  PremiumHoverText(
-                    text: p['provider_name'] ?? '',
-                    width: 60,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isSelected
-                          ? AppTheme.accent
-                          : AppTheme.textSecondary,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
               ),
-            );
-          }).toList(),
-        );
-      },
-      loading: () => const SizedBox(
-        height: 40,
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              SizedBox(
+                width: columnWidth,
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GenreFilterSection(),
+                    SizedBox(height: 32),
+                    WatchProviderFilterSection(),
+                  ],
+                ),
+              ),
+              SizedBox(width: columnWidth, child: const RangeFiltersSection()),
+            ],
+          );
+        },
       ),
-      error: (_, __) => const SizedBox.shrink(),
     );
   }
 }

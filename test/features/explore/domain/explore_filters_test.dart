@@ -1,5 +1,5 @@
-import 'package:cinemuse_app/features/explore/presentation/widgets/explore_filters.dart';
-import 'package:cinemuse_app/features/explore/presentation/widgets/media_type_selector.dart';
+import 'package:cinemuse_app/features/explore/domain/explore_filters.dart';
+import 'package:cinemuse_app/features/explore/domain/explore_type.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -27,12 +27,35 @@ void main() {
       'the "newest" sort', () {
     final movieFilters = ExploreFilters(
       genres: const [28, 35],
-      sortBy: ExploreFilters.newestSortFor(MediaType.movie),
+      sortBy: ExploreFilters.newestSortFor(ExploreType.movie),
     );
 
-    final tvFilters = movieFilters.forType(MediaType.tv);
+    final tvFilters = movieFilters.forType(ExploreType.tv);
 
     expect(tvFilters.genres, [35]);
     expect(tvFilters.sortBy, 'first_air_date.desc');
+  });
+
+  test('picking a genre or service twice removes it; a language is added '
+      'once', () {
+    final picked = ExploreFilters()
+        .toggleGenre(28)
+        .toggleGenre(35)
+        .toggleWatchProvider(8)
+        .addLanguage('it')
+        .addLanguage('it');
+
+    expect(picked.genres, [28, 35]);
+    expect(picked.watchProviders, [8]);
+    expect(picked.languages, ['it']);
+
+    final removed = picked
+        .toggleGenre(28)
+        .toggleWatchProvider(8)
+        .removeLanguage('it');
+
+    expect(removed.genres, [35]);
+    expect(removed.watchProviders, isEmpty);
+    expect(removed.languages, isEmpty);
   });
 }

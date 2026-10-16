@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show RangeValues;
 
-import '../../../../core/constants/tmdb_constants.dart';
-import 'media_type_selector.dart';
+import 'package:cinemuse_app/core/constants/tmdb_constants.dart';
+import 'explore_type.dart';
 
+/// The Explore filter panel's choices, sent to TMDB's discover.
 class ExploreFilters {
   // Slider limits and defaults: the panel, the chips and [isFiltered] all
   // read these, so they can't disagree.
@@ -14,11 +15,11 @@ class ExploreFilters {
   static const runtimeLimits = RangeValues(0, 240);
 
   /// "Newest releases": series name the date field differently.
-  static String newestSortFor(MediaType type) => type == MediaType.tv
+  static String newestSortFor(ExploreType type) => type == ExploreType.tv
       ? 'first_air_date.desc'
       : 'primary_release_date.desc';
 
-  static List<int> genreIdsFor(MediaType type) => type == MediaType.tv
+  static List<int> genreIdsFor(ExploreType type) => type == ExploreType.tv
       ? TmdbConstants.tvGenreIds
       : TmdbConstants.movieGenreIds;
 
@@ -74,15 +75,34 @@ class ExploreFilters {
 
   /// The same filters for [type]: drops the genres it doesn't have and
   /// renames the "newest" sort.
-  ExploreFilters forType(MediaType type) {
+  ExploreFilters forType(ExploreType type) {
     final isNewest =
-        sortBy == newestSortFor(MediaType.movie) ||
-        sortBy == newestSortFor(MediaType.tv);
+        sortBy == newestSortFor(ExploreType.movie) ||
+        sortBy == newestSortFor(ExploreType.tv);
     return copyWith(
       genres: genres.where(genreIdsFor(type).contains).toList(),
       sortBy: isNewest ? newestSortFor(type) : sortBy,
     );
   }
+
+  /// Adds [genreId], or removes it if already picked.
+  ExploreFilters toggleGenre(int genreId) =>
+      copyWith(genres: _toggled(genres, genreId));
+
+  /// Adds [providerId], or removes it if already picked.
+  ExploreFilters toggleWatchProvider(int providerId) =>
+      copyWith(watchProviders: _toggled(watchProviders, providerId));
+
+  ExploreFilters addLanguage(String code) => languages.contains(code)
+      ? this
+      : copyWith(languages: [...languages, code]);
+
+  ExploreFilters removeLanguage(String code) =>
+      copyWith(languages: languages.where((c) => c != code).toList());
+
+  static List<T> _toggled<T>(List<T> list, T value) => list.contains(value)
+      ? list.where((v) => v != value).toList()
+      : [...list, value];
 
   bool get hasRatingFilter => rating != ratingLimits;
   bool get hasYearFilter => year != yearLimits;

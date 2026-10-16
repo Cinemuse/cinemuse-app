@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import '../../../../core/presentation/theme/app_theme.dart';
 import '../../../../core/constants/tmdb_constants.dart';
-import 'explore_filters.dart';
+import '../../domain/explore_filters.dart';
 import '../../../../shared/widgets/dpad_focusable.dart';
 
 class ActiveFiltersList extends StatelessWidget {
@@ -32,10 +32,7 @@ class ActiveFiltersList extends StatelessWidget {
         ...filters.genres.map((gId) {
           return _FilterChip(
             label: l10n.genreName(gId),
-            onDelete: () {
-              final newGenres = List<int>.from(filters.genres)..remove(gId);
-              onChanged(filters.copyWith(genres: newGenres));
-            },
+            onDelete: () => onChanged(filters.toggleGenre(gId)),
           );
         }),
 
@@ -44,11 +41,7 @@ class ActiveFiltersList extends StatelessWidget {
           return _FilterChip(
             label: l10n.languageName(code),
             icon: Icons.language,
-            onDelete: () {
-              final newLangs = List<String>.from(filters.languages)
-                ..remove(code);
-              onChanged(filters.copyWith(languages: newLangs));
-            },
+            onDelete: () => onChanged(filters.removeLanguage(code)),
           );
         }),
 

@@ -1,4 +1,4 @@
-import 'package:cinemuse_app/features/explore/presentation/widgets/media_type_selector.dart';
+import 'package:cinemuse_app/features/explore/domain/explore_type.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/media/presentation/person_details_screen.dart';
@@ -12,7 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// a TV show or a person.
 class ExploreResultCard extends ConsumerWidget {
   final Map<String, dynamic> media;
-  final MediaType type;
+  final ExploreType type;
 
   const ExploreResultCard({super.key, required this.media, required this.type});
 
@@ -24,7 +24,7 @@ class ExploreResultCard extends ConsumerWidget {
         AppLocalizations.of(context)!.commonUnknown;
     final id = media['id'] as int;
 
-    if (type == MediaType.person) {
+    if (type == ExploreType.person) {
       // No list actions: a person is not a title, so the card must not
       // offer "Add to watchlist" (it would save the TV show with this ID).
       return MediaCard(
@@ -36,7 +36,7 @@ class ExploreResultCard extends ConsumerWidget {
       );
     }
 
-    final kind = type == MediaType.movie ? MediaKind.movie : MediaKind.tv;
+    final kind = type == ExploreType.movie ? MediaKind.movie : MediaKind.tv;
     return MediaCard(
       title: title,
       posterPath: media['poster_path'],

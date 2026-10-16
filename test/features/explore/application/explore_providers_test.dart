@@ -4,7 +4,7 @@ import 'package:cinemuse_app/core/application/l10n_provider.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/core/error/error_service.dart';
 import 'package:cinemuse_app/features/explore/application/explore_providers.dart';
-import 'package:cinemuse_app/features/explore/presentation/widgets/explore_filters.dart';
+import 'package:cinemuse_app/features/explore/domain/explore_filters.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:dio/dio.dart';
@@ -98,9 +98,9 @@ void main() {
     final pending = notifier.fetchNextPage();
     expect(container.read(exploreResultsProvider).value!.isLoadingMore, isTrue);
 
-    container.read(exploreFiltersProvider.notifier).state = ExploreFilters(
-      genres: const [35],
-    );
+    container
+        .read(exploreFiltersProvider.notifier)
+        .set(ExploreFilters(genres: const [35]));
     final fresh = await container.read(exploreResultsProvider.future);
     tmdb.nextPageGate!.complete();
     await pending;

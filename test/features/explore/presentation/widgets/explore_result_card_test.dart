@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:cinemuse_app/features/explore/presentation/widgets/explore_result_card.dart';
-import 'package:cinemuse_app/features/explore/presentation/widgets/media_type_selector.dart';
+import 'package:cinemuse_app/features/explore/domain/explore_type.dart';
 import 'package:cinemuse_app/features/media/application/person_providers.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -31,7 +31,7 @@ void main() {
 
   setUp(() => recorder = _PushRecorder());
 
-  Widget buildCard(Map<String, dynamic> media, MediaType type) {
+  Widget buildCard(Map<String, dynamic> media, ExploreType type) {
     return ProviderScope(
       overrides: [
         // Keeps the person screen loading: no TMDB call in tests.
@@ -64,7 +64,7 @@ void main() {
   const person = {'id': 287, 'name': 'Brad Pitt', 'profile_path': '/brad.jpg'};
 
   testWidgets('tapping a person opens the person screen', (tester) async {
-    await tester.pumpWidget(buildCard(person, MediaType.person));
+    await tester.pumpWidget(buildCard(person, ExploreType.person));
 
     await tester.tap(find.byType(MediaCard));
     await tester.pump();
@@ -80,7 +80,7 @@ void main() {
   testWidgets('a person card is not a title: no watchlist or list options', (
     tester,
   ) async {
-    await tester.pumpWidget(buildCard(person, MediaType.person));
+    await tester.pumpWidget(buildCard(person, ExploreType.person));
 
     final card = tester.widget<MediaCard>(find.byType(MediaCard));
     expect(card.listActions, isNull);
@@ -104,7 +104,7 @@ void main() {
         'poster_path': '/got.jpg',
         'first_air_date': '2011-04-17',
         'vote_average': 8.4,
-      }, MediaType.tv),
+      }, ExploreType.tv),
     );
 
     final card = tester.widget<MediaCard>(find.byType(MediaCard));

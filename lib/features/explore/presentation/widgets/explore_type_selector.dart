@@ -5,23 +5,21 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
+import 'package:cinemuse_app/features/explore/domain/explore_type.dart';
 
-enum MediaType { movie, tv, person }
+/// The Explore tabs: Movies, Series, People. Up from a tab goes to the navbar.
+class ExploreTypeSelector extends ConsumerWidget {
+  final ExploreType selectedType;
+  final ValueChanged<ExploreType> onTypeChanged;
 
-class MediaTypeSelector extends ConsumerWidget {
-  final MediaType selectedType;
-  final ValueChanged<MediaType> onTypeChanged;
-  final FocusNode? movieFocusNode;
-  final FocusNode? tvFocusNode;
-  final FocusNode? personFocusNode;
+  /// Given to the selected tab only.
+  final FocusNode? selectedFocusNode;
 
-  const MediaTypeSelector({
+  const ExploreTypeSelector({
     super.key,
     required this.selectedType,
     required this.onTypeChanged,
-    this.movieFocusNode,
-    this.tvFocusNode,
-    this.personFocusNode,
+    this.selectedFocusNode,
   });
 
   KeyEventResult _handleKeyEvent(
@@ -45,6 +43,11 @@ class MediaTypeSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final tabs = [
+      (ExploreType.movie, l10n.searchMovies, Icons.movie_outlined),
+      (ExploreType.tv, l10n.searchSeries, Icons.tv_outlined),
+      (ExploreType.person, l10n.searchPersons, Icons.person_outline),
+    ];
 
     return Container(
       padding: const EdgeInsets.all(4),
@@ -63,32 +66,17 @@ class MediaTypeSelector extends ConsumerWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _TypeButton(
-            label: l10n.searchMovies,
-            icon: Icons.movie_outlined,
-            isSelected: selectedType == MediaType.movie,
-            focusNode: movieFocusNode,
-            onTap: () => onTypeChanged(MediaType.movie),
-            onKeyEvent: (node, event) => _handleKeyEvent(ref, node, event),
-          ),
-          const SizedBox(width: 4),
-          _TypeButton(
-            label: l10n.searchSeries,
-            icon: Icons.tv_outlined,
-            isSelected: selectedType == MediaType.tv,
-            focusNode: tvFocusNode,
-            onTap: () => onTypeChanged(MediaType.tv),
-            onKeyEvent: (node, event) => _handleKeyEvent(ref, node, event),
-          ),
-          const SizedBox(width: 4),
-          _TypeButton(
-            label: l10n.searchPersons,
-            icon: Icons.person_outline,
-            isSelected: selectedType == MediaType.person,
-            focusNode: personFocusNode,
-            onTap: () => onTypeChanged(MediaType.person),
-            onKeyEvent: (node, event) => _handleKeyEvent(ref, node, event),
-          ),
+          for (final (type, label, icon) in tabs) ...[
+            if (type != ExploreType.movie) const SizedBox(width: 4),
+            _TypeButton(
+              label: label,
+              icon: icon,
+              isSelected: selectedType == type,
+              focusNode: selectedType == type ? selectedFocusNode : null,
+              onTap: () => onTypeChanged(type),
+              onKeyEvent: (node, event) => _handleKeyEvent(ref, node, event),
+            ),
+          ],
         ],
       ),
     );

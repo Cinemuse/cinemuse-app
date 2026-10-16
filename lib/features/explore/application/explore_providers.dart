@@ -1,32 +1,53 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/error/error_service.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
-import '../presentation/widgets/explore_filters.dart';
-import '../presentation/widgets/media_type_selector.dart';
+import '../domain/explore_filters.dart';
+import '../domain/explore_type.dart';
 
 // Not autoDispose: Explore keeps its tab and filters while the user is on
 // other screens.
 final exploreMediaTypeProvider =
-    NotifierProvider<ExploreMediaTypeNotifier, MediaType>(
+    NotifierProvider<ExploreMediaTypeNotifier, ExploreType>(
       ExploreMediaTypeNotifier.new,
     );
 
-class ExploreMediaTypeNotifier extends Notifier<MediaType> {
+class ExploreMediaTypeNotifier extends Notifier<ExploreType> {
   @override
-  MediaType build() => MediaType.movie;
+  ExploreType build() => ExploreType.movie;
 
   /// Switches the tab and fits the filters to it (series use other genres
   /// and another date field).
-  void select(MediaType type) {
+  void select(ExploreType type) {
     state = type;
     final filters = ref.read(exploreFiltersProvider);
-    ref.read(exploreFiltersProvider.notifier).state = filters.forType(type);
+    ref.read(exploreFiltersProvider.notifier).set(filters.forType(type));
   }
 }
 
-final exploreFiltersProvider = StateProvider<ExploreFilters>(
-  (ref) => ExploreFilters(),
-);
+// Not autoDispose: same as the tab above.
+final exploreFiltersProvider =
+    NotifierProvider<ExploreFiltersNotifier, ExploreFilters>(
+      ExploreFiltersNotifier.new,
+    );
+
+/// The filter panel's choices; each method is one user action.
+class ExploreFiltersNotifier extends Notifier<ExploreFilters> {
+  @override
+  ExploreFilters build() => ExploreFilters();
+
+  void set(ExploreFilters filters) => state = filters;
+
+  void clear() => state = ExploreFilters();
+
+  void toggleGenre(int genreId) => state = state.toggleGenre(genreId);
+
+  void toggleWatchProvider(int providerId) =>
+      state = state.toggleWatchProvider(providerId);
+
+  void addLanguage(String code) => state = state.addLanguage(code);
+
+  void removeLanguage(String code) => state = state.removeLanguage(code);
+}
 
 final exploreResultsProvider =
     AsyncNotifierProvider<ExploreResultsNotifier, ExploreResults>(
@@ -50,7 +71,7 @@ class ExploreResults {
 
 class ExploreResultsNotifier extends AsyncNotifier<ExploreResults> {
   late TmdbService _tmdb;
-  late MediaType _type;
+  late ExploreType _type;
   late ExploreFilters _filters;
   int _page = 1;
   // Bumped on every rebuild, so a next page still loading for the old
@@ -68,10 +89,10 @@ class ExploreResultsNotifier extends AsyncNotifier<ExploreResults> {
   }
 
   Future<ExploreResults> _fetchPage(int page) async {
-    final res = _type == MediaType.person
+    final res = _type == ExploreType.person
         ? await _tmdb.getPopularPersons(page)
         : await _tmdb.discover(
-            type: _type == MediaType.movie ? 'movie' : 'tv',
+            type: _type == ExploreType.movie ? 'movie' : 'tv',
             page: page,
             sortBy: _filters.sortBy,
             genres: _filters.genres,
@@ -159,7 +180,7 @@ final watchProvidersListProvider = FutureProvider<List<Map<String, dynamic>>>((
   );
 
   final providers = await tmdbService.getWatchProviders(
-    mediaType == MediaType.movie ? 'movie' : 'tv',
+    mediaType == ExploreType.movie ? 'movie' : 'tv',
     watchRegion,
   );
   return mainWatchProviders(providers, watchRegion);

@@ -1,5 +1,5 @@
 import 'package:cinemuse_app/features/explore/presentation/widgets/active_filters_list.dart';
-import 'package:cinemuse_app/features/explore/presentation/widgets/explore_filters.dart';
+import 'package:cinemuse_app/features/explore/domain/explore_filters.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:cinemuse_app/l10n/app_localizations_it.dart';
