@@ -194,6 +194,52 @@ void main() {
       expect(find.text('Stop Watching'), findsOneWidget);
     });
 
+    // REV-284: holding Enter on Play pressed Play instead of opening its menu.
+    testWidgets('holding Enter on Play opens its menu, a press plays', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      var plays = 0;
+      var drops = 0;
+      await tester.pumpWidget(
+        buildTestableWidget(
+          ResponsiveActionButtons(
+            onPlayClick: () => plays++,
+            playButtonLabel: 'Play Now',
+            mediaItem: MediaItem(
+              tmdbId: 123,
+              mediaType: MediaKind.movie,
+              updatedAt: DateTime(2026),
+            ),
+            isFavorite: false,
+            isInWatchlist: false,
+            onListTap: () {},
+            onDropClick: () => drops++,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(plays, 1);
+      expect(find.text('Stop Watching'), findsNothing);
+
+      // A held key sends repeats until it is released.
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.enter);
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 60));
+        await tester.sendKeyRepeatEvent(LogicalKeyboardKey.enter);
+      }
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Stop Watching'), findsOneWidget);
+      expect(plays, 1);
+      expect(drops, 0);
+    });
+
     // REV-246: the ▾ next to Play showed the arrow cursor.
     testWidgets('Play ▾: the hand', (tester) async {
       await tester.binding.setSurfaceSize(const Size(1280, 800));

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -14,7 +16,8 @@ typedef DpadFocusableBuilder =
 /// A reusable interactive wrapper that equips its child with:
 /// - D-Pad & keyboard navigation (Up/Down/Left/Right directional focus)
 /// - Activation (Enter, Space, D-Pad Center/Select, Gamepad A)
-/// - Context actions (ContextMenu key, Gamepad X/Y, Long Press, Secondary click)
+/// - Context actions (ContextMenu key, Shift+F10, Gamepad X/Y, Enter held,
+///   Long Press, Secondary click)
 /// - Mouse hover detection & cursor handling (Desktop)
 /// - Touch handling (Mobile)
 /// - Auto-scrolling the parent [Scrollable] into view when focused
@@ -79,6 +82,12 @@ class _DpadFocusableState extends State<DpadFocusable> {
   bool _isFocused = false;
   bool _isHovered = false;
 
+  // A keyboard or TV remote sends key repeats, not a long press: with an
+  // [onLongPress], an activation key held this long opens it (REV-284).
+  static const _keyLongPressDelay = Duration(milliseconds: 500);
+  Timer? _keyLongPressTimer;
+  LogicalKeyboardKey? _heldActivationKey;
+
   @override
   void initState() {
     super.initState();
@@ -98,6 +107,7 @@ class _DpadFocusableState extends State<DpadFocusable> {
   @override
   void dispose() {
     _effectiveFocusNode.removeListener(_handleFocusChanged);
+    _keyLongPressTimer?.cancel();
     _internalFocusNode?.dispose();
     super.dispose();
   }
@@ -105,6 +115,7 @@ class _DpadFocusableState extends State<DpadFocusable> {
   void _handleFocusChanged() {
     final hasFocus = _effectiveFocusNode.hasFocus;
     if (_isFocused == hasFocus) return;
+    if (!hasFocus) _cancelHeldActivationKey();
 
     setState(() => _isFocused = hasFocus);
     widget.onFocusChange?.call(hasFocus);
@@ -201,8 +212,6 @@ class _DpadFocusableState extends State<DpadFocusable> {
       }
     }
 
-    if (event is! KeyDownEvent) return KeyEventResult.ignored;
-
     // Primary Activation Keys: Enter, NumpadEnter, Select, Space, GameButtonA
     final isActivationKey =
         event.logicalKey == LogicalKeyboardKey.enter ||
@@ -210,6 +219,12 @@ class _DpadFocusableState extends State<DpadFocusable> {
         event.logicalKey == LogicalKeyboardKey.select ||
         event.logicalKey == LogicalKeyboardKey.space ||
         event.logicalKey == LogicalKeyboardKey.gameButtonA;
+
+    if (isActivationKey && widget.onLongPress != null) {
+      return _handleHoldableActivationKey(event);
+    }
+
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
     if (isActivationKey) {
       if (widget.onTap != null) {
@@ -219,9 +234,11 @@ class _DpadFocusableState extends State<DpadFocusable> {
       return KeyEventResult.ignored;
     }
 
-    // Secondary / Context Menu Keys: ContextMenu, GameButtonX, GameButtonY
+    // Secondary / Context Menu Keys: ContextMenu, Shift+F10, GameButtonX, GameButtonY
     final isContextKey =
         event.logicalKey == LogicalKeyboardKey.contextMenu ||
+        (event.logicalKey == LogicalKeyboardKey.f10 &&
+            HardwareKeyboard.instance.isShiftPressed) ||
         event.logicalKey == LogicalKeyboardKey.gameButtonX ||
         event.logicalKey == LogicalKeyboardKey.gameButtonY;
 
@@ -231,6 +248,31 @@ class _DpadFocusableState extends State<DpadFocusable> {
     }
 
     return KeyEventResult.ignored;
+  }
+
+  /// Tap on release, long press once the key is held for
+  /// [_keyLongPressDelay]; the release after a long press does nothing.
+  KeyEventResult _handleHoldableActivationKey(KeyEvent event) {
+    if (event is KeyDownEvent) {
+      _cancelHeldActivationKey();
+      _heldActivationKey = event.logicalKey;
+      _keyLongPressTimer = Timer(_keyLongPressDelay, _handleContextAction);
+      return KeyEventResult.handled;
+    }
+    // A key pressed before this control had focus is not ours.
+    if (event.logicalKey != _heldActivationKey) return KeyEventResult.ignored;
+    if (event is KeyUpEvent) {
+      final isShortPress = _keyLongPressTimer?.isActive ?? false;
+      _cancelHeldActivationKey();
+      if (isShortPress) _handleAction();
+    }
+    return KeyEventResult.handled;
+  }
+
+  void _cancelHeldActivationKey() {
+    _keyLongPressTimer?.cancel();
+    _keyLongPressTimer = null;
+    _heldActivationKey = null;
   }
 
   Widget _buildFocusRing(Widget child) {

@@ -99,9 +99,51 @@ void main() {
       await tester.pumpAndSettle();
       expect(contextTriggers, equals(2));
 
+      // Shift+F10: the Windows shortcut for the context menu (REV-284).
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.f10);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pumpAndSettle();
+      expect(contextTriggers, equals(3));
+
       focusNode.dispose();
     },
   );
+
+  // REV-284: a keyboard / TV remote has no long press, only key repeats.
+  for (final key in [LogicalKeyboardKey.enter, LogicalKeyboardKey.select]) {
+    testWidgets('DpadFocusable: ${key.keyLabel} held = long press, '
+        'pressed = tap', (tester) async {
+      var taps = 0;
+      var longPresses = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DpadFocusable(
+              autofocus: true,
+              onTap: () => taps++,
+              onLongPress: () => longPresses++,
+              child: const Text('Target'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyEvent(key);
+      await tester.pumpAndSettle();
+      expect((taps, longPresses), (1, 0));
+
+      await tester.sendKeyDownEvent(key);
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 60));
+        await tester.sendKeyRepeatEvent(key);
+      }
+      await tester.sendKeyUpEvent(key);
+      await tester.pumpAndSettle();
+      expect((taps, longPresses), (1, 1));
+    });
+  }
 
   testWidgets('DpadFocusable reports focus change and displays focus ring', (
     tester,
