@@ -11,7 +11,9 @@ import 'package:flutter/material.dart';
 /// [DpadFocusable].
 class CardTitleRow extends StatelessWidget {
   final String title;
-  final VoidCallback onMenu;
+
+  /// Null hides the "⋮" button (a card with nothing in its menu).
+  final VoidCallback? onMenu;
 
   /// Put on the "⋮" button, so the menu opens next to it.
   final Key menuAnchorKey;
@@ -20,6 +22,7 @@ class CardTitleRow extends StatelessWidget {
   /// The full title shows after a long hover (poster cards, whose titles are
   /// short on space).
   final bool showsFullTitleOnHover;
+  final int maxLines;
 
   const CardTitleRow({
     super.key,
@@ -28,6 +31,7 @@ class CardTitleRow extends StatelessWidget {
     required this.menuAnchorKey,
     this.menuIconSize = 16,
     this.showsFullTitleOnHover = false,
+    this.maxLines = 1,
   });
 
   @override
@@ -48,39 +52,40 @@ class CardTitleRow extends StatelessWidget {
               ? PremiumHoverText(text: title, style: style)
               : Text(
                   title,
-                  maxLines: 1,
+                  maxLines: maxLines,
                   overflow: TextOverflow.ellipsis,
                   style: style,
                 ),
         ),
-        AnimatedOpacity(
-          opacity: (isHighlighted || Breakpoints.isCompact(context))
-              ? 1.0
-              : 0.0,
-          duration: const Duration(milliseconds: 200),
-          child: Material(
-            color: Colors.transparent,
-            child: Tooltip(
-              message: AppLocalizations.of(context)!.menuMoreOptions,
-              child: InkWell(
-                canRequestFocus: false,
-                excludeFromSemantics: true,
-                onTap: onMenu,
-                mouseCursor: SystemMouseCursors.click,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  key: menuAnchorKey,
-                  padding: const EdgeInsets.only(left: 4, top: 2, bottom: 2),
-                  child: Icon(
-                    Icons.more_vert,
-                    color: Colors.white60,
-                    size: menuIconSize,
+        if (onMenu != null)
+          AnimatedOpacity(
+            opacity: (isHighlighted || Breakpoints.isCompact(context))
+                ? 1.0
+                : 0.0,
+            duration: const Duration(milliseconds: 200),
+            child: Material(
+              color: Colors.transparent,
+              child: Tooltip(
+                message: AppLocalizations.of(context)!.menuMoreOptions,
+                child: InkWell(
+                  canRequestFocus: false,
+                  excludeFromSemantics: true,
+                  onTap: onMenu,
+                  mouseCursor: SystemMouseCursors.click,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    key: menuAnchorKey,
+                    padding: const EdgeInsets.only(left: 4, top: 2, bottom: 2),
+                    child: Icon(
+                      Icons.more_vert,
+                      color: Colors.white60,
+                      size: menuIconSize,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
       ],
     );
   }

@@ -7,9 +7,9 @@ import 'package:cinemuse_app/features/live_tv/presentation/widgets/save_live_tv_
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
+import 'package:cinemuse_app/shared/widgets/card_title_row.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
-import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -152,19 +152,19 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
       borderRadius: BorderRadius.circular(8),
       child: SizedBox(
         width: 280,
-        child: Stack(
-          clipBehavior: Clip.none,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildBackdrop(theme),
-                const SizedBox(height: 8),
-                _buildTitle(theme),
-              ],
+            _buildBackdrop(theme),
+            const SizedBox(height: 8),
+            CardTitleRow(
+              title: _title(context),
+              maxLines: 2,
+              onMenu: widget.event.channels.isEmpty
+                  ? null
+                  : () => _showContextActions(context),
+              menuAnchorKey: _menuKey,
             ),
-            if (widget.event.channels.isNotEmpty)
-              Positioned(top: 8, right: 8, child: _buildContextMenuButton()),
           ],
         ),
       ),
@@ -267,70 +267,12 @@ class _SportEventCardState extends ConsumerState<SportEventCard> {
     );
   }
 
-  Widget _buildTitle(ThemeData theme) {
-    return Builder(
-      builder: (context) {
-        final isHighlighted =
-            DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
-        final localizedSport = _getLocalizedSportName(context);
-
-        return Text(
-          localizedSport.isNotEmpty
-              ? '$localizedSport${widget.event.description.isNotEmpty ? ' - ${widget.event.description}' : ''}'
-              : widget.event.description,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.bodyMedium!.copyWith(
-            color: isHighlighted
-                ? theme.colorScheme.primary
-                : AppTheme.textWhite,
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildContextMenuButton() {
-    return Builder(
-      builder: (context) {
-        final isHighlighted =
-            DpadFocusScope.maybeOf(context)?.isHighlighted ?? false;
-        final isMobile = Breakpoints.isCompact(context);
-
-        return AnimatedOpacity(
-          opacity: (isHighlighted || isMobile) ? 1.0 : 0.0,
-          duration: const Duration(milliseconds: 200),
-          child: Material(
-            color: Colors.transparent,
-            child: Tooltip(
-              message: AppLocalizations.of(context)!.menuMoreOptions,
-              child: InkWell(
-                mouseCursor: AppTheme.clickCursor,
-                canRequestFocus: false,
-                excludeFromSemantics: true,
-                onTap: () => _showContextActions(context),
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  key: _menuKey,
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: AppTheme.glass,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.more_vert,
-                    color: AppTheme.textWhite,
-                    size: 16,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
+  String _title(BuildContext context) {
+    final localizedSport = _getLocalizedSportName(context);
+    if (localizedSport.isEmpty) return widget.event.description;
+    return widget.event.description.isEmpty
+        ? localizedSport
+        : '$localizedSport - ${widget.event.description}';
   }
 
   Widget _buildPlaceholder(BuildContext context) {

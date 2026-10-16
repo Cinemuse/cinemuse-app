@@ -7,6 +7,7 @@ import 'package:cinemuse_app/features/home/presentation/widgets/sport_event_card
 import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 
 import '../../../../helpers/menu_helpers.dart';
 
@@ -88,4 +89,56 @@ void main() {
     expect(menuItems, findsNWidgets(2));
     expectMenuAt(tester, at);
   });
+
+  // REV-244: the "⋮" button sits on the line under the picture, next to the
+  // title, like every other card; an event with no channels has no menu.
+  for (final channels in [
+    ['Rai 2', 'Rai Sport'],
+    <String>[],
+  ]) {
+    testWidgets('channels $channels: menu button under the picture', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SportEventCard(
+                event: SportTvEvent(
+                  dateTime: null,
+                  sportName: 'Rugby',
+                  description: 'Italia - Francia',
+                  channels: channels,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final menu = find.byTooltip(AppLocalizationsEn().menuMoreOptions);
+      if (channels.isEmpty) {
+        expect(menu, findsNothing);
+        return;
+      }
+      expect(menu, findsOneWidget);
+      final title = find.textContaining('Italia - Francia');
+      expect(
+        tester.getTopLeft(menu).dy,
+        greaterThan(tester.getBottomLeft(find.text('Rai 2')).dy),
+      );
+      expect(
+        tester.getCenter(menu).dy,
+        moreOrLessEquals(tester.getCenter(title).dy, epsilon: 2),
+      );
+      expect(
+        tester.getTopLeft(menu).dx,
+        greaterThanOrEqualTo(tester.getTopRight(title).dx),
+      );
+    });
+  }
 }
