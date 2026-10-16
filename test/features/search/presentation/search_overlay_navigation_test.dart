@@ -38,13 +38,17 @@ void main() {
     mockTmdbService = MockTmdbService();
   });
 
-  Widget createTestWidget({SearchState? initialState}) {
+  Widget createTestWidget({
+    SearchState? initialState,
+    ConnectivityResult Function()? connectivity,
+  }) {
     return ProviderScope(
       overrides: [
         tmdbServiceProvider.overrideWithValue(mockTmdbService),
         userIdProvider.overrideWithValue('u1'),
         connectivityProvider.overrideWith(
-          (ref) => Stream.value(ConnectivityResult.wifi),
+          (ref) =>
+              Stream.value(connectivity?.call() ?? ConnectivityResult.wifi),
         ),
         settingsProvider.overrideWith(FakeSettingsNotifier.new),
         if (initialState != null)
@@ -79,6 +83,25 @@ void main() {
     final textField = tester.widget<TextField>(find.byType(TextField));
     expect(textField.focusNode?.hasFocus, isTrue);
   });
+
+  testWidgets(
+    'Offline shows the error box; Retry checks the connection again',
+    (tester) async {
+      var result = ConnectivityResult.none;
+      await tester.pumpWidget(createTestWidget(connectivity: () => result));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Inception'), findsNothing);
+      expect(find.text('Retry'), findsOneWidget);
+
+      result = ConnectivityResult.wifi;
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Retry'), findsNothing);
+      expect(find.text('Inception'), findsOneWidget);
+    },
+  );
 
   testWidgets(
     'ArrowDown from TextField transfers focus to first history item, ArrowUp returns to TextField',
