@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
-import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/media/presentation/widgets/gallery_bottom_sheet.dart';
 
@@ -37,7 +37,8 @@ class GalleryBox extends StatelessWidget {
     return BentoBox(
       title: l10n.detailsGallery,
       icon: Icons.image_outlined,
-      action: HoverScale(
+      action: DpadFocusable(
+        scale: 1.05,
         tooltip: l10n.detailsGallery,
         onTap: () => _openGallery(context, 0),
         borderRadius: AppTheme.radiusMd,
@@ -97,7 +98,8 @@ class _GalleryPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HoverScale(
+    return DpadFocusable(
+      scale: 1.05,
       onTap: onTap,
       borderRadius: AppTheme.radius12,
       child: Container(

@@ -9,7 +9,7 @@ import '../widgets/media_type_selector.dart';
 import '../widgets/explore_result_card.dart';
 import '../widgets/explore_filter_panel.dart';
 import '../widgets/active_filters_list.dart';
-import '../../../../shared/widgets/hover_scale.dart';
+import '../../../../shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/shared/widgets/offline_placeholder.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -411,7 +411,7 @@ class _FilterToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HoverScale(
+    return DpadFocusable(
       onTap: onTap,
       scale: 1.05,
       child: AnimatedContainer(

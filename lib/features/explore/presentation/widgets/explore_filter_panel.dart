@@ -12,7 +12,7 @@ import 'media_type_selector.dart';
 import 'package:cinemuse_app/features/explore/application/explore_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/widgets/premium_hover_text.dart';
-import '../../../../shared/widgets/hover_scale.dart';
+import '../../../../shared/widgets/dpad_focusable.dart';
 
 class ExploreFilterPanel extends ConsumerStatefulWidget {
   const ExploreFilterPanel({super.key});
@@ -247,7 +247,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
 
   Widget _buildSortOption(String label, String value, ExploreFilters filters) {
     final isSelected = filters.sortBy == value;
-    return HoverScale(
+    return DpadFocusable(
       onTap: () => _updateFilters(filters.copyWith(sortBy: value)),
       scale: 1.02,
       child: AnimatedContainer(
@@ -294,7 +294,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
       runSpacing: 8,
       children: ExploreFilters.genreIdsFor(mediaType).map((genreId) {
         final isSelected = filters.genres.contains(genreId);
-        return HoverScale(
+        return DpadFocusable(
           onTap: () => _toggleGenre(genreId),
           scale: 1.08,
           child: AnimatedContainer(
@@ -437,7 +437,7 @@ class _ExploreFilterPanelState extends ConsumerState<ExploreFilterPanel> {
             final isSelected = filters.watchProviders.contains(id);
             final imageUrl = TmdbImageHelper.logoUrl(p['logo_path']) ?? '';
 
-            return HoverScale(
+            return DpadFocusable(
               onTap: () => _toggleWatchProvider(id),
               scale: 1.15,
               child: Column(

@@ -3,7 +3,7 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import '../../../../core/presentation/theme/app_theme.dart';
 import '../../../../core/constants/tmdb_constants.dart';
 import 'explore_filters.dart';
-import '../../../../shared/widgets/hover_scale.dart';
+import '../../../../shared/widgets/dpad_focusable.dart';
 
 class ActiveFiltersList extends StatelessWidget {
   final ExploreFilters filters;
@@ -96,7 +96,7 @@ class ActiveFiltersList extends StatelessWidget {
           ),
 
         // Clear All
-        HoverScale(
+        DpadFocusable(
           onTap: onClear,
           scale: 1.05,
           child: _ClearAllButton(l10n: l10n),
@@ -138,7 +138,7 @@ class _FilterChip extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          HoverScale(
+          DpadFocusable(
             tooltip: AppLocalizations.of(context)!.commonRemoveFilter,
             onTap: onDelete,
             scale: 1.2,

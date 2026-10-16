@@ -9,7 +9,6 @@ import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
-import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -502,7 +501,8 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
             message: l10n.menuMoreOptions,
             child: Builder(
               builder: (buttonContext) {
-                return HoverScale(
+                return DpadFocusable(
+                  scale: 1.05,
                   borderRadius: AppTheme.radiusFull,
                   onTap: () {
                     _showContextMenu(context, anchorContext: buttonContext);
@@ -530,7 +530,8 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
           if (widget.onShowComments != null)
             Tooltip(
               message: l10n.detailsTvTimeComments,
-              child: HoverScale(
+              child: DpadFocusable(
+                scale: 1.05,
                 borderRadius: AppTheme.radiusFull,
                 onTap: widget.onShowComments,
                 child: Container(
@@ -602,7 +603,8 @@ class MarkWatchedButton extends StatelessWidget {
       message: isWatched
           ? l10n.detailsTooltipWatched
           : l10n.detailsTooltipMarkWatched,
-      child: HoverScale(
+      child: DpadFocusable(
+        scale: 1.05,
         borderRadius: AppTheme.radiusFull,
         onTap: onTap,
         child: Container(

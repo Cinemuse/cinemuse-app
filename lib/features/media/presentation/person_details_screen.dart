@@ -10,7 +10,7 @@ import 'package:cinemuse_app/features/media/presentation/widgets/external_links.
 import 'package:cinemuse_app/features/media/presentation/widgets/person_filmography_list.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_back_button.dart';
-import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -378,7 +378,8 @@ class _PersonDetailsContent extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        HoverScale(
+                        DpadFocusable(
+                          scale: 1.05,
                           onTap: onShowMore,
                           child: Container(
                             padding: const EdgeInsets.symmetric(

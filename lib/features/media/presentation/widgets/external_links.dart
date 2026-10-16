@@ -2,7 +2,7 @@ import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
 import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
-import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/shared/widgets/bento_box.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -170,7 +170,7 @@ class _ThemedBrandButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HoverScale(
+    return DpadFocusable(
       scale: 1.05,
       borderRadius: AppTheme.radius12,
       onTap: () => _openUrl(context, url),
@@ -220,7 +220,7 @@ class _SquareIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
-      child: HoverScale(
+      child: DpadFocusable(
         scale: 1.1,
         borderRadius: AppTheme.radius12,
         onTap: () => _openUrl(context, url),

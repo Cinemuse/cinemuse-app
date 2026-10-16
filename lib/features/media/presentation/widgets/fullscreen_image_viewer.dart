@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
-import 'package:cinemuse_app/shared/widgets/hover_scale.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
@@ -269,7 +269,8 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
                   // a remote doesn't lose focus.
                   Tooltip(
                     message: l10n.detailsGalleryDownload,
-                    child: HoverScale(
+                    child: DpadFocusable(
+                      scale: 1.05,
                       onTap: () =>
                           _downloadImage(widget.imageUrls[_currentIndex]),
                       borderRadius: AppTheme.radiusFull,
