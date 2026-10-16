@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/error/error_service.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
+import 'package:cinemuse_app/features/settings/application/watch_region_providers.dart';
 import '../domain/explore_filters.dart';
 import '../domain/explore_type.dart';
 
@@ -73,6 +74,7 @@ class ExploreResultsNotifier extends AsyncNotifier<ExploreResults> {
   late TmdbService _tmdb;
   late ExploreType _type;
   late ExploreFilters _filters;
+  late String _watchRegion;
   int _page = 1;
   // Bumped on every rebuild, so a next page still loading for the old
   // type/filters is dropped instead of appended to the new results.
@@ -83,6 +85,7 @@ class ExploreResultsNotifier extends AsyncNotifier<ExploreResults> {
     _tmdb = ref.watch(tmdbServiceProvider);
     _type = ref.watch(exploreMediaTypeProvider);
     _filters = ref.watch(exploreFiltersProvider);
+    _watchRegion = ref.watch(watchRegionProvider);
     _generation++;
     _page = 1;
     return _fetchPage(1);
@@ -106,7 +109,7 @@ class ExploreResultsNotifier extends AsyncNotifier<ExploreResults> {
             minRuntime: _filters.runtime.start.round(),
             maxRuntime: _filters.runtime.end.round(),
             watchProviders: _filters.watchProviders,
-            watchRegion: _filters.watchRegion,
+            watchRegion: _watchRegion,
           );
     return ExploreResults(
       items: List<Map<String, dynamic>>.from(res['results'] ?? []),
@@ -175,9 +178,7 @@ final watchProvidersListProvider = FutureProvider<List<Map<String, dynamic>>>((
 ) async {
   final tmdbService = ref.watch(tmdbServiceProvider);
   final mediaType = ref.watch(exploreMediaTypeProvider);
-  final watchRegion = ref.watch(
-    exploreFiltersProvider.select((f) => f.watchRegion),
-  );
+  final watchRegion = ref.watch(watchRegionProvider);
 
   final providers = await tmdbService.getWatchProviders(
     mediaType == ExploreType.movie ? 'movie' : 'tv',

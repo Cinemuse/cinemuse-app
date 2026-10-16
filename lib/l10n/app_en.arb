@@ -509,6 +509,8 @@
   "settingsLanguage": "Language",
   "settingsAppLanguage": "App Language",
   "settingsAppLanguageDesc": "Change the interface language.",
+  "settingsWatchRegion": "Streaming Country",
+  "settingsWatchRegionDesc": "Explore shows the streaming services of this country.",
   "settingsAudioLanguage": "Audio Language",
   "settingsAudioLanguageDesc": "Preferred audio language for movies and series.",
   "settingsSubtitleLanguage": "Subtitle Language",

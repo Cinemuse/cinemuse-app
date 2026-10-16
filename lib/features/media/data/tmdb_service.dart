@@ -282,7 +282,7 @@ class TmdbService {
 
     if (watchProviders != null && watchProviders.isNotEmpty) {
       queryParams['with_watch_providers'] = watchProviders.join('|');
-      queryParams['watch_region'] = watchRegion ?? 'IT';
+      if (watchRegion != null) queryParams['watch_region'] = watchRegion;
     }
 
     final dateField = type == 'movie'
@@ -313,6 +313,15 @@ class TmdbService {
       '/watch/providers/${type == 'tv' ? 'tv' : 'movie'}',
       {'watch_region': region, 'language': _language},
     );
+    return List<Map<String, dynamic>>.from(data['results']);
+  }
+
+  /// The countries TMDB has streaming data for, named in the app's language
+  /// (`iso_3166_1`, `native_name`).
+  Future<List<Map<String, dynamic>>> getWatchRegions() async {
+    final data = await _get('/watch/providers/regions', {
+      'language': _language,
+    });
     return List<Map<String, dynamic>>.from(data['results']);
   }
 }

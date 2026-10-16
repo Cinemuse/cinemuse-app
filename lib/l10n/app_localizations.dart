@@ -2438,6 +2438,18 @@ abstract class AppLocalizations {
   /// **'Change the interface language.'**
   String get settingsAppLanguageDesc;
 
+  /// No description provided for @settingsWatchRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Streaming Country'**
+  String get settingsWatchRegion;
+
+  /// No description provided for @settingsWatchRegionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore shows the streaming services of this country.'**
+  String get settingsWatchRegionDesc;
+
   /// No description provided for @settingsAudioLanguage.
   ///
   /// In en, this message translates to:

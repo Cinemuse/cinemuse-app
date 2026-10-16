@@ -35,7 +35,6 @@ class ExploreFilters {
   final RangeValues voteCount;
   final RangeValues runtime;
   final List<int> watchProviders;
-  final String watchRegion;
 
   ExploreFilters({
     this.sortBy = defaultSortBy,
@@ -46,7 +45,6 @@ class ExploreFilters {
     this.voteCount = defaultVoteCount,
     this.runtime = runtimeLimits,
     this.watchProviders = const [],
-    this.watchRegion = 'IT',
   }) : year = year ?? yearLimits;
 
   ExploreFilters copyWith({
@@ -58,7 +56,6 @@ class ExploreFilters {
     RangeValues? voteCount,
     RangeValues? runtime,
     List<int>? watchProviders,
-    String? watchRegion,
   }) {
     return ExploreFilters(
       sortBy: sortBy ?? this.sortBy,
@@ -69,7 +66,6 @@ class ExploreFilters {
       voteCount: voteCount ?? this.voteCount,
       runtime: runtime ?? this.runtime,
       watchProviders: watchProviders ?? this.watchProviders,
-      watchRegion: watchRegion ?? this.watchRegion,
     );
   }
 

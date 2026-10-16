@@ -1329,6 +1329,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsAppLanguageDesc => 'Cambia la lingua dell\'interfaccia.';
 
   @override
+  String get settingsWatchRegion => 'Paese Streaming';
+
+  @override
+  String get settingsWatchRegionDesc =>
+      'Esplora mostra i servizi di streaming di questo paese.';
+
+  @override
   String get settingsAudioLanguage => 'Lingua Audio';
 
   @override

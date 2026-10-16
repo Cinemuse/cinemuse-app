@@ -1316,6 +1316,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAppLanguageDesc => 'Change the interface language.';
 
   @override
+  String get settingsWatchRegion => 'Streaming Country';
+
+  @override
+  String get settingsWatchRegionDesc =>
+      'Explore shows the streaming services of this country.';
+
+  @override
   String get settingsAudioLanguage => 'Audio Language';
 
   @override

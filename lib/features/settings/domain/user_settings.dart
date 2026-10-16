@@ -10,6 +10,10 @@ import 'package:cinemuse_app/features/streaming/models/stremio_addon.dart';
 class UserSettings {
   final String displayName;
   final String appLanguage;
+
+  /// The country for streaming services (Explore's provider filter), a
+  /// TMDB `iso_3166_1` code.
+  final String watchRegion;
   final String playerLanguage; // General Audio Language
   final bool showSubtitles;
   final String subtitleLanguage;
@@ -37,6 +41,7 @@ class UserSettings {
   const UserSettings({
     this.displayName = '',
     this.appLanguage = 'en',
+    this.watchRegion = 'IT',
     this.playerLanguage = 'en',
     this.showSubtitles = true,
     this.subtitleLanguage = 'en',
@@ -93,6 +98,7 @@ class UserSettings {
     return UserSettings(
       displayName: profile.username ?? d.displayName,
       appLanguage: readString('appLanguage', d.appLanguage),
+      watchRegion: readString('watchRegion', d.watchRegion),
       playerLanguage: readString('playerLanguage', d.playerLanguage),
       showSubtitles: readBool('showSubtitles', d.showSubtitles),
       subtitleLanguage: readString('subtitleLanguage', d.subtitleLanguage),
@@ -167,6 +173,7 @@ class UserSettings {
   UserSettings copyWith({
     String? displayName,
     String? appLanguage,
+    String? watchRegion,
     String? playerLanguage,
     bool? showSubtitles,
     String? subtitleLanguage,
@@ -194,6 +201,7 @@ class UserSettings {
     return UserSettings(
       displayName: displayName ?? this.displayName,
       appLanguage: appLanguage ?? this.appLanguage,
+      watchRegion: watchRegion ?? this.watchRegion,
       playerLanguage: playerLanguage ?? this.playerLanguage,
       showSubtitles: showSubtitles ?? this.showSubtitles,
       subtitleLanguage: subtitleLanguage ?? this.subtitleLanguage,
@@ -250,6 +258,7 @@ class UserSettings {
   Map<String, dynamic> toPreferencesJson() {
     return {
       'appLanguage': appLanguage,
+      'watchRegion': watchRegion,
       'playerLanguage': playerLanguage,
       'showSubtitles': showSubtitles,
       'subtitleLanguage': subtitleLanguage,

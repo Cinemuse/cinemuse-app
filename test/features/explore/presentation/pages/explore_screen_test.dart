@@ -6,6 +6,7 @@ import 'package:cinemuse_app/features/explore/presentation/pages/explore_screen.
 import 'package:cinemuse_app/features/explore/presentation/widgets/explore_result_card.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
+import 'package:cinemuse_app/features/settings/application/watch_region_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
@@ -86,6 +87,7 @@ Future<void> _pumpExplore(WidgetTester tester, TmdbService tmdb) async {
       overrides: [
         tmdbServiceProvider.overrideWithValue(tmdb),
         localizationsProvider.overrideWithValue(AppLocalizationsEn()),
+        watchRegionProvider.overrideWithValue('IT'),
         connectivityProvider.overrideWith(
           (ref) => Stream.value(ConnectivityResult.wifi),
         ),

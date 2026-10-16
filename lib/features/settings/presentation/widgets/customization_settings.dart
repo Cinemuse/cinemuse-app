@@ -1,15 +1,18 @@
 import 'package:cinemuse_app/features/settings/application/local_settings_service.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/application/watch_region_providers.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/save_settings.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/setting_toggle.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/settings_widgets.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/subtitle_appearance_form.dart';
+import 'package:cinemuse_app/features/settings/presentation/widgets/watch_region_dropdown.dart';
 import 'package:cinemuse_app/features/streaming/models/stream_metadata.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// The Customization category: app language, playback, anime, subtitles.
+/// The Customization category: app language and streaming country,
+/// playback, anime, subtitles.
 class CustomizationSettings extends ConsumerWidget {
   const CustomizationSettings({super.key});
 
@@ -43,6 +46,7 @@ class _AppLanguageCard extends ConsumerWidget {
     final appLanguage = ref.watch(
       settingsProvider.select((s) => s.appLanguage),
     );
+    final watchRegion = ref.watch(watchRegionProvider);
 
     return SettingsCard(
       children: [
@@ -50,10 +54,19 @@ class _AppLanguageCard extends ConsumerWidget {
           label: l10n.settingsAppLanguage,
           description: l10n.settingsAppLanguageDesc,
           icon: Icons.language,
-          showDivider: false,
           trailing: SettingsLanguageDropdown(
             value: appLanguage,
             onChanged: (lang) => save((s) => s.copyWith(appLanguage: lang)),
+          ),
+        ),
+        SettingsTile(
+          label: l10n.settingsWatchRegion,
+          description: l10n.settingsWatchRegionDesc,
+          icon: Icons.public,
+          showDivider: false,
+          trailing: WatchRegionDropdown(
+            value: watchRegion,
+            onChanged: (code) => save((s) => s.copyWith(watchRegion: code)),
           ),
         ),
       ],

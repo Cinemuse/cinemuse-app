@@ -15,6 +15,17 @@ Profile _profile(Map<String, dynamic> preferences) => Profile(
 
 void main() {
   group('UserSettings Parsing', () {
+    test('the streaming country: Italy until the user picks one, which is '
+        'saved', () {
+      final stored = UserSettings.fromProfile(_profile(const {}));
+      expect(stored.watchRegion, 'IT');
+
+      final picked = stored.copyWith(watchRegion: 'US');
+      final patch = picked.preferencesChangedSince(stored);
+      expect(patch, {'watchRegion': 'US'});
+      expect(UserSettings.fromProfile(_profile(patch)).watchRegion, 'US');
+    });
+
     test(
       'UserSettings.fromProfile handles installedAddons as List of Maps',
       () {

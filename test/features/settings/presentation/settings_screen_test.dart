@@ -4,6 +4,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/navigation/application/back_navigation_notifier.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/application/watch_region_providers.dart';
 import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/features/settings/presentation/settings_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -42,6 +43,14 @@ class _SavingSettingsNotifier extends SettingsNotifier {
   ) async => state = change(state);
 }
 
+/// The "Streaming country" list, without TMDB.
+final _fakeRegions = watchRegionsProvider.overrideWith(
+  (ref) async => const [
+    (code: 'IT', name: 'Italy'),
+    (code: 'US', name: 'United States'),
+  ],
+);
+
 void main() {
   setUpAll(loadAppFont);
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -58,7 +67,10 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [settingsProvider.overrideWith(_FakeSettingsNotifier.new)],
+          overrides: [
+            settingsProvider.overrideWith(_FakeSettingsNotifier.new),
+            _fakeRegions,
+          ],
           child: MaterialApp(
             theme: AppTheme.darkTheme,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -210,6 +222,7 @@ void main() {
         ProviderScope(
           overrides: [
             settingsProvider.overrideWith(_BothDebridSettingsNotifier.new),
+            _fakeRegions,
           ],
           child: MaterialApp(
             theme: AppTheme.darkTheme,
@@ -245,7 +258,10 @@ void main() {
       addTearDown(tester.view.reset);
       FocusRing.debugWatchKeys();
       container = ProviderContainer(
-        overrides: [settingsProvider.overrideWith(_SavingSettingsNotifier.new)],
+        overrides: [
+          settingsProvider.overrideWith(_SavingSettingsNotifier.new),
+          _fakeRegions,
+        ],
       );
       addTearDown(container.dispose);
       await tester.pumpWidget(
@@ -285,6 +301,22 @@ void main() {
     }
 
     final l10n = AppLocalizationsEn();
+
+    // REV-77: the streaming country was fixed to Italy.
+    testWidgets('Streaming country lists the countries and saves the one '
+        'picked', (tester) async {
+      await openCategory(tester, l10n.settingsCustomization);
+      expect(find.text(l10n.settingsWatchRegion), findsOneWidget);
+
+      await tester.tap(find.text('Italy'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('United States').last);
+      await tester.pumpAndSettle();
+
+      expect(container.read(settingsProvider).watchRegion, 'US');
+      expect(find.text('United States'), findsOneWidget);
+    });
+
     for (final c in [
       (
         category: l10n.settingsCustomization,

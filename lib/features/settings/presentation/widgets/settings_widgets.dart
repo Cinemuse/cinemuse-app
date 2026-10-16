@@ -208,17 +208,23 @@ class SettingsTile extends StatelessWidget {
   }
 }
 
-/// The small drop-down at the end of a settings row.
+/// The small drop-down at the end of a settings row. It is as wide as its
+/// longest option, unless [width] fixes it (long lists, e.g. countries: the
+/// options then end in "…" and the open menu is [menuWidth] wide).
 class SettingsSmallDropdown<T> extends StatelessWidget {
   final T value;
   final List<DropdownMenuItem<T>> items;
   final ValueChanged<T?> onChanged;
+  final double? width;
+  final double? menuWidth;
 
   const SettingsSmallDropdown({
     super.key,
     required this.value,
     required this.items,
     required this.onChanged,
+    this.width,
+    this.menuWidth,
   });
 
   @override
@@ -228,6 +234,7 @@ class SettingsSmallDropdown<T> extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         height: 38,
+        width: width,
         decoration: BoxDecoration(
           color: Colors.white.withAlpha(18), // 0.07 * 255
           borderRadius: BorderRadius.circular(16),
@@ -238,6 +245,8 @@ class SettingsSmallDropdown<T> extends StatelessWidget {
             value: value,
             items: withMenuFocusRings(items),
             onChanged: onChanged,
+            isExpanded: width != null,
+            menuWidth: menuWidth,
             mouseCursor: AppTheme.clickCursor,
             dropdownMenuItemMouseCursor: AppTheme.clickCursor,
             dropdownColor: AppTheme.surface,

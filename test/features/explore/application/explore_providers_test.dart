@@ -6,6 +6,7 @@ import 'package:cinemuse_app/core/error/error_service.dart';
 import 'package:cinemuse_app/features/explore/application/explore_providers.dart';
 import 'package:cinemuse_app/features/explore/domain/explore_filters.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
+import 'package:cinemuse_app/features/settings/application/watch_region_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,6 +51,45 @@ class _FlakyTmdbService extends TmdbService {
   }
 }
 
+/// Remembers the country each call was made for.
+class _RegionTmdbService extends TmdbService {
+  _RegionTmdbService() : super(Dio(), 'en-US');
+
+  String? discoverRegion;
+  String? providersRegion;
+
+  @override
+  Future<Map<String, dynamic>> discover({
+    required String type,
+    required int page,
+    String? sortBy,
+    List<int>? genres,
+    List<String>? languages,
+    double? minRating,
+    double? maxRating,
+    int? minYear,
+    int? maxYear,
+    int? minVotes,
+    int? maxVotes,
+    int? minRuntime,
+    int? maxRuntime,
+    List<int>? watchProviders,
+    String? watchRegion,
+  }) async {
+    discoverRegion = watchRegion;
+    return {'results': [], 'total_pages': 1};
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getWatchProviders(
+    String type,
+    String region,
+  ) async {
+    providersRegion = region;
+    return [];
+  }
+}
+
 List<int> _ids(ProviderContainer container) => container
     .read(exploreResultsProvider)
     .value!
@@ -67,6 +107,7 @@ void main() {
       overrides: [
         tmdbServiceProvider.overrideWithValue(tmdb),
         localizationsProvider.overrideWithValue(AppLocalizationsEn()),
+        watchRegionProvider.overrideWithValue('IT'),
       ],
     );
   });
@@ -113,6 +154,26 @@ void main() {
         'genres': [35],
       },
     ]);
+  });
+
+  // REV-77: the country was fixed to Italy.
+  test('the services and the provider filter use the streaming country '
+      'setting', () async {
+    final regionTmdb = _RegionTmdbService();
+    final usContainer = ProviderContainer(
+      overrides: [
+        tmdbServiceProvider.overrideWithValue(regionTmdb),
+        watchRegionProvider.overrideWithValue('US'),
+      ],
+    );
+    addTearDown(usContainer.dispose);
+
+    usContainer.read(exploreFiltersProvider.notifier).toggleWatchProvider(8);
+    await usContainer.read(exploreResultsProvider.future);
+    await usContainer.read(watchProvidersListProvider.future);
+
+    expect(regionTmdb.discoverRegion, 'US');
+    expect(regionTmdb.providersRegion, 'US');
   });
 
   group('mainWatchProviders', () {
