@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/seekbar_hover.dart';
 
 /// Seekbar component for VOD video playback, handling timeline scrubbing,
 /// hover time preview tooltips, and TV D-Pad navigation.
@@ -38,6 +39,9 @@ class _VodSeekbarState extends State<VodSeekbar> {
   Duration? _hoverDuration;
   bool _isHoveringSeekbar = false;
   bool _isSeekbarFocused = false;
+
+  double get _thumbRadius => _isSeekbarFocused ? 8 : 5;
+  double get _overlayRadius => _isSeekbarFocused ? 14 : 10;
   DateTime? _lastSeekbarStepTime;
 
   void _handleSeekbarStep(bool forward) {
@@ -77,9 +81,11 @@ class _VodSeekbarState extends State<VodSeekbar> {
                   setState(() {
                     _hoverX = event.localPosition.dx;
                     _isHoveringSeekbar = true;
-                    final percent = (_hoverX! / constraints.maxWidth).clamp(
-                      0.0,
-                      1.0,
+                    final percent = seekbarHoverFraction(
+                      x: _hoverX!,
+                      width: constraints.maxWidth,
+                      thumbRadius: _thumbRadius,
+                      overlayRadius: _overlayRadius,
                     );
                     _hoverDuration = Duration(
                       seconds: (duration.inSeconds * percent).toInt(),
@@ -147,10 +153,10 @@ class _VodSeekbarState extends State<VodSeekbar> {
                         data: SliderThemeData(
                           trackHeight: _isSeekbarFocused ? 5 : 2.5,
                           thumbShape: RoundSliderThumbShape(
-                            enabledThumbRadius: _isSeekbarFocused ? 8 : 5,
+                            enabledThumbRadius: _thumbRadius,
                           ),
                           overlayShape: RoundSliderOverlayShape(
-                            overlayRadius: _isSeekbarFocused ? 14 : 10,
+                            overlayRadius: _overlayRadius,
                           ),
                           activeTrackColor: AppTheme.textWhite,
                           inactiveTrackColor: AppTheme.borderSubtle,
