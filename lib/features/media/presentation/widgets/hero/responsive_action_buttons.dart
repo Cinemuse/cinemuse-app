@@ -137,10 +137,14 @@ class _ResponsiveActionButtonsState
       );
     }
 
-    return Row(
+    // Wraps: just above the phone width the buttons don't fit on one line
+    // (REV-301).
+    return Wrap(
+      spacing: 16,
+      runSpacing: 12,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         _buildPlaySection(context),
-        const SizedBox(width: 16),
         SocialActionsGroup(
           mediaItem: widget.mediaItem,
           isFavorite: widget.isFavorite,
@@ -148,19 +152,15 @@ class _ResponsiveActionButtonsState
           onListTap: widget.onListTap,
           isExpanded: false,
         ),
-        if (widget.onTrackTap != null) ...[
-          const SizedBox(width: 16),
+        if (widget.onTrackTap != null)
           _TrackButton(
             onTrackTap: widget.onTrackTap!,
             isMovie: widget.mediaItem.mediaType == MediaKind.movie,
             seriesWatchStatus: widget.seriesWatchStatus,
             movieWatchCount: widget.movieWatchCount,
           ),
-        ],
-        if (widget.onCommentsTap != null) ...[
-          const SizedBox(width: 16),
+        if (widget.onCommentsTap != null)
           _CommentsButton(onCommentsTap: widget.onCommentsTap!),
-        ],
       ],
     );
   }

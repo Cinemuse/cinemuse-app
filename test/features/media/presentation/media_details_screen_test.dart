@@ -114,9 +114,8 @@ void main() {
   }
 
   // REV-20: below 600 px the page and its hero buttons use the phone layout.
-  // Wide is checked at 700 px: from 600 to ~650 px the hero buttons overflow
-  // (REV-301).
-  for (final (width, isPhone) in const [(599.0, true), (700.0, false)]) {
+  // REV-301: from 600 to ~650 px the wide hero buttons overflowed.
+  for (final (width, isPhone) in const [(599.0, true), (600.0, false)]) {
     testWidgets('${width}px wide: ${isPhone ? 'phone' : 'wide'} layout', (
       tester,
     ) async {
@@ -132,14 +131,17 @@ void main() {
         find.byType(DetailsTabNav),
         isPhone ? findsOneWidget : findsNothing,
       );
-      // Phone: Track sits under the Play button; wide: beside it.
+      // Phone: the bookmark sits under the Play button; wide: beside it
+      // (Track may wrap to a second line).
       final playMenu = tester.getCenter(find.byIcon(Icons.keyboard_arrow_down));
-      final track = tester.getCenter(find.text(l10n.detailsTrack));
+      final bookmark = tester.getCenter(
+        find.byTooltip(l10n.menuAddToWatchlist),
+      );
       if (isPhone) {
-        expect(track.dy, greaterThan(playMenu.dy + 20));
+        expect(bookmark.dy, greaterThan(playMenu.dy + 20));
       } else {
-        expect(track.dy, moreOrLessEquals(playMenu.dy, epsilon: 4));
-        expect(track.dx, greaterThan(playMenu.dx));
+        expect(bookmark.dy, moreOrLessEquals(playMenu.dy, epsilon: 4));
+        expect(bookmark.dx, greaterThan(playMenu.dx));
       }
     });
   }
