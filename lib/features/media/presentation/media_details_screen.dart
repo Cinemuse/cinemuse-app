@@ -217,19 +217,11 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
                     (watchHistory != null &&
                         !isDropped &&
                         !watchHistory.isCompleted)
-                    ? () => runShowingErrors(
-                        context,
-                        ref,
-                        () => controller.dropTitle(watchHistory),
-                      )
+                    ? () => _save(() => controller.dropTitle(watchHistory))
                     : null,
                 onClearProgress:
                     (watchHistory != null && watchHistory.progressSeconds > 0)
-                    ? () => runShowingErrors(
-                        context,
-                        ref,
-                        () => controller.clearProgress(watchHistory),
-                      )
+                    ? () => _save(() => controller.clearProgress(watchHistory))
                     : null,
                 playTarget: playTarget,
                 seriesWatchStatus: seriesWatchStatus,
@@ -601,7 +593,8 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       onMarkRemaining: (date) => _markAll(controller, tmdbId, details, date),
       onMarkAll: (date) =>
           _markAll(controller, tmdbId, details, date, onlyRemaining: false),
-      onRemoveAll: () => controller.deleteAllSeriesLogs(tmdbId: tmdbId),
+      onRemoveAll: () =>
+          _save(() => controller.deleteAllSeriesLogs(tmdbId: tmdbId)),
     );
   }
 
@@ -620,9 +613,11 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       title: title,
       watchCount: watchCount,
       onRewatch: (date) =>
-          controller.logMovieWatch(tmdbId: tmdbId, loggedAt: date),
-      onRemoveOne: () => controller.deleteLatestMovieLog(tmdbId: tmdbId),
-      onRemoveAll: () => controller.deleteAllMovieLogs(tmdbId: tmdbId),
+          _save(() => controller.logMovieWatch(tmdbId: tmdbId, loggedAt: date)),
+      onRemoveOne: () =>
+          _save(() => controller.deleteLatestMovieLog(tmdbId: tmdbId)),
+      onRemoveAll: () =>
+          _save(() => controller.deleteAllMovieLogs(tmdbId: tmdbId)),
       onViewHistory: () => WatchLogsSheet.show(context, tmdbId, title),
     );
   }
@@ -633,9 +628,7 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
     Map<String, dynamic> details,
     DateTime? date, {
     bool onlyRemaining = true,
-  }) => runShowingErrors(
-    context,
-    ref,
+  }) => _save(
     () => controller.markAllEpisodes(
       tmdbId: tmdbId,
       details: details,
@@ -643,6 +636,10 @@ class _MediaDetailsScreenState extends ConsumerState<MediaDetailsScreen> {
       loggedAt: date,
     ),
   );
+
+  /// Awaits a save and shows its failure (REV-299).
+  Future<bool> _save(Future<void> Function() action) =>
+      runShowingErrors(context, ref, action);
 
   String? _resolveEnglishOrOriginalTitle(Map<String, dynamic> details) {
     return MediaItem.extractTitleFromTmdb(details, 'en') ??

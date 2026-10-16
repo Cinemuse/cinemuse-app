@@ -1,9 +1,11 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
+import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/data/media_repository.dart';
+import 'package:cinemuse_app/features/media/data/watch_history_repository.dart';
 import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
@@ -19,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../helpers/app_font.dart';
 import '../../../helpers/offline_lists.dart';
@@ -28,6 +31,13 @@ class MockUnifiedStreamResolver extends Mock implements UnifiedStreamResolver {}
 class MockTmdbService extends Mock implements TmdbService {}
 
 class MockMediaRepository extends Mock implements MediaRepository {}
+
+class MockWatchHistoryRepository extends Mock
+    implements WatchHistoryRepository {}
+
+class MockSupabaseClient extends Mock implements SupabaseClient {}
+
+class MockGoTrueClient extends Mock implements GoTrueClient {}
 
 class FakeSettingsNotifier extends SettingsNotifier {
   @override
@@ -50,7 +60,7 @@ void main() {
     lastWatchedAt: DateTime.utc(2026, 10, 1),
   );
 
-  Widget app({required List<Override> overrides}) {
+  Widget app({required List<Override> overrides, String mediaType = 'movie'}) {
     final resolver = MockUnifiedStreamResolver();
     when(
       () => resolver.hasCachedStream(
@@ -75,7 +85,7 @@ void main() {
         theme: AppTheme.darkTheme,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: const MediaDetailsScreen(mediaId: '1', mediaType: 'movie'),
+        home: MediaDetailsScreen(mediaId: '1', mediaType: mediaType),
       ),
     );
   }
@@ -110,6 +120,104 @@ void main() {
 
       expect(find.text(l10n.failureNetwork), findsOneWidget);
       expect(find.textContaining('Exception'), findsNothing);
+    });
+  }
+
+  // REV-299, REV-305: the Track menu saved without awaiting, so offline the
+  // change was undone with no message.
+  // A movie watched twice offers every action; the show is up to date.
+  final showOverrides = [
+    mediaDetailsProvider.overrideWith(
+      (ref, args) async => {'id': 1, 'name': 'Some Show', 'seasons': []},
+    ),
+    seriesWatchStatusProvider.overrideWith(
+      (ref, args) =>
+          (isFullyWatched: true, isPartiallyWatched: false, minWatchCount: 1),
+    ),
+    watchedEpisodesMapProvider.overrideWith((ref, id) => const {}),
+    episodeProgressMapProvider.overrideWith(
+      (ref, id) => Stream.value(const {}),
+    ),
+    seasonDetailsProvider.overrideWith((ref, args) async => null),
+  ];
+  for (final (type, button, action) in [
+    ('movie', l10n.detailsWatchedCount(2), l10n.detailsMarkRewatch),
+    ('movie', l10n.detailsWatchedCount(2), l10n.detailsRemoveOneWatch),
+    ('movie', l10n.detailsWatchedCount(2), l10n.detailsRemoveAll),
+    ('tv', l10n.detailsUpToDate, l10n.detailsRemoveAll),
+  ]) {
+    testWidgets('offline $type, Track menu → "$action": a red message', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final auth = MockGoTrueClient();
+      when(() => auth.currentUser).thenReturn(
+        User(
+          id: 'user-a',
+          appMetadata: {},
+          userMetadata: {},
+          aud: '',
+          createdAt: '',
+        ),
+      );
+      final client = MockSupabaseClient();
+      when(() => client.auth).thenReturn(auth);
+      const offline = NetworkFailure('offline');
+      final repository = MockWatchHistoryRepository();
+      when(() => repository.getDroppedItems(any())).thenAnswer((_) async => []);
+      when(
+        () => repository.watchTitleLogs(any(), any(), any()),
+      ).thenAnswer((_) => Stream.value([]));
+      when(
+        () => repository.logMovieWatch(
+          userId: any(named: 'userId'),
+          tmdbId: any(named: 'tmdbId'),
+          loggedAt: any(named: 'loggedAt'),
+          isNow: any(named: 'isNow'),
+        ),
+      ).thenThrow(offline);
+      when(
+        () => repository.deleteLatestMovieLog(
+          userId: any(named: 'userId'),
+          tmdbId: any(named: 'tmdbId'),
+        ),
+      ).thenThrow(offline);
+      when(
+        () => repository.deleteAllMovieLogs(
+          userId: any(named: 'userId'),
+          tmdbId: any(named: 'tmdbId'),
+        ),
+      ).thenThrow(offline);
+      when(
+        () => repository.deleteAllSeriesLogs(
+          userId: any(named: 'userId'),
+          tmdbId: any(named: 'tmdbId'),
+        ),
+      ).thenThrow(offline);
+      await tester.pumpWidget(
+        app(
+          mediaType: type,
+          overrides: [
+            ...loaded,
+            if (type == 'tv') ...showOverrides,
+            supabaseClientProvider.overrideWithValue(client),
+            watchHistoryRepositoryProvider.overrideWithValue(repository),
+            movieWatchCountProvider.overrideWith((ref, id) => 2),
+          ],
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      await tester.tap(find.text(button));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(action));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text(l10n.failureNetwork), findsOneWidget);
     });
   }
 
