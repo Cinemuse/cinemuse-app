@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
 
 /// A reusable focus and hover border overlay designed for cards and thumbnails.
 ///
 /// Automatically retrieves focus and hover state from an enclosing [DpadFocusScope],
 /// or uses explicitly provided [isFocused] / [isHovered] overrides.
 ///
-/// - **Focused (D-pad/Remote)**: primary theme color border (2.0px).
-/// - **Hovered (Desktop Mouse)**: primary theme color at 50% (1.5px).
+/// - **Hovered or focused**: primary theme color border (2.0px).
+/// - **Focused (keyboard / remote) only**: plus the app's [FocusRing] around
+///   the picture, so the card's owner [DpadFocusable] sets
+///   `showFocusRing: false` (REV-252).
 /// - **Inactive**: subtle white outline (1.0px).
 class CardFocusBorder extends StatelessWidget {
   final BorderRadius borderRadius;
@@ -34,27 +37,19 @@ class CardFocusBorder extends StatelessWidget {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
 
-    final Border border;
-
-    if (effectiveFocused) {
-      border = Border.all(color: primaryColor, width: 2.0);
-    } else if (effectiveHovered) {
-      border = Border.all(
-        color: primaryColor.withValues(alpha: 0.5),
-        width: 1.5,
-      );
-    } else {
-      border = Border.all(
-        color: Colors.white.withValues(alpha: 0.1),
-        width: 1.0,
-      );
-    }
+    final border = (effectiveFocused || effectiveHovered)
+        ? Border.all(color: primaryColor, width: 2.0)
+        : Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.0);
 
     return IgnorePointer(
-      child: AnimatedContainer(
-        duration: duration,
-        curve: curve,
-        decoration: BoxDecoration(borderRadius: borderRadius, border: border),
+      child: FocusRing(
+        isVisible: effectiveFocused,
+        borderRadius: borderRadius,
+        child: AnimatedContainer(
+          duration: duration,
+          curve: curve,
+          decoration: BoxDecoration(borderRadius: borderRadius, border: border),
+        ),
       ),
     );
   }

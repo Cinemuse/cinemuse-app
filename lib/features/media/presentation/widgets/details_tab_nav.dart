@@ -60,24 +60,21 @@ class DetailsTabNav extends StatelessWidget {
 
     return DpadFocusable(
       onTap: () => onTabChanged(item.tab),
-      showFocusRing: false,
       scale: 1.0,
       child: const SizedBox.shrink(),
       builder: (context, isFocused, isHovered, child) {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: isFocused
+            color: isFocused || isHovered
                 ? theme.focusColor
-                : (isHovered ? theme.hoverColor : Colors.transparent),
+                : Colors.transparent,
             borderRadius: AppTheme.radiusMd,
             border: Border(
               bottom: BorderSide(
                 color: isActive
                     ? theme.colorScheme.primary
-                    : (isFocused
-                          ? theme.colorScheme.primary.withValues(alpha: 0.5)
-                          : Colors.transparent),
+                    : Colors.transparent,
                 width: 2,
               ),
             ),
@@ -85,7 +82,7 @@ class DetailsTabNav extends StatelessWidget {
           child: Text(
             item.label.toUpperCase(),
             style: TextStyle(
-              color: (isActive || isFocused)
+              color: (isActive || isFocused || isHovered)
                   ? theme.colorScheme.onSurface
                   : theme.colorScheme.onSurface.withValues(alpha: 0.6),
               fontSize: 14,

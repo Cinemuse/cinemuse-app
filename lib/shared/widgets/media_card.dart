@@ -242,9 +242,9 @@ class _MediaCardState extends ConsumerState<MediaCard> {
       onSecondaryTapDown: (d) =>
           _showContextActions(context, at: d.globalPosition),
       scale: 1.05,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOutCubic,
-      autoScroll: true,
+
+      // CardFocusBorder draws the ring around the picture only.
+      showFocusRing: false,
       child: RepaintBoundary(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

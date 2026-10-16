@@ -43,6 +43,7 @@ class EpgProgramBlock extends StatelessWidget {
           onTap: onTap,
           onFocusChange: onFocusChange,
           borderRadius: BorderRadius.circular(6),
+          isFocusRingInside: true,
           builder: (context, isFocused, isHovered, _) {
             final isHighlighted = isFocused || isHovered;
 
@@ -53,25 +54,19 @@ class EpgProgramBlock extends StatelessWidget {
                 vertical: 6,
               ),
               decoration: BoxDecoration(
-                color: isFocused
+                color: isHighlighted
                     ? AppTheme.accent.withValues(alpha: 0.28)
-                    : (isHovered
-                          ? Colors.white.withValues(alpha: 0.12)
-                          : (isLive
-                                ? AppTheme.secondary
-                                : AppTheme.secondary.withValues(alpha: 0.5))),
+                    : (isLive
+                          ? AppTheme.secondary
+                          : AppTheme.secondary.withValues(alpha: 0.5)),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: isFocused
+                  color: isHighlighted
                       ? AppTheme.accent
-                      : (isHovered
-                            ? Colors.white.withValues(alpha: 0.3)
-                            : (isLive
-                                  ? AppTheme.accent.withValues(alpha: 0.4)
-                                  : Colors.white.withValues(alpha: 0.07))),
-                  width: isFocused ? 1.5 : 1.0,
+                      : (isLive
+                            ? AppTheme.accent.withValues(alpha: 0.4)
+                            : Colors.white.withValues(alpha: 0.07)),
                 ),
-                boxShadow: isFocused ? AppTheme.shadowFocusGlow : null,
               ),
               child: Stack(
                 children: [
@@ -120,7 +115,7 @@ class EpgProgramBlock extends StatelessWidget {
                           Text(
                             program.timeRange,
                             style: TextStyle(
-                              color: isFocused
+                              color: isHighlighted
                                   ? Colors.white70
                                   : AppTheme.textMuted,
                               fontSize: 10,
@@ -147,7 +142,7 @@ class EpgProgramBlock extends StatelessWidget {
                           minHeight: 2,
                           backgroundColor: Colors.white.withValues(alpha: 0.08),
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            isFocused ? Colors.white : AppTheme.accent,
+                            isHighlighted ? Colors.white : AppTheme.accent,
                           ),
                         ),
                       ),

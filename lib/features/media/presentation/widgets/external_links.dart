@@ -172,8 +172,6 @@ class _ThemedBrandButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return HoverScale(
       scale: 1.05,
-      showFocusRing: true,
-      focusRingColor: brandColor,
       borderRadius: AppTheme.radius12,
       onTap: () => _openUrl(context, url),
       child: Container(
@@ -224,8 +222,6 @@ class _SquareIconButton extends StatelessWidget {
       message: tooltip,
       child: HoverScale(
         scale: 1.1,
-        showFocusRing: true,
-        focusRingColor: AppTheme.accent,
         borderRadius: AppTheme.radius12,
         onTap: () => _openUrl(context, url),
         child: Container(

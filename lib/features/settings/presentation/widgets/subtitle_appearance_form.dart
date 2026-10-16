@@ -186,7 +186,6 @@ class _ColorSelectorTile extends StatelessWidget {
                     onTap: () => onColorSelected(color),
                     borderRadius: BorderRadius.circular(18),
                     scale: 1.15,
-                    showFocusRing: true,
                     child: Container(
                       width: 36,
                       height: 36,

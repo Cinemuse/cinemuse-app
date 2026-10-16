@@ -324,16 +324,12 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                     height: 38,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: isFocused
+                      color: isFocused || isHovered
                           ? AppTheme.accent.withValues(alpha: 0.25)
-                          : (isHovered
-                                ? Colors.white.withValues(alpha: 0.08)
-                                : Colors.white.withValues(alpha: 0.04)),
+                          : Colors.white.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: isFocused
-                            ? AppTheme.accent
-                            : Colors.white.withValues(alpha: 0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                       ),
                     ),
                     child: Row(
@@ -381,18 +377,13 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
                     width: 38,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isFocused
+                      color: isFocused || isHovered
                           ? AppTheme.accent.withValues(alpha: 0.25)
-                          : (isHovered
-                                ? Colors.white.withValues(alpha: 0.08)
-                                : Colors.white.withValues(alpha: 0.04)),
+                          : Colors.white.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: isFocused
-                            ? AppTheme.accent
-                            : Colors.white.withValues(alpha: 0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                       ),
-                      boxShadow: isFocused ? AppTheme.shadowFocusGlow : null,
                     ),
                     child: const Icon(
                       Icons.tune_rounded,
@@ -471,19 +462,14 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
           decoration: BoxDecoration(
             color: isSelected
                 ? AppTheme.accent.withValues(alpha: 0.2)
-                : (isFocused
+                : (isFocused || isHovered
                       ? Colors.white.withValues(alpha: 0.12)
-                      : (isHovered
-                            ? Colors.white.withValues(alpha: 0.06)
-                            : Colors.white.withValues(alpha: 0.03))),
+                      : Colors.white.withValues(alpha: 0.03)),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isSelected
                   ? AppTheme.accent
-                  : (isFocused
-                        ? Colors.white
-                        : Colors.white.withValues(alpha: 0.08)),
-              width: 1,
+                  : Colors.white.withValues(alpha: 0.08),
             ),
           ),
           child: Row(
@@ -526,18 +512,14 @@ class _LiveTvGuideScreenState extends ConsumerState<LiveTvGuideScreen> {
           decoration: BoxDecoration(
             color: isSelected
                 ? AppTheme.accent
-                : (isFocused
+                : (isFocused || isHovered
                       ? Colors.white.withValues(alpha: 0.15)
-                      : (isHovered
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : Colors.white.withValues(alpha: 0.04))),
+                      : Colors.white.withValues(alpha: 0.04)),
             borderRadius: BorderRadius.circular(15),
             border: Border.all(
-              color: isFocused
-                  ? Colors.white
-                  : (isSelected
-                        ? AppTheme.accent
-                        : Colors.white.withValues(alpha: 0.08)),
+              color: isSelected
+                  ? AppTheme.accent
+                  : Colors.white.withValues(alpha: 0.08),
             ),
           ),
           child: Text(

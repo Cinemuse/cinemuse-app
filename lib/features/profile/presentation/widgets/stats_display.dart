@@ -539,7 +539,6 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay>
             currentWidget = DpadFocusable(
               onTap: () => _toggleExpanded(index),
               autofocus: true,
-              showFocusRing: true,
               borderRadius: BorderRadius.circular(16),
               child: switch (index) {
                 0 => TimeBreakdownCard(stats: widget.stats),
@@ -608,7 +607,6 @@ class _MobileStatsDisplayState extends State<_MobileStatsDisplay>
   ) {
     return DpadFocusable(
       onTap: () => _toggleExpanded(index),
-      showFocusRing: true,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         height: 110,

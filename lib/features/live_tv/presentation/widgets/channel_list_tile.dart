@@ -48,19 +48,14 @@ class ChannelListTile extends StatelessWidget {
             duration: const Duration(milliseconds: 150),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isFocused
+              color: isHighlighted
                   ? Colors.white.withValues(alpha: 0.18)
-                  : (isHovered
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : (isSelected
-                              ? AppTheme.accent.withValues(alpha: 0.12)
-                              : Colors.transparent)),
+                  : (isSelected
+                        ? AppTheme.accent.withValues(alpha: 0.12)
+                        : Colors.transparent),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isFocused
-                    ? Colors.white
-                    : (isSelected ? AppTheme.border : Colors.transparent),
-                width: isFocused ? 1.5 : 1.0,
+                color: isSelected ? AppTheme.border : Colors.transparent,
               ),
             ),
             child: Row(

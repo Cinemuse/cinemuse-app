@@ -97,6 +97,8 @@ class _ChannelItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return DpadFocusable(
       focusNode: focusNode,
+      borderRadius: BorderRadius.zero,
+      isFocusRingInside: true,
       onTap: onTap,
       onFocusChange: onFocusChange,
       onLongPress: onToggleFavorite,
@@ -118,18 +120,13 @@ class _ChannelItemTile extends StatelessWidget {
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: isFocused
+            color: isHighlighted
                 ? Colors.white.withValues(alpha: 0.16)
-                : (isHovered
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : (isSelected
-                            ? AppTheme.accent.withValues(alpha: 0.12)
-                            : AppTheme.primary)),
+                : (isSelected
+                      ? AppTheme.accent.withValues(alpha: 0.12)
+                      : AppTheme.primary),
             border: Border(
-              right: BorderSide(
-                color: isFocused ? AppTheme.accent : AppTheme.border,
-                width: isFocused ? 2.0 : 1.0,
-              ),
+              right: const BorderSide(color: AppTheme.border),
               bottom: BorderSide(
                 color: Colors.white.withValues(alpha: 0.05),
                 width: 0.5,

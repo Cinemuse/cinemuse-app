@@ -263,18 +263,13 @@ class EpgDetailsBanner extends StatelessWidget {
                     height: 40,
                     width: 40,
                     decoration: BoxDecoration(
-                      color: isFocused
+                      color: isFocused || isHovered
                           ? Colors.white.withValues(alpha: 0.18)
-                          : (isHovered
-                                ? Colors.white.withValues(alpha: 0.08)
-                                : Colors.white.withValues(alpha: 0.04)),
+                          : Colors.white.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isFocused
-                            ? AppTheme.accent
-                            : Colors.white.withValues(alpha: 0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                       ),
-                      boxShadow: isFocused ? AppTheme.shadowFocusGlow : null,
                     ),
                     alignment: Alignment.center,
                     child: Icon(
@@ -298,13 +293,10 @@ class EpgDetailsBanner extends StatelessWidget {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     decoration: BoxDecoration(
-                      color: isFocused
+                      color: isFocused || isHovered
                           ? AppTheme.accentHover
-                          : (isHovered
-                                ? AppTheme.accent.withValues(alpha: 0.9)
-                                : AppTheme.accent),
+                          : AppTheme.accent,
                       borderRadius: BorderRadius.circular(10),
-                      boxShadow: isFocused ? AppTheme.shadowFocusGlow : null,
                     ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,

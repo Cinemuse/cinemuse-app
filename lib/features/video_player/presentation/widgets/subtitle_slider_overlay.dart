@@ -328,7 +328,6 @@ class _StepButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return DpadFocusable(
       onTap: onTap,
-      showFocusRing: true,
       borderRadius: AppTheme.radiusMd,
       child: Container(
         width: 44,
@@ -370,7 +369,6 @@ class _ColorControl extends StatelessWidget {
         final isSelected = color.toARGB32() == selectedColor.toARGB32();
         return DpadFocusable(
           onTap: () => onColorSelected(color),
-          showFocusRing: true,
           borderRadius: BorderRadius.circular(22),
           child: Container(
             width: 44,

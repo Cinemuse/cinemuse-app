@@ -333,7 +333,7 @@ class _SplitPlayButtonState extends State<_SplitPlayButton> {
           decoration: BoxDecoration(
             color: theme.colorScheme.primary,
             borderRadius: AppTheme.radius12,
-            boxShadow: isFocused
+            boxShadow: isFocused || isHovered
                 ? AppTheme.shadowAccentGlow
                 : AppTheme.shadowCard,
           ),
@@ -434,7 +434,7 @@ class _PlayButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: theme.colorScheme.primary,
             borderRadius: AppTheme.radius12,
-            boxShadow: isFocused
+            boxShadow: isFocused || isHovered
                 ? AppTheme.shadowAccentGlow
                 : AppTheme.shadowCard,
           ),
@@ -493,14 +493,12 @@ class _TrackButton extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: isFullyWatched
-                ? (isFocused
+                ? (isFocused || isHovered
                       ? AppTheme.success.withValues(alpha: 0.3)
                       : AppTheme.success.withValues(alpha: 0.15))
-                : (isFocused
+                : (isFocused || isHovered
                       ? Color.alphaBlend(theme.focusColor, baseColor)
-                      : (isHovered
-                            ? Color.alphaBlend(theme.hoverColor, baseColor)
-                            : baseColor)),
+                      : baseColor),
             borderRadius: AppTheme.radius12,
             border: Border.all(
               color: isFullyWatched
@@ -588,11 +586,9 @@ class _CommentsButton extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
             decoration: BoxDecoration(
-              color: isFocused
+              color: isFocused || isHovered
                   ? Color.alphaBlend(theme.focusColor, baseColor)
-                  : (isHovered
-                        ? Color.alphaBlend(theme.hoverColor, baseColor)
-                        : baseColor),
+                  : baseColor,
               borderRadius: AppTheme.radius12,
               border: Border.all(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.05),

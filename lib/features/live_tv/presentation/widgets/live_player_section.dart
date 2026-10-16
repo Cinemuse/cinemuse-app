@@ -84,9 +84,6 @@ class LivePlayerSection extends ConsumerWidget {
 
     return DpadFocusable(
       focusNode: focusNode,
-      showFocusRing: true,
-      focusRingColor: Colors.white,
-      focusRingWidth: 2.0,
       borderRadius: BorderRadius.circular(12),
       onTap: onExpand,
       onKeyEvent: (node, event) {

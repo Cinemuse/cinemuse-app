@@ -40,7 +40,6 @@ class GalleryBox extends StatelessWidget {
       action: HoverScale(
         tooltip: l10n.detailsGallery,
         onTap: () => _openGallery(context, 0),
-        showFocusRing: true,
         borderRadius: AppTheme.radiusMd,
         child: const Padding(
           padding: EdgeInsets.all(4.0),
@@ -100,7 +99,6 @@ class _GalleryPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return HoverScale(
       onTap: onTap,
-      showFocusRing: true,
       borderRadius: AppTheme.radius12,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

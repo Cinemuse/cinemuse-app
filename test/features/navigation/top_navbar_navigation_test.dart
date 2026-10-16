@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:cinemuse_app/features/navigation/presentation/navbar.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
 
 import '../../helpers/focus_helpers.dart';
 
@@ -190,14 +191,12 @@ void main() {
     ];
     final tabs = items.take(4).toList();
     List<Rect> rects() => [for (final f in items) tester.getRect(f)];
-    // The outline is the look being checked: the pill's foreground ring.
-    bool hasOutline(Finder tab) =>
-        tester
-            .widget<AnimatedContainer>(
-              find.ancestor(of: tab, matching: find.byType(AnimatedContainer)),
-            )
-            .foregroundDecoration !=
-        null;
+    // The outline is the look being checked: the app's focus ring (REV-252).
+    bool hasOutline(Finder tab) => tester
+        .widget<FocusRing>(
+          find.ancestor(of: tab, matching: find.byType(FocusRing)),
+        )
+        .isVisible;
     // Bold labels made the bar move, but the test font is as wide in bold,
     // so the weight is checked too.
     FontWeight? weight(Finder tab) =>

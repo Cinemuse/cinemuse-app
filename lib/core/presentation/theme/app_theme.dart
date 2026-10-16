@@ -50,11 +50,11 @@ class AppTheme {
   static const BorderRadius radiusXl = BorderRadius.all(Radius.circular(20));
   static const BorderRadius radiusFull = BorderRadius.all(Radius.circular(999));
 
-  // Focus & Navigation Constants
+  // Focus ring (REV-252): sharp white line a small gap outside the item,
+  // no glow. Drawn by `FocusRing` (shared/widgets/focus_ring.dart).
   static const Color focusRing = Color(0xFFffffff);
-  static const List<BoxShadow> shadowFocusGlow = [
-    BoxShadow(color: Color(0x33ffffff), blurRadius: 12, spreadRadius: 1),
-  ];
+  static const double focusRingWidth = 3;
+  static const double focusRingGap = 3;
 
   // Shadows
   static const List<BoxShadow> shadowNeonSm = [

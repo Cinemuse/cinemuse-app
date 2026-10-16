@@ -146,7 +146,6 @@ class GalleryBottomSheet extends StatelessWidget {
         // Focusable so a remote can open an image (REV-216).
         return DpadFocusable(
           onTap: () => _openFullscreenViewer(context, items, index),
-          showFocusRing: true,
           borderRadius: AppTheme.radiusMd,
           child: ClipRRect(
             borderRadius: AppTheme.radiusMd,
@@ -201,7 +200,6 @@ class GalleryBottomSheet extends StatelessWidget {
         final url = _getImageUrl(logos[index], 'w500');
         return DpadFocusable(
           onTap: () => _openFullscreenViewer(context, logos, index),
-          showFocusRing: true,
           borderRadius: AppTheme.radiusMd,
           child: Container(
             decoration: BoxDecoration(

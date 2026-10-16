@@ -243,19 +243,17 @@ class _ModeToggleButton extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected || isHovered
+            color: isSelected || isFocused || isHovered
                 ? Colors.white.withValues(alpha: 0.1)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isFocused ? Colors.white : Colors.transparent,
-              width: 1.5,
-            ),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected || isFocused ? Colors.white : Colors.white60,
+              color: isSelected || isFocused || isHovered
+                  ? Colors.white
+                  : Colors.white60,
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             ),

@@ -282,32 +282,25 @@ class _CategoryChip extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: isSelected
-                ? (isFocused
+                ? (highlighted
                       ? AppTheme.accent
                       : AppTheme.accent.withValues(alpha: 0.22))
-                : (isFocused
+                : (highlighted
                       ? Colors.white.withValues(alpha: 0.15)
-                      : (isHovered
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : Colors.white.withValues(alpha: 0.04))),
+                      : Colors.white.withValues(alpha: 0.04)),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: isFocused
-                  ? Colors.white
-                  : (isSelected
-                        ? AppTheme.accent.withValues(alpha: 0.6)
-                        : Colors.white.withValues(alpha: 0.08)),
-              width: isFocused ? 1.5 : 1.0,
+              color: isSelected
+                  ? AppTheme.accent.withValues(alpha: 0.6)
+                  : Colors.white.withValues(alpha: 0.08),
             ),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected && isFocused
+              color: isSelected || highlighted
                   ? Colors.white
-                  : (isSelected || highlighted
-                        ? Colors.white
-                        : AppTheme.textMuted),
+                  : AppTheme.textMuted,
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             ),

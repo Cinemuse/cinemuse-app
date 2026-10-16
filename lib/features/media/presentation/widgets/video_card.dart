@@ -24,6 +24,7 @@ class VideoCard extends StatelessWidget {
       onTap: onTap,
       scale: 1.04,
       borderRadius: AppTheme.radiusLg,
+      showFocusRing: false,
       builder: (context, isFocused, isHovered, child) {
         return SizedBox(
           width: 320,
@@ -54,22 +55,22 @@ class VideoCard extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: isFocused
+                              color: (isFocused || isHovered)
                                   ? theme.focusColor
                                   : AppTheme.surfaceOverlay,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: isFocused
+                                color: (isFocused || isHovered)
                                     ? theme.colorScheme.primary
                                     : AppTheme.borderSubtle,
                               ),
                             ),
                             child: Icon(
                               Icons.play_arrow,
-                              color: isFocused
+                              color: (isFocused || isHovered)
                                   ? theme.colorScheme.primary
                                   : AppTheme.textWhite,
-                              size: isFocused ? 28 : 24,
+                              size: (isFocused || isHovered) ? 28 : 24,
                             ),
                           ),
                         ],
@@ -94,8 +95,8 @@ class VideoCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: DesktopTypography.bodySecondary.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isFocused
-                        ? theme.colorScheme.onSurface
+                    color: isFocused || isHovered
+                        ? theme.colorScheme.primary
                         : theme.colorScheme.onSurface.withValues(alpha: 0.9),
                   ),
                 ),

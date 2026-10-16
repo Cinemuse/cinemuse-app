@@ -361,15 +361,12 @@ class _VideoPlaybackControlsState extends ConsumerState<VideoPlaybackControls> {
             height: buttonSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isFocused
+              color: isFocused || isHovered
                   ? AppTheme.accent.withValues(alpha: 0.22)
-                  : (isHovered ? AppTheme.surfaceOverlay : null),
-              border: isFocused
-                  ? Border.all(color: AppTheme.accent, width: 1.5)
-                  : (isHovered
-                        ? Border.all(color: AppTheme.borderSubtle, width: 1.5)
-                        : null),
-              boxShadow: isFocused ? AppTheme.shadowNeonSm : null,
+                  : null,
+              border: isFocused || isHovered
+                  ? Border.all(color: AppTheme.borderSubtle, width: 1.5)
+                  : null,
             ),
             alignment: Alignment.center,
             child: Icon(

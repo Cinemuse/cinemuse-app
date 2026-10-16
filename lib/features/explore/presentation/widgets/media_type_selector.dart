@@ -119,21 +119,19 @@ class _TypeButton extends StatelessWidget {
       onKeyEvent: onKeyEvent,
       onTap: onTap,
       scale: 1.05,
+      borderRadius: BorderRadius.circular(10),
       builder: (context, isFocused, isHovered, _) {
+        final isHighlighted = isFocused || isHovered;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: isSelected
                 ? Colors.white
-                : (isFocused
+                : (isHighlighted
                       ? Colors.white.withValues(alpha: 0.15)
                       : Colors.white.withValues(alpha: 0.02)),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isFocused ? Colors.white : Colors.transparent,
-              width: isFocused ? 2 : 1,
-            ),
           ),
           child: Row(
             children: [
@@ -142,7 +140,7 @@ class _TypeButton extends StatelessWidget {
                 size: 18,
                 color: isSelected
                     ? Colors.black
-                    : (isFocused ? Colors.white : AppTheme.textMuted),
+                    : (isHighlighted ? Colors.white : AppTheme.textMuted),
               ),
               const SizedBox(width: 8),
               Text(
@@ -150,7 +148,7 @@ class _TypeButton extends StatelessWidget {
                 style: TextStyle(
                   color: isSelected
                       ? Colors.black
-                      : (isFocused ? Colors.white : AppTheme.textMuted),
+                      : (isHighlighted ? Colors.white : AppTheme.textMuted),
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),

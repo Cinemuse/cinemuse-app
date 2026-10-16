@@ -170,7 +170,6 @@ class CommentTile extends StatelessWidget {
 
     return DpadFocusable(
       onTap: onRevealSpoiler,
-      showFocusRing: true,
       borderRadius: AppTheme.radiusMd,
       child: Container(
         width: double.infinity,

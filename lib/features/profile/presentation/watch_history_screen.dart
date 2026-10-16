@@ -741,7 +741,6 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
             DpadFocusable(
               tooltip: l10n.commonClearSearch,
               onTap: _searchController.clear,
-              showFocusRing: true,
               borderRadius: BorderRadius.circular(12),
               child: const Padding(
                 padding: EdgeInsets.all(4),
@@ -850,7 +849,6 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
   }) {
     return DpadFocusable(
       onTap: onTap,
-      showFocusRing: true,
       borderRadius: BorderRadius.circular(9),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

@@ -74,6 +74,7 @@ class _NextEpisodeOverlayState extends ConsumerState<NextEpisodeOverlay> {
               focusNode: _focusNode,
               onTap: widget.onNextEpisode,
               scale: 1.05,
+              borderRadius: AppTheme.radiusLg,
               builder: (context, isFocused, isHovered, _) {
                 final isActive = isFocused || isHovered;
                 return AnimatedContainer(
@@ -97,12 +98,10 @@ class _NextEpisodeOverlayState extends ConsumerState<NextEpisodeOverlay> {
                     ),
                     borderRadius: AppTheme.radiusLg,
                     border: Border.all(
-                      color: isFocused
-                          ? AppTheme.focusRing
-                          : AppTheme.textWhite.withValues(
-                              alpha: isActive ? 0.4 : 0.2,
-                            ),
-                      width: isFocused ? 2.5 : 1.5,
+                      color: AppTheme.textWhite.withValues(
+                        alpha: isActive ? 0.4 : 0.2,
+                      ),
+                      width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(

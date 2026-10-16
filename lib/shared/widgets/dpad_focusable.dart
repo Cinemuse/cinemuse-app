@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
 
 typedef DpadFocusableBuilder =
     Widget Function(
@@ -21,7 +22,8 @@ typedef DpadFocusableBuilder =
 /// - Mouse hover detection & cursor handling (Desktop)
 /// - Touch handling (Mobile)
 /// - Auto-scrolling the parent [Scrollable] into view when focused
-/// - Optional animated scaling and focused glow/border indicators
+/// - Optional animated scaling on hover and focus
+/// - The app's [FocusRing] on keyboard / remote focus only (REV-252)
 class DpadFocusable extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -37,10 +39,16 @@ class DpadFocusable extends StatefulWidget {
   final double scale;
   final Duration duration;
   final Curve curve;
+
+  /// Off only where the child draws the [FocusRing] itself around a part
+  /// of it (e.g. a card's picture, not its title).
   final bool showFocusRing;
+
+  /// The child's corner radius, followed by the focus ring.
   final BorderRadius? borderRadius;
-  final Color? focusRingColor;
-  final double focusRingWidth;
+
+  /// See [FocusRing.isInside].
+  final bool isFocusRingInside;
   final DpadFocusableBuilder? builder;
   final FocusOnKeyEventCallback? onKeyEvent;
 
@@ -61,10 +69,9 @@ class DpadFocusable extends StatefulWidget {
     this.scale = 1.0,
     this.duration = const Duration(milliseconds: 200),
     this.curve = Curves.easeOutCubic,
-    this.showFocusRing = false,
+    this.showFocusRing = true,
     this.borderRadius,
-    this.focusRingColor,
-    this.focusRingWidth = 2.0,
+    this.isFocusRingInside = false,
     this.builder,
     this.onKeyEvent,
     this.tooltip,
@@ -275,33 +282,19 @@ class _DpadFocusableState extends State<DpadFocusable> {
     _heldActivationKey = null;
   }
 
-  Widget _buildFocusRing(Widget child) {
-    if (!widget.showFocusRing || !_isFocused) {
-      return child;
-    }
-
-    final radius = widget.borderRadius ?? BorderRadius.circular(8);
-    final ringColor = widget.focusRingColor ?? AppTheme.focusRing;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: radius,
-        border: Border.all(color: ringColor, width: widget.focusRingWidth),
-        boxShadow: AppTheme.shadowFocusGlow,
-      ),
-      position: DecorationPosition.foreground,
-      child: child,
-    );
-  }
-
   Widget _buildContent(BuildContext context) {
     Widget content = widget.child;
 
     if (widget.builder != null) {
       content = widget.builder!(context, _isFocused, _isHovered, content);
-    } else {
-      content = _buildFocusRing(content);
     }
+    // Hover only scales; the ring marks what Enter opens (REV-252).
+    content = FocusRing(
+      isVisible: widget.showFocusRing && _isFocused,
+      borderRadius: widget.borderRadius ?? AppTheme.radiusMd,
+      isInside: widget.isFocusRingInside,
+      child: content,
+    );
 
     if (widget.scale != 1.0) {
       final isHighlighted = _isFocused || _isHovered;

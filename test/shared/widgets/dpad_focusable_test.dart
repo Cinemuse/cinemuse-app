@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
+
+bool isRingShown(WidgetTester tester) => tester
+    .widgetList<FocusRing>(find.byType(FocusRing))
+    .any((ring) => ring.isVisible);
 
 void main() {
   testWidgets('DpadFocusable triggers onTap on tap', (tester) async {
@@ -156,7 +161,6 @@ void main() {
         home: Scaffold(
           body: DpadFocusable(
             focusNode: focusNode,
-            showFocusRing: true,
             onFocusChange: (val) => focusState = val,
             child: const SizedBox(width: 100, height: 100, child: Text('Card')),
           ),
@@ -165,16 +169,61 @@ void main() {
     );
 
     expect(focusState, isFalse);
-    expect(find.byType(DecoratedBox), findsNothing);
+    expect(isRingShown(tester), isFalse);
 
     focusNode.requestFocus();
     await tester.pumpAndSettle();
 
     expect(focusState, isTrue);
-    expect(find.byType(DecoratedBox), findsOneWidget);
+    expect(isRingShown(tester), isTrue);
 
     focusNode.dispose();
   });
+
+  // REV-252: the mouse only grows an item; the keyboard / remote also adds
+  // the ring, so with both on screen the ringed one is what Enter opens.
+  for (final hasBuilder in [false, true]) {
+    testWidgets('DpadFocusable: hover grows, focus grows + ring '
+        '(${hasBuilder ? 'own look' : 'plain child'})', (tester) async {
+      final focusNode = FocusNode();
+      addTearDown(focusNode.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: DpadFocusable(
+                focusNode: focusNode,
+                onTap: () {},
+                scale: 1.05,
+                builder: hasBuilder
+                    ? (context, isFocused, isHovered, child) => child
+                    : null,
+                child: const SizedBox(width: 100, height: 100),
+              ),
+            ),
+          ),
+        ),
+      );
+      final item = find.byType(DpadFocusable);
+      double scale() => tester
+          .widget<AnimatedScale>(
+            find.descendant(of: item, matching: find.byType(AnimatedScale)),
+          )
+          .scale;
+
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      addTearDown(mouse.removePointer);
+      await mouse.moveTo(tester.getCenter(item));
+      await tester.pumpAndSettle();
+      expect((scale(), isRingShown(tester)), (1.05, false));
+
+      await mouse.moveTo(Offset.zero);
+      focusNode.requestFocus();
+      await tester.pumpAndSettle();
+      expect((scale(), isRingShown(tester)), (1.05, true));
+    });
+  }
 
   testWidgets('DpadFocusable shows its tooltip on hover (REV-253)', (
     tester,

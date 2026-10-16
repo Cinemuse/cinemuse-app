@@ -72,7 +72,6 @@ class _CollectionTileState extends ConsumerState<CollectionTile> {
 
     return DpadFocusable(
       onTap: () => _openCollection(context, ref),
-      showFocusRing: true,
       borderRadius: AppTheme.radiusLg,
       child: Container(
         height: 120,

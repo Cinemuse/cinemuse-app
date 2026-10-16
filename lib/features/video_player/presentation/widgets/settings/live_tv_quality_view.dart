@@ -129,14 +129,11 @@ class LiveTvQualityView extends ConsumerWidget {
                         : AppTheme.textWhite.withValues(alpha: 0.04)),
               borderRadius: AppTheme.radius12,
               border: Border.all(
-                color: isFocused
-                    ? AppTheme.focusRing
-                    : (isActive
-                          ? AppTheme.accent.withValues(alpha: 0.5)
-                          : (isHovered
-                                ? AppTheme.textWhite.withValues(alpha: 0.2)
-                                : AppTheme.textWhite.withValues(alpha: 0.08))),
-                width: isFocused ? 2 : 1,
+                color: isActive
+                    ? AppTheme.accent.withValues(alpha: 0.5)
+                    : (isHighlighted
+                          ? AppTheme.textWhite.withValues(alpha: 0.2)
+                          : AppTheme.textWhite.withValues(alpha: 0.08)),
               ),
             ),
             child: Row(
@@ -219,14 +216,11 @@ class LiveTvQualityView extends ConsumerWidget {
                         : AppTheme.textWhite.withValues(alpha: 0.04)),
               borderRadius: AppTheme.radius12,
               border: Border.all(
-                color: isFocused
-                    ? AppTheme.focusRing
-                    : (isSelected
-                          ? AppTheme.accent.withValues(alpha: 0.4)
-                          : (isHovered
-                                ? AppTheme.textWhite.withValues(alpha: 0.2)
-                                : AppTheme.textWhite.withValues(alpha: 0.08))),
-                width: isFocused ? 2 : 1,
+                color: isSelected
+                    ? AppTheme.accent.withValues(alpha: 0.4)
+                    : (isHighlighted
+                          ? AppTheme.textWhite.withValues(alpha: 0.2)
+                          : AppTheme.textWhite.withValues(alpha: 0.08)),
               ),
             ),
             child: Row(

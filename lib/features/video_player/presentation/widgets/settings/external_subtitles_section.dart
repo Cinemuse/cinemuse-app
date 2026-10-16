@@ -140,7 +140,6 @@ class _ExternalSubtitlesSectionState extends State<ExternalSubtitlesSection> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         DpadFocusable(
-          showFocusRing: true,
           onTap: () =>
               setState(() => _expandedLanguages[language] = !isExpanded),
           borderRadius: AppTheme.radiusMd,
@@ -284,7 +283,6 @@ class _ExternalSubtitleTileState extends ConsumerState<_ExternalSubtitleTile> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: DpadFocusable(
-        showFocusRing: true,
         borderRadius: AppTheme.radiusMd,
         onTap: _isApplying ? null : _apply,
         child: Container(

@@ -146,6 +146,7 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
           _showContextMenu(context, at: d.globalPosition),
       scale: 1.04,
       borderRadius: AppTheme.radiusLg,
+      showFocusRing: false,
       builder: (context, isFocused, isHovered, child) {
         return SizedBox(
           width: 270,
@@ -158,11 +159,10 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
                 l10n,
                 stillPath,
                 runtime,
-                isFocused,
-                isHovered,
+                isFocused || isHovered,
               ),
               const SizedBox(height: 10),
-              _buildMetaInfo(context, formattedAirDate, isFocused),
+              _buildMetaInfo(context, formattedAirDate, isFocused || isHovered),
             ],
           ),
         );
@@ -184,8 +184,7 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
     AppLocalizations l10n,
     String? stillPath,
     dynamic runtime,
-    bool isFocused,
-    bool isHovered,
+    bool isHighlighted,
   ) {
     return AspectRatio(
       aspectRatio: 16 / 9,
@@ -197,18 +196,14 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
               fit: StackFit.expand,
               children: [
                 _buildStillImage(context, stillPath),
-                _buildPlayOverlay(context, isFocused),
+                _buildPlayOverlay(context, isHighlighted),
                 _buildBadges(l10n, runtime),
                 _buildProgressBar(),
               ],
             ),
           ),
           Positioned.fill(
-            child: CardFocusBorder(
-              isFocused: isFocused,
-              isHovered: isHovered,
-              borderRadius: AppTheme.radiusLg,
-            ),
+            child: CardFocusBorder(borderRadius: AppTheme.radiusLg),
           ),
         ],
       ),
@@ -244,24 +239,24 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
     );
   }
 
-  Widget _buildPlayOverlay(BuildContext context, bool isFocused) {
+  Widget _buildPlayOverlay(BuildContext context, bool isHighlighted) {
     final theme = Theme.of(context);
     return Center(
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isFocused ? theme.focusColor : AppTheme.surfaceOverlay,
+          color: isHighlighted ? theme.focusColor : AppTheme.surfaceOverlay,
           shape: BoxShape.circle,
           border: Border.all(
-            color: isFocused
+            color: isHighlighted
                 ? theme.colorScheme.primary
                 : AppTheme.borderSubtle,
           ),
         ),
         child: Icon(
           Icons.play_arrow,
-          color: isFocused ? theme.colorScheme.primary : AppTheme.textWhite,
-          size: isFocused ? 28 : 22,
+          color: isHighlighted ? theme.colorScheme.primary : AppTheme.textWhite,
+          size: isHighlighted ? 28 : 22,
         ),
       ),
     );
@@ -372,7 +367,7 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
   Widget _buildMetaInfo(
     BuildContext context,
     String? formattedAirDate,
-    bool isFocused,
+    bool isHighlighted,
   ) {
     final theme = Theme.of(context);
     return Column(
@@ -385,8 +380,8 @@ class _EpisodeCarouselCardState extends ConsumerState<EpisodeCarouselCard> {
           overflow: TextOverflow.ellipsis,
           style: DesktopTypography.bodySecondary.copyWith(
             fontWeight: FontWeight.bold,
-            color: isFocused
-                ? theme.colorScheme.onSurface
+            color: isHighlighted
+                ? theme.colorScheme.primary
                 : theme.colorScheme.onSurface.withValues(alpha: 0.9),
           ),
         ),

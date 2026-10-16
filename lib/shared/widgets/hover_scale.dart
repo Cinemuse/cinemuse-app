@@ -17,7 +17,6 @@ class HoverScale extends StatelessWidget {
   final bool autoScroll;
   final bool showFocusRing;
   final BorderRadius? borderRadius;
-  final Color? focusRingColor;
   final DpadFocusableBuilder? builder;
   final String? tooltip;
 
@@ -34,9 +33,8 @@ class HoverScale extends StatelessWidget {
     this.focusNode,
     this.autofocus = false,
     this.autoScroll = true,
-    this.showFocusRing = false,
+    this.showFocusRing = true,
     this.borderRadius,
-    this.focusRingColor,
     this.builder,
     this.tooltip,
   });
@@ -56,7 +54,6 @@ class HoverScale extends StatelessWidget {
       curve: curve,
       showFocusRing: showFocusRing,
       borderRadius: borderRadius,
-      focusRingColor: focusRingColor,
       builder: builder,
       tooltip: tooltip,
       child: child,

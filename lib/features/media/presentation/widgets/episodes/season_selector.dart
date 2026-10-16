@@ -53,18 +53,12 @@ class _SeasonSelectorState extends ConsumerState<SeasonSelector> {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: isFocused
+                color: isFocused || isHovered
                     ? theme.focusColor
-                    : (isHovered
-                          ? theme.hoverColor
-                          : theme.colorScheme.surfaceContainer.withValues(
-                              alpha: 0.5,
-                            )),
+                    : theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
                 borderRadius: AppTheme.radiusMd,
                 border: Border.all(
-                  color: isFocused
-                      ? theme.colorScheme.primary.withValues(alpha: 0.5)
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.1),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
                 ),
               ),
               child: child,

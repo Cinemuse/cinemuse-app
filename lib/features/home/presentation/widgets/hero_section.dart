@@ -648,7 +648,7 @@ class _HeroSectionState extends ConsumerState<HeroSection>
             message: l10n.homeMoreInfo,
             child: DpadFocusable(
               onTap: () => _navigateToDetails(context, item),
-              showFocusRing: false,
+              borderRadius: AppTheme.radiusFull,
               child: const SizedBox.shrink(),
               builder: (context, isFocused, isHovered, _) {
                 final isHighlighted = isFocused || isHovered;
@@ -657,11 +657,9 @@ class _HeroSectionState extends ConsumerState<HeroSection>
                   height: 48,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isFocused
+                    color: isHighlighted
                         ? theme.focusColor
-                        : (isHovered
-                              ? theme.hoverColor
-                              : AppTheme.accent.withValues(alpha: 0.12)),
+                        : AppTheme.accent.withValues(alpha: 0.12),
                     border: Border.all(
                       color: isHighlighted
                           ? primary.withValues(alpha: 0.5)

@@ -152,9 +152,9 @@ class _SocialIconState extends State<_SocialIcon>
       builder: (context, isFocused, isHovered, child) {
         return Container(
           decoration: BoxDecoration(
-            color: isFocused
+            color: isFocused || isHovered
                 ? theme.focusColor
-                : (isHovered ? theme.hoverColor : Colors.transparent),
+                : Colors.transparent,
             borderRadius: AppTheme.radiusMd,
           ),
           child: child,

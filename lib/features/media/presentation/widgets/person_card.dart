@@ -31,6 +31,7 @@ class PersonCard extends StatelessWidget {
         onTap: onTap,
         scale: 1.05,
         borderRadius: AppTheme.radiusLg,
+        showFocusRing: false,
         builder: (context, isFocused, isHovered, child) {
           return SizedBox(
             width: 120,
@@ -79,8 +80,8 @@ class PersonCard extends StatelessWidget {
                 Text(
                   name,
                   style: DesktopTypography.bodySecondary.copyWith(
-                    color: isFocused
-                        ? theme.colorScheme.onSurface
+                    color: isFocused || isHovered
+                        ? theme.colorScheme.primary
                         : theme.colorScheme.onSurface.withValues(alpha: 0.9),
                     fontWeight: FontWeight.bold,
                   ),

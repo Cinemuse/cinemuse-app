@@ -6,6 +6,7 @@ import 'package:cinemuse_app/core/utils/platform_info.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/features/navigation/presentation/window_buttons.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
 import 'package:window_manager/window_manager.dart';
 
 /// Top bar of the app shell.
@@ -343,7 +344,13 @@ class _ProfileMenu extends StatelessWidget {
         icon: isCompact
             ? Icon(Icons.person_rounded, color: onSurface, size: 24)
             : null,
-        child: isCompact ? null : _buildDesktopButton(theme),
+        child: isCompact
+            ? null
+            : _RoundNavIcon(
+                icon: Icons.person_rounded,
+                isFocused: isFocused,
+                onTap: () => menuKey?.currentState?.showButtonMenu(),
+              ),
       ),
     );
   }
@@ -372,27 +379,50 @@ class _ProfileMenu extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildDesktopButton(ThemeData theme) {
+/// Round icon button of the top bar (search, profile).
+class _RoundNavIcon extends StatelessWidget {
+  final IconData icon;
+  final bool isFocused;
+  final VoidCallback onTap;
+  final double size;
+
+  const _RoundNavIcon({
+    required this.icon,
+    required this.isFocused,
+    required this.onTap,
+    this.size = 20,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => menuKey?.currentState?.showButtonMenu(),
-        mouseCursor: SystemMouseCursors.click,
-        borderRadius: BorderRadius.circular(20),
-        hoverColor: theme.hoverColor,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isFocused ? theme.focusColor : Colors.transparent,
-          ),
-          child: Icon(
-            Icons.person_rounded,
-            color: isFocused ? onSurface : onSurface.withValues(alpha: 0.7),
-            size: 20,
+    return FocusRing(
+      isVisible: isFocused,
+      borderRadius: AppTheme.radiusFull,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          // A Focus around it is the only Tab stop (REV-57).
+          canRequestFocus: false,
+          onTap: onTap,
+          mouseCursor: SystemMouseCursors.click,
+          borderRadius: BorderRadius.circular(20),
+          hoverColor: theme.hoverColor,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isFocused ? theme.focusColor : Colors.transparent,
+            ),
+            child: Icon(
+              icon,
+              color: isFocused ? onSurface : onSurface.withValues(alpha: 0.7),
+              size: size,
+            ),
           ),
         ),
       ),
@@ -431,52 +461,48 @@ class _NavItemState extends State<_NavItem> {
       focusNode: widget.focusNode,
       onKeyEvent: widget.onKeyEvent,
       onFocusChange: (focused) => setState(() => _isFocused = focused),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          // The Focus above is the only Tab stop (REV-57).
-          canRequestFocus: false,
-          onTap: widget.onTap,
-          borderRadius: effectiveRadius,
-          mouseCursor: SystemMouseCursors.click,
-          hoverColor: theme.hoverColor,
-          focusColor: Colors.transparent,
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            decoration: BoxDecoration(
-              color: widget.isSelected
-                  ? theme.colorScheme.primary.withValues(alpha: 0.25)
-                  : (_isFocused ? theme.focusColor : Colors.transparent),
-              borderRadius: effectiveRadius,
-              border: Border.all(
+      // Painted outside: shows on the active tab, never resizes (REV-249/250).
+      child: FocusRing(
+        isVisible: _isFocused,
+        borderRadius: effectiveRadius,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            // The Focus above is the only Tab stop (REV-57).
+            canRequestFocus: false,
+            onTap: widget.onTap,
+            borderRadius: effectiveRadius,
+            mouseCursor: SystemMouseCursors.click,
+            hoverColor: theme.hoverColor,
+            focusColor: Colors.transparent,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
                 color: widget.isSelected
-                    ? theme.colorScheme.primary.withValues(alpha: 0.5)
-                    : Colors.transparent,
-                width: 1,
+                    ? theme.colorScheme.primary.withValues(alpha: 0.25)
+                    : (_isFocused ? theme.focusColor : Colors.transparent),
+                borderRadius: effectiveRadius,
+                border: Border.all(
+                  color: widget.isSelected
+                      ? theme.colorScheme.primary.withValues(alpha: 0.5)
+                      : Colors.transparent,
+                ),
               ),
-            ),
-            // On top: shows on the active tab, never resizes it (REV-249/250).
-            foregroundDecoration: _isFocused
-                ? BoxDecoration(
-                    borderRadius: effectiveRadius,
-                    border: Border.all(color: AppTheme.focusRing, width: 2),
-                    boxShadow: AppTheme.shadowFocusGlow,
-                  )
-                : null,
-            child: Text(
-              widget.label,
-              style: TextStyle(
-                color: (widget.isSelected || _isFocused)
-                    ? theme.colorScheme.onSurface
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                // Not bold on focus: wider text made the bar move (REV-250).
-                fontWeight: widget.isSelected
-                    ? FontWeight.bold
-                    : FontWeight.w500,
-                fontSize: 14,
+              child: Text(
+                widget.label,
+                style: TextStyle(
+                  color: (widget.isSelected || _isFocused)
+                      ? theme.colorScheme.onSurface
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  // Not bold on focus: wider text made the bar move (REV-250).
+                  fontWeight: widget.isSelected
+                      ? FontWeight.bold
+                      : FontWeight.w500,
+                  fontSize: 14,
+                ),
               ),
             ),
           ),
@@ -508,39 +534,17 @@ class _SearchButtonState extends State<_SearchButton> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Focus(
       focusNode: widget.focusNode,
       onKeyEvent: widget.onKeyEvent,
       onFocusChange: (focused) => setState(() => _isFocused = focused),
       child: Tooltip(
         message: AppLocalizations.of(context)!.navSearch,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            // The Focus above is the only Tab stop (REV-57).
-            canRequestFocus: false,
-            mouseCursor: SystemMouseCursors.click,
-            onTap: widget.onTap,
-            borderRadius: BorderRadius.circular(20),
-            hoverColor: theme.hoverColor,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _isFocused ? theme.focusColor : Colors.transparent,
-              ),
-              child: Icon(
-                Icons.search,
-                color: _isFocused
-                    ? theme.colorScheme.onSurface
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                size: widget.size,
-              ),
-            ),
-          ),
+        child: _RoundNavIcon(
+          icon: Icons.search,
+          isFocused: _isFocused,
+          onTap: widget.onTap,
+          size: widget.size,
         ),
       ),
     );

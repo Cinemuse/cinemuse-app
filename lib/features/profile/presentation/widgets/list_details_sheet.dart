@@ -276,7 +276,6 @@ class _ListDetailsSheetState extends ConsumerState<ListDetailsSheet> {
                         ),
                         if (isOverflowing)
                           DpadFocusable(
-                            showFocusRing: true,
                             borderRadius: BorderRadius.circular(4),
                             onTap: () => setState(
                               () => _isDescExpanded = !_isDescExpanded,

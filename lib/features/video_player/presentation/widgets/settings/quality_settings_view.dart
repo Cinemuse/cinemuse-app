@@ -82,7 +82,6 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                     if (currentState.currentStream?.files.isNotEmpty ??
                         false) ...[
                       DpadFocusable(
-                        showFocusRing: true,
                         onTap: () =>
                             setState(() => _filesExpanded = !_filesExpanded),
                         borderRadius: AppTheme.radius12,
@@ -150,7 +149,6 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 8.0),
                             child: DpadFocusable(
-                              showFocusRing: true,
                               borderRadius: AppTheme.radius12,
                               onTap: () {
                                 // Would restart at 0:00 (REV-172).
@@ -277,20 +275,15 @@ class _QualitySettingsViewState extends ConsumerState<QualitySettingsView> {
                                             )),
                                 borderRadius: AppTheme.radiusLg,
                                 border: Border.all(
-                                  color: isFocused
-                                      ? AppTheme.textWhite
-                                      : (isSelected
-                                            ? AppTheme.accent.withValues(
-                                                alpha: 0.5,
+                                  color: isSelected
+                                      ? AppTheme.accent.withValues(alpha: 0.5)
+                                      : (isHighlighted
+                                            ? AppTheme.textWhite.withValues(
+                                                alpha: 0.2,
                                               )
-                                            : (isHovered
-                                                  ? AppTheme.textWhite
-                                                        .withValues(alpha: 0.2)
-                                                  : AppTheme.textWhite
-                                                        .withValues(
-                                                          alpha: 0.05,
-                                                        ))),
-                                  width: isFocused ? 2 : 1,
+                                            : AppTheme.textWhite.withValues(
+                                                alpha: 0.05,
+                                              )),
                                 ),
                               ),
                               child: Column(

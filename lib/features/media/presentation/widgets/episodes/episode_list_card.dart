@@ -156,21 +156,16 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
           _showContextMenu(context, at: d.globalPosition),
       scale: 1.01,
       borderRadius: AppTheme.radiusLg,
+      showFocusRing: false,
       builder: (context, isFocused, isHovered, child) {
         final theme = Theme.of(context);
         return Stack(
           children: [
             Container(
               decoration: BoxDecoration(
-                color: isFocused
+                color: isFocused || isHovered
                     ? theme.focusColor
-                    : (isHovered
-                          ? theme.colorScheme.surfaceContainer.withValues(
-                              alpha: 0.7,
-                            )
-                          : theme.colorScheme.surfaceContainer.withValues(
-                              alpha: 0.5,
-                            )),
+                    : theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
                 borderRadius: AppTheme.radiusLg,
               ),
               clipBehavior: Clip.antiAlias,
@@ -473,7 +468,6 @@ class _EpisodeListCardState extends ConsumerState<EpisodeListCard> {
               if (isOverflowing)
                 DpadFocusable(
                   onTap: () => setState(() => _isExpanded = !_isExpanded),
-                  showFocusRing: true,
                   child: Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(

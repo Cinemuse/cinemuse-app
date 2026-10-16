@@ -161,6 +161,7 @@ class _BackdropCardState extends State<BackdropCard> {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
       autoScroll: true,
+      showFocusRing: false,
       child: SizedBox(
         width: cardWidth,
         child: Column(

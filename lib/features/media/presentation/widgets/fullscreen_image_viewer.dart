@@ -272,7 +272,6 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
                     child: HoverScale(
                       onTap: () =>
                           _downloadImage(widget.imageUrls[_currentIndex]),
-                      showFocusRing: true,
                       borderRadius: AppTheme.radiusFull,
                       child: Padding(
                         padding: const EdgeInsets.all(10),

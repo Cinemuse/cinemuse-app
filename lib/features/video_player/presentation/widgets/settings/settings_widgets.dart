@@ -92,14 +92,12 @@ class SettingsTile extends StatelessWidget {
                 ? AppTheme.textWhite.withValues(alpha: 0.1)
                 : null,
             borderRadius: AppTheme.radius12,
-            border: isFocused
-                ? Border.all(color: AppTheme.focusRing, width: 1.5)
-                : (isHovered
-                      ? Border.all(
-                          color: AppTheme.textWhite.withValues(alpha: 0.2),
-                          width: 1.5,
-                        )
-                      : null),
+            border: isHighlighted
+                ? Border.all(
+                    color: AppTheme.textWhite.withValues(alpha: 0.2),
+                    width: 1.5,
+                  )
+                : null,
           ),
           child: ListTile(
             contentPadding: EdgeInsets.symmetric(
@@ -286,58 +284,58 @@ class TrackTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final title = customTitle ?? LanguageMapper.trackLabel(track);
 
-    return DpadFocusable(
-      autofocus: autofocus,
-      onTap: _handleTrackSelection,
-      scale: 1.02,
-      borderRadius: AppTheme.radius12,
-      builder: (context, isFocused, isHovered, child) {
-        final isHighlighted = isFocused || isHovered;
-        return Container(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? AppTheme.accent.withValues(alpha: 0.15)
-                : (isHighlighted
-                      ? AppTheme.textWhite.withValues(alpha: 0.08)
-                      : AppTheme.textWhite.withValues(alpha: 0.02)),
-            borderRadius: AppTheme.radius12,
-            border: Border.all(
-              color: isFocused
-                  ? AppTheme.focusRing
-                  : (isSelected
-                        ? AppTheme.accent.withValues(alpha: 0.5)
-                        : (isHovered
-                              ? AppTheme.textWhite.withValues(alpha: 0.2)
-                              : AppTheme.textWhite.withValues(alpha: 0.05))),
-              width: isFocused ? 2 : 1,
-            ),
-          ),
-          child: ListTile(
-            shape: const RoundedRectangleBorder(
+    // The gap sits outside the item so the focus ring hugs the tile.
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: DpadFocusable(
+        autofocus: autofocus,
+        onTap: _handleTrackSelection,
+        scale: 1.02,
+        borderRadius: AppTheme.radius12,
+        builder: (context, isFocused, isHovered, child) {
+          final isHighlighted = isFocused || isHovered;
+          return Container(
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppTheme.accent.withValues(alpha: 0.15)
+                  : (isHighlighted
+                        ? AppTheme.textWhite.withValues(alpha: 0.08)
+                        : AppTheme.textWhite.withValues(alpha: 0.02)),
               borderRadius: AppTheme.radius12,
-            ),
-            title: Text(
-              title,
-              style: TextStyle(
+              border: Border.all(
                 color: isSelected
-                    ? (color ?? AppTheme.textWhite)
-                    : AppTheme.textWhite.withValues(alpha: 0.7),
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 15,
+                    ? AppTheme.accent.withValues(alpha: 0.5)
+                    : (isHighlighted
+                          ? AppTheme.textWhite.withValues(alpha: 0.2)
+                          : AppTheme.textWhite.withValues(alpha: 0.05)),
               ),
             ),
-            trailing: isSelected
-                ? Icon(
-                    Icons.check_circle_rounded,
-                    color: color ?? AppTheme.accent,
-                    size: 20,
-                  )
-                : null,
-          ),
-        );
-      },
-      child: const SizedBox.shrink(),
+            child: ListTile(
+              shape: const RoundedRectangleBorder(
+                borderRadius: AppTheme.radius12,
+              ),
+              title: Text(
+                title,
+                style: TextStyle(
+                  color: isSelected
+                      ? (color ?? AppTheme.textWhite)
+                      : AppTheme.textWhite.withValues(alpha: 0.7),
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  fontSize: 15,
+                ),
+              ),
+              trailing: isSelected
+                  ? Icon(
+                      Icons.check_circle_rounded,
+                      color: color ?? AppTheme.accent,
+                      size: 20,
+                    )
+                  : null,
+            ),
+          );
+        },
+        child: const SizedBox.shrink(),
+      ),
     );
   }
 

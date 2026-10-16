@@ -597,17 +597,19 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
           return KeyEventResult.ignored;
         },
         borderRadius: BorderRadius.circular(6),
+        isFocusRingInside: true,
         builder: (context, isFocused, isHovered, _) {
+          final isHighlighted = isFocused || isHovered;
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 14),
             alignment: Alignment.centerLeft,
             decoration: BoxDecoration(
-              color: isFocused
+              color: isHighlighted
                   ? AppTheme.accent.withValues(alpha: 0.2)
                   : Colors.white.withValues(alpha: 0.02),
               borderRadius: BorderRadius.circular(6),
               border: Border.all(
-                color: isFocused
+                color: isHighlighted
                     ? AppTheme.accent
                     : Colors.white.withValues(alpha: 0.04),
               ),
@@ -615,7 +617,7 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
             child: Text(
               l10n.liveTvNoEpg,
               style: TextStyle(
-                color: isFocused ? Colors.white : AppTheme.textMuted,
+                color: isHighlighted ? Colors.white : AppTheme.textMuted,
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
               ),
@@ -662,17 +664,18 @@ class EpgTimelineGridState extends State<EpgTimelineGrid> {
             return KeyEventResult.ignored;
           },
           borderRadius: BorderRadius.circular(6),
+          isFocusRingInside: true,
           builder: (context, isFocused, isHovered, _) {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               alignment: Alignment.centerLeft,
               decoration: BoxDecoration(
-                color: isFocused
+                color: isFocused || isHovered
                     ? AppTheme.accent.withValues(alpha: 0.18)
                     : Colors.white.withValues(alpha: 0.02),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: isFocused
+                  color: isFocused || isHovered
                       ? AppTheme.accent
                       : Colors.white.withValues(alpha: 0.03),
                 ),

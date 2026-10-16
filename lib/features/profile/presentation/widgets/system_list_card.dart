@@ -56,7 +56,6 @@ class SystemListCard extends StatelessWidget {
     return DpadFocusable(
       onTap: onTap,
       scale: 1.02,
-      showFocusRing: true,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(24),
