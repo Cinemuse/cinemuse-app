@@ -1,5 +1,6 @@
 import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
@@ -52,6 +53,10 @@ class EpisodeSection extends ConsumerWidget {
         .where((s) => s.seasonNumber > 0)
         .toList();
     final isMobile = Breakpoints.isCompact(context);
+    // The translated failure, not its raw text (REV-300).
+    String seasonError(Object err) => l10n.detailsErrorLoadingSeason(
+      ref.read(errorMapperProvider).map(err).message,
+    );
 
     void onEpisodeTap(int s, int e, String name, {bool restart = false}) =>
         _handleEpisodePlay(
@@ -133,6 +138,7 @@ class EpisodeSection extends ConsumerWidget {
         l10n: l10n,
         selectedSeason: selectedSeason,
         seasonDetailsAsync: seasonDetailsAsync,
+        seasonError: seasonError,
         watchedEpisodesMap: watchedEpisodesMap,
         episodeProgressMap: episodeProgressMap,
         seasonSelector: seasonSelectorWidget,
@@ -159,9 +165,7 @@ class EpisodeSection extends ConsumerWidget {
               color: AppTheme.accent,
             ),
           ),
-          error: (err, _) => Center(
-            child: Text(l10n.detailsErrorLoadingSeason(err.toString())),
-          ),
+          error: (err, _) => Center(child: Text(seasonError(err))),
           data: (season) {
             if (season == null) {
               return Center(child: Text(l10n.detailsSeasonNotFound));
@@ -190,6 +194,7 @@ class EpisodeSection extends ConsumerWidget {
     required AppLocalizations l10n,
     required int selectedSeason,
     required AsyncValue<Map<String, dynamic>?> seasonDetailsAsync,
+    required String Function(Object error) seasonError,
     required Map<String, int> watchedEpisodesMap,
     required Map<String, WatchHistory>? episodeProgressMap,
     required Widget seasonSelector,
@@ -225,8 +230,7 @@ class EpisodeSection extends ConsumerWidget {
               strokeWidth: 2,
               color: AppTheme.accent,
             ),
-            error: (err, _) =>
-                Text(l10n.detailsErrorLoadingSeason(err.toString())),
+            error: (err, _) => Text(seasonError(err)),
             data: (_) => Text(l10n.detailsSeasonNotFound),
           ),
         ),

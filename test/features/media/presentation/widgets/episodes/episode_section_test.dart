@@ -243,7 +243,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.widgetWithText(SeasonSelector, 'Season 2'), findsOneWidget);
-      expect(find.textContaining('offline'), findsOneWidget);
+      // REV-300: the translated failure, not "NetworkFailure: offline".
+      final l10n = AppLocalizationsEn();
+      expect(
+        find.text(l10n.detailsErrorLoadingSeason(l10n.failureNetwork)),
+        findsOneWidget,
+      );
+      expect(find.textContaining('offline'), findsNothing);
       expect(find.textContaining('S1 episode 1'), findsNothing);
 
       await tester.tap(find.byType(SeasonSelector));
