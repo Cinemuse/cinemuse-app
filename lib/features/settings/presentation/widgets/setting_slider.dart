@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
 
 class SettingSlider extends StatelessWidget {
   final String label;
@@ -27,50 +28,57 @@ class SettingSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label, style: DesktopTypography.subtitle),
-              Text(
-                valueLabelBuilder?.call(value) ?? value.toInt().toString(),
-                style: DesktopTypography.bodyPrimary.copyWith(
-                  color: AppTheme.accent,
-                  fontWeight: FontWeight.bold,
+    // Like the settings rows, the ring goes on the block's own edge (REV-263).
+    return FocusRingFollower(
+      borderRadius: BorderRadius.circular(16),
+      isInside: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(label, style: DesktopTypography.subtitle),
+                Text(
+                  valueLabelBuilder?.call(value) ?? value.toInt().toString(),
+                  style: DesktopTypography.bodyPrimary.copyWith(
+                    color: AppTheme.accent,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
+              ],
+            ),
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 2,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                activeTrackColor: AppTheme.accent,
+                inactiveTrackColor: Colors.white10,
+                thumbColor: AppTheme.accent,
+                tickMarkShape: divisions != null
+                    ? const RoundSliderTickMarkShape(tickMarkRadius: 1.5)
+                    : null,
+                activeTickMarkColor: divisions != null
+                    ? AppTheme.accent.withValues(alpha: 0.5)
+                    : null,
+                inactiveTickMarkColor: divisions != null
+                    ? Colors.white24
+                    : null,
               ),
-            ],
-          ),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 2,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-              activeTrackColor: AppTheme.accent,
-              inactiveTrackColor: Colors.white10,
-              thumbColor: AppTheme.accent,
-              tickMarkShape: divisions != null
-                  ? const RoundSliderTickMarkShape(tickMarkRadius: 1.5)
-                  : null,
-              activeTickMarkColor: divisions != null
-                  ? AppTheme.accent.withValues(alpha: 0.5)
-                  : null,
-              inactiveTickMarkColor: divisions != null ? Colors.white24 : null,
+              child: Slider(
+                value: value,
+                min: min,
+                max: max,
+                divisions: divisions,
+                onChanged: onChanged,
+                onChangeEnd: onChangeEnd,
+              ),
             ),
-            child: Slider(
-              value: value,
-              min: min,
-              max: max,
-              divisions: divisions,
-              onChanged: onChanged,
-              onChangeEnd: onChangeEnd,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

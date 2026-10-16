@@ -8,13 +8,16 @@ import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
 import 'package:cinemuse_app/features/settings/presentation/settings_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../helpers/app_font.dart';
 import '../../../helpers/cursor_helpers.dart';
+import '../../../helpers/focus_helpers.dart';
 
 class _FakeSettingsNotifier extends SettingsNotifier {
   @override
@@ -26,6 +29,17 @@ class _BothDebridSettingsNotifier extends SettingsNotifier {
   @override
   UserSettings build() =>
       const UserSettings(enableRealDebrid: true, enableTorBox: true);
+}
+
+/// Saves straight into its state: the row tests check what a tap saved.
+class _SavingSettingsNotifier extends SettingsNotifier {
+  @override
+  UserSettings build() => const UserSettings();
+
+  @override
+  Future<void> updateSettings(
+    UserSettings Function(UserSettings current) change,
+  ) async => state = change(state);
 }
 
 void main() {
@@ -221,4 +235,133 @@ void main() {
       await expectHandOver(tester, find.text(c.option).last);
     });
   }
+
+  group('settings rows (REV-84b, REV-263)', () {
+    late ProviderContainer container;
+
+    Future<void> openCategory(WidgetTester tester, String category) async {
+      tester.view.physicalSize = const Size(1280, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      FocusRing.debugWatchKeys();
+      container = ProviderContainer(
+        overrides: [settingsProvider.overrideWith(_SavingSettingsNotifier.new)],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            theme: AppTheme.darkTheme,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(body: SettingsScreen()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(category).first);
+      await tester.pumpAndSettle();
+    }
+
+    bool isRingShownAround(WidgetTester tester, Finder target) => tester
+        .widgetList<FocusRing>(
+          find.ancestor(of: target, matching: find.byType(FocusRing)),
+        )
+        .any((ring) => ring.isVisible);
+
+    /// Tab until the focus is inside a [T] (a slider or a text box keeps
+    /// its focus inside, so `isFocused` can't see it).
+    Future<void> tabInto<T extends Widget>(WidgetTester tester) async {
+      bool isIn() =>
+          FocusManager.instance.primaryFocus?.context
+              ?.findAncestorWidgetOfExactType<T>() !=
+          null;
+      for (var i = 0; i < 40 && !isIn(); i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+      }
+      expect(isIn(), isTrue, reason: 'Tab never reached a $T');
+    }
+
+    final l10n = AppLocalizationsEn();
+    for (final c in [
+      (
+        category: l10n.settingsCustomization,
+        row: l10n.settingsShowSubtitles,
+        value: (UserSettings s) => s.showSubtitles,
+      ),
+      (
+        category: l10n.settingsIntegrations,
+        row: l10n.settingsEnableVixSrc,
+        value: (UserSettings s) => s.enableVixSrc,
+      ),
+    ]) {
+      testWidgets('${c.row}: a click on the label flips the switch', (
+        tester,
+      ) async {
+        await openCategory(tester, c.category);
+        final before = c.value(container.read(settingsProvider));
+
+        await tester.tap(find.text(c.row));
+        await tester.pumpAndSettle();
+
+        expect(c.value(container.read(settingsProvider)), !before);
+      });
+
+      testWidgets('${c.row}: Tab stops on the row, shows the ring, and '
+          'Enter flips the switch', (tester) async {
+        await openCategory(tester, c.category);
+        final before = c.value(container.read(settingsProvider));
+
+        await tabTo(tester, find.text(c.row));
+        await tester.pumpAndSettle();
+        expect(isRingShownAround(tester, find.text(c.row)), isTrue);
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+        expect(c.value(container.read(settingsProvider)), !before);
+        // Still on the row: the switch is not a stop of its own.
+        expect(isFocused(find.text(c.row)), isTrue);
+      });
+    }
+
+    for (final c in [
+      (
+        name: 'slider',
+        category: l10n.settingsCustomization,
+        tabIn: (WidgetTester t) => tabInto<Slider>(t),
+        target: find.byType(Slider),
+      ),
+      (
+        name: 'text box',
+        category: l10n.settingsIdentity,
+        tabIn: (WidgetTester t) => tabInto<TextField>(t),
+        target: find.byType(TextField),
+      ),
+    ]) {
+      testWidgets('a ${c.name} reached with Tab shows the ring', (
+        tester,
+      ) async {
+        await openCategory(tester, c.category);
+
+        await c.tabIn(tester);
+        await tester.pumpAndSettle();
+
+        final focused = FocusManager.instance.primaryFocus!.context!;
+        expect(
+          find
+              .ancestor(
+                of: find.byElementPredicate((e) => e == focused),
+                matching: find.byWidgetPredicate(
+                  (w) => w is FocusRing && w.isVisible,
+                ),
+              )
+              .evaluate(),
+          isNotEmpty,
+        );
+        expect(c.target, findsWidgets);
+      });
+    }
+  });
 }

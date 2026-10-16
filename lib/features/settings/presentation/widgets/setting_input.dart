@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
 
 class SettingInput extends ConsumerStatefulWidget {
   final String? label;
@@ -115,14 +116,11 @@ class _SettingInputState extends ConsumerState<SettingInput> {
     final input = Row(
       children: [
         Expanded(
-          child: TextField(
+          child: SettingsTextField(
             controller: _controller,
             obscureText: _isObscured,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
+            decoration: settingsInputDecoration(
               hintText: widget.placeholder,
-              filled: true,
-              fillColor: Colors.black.withValues(alpha: 0.3),
               suffixIcon: widget.isPassword
                   ? IconButton(
                       tooltip: _isObscured
@@ -140,26 +138,6 @@ class _SettingInputState extends ConsumerState<SettingInput> {
                       },
                     )
                   : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: AppTheme.accent),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
             ),
           ),
         ),
@@ -233,4 +211,61 @@ class _SettingInputState extends ConsumerState<SettingInput> {
       ),
     );
   }
+}
+
+/// The settings text box: the shared look, and the focus ring while the
+/// keyboard / remote is in it (REV-263).
+class SettingsTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final InputDecoration decoration;
+  final bool obscureText;
+  final ValueChanged<String>? onSubmitted;
+
+  const SettingsTextField({
+    super.key,
+    required this.controller,
+    required this.decoration,
+    this.obscureText = false,
+    this.onSubmitted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FocusRingFollower(
+      borderRadius: BorderRadius.circular(16),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        style: const TextStyle(color: Colors.white),
+        decoration: decoration,
+        onSubmitted: onSubmitted,
+      ),
+    );
+  }
+}
+
+/// The look of every settings text box (REV-83).
+InputDecoration settingsInputDecoration({
+  String? hintText,
+  String? errorText,
+  Widget? suffixIcon,
+}) {
+  final border = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(16),
+    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+  );
+  return InputDecoration(
+    hintText: hintText,
+    hintStyle: const TextStyle(color: Colors.white24),
+    errorText: errorText,
+    filled: true,
+    fillColor: Colors.black.withValues(alpha: 0.3),
+    suffixIcon: suffixIcon,
+    border: border,
+    enabledBorder: border,
+    focusedBorder: border.copyWith(
+      borderSide: const BorderSide(color: AppTheme.accent),
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  );
 }

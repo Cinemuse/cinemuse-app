@@ -1,10 +1,10 @@
-import 'package:cinemuse_app/core/application/locale_service.dart';
+﻿import 'package:cinemuse_app/core/application/locale_service.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/auth/application/auth_service.dart';
 import 'package:cinemuse_app/features/profile/data/profile_repository.dart';
 import 'package:cinemuse_app/features/profile/domain/profile.dart';
 import 'package:cinemuse_app/features/settings/data/user_secrets_repository.dart';
-import 'package:cinemuse_app/features/settings/presentation/widgets/settings_categories.dart';
+import 'package:cinemuse_app/features/settings/presentation/widgets/identity_settings.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:cinemuse_app/l10n/app_localizations_it.dart';
@@ -24,7 +24,7 @@ class MockSupabaseClient extends Mock implements SupabaseClient {}
 class MockGoTrueClient extends Mock implements GoTrueClient {}
 
 // REV-260, REV-86: offline, saving the display name said "something went
-// wrong" or showed "Exception: …".
+// wrong" or showed "Exception: â€¦".
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
