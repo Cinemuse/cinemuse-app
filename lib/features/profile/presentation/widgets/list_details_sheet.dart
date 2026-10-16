@@ -664,7 +664,6 @@ class _ListMediaCard extends ConsumerWidget {
       posterPath: posterPath,
       rating: rating,
       releaseDate: year,
-      tmdbId: item.tmdbId,
       // Dropped is a label, not a list: its titles only leave it through
       // Restore (REV-262).
       onRemoveFromList: list.isReadOnly || list.type == ListType.dropped

@@ -8,6 +8,7 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/person.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/media/presentation/person_details_screen.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/title_list_actions.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:flutter/material.dart';
@@ -82,8 +83,7 @@ void main() {
     await tester.pumpWidget(buildCard(person, MediaType.person));
 
     final card = tester.widget<MediaCard>(find.byType(MediaCard));
-    expect(card.tmdbId, isNull);
-    expect(card.mediaType, isNull);
+    expect(card.listActions, isNull);
 
     await tester.longPress(find.byType(MediaCard));
     await tester.pumpAndSettle();
@@ -108,8 +108,9 @@ void main() {
     );
 
     final card = tester.widget<MediaCard>(find.byType(MediaCard));
-    expect(card.tmdbId, 1399);
-    expect(card.mediaType, MediaKind.tv);
+    final media = (card.listActions! as TitleListActions).media;
+    expect(media.tmdbId, 1399);
+    expect(media.mediaType, MediaKind.tv);
 
     // No pump after the tap: the details screen needs real services.
     await tester.tap(find.byType(MediaCard));

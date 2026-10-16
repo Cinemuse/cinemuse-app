@@ -14,6 +14,7 @@ import 'package:cinemuse_app/features/video_player/presentation/video_player_scr
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/title_list_actions.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/features/profile/presentation/watch_history_screen.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -64,8 +65,7 @@ class ProfileOverview extends ConsumerWidget {
           posterPath: item.posterPath,
           releaseDate: item.releaseDate?.year.toString(),
           rating: item.voteAverage,
-          tmdbId: item.tmdbId,
-          mediaType: item.mediaType,
+          listActions: TitleListActions(context, ref, item),
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(

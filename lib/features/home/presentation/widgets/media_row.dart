@@ -7,6 +7,7 @@ import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/poster_carousel_row.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/title_list_actions.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart'; // for CarouselTheme
@@ -100,8 +101,7 @@ class MediaRow extends ConsumerWidget {
         posterPath: item.posterPath,
         releaseDate: item.releaseDate?.year.toString(),
         rating: item.voteAverage,
-        tmdbId: item.tmdbId,
-        mediaType: item.mediaType,
+        listActions: TitleListActions(context, ref, item),
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(

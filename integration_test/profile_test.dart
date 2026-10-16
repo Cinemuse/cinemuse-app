@@ -22,6 +22,7 @@ import 'package:cinemuse_app/features/navigation/presentation/app_shell.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/system_list_card.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/title_list_actions.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
 
@@ -107,7 +108,11 @@ void main() {
     await pumpUntil(
       tester,
       () => find
-          .byWidgetPredicate((w) => w is MediaCard && w.tmdbId == _movieId)
+          .byWidgetPredicate(
+            (w) =>
+                w is MediaCard &&
+                (w.listActions as TitleListActions?)?.media.tmdbId == _movieId,
+          )
           .evaluate()
           .isNotEmpty,
       what: 'the movie in the Profile history',

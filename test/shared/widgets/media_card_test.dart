@@ -1,4 +1,5 @@
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/title_list_actions.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:cinemuse_app/l10n/app_localizations_it.dart';
@@ -24,16 +25,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
-            body: Center(
-              child: SizedBox(
-                width: 160,
-                child: MediaCard(
-                  title: 'Some Movie',
-                  tmdbId: 1,
-                  mediaType: MediaKind.movie,
-                ),
-              ),
-            ),
+            body: Center(child: SizedBox(width: 160, child: _MovieCard())),
           ),
         ),
       ),
@@ -68,16 +60,7 @@ void main() {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: const Scaffold(
-              body: Center(
-                child: SizedBox(
-                  width: 160,
-                  child: MediaCard(
-                    title: 'Some Movie',
-                    tmdbId: 1,
-                    mediaType: MediaKind.movie,
-                  ),
-                ),
-              ),
+              body: Center(child: SizedBox(width: 160, child: _MovieCard())),
             ),
           ),
         ),
@@ -103,14 +86,7 @@ void main() {
           home: Scaffold(
             body: Align(
               alignment: Alignment(0.5, -0.9),
-              child: SizedBox(
-                width: 160,
-                child: MediaCard(
-                  title: 'Some Movie',
-                  tmdbId: 1,
-                  mediaType: MediaKind.movie,
-                ),
-              ),
+              child: SizedBox(width: 160, child: _MovieCard()),
             ),
           ),
         ),
@@ -123,4 +99,24 @@ void main() {
     expect(find.text(l10n.menuAddToWatchlist), findsOneWidget);
     expectMenuAt(tester, at);
   });
+}
+
+/// A movie card wired to the real lists, as the app's screens wire it.
+class _MovieCard extends ConsumerWidget {
+  const _MovieCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => MediaCard(
+    title: 'Some Movie',
+    listActions: TitleListActions(
+      context,
+      ref,
+      MediaItem(
+        tmdbId: 1,
+        mediaType: MediaKind.movie,
+        titleEn: 'Some Movie',
+        updatedAt: DateTime(2026),
+      ),
+    ),
+  );
 }

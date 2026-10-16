@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/title_list_actions.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/shared/widgets/carousels/poster_carousel_row.dart';
 import 'package:cinemuse_app/shared/widgets/media_card.dart';
@@ -38,8 +39,7 @@ class MediaListRow extends ConsumerWidget {
         posterPath: item.posterPath,
         releaseDate: item.releaseDate?.year.toString(),
         rating: item.voteAverage,
-        tmdbId: item.tmdbId,
-        mediaType: item.mediaType,
+        listActions: TitleListActions(context, ref, item),
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(

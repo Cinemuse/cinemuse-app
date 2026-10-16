@@ -1,36 +1,29 @@
-import 'package:cinemuse_app/features/profile/presentation/widgets/list_action_feedback.dart';
 import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/menu/app_menu.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
 import 'package:cinemuse_app/shared/widgets/premium_hover_text.dart';
-import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
-import 'package:cinemuse_app/features/profile/domain/user_list.dart';
-import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/shared/widgets/card_list_actions.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/card_focus_border.dart';
 import 'package:cinemuse_app/shared/widgets/card_progress_bar.dart';
 
-import 'package:cinemuse_app/features/profile/presentation/widgets/add_to_list_sheet.dart';
-
-class MediaCard extends ConsumerStatefulWidget {
+class MediaCard extends StatefulWidget {
   final String title;
   final String? posterPath;
   final String? releaseDate;
   final double? rating;
-  final bool isWatchlisted;
-  final VoidCallback? onWatchlistToggle;
   final VoidCallback? onTap;
   final VoidCallback? onPlay;
   final VoidCallback? onRemoveFromList;
   final VoidCallback? onRestore;
 
-  final int? tmdbId;
-  final MediaKind? mediaType;
+  /// The menu's "Watchlist" and "Add to list" entries; null hides them
+  /// (a person, or a list that offers its own actions).
+  final CardListActions? listActions;
 
   // Optional playback progress (0.0 to 1.0) & metadata subtitle (e.g. S1 E5)
   final double? progress;
@@ -48,14 +41,11 @@ class MediaCard extends ConsumerStatefulWidget {
     this.posterPath,
     this.releaseDate,
     this.rating,
-    this.isWatchlisted = false,
-    this.onWatchlistToggle,
     this.onTap,
     this.onPlay,
     this.onRemoveFromList,
     this.onRestore,
-    this.tmdbId,
-    this.mediaType,
+    this.listActions,
     this.progress,
     this.infoText,
     this.stackCount,
@@ -64,24 +54,11 @@ class MediaCard extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<MediaCard> createState() => _MediaCardState();
+  State<MediaCard> createState() => _MediaCardState();
 }
 
-class _MediaCardState extends ConsumerState<MediaCard> {
+class _MediaCardState extends State<MediaCard> {
   final GlobalKey _menuKey = GlobalKey();
-
-  /// Only call when `tmdbId` and `mediaType` are set.
-  MediaItem _toMediaItem() => MediaItem(
-    tmdbId: widget.tmdbId!,
-    mediaType: widget.mediaType!,
-    titleEn: widget.title,
-    posterPath: widget.posterPath,
-    releaseDate: widget.releaseDate != null
-        ? DateTime.tryParse(widget.releaseDate!)
-        : null,
-    voteAverage: widget.rating,
-    updatedAt: DateTime.now(),
-  );
 
   void _showContextActions(
     BuildContext context, {
@@ -89,19 +66,8 @@ class _MediaCardState extends ConsumerState<MediaCard> {
     Offset? at,
   }) {
     final l10n = AppLocalizations.of(context)!;
-
-    bool isWatchlisted = false;
-    if (widget.tmdbId != null && widget.mediaType != null) {
-      isWatchlisted = ref.read(
-        isInSystemListProvider((
-          tmdbId: widget.tmdbId!,
-          mediaType: widget.mediaType!,
-          type: ListType.watchlist,
-        )),
-      );
-    } else if (widget.onWatchlistToggle != null) {
-      isWatchlisted = widget.isWatchlisted;
-    }
+    final listActions = widget.listActions;
+    final isWatchlisted = listActions?.isWatchlisted ?? false;
 
     final options = [
       if (widget.onPlay != null)
@@ -116,8 +82,7 @@ class _MediaCardState extends ConsumerState<MediaCard> {
           label: l10n.homeMoreInfo,
           onTap: widget.onTap!,
         ),
-      if ((widget.tmdbId != null && widget.mediaType != null) ||
-          widget.onWatchlistToggle != null)
+      if (listActions != null) ...[
         AppMenuOption(
           icon: isWatchlisted
               ? Icons.bookmark_remove
@@ -125,26 +90,14 @@ class _MediaCardState extends ConsumerState<MediaCard> {
           label: isWatchlisted
               ? l10n.menuRemoveFromWatchlist
               : l10n.menuAddToWatchlist,
-          onTap: () {
-            if (widget.onWatchlistToggle != null) {
-              widget.onWatchlistToggle!.call();
-            } else {
-              runListAction(
-                context,
-                ref,
-                (lists) => lists.toggleWatchlist(_toMediaItem()),
-              );
-            }
-          },
+          onTap: listActions.toggleWatchlist,
         ),
-      if (widget.tmdbId != null && widget.mediaType != null)
         AppMenuOption(
           icon: Icons.playlist_add,
           label: l10n.detailsAddToList,
-          onTap: () {
-            AddToListSheet.show(context, _toMediaItem());
-          },
+          onTap: listActions.addToList,
         ),
+      ],
       if (widget.onRemoveFromList != null)
         AppMenuOption(
           icon: Icons.remove_circle_outline,

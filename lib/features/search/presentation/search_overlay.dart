@@ -4,6 +4,7 @@ import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
 import 'package:cinemuse_app/features/media/presentation/person_details_screen.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/title_list_actions.dart';
 import 'package:cinemuse_app/features/search/application/search_provider.dart';
 import 'package:cinemuse_app/features/search/application/search_state.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
@@ -670,15 +671,12 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
               final title = item['name'] ?? l10n.commonUnknown;
               final posterPath = item['profile_path'] as String?;
               final releaseDate = item['known_for_department'] as String?;
-              final tmdbId = item['id'] as int;
 
               return MediaCard(
                 title: title,
                 posterPath: posterPath,
                 releaseDate: releaseDate,
                 rating: null,
-                tmdbId: tmdbId,
-                mediaType: null,
                 focusNode: isFirst ? _firstContentFocusNode : null,
                 onKeyEvent: topRowKeyEvent,
                 onTap: () => _onMediaTap(item),
@@ -692,8 +690,7 @@ class _SearchOverlayState extends ConsumerState<SearchOverlay>
                 posterPath: mediaItem.posterPath,
                 releaseDate: mediaItem.releaseDate?.year.toString(),
                 rating: mediaItem.voteAverage,
-                tmdbId: mediaItem.tmdbId,
-                mediaType: mediaItem.mediaType,
+                listActions: TitleListActions(context, ref, mediaItem),
                 focusNode: isFirst ? _firstContentFocusNode : null,
                 onKeyEvent: topRowKeyEvent,
                 onTap: () => _onMediaTap(item),

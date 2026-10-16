@@ -3,6 +3,7 @@ import 'package:cinemuse_app/shared/widgets/menu/menu_focus_ring.dart';
 import 'package:cinemuse_app/core/error/error_mappers.dart';
 import 'package:cinemuse_app/shared/widgets/error_card.dart';
 import 'package:cinemuse_app/features/profile/presentation/widgets/refresh_user_data.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/title_list_actions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
@@ -1025,8 +1026,7 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
       posterPath: posterPath,
       releaseDate: releaseYear,
       rating: rating,
-      tmdbId: item.tmdbId,
-      mediaType: item.mediaType,
+      listActions: media == null ? null : TitleListActions(context, ref, media),
       progress: progress,
       infoText: infoText,
       stackCount: isTimeline ? stackCount : null,
