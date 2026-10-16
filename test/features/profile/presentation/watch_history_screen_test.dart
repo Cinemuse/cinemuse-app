@@ -96,4 +96,21 @@ void main() {
 
     await expectHandOver(tester, find.text(l10n.watchHistoryFiltersTitle));
   });
+
+  // REV-302: the wide window's sort drop-down showed the arrow cursor.
+  testWidgets('wide: the sort drop-down and its options show the hand', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1600, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+
+    final sort = find.byType(DropdownButton<HistorySortOption>);
+    await expectHandOver(tester, sort);
+    await tester.tap(sort);
+    await tester.pumpAndSettle();
+    await expectHandOver(tester, find.text(l10n.searchHighestRated).last);
+  });
 }

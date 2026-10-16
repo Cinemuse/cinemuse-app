@@ -44,7 +44,6 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
   TimelineGranularity _granularity = TimelineGranularity.daily;
   HistorySortOption _sortOption = HistorySortOption.recentlyWatched;
 
-  // Progressive batch loading state for high-performance rendering
   int _visibleSectionCount = 30;
   int _visibleGridCount = 60;
 
@@ -898,6 +897,8 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
         child: DropdownButton<HistorySortOption>(
           value: _sortOption,
           dropdownColor: AppTheme.surface,
+          mouseCursor: AppTheme.clickCursor,
+          dropdownMenuItemMouseCursor: AppTheme.clickCursor,
           borderRadius: BorderRadius.circular(12),
           icon: const Padding(
             padding: EdgeInsets.only(left: 6),
@@ -1001,7 +1002,6 @@ class _WatchHistoryScreenState extends ConsumerState<WatchHistoryScreen> {
     final releaseYear = media?.releaseDate?.year.toString();
     final rating = media?.voteAverage;
 
-    // Calculate progress fraction if not completed
     final double? progress =
         (item.totalDuration != null &&
             item.totalDuration! > 0 &&

@@ -6,6 +6,7 @@ import 'package:cinemuse_app/features/navigation/application/nav_providers.dart'
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/settings/presentation/settings_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,6 +18,13 @@ import '../../../helpers/cursor_helpers.dart';
 class _FakeSettingsNotifier extends SettingsNotifier {
   @override
   UserSettings build() => const UserSettings();
+}
+
+/// Both debrid services on: Integrations shows the preferred-debrid choice.
+class _BothDebridSettingsNotifier extends SettingsNotifier {
+  @override
+  UserSettings build() =>
+      const UserSettings(enableRealDebrid: true, enableTorBox: true);
 }
 
 void main() {
@@ -163,4 +171,53 @@ void main() {
       await expectHandOver(tester, categories.at(i));
     }
   });
+
+  // REV-302: the drop-downs and their options showed the arrow cursor.
+  final l10n = AppLocalizationsEn();
+  for (final c in [
+    (
+      category: l10n.settingsCustomization,
+      shown: l10n.settingsEnglish,
+      option: l10n.settingsItalian,
+    ),
+    (
+      category: l10n.settingsIntegrations,
+      shown: 'Real-Debrid',
+      option: 'TorBox',
+    ),
+  ]) {
+    testWidgets('${c.category}: the drop-downs and their options show the '
+        'hand', (tester) async {
+      tester.view.physicalSize = const Size(1280, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            settingsProvider.overrideWith(_BothDebridSettingsNotifier.new),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.darkTheme,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(body: SettingsScreen()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(c.category).first);
+      await tester.pumpAndSettle();
+
+      final dropdowns = find.byWidgetPredicate((w) => w is DropdownButton);
+      expect(dropdowns, findsWidgets);
+      for (var i = 0; i < dropdowns.evaluate().length; i++) {
+        await expectHandOver(tester, dropdowns.at(i));
+      }
+      await tester.tap(
+        find.ancestor(of: find.text(c.shown), matching: dropdowns).first,
+      );
+      await tester.pumpAndSettle();
+      await expectHandOver(tester, find.text(c.option).last);
+    });
+  }
 }

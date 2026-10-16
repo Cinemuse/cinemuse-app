@@ -32,7 +32,6 @@ class PlaylistListSection extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Playlist tiles
         if (playlists.isEmpty)
           _buildEmptyState(context, l10n)
         else
@@ -46,7 +45,6 @@ class PlaylistListSection extends ConsumerWidget {
             ),
           ),
         const SizedBox(height: 20),
-        // Action buttons
         Row(
           children: [
             Expanded(
@@ -433,6 +431,8 @@ class _AddRemotePlaylistDialogState extends State<_AddRemotePlaylistDialog> {
             const SizedBox(height: 16),
             DropdownButtonFormField<PlaylistType>(
               initialValue: _type,
+              mouseCursor: AppTheme.clickCursor,
+              dropdownMenuItemMouseCursor: AppTheme.clickCursor,
               decoration: InputDecoration(labelText: l10n.liveTvPlaylistFormat),
               items: PlaylistType.values
                   .map(

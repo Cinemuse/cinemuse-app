@@ -60,7 +60,6 @@ class CustomizationSettings extends ConsumerWidget {
           title: l10n.settingsCustomization,
           description: l10n.settingsCustomizationDesc,
           children: [
-            // Interface Language
             SettingsCard(
               children: [
                 SettingsTile(
@@ -87,7 +86,6 @@ class CustomizationSettings extends ConsumerWidget {
               ],
             ),
 
-            // Media Preferences
             SettingsCard(
               children: [
                 SettingsTile(
@@ -291,6 +289,8 @@ Widget buildSmallDropdown<T>({
         value: value,
         items: items,
         onChanged: onChanged,
+        mouseCursor: AppTheme.clickCursor,
+        dropdownMenuItemMouseCursor: AppTheme.clickCursor,
         dropdownColor: AppTheme.surface,
         borderRadius: BorderRadius.circular(16),
         isDense: true, // Crucial to remove internal padding

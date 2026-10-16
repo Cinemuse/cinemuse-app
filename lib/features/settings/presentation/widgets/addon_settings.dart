@@ -100,7 +100,6 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Debrid Services
         SettingsSection(
           title: l10n.settingsDebridServices,
           children: [
@@ -162,6 +161,8 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
                           ? 'torbox'
                           : 'realdebrid',
                       dropdownColor: AppTheme.surface,
+                      mouseCursor: AppTheme.clickCursor,
+                      dropdownMenuItemMouseCursor: AppTheme.clickCursor,
                       underline: const SizedBox(),
                       items: const [
                         DropdownMenuItem(
@@ -193,7 +194,6 @@ class _AddonSettingsState extends ConsumerState<AddonSettings> {
           ],
         ),
 
-        // External Subtitle Services
         SettingsSection(
           title: l10n.settingsOpenSubtitlesTitle,
           children: [
