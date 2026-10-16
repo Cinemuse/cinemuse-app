@@ -5,6 +5,7 @@ import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
+import 'package:cinemuse_app/features/video_player/application/episode_name_provider.dart';
 import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
 import 'package:cinemuse_app/features/streaming/unified_stream_resolver_provider.dart';
 import 'package:cinemuse_app/shared/widgets/backdrop_card.dart';
@@ -107,6 +108,9 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
               widget.historyItem.totalDuration!)
         : 0.0;
 
+    final episodeLabel = _episodeLabel(ref);
+    final timeLeft = _timeLeftLabel(l10n, item.timeLeft);
+
     final resolver = ref.watch(unifiedStreamResolverProvider);
     final hasCache = resolver.hasCachedStream(
       widget.historyItem.tmdbId.toString(),
@@ -122,9 +126,9 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
       backdropPath: media?.backdropPath,
       posterPath: media?.posterPath,
       progress: percentage,
-      infoText: widget.historyItem.mediaType == MediaKind.tv
-          ? "S${widget.historyItem.season} E${widget.historyItem.episode}"
-          : l10n.personMovie,
+      // Series: "S2 E5 · Pilot" … "23 min left"; movies: the time left.
+      subtitle: episodeLabel ?? timeLeft,
+      subtitleEnd: episodeLabel == null ? null : timeLeft,
       // Offline with no saved details (media null): no list entries, rather
       // than saving an "Unknown" title.
       listActions: media == null ? null : TitleListActions(context, ref, media),
@@ -179,5 +183,35 @@ class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
             }
           : null,
     );
+  }
+
+  /// "S2 E5 · Pilot" ("S2 E5" until the name loads, or when TMDB has none);
+  /// null for movies.
+  String? _episodeLabel(WidgetRef ref) {
+    final item = widget.historyItem;
+    final season = item.season;
+    final episode = item.episode;
+    if (item.mediaType != MediaKind.tv || season == null || episode == null) {
+      return null;
+    }
+    final name = ref
+        .watch(
+          episodeNameProvider((
+            tmdbId: item.tmdbId,
+            season: season,
+            episode: episode,
+          )),
+        )
+        .valueOrNull;
+    return name == null ? 'S$season E$episode' : 'S$season E$episode · $name';
+  }
+
+  static String? _timeLeftLabel(AppLocalizations l10n, Duration? left) {
+    if (left == null) return null;
+    final hours = left.inHours;
+    final minutes = left.inMinutes % 60;
+    if (hours == 0) return l10n.homeTimeLeftMinutes(minutes);
+    if (minutes == 0) return l10n.homeTimeLeftHours(hours);
+    return l10n.homeTimeLeftHoursMinutes(hours, minutes);
   }
 }

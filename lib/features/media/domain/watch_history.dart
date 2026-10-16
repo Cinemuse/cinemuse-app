@@ -45,6 +45,16 @@ class WatchHistory {
 
   bool get isCompleted => status == WatchStatus.completed;
 
+  /// Time still to watch, rounded up to the minute (REV-245); null when the
+  /// length is unknown or nothing is left.
+  Duration? get timeLeft {
+    final total = totalDuration;
+    if (total == null || total <= 0) return null;
+    final seconds = total - progressSeconds;
+    if (seconds <= 0) return null;
+    return Duration(minutes: (seconds / 60).ceil());
+  }
+
   /// One title = type + id: TMDB movie and series ids overlap (REV-98).
   String get titleKey => '${mediaType.name}-$tmdbId';
 

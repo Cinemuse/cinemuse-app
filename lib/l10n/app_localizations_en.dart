@@ -300,6 +300,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeContinueWatching => 'Continue Watching';
 
   @override
+  String homeTimeLeftMinutes(int minutes) {
+    return '$minutes min left';
+  }
+
+  @override
+  String homeTimeLeftHours(int hours) {
+    return '$hours h left';
+  }
+
+  @override
+  String homeTimeLeftHoursMinutes(int hours, int minutes) {
+    return '$hours h $minutes min left';
+  }
+
+  @override
   String get homeSportSchedule => 'Sport Schedule';
 
   @override

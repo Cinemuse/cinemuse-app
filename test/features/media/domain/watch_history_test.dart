@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -31,5 +32,29 @@ void main() {
         isTrue,
       );
     });
+  });
+
+  group('timeLeft (REV-245)', () {
+    for (final (progress, total, expected) in [
+      (0, 2700, const Duration(minutes: 45)),
+      (1200, 2580, const Duration(minutes: 23)),
+      // A part of a minute counts as a whole one.
+      (2550, 2580, const Duration(minutes: 1)),
+      (2580, 2580, null),
+      (100, null, null),
+      (100, 0, null),
+    ]) {
+      test('$progress s of $total s: $expected', () {
+        final history = WatchHistory(
+          userId: 'u',
+          tmdbId: 1,
+          mediaType: MediaKind.movie,
+          progressSeconds: progress,
+          totalDuration: total,
+          lastWatchedAt: DateTime.utc(2026),
+        );
+        expect(history.timeLeft, expected);
+      });
+    }
   });
 }

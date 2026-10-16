@@ -650,6 +650,24 @@ abstract class AppLocalizations {
   /// **'Continue Watching'**
   String get homeContinueWatching;
 
+  /// No description provided for @homeTimeLeftMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min left'**
+  String homeTimeLeftMinutes(int minutes);
+
+  /// No description provided for @homeTimeLeftHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h left'**
+  String homeTimeLeftHours(int hours);
+
+  /// No description provided for @homeTimeLeftHoursMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h {minutes} min left'**
+  String homeTimeLeftHoursMinutes(int hours, int minutes);
+
   /// No description provided for @homeSportSchedule.
   ///
   /// In en, this message translates to:

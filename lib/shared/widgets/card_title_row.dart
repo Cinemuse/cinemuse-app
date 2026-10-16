@@ -1,10 +1,12 @@
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:cinemuse_app/shared/widgets/premium_hover_text.dart';
 import 'package:flutter/material.dart';
 
-/// The line under a card's picture: its title and the "⋮" menu button.
+/// The line under a card's picture: its title and the "⋮" menu button, and
+/// an optional muted line below (e.g. "S2 E5 · Pilot" … "23 min left").
 ///
 /// While the card is hovered or focused the title turns pink and the button
 /// shows (on phones the button always shows). Must sit inside the card's
@@ -24,6 +26,12 @@ class CardTitleRow extends StatelessWidget {
   final bool showsFullTitleOnHover;
   final int maxLines;
 
+  /// The muted line under the title, cut with "…" when long.
+  final String? subtitle;
+
+  /// Shown at the end of the muted line, never cut.
+  final String? subtitleEnd;
+
   const CardTitleRow({
     super.key,
     required this.title,
@@ -32,6 +40,8 @@ class CardTitleRow extends StatelessWidget {
     this.menuIconSize = 16,
     this.showsFullTitleOnHover = false,
     this.maxLines = 1,
+    this.subtitle,
+    this.subtitleEnd,
   });
 
   @override
@@ -45,7 +55,7 @@ class CardTitleRow extends StatelessWidget {
       fontSize: 14,
     );
 
-    return Row(
+    final titleRow = Row(
       children: [
         Expanded(
           child: showsFullTitleOnHover
@@ -86,6 +96,36 @@ class CardTitleRow extends StatelessWidget {
               ),
             ),
           ),
+      ],
+    );
+    if (subtitle == null && subtitleEnd == null) return titleRow;
+
+    final mutedStyle = theme.textTheme.bodySmall!.copyWith(
+      color: AppTheme.textMuted,
+      fontSize: 12,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        titleRow,
+        const SizedBox(height: 2),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                subtitle ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: mutedStyle,
+              ),
+            ),
+            if (subtitleEnd != null) ...[
+              const SizedBox(width: 8),
+              Text(subtitleEnd!, maxLines: 1, style: mutedStyle),
+            ],
+          ],
+        ),
       ],
     );
   }

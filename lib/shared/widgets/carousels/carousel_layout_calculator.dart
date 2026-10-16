@@ -40,7 +40,12 @@ class CarouselLayoutCalculator {
 
   /// Default desktop dimensions for backdrop carousels.
   static const double defaultBackdropWidthDesktop = 320.0;
-  static const double defaultBackdropHeightDesktop = 240.0;
+  static const double defaultBackdropHeightDesktop =
+      defaultBackdropWidthDesktop * 9 / 16 + backdropMetadataHeight;
+
+  /// Room under a backdrop card's picture: the title line and the muted
+  /// episode / time-left line (REV-245).
+  static const double backdropMetadataHeight = 72.0;
 
   /// Standard spacing between carousel cards.
   static const double defaultSpacing = 16.0;
@@ -139,8 +144,7 @@ class CarouselLayoutCalculator {
     final itemWidth = (availableWidth / visibleCards).clamp(120.0, 500.0);
 
     // 16:9 aspect ratio for backdrop thumbnail + metadata
-    const metadataHeight = 60.0;
-    final totalHeight = (itemWidth * (9 / 16)) + metadataHeight;
+    final totalHeight = (itemWidth * (9 / 16)) + backdropMetadataHeight;
 
     return CarouselDimensions(itemWidth: itemWidth, height: totalHeight);
   }

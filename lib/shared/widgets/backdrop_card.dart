@@ -16,7 +16,10 @@ class BackdropCard extends StatefulWidget {
   final String? backdropPath;
   final String? posterPath;
   final double? progress; // 0.0 to 1.0
-  final String? infoText; // e.g. "S1 E5" or "1h 20m left"
+
+  /// The muted line under the title (see [CardTitleRow]).
+  final String? subtitle;
+  final String? subtitleEnd;
   final VoidCallback? onTap;
   final VoidCallback? onDrop;
   final VoidCallback? onCancelRewatch;
@@ -35,7 +38,8 @@ class BackdropCard extends StatefulWidget {
     this.backdropPath,
     this.posterPath,
     this.progress,
-    this.infoText,
+    this.subtitle,
+    this.subtitleEnd,
     this.onTap,
     this.onDrop,
     this.onCancelRewatch,
@@ -198,34 +202,6 @@ class _BackdropCardState extends State<BackdropCard> {
                       },
                     ),
 
-                    // Info Badge
-                    if (widget.infoText != null)
-                      Positioned(
-                        top: 8,
-                        left: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.1),
-                            ),
-                          ),
-                          child: Text(
-                            widget.infoText!,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-
                     // Progress Bar
                     if (widget.progress != null)
                       CardProgressBar(progress: widget.progress!),
@@ -242,6 +218,8 @@ class _BackdropCardState extends State<BackdropCard> {
               onMenu: () => _showContextActions(context),
               menuAnchorKey: _menuKey,
               menuIconSize: 18,
+              subtitle: widget.subtitle,
+              subtitleEnd: widget.subtitleEnd,
             ),
           ],
         ),

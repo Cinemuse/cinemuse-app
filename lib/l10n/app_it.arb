@@ -92,6 +92,25 @@
   "homePopularMovies": "Film Popolari",
   "homePopularSeries": "Serie Popolari",
   "homeContinueWatching": "Continua a guardare",
+  "homeTimeLeftMinutes": "{minutes} min rimanenti",
+  "@homeTimeLeftMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "homeTimeLeftHours": "{hours} h rimanenti",
+  "@homeTimeLeftHours": {
+    "placeholders": {
+      "hours": { "type": "int" }
+    }
+  },
+  "homeTimeLeftHoursMinutes": "{hours} h {minutes} min rimanenti",
+  "@homeTimeLeftHoursMinutes": {
+    "placeholders": {
+      "hours": { "type": "int" },
+      "minutes": { "type": "int" }
+    }
+  },
   "homeSportSchedule": "Sport in programma",
   "sportFootball": "Calcio",
   "sportBasketball": "Pallacanestro",
