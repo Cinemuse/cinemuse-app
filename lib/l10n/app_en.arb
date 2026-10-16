@@ -172,6 +172,12 @@
   "detailsSeasonNumber": "Season {num}",
   "detailsSynopsis": "Synopsis",
   "detailsResumeEpisode": "Resume S{season} E{episode}",
+  "@detailsResumeEpisode": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "episode": { "type": "int" }
+    }
+  },
   "detailsResume": "Resume",
   "detailsPlayNow": "Play Now",
   "detailsSeriesProgress": "Series Progress",

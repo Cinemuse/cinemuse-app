@@ -342,12 +342,11 @@ class DetailsHero extends ConsumerWidget {
 
   String _getPlayButtonLabel(AppLocalizations l10n, String type) {
     if (type == 'series' || type == 'tv') {
-      // AppLocalizations generates arguments alphabetically: (episode, season)
       final season = playTarget.season ?? 1;
       final episode = playTarget.episode ?? 1;
       return playTarget.isResume
-          ? l10n.detailsResumeEpisode(episode, season)
-          : l10n.detailsPlaySeasonEpisode(episode, season);
+          ? l10n.detailsResumeEpisode(season, episode)
+          : l10n.detailsPlaySeasonEpisode(season, episode);
     }
     return playTarget.isResume ? l10n.detailsResume : l10n.detailsPlayNow;
   }

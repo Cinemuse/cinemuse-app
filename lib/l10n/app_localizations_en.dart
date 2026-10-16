@@ -457,7 +457,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailsSynopsis => 'Synopsis';
 
   @override
-  String detailsResumeEpisode(Object episode, Object season) {
+  String detailsResumeEpisode(int season, int episode) {
     return 'Resume S$season E$episode';
   }
 

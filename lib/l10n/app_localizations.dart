@@ -894,7 +894,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Resume S{season} E{episode}'**
-  String detailsResumeEpisode(Object episode, Object season);
+  String detailsResumeEpisode(int season, int episode);
 
   /// No description provided for @detailsResume.
   ///

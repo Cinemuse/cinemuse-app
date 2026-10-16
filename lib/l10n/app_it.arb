@@ -131,9 +131,21 @@
   "detailsEpisodesCount": "{count, plural, =1{1 Episodio} other{{count} Episodi}}",
   "detailsEpisodeRuntime": "{minutes}m/ep",
   "detailsPlaySeasonEpisode": "Riproduci S{season} E{episode}",
+  "@detailsPlaySeasonEpisode": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "episode": { "type": "int" }
+    }
+  },
   "detailsSeasonNumber": "Stagione {num}",
   "detailsSynopsis": "Sinossi",
   "detailsResumeEpisode": "Riprendi S{season} E{episode}",
+  "@detailsResumeEpisode": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "episode": { "type": "int" }
+    }
+  },
   "detailsResume": "Riprendi",
   "detailsPlayNow": "Riproduci Ora",
   "detailsSeriesProgress": "Progresso Serie",

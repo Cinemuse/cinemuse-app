@@ -152,6 +152,7 @@ void main() {
       MediaKind type, {
       required WatchStatus status,
       required int day,
+      int progress = 600,
     }) => WatchHistory(
       userId: 'user-a',
       tmdbId: 1,
@@ -159,7 +160,7 @@ void main() {
       status: status,
       season: type == MediaKind.tv ? 2 : null,
       episode: type == MediaKind.tv ? 4 : null,
-      progressSeconds: 600,
+      progressSeconds: progress,
       totalDuration: 6000,
       lastWatchedAt: DateTime.utc(2026, 10, day),
     );
@@ -254,21 +255,32 @@ void main() {
       expect(find.text(l10n.detailsPlayNow), findsNothing);
     });
 
-    testWidgets('the show page opens on its season and resumes its episode', (
-      tester,
-    ) async {
-      await pumpPage(
+    // REV-290: the label once read "Play S4 E2" for season 2, episode 4.
+    for (final (progress, label) in const [
+      (600, 'Resume S2 E4'),
+      (0, 'Play S2 E4'),
+    ]) {
+      testWidgets('the show page opens on its season and shows "$label"', (
         tester,
-        type: 'tv',
-        rows: [
-          row(MediaKind.tv, status: WatchStatus.watching, day: 1),
-          row(MediaKind.movie, status: WatchStatus.completed, day: 2),
-        ],
-      );
+      ) async {
+        await pumpPage(
+          tester,
+          type: 'tv',
+          rows: [
+            row(
+              MediaKind.tv,
+              status: WatchStatus.watching,
+              day: 1,
+              progress: progress,
+            ),
+            row(MediaKind.movie, status: WatchStatus.completed, day: 2),
+          ],
+        );
 
-      expect(find.text(l10n.detailsResumeEpisode(4, 2)), findsOneWidget);
-      expect(loadedSeasons.last, 2);
-    });
+        expect(find.text(label), findsOneWidget);
+        expect(loadedSeasons.last, 2);
+      });
+    }
   });
 
   // REV-206: a failed load showed an endless spinner or "not found".
