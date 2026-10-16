@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:cinemuse_app/core/data/database.dart';
 import 'package:cinemuse_app/core/error/supabase_extensions.dart';
+import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -16,6 +17,8 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
 });
 
 class ProfileRepository {
+  static const _tag = 'ProfileRepository';
+
   final SupabaseClient _client;
   final AppDatabase _db;
 
@@ -70,40 +73,60 @@ class ProfileRepository {
     return null;
   }
 
-  Future<void> updateProfile(
-    String userId,
-    Map<String, dynamic> updates,
-  ) async {
-    // 1. Update Remote
+  /// Saves a new display name as the profile's `username`.
+  Future<void> updateUsername(String userId, String username) async {
     await _client
         .from('profiles')
-        .update(updates)
+        .update({'username': username})
         .eq('id', userId)
         .withErrorHandling();
+    await _updateCache(userId, username: username);
+  }
 
-    // 2. Update Local Cache (Best effort)
+  /// Merges [patch] (only the changed keys) into the stored preferences,
+  /// so values this device never changed stay as stored (DATA-02b).
+  Future<void> patchPreferences(
+    String userId,
+    Map<String, dynamic> patch,
+  ) async {
+    final merged = await _client
+        .rpc('patch_preferences', params: {'p_patch': patch})
+        .withErrorHandling();
+    await _updateCache(
+      userId,
+      preferences: Map<String, dynamic>.from(merged as Map),
+    );
+  }
+
+  /// Best effort: the remote write already succeeded, and the next
+  /// [getProfile] online refreshes the cache anyway.
+  Future<void> _updateCache(
+    String userId, {
+    String? username,
+    Map<String, dynamic>? preferences,
+  }) async {
     try {
       final cached = await _db.getCachedProfile(userId);
-      if (cached != null) {
-        final Map<String, dynamic> currentPrefs = cached.preferences != null
-            ? jsonDecode(cached.preferences!) as Map<String, dynamic>
-            : {};
-
-        final updatedPrefs = {...currentPrefs, ...?updates['preferences']};
-
-        await _db.upsertProfile(
-          CachedProfilesCompanion(
-            id: Value(userId),
-            username: Value(updates['username'] ?? cached.username),
-            avatarUrl: Value(updates['avatar_url'] ?? cached.avatarUrl),
-            preferences: Value(jsonEncode(updatedPrefs)),
-            createdAt: Value(cached.createdAt),
-            updatedAt: Value(DateTime.now()),
+      if (cached == null) return;
+      await _db.upsertProfile(
+        CachedProfilesCompanion(
+          id: Value(userId),
+          username: Value(username ?? cached.username),
+          avatarUrl: Value(cached.avatarUrl),
+          preferences: Value(
+            preferences != null ? jsonEncode(preferences) : cached.preferences,
           ),
-        );
-      }
-    } catch (e) {
-      debugPrint('ProfileRepository: Failed to update local cache: $e');
+          createdAt: Value(cached.createdAt),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+    } catch (e, st) {
+      AppLogger.warn(
+        _tag,
+        'Failed to update the local profile cache',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 }

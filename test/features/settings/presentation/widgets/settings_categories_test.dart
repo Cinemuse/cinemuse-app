@@ -60,7 +60,7 @@ void main() {
         ),
       );
       when(
-        () => profiles.updateProfile(any(), any()),
+        () => profiles.updateUsername(any(), any()),
       ).thenThrow(const NetworkFailure('offline'));
 
       await tester.pumpWidget(

@@ -219,6 +219,18 @@ class UserSettings {
     );
   }
 
+  /// The stored keys whose value differs from [previous], for a save that
+  /// writes only what changed (DATA-02b).
+  Map<String, dynamic> preferencesChangedSince(UserSettings previous) {
+    final before = previous.toPreferencesJson();
+    // jsonEncode compares the addon lists by content, not by identity.
+    return {
+      for (final entry in toPreferencesJson().entries)
+        if (jsonEncode(entry.value) != jsonEncode(before[entry.key]))
+          entry.key: entry.value,
+    };
+  }
+
   Map<String, dynamic> toPreferencesJson() {
     return {
       'appLanguage': appLanguage,

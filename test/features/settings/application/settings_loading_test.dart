@@ -40,7 +40,10 @@ void main() {
     profileRepo = MockProfileRepository();
     authEvents = StreamController<AuthState>.broadcast();
     when(
-      () => profileRepo.updateProfile(any(), any()),
+      () => profileRepo.patchPreferences(any(), any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => profileRepo.updateUsername(any(), any()),
     ).thenAnswer((_) async {});
 
     final auth = MockGoTrueClient();
@@ -71,10 +74,10 @@ void main() {
       notifier.updateSettings((s) => s.copyWith(showSubtitles: false)),
       throwsException,
     );
-    verifyNever(() => profileRepo.updateProfile(any(), any()));
+    verifyNever(() => profileRepo.patchPreferences(any(), any()));
   });
 
-  test('a change made while loading waits and keeps stored keys', () async {
+  test('a change made while loading waits for the stored settings', () async {
     final load = Completer<Profile?>();
     when(() => profileRepo.getProfile('user-a')).thenAnswer((_) => load.future);
 
@@ -86,14 +89,33 @@ void main() {
     load.complete(_profile('user-a', {'realDebridKey': 'stored-key'}));
     await update;
 
-    final saved =
-        verify(
-              () => profileRepo.updateProfile('user-a', captureAny()),
-            ).captured.single
-            as Map<String, dynamic>;
-    final prefs = saved['preferences'] as Map<String, dynamic>;
-    expect(prefs['realDebridKey'], 'stored-key');
-    expect(prefs['showSubtitles'], false);
+    expect(container.read(settingsProvider).realDebridKey, 'stored-key');
+    verify(
+      () => profileRepo.patchPreferences('user-a', {'showSubtitles': false}),
+    ).called(1);
+  });
+
+  // DATA-02b: a save writes only what changed, so values another device
+  // saved meanwhile (or this one never loaded right) stay as stored.
+  test('a save sends only the changed keys', () async {
+    when(() => profileRepo.getProfile('user-a')).thenAnswer(
+      (_) async => _profile('user-a', {
+        'realDebridKey': 'stored-key',
+        'installedAddons': [
+          {'id': 'a', 'name': 'A', 'transportUrl': 'https://a', 'version': '1'},
+        ],
+      }),
+    );
+
+    final notifier = container.read(settingsProvider.notifier);
+    await notifier.initSettings();
+    await notifier.updateSettings((s) => s.copyWith(showSubtitles: false));
+
+    // Exactly this map: the stored key and the addon list are not sent.
+    verify(
+      () => profileRepo.patchPreferences('user-a', {'showSubtitles': false}),
+    ).called(1);
+    verifyNever(() => profileRepo.updateUsername(any(), any()));
   });
 
   test('switching account drops the previous user\'s settings', () async {
@@ -114,7 +136,7 @@ void main() {
       notifier.updateSettings((s) => s.copyWith(showSubtitles: false)),
       throwsException,
     );
-    verifyNever(() => profileRepo.updateProfile('user-b', any()));
+    verifyNever(() => profileRepo.patchPreferences('user-b', any()));
   });
 
   test('a failed save puts the old value back and rethrows (REV-78)', () async {
@@ -122,7 +144,7 @@ void main() {
       () => profileRepo.getProfile('user-a'),
     ).thenAnswer((_) async => _profile('user-a', {'showSubtitles': true}));
     when(
-      () => profileRepo.updateProfile(any(), any()),
+      () => profileRepo.patchPreferences(any(), any()),
     ).thenThrow(const NetworkFailure('offline'));
 
     final notifier = container.read(settingsProvider.notifier);
@@ -149,15 +171,9 @@ void main() {
       await notifier.initSettings();
       await notifier.updateSettings((s) => s.copyWith(enableVixSrc: false));
 
-      final saved =
-          verify(
-                () => profileRepo.updateProfile('user-a', captureAny()),
-              ).captured.single
-              as Map<String, dynamic>;
-      final prefs = saved['preferences'] as Map<String, dynamic>;
-      expect(prefs['realDebridKey'], 'stored-key');
-      expect(prefs['enableVixSrc'], false);
-      expect(saved.containsKey('username'), isFalse);
+      verify(
+        () => profileRepo.patchPreferences('user-a', {'enableVixSrc': false}),
+      ).called(1);
     },
   );
 
@@ -170,11 +186,7 @@ void main() {
     await notifier.initSettings();
     await notifier.updateSettings((s) => s.copyWith(displayName: 'Ste'));
 
-    final saved =
-        verify(
-              () => profileRepo.updateProfile('user-a', captureAny()),
-            ).captured.single
-            as Map<String, dynamic>;
-    expect(saved['username'], 'Ste');
+    verify(() => profileRepo.updateUsername('user-a', 'Ste')).called(1);
+    verifyNever(() => profileRepo.patchPreferences(any(), any()));
   });
 }

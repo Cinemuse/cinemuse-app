@@ -14,7 +14,7 @@ class SettingsNotifier extends Notifier<UserSettings> {
 
   // The user whose stored settings are in `state`. Null until a load
   // succeeds: until then `state` holds defaults and must not be saved,
-  // because every save writes the whole preferences object.
+  // because a change is worked out against what `state` holds.
   String? _loadedUserId;
   Future<void>? _loading;
 
@@ -98,16 +98,15 @@ class SettingsNotifier extends Notifier<UserSettings> {
       ref.read(localeProvider.notifier).setLocale(updated.appLanguage);
     }
 
-    final Map<String, dynamic> dbUpdates = {
-      if (updated.displayName != previous.displayName)
-        'username': updated.displayName,
-      'preferences': updated.toPreferencesJson(),
-    };
+    final profiles = ref.read(profileRepositoryProvider);
+    // Only the changed keys: another device's newer values stay (DATA-02b).
+    final patch = updated.preferencesChangedSince(previous);
 
     try {
-      await ref
-          .read(profileRepositoryProvider)
-          .updateProfile(user.id, dbUpdates);
+      if (updated.displayName != previous.displayName) {
+        await profiles.updateUsername(user.id, updated.displayName);
+      }
+      if (patch.isNotEmpty) await profiles.patchPreferences(user.id, patch);
     } catch (e, st) {
       AppLogger.warn(
         _tag,
