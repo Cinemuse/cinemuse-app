@@ -1,5 +1,7 @@
 /// Real app, dev account: the details page's Drop, Play and "mark all"
-/// save through the controller (REV-205, old manual check 8p 4).
+/// save through the controller (REV-205, old manual check 8p 4), and a
+/// movie's watch count goes up and stays, today and on a past date
+/// (REV-196, old manual check 8o 15).
 ///
 /// Run with (Windows, from `cinemuse-app/`):
 /// ```
@@ -12,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+import 'package:cinemuse_app/core/services/system/supabase_service.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
 import 'package:cinemuse_app/features/media/application/series_domain_service.dart';
@@ -27,6 +30,9 @@ import 'app_test_helpers.dart';
 /// Fleabag (TMDB tv 67070): finished, two short seasons, never touched by
 /// the dev account.
 const _showId = 67070;
+
+/// Dr. Strangelove (TMDB movie 935), never touched by the dev account.
+const _movieId = 935;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -135,5 +141,101 @@ void main() {
 
     await eraseTitle(container, _showId, 'tv');
     expect(await serverHistoryRow(container, _showId, 'tv'), isNull);
+  });
+
+  testWidgets('movie Track → watched today, then a rewatch on a past date', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 800);
+    addTearDown(tester.view.reset);
+
+    final container = await pumpAppAndLogin(tester);
+    await expectUntouched(container, _movieId, 'movie');
+    addTearDown(() => eraseTitle(container, _movieId, 'movie'));
+
+    openDetails(container, _movieId, 'movie');
+    await pumpUntil(
+      tester,
+      () => find.byType(DetailsHero).evaluate().isNotEmpty,
+      what: 'the details page',
+    );
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(MediaDetailsScreen)),
+    )!;
+    Finder inHero(Finder finder) =>
+        find.descendant(of: find.byType(DetailsHero), matching: finder);
+    final track = inHero(find.text(l10n.detailsTrack));
+    await pumpUntil(
+      tester,
+      () => track.evaluate().isNotEmpty,
+      what: 'the Track button',
+    );
+    Future<void> waitForLogs(int count) async {
+      var logs = 0;
+      for (var i = 0; i < 40 && logs != count; i++) {
+        await tester.pump(const Duration(milliseconds: 250));
+        logs = await serverLogCount(container, _movieId, 'movie');
+      }
+      expect(logs, count);
+    }
+
+    // Today.
+    await tester.tap(track);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text(l10n.detailsMarkAsWatched));
+    await waitForLogs(1);
+    final watched = inHero(find.text(l10n.detailsWatched));
+    await pumpUntil(
+      tester,
+      () => watched.evaluate().isNotEmpty,
+      what: '"Watched" on the Track button',
+    );
+
+    // A rewatch on the 15th of last month, through the calendar.
+    await tester.tap(watched);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.byTooltip(l10n.detailsSelectDate));
+    await tester.pump(const Duration(seconds: 1));
+    final material = MaterialLocalizations.of(
+      tester.element(find.byType(DatePickerDialog)),
+    );
+    await tester.tap(find.byTooltip(material.previousMonthTooltip));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text('15'));
+    await tester.tap(find.text(material.okButtonLabel));
+    await tester.pump(const Duration(seconds: 1));
+    final now = DateTime.now();
+    final past = DateTime(now.year, now.month - 1, 15);
+    await tester.tap(
+      find.text(l10n.detailsWatchedOnDate('15/${past.month}/${past.year}')),
+    );
+    await waitForLogs(2);
+
+    // The count goes up and stays, once the server's logs come back.
+    final twice = inHero(find.text(l10n.detailsWatchedCount(2)));
+    await pumpUntil(
+      tester,
+      () => twice.evaluate().isNotEmpty,
+      what: '"Watched x2" on the Track button',
+    );
+    await tester.pump(const Duration(seconds: 3));
+    expect(twice, findsOneWidget);
+    expect(await serverLogCount(container, _movieId, 'movie'), 2);
+    final dates = await container
+        .read(supabaseClientProvider)
+        .from('watch_logs')
+        .select('logged_at')
+        .eq('tmdb_id', _movieId)
+        .eq('media_type', 'movie');
+    final days = dates
+        .map((r) => DateTime.parse(r['logged_at'] as String).toLocal())
+        .map((d) => DateTime(d.year, d.month, d.day))
+        .toSet();
+    expect(days, {DateTime(now.year, now.month, now.day), past});
+    expect(
+      (await serverHistoryRow(container, _movieId, 'movie'))?['status'],
+      'completed',
+    );
   });
 }
