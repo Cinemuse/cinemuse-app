@@ -1,0 +1,224 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/features/profile/presentation/widgets/title_list_actions.dart';
+import 'package:cinemuse_app/features/media/domain/watch_history.dart';
+import 'package:cinemuse_app/features/media/application/details_provider.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/media/presentation/media_details_screen.dart';
+import 'package:cinemuse_app/features/video_player/application/episode_name_provider.dart';
+import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
+import 'package:cinemuse_app/features/streaming/unified_stream_resolver_provider.dart';
+import 'package:cinemuse_app/shared/widgets/backdrop_card.dart';
+import 'package:cinemuse_app/shared/widgets/skeleton_box.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+
+class ContinueWatchingCard extends ConsumerStatefulWidget {
+  final WatchHistory historyItem;
+  final VoidCallback? onDrop;
+
+  /// These get the title the card shows, for the Undo message.
+  final ValueChanged<String> onCancelRewatch;
+  final ValueChanged<String>? onClearProgress;
+  final double? width;
+
+  const ContinueWatchingCard({
+    super.key,
+    required this.historyItem,
+    required this.onCancelRewatch,
+    this.onDrop,
+    this.onClearProgress,
+    this.width,
+  });
+
+  @override
+  ConsumerState<ContinueWatchingCard> createState() =>
+      _ContinueWatchingCardState();
+}
+
+class _ContinueWatchingCardState extends ConsumerState<ContinueWatchingCard> {
+  @override
+  Widget build(BuildContext context) {
+    final localMedia = widget.historyItem.media;
+    final appLanguage = ref.watch(
+      settingsProvider.select((s) => s.appLanguage),
+    );
+
+    if (localMedia != null && localMedia.hasCompleteTitle(appLanguage)) {
+      return _buildCard(context, ref, localMedia, appLanguage);
+    }
+
+    final mediaAsync = ref.watch(
+      mediaItemProvider((
+        id: widget.historyItem.tmdbId,
+        type: widget.historyItem.mediaType,
+      )),
+    );
+
+    return mediaAsync.when(
+      // Offline or TMDB failed (null): still a usable card from the local
+      // data, titled "Unknown", so it can be resumed or removed.
+      data: (media) =>
+          _buildCard(context, ref, media ?? localMedia, appLanguage),
+      loading: _buildSkeleton,
+      error: (_, _) => _buildCard(context, ref, localMedia, appLanguage),
+    );
+  }
+
+  Widget _buildSkeleton() {
+    final w = widget.width ?? 280.0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SkeletonBox(width: w, height: w * (9 / 16)),
+        const SizedBox(height: 10),
+        SkeletonBox(width: w * 0.55, height: 16),
+      ],
+    );
+  }
+
+  Widget _buildCard(
+    BuildContext context,
+    WidgetRef ref,
+    MediaItem? media,
+    String appLanguage,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    final item = widget.historyItem;
+    final isRewatching =
+        ref
+            .watch(
+              isRewatchingProvider((
+                tmdbId: item.tmdbId,
+                mediaType: item.mediaType,
+                season: item.season,
+                episode: item.episode,
+              )),
+            )
+            .value ??
+        false;
+
+    final title = media != null && media.hasCompleteTitle(appLanguage)
+        ? media.getLocalizedTitle(appLanguage)!
+        : l10n.commonUnknown;
+    final onClearProgress = widget.onClearProgress;
+    final type = item.mediaType.name;
+
+    final percentage =
+        (widget.historyItem.totalDuration != null &&
+            widget.historyItem.totalDuration! > 0)
+        ? (widget.historyItem.progressSeconds /
+              widget.historyItem.totalDuration!)
+        : 0.0;
+
+    final episodeLabel = _episodeLabel(ref);
+    final timeLeft = _timeLeftLabel(l10n, item.timeLeft);
+
+    final resolver = ref.watch(unifiedStreamResolverProvider);
+    final hasCache = resolver.hasCachedStream(
+      widget.historyItem.tmdbId.toString(),
+      type,
+      season: widget.historyItem.season,
+      episode: widget.historyItem.episode,
+    );
+
+    return BackdropCard(
+      key: ValueKey('$type-${item.tmdbId}'),
+      title: title,
+      width: widget.width,
+      backdropPath: media?.backdropPath,
+      posterPath: media?.posterPath,
+      progress: percentage,
+      // Series: "S2 E5 · Pilot" … "23 min left"; movies: the time left.
+      subtitle: episodeLabel ?? timeLeft,
+      subtitleEnd: episodeLabel == null ? null : timeLeft,
+      // Offline with no saved details (media null): no list entries, rather
+      // than saving an "Unknown" title.
+      listActions: media == null ? null : TitleListActions(context, ref, media),
+      onTap: () {
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute(
+            builder: (_) => VideoPlayerScreen(
+              queryId: widget.historyItem.tmdbId.toString(),
+              type: type,
+              season: widget.historyItem.season,
+              episode: widget.historyItem.episode,
+              startPosition: widget.historyItem.progressSeconds,
+            ),
+          ),
+        );
+      },
+      onRestart: () {
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute(
+            builder: (_) => VideoPlayerScreen(
+              queryId: widget.historyItem.tmdbId.toString(),
+              type: type,
+              season: widget.historyItem.season,
+              episode: widget.historyItem.episode,
+              startPosition: 0,
+            ),
+          ),
+        );
+      },
+      onDetails: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MediaDetailsScreen(
+              mediaId: widget.historyItem.tmdbId.toString(),
+              mediaType: type,
+            ),
+          ),
+        );
+      },
+      onDrop: isRewatching ? null : widget.onDrop,
+      onCancelRewatch: isRewatching
+          ? () => widget.onCancelRewatch(title)
+          : null,
+      onClearProgress: onClearProgress == null
+          ? null
+          : () => onClearProgress(title),
+      onClearCache: hasCache
+          ? () {
+              resolver.clearCachedStream(
+                widget.historyItem.tmdbId.toString(),
+                type,
+                season: widget.historyItem.season,
+                episode: widget.historyItem.episode,
+              );
+              setState(() {});
+            }
+          : null,
+    );
+  }
+
+  /// "S2 E5 · Pilot" ("S2 E5" until the name loads, or when TMDB has none);
+  /// null for movies.
+  String? _episodeLabel(WidgetRef ref) {
+    final item = widget.historyItem;
+    final season = item.season;
+    final episode = item.episode;
+    if (item.mediaType != MediaKind.tv || season == null || episode == null) {
+      return null;
+    }
+    final name = ref
+        .watch(
+          episodeNameProvider((
+            tmdbId: item.tmdbId,
+            season: season,
+            episode: episode,
+          )),
+        )
+        .value;
+    return name == null ? 'S$season E$episode' : 'S$season E$episode · $name';
+  }
+
+  static String? _timeLeftLabel(AppLocalizations l10n, Duration? left) {
+    if (left == null) return null;
+    final hours = left.inHours;
+    final minutes = left.inMinutes % 60;
+    if (hours == 0) return l10n.homeTimeLeftMinutes(minutes);
+    if (minutes == 0) return l10n.homeTimeLeftHours(hours);
+    return l10n.homeTimeLeftHoursMinutes(hours, minutes);
+  }
+}

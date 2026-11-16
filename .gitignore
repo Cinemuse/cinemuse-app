@@ -1,0 +1,58 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.buildlog/
+.history
+migrate_working_dir/
+
+# IDEs
+*.iml
+*.ipr
+*.iws
+.idea/
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+coverage/
+.fvm/
+
+# Android (more rules in android/.gitignore)
+.gradle/
+.kotlin/
+*.jks
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
+
+# Generated plugin registrants
+**/generated_plugin_registrant.dart
+**/windows/flutter/generated_plugin_registrant.cc
+**/windows/flutter/generated_plugin_registrant.h
+**/windows/flutter/generated_plugins.cmake
+**/linux/flutter/generated_plugin_registrant.cc
+**/linux/flutter/generated_plugin_registrant.h
+**/linux/flutter/generated_plugins.cmake
+
+# Symbols and obfuscation maps
+app.*.symbols
+app.*.map.json
+
+# Project
+.env
+# Dev/test account for the debug "Dev login" button (SEC-08)
+dev_login.json
+cinemuse.sqlite
+untranslated.json
+# Health checks kept outside this repo, copied in to run by hand
+scripts/telemetry/
+*_telemetry_report.json

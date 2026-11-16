@@ -1,0 +1,397 @@
+import 'package:cinemuse_app/core/presentation/theme/breakpoints.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:cinemuse_app/features/media/application/details_provider.dart';
+import 'package:cinemuse_app/features/media/application/media_details_controller.dart';
+import 'package:cinemuse_app/features/media/domain/comments_repository.dart';
+import 'package:cinemuse_app/features/media/domain/episode_item.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/media/domain/watch_history.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/comments_bottom_sheet.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_carousel_row.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/episode_list.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/episodes/season_selector.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/tracking_modals.dart';
+import 'package:cinemuse_app/features/media/presentation/widgets/watch_logs_sheet.dart';
+import 'package:cinemuse_app/features/video_player/presentation/video_player_screen.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/action_feedback.dart';
+import 'package:cinemuse_app/shared/widgets/app_snackbar.dart';
+import 'package:cinemuse_app/shared/widgets/bento_box.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:cinemuse_app/features/media/application/series_domain_service_provider.dart';
+
+class EpisodeSection extends ConsumerWidget {
+  final String mediaId;
+
+  /// The show's details, for its seasons.
+  final MediaItem series;
+
+  const EpisodeSection({
+    super.key,
+    required this.mediaId,
+    required this.series,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final tmdbId = int.parse(mediaId);
+    final selectedSeason = ref.watch(selectedSeasonProvider(mediaId));
+    final seasonEpisodesAsync = ref.watch(
+      seasonEpisodesProvider((tmdbId: tmdbId, seasonNumber: selectedSeason)),
+    );
+
+    final watchedEpisodesMap = ref.watch(watchedEpisodesMapProvider(tmdbId));
+    final episodeProgressMap = ref
+        .watch(episodeProgressMapProvider(tmdbId))
+        .value;
+    final controller = ref.read(mediaDetailsControllerProvider.notifier);
+    final seasons = series.seasons ?? const <SeasonSummary>[];
+    final seasonSummaries = SeasonSummary.inPickerOrder(seasons);
+    final isMobile = Breakpoints.isCompact(context);
+    // The translated failure, not its raw text (REV-300).
+    String seasonError(Object err) => l10n.detailsErrorLoadingSeason(
+      ref.read(errorMapperProvider).map(err).message,
+    );
+
+    void onEpisodeTap(int s, int e, String name, {bool restart = false}) =>
+        _handleEpisodePlay(
+          context,
+          mediaId,
+          s,
+          e,
+          name,
+          episodeProgressMap?['$s-$e']?.progressSeconds ?? 0,
+          restart: restart,
+        );
+
+    // The tick is undone by the controller; the error shows here (REV-298).
+    void onMarkWatched(int season, int ep, DateTime? date) => runShowingErrors(
+      context,
+      ref,
+      () => controller.logEpisodeWatch(
+        tmdbId: tmdbId,
+        season: season,
+        episode: ep,
+        loggedAt: date,
+      ),
+    );
+
+    void onTrackOptions(int season, int ep) => showTrackOptions(
+      context: context,
+      ref: ref,
+      controller: controller,
+      tmdbId: tmdbId,
+      season: season,
+      episode: ep,
+      watchCount: watchedEpisodesMap['$season-$ep'] ?? 0,
+    );
+
+    List<({int season, int episode})> onFindMissingPreceding(
+      int season,
+      int ep,
+    ) => findMissingPrecedingEpisodes(
+      ref: ref,
+      seasons: seasons,
+      watchedEpisodesCount: watchedEpisodesMap,
+      currentSeason: season,
+      currentEpisode: ep,
+    );
+
+    void onShowMarkPrecedingModal(
+      int season,
+      int ep,
+      List<({int season, int episode})> missing,
+    ) => showMarkPrecedingModal(
+      context: context,
+      ref: ref,
+      controller: controller,
+      tmdbId: tmdbId,
+      season: season,
+      episode: ep,
+      missing: missing,
+    );
+
+    void onViewHistory(int season, int ep) => WatchLogsSheet.show(
+      context,
+      tmdbId,
+      l10n.detailsEpisodeFallback(ep),
+      season: season,
+      episode: ep,
+    );
+
+    void onShowComments(int s, int e) =>
+        _showEpisodeComments(context, tmdbId, s, e, l10n);
+
+    final seasonSelectorWidget = SeasonSelector(
+      seasons: seasonSummaries,
+      selectedSeason: selectedSeason,
+      mediaId: mediaId,
+    );
+
+    if (!isMobile) {
+      return _buildWidescreenCarousel(
+        l10n: l10n,
+        selectedSeason: selectedSeason,
+        seasonEpisodesAsync: seasonEpisodesAsync,
+        seasonError: seasonError,
+        watchedEpisodesMap: watchedEpisodesMap,
+        episodeProgressMap: episodeProgressMap,
+        seasonSelector: seasonSelectorWidget,
+        onEpisodeTap: onEpisodeTap,
+        onMarkWatched: onMarkWatched,
+        onTrackOptions: onTrackOptions,
+        onFindMissingPreceding: onFindMissingPreceding,
+        onShowMarkPrecedingModal: onShowMarkPrecedingModal,
+        onViewHistory: onViewHistory,
+        onShowComments: onShowComments,
+      );
+    }
+
+    return BentoBox(
+      title: l10n.detailsEpisodesRegistry,
+      icon: LucideIcons.tv,
+      action: seasonSelectorWidget,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 300),
+        child: seasonEpisodesAsync.when(
+          loading: () => const Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppTheme.accent,
+            ),
+          ),
+          error: (err, _) => Center(child: Text(seasonError(err))),
+          data: (episodes) {
+            if (episodes == null) {
+              return Center(child: Text(l10n.detailsSeasonNotFound));
+            }
+            return EpisodeList(
+              episodes: episodes,
+              seasonNumber: selectedSeason,
+              mediaId: mediaId,
+              watchedEpisodesCount: watchedEpisodesMap,
+              episodeProgress: episodeProgressMap,
+              onEpisodeTap: onEpisodeTap,
+              onMarkWatched: onMarkWatched,
+              onTrackOptions: onTrackOptions,
+              onFindMissingPreceding: onFindMissingPreceding,
+              onShowMarkPrecedingModal: onShowMarkPrecedingModal,
+              onViewHistory: onViewHistory,
+              onShowComments: onShowComments,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWidescreenCarousel({
+    required AppLocalizations l10n,
+    required int selectedSeason,
+    required AsyncValue<List<EpisodeItem>?> seasonEpisodesAsync,
+    required String Function(Object error) seasonError,
+    required Map<String, int> watchedEpisodesMap,
+    required Map<String, WatchHistory>? episodeProgressMap,
+    required Widget seasonSelector,
+    required void Function(int s, int e, String name, {bool restart})
+    onEpisodeTap,
+    required void Function(int season, int ep, DateTime? date) onMarkWatched,
+    required void Function(int season, int ep) onTrackOptions,
+    required List<({int season, int episode})> Function(int season, int ep)
+    onFindMissingPreceding,
+    required void Function(
+      int season,
+      int ep,
+      List<({int season, int episode})> missing,
+    )
+    onShowMarkPrecedingModal,
+    required void Function(int season, int ep) onViewHistory,
+    required void Function(int s, int e) onShowComments,
+  }) {
+    // One row for every state, so the season selector never moves to another
+    // parent (focus loss, REV-204) and a missing season keeps it (REV-207).
+    return EpisodeCarouselRow(
+      episodes: seasonEpisodesAsync.value ?? const [],
+      seasonNumber: selectedSeason,
+      mediaId: mediaId,
+      watchedEpisodesCount: watchedEpisodesMap,
+      episodeProgress: episodeProgressMap,
+      seasonSelector: seasonSelector,
+      emptyBuilder: (_) => SizedBox(
+        height: 230,
+        child: Center(
+          child: seasonEpisodesAsync.when(
+            loading: () => const CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppTheme.accent,
+            ),
+            error: (err, _) => Text(seasonError(err)),
+            data: (_) => Text(l10n.detailsSeasonNotFound),
+          ),
+        ),
+      ),
+      onEpisodeTap: onEpisodeTap,
+      onMarkWatched: onMarkWatched,
+      onTrackOptions: onTrackOptions,
+      onFindMissingPreceding: onFindMissingPreceding,
+      onShowMarkPrecedingModal: onShowMarkPrecedingModal,
+      onViewHistory: onViewHistory,
+      onShowComments: onShowComments,
+    );
+  }
+
+  static void _handleEpisodePlay(
+    BuildContext context,
+    String mediaId,
+    int season,
+    int episode,
+    String name,
+    int progress, {
+    bool restart = false,
+  }) {
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        builder: (_) => VideoPlayerScreen(
+          queryId: mediaId,
+          type: 'tv',
+          season: season,
+          episode: episode,
+          episodeTitle: name,
+          startPosition: restart ? 0 : progress,
+        ),
+      ),
+    );
+  }
+
+  static List<({int season, int episode})> findMissingPrecedingEpisodes({
+    required WidgetRef ref,
+    required List<SeasonSummary> seasons,
+    required Map<String, int> watchedEpisodesCount,
+    required int currentSeason,
+    required int currentEpisode,
+  }) {
+    return ref
+        .read(seriesDomainServiceProvider)
+        .findMissingPrecedingEpisodes(
+          currentSeason: currentSeason,
+          currentEpisode: currentEpisode,
+          seasons: seasons,
+          watchedEpisodesCount: watchedEpisodesCount,
+        );
+  }
+
+  static void showMarkPrecedingModal({
+    required BuildContext context,
+    required WidgetRef ref,
+    required MediaDetailsController controller,
+    required int tmdbId,
+    required int season,
+    required int episode,
+    required List<({int season, int episode})> missing,
+  }) {
+    MarkPrecedingModal.show(context, missingCount: missing.length).then((
+      markAll,
+    ) {
+      if (markAll == null) return;
+      if (!context.mounted) return;
+      final allToMark = [
+        if (markAll) ...missing,
+        (season: season, episode: episode),
+      ];
+      runShowingErrors(
+        context,
+        ref,
+        () =>
+            controller.logMultipleEpisodes(tmdbId: tmdbId, episodes: allToMark),
+      );
+    });
+  }
+
+  static void showTrackOptions({
+    required BuildContext context,
+    required WidgetRef ref,
+    required MediaDetailsController controller,
+    required int tmdbId,
+    required int season,
+    required int episode,
+    required int watchCount,
+  }) {
+    void save(Future<void> Function() action) =>
+        runShowingErrors(context, ref, action);
+    final l10n = AppLocalizations.of(context)!;
+    WatchTrackModal.show(
+      context: context,
+      title: l10n.detailsEpisodeNumber(episode),
+      prompt: l10n.detailsTrackEpisodeProgress,
+      removeAllSubtitle: l10n.detailsClearAllEpisodeLogs,
+      watchCount: watchCount,
+      onRewatch: (date) => save(
+        () => controller.logEpisodeWatch(
+          tmdbId: tmdbId,
+          season: season,
+          episode: episode,
+          loggedAt: date,
+        ),
+      ),
+      onRemoveOne: () => save(
+        () => controller.deleteLatestEpisodeLog(
+          tmdbId: tmdbId,
+          season: season,
+          episode: episode,
+          undone: AppSnackBar.showUndo(
+            context,
+            message: l10n.oneWatchRemoved(l10n.detailsEpisodeFallback(episode)),
+          ),
+        ),
+      ),
+      onRemoveAll: () => save(
+        () => controller.deleteAllEpisodeLogs(
+          tmdbId: tmdbId,
+          season: season,
+          episode: episode,
+          undone: AppSnackBar.showUndo(
+            context,
+            message: l10n.watchHistoryRemoved(
+              l10n.detailsEpisodeFallback(episode),
+            ),
+          ),
+        ),
+      ),
+      onViewHistory: () => WatchLogsSheet.show(
+        context,
+        tmdbId,
+        l10n.detailsEpisodeFallback(episode),
+        season: season,
+        episode: episode,
+      ),
+    );
+  }
+
+  static void _showEpisodeComments(
+    BuildContext context,
+    int tmdbId,
+    int season,
+    int episode,
+    AppLocalizations l10n,
+  ) {
+    if (tmdbId > 0) {
+      showCommentsBottomSheet(
+        context,
+        EpisodeCommentsRequest(
+          tmdbShowId: tmdbId,
+          seasonNumber: season,
+          episodeNumber: episode,
+        ),
+      );
+    } else {
+      AppSnackBar.show(
+        context,
+        message: l10n.detailsTvTimeCommentsNotAvailableSeries,
+      );
+    }
+  }
+}

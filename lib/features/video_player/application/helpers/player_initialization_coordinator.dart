@@ -1,0 +1,239 @@
+import 'dart:async';
+import 'dart:developer' as developer;
+import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
+import 'package:cinemuse_app/features/streaming/models/provider_search_status.dart';
+import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/features/live_tv/application/live_tv_providers.dart';
+import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/video_player/application/handlers/livetv_playback_coordinator.dart';
+import 'package:cinemuse_app/features/video_player/application/handlers/vod_source_handler.dart';
+import 'package:cinemuse_app/features/video_player/application/handlers/youtube_source_handler.dart';
+import 'package:cinemuse_app/features/video_player/application/helpers/player_history_manager.dart';
+import 'package:cinemuse_app/features/video_player/application/helpers/stream_fallback_manager.dart';
+import 'package:cinemuse_app/features/video_player/application/managers/track_manager.dart';
+import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
+
+/// Coordinates player initialization across VOD, YouTube, and Live TV playback.
+class PlayerInitializationCoordinator {
+  final Ref ref;
+  final Player player;
+  final VideoController controller;
+  final YouTubeSourceHandler youtubeSourceHandler;
+  final UnifiedStreamResolver resolver;
+  final StreamFallbackManager fallbackManager;
+  final TrackManager? Function() getTrackManager;
+  final LiveTvPlaybackCoordinator? Function() getLiveTvCoordinator;
+  final bool Function() isMounted;
+  final CinemaPlayerState? Function() getCurrentState;
+  final void Function(CinemaPlayerState) onStateChanged;
+  final void Function(dynamic error, StackTrace st) onError;
+  final Future<void> Function(Channel) changeChannel;
+  final void Function() applyTrackPreferences;
+
+  /// Called once the first film or episode source plays.
+  final void Function() onVodSourceStarted;
+
+  MediaItem? _mediaItem;
+  PlayerHistoryManager? _historyManager;
+  Completer<void>? _skipCompleter;
+
+  PlayerInitializationCoordinator({
+    required this.ref,
+    required this.player,
+    required this.controller,
+    required this.youtubeSourceHandler,
+    required this.resolver,
+    required this.fallbackManager,
+    required this.getTrackManager,
+    required this.getLiveTvCoordinator,
+    required this.isMounted,
+    required this.getCurrentState,
+    required this.onStateChanged,
+    required this.onError,
+    required this.changeChannel,
+    required this.applyTrackPreferences,
+    required this.onVodSourceStarted,
+  });
+
+  PlayerHistoryManager? get historyManager => _historyManager;
+  MediaItem? get mediaItem => _mediaItem;
+
+  void skipResolution() {
+    if (_skipCompleter != null && !_skipCompleter!.isCompleted) {
+      _skipCompleter!.complete();
+    }
+  }
+
+  void onProviderStatusUpdate(List<ProviderSearchStatus> statuses) {
+    if (!isMounted()) return;
+    final currentState = getCurrentState();
+    if (currentState != null) {
+      onStateChanged(currentState.copyWith(providerStatuses: statuses));
+    }
+  }
+
+  /// Sets the player's short message (null clears it). Does nothing once
+  /// the player has closed (the last save runs while it closes).
+  void _showNotice(String? notice) {
+    if (!isMounted()) return;
+    final currentState = getCurrentState();
+    if (currentState != null) {
+      onStateChanged(currentState.copyWith(notification: notice));
+    }
+  }
+
+  void onMediaDetailsFetched(PlayerParams resolvedParams, MediaItem? item) {
+    _mediaItem = item;
+    _historyManager = PlayerHistoryManager(
+      ref: ref,
+      params: resolvedParams,
+      mediaItem: _mediaItem,
+      series: resolvedParams.type == 'tv' ? item : null,
+      onNotice: _showNotice,
+    );
+
+    if (isMounted()) {
+      final currentState = getCurrentState();
+      if (currentState != null) {
+        final appLanguage = ref.read(settingsProvider).appLanguage;
+        onStateChanged(
+          currentState.copyWith(
+            title: resolveTitle(resolvedParams, appLanguage),
+          ),
+        );
+      }
+    }
+  }
+
+  String resolveTitle(PlayerParams resolvedParams, String languageCode) {
+    return _mediaItem?.getLocalizedTitle(languageCode) ??
+        resolvedParams.episodeTitle ??
+        resolvedParams.queryId;
+  }
+
+  Future<void> handleYouTubeInitialization(PlayerParams resolvedParams) async {
+    final result = await youtubeSourceHandler.initialize(resolvedParams);
+    if (isMounted()) {
+      onStateChanged(
+        CinemaPlayerState(
+          controller: controller,
+          availableStreams: result.candidates,
+          currentStream: result.resolvedStream,
+          title: result.title,
+          activeAudioTrack: player.state.track.audio,
+          activeSubtitleTrack: player.state.track.subtitle,
+          isLive: resolvedParams.type == 'livetv',
+        ),
+      );
+    }
+  }
+
+  Future<void> handleLiveTvInitialization(PlayerParams params) async {
+    getLiveTvCoordinator()?.initializeIdleState(
+      defaultTitle: params.episodeTitle ?? 'Live TV',
+    );
+    final initialChannel = ref.read(selectedChannelProvider);
+    if (initialChannel != null) {
+      // Recents are a convenience: playback does not wait for the save.
+      unawaited(
+        ref
+            .read(recentChannelIdsProvider.notifier)
+            .push(initialChannel.uniqueId),
+      );
+      await changeChannel(initialChannel);
+    }
+  }
+
+  Future<void> handleVodInitialization(PlayerParams resolvedParams) async {
+    _skipCompleter = Completer<void>();
+    // The first source opens at the saved spot ([VodSourceHandler]); a
+    // switch before the player gets there starts there too.
+    fallbackManager.resumeAt(
+      Duration(seconds: resolvedParams.startPosition ?? 0),
+    );
+    final handler = VodSourceHandler(
+      resolver,
+      ref.read(tmdbServiceProvider),
+      player,
+      isMounted: isMounted,
+    );
+    final vodResult = await handler.initialize(
+      resolvedParams,
+      onStatusUpdate: onProviderStatusUpdate,
+      onMediaDetailsFetched: (item) =>
+          onMediaDetailsFetched(resolvedParams, item),
+      skipTrigger: _skipCompleter!.future,
+    );
+    if (vodResult == null) return;
+
+    await performPostInitialization(resolvedParams, vodResult);
+  }
+
+  Future<void> performPostInitialization(
+    PlayerParams resolvedParams,
+    VodInitializationResult vodResult,
+  ) async {
+    if (isMounted()) {
+      onStateChanged(
+        CinemaPlayerState(
+          controller: controller,
+          availableStreams: vodResult.candidates,
+          currentStream: vodResult.resolvedStream,
+          title: resolveTitle(
+            resolvedParams,
+            ref.read(settingsProvider).appLanguage,
+          ),
+          nextEpisode: null,
+          providerStatuses: getCurrentState()?.providerStatuses ?? const [],
+          isAnime: vodResult.isAnime,
+          activeAudioTrack: player.state.track.audio,
+          activeSubtitleTrack: player.state.track.subtitle,
+          isLive: resolvedParams.type == 'livetv',
+        ),
+      );
+    }
+
+    // Reset retry count on successful initialization
+    fallbackManager.resetRetryCount();
+
+    // Apply track preferences after state is updated with isAnime
+    applyTrackPreferences();
+    unawaited(
+      getTrackManager()?.ensurePreferredTrack(isAnime: vodResult.isAnime) ??
+          Future.value(),
+    );
+    onVodSourceStarted();
+
+    unawaited(ensureMediaCached());
+    // Next-episode info is optional: playback starts without it.
+    unawaited(loadNextEpisodeAsync());
+  }
+
+  Future<void> loadNextEpisodeAsync() async {
+    try {
+      final nextEpisode = await _historyManager?.calculateNextEpisode();
+      if (isMounted() && nextEpisode != null) {
+        final current = getCurrentState();
+        if (current != null) {
+          onStateChanged(current.copyWith(nextEpisode: nextEpisode));
+        }
+      }
+    } catch (e, s) {
+      developer.log(
+        'Failed to calculate or load next episode asynchronously',
+        name: 'PlayerInitializationCoordinator',
+        error: e,
+        stackTrace: s,
+      );
+    }
+  }
+
+  Future<void> ensureMediaCached() async {
+    await _historyManager?.cacheMediaItem();
+  }
+}

@@ -1,0 +1,219 @@
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/constants/tmdb_image_helper.dart';
+import 'package:cinemuse_app/features/profile/domain/user_list.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+
+class CollectionCard extends StatelessWidget {
+  final UserList list;
+  final VoidCallback onTap;
+
+  /// Opens the card's menu from this card, at [position] for a right-click
+  /// (REV-255). Null: no menu.
+  final void Function(BuildContext card, Offset? position)? onMenu;
+
+  const CollectionCard({
+    super.key,
+    required this.list,
+    required this.onTap,
+    this.onMenu,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    // Only custom lists use this card; system lists use SystemListCard.
+    const borderColor = Colors.white10;
+    const borderWidth = 1.0;
+    const iconColor = AppTheme.textMuted;
+    const badgeColor = AppTheme.textMuted;
+    const badgeBg = Colors.white10;
+    const icon = LucideIcons.list;
+    const backgroundGradient = [AppTheme.surface, AppTheme.surface];
+    final headerGradient = [
+      Colors.black.withValues(alpha: 0.05),
+      Colors.black.withValues(alpha: 0.05),
+    ];
+
+    return DpadFocusable(
+      onTap: onTap,
+      onLongPress: onMenu == null ? null : () => onMenu!(context, null),
+      onSecondaryTapDown: onMenu == null
+          ? null
+          : (d) => onMenu!(context, d.globalPosition),
+      scale: 1.02,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: backgroundGradient,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor, width: borderWidth),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header Image Grid (Top 3 items)
+            Expanded(
+              flex: 3,
+              child: Stack(
+                children: [
+                  // Header Background Gradient (Fallback when empty)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: headerGradient,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (list.items.isNotEmpty)
+                    Row(
+                      children: list.items.take(3).map((item) {
+                        final posterPath = item.media?.posterPath;
+                        return Expanded(
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              border: Border(
+                                right: BorderSide(color: Colors.black12),
+                              ),
+                            ),
+                            child: posterPath != null
+                                ? CachedNetworkImage(
+                                    imageUrl: TmdbImageHelper.posterUrl(
+                                      context,
+                                      posterPath,
+                                    )!,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    errorWidget: (_, _, _) =>
+                                        Container(color: AppTheme.surface),
+                                  )
+                                : Container(color: AppTheme.surface),
+                          ),
+                        );
+                      }).toList(),
+                    )
+                  else
+                    Center(
+                      child: Icon(
+                        icon,
+                        size: 32,
+                        color: iconColor.withValues(alpha: 0.5),
+                      ),
+                    ),
+
+                  // Bottom Fade Gradient (matches web)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.4),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Content Body
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(
+                  16,
+                ), // Increased padding to match web feel
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Title & Icon
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Icon(icon, size: 18, color: iconColor),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  list.name,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Count Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: badgeBg,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '${list.items.length}',
+                            style: TextStyle(
+                              color: badgeColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Expanded(
+                      child: Text(
+                        list.description ??
+                            (list.items.isEmpty
+                                ? l10n.listCardEmpty
+                                : l10n.listCardOpenAll),
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

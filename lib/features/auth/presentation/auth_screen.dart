@@ -1,0 +1,257 @@
+import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/features/auth/application/auth_service.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_text_box.dart';
+
+class AuthScreen extends ConsumerStatefulWidget {
+  const AuthScreen({super.key});
+
+  @override
+  ConsumerState<AuthScreen> createState() => _AuthScreenState();
+}
+
+// Dev login, debug builds only. The account comes from the uncommitted
+// dev_login.json (`--dart-define-from-file=dev_login.json`), never from code:
+// the repo is public (SEC-08). Without the file the button is hidden.
+const _devLoginEmail = String.fromEnvironment('DEV_LOGIN_EMAIL');
+const _devLoginPassword = String.fromEnvironment('DEV_LOGIN_PASSWORD');
+const _hasDevLogin = kDebugMode && _devLoginEmail != '';
+
+class _AuthScreenState extends ConsumerState<AuthScreen> {
+  bool isLoading = false;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  // The keyboard's Next on the email goes on typing in the password.
+  final _passwordTextNode = FocusNode();
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _passwordTextNode.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => isLoading = true);
+
+      final actions = ref.read(authProvider.notifier);
+      final email = _emailController.text.trim();
+      // Not trimmed: spaces can be part of a password (REV-58).
+      final password = _passwordController.text;
+
+      try {
+        await actions.signIn(email, password);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ref.read(errorMapperProvider).map(e).message),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      } finally {
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
+    }
+  }
+
+  void _devLogin() {
+    _emailController.text = _devLoginEmail;
+    _passwordController.text = _devLoginPassword;
+    _submit();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      backgroundColor: AppTheme.primary,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.border),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.accent.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Logo
+                  Image.asset(
+                    'assets/wordmark-logo.png',
+                    height: 48,
+                    // Brand name: the same in every language.
+                    errorBuilder: (c, e, s) => Text(
+                      "CINEMUSE",
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Title
+                  Text(
+                    l10n.authWelcomeBack,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.authEnterCredentials,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppTheme.textMuted),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // E-mail Input
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      l10n.authEmail,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  DpadTextBox(
+                    borderRadius: AppTheme.radius12,
+                    builder: (context, textNode, stopTyping) => TextFormField(
+                      controller: _emailController,
+                      focusNode: textNode,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      onEditingComplete: _passwordTextNode.requestFocus,
+                      decoration: const InputDecoration(
+                        hintText: 'hello@example.com',
+                        prefixIcon: Icon(
+                          Icons.email_outlined,
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      validator: (value) => value != null && value.contains('@')
+                          ? null
+                          : l10n.authInvalidEmail,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Password Input
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      l10n.authPassword,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  DpadTextBox(
+                    textFocusNode: _passwordTextNode,
+                    borderRadius: AppTheme.radius12,
+                    builder: (context, textNode, stopTyping) => TextFormField(
+                      controller: _passwordController,
+                      focusNode: textNode,
+                      obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      onEditingComplete: () {
+                        stopTyping();
+                        if (!isLoading) _submit();
+                      },
+                      decoration: const InputDecoration(
+                        hintText: '••••••••',
+                        prefixIcon: Icon(
+                          Icons.lock_outline,
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      validator: (value) => value != null && value.length >= 6
+                          ? null
+                          : l10n.authPasswordTooShort,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Submit Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : _submit,
+                      child: isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(l10n.authSignIn),
+                    ),
+                  ),
+
+                  if (_hasDevLogin) ...[
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton.icon(
+                        icon: const Icon(
+                          Icons.developer_mode,
+                          color: Colors.amber,
+                        ),
+                        // Not translated: debug builds only, users never see it.
+                        label: const Text(
+                          'Dev login',
+                          style: TextStyle(color: Colors.amber),
+                        ),
+                        onPressed: isLoading ? null : _devLogin,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

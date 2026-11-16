@@ -1,0 +1,153 @@
+import 'dart:async';
+import 'package:cinemuse_app/core/error/app_failure.dart';
+import 'package:cinemuse_app/features/media/data/tmdb_service.dart';
+import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/features/video_player/application/helpers/player_engine_configurator.dart';
+import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/streaming/models/provider_search_status.dart';
+import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
+import 'package:media_kit/media_kit.dart';
+import 'dart:developer' as developer;
+
+class VodInitializationResult {
+  final List<StreamCandidate> candidates;
+  final ResolvedStream resolvedStream;
+  final bool isAnime;
+
+  VodInitializationResult({
+    required this.candidates,
+    required this.resolvedStream,
+    this.isAnime = false,
+  });
+}
+
+class VodSourceHandler {
+  final UnifiedStreamResolver _resolver;
+  final TmdbService _tmdbService;
+  final Player _player;
+
+  /// False once the player was closed: each step checks it and stops, so a
+  /// closed player doesn't go on resolving (an RD torrent, STR-03) and
+  /// opening a stream (REV-147).
+  final bool Function() _isMounted;
+
+  VodSourceHandler(
+    this._resolver,
+    this._tmdbService,
+    this._player, {
+    required bool Function() isMounted,
+  }) : _isMounted = isMounted;
+
+  /// Returns `null` when the player was closed before the stream opened.
+  Future<VodInitializationResult?> initialize(
+    PlayerParams params, {
+    required Function(List<ProviderSearchStatus>) onStatusUpdate,
+    required void Function(MediaItem?) onMediaDetailsFetched,
+    Future<void>? skipTrigger,
+  }) async {
+    final details = await _tmdbService.getMediaDetails(
+      params.queryId,
+      params.type,
+    );
+    onMediaDetailsFetched(details);
+    if (!_isMounted()) return null;
+
+    final searchResult = await _searchAvailableStreams(
+      params,
+      onStatusUpdate,
+      skipTrigger: skipTrigger,
+      preloadedDetails: details,
+    );
+    if (!_isMounted()) return null;
+
+    final resolution = await _resolveBestStream(
+      params,
+      searchResult.candidates,
+    );
+    if (resolution == null || !_isMounted()) return null;
+
+    final resumeAt = params.startPosition ?? 0;
+    await PlayerEngineConfigurator.openStream(
+      _player,
+      resolution.stream,
+      play: true,
+      start: resumeAt > 0 ? Duration(seconds: resumeAt) : null,
+    );
+
+    return VodInitializationResult(
+      candidates: searchResult.candidates,
+      resolvedStream: resolution.stream,
+      isAnime: searchResult.isAnime,
+    );
+  }
+
+  Future<StreamSearchResult> _searchAvailableStreams(
+    PlayerParams params,
+    Function(List<ProviderSearchStatus>) onStatusUpdate, {
+    Future<void>? skipTrigger,
+    MediaItem? preloadedDetails,
+  }) async {
+    final result = await _resolver.searchStreams(
+      params.queryId,
+      params.type,
+      season: params.season,
+      episode: params.episode,
+      onStatusUpdate: onStatusUpdate,
+      skipTrigger: skipTrigger,
+      preloadedDetails: preloadedDetails,
+    );
+
+    if (result.candidates.isEmpty) {
+      throw const NoStreamsFailure(
+        NoStreamsReason.noResults,
+        'No results found across add-ons',
+      );
+    }
+    return result;
+  }
+
+  Future<({ResolvedStream stream, StreamCandidate candidate})?>
+  _resolveBestStream(
+    PlayerParams params,
+    List<StreamCandidate> candidates,
+  ) async {
+    final refusals = <DebridFileFailure>[];
+    for (var candidate in candidates) {
+      if (!_isMounted()) return null;
+      try {
+        final resolvedStream = await _resolver.resolveStream(
+          candidate,
+          season: params.season,
+          episode: params.episode,
+        );
+
+        if (resolvedStream != null) {
+          return (stream: resolvedStream, candidate: candidate);
+        }
+      } on DebridFileFailure catch (refusal) {
+        refusals.add(refusal);
+      } catch (e, st) {
+        developer.log(
+          'Failed to resolve candidate: ${candidate.title}',
+          name: 'VideoPlayer.VodSourceHandler',
+          error: e,
+          stackTrace: st,
+          level: 800,
+        );
+      }
+    }
+
+    // The player screen says why: "still downloading" first, the one a
+    // later try can fix; else the best source's reason.
+    if (refusals.isNotEmpty) {
+      throw refusals.firstWhere(
+        (r) => r.reason == DebridRefusal.downloading,
+        orElse: () => refusals.first,
+      );
+    }
+    // The player screen shows "all sources failed" for this (REV-164).
+    throw const StreamingFailure('All streams failed to resolve');
+  }
+}

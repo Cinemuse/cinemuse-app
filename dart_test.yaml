@@ -1,0 +1,5 @@
+tags:
+  # The every-screen-at-every-size check runs on demand only (see
+  # test/screen_sizes/screen_sizes_test.dart).
+  screen-sizes:
+    skip: "On demand: fvm flutter test --run-skipped -t screen-sizes"

@@ -1,0 +1,1054 @@
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/l10n/app_localizations_en.dart';
+import 'package:cinemuse_app/l10n/app_localizations_it.dart';
+import 'package:cinemuse_app/shared/widgets/focus_ring.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/carousel_arrow_buttons.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/poster_carousel_row.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+
+import '../../helpers/cursor_helpers.dart';
+import '../../helpers/focus_helpers.dart';
+import 'package:cinemuse_app/core/application/provider_retry.dart';
+
+void main() {
+  testWidgets('Pressing arrowLeft on the first card keeps focus there', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: noProviderRetry,
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: Scaffold(
+            body: GenericCarouselRow(
+              height: 200,
+              itemCount: 5,
+              itemBuilder: (context, index) {
+                return SizedBox(
+                  width: 100,
+                  height: 150,
+                  child: DpadFocusable(
+                    onTap: _noop,
+                    child: Text('Card $index'),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Card 0'));
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pumpAndSettle();
+
+    final card0Focus = tester.widget<Focus>(
+      find
+          .ancestor(of: find.text('Card 0'), matching: find.byType(Focus))
+          .first,
+    );
+    expect(card0Focus.focusNode?.hasFocus, isTrue);
+  });
+
+  testWidgets(
+    'Pressing arrowRight on last item stays on that item and does not escape',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          retry: noProviderRetry,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            home: Scaffold(
+              body: Column(
+                children: [
+                  GenericCarouselRow(
+                    title: 'Row 1',
+                    height: 200,
+                    itemCount: 3,
+                    itemBuilder: (context, index) {
+                      return SizedBox(
+                        width: 100,
+                        height: 150,
+                        child: DpadFocusable(
+                          onTap: _noop,
+                          child: Text('Row1 Card $index'),
+                        ),
+                      );
+                    },
+                  ),
+                  GenericCarouselRow(
+                    title: 'Row 2',
+                    height: 200,
+                    itemCount: 3,
+                    itemBuilder: (context, index) {
+                      return SizedBox(
+                        width: 100,
+                        height: 150,
+                        child: DpadFocusable(
+                          onTap: _noop,
+                          child: Text('Row2 Card $index'),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Focus the last card in Row 1 (Card 2)
+      await tester.tap(find.text('Row1 Card 2'));
+      await tester.pumpAndSettle();
+
+      // Press and hold (repeat) arrowRight on the last card
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      for (int i = 0; i < 5; i++) {
+        await tester.sendKeyRepeatEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pumpAndSettle();
+      }
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+
+      // Verify focus is still within Row 1 (has not jumped to Row 2)
+      final row2Card0 = find.text('Row2 Card 0');
+      final row2Card0Focus = tester.widget<Focus>(
+        find.ancestor(of: row2Card0, matching: find.byType(Focus)).first,
+      );
+      expect(row2Card0Focus.focusNode?.hasFocus ?? false, isFalse);
+
+      // Focus Card 0 in Row 2
+      await tester.tap(find.text('Row2 Card 0'));
+      await tester.pumpAndSettle();
+
+      // Press and hold (repeat) arrowLeft on Card 0
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pumpAndSettle();
+      for (int i = 0; i < 5; i++) {
+        await tester.sendKeyRepeatEvent(LogicalKeyboardKey.arrowLeft);
+        await tester.pumpAndSettle();
+      }
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pumpAndSettle();
+
+      // Verify focus has NOT escaped to Row 1
+      final row1Card2Focus = tester.widget<Focus>(
+        find
+            .ancestor(
+              of: find.text('Row1 Card 2'),
+              matching: find.byType(Focus),
+            )
+            .first,
+      );
+      expect(row1Card2Focus.focusNode?.hasFocus ?? false, isFalse);
+    },
+  );
+
+  testWidgets('Row Memory preserves the last focused card in each row', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: noProviderRetry,
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: Scaffold(
+            body: Column(
+              children: [
+                GenericCarouselRow(
+                  title: 'Row 1',
+                  height: 200,
+                  itemCount: 4,
+                  itemBuilder: (context, index) {
+                    return SizedBox(
+                      width: 100,
+                      height: 150,
+                      child: DpadFocusable(
+                        onTap: _noop,
+                        child: Text('Row1 Card $index'),
+                      ),
+                    );
+                  },
+                ),
+                GenericCarouselRow(
+                  title: 'Row 2',
+                  height: 200,
+                  itemCount: 4,
+                  itemBuilder: (context, index) {
+                    return SizedBox(
+                      width: 100,
+                      height: 150,
+                      child: DpadFocusable(
+                        onTap: _noop,
+                        child: Text('Row2 Card $index'),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Focus Card 0 in Row 1
+    await tester.tap(find.text('Row1 Card 0'));
+    await tester.pumpAndSettle();
+
+    // Navigate right to Card 2 in Row 1
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+
+    // Navigate Down to Row 2 for the FIRST time: must start from the first card on the left (Card 0)!
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+
+    final row2Card0 = find.text('Row2 Card 0');
+    final row2Card0Focus = tester.widget<Focus>(
+      find.ancestor(of: row2Card0, matching: find.byType(Focus)).first,
+    );
+    expect(row2Card0Focus.focusNode?.hasFocus, isTrue);
+
+    // Move across to Card 3 in Row 2
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+
+    // Navigate Up back to Row 1: Row Memory should restore Card 2!
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.pumpAndSettle();
+
+    // Verify Row 1 restored focus to Row1 Card 2!
+    final row1Card2 = find.text('Row1 Card 2');
+    final row1Card2Focus = tester.widget<Focus>(
+      find.ancestor(of: row1Card2, matching: find.byType(Focus)).first,
+    );
+    expect(row1Card2Focus.focusNode?.hasFocus, isTrue);
+
+    // Navigate Down again back to Row 2: should restore Row2 Card 3!
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    final row2Card3 = find.text('Row2 Card 3');
+    final row2Card3Focus = tester.widget<Focus>(
+      find.ancestor(of: row2Card3, matching: find.byType(Focus)).first,
+    );
+    expect(row2Card3Focus.focusNode?.hasFocus, isTrue);
+  });
+
+  testWidgets('Up / Down into a row draws the ring only on the card it lands '
+      'on, never first on the card straight above or below (REV-323)', (
+    tester,
+  ) async {
+    Widget row(String name) => GenericCarouselRow(
+      title: name,
+      height: 200,
+      itemCount: 5,
+      itemBuilder: (context, i) => SizedBox(
+        width: 100,
+        height: 150,
+        child: DpadFocusable(onTap: _noop, child: Text('$name $i')),
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: noProviderRetry,
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: Scaffold(body: Column(children: [row('A'), row('B')])),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The card texts the ring is drawn around, frame by frame.
+    List<String?> ringed() => [
+      for (final ring in tester.widgetList<FocusRing>(find.byType(FocusRing)))
+        if (ring.isVisible)
+          tester
+              .widget<Text>(
+                find
+                    .descendant(
+                      of: find.byWidget(ring),
+                      matching: find.byType(Text),
+                    )
+                    .first,
+              )
+              .data,
+    ];
+    Future<void> pressAndCheckEveryFrame(
+      LogicalKeyboardKey key,
+      String expected,
+    ) async {
+      await tester.sendKeyEvent(key);
+      for (var frame = 0; frame < 3; frame++) {
+        await tester.pump();
+        expect(ringed(), [expected], reason: 'frame $frame');
+      }
+      await tester.pumpAndSettle();
+    }
+
+    await tester.tap(find.text('A 0'));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+
+    // First time into row B: its first card, from the first frame.
+    await pressAndCheckEveryFrame(LogicalKeyboardKey.arrowDown, 'B 0');
+    for (var i = 0; i < 3; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+    }
+    // Back up from B 3: the remembered A 2, never A 3 first.
+    await pressAndCheckEveryFrame(LogicalKeyboardKey.arrowUp, 'A 2');
+  });
+
+  testWidgets(
+    'Row with non-focusable headers (like sport schedule) does not escape between rows',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          retry: noProviderRetry,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            home: Scaffold(
+              body: Column(
+                children: [
+                  GenericCarouselRow(
+                    title: 'Row Above',
+                    height: 200,
+                    itemCount: 3,
+                    itemBuilder: (context, index) => SizedBox(
+                      width: 100,
+                      height: 150,
+                      child: DpadFocusable(
+                        onTap: _noop,
+                        child: Text('Above $index'),
+                      ),
+                    ),
+                  ),
+                  GenericCarouselRow(
+                    title: 'Sport Schedule',
+                    height: 200,
+                    // index 0: Header (Today, not focusable)
+                    // index 1: Event 1 (focusable)
+                    // index 2: Header (Tomorrow, not focusable)
+                    // index 3: Event 2 (focusable)
+                    itemCount: 4,
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return const SizedBox(width: 72, child: Text('TODAY'));
+                      }
+                      if (index == 1) {
+                        return const SizedBox(
+                          width: 150,
+                          child: DpadFocusable(
+                            onTap: _noop,
+                            child: Text('Event 1'),
+                          ),
+                        );
+                      }
+                      if (index == 2) {
+                        return const SizedBox(
+                          width: 72,
+                          child: Text('TOMORROW'),
+                        );
+                      }
+                      return const SizedBox(
+                        width: 150,
+                        child: DpadFocusable(
+                          onTap: _noop,
+                          child: Text('Event 2'),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Focus Event 1 (first focusable card in sport schedule)
+      await tester.tap(find.text('Event 1'));
+      await tester.pumpAndSettle();
+
+      // Press arrowLeft on Event 1 (index 1, where index 0 is non-focusable): should NOT escape to Row Above!
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pumpAndSettle();
+
+      final above0 = find.text('Above 0');
+      final above0Focus = tester.widget<Focus>(
+        find.ancestor(of: above0, matching: find.byType(Focus)).first,
+      );
+      expect(above0Focus.focusNode?.hasFocus ?? false, isFalse);
+
+      // Press arrowRight on Event 1: jumps across non-focusable TOMORROW header to Event 2!
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+
+      final event2 = find.text('Event 2');
+      final event2Focus = tester.widget<Focus>(
+        find.ancestor(of: event2, matching: find.byType(Focus)).first,
+      );
+      expect(event2Focus.focusNode?.hasFocus, isTrue);
+
+      // Press arrowRight on Event 2 (last focusable card): should clamp and NOT escape!
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(event2Focus.focusNode?.hasFocus, isTrue);
+    },
+  );
+
+  for (final theme in [CarouselTheme.homeRow, CarouselTheme.profileRow]) {
+    testWidgets(
+      'Row title opens the full list on click, not with the keys (${theme.name})',
+      (tester) async {
+        var headerTaps = 0;
+
+        await tester.pumpWidget(
+          ProviderScope(
+            retry: noProviderRetry,
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              home: Scaffold(
+                body: GenericCarouselRow(
+                  title: 'Movies',
+                  theme: theme,
+                  height: 200,
+                  itemCount: 2,
+                  onHeaderTap: () => headerTaps++,
+                  itemBuilder: (context, index) => SizedBox(
+                    width: 100,
+                    height: 150,
+                    child: DpadFocusable(
+                      onTap: _noop,
+                      child: Text('Movie $index'),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Movies'));
+        await tester.pumpAndSettle();
+        expect(headerTaps, 1);
+
+        // The arrows pass over the title (the user): Up from the first card
+        // doesn't land on it, so Enter can't open it.
+        await tester.tap(find.text('Movie 0'));
+        await tester.pumpAndSettle();
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pumpAndSettle();
+        expect(isFocused(find.text('Movies')), isFalse);
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+        expect(headerTaps, 1);
+      },
+    );
+
+    // REV-243: the clickable title showed no hover or focus style.
+    testWidgets(
+      'Row title turns pink on hover, never takes the ring (${theme.name})',
+      (tester) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            retry: noProviderRetry,
+            child: MaterialApp(
+              theme: AppTheme.darkTheme,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              home: Scaffold(
+                body: GenericCarouselRow(
+                  title: 'Movies',
+                  theme: theme,
+                  height: 200,
+                  itemCount: 2,
+                  onHeaderTap: _noop,
+                  itemBuilder: (context, index) => SizedBox(
+                    width: 100,
+                    height: 150,
+                    child: DpadFocusable(
+                      onTap: _noop,
+                      child: Text('Movie $index'),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final pink = AppTheme.darkTheme.colorScheme.primary;
+        Color? titleColor() =>
+            tester.widget<Text>(find.text('Movies')).style?.color;
+        bool isTitleRingShown() => tester
+            .widgetList<FocusRing>(
+              find.ancestor(
+                of: find.text('Movies'),
+                matching: find.byType(FocusRing),
+              ),
+            )
+            .any((ring) => ring.isVisible);
+
+        expect(titleColor(), isNot(pink));
+
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        // Moved there: a pointer left still while keys are in use is hidden
+        // and hovers nothing.
+        await mouse.addPointer(location: Offset.zero);
+        await mouse.moveTo(tester.getCenter(find.text('Movies')));
+        await tester.pumpAndSettle();
+        expect(titleColor(), pink);
+        expect(isTitleRingShown(), isFalse);
+        await mouse.removePointer();
+        await tester.pumpAndSettle();
+        expect(titleColor(), isNot(pink));
+
+        await tester.tap(find.text('Movie 0'));
+        await tester.pumpAndSettle();
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pumpAndSettle();
+        expect(titleColor(), isNot(pink));
+        expect(isTitleRingShown(), isFalse);
+      },
+    );
+  }
+
+  testWidgets(
+    'Navigating down and up between multiple rows in SingleChildScrollView changes row on each single press',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 720));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        ProviderScope(
+          retry: noProviderRetry,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    for (int r = 0; r < 5; r++)
+                      GenericCarouselRow(
+                        title: 'Row $r',
+                        height: 250,
+                        itemCount: 4,
+                        itemBuilder: (context, index) => SizedBox(
+                          width: 150,
+                          height: 200,
+                          child: DpadFocusable(
+                            onTap: _noop,
+                            child: Text('R${r}C$index'),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      bool isCardFocused(String text) {
+        final finder = find.text(text);
+        final focusWidget = tester.widget<Focus>(
+          find.ancestor(of: finder, matching: find.byType(Focus)).first,
+        );
+        return focusWidget.focusNode?.hasFocus ?? false;
+      }
+
+      // Focus R0C0
+      await tester.tap(find.text('R0C0'));
+      await tester.pumpAndSettle();
+      expect(isCardFocused('R0C0'), isTrue);
+
+      // Press arrowDown: should move to Row 1 on 1st press!
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      expect(isCardFocused('R1C0'), isTrue);
+
+      // Press arrowDown: should move to Row 2 on 1st press!
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      expect(isCardFocused('R2C0'), isTrue);
+
+      // Press arrowDown: should move to Row 3 on 1st press!
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      expect(isCardFocused('R3C0'), isTrue);
+
+      // Press arrowDown: should move to Row 4 on 1st press!
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      expect(isCardFocused('R4C0'), isTrue);
+
+      // Press arrowUp: should move to Row 3 on 1st press!
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pumpAndSettle();
+      expect(isCardFocused('R3C0'), isTrue);
+
+      // Press arrowUp: should move to Row 2 on 1st press!
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pumpAndSettle();
+      expect(isCardFocused('R2C0'), isTrue);
+
+      // Press arrowUp: should move to Row 1 on 1st press!
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pumpAndSettle();
+      expect(isCardFocused('R1C0'), isTrue);
+
+      // Press arrowUp: should move to Row 0 on 1st press!
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pumpAndSettle();
+      expect(isCardFocused('R0C0'), isTrue);
+    },
+  );
+
+  // REV-253: the row's scroll arrows have tooltips in the app's language.
+  for (final (locale, l10n) in [
+    (const Locale('en'), AppLocalizationsEn()),
+    (const Locale('it'), AppLocalizationsIt()),
+  ]) {
+    testWidgets('scroll arrow tooltips in ${locale.languageCode}', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          retry: noProviderRetry,
+          child: MaterialApp(
+            locale: locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: GenericCarouselRow(
+                title: 'Row',
+                height: 200,
+                itemCount: 20,
+                itemBuilder: (context, index) => SizedBox(
+                  width: 100,
+                  height: 150,
+                  child: DpadFocusable(onTap: _noop, child: Text('$index')),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip(l10n.commonScrollLeft), findsOneWidget);
+      expect(find.byTooltip(l10n.commonScrollRight), findsOneWidget);
+    });
+  }
+
+  // The arrows stayed on a row under a resting mouse while the keys moved.
+  testWidgets('scroll arrows: the mouse shows them, an arrow key hides them', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: noProviderRetry,
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: GenericCarouselRow(
+              title: 'Row',
+              height: 200,
+              itemCount: 20,
+              itemBuilder: (context, index) => SizedBox(
+                width: 150,
+                height: 150,
+                child: DpadFocusable(onTap: _noop, child: Text('Card $index')),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    double arrowsOpacity() => tester
+        .widget<AnimatedOpacity>(
+          find.descendant(
+            of: find.byType(CarouselArrowButtons),
+            matching: find.byType(AnimatedOpacity),
+          ),
+        )
+        .opacity;
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer(location: tester.getCenter(find.text('Card 0')));
+    await mouse.moveBy(const Offset(100, 0));
+    await tester.pumpAndSettle();
+    expect(arrowsOpacity(), 1.0);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    expect(arrowsOpacity(), 0.0, reason: 'the mouse still rests on the row');
+
+    await mouse.moveBy(const Offset(100, 0));
+    await tester.pumpAndSettle();
+    expect(arrowsOpacity(), 1.0);
+  });
+
+  // REV-247: the arrows stopped with a card cut on the left.
+  for (final hasDayMarkers in [false, true]) {
+    testWidgets(
+      'arrows stop with an item on the left padding (day markers: $hasDayMarkers)',
+      (tester) async {
+        tester.view.physicalSize = const Size(1000, 600);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final l10n = AppLocalizationsEn();
+        final controller = ScrollController();
+        addTearDown(controller.dispose);
+        bool isMarker(int i) => hasDayMarkers && i % 4 == 0;
+        String label(int i) => isMarker(i) ? 'Day $i' : 'Card $i';
+
+        await tester.pumpWidget(
+          ProviderScope(
+            retry: noProviderRetry,
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              home: Scaffold(
+                body: GenericCarouselRow(
+                  title: 'Row',
+                  controller: controller,
+                  height: 200,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  itemCount: 30,
+                  separatorBuilder: (_, _) => const SizedBox(width: 16),
+                  itemBuilder: (context, i) => isMarker(i)
+                      ? SizedBox(width: 72, child: Text(label(i)))
+                      : SizedBox(
+                          width: 150,
+                          child: DpadFocusable(
+                            onTap: _noop,
+                            child: Text(label(i)),
+                          ),
+                        ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        void expectItemOnLeftPadding() {
+          final lefts = [
+            for (var i = 0; i < 30; i++)
+              if (find.text(label(i)).evaluate().isNotEmpty)
+                tester.getTopLeft(find.text(label(i))).dx,
+          ];
+          expect(
+            lefts.any((x) => (x - 24).abs() < 0.5),
+            isTrue,
+            reason: 'offset ${controller.offset}',
+          );
+        }
+
+        for (var press = 0; press < 3; press++) {
+          await tester.tap(find.byTooltip(l10n.commonScrollRight));
+          await tester.pumpAndSettle();
+          expectItemOnLeftPadding();
+        }
+        final afterRight = controller.offset;
+        expect(afterRight, greaterThan(0));
+
+        await tester.tap(find.byTooltip(l10n.commonScrollLeft));
+        await tester.pumpAndSettle();
+        expectItemOnLeftPadding();
+        expect(controller.offset, lessThan(afterRight));
+      },
+    );
+  }
+
+  // REV-246: the row title and the ← / → arrows showed the arrow cursor.
+  testWidgets('row title and →: the hand; ← at the start: the arrow', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final l10n = AppLocalizationsEn();
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: noProviderRetry,
+        child: MaterialApp(
+          theme: AppTheme.darkTheme,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: GenericCarouselRow(
+              title: 'My List',
+              onHeaderTap: _noop,
+              height: 200,
+              itemCount: 20,
+              itemBuilder: (context, index) => SizedBox(
+                width: 200,
+                child: DpadFocusable(onTap: _noop, child: Text('Card $index')),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await expectHandOver(tester, find.text('My List'));
+    await expectHandOver(tester, find.byTooltip(l10n.commonScrollRight));
+    expect(
+      await cursorOver(tester, find.byTooltip(l10n.commonScrollLeft)),
+      SystemMouseCursors.basic,
+    );
+  });
+
+  // REV-41: every row built all its cards, and hovering a row rebuilt them.
+  group('long rows', () {
+    Widget longRow({
+      required String name,
+      ScrollController? controller,
+      void Function(int index)? onBuild,
+    }) => GenericCarouselRow(
+      title: name,
+      controller: controller,
+      height: 200,
+      itemCount: 100,
+      separatorBuilder: (_, _) => const SizedBox(width: 16),
+      itemBuilder: (context, i) {
+        onBuild?.call(i);
+        return SizedBox(
+          width: 150,
+          child: DpadFocusable(onTap: _noop, child: Text('$name $i')),
+        );
+      },
+    );
+
+    Future<void> pumpRows(WidgetTester tester, List<Widget> rows) async {
+      tester.view.physicalSize = const Size(1000, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        ProviderScope(
+          retry: noProviderRetry,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            home: Scaffold(body: Column(children: rows)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('builds only the cards near the view', (tester) async {
+      await pumpRows(tester, [longRow(name: 'A')]);
+      expect(find.text('A 0'), findsOneWidget);
+      // One screen width is built on each side, not all 100 cards.
+      expect(find.text('A 30', skipOffstage: false), findsNothing);
+    });
+
+    testWidgets('the mouse over a row does not rebuild its cards', (
+      tester,
+    ) async {
+      var builds = 0;
+      await pumpRows(tester, [longRow(name: 'A', onBuild: (_) => builds++)]);
+      final before = builds;
+
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: tester.getCenter(find.text('A 0')));
+      await tester.pumpAndSettle();
+      await mouse.moveTo(const Offset(500, 790));
+      await tester.pumpAndSettle();
+      await mouse.removePointer();
+
+      expect(builds, before);
+    });
+
+    testWidgets('the remote walks to cards that were not built yet', (
+      tester,
+    ) async {
+      await pumpRows(tester, [longRow(name: 'A')]);
+      await tester.tap(find.text('A 0'));
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 40; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pumpAndSettle();
+      }
+      expect(isFocused(find.text('A 40')), isTrue);
+    });
+
+    testWidgets('first Down into a row scrolled far starts on its first card', (
+      tester,
+    ) async {
+      final controller = ScrollController();
+      addTearDown(controller.dispose);
+      await pumpRows(tester, [
+        longRow(name: 'A'),
+        longRow(name: 'B', controller: controller),
+      ]);
+      controller.jumpTo(5000);
+      await tester.pumpAndSettle();
+      expect(find.text('B 0'), findsNothing);
+
+      await tester.tap(find.text('A 0'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      expect(isFocused(find.text('B 0')), isTrue);
+      expect(controller.offset, 0);
+    });
+  });
+
+  // The user: a row title the arrows stop on breaks the flow, and most apps
+  // don't do it. The title stays a link for the mouse and touch; the keys
+  // reach the same page through "See all" at the row's end.
+  group('row title and See all', () {
+    Future<void> pumpRow(
+      WidgetTester tester, {
+      VoidCallback? onHeaderTap,
+      int itemCount = 3,
+    }) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        ProviderScope(
+          retry: noProviderRetry,
+          child: MaterialApp(
+            theme: AppTheme.darkTheme,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Column(
+                children: [
+                  DpadFocusable(onTap: _noop, child: const Text('Above')),
+                  PosterCarouselRow(
+                    title: 'My List',
+                    theme: CarouselTheme.homeRow,
+                    onHeaderTap: onHeaderTap,
+                    items: [
+                      for (var i = 0; i < itemCount; i++)
+                        DpadFocusable(onTap: _noop, child: Text('Card $i')),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    final seeAll = find.text(AppLocalizationsEn().carouselSeeAll);
+
+    testWidgets('Up from a card skips the title; a click still opens it', (
+      tester,
+    ) async {
+      var opened = 0;
+      await pumpRow(tester, onHeaderTap: () => opened++);
+
+      await tester.tap(find.text('Card 0'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pumpAndSettle();
+      expect(isFocused(find.text('Above')), isTrue);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      expect(isFocused(find.text('Card 0')), isTrue);
+
+      await tester.tap(find.text('My List'));
+      await tester.pumpAndSettle();
+      expect(opened, 1);
+    });
+
+    testWidgets('Right walks to See all at the end; OK or a click opens it', (
+      tester,
+    ) async {
+      var opened = 0;
+      await pumpRow(tester, onHeaderTap: () => opened++);
+
+      await tester.tap(find.text('Card 0'));
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 3; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pumpAndSettle();
+      }
+      expect(isFocused(seeAll), isTrue);
+      // The ring goes round the circle, not round the circle and its text.
+      bool ringAround(Finder target) => tester
+          .widgetList<FocusRing>(
+            find.ancestor(of: target, matching: find.byType(FocusRing)),
+          )
+          .any((ring) => ring.isVisible);
+      expect(ringAround(find.byIcon(LucideIcons.arrowRight)), isTrue);
+      expect(ringAround(seeAll), isFalse);
+      // The row's last stop: Right stays on it.
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(isFocused(seeAll), isTrue);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(opened, 1);
+
+      await tester.tap(seeAll);
+      await tester.pumpAndSettle();
+      expect(opened, 2);
+    });
+
+    testWidgets('no See all without a title link, or on an empty row', (
+      tester,
+    ) async {
+      await pumpRow(tester);
+      expect(seeAll, findsNothing);
+
+      await pumpRow(tester, onHeaderTap: _noop, itemCount: 0);
+      expect(seeAll, findsNothing);
+    });
+
+    test('See all in Italian', () {
+      expect(AppLocalizationsIt().carouselSeeAll, 'Vedi tutti');
+    });
+  });
+}
+
+// Real cards always have an action (open details); without one a
+// DpadFocusable ignores taps (REV-39), so tapping would not focus it.
+void _noop() {}

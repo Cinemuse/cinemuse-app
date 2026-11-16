@@ -1,0 +1,1123 @@
+{
+  "navHome": "Home",
+  "navSearch": "Search",
+  "navExplore": "Explore",
+  "navSettings": "Settings",
+  "navLibrary": "Library",
+
+  "commonLoading": "Loading...",
+  "commonError": "Error",
+  "commonRetry": "Retry",
+  "commonCancel": "Cancel",
+  "commonClose": "Close",
+  "commonConfirm": "Confirm",
+  "commonCreate": "Create",
+  "commonDelete": "Delete",
+  "commonClearAll": "Clear All",
+  "commonUndo": "Undo",
+  "commonFeatured": "FEATURED",
+  "commonUnexpectedError": "An unexpected error occurred",
+  "commonOk": "OK",
+  "commonUnknown": "Unknown",
+  "commonAnonymous": "Anonymous",
+  "commonScrollLeft": "Scroll left",
+  "commonScrollRight": "Scroll right",
+  "carouselSeeAll": "See all",
+  "commonShowPassword": "Show password",
+  "commonHidePassword": "Hide password",
+  "commonClearSearch": "Clear search",
+  "commonRemoveFilter": "Remove filter",
+  "commonShow": "Show",
+  "windowMinimize": "Minimize",
+  "windowMaximize": "Maximize",
+  "windowRestore": "Restore down",
+  "liveTvAddToFavorites": "Add to favorites",
+  "liveTvRemoveFromFavorites": "Remove from favorites",
+  "filterMax": "Max",
+  "offlineScreenTitle": "Connection Required",
+  "offlineScreenMessage": "This feature requires an internet connection to browse content and stream media.",
+  "searchPlaceholder": "Search movies, series, people...",
+  "searchRecentSearches": "Recent Searches",
+  "searchHoldToDelete": "Hold to delete",
+  "searchNoResults": "No results found for \"{query}\"",
+  "searchEmptyStateTitle": "Find your next favorite story",
+  "searchItemYear": "{year}",
+  "searchMovies": "Movies",
+  "searchSeries": "Series",
+  "searchPersons": "People",
+  "searchAdvancedFilters": "Advanced Filters",
+  "searchFilterAction": "Filters",
+  "searchFilteredResults": "Results",
+  "searchSortBy": "Sort By",
+  "searchMostPopular": "Most Popular",
+  "searchHighestRated": "Highest Rated",
+  "searchNewestReleases": "Newest Releases",
+  "searchLanguages": "Languages",
+  "searchGenres": "Genres",
+  "searchRating": "Rating",
+  "searchYearRange": "Year Range",
+  "searchVoteCount": "Vote Count",
+  "searchRuntime": "Runtime",
+  "searchWatchProviders": "Watch Providers",
+  "searchClearAll": "Clear All",
+  "searchNoResultsTitle": "No results found",
+  "searchTryAdjusting": "Try adjusting your filters",
+  "searchMatchAny": "Match Any",
+  "searchMatchAll": "Match All",
+  "searchLanguagePlaceholder": "Add a language...",
+  "searchNoLanguagesFound": "No languages found",
+  "searchFilteredByPerson": "Filtered by person",
+  "searchFilteredByStudio": "Filtered by studio",
+  "detailsErrorLoadingSeason": "Error loading season: {error}",
+  "detailsSeasonNotFound": "Season details not found",
+  "detailsListDeleted": "List '{name}' deleted.",
+  "listTitleRemoved": "{title} removed",
+  "watchHistoryRemoved": "{title}: watch history removed",
+  "oneWatchRemoved": "{title}: one watch removed",
+  "progressCleared": "{title}: progress cleared",
+  "rewatchCancelled": "{title}: rewatch cancelled",
+  "detailsCollectionsTitle": "Collections",
+  "detailsCollectionsDesc": "Your custom themed lists.",
+  "detailsCollection": "Collection",
+  "detailsMoreLikeThis": "More Like This",
+  "detailsNewCollection": "New Collection",
+  "detailsNoCollections": "No Collections yet. Create one to start organizing!",
+  "detailsAddToList": "Add to List",
+  "detailsNoCustomLists": "No custom lists yet",
+  "detailsCreateNewList": "Create New List",
+  "detailsMarkPreviousTitle": "Mark previous?",
+  "detailsMarkPreviousDesc": "Do you also want to mark the {count} previous unwatched episode(s) as watched?",
+  "detailsOnlyThisOne": "Only this one",
+  "detailsCollectionNameHint": "Collection Name (e.g., 'Sci-Fi Gems')",
+  "homeErrorLoadingFeatures": "Error loading features",
+  "homeMoreInfo": "More Info",
+  "homeHeroPauseCarousel": "Pause carousel",
+  "homeHeroResumeCarousel": "Resume carousel",
+  "homeTrendingNow": "Trending Now",
+  "homePopularMovies": "Popular Movies",
+  "homePopularSeries": "Popular Series",
+  "homeContinueWatching": "Continue Watching",
+  "homeTimeLeftMinutes": "{minutes} min left",
+  "@homeTimeLeftMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "homeTimeLeftHours": "{hours} h left",
+  "@homeTimeLeftHours": {
+    "placeholders": {
+      "hours": { "type": "int" }
+    }
+  },
+  "homeTimeLeftHoursMinutes": "{hours} h {minutes} min left",
+  "@homeTimeLeftHoursMinutes": {
+    "placeholders": {
+      "hours": { "type": "int" },
+      "minutes": { "type": "int" }
+    }
+  },
+  "homeSportSchedule": "Sport Schedule",
+  "sportFootball": "Football",
+  "sportBasketball": "Basketball",
+  "sportMotorcycling": "Motorcycling",
+  "sportVolleyball": "Volleyball",
+  "sportAthletics": "Athletics",
+  "sportTennis": "Tennis",
+  "sportCycling": "Cycling",
+  "sportRugby": "Rugby",
+  "sportF1": "Formula 1",
+  "sportGeneric": "Sport Event",
+  "sportWatchOnChannel": "Watch on {channel}",
+  "@sportWatchOnChannel": {
+    "placeholders": {
+      "channel": { "type": "String" }
+    }
+  },
+  "sportChannelsTitle": "Channels",
+  "homeRemovedFromContinueWatching": "Removed {title}",
+  "authWelcomeBack": "Welcome Back",
+  "authEnterCredentials": "Enter your credentials to access your account",
+  "authWelcomeBackDesc": "Sign in to access your library and settings",
+  "authEmail": "EMAIL",
+  "authPassword": "PASSWORD",
+  "authInvalidEmail": "Enter a valid email",
+  "authPasswordTooShort": "The password must be at least 6 characters",
+  "authSignIn": "Sign In",
+  "settingsErrorSaving": "Error saving: {error}",
+  
+  "detailsEpisodes": "Episodes",
+  "detailsCast": "Cast",
+  "detailsPlay": "Play",
+  "detailsMyList": "My List",
+  "detailsErrorLoading": "Error loading details: {error}",
+  "detailsDecryptingMetadata": "Decrypting metadata...",
+  "detailsEpisodesRegistry": "Episodes Registry",
+  "detailsEpisodeFallback": "Episode {number}",
+  "@detailsEpisodeFallback": {
+    "placeholders": {
+      "number": { "type": "int" }
+    }
+  },
+  "detailsEpisodeWithSeason": "S{season} E{episode} • {name}",
+  "@detailsEpisodeWithSeason": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "episode": { "type": "int" },
+      "name": { "type": "String" }
+    }
+  },
+  "detailsMarkSeasonWatched": "Mark season as watched",
+  "detailsSeasonLabel": "Season",
+  "detailsSeasonsCount": "{count, plural, =1{1 Season} other{{count} Seasons}}",
+  "@detailsSeasonsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsEpisodesCount": "{count, plural, =1{1 Episode} other{{count} Episodes}}",
+  "@detailsEpisodesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsEpisodeRuntime": "{minutes}m/ep",
+  "@detailsEpisodeRuntime": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "detailsPlaySeasonEpisode": "Play S{season} E{episode}",
+  "@detailsPlaySeasonEpisode": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "episode": { "type": "int" }
+    }
+  },
+  "detailsSeasonNumber": "{num, plural, =0{Specials} other{Season {num}}}",
+  "@detailsSeasonNumber": {
+    "placeholders": {
+      "num": { "type": "int" }
+    }
+  },
+  "detailsSynopsis": "Synopsis",
+  "detailsResumeEpisode": "Resume S{season} E{episode}",
+  "@detailsResumeEpisode": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "episode": { "type": "int" }
+    }
+  },
+  "detailsResume": "Resume",
+  "detailsPlayNow": "Play Now",
+  "detailsSeriesProgress": "Series Progress",
+  "detailsCreativeVision": "Creative Vision",
+  "detailsVerdict": "Verdict",
+  "detailsVerdictExcellent": "Sublime",
+  "detailsVerdictGood": "Recommended",
+  "detailsVerdictAverage": "Watchable",
+  "detailsVerdictPoor": "Forgettable",
+  "detailsReviews": "Reviews",
+  "detailsReviewsAll": "Read all reviews",
+  "detailsNoReviews": "No reviews found.",
+  "detailsFinances": "Finances",
+  "detailsProductionDNA": "Production DNA",
+  "detailsRate": "RATE",
+  "detailsMarkRemaining": "Mark Remaining",
+  "detailsMarkAll": "Mark All",
+  "detailsRewatchSeries": "Rewatch Series",
+  "detailsRemoveAll": "Clear Watch History",
+  "detailsSelectDate": "Select Date",
+  "detailsMarkEntireSeriesPrompt": "Mark the entire series as watched?",
+  "detailsManageHistorySeriesPrompt": "Manage your history for this series.",
+  "detailsClearAllSeriesLogsSubtitle": "Clear all logs for all seasons",
+  "detailsTrackEpisodeProgress": "Track your progress for this episode.",
+  "detailsMarkRewatch": "Mark a Rewatch",
+  "detailsMarkAsWatched": "Mark as Watched",
+  "detailsSeeAllDatesWatched": "See all dates you watched this",
+  "detailsRemoveOneWatch": "Remove One Watch",
+  "detailsDeleteLatestEntry": "Delete the latest entry",
+  "detailsClearAllEpisodeLogs": "Clear all logs for this episode",
+  "detailsTrackMovieProgress": "Track your progress for this movie.",
+  "detailsClearAllMovieLogs": "Clear all logs for this movie",
+  "detailsWatchedOnDate": "Watched on {date}",
+  "@detailsWatchedOnDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "detailsWatchHistoryLogs": "Watch History Logs",
+  "detailsErrorLoadingHistory": "Error loading history",
+  "detailsBudget": "Budget",
+  "detailsRevenue": "Revenue",
+  "detailsOfficialWebsite": "Official Website",
+  "detailsMedia": "Media",
+  "detailsLinks": "Links",
+  "detailsLinkOpenFailed": "Couldn't open this link.",
+  "detailsMore": "More",
+  "seasonLabel": "Season {number}",
+  "detailsEpisodeNumber": "EP {num}",
+  "detailsReadMore": "Read more",
+  "detailsShowLess": "Show less",
+  "detailsTooltipWatched": "Watched",
+  "detailsTooltipMarkWatched": "Mark as Watched (Long press for date)",
+  "detailsGallery": "Gallery",
+  "detailsGallerySubtitle": "Backdrops, posters, and logos",
+  "detailsBackdropsCount": "{count, plural, =1{1 Backdrop} other{{count} Backdrops}}",
+  "@detailsBackdropsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsPostersCount": "{count, plural, =1{1 Poster} other{{count} Posters}}",
+  "@detailsPostersCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsLogosCount": "{count, plural, =1{1 Logo} other{{count} Logos}}",
+  "@detailsLogosCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsNoImages": "No images available",
+  "detailsBackdrops": "Backdrops",
+  "detailsPosters": "Posters",
+  "detailsLogos": "Logos",
+  "detailsGalleryPrevious": "Previous Image",
+  "detailsGalleryNext": "Next Image",
+  "detailsGalleryDownload": "Download Image",
+  "detailsGalleryDownloadSuccess": "Image saved successfully",
+  
+  "personBiography": "Biography",
+  "personKnownFor": "Known For",
+  "personFilmography": "Filmography",
+  "personSeen": "Seen",
+  "personYearsOld": "years old",
+  "personNoImage": "No image available",
+  "personShowMore": "Show More",
+  "personShowLess": "Show Less",
+  "personShowHidden": "Show Hidden",
+  "personShowingCredits": "Showing {visible} of {total} credits",
+  "personNoImg": "No image",
+  "personSeries": "Series",
+  "personMovie": "Movie",
+  
+  "playerTracks": "Audio & subtitles",
+  "playerQuality": "Source",
+  "playerAudio": "Audio",
+  "playerSelectQuality": "Select Source",
+  "playerSubtitleSize": "Subtitle Size",
+  "playerSubtitleDelay": "Subtitle Delay",
+  "playerSubtitleDelayReset": "Reset",
+  "playerTrackOff": "Off / Disable",
+  "playerTrackNoAudio": "No Audio / Mute",
+  "playerInternalTracks": "INTERNAL TRACKS",
+  "playerAudioTracks": "AUDIO TRACKS",
+  "playerExternalTracks": "EXTERNAL TRACKS",
+  "playerNoExternalSubtitles": "No external subtitles found.",
+  "playerFailedLoadSubtitle": "Failed to load external subtitle.",
+  "playerTrackSwitchFailed": "Couldn't switch to this track.",
+  "playerSubtitlesCount": "{count} subtitles",
+  "@playerSubtitlesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playerResolving": "Resolving stream...",
+  "playerSkipResolution": "Skip",
+  "playerTryingNextSource": "Stream failed, trying next source...",
+  "playerSoundLanguageMissingTryingNext": "This source has no audio in {language}: trying the next one",
+  "@playerSoundLanguageMissingTryingNext": {
+    "placeholders": {
+      "language": { "type": "String" }
+    }
+  },
+  "playerNoSourceWithSoundLanguage": "No source with audio in {language} found",
+  "@playerNoSourceWithSoundLanguage": {
+    "placeholders": {
+      "language": { "type": "String" }
+    }
+  },
+  "playerSourceWithoutSoundLanguage": "This source has no audio in {language}",
+  "@playerSourceWithoutSoundLanguage": {
+    "placeholders": {
+      "language": { "type": "String" }
+    }
+  },
+  "playerProgressNotSaved": "Progress not saved. {reason}",
+  "@playerProgressNotSaved": {
+    "placeholders": {
+      "reason": { "type": "String" }
+    }
+  },
+  "playerEpisodeNotMarkedWatched": "Episode not marked as watched. {reason}",
+  "@playerEpisodeNotMarkedWatched": {
+    "placeholders": {
+      "reason": { "type": "String" }
+    }
+  },
+  "playerAllSourcesExhausted": "All sources failed. Please go back and try again.",
+  "playerResolvingYoutube": "Loading YouTube video...",
+  "playerErrorResolving": "Error resolving stream:\n{error}",
+  "playerYoutubeBlocked": "This trailer can't be played in the app.\nYouTube sometimes blocks apps like this one. You can watch it on YouTube instead.",
+  "playerOpenOnYoutube": "Open on YouTube",
+  "playerOpenOnYoutubeFailed": "Couldn't open YouTube on this device.",
+  "playerNoAudioFound": "No audio tracks found",
+  "playerNoQualityOptions": "No quality options available for this stream.",
+  "youtubeDefaultTitle": "YouTube Video",
+  "youtubeStreamLabel": "YouTube Stream",
+  "playerResolvingStream": "Resolving Stream...",
+  "playerCheckingDebridCache": "Checking debrid cache",
+  "sectionVisualArchives": "Visual Archives",
+  "failureNetwork": "Can't reach the server. Check your connection.",
+  "failureAuth": "Please sign in again.",
+  "failureServer": "The server had a problem. Try again later.",
+  "failureNotFound": "This item couldn't be found.",
+  "failureStreaming": "This video couldn't be played.",
+  "failureValidation": "Some data was invalid.",
+  "failureUnknown": "Something went wrong.",
+  "debridFileDownloading": "Your debrid service is still downloading this one. Try again later.",
+  "debridFileCopyright": "Your debrid service refuses this file (copyright).",
+  "debridFileLimit": "Your debrid service has too many downloads running, or the account reached a limit.",
+  "debridFileOther": "The source sent an error video instead of the video.",
+  "shellPressBackAgainToExit": "Press Back again to exit",
+  "errorTimeout": "Connection timed out. Check your connection.",
+  "errorServerStatus": "The server returned an error ({statusCode}).",
+  "errorCertificateHint": "Your system might be missing some root certificates. Try updating Windows or check your firewall/DNS.",
+  "authErrorInvalidCredentials": "Invalid email or password.",
+  "authErrorEmailNotConfirmed": "Please confirm your email address.",
+  "authErrorUserExists": "An account with this email already exists.",
+  "authErrorGeneric": "Sign in failed. Please try again.",
+  "updatePreparingInstaller": "Preparing to launch the installer...",
+  "updateRestarting": "Files swapped. Restarting in a moment...",
+  "genreAction": "Action",
+  "genreAdventure": "Adventure",
+  "genreAnimation": "Animation",
+  "genreComedy": "Comedy",
+  "genreCrime": "Crime",
+  "genreDocumentary": "Documentary",
+  "genreDrama": "Drama",
+  "genreFamily": "Family",
+  "genreFantasy": "Fantasy",
+  "genreHistory": "History",
+  "genreHorror": "Horror",
+  "genreMusic": "Music",
+  "genreMystery": "Mystery",
+  "genreRomance": "Romance",
+  "genreSciFi": "Sci-Fi",
+  "genreTVMovie": "TV Movie",
+  "genreThriller": "Thriller",
+  "genreWar": "War",
+  "genreWestern": "Western",
+  "genreActionAdventure": "Action & Adventure",
+  "genreKids": "Kids",
+  "genreNews": "News",
+  "genreReality": "Reality",
+  "genreSciFiFantasy": "Sci-Fi & Fantasy",
+  "genreSoap": "Soap",
+  "genreTalk": "Talk Show",
+  "genreWarPolitics": "War & Politics",
+  "languageEnglish": "English",
+  "languageSpanish": "Spanish",
+  "languageFrench": "French",
+  "languageGerman": "German",
+  "languageItalian": "Italian",
+  "languagePortuguese": "Portuguese",
+  "languageRussian": "Russian",
+  "languageJapanese": "Japanese",
+  "languageKorean": "Korean",
+  "languageChinese": "Chinese",
+  "languageHindi": "Hindi",
+  "languageDutch": "Dutch",
+  "languageSwedish": "Swedish",
+  "languageDanish": "Danish",
+  "languagePolish": "Polish",
+  "languageTurkish": "Turkish",
+  "languageThai": "Thai",
+  "languageIndonesian": "Indonesian",
+  "languageArabic": "Arabic",
+  "languageCzech": "Czech",
+  "languageGreek": "Greek",
+  "languageFinnish": "Finnish",
+  "languageHebrew": "Hebrew",
+  "languageHungarian": "Hungarian",
+  "languageNorwegian": "Norwegian",
+  "languageRomanian": "Romanian",
+  "languageUkrainian": "Ukrainian",
+  "languageVietnamese": "Vietnamese",
+  "languageBulgarian": "Bulgarian",
+  "languageCroatian": "Croatian",
+  "languageSerbian": "Serbian",
+  "languageSlovak": "Slovak",
+  "languageSlovenian": "Slovenian",
+  "languageEstonian": "Estonian",
+  "languageLatvian": "Latvian",
+  "languageLithuanian": "Lithuanian",
+  "languageIcelandic": "Icelandic",
+  "languageCatalan": "Catalan",
+  "languageBasque": "Basque",
+  "languageGalician": "Galician",
+  "languageMalay": "Malay",
+  "languagePersian": "Persian",
+  "languageTamil": "Tamil",
+  "languageTelugu": "Telugu",
+  "languageFilipino": "Filipino",
+  "languageBengali": "Bengali",
+  "streamingErrorNoProviders": "No streaming addons are enabled. Please check your settings.",
+  "streamingErrorNoResults": "No results found across addons.",
+  "streamingErrorResolutionFailed": "Failed to resolve the selected stream. Link might not be available in cache.",
+  "streamingErrorMediaDetails": "Could not fetch media details.",
+  "playerFiles": "Files",
+  "playerFilesCount": "{count} files available",
+  "@playerFilesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playerProviderFailed": "Failed ({time})",
+  "@playerProviderFailed": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "playerProviderResults": "{count} results ({time})",
+  "@playerProviderResults": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "playerSkipToPlayback": "Skip to playback",
+  "playerSelectFile": "Select File",
+  "playerSubtitles": "Subtitles",
+  "commonGoBack": "Go Back",
+  "playerNextEpisode": "Next Episode",
+  "playerPreviousChannel": "Previous Channel",
+  "playerNextChannel": "Next Channel",
+  "playerChannelList": "Channel List",
+  "playerPlay": "Play",
+  "playerPause": "Pause",
+  "playerStop": "Stop",
+  "playerSkipBackward": "Rewind 10 seconds",
+  "playerSkipForward": "Forward 10 seconds",
+  "playerSubtitleAppearance": "Subtitle Appearance",
+  "playerLookTab": "Look",
+  "playerAppearanceFontSize": "Font Size",
+  "playerAppearanceTextColor": "Text Color",
+  "playerAppearanceBackground": "Background Opacity",
+  "playerAppearanceBottomPadding": "Bottom Padding",
+  "playerAppearancePositionBottom": "Bottom",
+  "playerAppearancePositionMiddle": "Middle",
+  "playerAppearancePositionTop": "Top",
+  "playerAppearanceSaveDefault": "Save as Default",
+  "playerAppearanceReset": "Reset to Default",
+  "playerAppearanceSave": "Save",
+  "playerAppearanceSampleText": "Sample Subtitle Text",
+  "playerSubtitleSync": "Subtitle Sync",
+
+  "settingsTitle": "Settings",
+  "settingsIdentity": "Identity & Access",
+  "settingsIdentityDesc": "Manage your personal details and access preferences.",
+  "settingsCustomization": "App Customization",
+  "settingsCustomizationDesc": "Customize your viewing experience and app appearance.",
+  "settingsIntegrations": "Addons & Extensions",
+  "settingsIntegrationsDesc": "Manage streaming providers, addons, and external integrations.",
+  "settingsInfoUpdates": "Info & Updates",
+  "settingsInfoUpdatesDesc": "The app's version and its updates.",
+  "settingsData": "Data & Storage",
+  "settingsDataDesc": "Manage your local data and cache.",
+  
+  "settingsProvidersTitle": "Streaming Addons",
+  "settingsProvidersDesc": "Manage your Stremio-compatible addons.",
+  "settingsAddNewAddon": "ADD NEW ADDON",
+  "settingsInstall": "Install",
+  "settingsAddonHint": "Paste any Stremio manifest URL to add new content sources.",
+  "settingsInstalledAddons": "INSTALLED ADDONS",
+  "settingsNoAddons": "No addons installed yet",
+  "settingsAddonSuccess": "Addon installed successfully",
+  "settingsAddonInvalid": "This isn't a valid Stremio add-on link.",
+  "settingsCopiedToClipboard": "URL copied to clipboard",
+  "settingsCopy": "Copy URL",
+  "settingsRemove": "Remove",
+  "settingsAddonRemoved": "{name} removed",
+  "settingsNativeIntegrations": "Native Providers",
+  "settingsEnableSource": "Enable {name}",
+  "@settingsEnableSource": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "settingsEnableBuiltInAnimeDesc": "Native anime streaming source (No Debrid required)",
+  "settingsAnimeTorrentsNeedDebrid": "{name} needs Real-Debrid or TorBox with an API key",
+  "@settingsAnimeTorrentsNeedDebrid": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "settingsDebridServices": "Debrid Services",
+  "settingsRealDebridTitle": "Real-Debrid (Native)",
+  "settingsRealDebridKey": "Real-Debrid API Key",
+  "settingsTorBoxTitle": "TorBox (Native)",
+  "settingsTorBoxKey": "TorBox API Key",
+  "settingsPreferredDebridTitle": "Preferred Debrid Provider",
+  "settingsPreferredDebridDesc": "Service to prioritize when content is cached on multiple providers.",
+  "settingsOpenSubtitlesTitle": "OpenSubtitles.com",
+  "settingsOpenSubtitlesKey": "OpenSubtitles API Key",
+  "settingsOpenSubtitlesKeyDesc": "Used for external subtitle lookup. Requires a free API key.",
+  "settingsOpenSubtitlesAutoDownloadTitle": "Auto-download missing subtitles",
+  "settingsOpenSubtitlesAutoDownloadDesc": "Automatically fetch subtitles when your preferred language is missing from the stream. Consumes daily API quota.",
+
+  "settingsDisplayName": "Display Name",
+  "settingsDisplayNameDesc": "Your public display name.",
+  "settingsEnterName": "Enter your name",
+  "settingsLanguage": "Language",
+  "settingsAppLanguage": "App Language",
+  "settingsAppLanguageDesc": "Change the interface language.",
+  "settingsWatchRegion": "Streaming Country",
+  "settingsWatchRegionDesc": "Explore shows the streaming services of this country.",
+  "settingsUndoTime": "Undo Time",
+  "settingsUndoTimeDesc": "How long the Undo message stays after a removal. Off: removals are final at once.",
+  "settingsUndoTimeOff": "Off",
+  "settingsUndoTimeSeconds": "{seconds} seconds",
+  "@settingsUndoTimeSeconds": {
+    "placeholders": {
+      "seconds": { "type": "int" }
+    }
+  },
+  "settingsScreenSize": "Screen Size",
+  "settingsScreenSizeDesc": "How big text and buttons are on this device. Smaller fits more on screen.",
+  "settingsStartFullScreen": "Start in Full Screen",
+  "settingsStartFullScreenDesc": "Cinemuse opens in full screen on this computer. F11 switches it at any time.",
+  "settingsCloseApp": "Close Cinemuse",
+  "settingsCloseAppDesc": "Closes the app on this computer.",
+  "settingsAudioLanguage": "Audio Language",
+  "settingsAudioLanguageDesc": "Preferred audio language for movies and series.",
+  "settingsSubtitleLanguage": "Subtitle Language",
+  "settingsSubtitleLanguageDesc": "Preferred subtitle language for movies and series.",
+  "settingsShowSubtitles": "Show Subtitles",
+  "settingsShowSubtitlesDesc": "Turn subtitles on when a video starts",
+  "settingsJapanese": "Japanese",
+  "settingsOriginal": "Original",
+  "settingsPlayer": "Media Preferences",
+  "settingsEnglish": "English",
+  "settingsItalian": "Italian",
+  "settingsSplitAnimePreferences": "Split Anime Preferences",
+  "settingsSplitAnimePreferencesDesc": "Use different audio and subtitle settings for anime.",
+  "settingsAnimeAudioLanguage": "Anime Audio Language",
+  "settingsAnimeAudioLanguageDesc": "Preferred audio language for anime.",
+  "settingsAnimeShowSubtitles": "Anime Show Subtitles",
+  "settingsAnimeShowSubtitlesDesc": "Enable or disable subtitles by default for anime.",
+  "settingsAnimeSubtitleLanguage": "Anime Subtitle Language",
+  "settingsAnimeSubtitleLanguageDesc": "Preferred subtitle language for anime.",
+  "settingsPrimaryColor": "Primary Color",
+  "settingsPrimaryColorDesc": "Main accent color for the player.",
+  "settingsSecondaryColor": "Secondary Color",
+  "settingsSecondaryColorDesc": "Secondary accent color for the player.",
+  "settingsOther": "Other",
+  "settingsShowDebugPanel": "Show Debug Panel",
+  "settingsShowDebugPanelDesc": "Display technical details overlay.",
+  "settingsSmartSearch": "Clean Stream Results",
+  "settingsSmartSearchDesc": "Automatically hide items like CAM, Screener, 3D, or junk from addon results.",
+  "settingsMaxResolution": "Max Resolution",
+  "settingsMaxResolutionDesc": "Hide streams with a resolution higher than the selected one.",
+  
+  "settingsTotalDocSize": "Total Document Size",
+  "settingsTotalDocSizeDesc": "Total size of all your stored data.",
+  "settingsUserProfile": "User Library",
+  "settingsWatchedMovies": "Watched Movies",
+  "settingsWatchedSeries": "Watched Series",
+  "settingsLists": "Lists",
+  "settingsAggregatedStats": "Aggregated Stats",
+
+  "settingsSave": "Save",
+  "settingsSaved": "Saved",
+  "settingsBack": "Back to Settings",
+  "settingsLogout": "Log out",
+  "settingsProfile": "Library",
+  "profileOverview": "OVERVIEW",
+  "profileCollections": "COLLECTIONS",
+  "profileUserDashboard": "User Library",
+  "profileErrorLoading": "Error loading library",
+  "profileMemberSince": "Member since {year}",
+
+  "navLiveTV": "Live TV",
+  "liveTvTitle": "Live TV",
+  "liveTvSelectChannel": "Select a channel to start watching",
+  "liveTvNoEpg": "No program information available",
+  "liveTvLoading": "Loading channels...",
+  "liveTvError": "Failed to load channels",
+  "liveTvStreamUnavailable": "Stream unavailable",
+  "liveTvStreamUnavailableHint": "This channel may be offline or not available in your country.",
+  "liveTvAllChannels": "All",
+  "liveTvHd": "HD",
+  "liveTvNoChannels": "No channels found",
+  "liveTvSearchPlaceholder": "Search channels...",
+  "settingsLiveTv": "Live TV",
+  "settingsLiveTvRewind": "Rewind length",
+  "settingsLiveTvRewindDesc": "How far back you can go in a live channel. A device with little free memory keeps less.",
+  "settingsLiveTvRewindMinutes": "{minutes} min",
+  "@settingsLiveTvRewindMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "settingsNone": "None",
+  "liveTvCategories": "Categories",
+  "liveTvProviders": "Providers",
+  "liveTvBrowse": "Browse",
+  "liveTvGroupMode": "Grouping",
+  "agendaTitle": "Agenda",
+  "agendaSubtitle": "Upcoming releases from your library",
+  "agendaLoading": "Checking for updates...",
+  "agendaNoEvents": "No upcoming releases found",
+  "agendaToday": "Today",
+  "agendaTomorrow": "Tomorrow",
+  "agendaThisWeek": "This Week",
+  "agendaNextWeek": "Next Week",
+  "agendaLater": "Later",
+  "agendaMovie": "Movie",
+  "agendaSeries": "Series",
+  "agendaRecentlyReleased": "Recently Released",
+  "agendaTbd": "TBD / Coming Soon",
+  "agendaTbdLabel": "TBD",
+  "updateAvailableMessage": "Version {version} is available: Settings → Info & Updates",
+  "updateInstalledVersion": "Installed version",
+  "updateNewVersion": "New version",
+  "updateCheck": "Check for updates",
+  "updateChecking": "Checking for updates...",
+  "updateWhatsNewIn": "What's new in {version}",
+  "updateNow": "Update Now",
+  "downloadingUpdate": "Downloading update {progress}%",
+  "updateFailed": "Update failed. Please try again later.",
+  "updateNoCompatibleApk": "No compatible update found for your device architecture ({abi})",
+  "updateUpToDate": "App is up to date",
+  "updateCancel": "Cancel Update",
+  "updateNetworkError": "Network error during update. Please check your connection.",
+  "updateStorageError": "Not enough storage space to download the update.",
+  "updateSourceError": "The update source is currently unavailable.",
+  "updateIntegrityError": "The downloaded update could not be verified, so it was not installed.",
+  "updateFolderNotWritable": "Cinemuse can't update itself in this folder. Move the Cinemuse folder somewhere you own (for example Documents), or download the update from GitHub.",
+  "updateAlreadyRunning": "An update is already in progress.",
+  "updatePermissionDenied": "Cinemuse needs permission to install apps. Allow it in Settings, then try again.",
+  "updateRequiredTitle": "Update required",
+  "updateRequiredMessage": "This version of Cinemuse is too old to work with your account. Update the app to keep using it.",
+  "menuMoreOptions": "More Options",
+  "menuAddToWatchlist": "Add to Watchlist",
+  "menuRemoveFromWatchlist": "Remove from Watchlist",
+  "watchlistAdded": "Added to Watchlist",
+  "watchlistRemoved": "Removed from Watchlist",
+  "cardInWatchlist": "In Watchlist",
+  "cardInFavorites": "In Favorites",
+  "menuAddToFavorites": "Add to Favorites",
+  "menuRemoveFromFavorites": "Remove from Favorites",
+  "menuRemoveFromList": "Remove from List",
+  "menuMarkAsWatched": "Mark as Watched",
+  "menuMarkAsUnwatched": "Mark as Unwatched",
+  "menuShare": "Share",
+  "menuResume": "Resume",
+  "menuRestart": "Restart",
+  "menuClearProgress": "Clear Progress",
+  "menuMarkWatchedNow": "Mark as watched (now)",
+  "menuMarkWatchedCustomDate": "Mark as watched (custom date)",
+  "menuPlay": "Play",
+  "menuStopWatching": "Stop Watching",
+  "menuCancelRewatch": "Cancel Rewatch",
+  "menuRemoveCachedProvider": "Remove Cached Stream",
+  "menuManageWatchHistory": "Manage Watch History",
+  "liveTvTabAll": "All",
+  "liveTvTabFavorites": "Favorites",
+  "liveTvTabRecents": "Recents",
+  "liveTvFilterChannels": "Filter Channels",
+  "liveTvGroupBy": "Group by",
+  "liveTvSubProvider": "Sub-provider",
+  "liveTvApplyFilters": "Apply Filters",
+  "liveTvClearFilters": "Clear Filters",
+  "liveTvAddedToFavorites": "Added to favorites",
+  "liveTvRemovedFromFavorites": "Removed from favorites",
+  "liveTvNoFavorites": "No favorite channels yet",
+  "liveTvNoFavoritesHint": "Long-press a channel to add it to favorites",
+  "liveTvNoRecents": "No recently watched channels",
+
+  "liveTvPlaylistsDesc": "The Cinemuse channels, plus your own M3U/JSON playlists from links or files.",
+  "liveTvCinemuseChannels": "Free-to-air channels",
+  "liveTvTypeBuiltIn": "Built-in",
+  "liveTvAddUrl": "Add URL",
+  "liveTvAddFile": "Add File",
+  "liveTvAddRemotePlaylist": "Add Remote Playlist",
+  "liveTvPlaylistName": "Playlist Name",
+  "liveTvPlaylistUrl": "Playlist URL",
+  "liveTvPlaylistFormat": "Format",
+  "liveTvOpenFileLocation": "Open File Location",
+  "liveTvOpenLink": "Open Link",
+  "liveTvManagePlaylists": "Manage Playlists",
+  "liveTvTypeM3uFile": "M3U File",
+  "liveTvTypeJsonFile": "JSON File",
+  "liveTvTypeM3uUrl": "M3U URL",
+  "liveTvTypeJsonUrl": "JSON URL",
+  "liveTvPlaylists": "Playlists & EPGs",
+  "liveTvFilterAndPlaylists": "Filter & Playlists",
+  "liveTvEpgSection": "TV Guide (EPG)",
+  "liveTvCinemuseGuide": "Guide of the free-to-air channels",
+  "liveTvAddRemoteGuide": "Add Remote Guide",
+  "liveTvGuideName": "Guide Name",
+  "liveTvGuideUrl": "Guide URL",
+  "liveTvTypeXmltvFile": "XMLTV File",
+  "liveTvTypeXmltvUrl": "XMLTV URL",
+  "liveTvPlaylistsTitle": "Playlists",
+  "liveTvRefreshAll": "Refresh",
+  "liveTvRefreshed": "Playlists and guides refreshed",
+  "liveTvSourceRemoved": "{name} removed",
+  "liveTvCouldNotLoad": "Couldn't load: {details}",
+  "liveTvFailedPlaylist": "{name} (playlist)",
+  "liveTvFailedGuide": "{name} (EPG)",
+  "liveTvSavedGuideShown": "Showing the saved guide. Couldn't update: {details}",
+  "liveTvSavedChannelsShown": "Showing the saved channels. Couldn't update: {details}",
+  "liveTvNoChannelsInIt": "No channels found in it.",
+  "liveTvNoProgrammesInIt": "No programmes found in it.",
+  "liveTvFileNotFound": "The file can't be found.",
+
+  "tvTimeComments": "Comments",
+  "tvTimeNoComments": "No comments yet.",
+  "commentsLoadMore": "Load more comments",
+  "tvTimeReplies": "{count, plural, one{{count} reply} other{{count} replies}}",
+  "@tvTimeReplies": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "tvTimeLoadingComments": "Loading comments...",
+  "tvTimeCommentsError": "Could not load comments.",
+  "commentsSpoilerWarning": "Spoiler Warning",
+  "commentsTapToReveal": "Tap to reveal",
+  "commentsSortMostLiked": "Most Liked",
+  "commentsSortRecent": "Recent",
+  "commentsSortRating": "Highest Rating",
+  "commentsFilterAnyLanguage": "Any Language",
+  "commentsFilterEnglish": "English",
+  "commentsFilterItalian": "Italian",
+  "commentsFilterEnIt": "English + Italian",
+  "commentsFilterAllSources": "All Sources",
+  "commentsSourceLetterboxd": "Letterboxd",
+  "commentsSourceImdb": "IMDb",
+  "ownReviewAdd": "Add a review",
+  "ownReviewEdit": "Edit review",
+  "ownReviewNotWatched": "Mark as watched to review",
+  "ownReviewEditorTitle": "Your review",
+  "ownReviewScoreField": "Your score",
+  "ownReviewScoreLabel": "Score {score} out of 10",
+  "@ownReviewScoreLabel": {
+    "placeholders": {
+      "score": { "type": "int" }
+    }
+  },
+  "ownReviewTextField": "Review (optional)",
+  "ownReviewFormattingHint": "**bold**, *italics*, - lists and > quotes work",
+  "ownReviewSave": "Save",
+  "ownReviewRemove": "Remove review",
+  "ownReviewRemoved": "Review removed",
+  "ownReviewChangesDiscarded": "Changes discarded",
+  "ownReviewLoadError": "Couldn't load your review",
+  "settingsSearchPreferences": "Search Preferences",
+  "settingsAutoSkipProviders": "Auto-Skip Slow Providers",
+  "settingsAutoSkipProvidersDesc": "Skip streaming providers that take longer than 10 seconds to respond.",
+  "profileRecentMovies": "Recent Movies",
+  "profileRecentSeries": "Recent Series",
+  "statsTimeBreakdown": "Time Breakdown",
+  "statsAllTime": "All Time",
+  "statsMovies": "Movies",
+  "statsSeries": "Series",
+  "statsLast7Days": "Last 7 Days",
+  "statsLast30Days": "Last 30 Days",
+  "statsLastYear": "Last Year",
+  "statsMoviesStats": "Movies Stats",
+  "statsSeriesStats": "Series Stats",
+  "statsEpisodes": "Episodes",
+  "statsSeasons": "Seasons",
+  "statsTime": "Time",
+  "detailsCreatorsAndDirectors": "Creators & Directors",
+  "detailsDirector": "Director",
+  "detailsCreator": "Creator",
+  "detailsWriter": "Writer",
+  "detailsWriters": "Writers",
+  "detailsPeople": "Cast & Crew",
+  "detailsSectionCrew": "CREW",
+  "detailsSectionCast": "CAST",
+  "detailsTvTimeComments": "Comments",
+  "detailsExternalLinks": "External Links",
+  "detailsTrack": "Track",
+  "detailsWatched": "Watched",
+  "detailsWatchedCount": "Watched x{count}",
+  "@detailsWatchedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsUpToDate": "Up to date",
+  "detailsUpToDateCount": "Up to date x{count}",
+  "@detailsUpToDateCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "detailsFinishSeries": "Finish Series",
+  "commonNoContent": "No content available",
+  "commonStopCasting": "STOP CASTING",
+  "castConnectDevice": "Connect to device",
+  "castNoDevices": "No devices found",
+  "castRefresh": "Refresh",
+  "profileNoRecentItems": "No recently watched items",
+  "detailsEditList": "Edit List",
+  "detailsDeleteList": "Delete List",
+  "detailsTvTimeCommentsNotAvailable": "Comments not available for this media",
+  "detailsTvTimeCommentsNotAvailableSeries": "Comments not available for this series",
+  "detailsFailedLoadCollection": "Failed to load collection details",
+  "detailsFeaturedCritic": "Featured Critic",
+  "offlineBannerTitle": "Offline Mode",
+  "offlineBannerMessage": "Showing locally cached content only.",
+  "castSearching": "Searching for devices...",
+  "castError": "Error: {error}",
+  "@castError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "castCastingTo": "Casting to {deviceName}",
+  "@castCastingTo": {
+    "placeholders": {
+      "deviceName": { "type": "String" }
+    }
+  },
+  "castSeasonEpisode": "Season {season} • Episode {episode}",
+  "@castSeasonEpisode": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "episode": { "type": "int" }
+    }
+  },
+  "statsDaysHours": "{days}d {hours}h",
+  "@statsDaysHours": {
+    "placeholders": {
+      "days": { "type": "int" },
+      "hours": { "type": "int" }
+    }
+  },
+  "listWatchLater": "Watch Later",
+  "listFavorites": "Favorites",
+  "listYourQueue": "Your queue",
+  "listCuratedPicks": "Your curated picks",
+  "listDropped": "Dropped",
+  "listDroppedSubtitle": "Titles you interrupted.",
+  "menuRestoreContinueWatching": "Restore to Continue Watching",
+  "listUntitled": "Untitled List",
+  "listNameHint": "List Name",
+  "listDescriptionHint": "Add a description...",
+  "listItemsCount": "{count, plural, one{{count} item} other{{count} items}}",
+  "@listItemsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "listEmptyTitle": "This list is empty",
+  "listEmptyMessage": "Add media from the details page",
+  "collectionTitleFallback": "Collection",
+  "collectionSubtitle": "Movie Collection",
+  "menuOpenList": "Open List",
+  "listPinToHome": "Pin to Home",
+  "listUnpinFromHome": "Unpin from Home",
+  "listPinnedSuccess": "Pinned to Home",
+  "listUnpinnedSuccess": "Unpinned from Home",
+  "playerLiveSources": "Source",
+  "playerPictureSize": "Quality",
+  "playerPictureSizeSuggestLower": "The stream keeps stopping. Try a lower quality in the Quality menu.",
+  "playerActiveSource": "Active",
+  "playerSourceFailed": "Unavailable",
+  "watchHistoryTitle": "Watch History",
+  "watchHistorySubtitle": "{count, plural, =1{1 title} other{{count} titles}}",
+  "@watchHistorySubtitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "watchHistoryFilteredCount": "{filtered} of {total, plural, =1{1 title} other{{total} titles}}",
+  "@watchHistoryFilteredCount": {
+    "placeholders": {
+      "filtered": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "watchHistoryBreakdown": "{movies, plural, =1{1 movie} other{{movies} movies}}, {series, plural, =1{1 series} other{{series} series}}",
+  "@watchHistoryBreakdown": {
+    "placeholders": {
+      "movies": { "type": "int" },
+      "series": { "type": "int" }
+    }
+  },
+  "watchHistoryMoviesCount": "{count, plural, =1{1 movie} other{{count} movies}}",
+  "@watchHistoryMoviesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "watchHistoryFilteredMoviesCount": "{filtered} of {total, plural, =1{1 movie} other{{total} movies}}",
+  "@watchHistoryFilteredMoviesCount": {
+    "placeholders": {
+      "filtered": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "watchHistorySeriesBreakdown": "{series, plural, =1{1 series} other{{series} series}}, {seasons, plural, =1{1 season} other{{seasons} seasons}}, {episodes, plural, =1{1 episode} other{{episodes} episodes}}",
+  "@watchHistorySeriesBreakdown": {
+    "placeholders": {
+      "series": { "type": "int" },
+      "seasons": { "type": "int" },
+      "episodes": { "type": "int" }
+    }
+  },
+  "watchHistoryFilteredSeriesBreakdown": "{filteredSeries} of {totalSeries, plural, =1{1 series} other{{totalSeries} series}}, {seasons, plural, =1{1 season} other{{seasons} seasons}}, {episodes, plural, =1{1 episode} other{{episodes} episodes}}",
+  "@watchHistoryFilteredSeriesBreakdown": {
+    "placeholders": {
+      "filteredSeries": { "type": "int" },
+      "totalSeries": { "type": "int" },
+      "seasons": { "type": "int" },
+      "episodes": { "type": "int" }
+    }
+  },
+  "watchHistorySearchPlaceholder": "Search watched titles...",
+  "watchHistoryAll": "All",
+  "watchHistoryStatusAll": "All Statuses",
+  "watchHistoryStatusWatching": "In Progress",
+  "watchHistoryStatusCompleted": "Completed",
+  "watchHistoryStatusDropped": "Dropped",
+  "watchHistorySortRecent": "Recently Watched",
+  "watchHistorySortTitle": "Title (A-Z)",
+  "watchHistoryViewGrid": "Grid",
+  "watchHistoryViewTimeline": "Timeline",
+  "watchHistoryViewRatings": "Ratings",
+  "watchHistoryRatedCount": "{rated} rated of {total, plural, =1{1 title} other{{total} titles}}",
+  "@watchHistoryRatedCount": {
+    "placeholders": {
+      "rated": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "watchHistoryRatingsEmpty": "Nothing rated yet",
+  "watchHistoryDateToday": "Today",
+  "watchHistoryDateYesterday": "Yesterday",
+  "watchHistoryDateThisWeek": "This Week",
+  "watchHistoryDateThisMonth": "This Month",
+  "watchHistoryReplay": "Replay",
+  "seasonEpisodeShort": "S{season} E{episode}",
+  "@seasonEpisodeShort": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "episode": { "type": "int" }
+    }
+  },
+  "watchHistoryEmpty": "No watch history found",
+  "watchHistoryGranularityDaily": "Daily",
+  "watchHistoryGranularityMonthly": "Monthly",
+  "watchHistoryGranularityYearly": "Yearly",
+  "watchHistoryStackedEpisodes": "{count, plural, =1{1 episode} other{{count} episodes}}",
+  "@watchHistoryStackedEpisodes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "watchHistoryEpisodeRange": "S{season} E{start}–E{end}",
+  "@watchHistoryEpisodeRange": {
+    "placeholders": {
+      "season": { "type": "int" },
+      "start": { "type": "int" },
+      "end": { "type": "int" }
+    }
+  },
+  "watchHistoryMultiSeasonRange": "S{startSeason} E{startEpisode}–S{endSeason} E{endEpisode}",
+  "@watchHistoryMultiSeasonRange": {
+    "placeholders": {
+      "startSeason": { "type": "int" },
+      "startEpisode": { "type": "int" },
+      "endSeason": { "type": "int" },
+      "endEpisode": { "type": "int" }
+    }
+  },
+  "watchHistorySeasonRange": "S{startSeason}–S{endSeason}",
+  "@watchHistorySeasonRange": {
+    "placeholders": {
+      "startSeason": { "type": "int" },
+      "endSeason": { "type": "int" }
+    }
+  },
+  "watchHistoryFiltersTitle": "Filters",
+  "watchHistoryResetFilters": "Reset",
+  "watchHistoryApplyFilters": "Apply Filters",
+  "watchHistoryFilterType": "Media Type",
+  "watchHistoryFilterStatus": "Watch Status",
+  "watchHistoryFilterSort": "Sort By",
+  "watchHistoryFilterGranularity": "Timeline Grouping",
+  "watchHistoryActiveFilterCount": "{count, plural, =1{1 filter} other{{count} filters}}",
+  "@watchHistoryActiveFilterCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "liveTvFullWindow": "Full Window",
+  "liveTvSplitView": "Split View",
+  "liveTvChannels": "Channels",
+  "liveTvCloseOverlay": "Close channel list",
+  "liveTvLive": "Live",
+  "liveTvGoToLive": "Go to Live",
+  "playerFullscreen": "Fullscreen",
+  "playerExitFullscreen": "Exit fullscreen",
+  "seriesStatusOngoing": "Ongoing",
+  "seriesStatusEnded": "Ended",
+  "seriesStatusCanceled": "Canceled",
+  "seriesStatusInProduction": "In production",
+  "seriesStatusPlanned": "Planned",
+  "seriesStatusPilot": "Pilot",
+  "settingsAnimeTorrentsDesc": "Built-in high-quality anime source (torrent)",
+  "settingsMovieSiteDesc": "Built-in direct streaming source (no debrid needed)",
+  "listCardEmpty": "No titles yet",
+  "listCardOpenAll": "Open to see all the titles",
+  "settingsResolutionAny": "Any",
+  "playerTrackForced": "Forced",
+  "playerTrackCc": "CC",
+  "playerTrackNumber": "Track {number}",
+  "@playerTrackNumber": {
+    "placeholders": {
+      "number": { "type": "String" }
+    }
+  },
+  "menuViewWatchHistory": "View Watch History",
+  "liveTvJumpToNow": "Jump to Live",
+  "liveTvTvGuide": "TV Guide",
+  "liveTvNoProgramDetails": "No synopsis available for this program.",
+  "liveTvMinutesRemaining": "{minutes}m remaining",
+  "@liveTvMinutesRemaining": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "playerCached": "CACHED",
+  "castDefaultDevice": "Chromecast",
+  "playerErrorPrefix": "Error: {error}",
+  "@playerErrorPrefix": {
+    "description": "Error prefix message",
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  }
+}
+

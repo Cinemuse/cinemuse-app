@@ -1,0 +1,319 @@
+import 'package:cinemuse_app/core/services/system/app_full_screen.dart';
+import 'package:cinemuse_app/core/utils/platform_info.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/settings/domain/user_settings.dart';
+import 'package:cinemuse_app/features/video_player/application/player_provider.dart';
+import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_video_controls.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/overlays/seek_feedback_hud.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/play_pause_overlay.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/player_seekbar.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:cinemuse_app/core/application/provider_retry.dart';
+
+import '../../../../helpers/fake_app_window.dart';
+
+class _MockPlayer extends Mock implements Player {}
+
+class _MockPlayerStream extends Mock implements PlayerStream {}
+
+class _MockPlayerState extends Mock implements PlayerState {}
+
+class _MockVideoController extends Mock implements VideoController {}
+
+class _FakeVideoState extends Fake implements VideoState {
+  @override
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
+      'FakeVideoState';
+}
+
+class _FakeSettingsNotifier extends SettingsNotifier {
+  @override
+  UserSettings build() => const UserSettings();
+}
+
+class _FakePlayerController extends Notifier<AsyncValue<CinemaPlayerState>>
+    implements PlayerController {
+  _FakePlayerController(this.seeks);
+
+  @override
+  AsyncValue<CinemaPlayerState> build() => const AsyncValue.loading();
+  final List<Duration> seeks;
+
+  @override
+  Future<void> seek(Duration position) async => seeks.add(position);
+
+  @override
+  Future<void> play() async {}
+
+  @override
+  Future<void> pause() async {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+void main() {
+  final touchLayout = TargetPlatformVariant.only(TargetPlatform.android);
+  late _MockPlayer player;
+  late List<Duration> seeks;
+  late int backPresses;
+  late FakeAppWindow window;
+
+  setUp(() {
+    player = _MockPlayer();
+    final stream = _MockPlayerStream();
+    final state = _MockPlayerState();
+    when(() => player.stream).thenReturn(stream);
+    when(() => player.state).thenReturn(state);
+    when(() => stream.playing).thenAnswer((_) => const Stream.empty());
+    when(() => stream.buffering).thenAnswer((_) => const Stream.empty());
+    when(() => stream.volume).thenAnswer((_) => const Stream.empty());
+    when(() => stream.position).thenAnswer((_) => const Stream.empty());
+    // Playing: only then do the controls fade out.
+    when(() => state.playing).thenReturn(true);
+    when(() => state.buffering).thenReturn(false);
+    when(() => state.volume).thenReturn(100.0);
+    when(() => state.position).thenReturn(Duration.zero);
+    when(() => state.duration).thenReturn(const Duration(minutes: 90));
+    when(() => state.track).thenReturn(const Track());
+    when(() => state.tracks).thenReturn(const Tracks());
+    seeks = [];
+    backPresses = 0;
+    window = FakeAppWindow();
+  });
+
+  Future<void> pumpControls(
+    WidgetTester tester, {
+    bool appFullScreen = false,
+  }) async {
+    tester.view.physicalSize = const Size(800, 400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final controller = _MockVideoController();
+    when(() => controller.player).thenReturn(player);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: noProviderRetry,
+        overrides: [
+          settingsProvider.overrideWith(_FakeSettingsNotifier.new),
+          playerControllerProvider.overrideWith2(
+            (_) => _FakePlayerController(seeks),
+          ),
+          appWindowProvider.overrideWithValue(window),
+          appFullScreenProvider.overrideWith(
+            () => AppFullScreenNotifier(startsOn: appFullScreen),
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: CustomVideoControls(
+              videoState: _FakeVideoState(),
+              playerState: CinemaPlayerState(
+                controller: controller,
+                availableStreams: const [],
+                currentStream: null,
+                title: 'Test Movie',
+              ),
+              params: const PlayerParams('movie-1', 'movie'),
+              onSettingsPressed: (_) async {},
+              onBackPressed: () => backPresses++,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  /// Taps once and waits out the double-tap window.
+  Future<void> tapAndSettle(WidgetTester tester, Offset at) async {
+    await tester.tapAt(at);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+  }
+
+  // Taps on the controls only work while they show.
+  final stop = find.byTooltip('Stop').hitTestable();
+
+  group('touch layout (REV-157)', () {
+    testWidgets('controls faded out: a tap where the seekbar was brings them '
+        'back and does not seek', (tester) async {
+      await pumpControls(tester);
+      final seekbar = tester.getCenter(find.byType(VodSeekbar));
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      expect(stop, findsNothing);
+
+      await tapAndSettle(tester, seekbar);
+
+      expect(seeks, isEmpty);
+      expect(stop, findsOneWidget);
+    }, variant: touchLayout);
+
+    testWidgets('controls faded out: a tap where Stop was brings them back '
+        'and the player stays open', (tester) async {
+      await pumpControls(tester);
+      final stopButton = tester.getCenter(stop);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      expect(stop, findsNothing);
+
+      await tapAndSettle(tester, stopButton);
+
+      expect(backPresses, 0);
+      expect(stop, findsOneWidget);
+    }, variant: touchLayout);
+
+    testWidgets('controls showing: the seekbar seeks and Stop closes', (
+      tester,
+    ) async {
+      await pumpControls(tester);
+
+      await tapAndSettle(tester, tester.getCenter(find.byType(VodSeekbar)));
+      expect(seeks, isNotEmpty);
+
+      await tapAndSettle(tester, tester.getCenter(stop));
+      expect(backPresses, 1);
+    }, variant: touchLayout);
+  });
+
+  group('seek count (REV-163)', () {
+    final centreBadge = find.byType(SeekFeedbackHud);
+    Finder centre(IconData icon) => find.descendant(
+      of: find.byType(PlayPauseOverlay),
+      matching: find.byIcon(icon),
+    );
+    final forward10 = centre(Icons.forward_10_rounded);
+
+    Future<void> hideControls(WidgetTester tester) async {
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      expect(stop, findsNothing);
+    }
+
+    testWidgets('touch, controls showing: a double-tap on the right shows '
+        '+10s in the right button only', (tester) async {
+      await pumpControls(tester);
+      final rightButton = tester.getCenter(forward10);
+
+      await tester.tapAt(const Offset(700, 200));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tapAt(const Offset(700, 200));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.text('+10s'), findsOneWidget);
+      expect(tester.getCenter(find.text('+10s')).dx, rightButton.dx);
+      expect(centreBadge, findsNothing);
+      expect(seeks, [const Duration(seconds: 10)]);
+    }, variant: touchLayout);
+
+    testWidgets(
+      'touch, controls hidden: arrow right shows the centre badge',
+      (tester) async {
+        await pumpControls(tester);
+        await hideControls(tester);
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(centreBadge, findsOneWidget);
+        expect(
+          find.descendant(of: centreBadge, matching: find.text('+10s')),
+          findsOneWidget,
+        );
+      },
+      variant: touchLayout,
+    );
+
+    testWidgets('desktop, controls hidden: arrow right shows the centre '
+        'badge', (tester) async {
+      await pumpControls(tester);
+      await hideControls(tester);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(centreBadge, findsOneWidget);
+      expect(find.text('+10s'), findsOneWidget);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+
+    testWidgets('Android TV: no centre play or ±10 buttons', (tester) async {
+      PlatformInfo.setTvForTesting(true);
+      addTearDown(() => PlatformInfo.setTvForTesting(null));
+      await pumpControls(tester);
+
+      expect(forward10, findsNothing);
+      expect(centre(Icons.replay_10_rounded), findsNothing);
+      expect(centre(Icons.pause_rounded), findsNothing);
+    }, variant: touchLayout);
+  });
+  group('full-screen button', () {
+    final button = find.byTooltip('Fullscreen');
+    final windows = TargetPlatformVariant.only(TargetPlatform.windows);
+
+    testWidgets('Windows, the app in a window: the player has its button', (
+      tester,
+    ) async {
+      await pumpControls(tester);
+      expect(button, findsOneWidget);
+    }, variant: windows);
+
+    testWidgets('Windows, the app in full screen: no button, and F11 gives '
+        'the window back', (tester) async {
+      await pumpControls(tester, appFullScreen: true);
+      expect(button, findsNothing);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.f11);
+      await tester.pumpAndSettle();
+
+      expect(window.fullScreenCalls, [false]);
+      expect(button, findsOneWidget);
+    }, variant: windows);
+
+    testWidgets('Windows, the app in a window: F11 fills the screen with the '
+        'whole app', (tester) async {
+      await pumpControls(tester);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.f11);
+      await tester.pumpAndSettle();
+
+      expect(window.fullScreenCalls, [true]);
+      expect(button, findsNothing);
+    }, variant: windows);
+
+    testWidgets('Windows, the app in full screen: F does nothing', (
+      tester,
+    ) async {
+      await pumpControls(tester, appFullScreen: true);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.pumpAndSettle();
+
+      expect(window.fullScreenCalls, isEmpty);
+      expect(tester.takeException(), isNull);
+    }, variant: windows);
+
+    testWidgets('Android TV: no button', (tester) async {
+      PlatformInfo.setTvForTesting(true);
+      addTearDown(() => PlatformInfo.setTvForTesting(null));
+      await pumpControls(tester);
+      expect(button, findsNothing);
+    }, variant: touchLayout);
+
+    testWidgets('Android phone: the button stays', (tester) async {
+      await pumpControls(tester);
+      expect(button, findsOneWidget);
+    }, variant: touchLayout);
+  });
+}

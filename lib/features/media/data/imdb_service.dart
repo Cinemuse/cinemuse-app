@@ -1,0 +1,198 @@
+import 'dart:convert';
+import 'dart:developer' as developer;
+import 'package:dio/dio.dart';
+import 'package:html/parser.dart' as html_parser;
+import 'package:cinemuse_app/features/media/domain/comment.dart';
+import 'package:cinemuse_app/features/media/data/review_json_fields.dart';
+
+/// Service responsible for fetching IMDb user reviews via the lightweight GraphQL endpoint.
+class ImdbService {
+  static const String _endpoint = 'https://caching.graphql.imdb.com/';
+  static const Map<String, String> _defaultHeaders = {
+    'Content-Type': 'application/json',
+    'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+    'Referer': 'https://www.imdb.com/',
+  };
+
+  final Dio _dio;
+  final Map<String, String> _pageCursors = {};
+
+  ImdbService(this._dio);
+
+  /// Fetches reviews from IMDb for a movie, series, or episode with [imdbId].
+  /// Supports [page] based pagination through GraphQL cursor caching.
+  Future<List<Comment>> fetchReviews({
+    required String imdbId,
+    int limit = 15,
+    int page = 1,
+  }) async {
+    final cleanId = imdbId.trim();
+    if (cleanId.isEmpty) return const [];
+
+    final formattedId = cleanId.startsWith('tt') ? cleanId : 'tt$cleanId';
+    final previousCursor = page > 1
+        ? _pageCursors['$formattedId:p${page - 1}']
+        : null;
+    // REV-188: no cursor for the previous page means IMDb has no more (or
+    // that page failed): asking without one would download page 1 again.
+    if (page > 1 && (previousCursor == null || previousCursor.isEmpty)) {
+      return const [];
+    }
+
+    final variables = <String, dynamic>{
+      'titleId': formattedId,
+      'first': limit,
+      'after': previousCursor,
+    };
+
+    try {
+      final response = await _dio.post<dynamic>(
+        _endpoint,
+        data: {'query': _reviewsGraphQLQuery, 'variables': variables},
+        options: Options(headers: _defaultHeaders),
+      );
+
+      dynamic rawData = response.data;
+      if (rawData is String) {
+        try {
+          rawData = jsonDecode(rawData);
+        } catch (e, stack) {
+          developer.log(
+            'Failed to decode IMDb raw JSON response for $formattedId',
+            name: 'ImdbService',
+            error: e,
+            stackTrace: stack,
+          );
+          return const [];
+        }
+      }
+
+      if (rawData is! Map<String, dynamic>) return const [];
+
+      final reviewsData = rawData['data']?['title']?['reviews'];
+      if (reviewsData == null) return const [];
+
+      final pageInfo = reviewsData['pageInfo'] as Map<String, dynamic>?;
+      final nextCursor = pageInfo?['endCursor']?.toString();
+      final hasNextPage = pageInfo?['hasNextPage'] == true;
+
+      if (hasNextPage && nextCursor != null && nextCursor.isNotEmpty) {
+        _pageCursors['$formattedId:p$page'] = nextCursor;
+      }
+
+      final edges = (reviewsData['edges'] as List<dynamic>?) ?? [];
+
+      final comments = edges
+          .whereType<Map<String, dynamic>>()
+          .map(_mapGraphQLNodeToComment)
+          .where(
+            (c) =>
+                c.text.isNotEmpty || (c.title != null && c.title!.isNotEmpty),
+          )
+          .toList();
+
+      developer.log(
+        'Fetched ${comments.length} IMDb reviews for $formattedId (page $page)',
+        name: 'ImdbService',
+      );
+
+      return comments;
+    } catch (e, stack) {
+      developer.log(
+        'Failed to fetch IMDb reviews for $formattedId (page $page)',
+        name: 'ImdbService',
+        error: e,
+        stackTrace: stack,
+      );
+      return const [];
+    }
+  }
+
+  Comment _mapGraphQLNodeToComment(Map<String, dynamic> json) {
+    final node = json['node'] as Map<String, dynamic>? ?? {};
+    final id = node['id']?.toString() ?? '';
+    final authorName = (node['author']?['nickName']?.toString() ?? 'IMDb User')
+        .trim();
+    final summary = (node['summary']?['originalText']?.toString() ?? '').trim();
+
+    final textObj = node['text']?['originalText'];
+    String rawText = '';
+    if (textObj is Map) {
+      rawText = textObj['plaidHtml']?.toString() ?? '';
+    } else if (textObj is String) {
+      rawText = textObj;
+    } else if (textObj != null) {
+      rawText = textObj.toString();
+    }
+
+    // Normalize IMDb rating from 0-10 scale into 0-5 scale
+    final rawRating = node['authorRating'];
+    final rating = rawRating is num ? (rawRating / 2.0) : null;
+    final date = jsonDate(node['submissionDate']?.toString());
+    final upVotes = jsonInt(node['helpfulness']?['upVotes']);
+
+    return Comment(
+      id: 'imdb_$id',
+      author: CommentAuthor(
+        id: 'imdb_$authorName',
+        username: authorName.isNotEmpty ? authorName : 'IMDb User',
+      ),
+      title: summary.isNotEmpty ? _htmlToText(summary) : null,
+      text: _htmlToText(rawText),
+      rating: rating,
+      createdAt: date,
+      likeCount: upVotes,
+      source: CommentSource.imdb,
+    );
+  }
+
+  /// Review HTML as plain text: line breaks kept, tags dropped, entities
+  /// decoded once by a real parser (REV-188: decoding `&amp;` first turned
+  /// a written `&lt;` into `<`).
+  String _htmlToText(String html) {
+    if (html.isEmpty) return '';
+    final withBreaks = html.replaceAll(
+      RegExp(r'<br\s*/?>', caseSensitive: false),
+      '\n',
+    );
+    return (html_parser.parseFragment(withBreaks).text ?? '').trim();
+  }
+
+  /// One query for every page: `$after` is null on the first one.
+  static const String _reviewsGraphQLQuery = r'''
+    query TitleReviews($titleId: ID!, $first: Int!, $after: ID) {
+      title(id: $titleId) {
+        reviews(first: $first, after: $after) {
+          total
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            node {
+              id
+              author {
+                nickName
+              }
+              authorRating
+              submissionDate
+              summary {
+                originalText
+              }
+              text {
+                originalText {
+                  plaidHtml
+                }
+              }
+              helpfulness {
+                upVotes
+                downVotes
+              }
+            }
+          }
+        }
+      }
+    }
+  ''';
+}

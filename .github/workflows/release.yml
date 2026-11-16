@@ -1,0 +1,195 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  # Nothing is built or released unless format, analyze and tests pass
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  build-windows-android:
+    name: Build Android & Windows
+    needs: checks
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.41.0'
+
+      - name: Create .env from secret
+        run: echo "${{ secrets.ENV_FILE }}" > .env
+
+      - name: Configure Keystore
+        shell: pwsh
+        run: |
+          $keystorePath = "android/app/cinemuse-release.jks"
+          $encodedKeystore = "${{ secrets.ANDROID_KEYSTORE_BASE64 }}"
+          [IO.File]::WriteAllBytes($keystorePath, [Convert]::FromBase64String($encodedKeystore))
+          
+          $propertiesPath = "android/key.properties"
+          $propertiesContent = @"
+          ${{ secrets.KEY_PROPERTIES }}
+          "@
+          # Ensure the storeFile path in properties is correct for the runner
+          $propertiesContent = $propertiesContent -replace "storeFile=.*", "storeFile=cinemuse-release.jks"
+          Set-Content -Path $propertiesPath -Value $propertiesContent
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Parse version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}".TrimStart('v')
+          if ($tag -match '^([0-9]+\.[0-9]+\.[0-9]+)\+([0-9]+)$') {
+            $buildName = $Matches[1]
+            $buildNumber = $Matches[2]
+          } elseif ($tag -match '^([0-9]+\.[0-9]+\.[0-9]+)$') {
+            $buildName = $tag
+            $buildNumber = 1
+          } else {
+            # A 1.0.0 fallback would publish a release no device updates to (CI-04)
+            Write-Output "::error::Tag '${{ github.ref_name }}' is not vX.Y.Z or vX.Y.Z+N"
+            exit 1
+          }
+          Write-Output "BUILD_NAME=$buildName" >> $env:GITHUB_OUTPUT
+          Write-Output "BUILD_NUMBER=$buildNumber" >> $env:GITHUB_OUTPUT
+          # Also update pubspec.yaml so Flutter desktop asset generator embeds the exact version in version.json
+          (Get-Content pubspec.yaml) -replace '^version: .*', "version: $buildName+$buildNumber" | Set-Content pubspec.yaml
+
+      - name: Build APK
+        run: flutter build apk --release --split-per-abi --build-name="${{ steps.version.outputs.BUILD_NAME }}" --build-number="${{ steps.version.outputs.BUILD_NUMBER }}"
+
+      - name: Build Windows ZIP
+        run: |
+          flutter build windows --release --build-name="${{ steps.version.outputs.BUILD_NAME }}" --build-number="${{ steps.version.outputs.BUILD_NUMBER }}"
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath build/windows/x64/runner/Release/cinemuse-windows.zip
+
+      - name: Stage Windows & Android Artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Get-ChildItem -Path build/app/outputs/flutter-apk/*.apk | Copy-Item -Destination dist/
+          Copy-Item -Path build/windows/x64/runner/Release/cinemuse-windows.zip -Destination dist/
+          Get-ChildItem -Path dist/ | ForEach-Object { Write-Output "Staged artifact: $($_.Name)" }
+
+      - name: Upload Windows & Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-android-artifacts
+          path: dist/*
+          retention-days: 1
+
+  build-linux:
+    name: Build Linux (.tar.gz)
+    needs: checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libmpv-dev libsecret-1-dev
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.41.0'
+
+      - name: Create .env from secret
+        run: echo "${{ secrets.ENV_FILE }}" > .env
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Parse version from tag
+        id: version
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          if [[ "$TAG" =~ ^([0-9]+\.[0-9]+\.[0-9]+)\+([0-9]+)$ ]]; then
+            BUILD_NAME="${BASH_REMATCH[1]}"
+            BUILD_NUMBER="${BASH_REMATCH[2]}"
+          elif [[ "$TAG" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            BUILD_NAME="$TAG"
+            BUILD_NUMBER=1
+          else
+            # A 1.0.0 fallback would publish a release no device updates to (CI-04)
+            echo "::error::Tag '${GITHUB_REF_NAME}' is not vX.Y.Z or vX.Y.Z+N"
+            exit 1
+          fi
+          echo "BUILD_NAME=${BUILD_NAME}" >> "$GITHUB_OUTPUT"
+          echo "BUILD_NUMBER=${BUILD_NUMBER}" >> "$GITHUB_OUTPUT"
+          sed -i "s/^version: .*/version: ${BUILD_NAME}+${BUILD_NUMBER}/" pubspec.yaml
+
+      - name: Build Linux release bundle
+        run: flutter build linux --release --build-name="${{ steps.version.outputs.BUILD_NAME }}" --build-number="${{ steps.version.outputs.BUILD_NUMBER }}"
+
+      - name: Package Linux .tar.gz
+        run: |
+          mkdir -p dist
+          tar -czf "dist/cinemuse-linux-x64.tar.gz" -C build/linux/x64/release/bundle .
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: dist/*
+          retention-days: 1
+
+  release:
+    name: Create GitHub Release
+    needs: [build-windows-android, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      # The Windows and Linux updaters refuse a download that doesn't match this file (SEC-03)
+      - name: Write SHA256SUMS
+        working-directory: release-assets
+        run: |
+          sha256sum * > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: List Release Assets
+        run: ls -lh release-assets/
+
+      - name: Publish Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "release-assets/*"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generateReleaseNotes: true
+          tag: ${{ github.ref_name }}
+          commit: ${{ github.sha }}
+

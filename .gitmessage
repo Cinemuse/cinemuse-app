@@ -1,0 +1,15 @@
+
+# <type>(<optional area>): <short description>
+#
+# Types:
+#   feat      new feature              feat(media): add comments button
+#   fix       bug fix                  fix(player): stop crash on empty playlist
+#   refactor  cleanup, same behaviour  refactor(media): replace untyped maps
+#   chore     tooling / config         chore: pin Flutter with FVM
+#   docs      documentation only       docs: update README
+#   test      tests only              test(auth): cover logout
+#   ci        GitHub Actions           ci: run tests on push
+#
+# Rules: lowercase after the colon, imperative ("add" not "added"),
+# first line under ~72 characters. Optional body after a blank line.
+# Lines starting with # are ignored.

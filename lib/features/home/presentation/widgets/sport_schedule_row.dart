@@ -1,0 +1,237 @@
+import 'package:cinemuse_app/features/home/application/home_providers.dart';
+import 'package:cinemuse_app/features/home/domain/sport_tv_event.dart';
+import 'package:cinemuse_app/features/home/presentation/widgets/sport_event_card.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/shared/widgets/error_card.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:intl/intl.dart';
+import 'package:cinemuse_app/shared/widgets/skeleton_box.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/generic_carousel_row.dart';
+import 'package:cinemuse_app/shared/widgets/carousels/carousel_vertical_separator.dart';
+
+// ---------------------------------------------------------------------------
+// Sealed list item model
+// ---------------------------------------------------------------------------
+
+sealed class _ScheduleItem {
+  const _ScheduleItem();
+}
+
+class _DayHeaderItem extends _ScheduleItem {
+  final DateTime day;
+  const _DayHeaderItem(this.day);
+}
+
+class _EventItem extends _ScheduleItem {
+  final SportTvEvent event;
+  const _EventItem(this.event);
+}
+
+// ---------------------------------------------------------------------------
+// SportScheduleRow
+// ---------------------------------------------------------------------------
+
+class SportScheduleRow extends ConsumerStatefulWidget {
+  const SportScheduleRow({super.key});
+
+  @override
+  ConsumerState<SportScheduleRow> createState() => _SportScheduleRowState();
+}
+
+class _SportScheduleRowState extends ConsumerState<SportScheduleRow> {
+  final ScrollController _scrollController = ScrollController();
+
+  // Layout constants
+  static const double _cardSpacing = 16.0;
+  static const double _dayHeaderSpacing = 16.0;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Builds the flat list of [_DayHeaderItem] + [_EventItem] from the raw events.
+  List<_ScheduleItem> _buildItems(List<SportTvEvent> events) {
+    final items = <_ScheduleItem>[];
+    DateTime? lastDay;
+
+    for (final event in events) {
+      final day = event.dateTime != null
+          ? DateTime(
+              event.dateTime!.year,
+              event.dateTime!.month,
+              event.dateTime!.day,
+            )
+          : null;
+
+      if (day != null && (lastDay == null || !_isSameDay(day, lastDay))) {
+        items.add(_DayHeaderItem(day));
+        lastDay = day;
+      }
+      items.add(_EventItem(event));
+    }
+
+    return items;
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheduleAsync = ref.watch(sportScheduleProvider);
+    final l10n = AppLocalizations.of(context)!;
+    final horizontalPadding = AppTheme.getResponsiveHorizontalPadding(context);
+
+    if (scheduleAsync.hasError && !scheduleAsync.hasValue) {
+      final mapped = ref.read(errorMapperProvider).map(scheduleAsync.error!);
+      return Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: 16,
+        ),
+        child: ErrorCard(
+          error: mapped,
+          onRetry: () => ref.refresh(sportScheduleProvider),
+        ),
+      );
+    }
+
+    if (scheduleAsync.isLoading && !scheduleAsync.hasValue) {
+      return const SportScheduleSkeleton();
+    }
+
+    final events = scheduleAsync.value ?? [];
+    if (events.isEmpty) return const SizedBox.shrink();
+
+    final items = _buildItems(events);
+
+    return GenericCarouselRow(
+      theme: CarouselTheme.homeRow,
+      title: l10n.homeSportSchedule,
+      controller: _scrollController,
+      height: 236,
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+      itemCount: items.length,
+      itemBuilder: (context, index) =>
+          _buildItem(context, items[index], index, items),
+    );
+  }
+
+  Widget _buildItem(
+    BuildContext context,
+    _ScheduleItem item,
+    int index,
+    List<_ScheduleItem> items,
+  ) {
+    final isLast = index == items.length - 1;
+
+    if (item is _DayHeaderItem) {
+      return _DayHeader(
+        day: item.day,
+        isFirst: index == 0,
+        trailingSpacing: _dayHeaderSpacing,
+      );
+    }
+
+    final event = (item as _EventItem).event;
+    return Padding(
+      padding: EdgeInsets.only(right: isLast ? 0 : _cardSpacing),
+      child: SportEventCard(event: event),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Day Header Widget
+// ---------------------------------------------------------------------------
+
+class _DayHeader extends StatelessWidget {
+  final DateTime day;
+  final bool isFirst;
+  final double trailingSpacing;
+
+  const _DayHeader({
+    required this.day,
+    required this.isFirst,
+    required this.trailingSpacing,
+  });
+
+  String _label(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final normalised = DateTime(day.year, day.month, day.day);
+    final l10n = AppLocalizations.of(context)!;
+
+    if (normalised == today) return l10n.agendaToday;
+    if (normalised == tomorrow) return l10n.agendaTomorrow;
+    return DateFormat(
+      'E d\nMMM',
+      Localizations.localeOf(context).toString(),
+    ).format(day);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CarouselVerticalSeparator(
+      label: _label(context),
+      isHighlighted: _isToday(),
+      leadingSpacing: isFirst ? 0 : 8,
+      trailingSpacing: trailingSpacing,
+      width: 72,
+    );
+  }
+
+  bool _isToday() {
+    final now = DateTime.now();
+    return day.year == now.year && day.month == now.month && day.day == now.day;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Skeleton & helpers (unchanged)
+// ---------------------------------------------------------------------------
+
+class SportScheduleSkeleton extends StatelessWidget {
+  const SportScheduleSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final horizontalPadding = AppTheme.getResponsiveHorizontalPadding(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            24,
+            horizontalPadding,
+            16,
+          ),
+          child: const SkeletonBox(width: 180, height: 25),
+        ),
+        GenericCarouselRow(
+          theme: CarouselTheme.plain,
+          height: 236,
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          itemCount: 4,
+          separatorBuilder: (_, _) => const SizedBox(width: 16),
+          itemBuilder: (_, _) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 280, height: 280 * (9 / 16)),
+              const SizedBox(height: 10),
+              const SkeletonBox(width: 150, height: 16),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

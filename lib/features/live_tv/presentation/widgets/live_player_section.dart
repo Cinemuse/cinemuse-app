@@ -1,0 +1,169 @@
+import 'package:flutter/material.dart';
+
+import 'package:media_kit_video/media_kit_video.dart' as mkv;
+import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
+import 'package:cinemuse_app/core/services/system/phone_orientation.dart';
+import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/features/live_tv/domain/channel_model.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/custom_video_controls.dart';
+import 'package:cinemuse_app/features/video_player/presentation/widgets/player_settings_panel.dart';
+
+import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
+import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
+
+/// The live video player section with custom controls overlay.
+class LivePlayerSection extends ConsumerWidget {
+  final Channel? channel;
+  final AsyncValue<CinemaPlayerState>? playerState;
+  final ValueChanged<Channel>? onChannelNumberFound;
+  final VoidCallback? onExpand;
+  final Future<void> Function(PlayerSettingsKind kind)? onSettingsPressed;
+  final FocusNode? focusNode;
+
+  const LivePlayerSection({
+    super.key,
+    required this.channel,
+    required this.playerState,
+    this.onChannelNumberFound,
+    this.onExpand,
+    this.onSettingsPressed,
+    this.focusNode,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final radius = BorderRadius.circular(12);
+
+    final playerWidget = ClipRRect(
+      borderRadius: radius,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.primary,
+          borderRadius: radius,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: playerState == null
+            ? _buildPlaceholder(l10n)
+            : playerState!.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, _) => _buildErrorState(l10n),
+                data: (state) {
+                  // Error first: a failure with no stream must not spin
+                  // forever (REV-139).
+                  if (state.error != null) return _buildErrorState(l10n);
+                  if (state.isResolving || state.currentStream == null) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  return mkv.Video(
+                    controller: state.controller,
+                    filterQuality: FilterQuality.none,
+                    onExitFullscreen: PhoneOrientation.exitFullscreen,
+                    controls: (videoState) => CustomVideoControls(
+                      playerState: state,
+                      channel: channel,
+                      videoState: videoState,
+                      params: const PlayerParams('livetv_session', 'livetv'),
+                      isLive: true,
+                      onChannelNumberFound: onChannelNumberFound,
+                      onSettingsPressed: onSettingsPressed ?? (_) async {},
+                      onTap: onExpand,
+                    ),
+                  );
+                },
+              ),
+      ),
+    );
+
+    return DpadFocusable(
+      focusNode: focusNode,
+      borderRadius: BorderRadius.circular(12),
+      onTap: onExpand,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+          final focusNavbar = ref.read(topNavbarFocusActionProvider);
+          if (focusNavbar != null) {
+            focusNavbar();
+            return KeyEventResult.handled;
+          }
+        }
+        if (event.logicalKey == LogicalKeyboardKey.enter ||
+            event.logicalKey == LogicalKeyboardKey.select) {
+          onExpand?.call();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: playerWidget,
+    );
+  }
+
+  Widget _buildPlaceholder(AppLocalizations l10n) {
+    return Container(
+      color: AppTheme.surface.withValues(alpha: 0.5),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.live_tv_rounded,
+              color: AppTheme.textMuted.withValues(alpha: 0.5),
+              size: 48,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              l10n.liveTvSelectChannel,
+              style: TextStyle(
+                color: AppTheme.textMuted.withValues(alpha: 0.7),
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // The raw error is in the log; users get translated text (REV-164).
+  Widget _buildErrorState(AppLocalizations l10n) {
+    return Container(
+      color: AppTheme.surface.withValues(alpha: 0.8),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.signal_wifi_off_rounded,
+              color: Colors.red.withValues(alpha: 0.7),
+              size: 42,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              l10n.liveTvStreamUnavailable,
+              style: TextStyle(
+                color: AppTheme.textWhite,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                l10n.liveTvStreamUnavailableHint,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

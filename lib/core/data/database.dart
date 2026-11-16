@@ -1,0 +1,399 @@
+import 'dart:io';
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+part 'database.g.dart';
+
+class CachedMediaItems extends Table {
+  IntColumn get tmdbId => integer()();
+  TextColumn get mediaType => text()(); // 'movie' or 'tv'
+  TextColumn get titleIt => text().nullable()();
+  TextColumn get titleEn => text().nullable()();
+  TextColumn get posterPath => text().nullable()();
+  TextColumn get backdropPath => text().nullable()();
+  IntColumn get runtimeMinutes => integer().nullable()();
+  TextColumn get genres => text().nullable()(); // JSON string
+  DateTimeColumn get releaseDate => dateTime().nullable()();
+  RealColumn get voteAverage => real().nullable()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {tmdbId, mediaType};
+}
+
+class LocalWatchHistories extends Table {
+  TextColumn get userId => text()();
+  IntColumn get tmdbId => integer()();
+  TextColumn get mediaType => text()();
+  IntColumn get season => integer().withDefault(const Constant(0))();
+  IntColumn get episode => integer().withDefault(const Constant(0))();
+  TextColumn get status => text()();
+  IntColumn get progressSeconds => integer().withDefault(const Constant(0))();
+  IntColumn get totalDuration => integer().withDefault(const Constant(0))();
+  DateTimeColumn get lastWatchedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {userId, tmdbId, mediaType};
+}
+
+class CachedUserLists extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()();
+  TextColumn get name => text()();
+  TextColumn get type => text()(); // 'system' or 'custom'
+  TextColumn get description => text().nullable()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+class CachedListItems extends Table {
+  TextColumn get listId => text()();
+  IntColumn get tmdbId => integer()();
+  TextColumn get mediaType => text()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  DateTimeColumn get addedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {listId, tmdbId, mediaType};
+}
+
+/// The offline copy of the server's anime list, one line per anime.
+class AnimeExternalMappings extends Table {
+  IntColumn get anilistId => integer()();
+  IntColumn get anidbId => integer().nullable()();
+  IntColumn get kitsuId => integer().nullable()();
+  IntColumn get tmdbShowId => integer().nullable()();
+  IntColumn get tmdbMovieId => integer().nullable()();
+
+  /// The anime's exact TMDB episodes as the server sends them, a JSON list
+  /// of `{"season", "first", "last", "anime_first"}`.
+  TextColumn get tmdbEpisodes => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {anilistId};
+}
+
+class CachedProfiles extends Table {
+  TextColumn get id => text()();
+  TextColumn get username => text().nullable()();
+  TextColumn get avatarUrl => text().nullable()();
+  TextColumn get preferences => text().nullable()(); // JSON string
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(
+  tables: [
+    CachedMediaItems,
+    LocalWatchHistories,
+    CachedUserLists,
+    CachedListItems,
+    AnimeExternalMappings,
+    CachedProfiles,
+  ],
+)
+class AppDatabase extends _$AppDatabase {
+  AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
+
+  @override
+  int get schemaVersion => 6;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) async {
+      await m.createAll();
+    },
+    onUpgrade: (m, from, to) async {
+      if (from == 1 && to >= 2) {
+        // We changed the primary key for localWatchHistories.
+        // Easiest migration since it's a cache is to drop and recreate the table.
+        await m.deleteTable(localWatchHistories.actualTableName);
+        await m.createTable(localWatchHistories);
+      }
+      if (from < 3) {
+        // Renamed media_tmdb_id to tmdb_id in CachedListItems.
+        await m.deleteTable(cachedListItems.actualTableName);
+        await m.createTable(cachedListItems);
+      }
+      if (from == 3) {
+        // Dropped the `meta` copy of the title (REV-268).
+        await _dropColumnIfPresent(m, cachedListItems, 'meta');
+      }
+      if (from < 5) {
+        // The anime list's copy takes the server's exact episodes and Kitsu
+        // ids, so the Kitsu table goes; the copy downloads again at once.
+        await m.deleteTable('anime_kitsu_mappings');
+        await m.deleteTable(animeExternalMappings.actualTableName);
+        await m.createTable(animeExternalMappings);
+      }
+      if (from < 6) {
+        // Nothing ever read the cast numbers: a title page gets its cast from
+        // TMDB.
+        await _dropColumnIfPresent(m, cachedMediaItems, 'cast_members');
+      }
+    },
+  );
+
+  /// An older build opening the file writes its own lower version back, so a
+  /// step can run again on a file it already changed: removing a column that
+  /// is gone would stop the whole upgrade, and the app with it.
+  Future<void> _dropColumnIfPresent(
+    Migrator m,
+    TableInfo table,
+    String column,
+  ) async {
+    final columns = await customSelect(
+      'PRAGMA table_info(${table.actualTableName})',
+    ).map((row) => row.read<String>('name')).get();
+    if (columns.contains(column)) await m.dropColumn(table, column);
+  }
+
+  // --- Anime Mappings ---
+
+  Future<void> replaceAnimeExternalMappings(
+    List<AnimeExternalMappingsCompanion> mappings,
+  ) async {
+    await transaction(() async {
+      await delete(animeExternalMappings).go();
+      await batch((batch) {
+        batch.insertAll(animeExternalMappings, mappings);
+      });
+    });
+  }
+
+  Future<List<AnimeExternalMapping>> getAnimeMappingsByTmdbShow(
+    int tmdbShowId,
+  ) {
+    return (select(animeExternalMappings)
+          ..where((t) => t.tmdbShowId.equals(tmdbShowId))
+          ..orderBy([(t) => OrderingTerm(expression: t.anilistId)]))
+        .get();
+  }
+
+  Future<List<AnimeExternalMapping>> getAnimeMappingsByTmdbMovie(
+    int tmdbMovieId,
+  ) {
+    return (select(animeExternalMappings)
+          ..where((t) => t.tmdbMovieId.equals(tmdbMovieId))
+          ..orderBy([(t) => OrderingTerm(expression: t.anilistId)]))
+        .get();
+  }
+
+  Future<int> getAnimeExternalMappingsCount() async {
+    final countExp = animeExternalMappings.anilistId.count();
+    final query = selectOnly(animeExternalMappings)..addColumns([countExp]);
+    final result = await query.map((row) => row.read(countExp)).getSingle();
+    return result ?? 0;
+  }
+
+  // Helper to upsert a media item
+  Future<void> upsertMediaItem(CachedMediaItemsCompanion item) async {
+    await into(cachedMediaItems).insertOnConflictUpdate(item);
+  }
+
+  // Get a single media item
+  Future<CachedMediaItem?> getMediaItem(int tmdbId, String mediaType) {
+    return (select(cachedMediaItems)..where(
+          (t) => t.tmdbId.equals(tmdbId) & t.mediaType.equals(mediaType),
+        ))
+        .getSingleOrNull();
+  }
+
+  // Get multiple media items in bulk for optimization
+  Future<List<CachedMediaItem>> getMediaItems(
+    List<({int id, String type})> filters,
+  ) {
+    if (filters.isEmpty) return Future.value([]);
+
+    return (select(cachedMediaItems)..where((t) {
+          Expression<bool> predicate = const Constant(false);
+          for (final filter in filters) {
+            predicate =
+                predicate |
+                (t.tmdbId.equals(filter.id) & t.mediaType.equals(filter.type));
+          }
+          return predicate;
+        }))
+        .get();
+  }
+
+  // Get all watch history for a user
+  Future<List<LocalWatchHistory>> getWatchHistory(String userId) {
+    return (select(localWatchHistories)
+          ..where((t) => t.userId.equals(userId))
+          ..orderBy([
+            (t) => OrderingTerm(
+              expression: t.lastWatchedAt,
+              mode: OrderingMode.desc,
+            ),
+          ]))
+        .get();
+  }
+
+  // Upsert watch history entry
+  Future<void> upsertWatchHistory(LocalWatchHistoriesCompanion entry) {
+    return into(localWatchHistories).insertOnConflictUpdate(entry);
+  }
+
+  // Delete a specific watch history entry (or all episodes for a tv show)
+  Future<void> deleteWatchHistoryItem(
+    String userId,
+    int tmdbId,
+    String mediaType, {
+    int? season,
+    int? episode,
+  }) {
+    return (delete(localWatchHistories)..where((t) {
+          var predicate =
+              t.userId.equals(userId) &
+              t.tmdbId.equals(tmdbId) &
+              t.mediaType.equals(mediaType);
+          if (season != null) predicate = predicate & t.season.equals(season);
+          if (episode != null) {
+            predicate = predicate & t.episode.equals(episode);
+          }
+          return predicate;
+        }))
+        .go();
+  }
+
+  // Sync whole watch history
+  Future<void> syncWatchHistory(
+    String userId,
+    List<LocalWatchHistoriesCompanion> entries,
+  ) async {
+    await batch((batch) {
+      batch.deleteWhere(localWatchHistories, (t) => t.userId.equals(userId));
+      batch.insertAll(localWatchHistories, entries);
+    });
+  }
+
+  // Watch watch history locally
+  Stream<List<LocalWatchHistory>> watchWatchHistory(String userId) {
+    return (select(localWatchHistories)
+          ..where((t) => t.userId.equals(userId))
+          ..orderBy([
+            (t) => OrderingTerm(
+              expression: t.lastWatchedAt,
+              mode: OrderingMode.desc,
+            ),
+          ]))
+        .watch();
+  }
+
+  // --- User Lists ---
+
+  Future<void> syncUserLists(
+    String userId,
+    List<CachedUserListsCompanion> lists,
+    List<CachedListItemsCompanion> items,
+  ) async {
+    await transaction(() async {
+      // Find all existing list IDs for this user to manually delete their items
+      final userListIds =
+          await (selectOnly(cachedUserLists)
+                ..addColumns([cachedUserLists.id])
+                ..where(cachedUserLists.userId.equals(userId)))
+              .map((row) => row.read(cachedUserLists.id)!)
+              .get();
+
+      // Delete old list items
+      if (userListIds.isNotEmpty) {
+        await (delete(
+          cachedListItems,
+        )..where((t) => t.listId.isIn(userListIds))).go();
+      }
+
+      // Delete old lists
+      await (delete(
+        cachedUserLists,
+      )..where((t) => t.userId.equals(userId))).go();
+
+      // Batch insert the freshly synced lists and items
+      await batch((batch) {
+        batch.insertAll(
+          cachedUserLists,
+          lists,
+          mode: InsertMode.insertOrReplace,
+        );
+        batch.insertAll(
+          cachedListItems,
+          items,
+          mode: InsertMode.insertOrReplace,
+        );
+      });
+    });
+  }
+
+  Stream<List<CachedUserList>> watchUserLists(String userId) {
+    return (select(cachedUserLists)
+          ..where((t) => t.userId.equals(userId))
+          ..orderBy([(t) => OrderingTerm(expression: t.sortOrder)]))
+        .watch();
+  }
+
+  Future<void> upsertUserList(CachedUserListsCompanion list) async {
+    await into(cachedUserLists).insertOnConflictUpdate(list);
+  }
+
+  Future<void> deleteUserList(String listId) async {
+    await (delete(cachedUserLists)..where((t) => t.id.equals(listId))).go();
+  }
+
+  Future<void> upsertListItem(CachedListItemsCompanion item) async {
+    await into(cachedListItems).insertOnConflictUpdate(item);
+  }
+
+  Future<void> deleteListItem(
+    String listId,
+    int tmdbId,
+    String mediaType,
+  ) async {
+    await (delete(cachedListItems)..where(
+          (t) =>
+              t.listId.equals(listId) &
+              t.tmdbId.equals(tmdbId) &
+              t.mediaType.equals(mediaType),
+        ))
+        .go();
+  }
+
+  // --- Profiles & Settings ---
+
+  Future<void> upsertProfile(CachedProfilesCompanion profile) {
+    return into(cachedProfiles).insertOnConflictUpdate(profile);
+  }
+
+  Future<CachedProfile?> getCachedProfile(String id) {
+    return (select(
+      cachedProfiles,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
+}
+
+LazyDatabase _openConnection() {
+  return LazyDatabase(() async {
+    final supportDir = await getApplicationSupportDirectory();
+    final dataDir = Directory(p.join(supportDir.path, 'data'));
+    if (!dataDir.existsSync()) await dataDir.create(recursive: true);
+    return NativeDatabase.createInBackground(
+      File(p.join(dataDir.path, 'cinemuse.sqlite')),
+    );
+  });
+}
+
+// Kept alive: one database connection for the whole session.
+final appDatabaseProvider = Provider<AppDatabase>((ref) {
+  final db = AppDatabase();
+  ref.onDispose(db.close);
+  return db;
+});

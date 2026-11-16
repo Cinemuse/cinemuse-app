@@ -1,0 +1,364 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:cinemuse_app/features/media/application/comments_provider.dart';
+import 'package:cinemuse_app/features/media/data/comments_repository_provider.dart';
+import 'package:cinemuse_app/features/media/domain/comment.dart';
+import 'package:cinemuse_app/features/media/domain/comments_repository.dart';
+import 'package:cinemuse_app/core/application/provider_retry.dart';
+
+class MockCommentsRepository extends Mock implements CommentsRepository {}
+
+void main() {
+  late MockCommentsRepository mockRepo;
+  late ProviderContainer container;
+
+  final sampleComment1 = Comment(
+    id: '1',
+    author: const CommentAuthor(id: 'u1', username: 'alice'),
+    text: 'Old but liked',
+    likeCount: 50,
+    rating: 3.0,
+    createdAt: DateTime.parse('2023-01-01T00:00:00Z'),
+    source: CommentSource.seriesReviews,
+  );
+
+  final sampleComment2 = Comment(
+    id: '2',
+    author: const CommentAuthor(id: 'u2', username: 'bob'),
+    text: 'New and highly rated',
+    likeCount: 10,
+    rating: 5.0,
+    createdAt: DateTime.parse('2024-01-01T00:00:00Z'),
+    source: CommentSource.seriesReviews,
+  );
+
+  const testRequest = EpisodeCommentsRequest(
+    tmdbShowId: 100,
+    seasonNumber: 1,
+    episodeNumber: 1,
+  );
+
+  setUp(() {
+    mockRepo = MockCommentsRepository();
+    container = ProviderContainer(
+      retry: noProviderRetry,
+      overrides: [commentsRepositoryProvider.overrideWithValue(mockRepo)],
+    );
+  });
+
+  tearDown(() {
+    container.dispose();
+  });
+
+  group('CommentsNotifier', () {
+    test('fetches comments and sorts by most liked by default', () async {
+      when(
+        () => mockRepo.fetchComments(testRequest, page: any(named: 'page')),
+      ).thenAnswer((invocation) async {
+        final page = invocation.namedArguments[#page] as int? ?? 1;
+        return page == 1 ? [sampleComment2, sampleComment1] : [];
+      });
+
+      final sub = container.listen(commentsProvider(testRequest), (_, _) {});
+
+      while (container.read(commentsProvider(testRequest)).isLoading) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+
+      final state = container.read(commentsProvider(testRequest));
+      expect(state.isLoading, false);
+      expect(state.hasAnyComments, true);
+      expect(state.comments.length, 2);
+      expect(state.comments.first.id, '1'); // 50 likes > 10 likes
+      expect(state.comments.last.id, '2');
+      sub.close();
+    });
+
+    // REV-201: a failed page 2 threw page 1 away and showed an error.
+    test('a failed page 2 keeps page 1', () async {
+      when(
+        () => mockRepo.fetchComments(testRequest, page: any(named: 'page')),
+      ).thenAnswer((invocation) async {
+        final page = invocation.namedArguments[#page] as int? ?? 1;
+        if (page == 2) throw Exception('offline');
+        return [sampleComment1];
+      });
+
+      final sub = container.listen(commentsProvider(testRequest), (_, _) {});
+      while (container.read(commentsProvider(testRequest)).isLoading) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+
+      while (container.read(commentsProvider(testRequest)).isLoadingMore) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+
+      final state = container.read(commentsProvider(testRequest));
+      expect(state.error, isNull);
+      expect(state.comments.map((c) => c.id), ['1']);
+      sub.close();
+    });
+
+    // REV-201 (user choice): page 1 shows at once, page 2 is added below.
+    test('page 1 shows before page 2 arrives', () async {
+      final secondPage = Completer<List<Comment>>();
+      when(
+        () => mockRepo.fetchComments(testRequest, page: any(named: 'page')),
+      ).thenAnswer((invocation) {
+        final page = invocation.namedArguments[#page] as int? ?? 1;
+        if (page == 1) return Future.value([sampleComment2]);
+        if (page == 2) return secondPage.future;
+        return Future.value(<Comment>[]);
+      });
+
+      final sub = container.listen(commentsProvider(testRequest), (_, _) {});
+      while (container.read(commentsProvider(testRequest)).isLoading) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      var state = container.read(commentsProvider(testRequest));
+      expect(state.comments.map((c) => c.id), ['2']);
+      expect(state.isLoadingMore, true);
+
+      secondPage.complete([sampleComment1]);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      state = container.read(commentsProvider(testRequest));
+      // Added below page 1, even with more likes.
+      expect(state.comments.map((c) => c.id), ['2', '1']);
+      expect(state.isLoadingMore, false);
+      sub.close();
+    });
+
+    test('re-sorts comments when highestRating is selected', () async {
+      when(
+        () => mockRepo.fetchComments(testRequest, page: any(named: 'page')),
+      ).thenAnswer((invocation) async {
+        final page = invocation.namedArguments[#page] as int? ?? 1;
+        return page == 1 ? [sampleComment1, sampleComment2] : [];
+      });
+
+      final sub = container.listen(commentsProvider(testRequest), (_, _) {});
+
+      while (container.read(commentsProvider(testRequest)).isLoading) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+
+      final notifier = container.read(commentsProvider(testRequest).notifier);
+      notifier.setSortType(CommentSortType.highestRating);
+
+      final state = container.read(commentsProvider(testRequest));
+      expect(state.sortType, CommentSortType.highestRating);
+      expect(state.comments.first.id, '2'); // rating 5.0 > 3.0
+      expect(state.comments.last.id, '1');
+      sub.close();
+    });
+
+    test('re-sorts comments when recent is selected', () async {
+      when(
+        () => mockRepo.fetchComments(testRequest, page: any(named: 'page')),
+      ).thenAnswer((invocation) async {
+        final page = invocation.namedArguments[#page] as int? ?? 1;
+        return page == 1 ? [sampleComment1, sampleComment2] : [];
+      });
+
+      final sub = container.listen(commentsProvider(testRequest), (_, _) {});
+
+      while (container.read(commentsProvider(testRequest)).isLoading) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+
+      final notifier = container.read(commentsProvider(testRequest).notifier);
+      notifier.setSortType(CommentSortType.recent);
+
+      final state = container.read(commentsProvider(testRequest));
+      expect(state.sortType, CommentSortType.recent);
+      expect(state.comments.first.id, '2'); // 2024 > 2023
+      expect(state.comments.last.id, '1');
+      sub.close();
+    });
+
+    test('filters comments by source correctly including IMDb', () async {
+      final letterboxdComment = Comment(
+        id: 'lb_1',
+        author: const CommentAuthor(id: 'u3', username: 'carol'),
+        text: 'Letterboxd review',
+        likeCount: 5,
+        source: CommentSource.letterboxd,
+      );
+
+      final imdbComment = Comment(
+        id: 'imdb_1',
+        author: const CommentAuthor(id: 'u4', username: 'dave'),
+        text: 'IMDb review',
+        likeCount: 20,
+        source: CommentSource.imdb,
+      );
+
+      when(
+        () => mockRepo.fetchComments(testRequest, page: any(named: 'page')),
+      ).thenAnswer((invocation) async {
+        final page = invocation.namedArguments[#page] as int? ?? 1;
+        return page == 1
+            ? [sampleComment1, letterboxdComment, imdbComment]
+            : [];
+      });
+
+      final sub = container.listen(commentsProvider(testRequest), (_, _) {});
+
+      while (container.read(commentsProvider(testRequest)).isLoading) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+
+      final notifier = container.read(commentsProvider(testRequest).notifier);
+      expect(container.read(commentsProvider(testRequest)).comments.length, 3);
+      expect(container.read(commentsProvider(testRequest)).availableSources, {
+        CommentSource.seriesReviews,
+        CommentSource.letterboxd,
+        CommentSource.imdb,
+      });
+
+      // Filter for Letterboxd only
+      await notifier.setSourceFilter(CommentSourceFilter.letterboxd);
+      var state = container.read(commentsProvider(testRequest));
+      expect(state.comments.length, 1);
+      expect(state.comments.first.id, 'lb_1');
+
+      // Filter for series reviews only
+      await notifier.setSourceFilter(CommentSourceFilter.seriesReviews);
+      state = container.read(commentsProvider(testRequest));
+      expect(state.comments.length, 1);
+      expect(state.comments.first.id, '1');
+
+      // Filter for IMDb only
+      await notifier.setSourceFilter(CommentSourceFilter.imdb);
+      state = container.read(commentsProvider(testRequest));
+      expect(state.comments.length, 1);
+      expect(state.comments.first.id, 'imdb_1');
+
+      // Reset to all
+      await notifier.setSourceFilter(CommentSourceFilter.all);
+      state = container.read(commentsProvider(testRequest));
+      expect(state.comments.length, 3);
+      sub.close();
+    });
+
+    // REV-209: a filter only hid loaded comments, and more pages loaded only
+    // on scroll, so an empty filtered list said "No comments" for good.
+    test('a filter that leaves few comments loads more pages', () async {
+      Comment comment(String id, CommentSource source) => Comment(
+        id: id,
+        author: const CommentAuthor(id: 'u', username: 'u'),
+        text: id,
+        likeCount: 1,
+        source: source,
+      );
+      final pages = <int, List<Comment>>{
+        1: [
+          for (var i = 0; i < 6; i++)
+            comment('s$i', CommentSource.seriesReviews),
+        ],
+        2: [
+          for (var i = 6; i < 12; i++)
+            comment('s$i', CommentSource.seriesReviews),
+        ],
+        3: [
+          comment('i1', CommentSource.imdb),
+          comment('i2', CommentSource.imdb),
+        ],
+        4: [comment('i3', CommentSource.imdb)],
+      };
+      when(
+        () => mockRepo.fetchComments(testRequest, page: any(named: 'page')),
+      ).thenAnswer(
+        (invocation) async =>
+            pages[invocation.namedArguments[#page] as int] ?? const [],
+      );
+
+      final sub = container.listen(commentsProvider(testRequest), (_, _) {});
+      final notifier = container.read(commentsProvider(testRequest).notifier);
+      while (container.read(commentsProvider(testRequest)).isLoading ||
+          container.read(commentsProvider(testRequest)).isLoadingMore) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(
+        container.read(commentsProvider(testRequest)).comments,
+        hasLength(12),
+      );
+
+      await notifier.setSourceFilter(CommentSourceFilter.imdb);
+
+      final state = container.read(commentsProvider(testRequest));
+      expect(state.comments.map((c) => c.id), containsAll(['i1', 'i2', 'i3']));
+      expect(state.comments, hasLength(3));
+      expect(state.hasMore, isFalse);
+      sub.close();
+    });
+
+    test(
+      'loadNextPage strictly appends new batch without disturbing order of existing items',
+      () async {
+        final page1CommentA = Comment(
+          id: 'p1_a',
+          author: const CommentAuthor(id: 'u1', username: 'alice'),
+          text: 'Page 1 item A',
+          likeCount: 50,
+          source: CommentSource.letterboxd,
+        );
+
+        final page1CommentB = Comment(
+          id: 'p1_b',
+          author: const CommentAuthor(id: 'u2', username: 'bob'),
+          text: 'Page 1 item B',
+          likeCount: 20,
+          source: CommentSource.letterboxd,
+        );
+
+        final page2CommentHighLikes = Comment(
+          id: 'p2_high',
+          author: const CommentAuthor(id: 'u3', username: 'carol'),
+          text: 'Page 2 item with 100 likes',
+          likeCount: 100, // higher than page 1 items!
+          source: CommentSource.imdb,
+        );
+
+        when(
+          () => mockRepo.fetchComments(testRequest, page: 1),
+        ).thenAnswer((_) async => [page1CommentA]);
+        when(
+          () => mockRepo.fetchComments(testRequest, page: 2),
+        ).thenAnswer((_) async => [page1CommentB]);
+        when(
+          () => mockRepo.fetchComments(testRequest, page: 3),
+        ).thenAnswer((_) async => [page2CommentHighLikes]);
+
+        final sub = container.listen(commentsProvider(testRequest), (_, _) {});
+
+        while (container.read(commentsProvider(testRequest)).isLoading) {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+        }
+
+        final notifier = container.read(commentsProvider(testRequest).notifier);
+        final initialState = container.read(commentsProvider(testRequest));
+        expect(initialState.comments.length, 2);
+        expect(initialState.comments[0].id, 'p1_a');
+        expect(initialState.comments[1].id, 'p1_b');
+
+        // Load next page
+        await notifier.loadNextPage();
+
+        final paginatedState = container.read(commentsProvider(testRequest));
+        expect(paginatedState.comments.length, 3);
+        // Items 0 and 1 MUST remain unchanged so the viewport does not jump
+        expect(paginatedState.comments[0].id, 'p1_a');
+        expect(paginatedState.comments[1].id, 'p1_b');
+        // The new item must be appended at index 2
+        expect(paginatedState.comments[2].id, 'p2_high');
+
+        sub.close();
+      },
+    );
+  });
+}

@@ -1,0 +1,549 @@
+import 'dart:async';
+import 'dart:developer' as developer;
+import 'package:cinemuse_app/core/application/l10n_provider.dart';
+import 'package:cinemuse_app/core/constants/tmdb_constants.dart';
+import 'package:cinemuse_app/core/error/error_mappers.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
+import 'package:cinemuse_app/features/streaming/models/resolved_stream.dart';
+import 'package:cinemuse_app/features/streaming/models/stream_candidate.dart';
+import 'package:cinemuse_app/core/error/app_failure.dart';
+import 'package:cinemuse_app/features/streaming/unified_stream_resolver.dart';
+import 'package:cinemuse_app/features/video_player/application/handlers/livetv_playback_coordinator.dart';
+import 'package:cinemuse_app/features/video_player/application/handlers/youtube_source_handler.dart';
+import 'package:cinemuse_app/features/video_player/application/helpers/player_engine_configurator.dart';
+import 'package:cinemuse_app/features/video_player/application/helpers/stream_fallback_manager.dart';
+import 'package:cinemuse_app/features/video_player/application/managers/track_manager.dart';
+import 'package:cinemuse_app/features/video_player/application/track_choices.dart';
+import 'package:cinemuse_app/features/video_player/domain/player_models.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart';
+
+/// Coordinates source switching, file switching, errors, and failover fallbacks.
+class PlayerSourceCoordinator {
+  final Ref ref;
+  final Player player;
+  final PlayerParams Function() getResolvedParams;
+  final YouTubeSourceHandler youtubeSourceHandler;
+  final UnifiedStreamResolver resolver;
+  final StreamFallbackManager fallbackManager;
+  final TrackManager? Function() getTrackManager;
+  final LiveTvPlaybackCoordinator? Function() getLiveTvCoordinator;
+  final bool Function() isMounted;
+  final CinemaPlayerState? Function() getCurrentState;
+  final void Function(CinemaPlayerState) onStateChanged;
+  final void Function(dynamic error, StackTrace st) onError;
+  final Future<void> Function() saveProgress;
+
+  /// mpv errors that leave the video playing (re-picking a track, a failed
+  /// external subtitle). Any "track" also hid real failures (REV-149).
+  static final _benignMpvError = RegExp(
+    r'already selected|^can not open external file',
+    caseSensitive: false,
+  );
+
+  /// mpv skips a broken bit of a live stream and keeps playing. Reopening
+  /// the channel for it turned the screen black every few seconds; a stream
+  /// that really stops is caught by the stall watchdog.
+  static final _liveDecodeError = RegExp(
+    r'^error decoding (audio|video)',
+    caseSensitive: false,
+  );
+
+  /// mpv couldn't start one decoder (often the chip's) and goes on with the
+  /// next one. Reopening for it looped live channels and dropped good films.
+  static final _decoderFallback = RegExp(
+    r'^could not open codec',
+    caseSensitive: false,
+  );
+
+  /// mpv's message for an address that doesn't open; group 1 is the address.
+  static final _failedToOpen = RegExp(
+    r'^failed to open (\S+?)\.?$',
+    caseSensitive: false,
+  );
+
+  PlayerSourceCoordinator({
+    required this.ref,
+    required this.player,
+    required this.getResolvedParams,
+    required this.youtubeSourceHandler,
+    required this.resolver,
+    required this.fallbackManager,
+    required this.getTrackManager,
+    required this.getLiveTvCoordinator,
+    required this.isMounted,
+    required this.getCurrentState,
+    required this.onStateChanged,
+    required this.onError,
+    required this.saveProgress,
+  });
+
+  Future<void> changeSource(
+    StreamCandidate candidate, {
+    bool isManual = true,
+  }) async {
+    final currentState = getCurrentState();
+    if (currentState == null) return;
+
+    if (isManual) fallbackManager.clearExhausted();
+
+    onStateChanged(
+      currentState.copyWith(
+        isResolving: true,
+        error: null,
+        notification: isManual ? null : currentState.notification,
+      ),
+    );
+
+    try {
+      final position = fallbackManager.restartPosition(player.state.position);
+
+      switch (candidate.kind) {
+        case StreamSourceKind.youtube:
+          await _changeToYouTubeSource(candidate, position);
+        case StreamSourceKind.vod:
+          await _changeToVodSource(candidate, position);
+          unawaited(skipIfSoundLanguageMissing(isManual: isManual));
+        case StreamSourceKind.live:
+          throw Exception(
+            "Cannot change source on Live TV kind via changeSource.",
+          );
+      }
+    } catch (e, st) {
+      developer.log(
+        'Error changing source: $e',
+        name: 'VideoPlayer.PlayerSourceCoordinator',
+        error: e,
+        stackTrace: st,
+        level: 900,
+      );
+      if (!isManual && tryNextCandidate()) return;
+      _updateState(
+        (s) => s.copyWith(
+          isResolving: false,
+          error: ref.read(errorMapperProvider).map(e).message,
+        ),
+      );
+    }
+  }
+
+  /// Once a source plays, looks at its sound tracks: when they all name a
+  /// language and none is the preferred one (a name can say "ITA" for
+  /// Italian subtitles), the next source whose name says that language
+  /// starts instead. A source the user picked ([isManual]) stays, and so
+  /// does the last one when no other source says it has the language: a
+  /// message says so.
+  Future<void> skipIfSoundLanguageMissing({required bool isManual}) async {
+    final stream = getCurrentState()?.currentStream;
+    final tracks = getTrackManager();
+    if (stream == null || tracks == null) return;
+    final language = preferredAudioLanguage(
+      ref.read(settingsProvider),
+      isAnime: getCurrentState()?.isAnime ?? false,
+    );
+    if (language.isEmpty) return;
+
+    final sound = await tracks.soundLanguage(language);
+    // Another source started meanwhile, or the player closed.
+    final current = getCurrentState();
+    if (!isMounted() || current == null) return;
+    if (!identical(current.currentStream, stream)) return;
+    if (sound != SoundLanguage.missing) return;
+
+    final l10n = ref.read(localizationsProvider);
+    final name = l10n.languageName(language);
+    if (isManual) {
+      return _showNotice(l10n.playerSourceWithoutSoundLanguage(name));
+    }
+    final next = fallbackManager.selectNextCandidate(
+      availableStreams: current.availableStreams,
+      currentStream: stream,
+      where: (candidate) => soundMayBeIn(candidate, language),
+    );
+    if (next == null) {
+      return _showNotice(l10n.playerNoSourceWithSoundLanguage(name));
+    }
+    developer.log(
+      'No $language sound in ${stream.candidate.title}: trying ${next.title}',
+      name: 'VideoPlayer.PlayerSourceCoordinator',
+    );
+    _showNotice(l10n.playerSoundLanguageMissingTryingNext(name));
+    await changeSource(next, isManual: false);
+  }
+
+  void _showNotice(String message) =>
+      _updateState((s) => s.copyWith(notification: message));
+
+  /// Applies [change] to the current state while the player is open.
+  void _updateState(CinemaPlayerState Function(CinemaPlayerState) change) {
+    final current = getCurrentState();
+    if (isMounted() && current != null) onStateChanged(change(current));
+  }
+
+  Future<void> _changeToYouTubeSource(
+    StreamCandidate candidate,
+    Duration position,
+  ) async {
+    final audioUrl = _youtubeAudioUrl(candidate);
+    final resolvedStream = ResolvedStream(
+      url: candidate.url!,
+      provider: candidate.provider,
+      candidate: candidate,
+      headers: youtubeSourceHandler.youtubeHeaders,
+    );
+
+    await PlayerEngineConfigurator.openStream(
+      player,
+      resolvedStream,
+      play: false,
+    );
+
+    if (audioUrl != null) {
+      await player.setAudioTrack(AudioTrack.uri(audioUrl));
+    }
+
+    await _finalizeSourceChange(resolvedStream, position);
+  }
+
+  /// Video-only YouTube qualities need their audio added as an external track.
+  String? _youtubeAudioUrl(StreamCandidate candidate) {
+    final custom = candidate.metadata?.custom;
+    return custom?['needsAudio'] == true
+        ? (custom?['audioUrl'] as String?)
+        : null;
+  }
+
+  Future<void> _changeToVodSource(
+    StreamCandidate candidate,
+    Duration position,
+  ) async {
+    final resolvedParams = getResolvedParams();
+    final resolvedStream = await resolver.resolveStream(
+      candidate,
+      season: resolvedParams.season,
+      episode: resolvedParams.episode,
+    );
+
+    if (resolvedStream == null) {
+      throw const NoStreamsFailure(
+        NoStreamsReason.linkFailed,
+        'No link for the picked source',
+      );
+    }
+
+    await PlayerEngineConfigurator.openStream(
+      player,
+      resolvedStream,
+      play: false,
+    );
+    unawaited(
+      getTrackManager()?.ensurePreferredTrack(
+            isAnime: getCurrentState()?.isAnime ?? false,
+          ) ??
+          Future.value(),
+    );
+
+    await _finalizeSourceChange(resolvedStream, position);
+  }
+
+  Future<void> _finalizeSourceChange(
+    ResolvedStream resolvedStream,
+    Duration position,
+  ) async {
+    // A source that never loads fails like any other error (REV-148).
+    final newDuration = await player.stream.duration
+        .firstWhere((d) => d.inSeconds > 0)
+        .timeout(const Duration(seconds: 30));
+    final seekTo = position.inSeconds < newDuration.inSeconds
+        ? position
+        : Duration(seconds: newDuration.inSeconds - 2);
+
+    await player.seek(seekTo.isNegative ? Duration.zero : seekTo);
+    await player.play();
+
+    if (isMounted()) {
+      fallbackManager.resetRetryCount();
+      final current = getCurrentState();
+      if (current != null) {
+        onStateChanged(
+          current.copyWith(
+            currentStream: resolvedStream,
+            isResolving: false,
+            error: null,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> changeFile(int fileId) async {
+    final current = getCurrentState();
+    if (current == null || current.currentStream == null) {
+      return;
+    }
+
+    onStateChanged(current.copyWith(isResolving: true, error: null));
+
+    try {
+      final resolvedStream = await resolver.resolveStream(
+        current.currentStream!.candidate,
+        fileId: fileId,
+      );
+
+      if (resolvedStream == null) {
+        final message = ref
+            .read(localizationsProvider)
+            .streamingErrorResolutionFailed;
+        _updateState((s) => s.copyWith(isResolving: false, error: message));
+        return;
+      }
+      // Same headers as every other open: some hosts refuse without them
+      // (REV-150).
+      await PlayerEngineConfigurator.openStream(
+        player,
+        resolvedStream,
+        play: true,
+      );
+      unawaited(
+        getTrackManager()?.ensurePreferredTrack(
+              isAnime: getCurrentState()?.isAnime ?? false,
+            ) ??
+            Future.value(),
+      );
+      _updateState(
+        (s) => s.copyWith(
+          currentStream: resolvedStream,
+          isResolving: false,
+          error: null,
+        ),
+      );
+    } catch (e, st) {
+      developer.log(
+        'Error changing file: $e',
+        name: 'VideoPlayer.PlayerSourceCoordinator',
+        error: e,
+        stackTrace: st,
+        level: 900,
+      );
+      _updateState(
+        (s) => s.copyWith(
+          isResolving: false,
+          error: ref.read(errorMapperProvider).map(e).message,
+        ),
+      );
+    }
+  }
+
+  Future<void> handlePlaybackCompleted() async {
+    final resolvedParams = getResolvedParams();
+    if (resolvedParams.type == 'livetv') {
+      final liveTvCoordinator = getLiveTvCoordinator();
+      if (liveTvCoordinator?.isChangingChannel == true) {
+        developer.log(
+          'Ignoring EOS during channel change.',
+          name: 'VideoPlayer.PlayerSourceCoordinator',
+        );
+        return;
+      }
+      developer.log(
+        'Live TV EOS. Retrying same link...',
+        name: 'VideoPlayer.PlayerSourceCoordinator',
+      );
+      // Called from a player stream listener, which cannot wait.
+      unawaited(
+        liveTvCoordinator?.handleFailover(
+          'Stream ended (EOS)',
+          isConnectionError: false,
+        ),
+      );
+      return;
+    }
+
+    if (resolvedParams.type != 'youtube') {
+      final position = player.state.position;
+      final duration = player.state.duration;
+      if (duration > Duration.zero &&
+          (duration < const Duration(seconds: 30) ||
+              (position < const Duration(seconds: 30) &&
+                  duration < const Duration(minutes: 3)))) {
+        developer.log(
+          'Premature playback completion detected (duration: $duration, pos: $position). Triggering candidate failover...',
+          name: 'VideoPlayer.PlayerSourceCoordinator',
+          level: 800,
+        );
+        if (tryNextCandidate()) return;
+      }
+    }
+
+    await saveProgress();
+
+    developer.log(
+      'Playback finished. Ready for next actions.',
+      name: 'VideoPlayer.PlayerSourceCoordinator',
+    );
+  }
+
+  void handlePlayerError(String error) {
+    if (_decoderFallback.hasMatch(error)) {
+      developer.log(
+        'Ignoring decoder fallback: $error',
+        name: 'VideoPlayer.PlayerSourceCoordinator',
+        level: 500,
+      );
+      return;
+    }
+
+    final resolvedParams = getResolvedParams();
+    if (resolvedParams.type == 'livetv') {
+      final liveTvCoordinator = getLiveTvCoordinator();
+      if (liveTvCoordinator?.isChangingChannel == true) {
+        developer.log(
+          'Ignoring Error during channel change: $error',
+          name: 'VideoPlayer.PlayerSourceCoordinator',
+        );
+        return;
+      }
+      if (_liveDecodeError.hasMatch(error)) {
+        developer.log(
+          'Ignoring live decoding error: $error',
+          name: 'VideoPlayer.PlayerSourceCoordinator',
+          level: 500,
+        );
+        return;
+      }
+      if (_isInnerList(error)) {
+        developer.log(
+          'Ignoring a list inside the stream: $error',
+          name: 'VideoPlayer.PlayerSourceCoordinator',
+          level: 500,
+        );
+        return;
+      }
+      liveTvCoordinator?.handleFailover(error, isConnectionError: true);
+      return;
+    }
+
+    if (_benignMpvError.hasMatch(error)) {
+      developer.log(
+        'Ignoring benign MPV error: $error',
+        name: 'VideoPlayer.PlayerSourceCoordinator',
+        level: 500,
+      );
+      return;
+    }
+
+    if (isMounted()) {
+      // A sound track the engine can't decode: another track of the file
+      // first; with none left, a retry would fail the same way.
+      final audio = getTrackManager()?.recoverFromAudioError(error);
+      if (audio == AudioErrorRecovery.switchedTrack) return;
+      if (audio == AudioErrorRecovery.noTrackLeft) {
+        if (tryNextCandidate()) return;
+        onError(error, StackTrace.current);
+        return;
+      }
+
+      final currentState = getCurrentState();
+      if (currentState != null &&
+          currentState.currentStream != null &&
+          fallbackManager.canSoftRetry) {
+        fallbackManager.recordRetryAttempt();
+        developer.log(
+          'Auto-retrying playback (attempt ${fallbackManager.retryCount}/${StreamFallbackManager.maxRetries}) after error: $error',
+          name: 'VideoPlayer.PlayerSourceCoordinator',
+          level: 800,
+        );
+        performSoftRetry();
+        return;
+      }
+
+      if (tryNextCandidate()) return;
+
+      onError(error, StackTrace.current);
+    }
+  }
+
+  /// [error] is about a list inside the live stream (one picture size's), not
+  /// the channel's own address. A reopen cuts those downloads off, and each
+  /// cut one used to reopen the channel again, in a loop; a picture that
+  /// never comes is left to the stall watchdog.
+  bool _isInnerList(String error) {
+    final address = _failedToOpen.firstMatch(error)?.group(1);
+    final channel = getCurrentState()?.currentStream?.url;
+    return address != null && channel != null && address != channel;
+  }
+
+  bool tryNextCandidate() {
+    final currentState = getCurrentState();
+    if (currentState == null) return false;
+
+    final nextCandidate = fallbackManager.selectNextCandidate(
+      availableStreams: currentState.availableStreams,
+      currentStream: currentState.currentStream,
+    );
+
+    if (nextCandidate == null) return false;
+
+    developer.log(
+      'Falling back to next candidate: ${nextCandidate.provider} (${nextCandidate.title})',
+      name: 'VideoPlayer.PlayerSourceCoordinator',
+    );
+
+    final message = ref.read(localizationsProvider).playerTryingNextSource;
+    if (isMounted() && getCurrentState() != null) {
+      onStateChanged(getCurrentState()!.copyWith(notification: message));
+    }
+
+    changeSource(nextCandidate, isManual: false);
+    return true;
+  }
+
+  Future<void> performSoftRetry() async {
+    final currentState = getCurrentState();
+    if (currentState == null || currentState.currentStream == null) {
+      return;
+    }
+
+    final candidate = currentState.currentStream!.candidate;
+    // A YouTube link is reopened as it is: the resolver only knows movies
+    // and episodes, so asking it again always failed (REV-236).
+    // The retry counter is kept, so a link that keeps failing moves on to
+    // the next quality.
+    if (candidate.kind == StreamSourceKind.youtube) {
+      try {
+        await youtubeSourceHandler.openStream(
+          candidate.url!,
+          audioUrl: _youtubeAudioUrl(candidate),
+        );
+      } catch (e, st) {
+        if (!tryNextCandidate()) onError(e, st);
+      }
+      return;
+    }
+    final resolvedParams = getResolvedParams();
+
+    await fallbackManager.performSoftRetry(
+      player: player,
+      resolver: resolver,
+      candidate: candidate,
+      season: resolvedParams.season,
+      episode: resolvedParams.episode,
+      fileId: currentState.currentStream?.activeFileId,
+      onResolving: () => _updateState(
+        (s) => s.copyWith(
+          isResolving: true,
+          providerStatuses: const [],
+          error: null,
+        ),
+      ),
+      onSuccess: (resolvedStream) => _updateState(
+        (s) => s.copyWith(currentStream: resolvedStream, isResolving: false),
+      ),
+      // A failed retry moves on to the next source; the error screen can't
+      // switch source, so it comes only when none is left (REV-144).
+      onError: (e, st) {
+        if (isMounted() && !tryNextCandidate()) onError(e.toString(), st);
+      },
+    );
+  }
+}

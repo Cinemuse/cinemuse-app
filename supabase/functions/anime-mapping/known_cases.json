@@ -1,0 +1,496 @@
+{
+  "about": "The anime mapping's known cases, run by the server's tests (lookup_test.ts) and by the app's tests, so the server's picking and the app's offline copy give the same answers. Each case asks one title or episode with a fixture's lines (the list's lines of that title, in the format the app downloads, by AniList id) and gives the server's answer. Real lines (built from AniBridge and Fribb on 2026-10-27, checked on TMDB) unless a fixture says otherwise.",
+  "fixtures": {
+    "tokyo-revengers": {
+      "about": "TMDB 105009: four anime in TMDB season 1, which has 55 episodes; the fourth anime is still airing and the list has its first 5.",
+      "rows": [
+        {
+          "anilist_id": 120120,
+          "anidb_id": 15601,
+          "kitsu_id": 43321,
+          "tmdb_show_id": 105009,
+          "tvdb_id": 393478,
+          "tmdb_episodes": [
+            { "season": 1, "first": 1, "last": 24, "anime_first": 1 }
+          ],
+          "placed_by": "anibridge"
+        },
+        {
+          "anilist_id": 142853,
+          "anidb_id": 17064,
+          "kitsu_id": 45607,
+          "tmdb_show_id": 105009,
+          "tvdb_id": 393478,
+          "tmdb_episodes": [
+            { "season": 1, "first": 25, "last": 37, "anime_first": 1 }
+          ],
+          "placed_by": "anibridge"
+        },
+        {
+          "anilist_id": 163329,
+          "anidb_id": 17969,
+          "kitsu_id": 47278,
+          "tmdb_show_id": 105009,
+          "tvdb_id": 393478,
+          "tmdb_episodes": [
+            { "season": 1, "first": 38, "last": 50, "anime_first": 1 }
+          ],
+          "placed_by": "anibridge"
+        },
+        {
+          "anilist_id": 178083,
+          "anidb_id": 18693,
+          "kitsu_id": 48960,
+          "tmdb_show_id": 105009,
+          "tvdb_id": 393478,
+          "tmdb_episodes": [
+            { "season": 1, "first": 51, "last": 55, "anime_first": 1 }
+          ],
+          "placed_by": "anibridge"
+        }
+      ]
+    },
+    "attack-on-titan": {
+      "about": "TMDB 1429: season 4 has 28 episodes; The Final Chapters are specials 36 and 37 (season 0).",
+      "rows": [
+        {
+          "anilist_id": 16498,
+          "anidb_id": 9541,
+          "kitsu_id": 7442,
+          "tmdb_show_id": 1429,
+          "tvdb_id": 267440,
+          "tmdb_episodes": [
+            { "season": 1, "first": 1, "last": 25, "anime_first": 1 }
+          ],
+          "placed_by": "anibridge"
+        },
+        {
+          "anilist_id": 20958,
+          "anidb_id": 10944,
+          "kitsu_id": 8671,
+          "tmdb_show_id": 1429,
+          "tvdb_id": 267440,
+          "tmdb_episodes": [
+            { "season": 2, "first": 1, "last": 12, "anime_first": 1 }
+          ],
+          "placed_by": "anibridge"
+        },
+        {
+          "anilist_id": 99147,
+          "anidb_id": 13241,
+          "kitsu_id": 13569,
+          "tmdb_show_id": 1429,
+          "tvdb_id": 267440,
+          "tmdb_episodes": [
+            { "season": 3, "first": 1, "last": 12, "anime_first": 1 }
+          ],
+          "placed_by": "anibridge"
+        },
+        {
+          "anilist_id": 104578,
+          "anidb_id": 14444,
+          "kitsu_id": 41982,
+          "tmdb_show_id": 1429,
+          "tvdb_id": 267440,
+          "tmdb_episodes": [
+            { "season": 3, "first": 13, "last": 22, "anime_first": 1 }
+          ],
+          "placed_by": "anibridge"
+        },
+        {
+          "anilist_id": 110277,
+          "anidb_id": 14977,
+          "kitsu_id": 42422,
+          "tmdb_show_id": 1429,
+          "tvdb_id": 267440,
+          "tmdb_episodes": [
+            { "season": 4, "first": 1, "last": 16, "anime_first": 1 }
+          ],
+          "placed_by": "anibridge"
+        },
+        {
+          "anilist_id": 131681,
+          "anidb_id": 16177,
+          "kitsu_id": 44240,
+          "tmdb_show_id": 1429,
+          "tvdb_id": 267440,
+          "tmdb_episodes": [
+            { "season": 4, "first": 17, "last": 28, "anime_first": 1 }
+          ],
+          "placed_by": "anibridge"
+        },
+        {
+          "anilist_id": 146984,
+          "anidb_id": 17303,
+          "kitsu_id": 46038,
+          "tmdb_show_id": 1429,
+          "tvdb_id": 267440,
+          "tmdb_episodes": [
+            { "season": 0, "first": 36, "last": 36, "anime_first": 1 }
+          ],
+          "placed_by": "anibridge"
+        },
+        {
+          "anilist_id": 162314,
+          "kitsu_id": 47132,
+          "tmdb_show_id": 1429,
+          "tmdb_episodes": [
+            { "season": 0, "first": 37, "last": 37, "anime_first": 1 }
+          ],
+          "placed_by": "anibridge"
+        }
+      ]
+    },
+    "one-piece": {
+      "about": "TMDB 37854 numbers its episodes straight on through the seasons (season 22 starts at 1089). Real pieces, most seasons left out.",
+      "rows": [
+        {
+          "anilist_id": 21,
+          "anidb_id": 69,
+          "kitsu_id": 12,
+          "tmdb_show_id": 37854,
+          "tvdb_id": 81797,
+          "tmdb_episodes": [
+            { "season": 1, "first": 1, "last": 61, "anime_first": 1 },
+            { "season": 21, "first": 892, "last": 1088, "anime_first": 892 },
+            { "season": 22, "first": 1089, "anime_first": 1089 }
+          ],
+          "placed_by": "anibridge"
+        }
+      ]
+    },
+    "texhnolyze": {
+      "about": "TMDB 8838: the anime's first two episodes are TMDB specials 2 and 3, the other 20 are season 1.",
+      "rows": [
+        {
+          "anilist_id": 26,
+          "anidb_id": 673,
+          "kitsu_id": 17,
+          "tmdb_show_id": 8838,
+          "tvdb_id": 74493,
+          "tmdb_episodes": [
+            { "season": 0, "first": 2, "last": 3, "anime_first": 1 },
+            { "season": 1, "first": 1, "last": 20, "anime_first": 3 }
+          ],
+          "placed_by": "anibridge"
+        }
+      ]
+    },
+    "two-anime-same-episodes": {
+      "about": "Made up: two anime cover the same TMDB episodes; the lower AniList id wins. The second has no Kitsu or AniDB id.",
+      "rows": [
+        {
+          "anilist_id": 300,
+          "anidb_id": 30,
+          "kitsu_id": 3,
+          "tmdb_show_id": 9,
+          "tmdb_episodes": [
+            { "season": 1, "first": 1, "last": 12, "anime_first": 1 }
+          ],
+          "placed_by": "anibridge"
+        },
+        {
+          "anilist_id": 400,
+          "tmdb_show_id": 9,
+          "tmdb_episodes": [
+            { "season": 1, "first": 1, "last": 13, "anime_first": 1 }
+          ],
+          "placed_by": "fribb"
+        }
+      ]
+    },
+    "your-name": {
+      "about": "TMDB film 372058.",
+      "rows": [
+        {
+          "anilist_id": 21519,
+          "anidb_id": 11829,
+          "kitsu_id": 11614,
+          "tmdb_movie_id": 372058
+        }
+      ]
+    },
+    "not-anime": {
+      "about": "Game of Thrones (TMDB 1399): no lines.",
+      "rows": []
+    }
+  },
+  "cases": [
+    {
+      "name": "Tokyo Revengers S1 E1 is the first anime's episode 1",
+      "fixture": "tokyo-revengers",
+      "ask": { "tmdb_id": 105009, "type": "tv", "season": 1, "episode": 1 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 120120,
+          "anidb_id": 15601,
+          "kitsu_id": 43321,
+          "episode": 1
+        }
+      }
+    },
+    {
+      "name": "Tokyo Revengers S1 E37 is the second anime's episode 13",
+      "fixture": "tokyo-revengers",
+      "ask": { "tmdb_id": 105009, "type": "tv", "season": 1, "episode": 37 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 142853,
+          "anidb_id": 17064,
+          "kitsu_id": 45607,
+          "episode": 13
+        }
+      }
+    },
+    {
+      "name": "Tokyo Revengers S1 E38 is the third anime's episode 1",
+      "fixture": "tokyo-revengers",
+      "ask": { "tmdb_id": 105009, "type": "tv", "season": 1, "episode": 38 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 163329,
+          "anidb_id": 17969,
+          "kitsu_id": 47278,
+          "episode": 1
+        }
+      }
+    },
+    {
+      "name": "Tokyo Revengers S1 E51 is the fourth anime's episode 1",
+      "fixture": "tokyo-revengers",
+      "ask": { "tmdb_id": 105009, "type": "tv", "season": 1, "episode": 51 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 178083,
+          "anidb_id": 18693,
+          "kitsu_id": 48960,
+          "episode": 1
+        }
+      }
+    },
+    {
+      "name": "Tokyo Revengers S1 E55 is the fourth anime's episode 5",
+      "fixture": "tokyo-revengers",
+      "ask": { "tmdb_id": 105009, "type": "tv", "season": 1, "episode": 55 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 178083,
+          "anidb_id": 18693,
+          "kitsu_id": 48960,
+          "episode": 5
+        }
+      }
+    },
+    {
+      "name": "Tokyo Revengers S1 E56, past what the list states, has no match",
+      "fixture": "tokyo-revengers",
+      "ask": { "tmdb_id": 105009, "type": "tv", "season": 1, "episode": 56 },
+      "answer": { "is_anime": true, "match": null }
+    },
+    {
+      "name": "Attack on Titan S3 E13 is Season 3 Part 2's episode 1",
+      "fixture": "attack-on-titan",
+      "ask": { "tmdb_id": 1429, "type": "tv", "season": 3, "episode": 13 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 104578,
+          "anidb_id": 14444,
+          "kitsu_id": 41982,
+          "episode": 1
+        }
+      }
+    },
+    {
+      "name": "Attack on Titan S4 E28 is The Final Season Part 2's episode 12",
+      "fixture": "attack-on-titan",
+      "ask": { "tmdb_id": 1429, "type": "tv", "season": 4, "episode": 28 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 131681,
+          "anidb_id": 16177,
+          "kitsu_id": 44240,
+          "episode": 12
+        }
+      }
+    },
+    {
+      "name": "Attack on Titan S0 E36 is The Final Chapters Part 1",
+      "fixture": "attack-on-titan",
+      "ask": { "tmdb_id": 1429, "type": "tv", "season": 0, "episode": 36 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 146984,
+          "anidb_id": 17303,
+          "kitsu_id": 46038,
+          "episode": 1
+        }
+      }
+    },
+    {
+      "name": "Attack on Titan S0 E37 is The Final Chapters Part 2, which has no AniDB id",
+      "fixture": "attack-on-titan",
+      "ask": { "tmdb_id": 1429, "type": "tv", "season": 0, "episode": 37 },
+      "answer": {
+        "is_anime": true,
+        "match": { "anilist_id": 162314, "kitsu_id": 47132, "episode": 1 }
+      }
+    },
+    {
+      "name": "Attack on Titan S0 E1, a special no line covers, has no match but is anime",
+      "fixture": "attack-on-titan",
+      "ask": { "tmdb_id": 1429, "type": "tv", "season": 0, "episode": 1 },
+      "answer": { "is_anime": true, "match": null }
+    },
+    {
+      "name": "Attack on Titan S4 E29 doesn't exist on TMDB: no match",
+      "fixture": "attack-on-titan",
+      "ask": { "tmdb_id": 1429, "type": "tv", "season": 4, "episode": 29 },
+      "answer": { "is_anime": true, "match": null }
+    },
+    {
+      "name": "One Piece S1 E1 is episode 1",
+      "fixture": "one-piece",
+      "ask": { "tmdb_id": 37854, "type": "tv", "season": 1, "episode": 1 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 21,
+          "anidb_id": 69,
+          "kitsu_id": 12,
+          "episode": 1
+        }
+      }
+    },
+    {
+      "name": "One Piece S21 E900 is episode 900",
+      "fixture": "one-piece",
+      "ask": { "tmdb_id": 37854, "type": "tv", "season": 21, "episode": 900 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 21,
+          "anidb_id": 69,
+          "kitsu_id": 12,
+          "episode": 900
+        }
+      }
+    },
+    {
+      "name": "One Piece S22 E1100, in an open piece, is episode 1100",
+      "fixture": "one-piece",
+      "ask": { "tmdb_id": 37854, "type": "tv", "season": 22, "episode": 1100 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 21,
+          "anidb_id": 69,
+          "kitsu_id": 12,
+          "episode": 1100
+        }
+      }
+    },
+    {
+      "name": "One Piece S22 E1, before its piece starts, has no match",
+      "fixture": "one-piece",
+      "ask": { "tmdb_id": 37854, "type": "tv", "season": 22, "episode": 1 },
+      "answer": { "is_anime": true, "match": null }
+    },
+    {
+      "name": "Texhnolyze S0 E2 is episode 1",
+      "fixture": "texhnolyze",
+      "ask": { "tmdb_id": 8838, "type": "tv", "season": 0, "episode": 2 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 26,
+          "anidb_id": 673,
+          "kitsu_id": 17,
+          "episode": 1
+        }
+      }
+    },
+    {
+      "name": "Texhnolyze S1 E1 is episode 3",
+      "fixture": "texhnolyze",
+      "ask": { "tmdb_id": 8838, "type": "tv", "season": 1, "episode": 1 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 26,
+          "anidb_id": 673,
+          "kitsu_id": 17,
+          "episode": 3
+        }
+      }
+    },
+    {
+      "name": "Texhnolyze S1 E20 is episode 22",
+      "fixture": "texhnolyze",
+      "ask": { "tmdb_id": 8838, "type": "tv", "season": 1, "episode": 20 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 26,
+          "anidb_id": 673,
+          "kitsu_id": 17,
+          "episode": 22
+        }
+      }
+    },
+    {
+      "name": "two anime on the same episodes: the lower AniList id wins",
+      "fixture": "two-anime-same-episodes",
+      "ask": { "tmdb_id": 9, "type": "tv", "season": 1, "episode": 5 },
+      "answer": {
+        "is_anime": true,
+        "match": {
+          "anilist_id": 300,
+          "anidb_id": 30,
+          "kitsu_id": 3,
+          "episode": 5
+        }
+      }
+    },
+    {
+      "name": "an anime with no Kitsu or AniDB id still matches",
+      "fixture": "two-anime-same-episodes",
+      "ask": { "tmdb_id": 9, "type": "tv", "season": 1, "episode": 13 },
+      "answer": {
+        "is_anime": true,
+        "match": { "anilist_id": 400, "episode": 13 }
+      }
+    },
+    {
+      "name": "a film is its anime, with no episode",
+      "fixture": "your-name",
+      "ask": { "tmdb_id": 372058, "type": "movie" },
+      "answer": {
+        "is_anime": true,
+        "match": { "anilist_id": 21519, "anidb_id": 11829, "kitsu_id": 11614 }
+      }
+    },
+    {
+      "name": "a show with no episode asked is its first anime",
+      "fixture": "tokyo-revengers",
+      "ask": { "tmdb_id": 105009, "type": "tv" },
+      "answer": {
+        "is_anime": true,
+        "match": { "anilist_id": 120120, "anidb_id": 15601, "kitsu_id": 43321 }
+      }
+    },
+    {
+      "name": "a title with no lines is not anime",
+      "fixture": "not-anime",
+      "ask": { "tmdb_id": 1399, "type": "tv", "season": 1, "episode": 1 },
+      "answer": { "is_anime": false, "match": null }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+# This file configures the analyzer, which statically analyzes Dart code to
+# check for errors, warnings, and lints. CI fails on any issue it reports.
+#
+# Lint docs: https://dart.dev/lints
+# Suppress for one line with `// ignore: name_of_lint`, or for a whole file
+# with `// ignore_for_file: name_of_lint`.
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  # Generated code: fix the generator input, not the output
+  exclude:
+    - "**/*.g.dart"
+    - "lib/l10n/app_localizations*.dart"
+
+linter:
+  # Extra rules on top of flutter_lints. Backlog candidates (too many existing
+  # issues to enable yet): discarded_futures,
+  # avoid_dynamic_calls, and the strict-casts / strict-inference /
+  # strict-raw-types analyzer modes.
+  rules:
+    # Leaks
+    - cancel_subscriptions
+    - close_sinks
+    # Async
+    - avoid_slow_async_io
+    - avoid_void_async
+    - unawaited_futures
+    - unnecessary_await_in_return
+    # Correctness
+    - always_declare_return_types
+    - only_throw_errors
+    - test_types_in_equals
+    # Cleanliness
+    - prefer_final_locals
+    - unnecessary_lambdas
+    - use_super_parameters
