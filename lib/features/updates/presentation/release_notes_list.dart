@@ -51,6 +51,13 @@ class ReleaseNotesList extends StatelessWidget {
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
+              // "New" and "Fixed" under each version (CONTRIBUTING.md)
+              h3: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textMuted,
+              ),
+              h3Padding: const EdgeInsets.only(top: 4),
               listBullet: const TextStyle(color: AppTheme.accent),
             ),
           ),

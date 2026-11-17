@@ -196,6 +196,45 @@ void main() {
     variant: TargetPlatformVariant.only(TargetPlatform.linux),
   );
 
+  testWidgets('New and Fixed: small titles under the version, in their '
+      'own style', (tester) async {
+    await pumpPage(
+      tester,
+      _state(
+        UpdateStatus.available,
+        latest: 'v1.9.3',
+        notes: [
+          const ReleaseNotes('1.9.3', {
+            'en': '### New\n- Faster Live TV\n### Fixed\n- A gap',
+          }),
+        ],
+      ),
+    );
+
+    for (final title in ['New', 'Fixed']) {
+      final text = tester
+          .widget<RichText>(
+            find.descendant(
+              of: find.text(title),
+              matching: find.byType(RichText),
+            ),
+          )
+          .text;
+      Color? color;
+      text.visitChildren((span) {
+        color ??= span.style?.color;
+        return color == null;
+      });
+      expect(color, AppTheme.textMuted, reason: title);
+    }
+    final version = tester.getTopLeft(find.text('1.9.3').last).dy;
+    expect(tester.getTopLeft(find.text('New')).dy, greaterThan(version));
+    expect(
+      tester.getTopLeft(find.text('Fixed')).dy,
+      greaterThan(tester.getTopLeft(find.text('Faster Live TV')).dy),
+    );
+  });
+
   testWidgets('new versions without notes: no notes card', (tester) async {
     await pumpPage(tester, _state(UpdateStatus.available, latest: 'v1.9.3'));
 
