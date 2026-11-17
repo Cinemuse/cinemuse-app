@@ -214,12 +214,16 @@ class _ReleaseNotesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DpadFocusable(
-      borderRadius: BorderRadius.circular(16),
-      // No margin inside the ring: it would sit away from the card.
-      child: SettingsCard(
-        margin: EdgeInsets.zero,
-        children: [ReleaseNotesList(notes: notes)],
+    // The card's usual gap below goes outside the ring: inside, the ring
+    // would sit away from the card.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: DpadFocusable(
+        borderRadius: BorderRadius.circular(16),
+        child: SettingsCard(
+          margin: EdgeInsets.zero,
+          children: [ReleaseNotesList(notes: notes)],
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:cinemuse_app/core/application/provider_retry.dart';
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/system/app_full_screen.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/info_update_settings.dart';
+import 'package:cinemuse_app/features/settings/presentation/widgets/settings_widgets.dart';
 import 'package:cinemuse_app/features/updates/application/update_service.dart';
 import 'package:cinemuse_app/features/updates/domain/release_notes.dart';
 import 'package:cinemuse_app/features/updates/domain/update_state.dart';
@@ -176,6 +177,24 @@ void main() {
       allOf(greaterThan(newer), lessThan(older)),
     );
   });
+
+  testWidgets(
+    'Close Cinemuse keeps the usual gap below the notes',
+    (tester) async {
+      await pumpPage(
+        tester,
+        _state(UpdateStatus.available, latest: 'v1.9.3', notes: [_notes193]),
+      );
+
+      Rect cardOf(Finder text) => tester.getRect(
+        find.ancestor(of: text, matching: find.byType(SettingsCard)).first,
+      );
+      final notes = cardOf(find.text('Faster Live TV'));
+      final close = cardOf(find.text(en.settingsCloseApp));
+      expect(close.top - notes.bottom, 24);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.linux),
+  );
 
   testWidgets('new versions without notes: no notes card', (tester) async {
     await pumpPage(tester, _state(UpdateStatus.available, latest: 'v1.9.3'));
