@@ -1,3 +1,4 @@
+import 'package:cinemuse_app/features/updates/domain/release_notes.dart';
 import 'package:dio/dio.dart';
 
 enum UpdateStatus {
@@ -21,7 +22,10 @@ class UpdateState {
 
   /// The release's `SHA256SUMS` file; without it Windows refuses to update.
   final String? checksumUrl;
-  final String? releaseNotes;
+
+  /// The notes of every version newer than the installed one, newest
+  /// first; versions without notes are left out.
+  final List<ReleaseNotes> releaseNotes;
   final CancelToken? cancelToken;
 
   /// [latestVersion] as the app shows it: the tag without its `v`.
@@ -37,7 +41,7 @@ class UpdateState {
     this.errorArgs,
     this.downloadUrl,
     this.checksumUrl,
-    this.releaseNotes,
+    this.releaseNotes = const [],
     this.cancelToken,
   });
 
@@ -50,7 +54,7 @@ class UpdateState {
     Map<String, String>? errorArgs,
     String? downloadUrl,
     String? checksumUrl,
-    String? releaseNotes,
+    List<ReleaseNotes>? releaseNotes,
     CancelToken? cancelToken,
     bool clearCancelToken = false,
   }) {

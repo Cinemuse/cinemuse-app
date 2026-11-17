@@ -1,9 +1,11 @@
 import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/features/updates/application/update_service.dart';
 import 'package:cinemuse_app/features/updates/domain/update_state.dart';
+import 'package:cinemuse_app/features/updates/presentation/release_notes_list.dart';
 import 'package:cinemuse_app/features/updates/presentation/update_error_message.dart';
 import 'package:cinemuse_app/features/updates/presentation/update_progress.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
+import 'package:cinemuse_app/shared/widgets/dpad_focusable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -51,9 +53,37 @@ class UpdateRequiredScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 const _UpdateAction(),
+                const _ReleaseNotes(),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The new versions' notes under the button, when there are any. It takes
+/// the focus with nothing to press, so the remote's Down scrolls to it.
+class _ReleaseNotes extends ConsumerWidget {
+  const _ReleaseNotes();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notes = ref.watch(updateProvider.select((s) => s.releaseNotes));
+    if (notes.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 32),
+      child: DpadFocusable(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ReleaseNotesList(notes: notes),
         ),
       ),
     );

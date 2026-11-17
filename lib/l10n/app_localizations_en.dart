@@ -1772,9 +1772,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateChecking => 'Checking for updates...';
 
   @override
-  String updateWhatsNewIn(Object version) {
-    return 'What\'s new in $version';
-  }
+  String get updateWhatsNew => 'What\'s new';
 
   @override
   String get updateNow => 'Update Now';

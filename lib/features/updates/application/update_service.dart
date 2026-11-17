@@ -16,7 +16,7 @@ import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/updates/data/linux_updater_script.dart';
 import 'package:cinemuse_app/features/updates/data/update_archive_extractor.dart';
 import 'package:cinemuse_app/features/updates/data/update_checksum.dart';
-import 'package:cinemuse_app/features/updates/domain/release_version.dart';
+import 'package:cinemuse_app/features/updates/domain/release_notes.dart';
 import 'package:cinemuse_app/features/updates/domain/update_state.dart';
 import 'package:cinemuse_app/features/updates/data/windows_updater_script.dart';
 import 'package:cinemuse_app/core/utils/app_logger.dart';
@@ -85,26 +85,41 @@ class UpdateNotifier extends Notifier<UpdateState> {
 
       final repo = await _repoAddress();
       if (!ref.mounted) return;
-      final response = await _dio.get('$repo/releases/latest');
-
-      final latestTag = response.data['tag_name'] as String;
-      final releaseNotes = response.data['body'] as String?;
-      final downloadUrl = await _getDownloadUrl(response.data);
+      // Every newer release, for their notes; a device more than 30
+      // releases behind misses only the oldest notes.
+      final response = await _dio.get(
+        '$repo/releases',
+        queryParameters: {'per_page': 30},
+      );
+      final newer = newerReleases(
+        response.data as List,
+        currentVersion,
+        packageInfo.buildNumber,
+      );
       AppLogger.debug(
         _tag,
         'Installed $currentVersion+${packageInfo.buildNumber}, '
-        'latest $latestTag, download $downloadUrl',
+        '${newer.length} newer releases',
       );
 
-      if (isNewerRelease(latestTag, currentVersion, packageInfo.buildNumber)) {
-        AppLogger.info(_tag, 'Update $latestTag available');
+      if (newer.isNotEmpty) {
+        final latest = newer.first;
+        final latestTag = latest['tag_name'] as String;
+        final downloadUrl = await _getDownloadUrl(latest);
+        AppLogger.info(_tag, 'Update $latestTag available: $downloadUrl');
         state = state.copyWith(
           status: UpdateStatus.available,
           latestVersion: latestTag,
           currentVersion: currentVersion,
           downloadUrl: downloadUrl,
-          checksumUrl: _checksumUrl(response.data),
-          releaseNotes: releaseNotes,
+          checksumUrl: _checksumUrl(latest),
+          releaseNotes: [
+            for (final release in newer)
+              ?ReleaseNotes.tryParse(
+                release['tag_name'] as String,
+                release['body'] as String?,
+              ),
+          ],
         );
       } else {
         // A fresh state: no new version left over from an earlier check.

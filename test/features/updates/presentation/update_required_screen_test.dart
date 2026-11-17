@@ -1,10 +1,12 @@
 import 'package:cinemuse_app/features/updates/application/update_service.dart';
+import 'package:cinemuse_app/features/updates/domain/release_notes.dart';
 import 'package:cinemuse_app/features/updates/domain/update_state.dart';
 import 'package:cinemuse_app/features/updates/presentation/update_required_screen.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
 import 'package:cinemuse_app/l10n/app_localizations_it.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -36,10 +38,11 @@ void main() {
     WidgetTester tester,
     UpdateStatus status, {
     String? errorKey,
+    List<ReleaseNotes> notes = const [],
     Locale locale = const Locale('en'),
   }) async {
     final notifier = _FakeUpdateNotifier(
-      UpdateState(status: status, errorKey: errorKey),
+      UpdateState(status: status, errorKey: errorKey, releaseNotes: notes),
     );
     await tester.pumpWidget(
       ProviderScope(
@@ -69,6 +72,36 @@ void main() {
 
       await tester.tap(find.text(en.updateNow));
       expect(notifier.startCalls, 1);
+    });
+
+    testWidgets("the new versions' notes under Update now, reached with "
+        'the remote', (tester) async {
+      await pumpScreen(
+        tester,
+        UpdateStatus.available,
+        notes: [
+          const ReleaseNotes('2.2.0', {'en': '- Smaller guide'}),
+          const ReleaseNotes('2.1.0', {'en': '- Faster Live TV'}),
+        ],
+      );
+
+      expect(find.text(en.updateWhatsNew), findsOneWidget);
+      expect(find.text('2.2.0'), findsOneWidget);
+      expect(find.text('2.1.0'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Smaller guide')).dy,
+        lessThan(tester.getTopLeft(find.text('Faster Live TV')).dy),
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      expect(isFocused(find.text('Smaller guide')), isTrue);
+    });
+
+    testWidgets('no notes: only the button', (tester) async {
+      await pumpScreen(tester, UpdateStatus.available);
+
+      expect(find.text(en.updateWhatsNew), findsNothing);
     });
 
     testWidgets('update check failed: the reason and Retry', (tester) async {

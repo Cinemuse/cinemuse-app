@@ -63,3 +63,4 @@ Old code that breaks a rule is fixed when a change touches it, not in big rewrit
 
 - **`ci.yml`:** format, analyze and tests on every push to `main`.
 - **`release.yml`:** push a tag `vX.Y.Z`. It runs CI, builds the Android APKs, the Windows zip and the Linux `.tar.gz`, writes `SHA256SUMS` and publishes a GitHub release. The `.env` file comes from the `ENV_FILE` secret.
+- **Release notes:** the tag's message is the release's text: what changed for the people using the app, in plain words, under a `## English` and a `## Italiano` title. The app shows every version newer than the installed one, newest first, in its own language. Tag with `git tag -a vX.Y.Z --cleanup=verbatim -F notes.md`: without `--cleanup=verbatim`, git deletes the `##` lines, and a release whose message lacks either title stops before anything is published.

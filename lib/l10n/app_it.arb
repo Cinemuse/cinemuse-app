@@ -585,7 +585,7 @@
   "updateNewVersion": "Nuova versione",
   "updateCheck": "Controlla aggiornamenti",
   "updateChecking": "Controllo degli aggiornamenti...",
-  "updateWhatsNewIn": "Novità della {version}",
+  "updateWhatsNew": "Novità",
   "updateNow": "Aggiorna Ora",
   "downloadingUpdate": "Scaricamento aggiornamento {progress}%",
   "updateFailed": "Aggiornamento fallito. Riprova più tardi.",

@@ -698,7 +698,7 @@
   "updateNewVersion": "New version",
   "updateCheck": "Check for updates",
   "updateChecking": "Checking for updates...",
-  "updateWhatsNewIn": "What's new in {version}",
+  "updateWhatsNew": "What's new",
   "updateNow": "Update Now",
   "downloadingUpdate": "Downloading update {progress}%",
   "updateFailed": "Update failed. Please try again later.",

@@ -11,9 +11,43 @@ jobs:
   checks:
     uses: ./.github/workflows/ci.yml
 
+  # The release's text is the tag's message, with a "## English" and a
+  # "## Italiano" part; the app shows the part in its own language.
+  release-notes:
+    name: Release notes from the tag
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Read the tag message
+        run: |
+          # The checkout can leave the tag without its message: fetch it again
+          git fetch --force origin "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
+          if [ "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}")" != "tag" ]; then
+            echo "::error::Tag '${GITHUB_REF_NAME}' has no message: tag it with git tag -a"
+            exit 1
+          fi
+          git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > release-notes.md
+          for title in English Italiano; do
+            if ! grep -qxE "##[[:space:]]+${title}[[:space:]]*" release-notes.md; then
+              echo "::error::The tag message has no '## ${title}' part"
+              exit 1
+            fi
+          done
+          cat release-notes.md
+
+      - name: Upload the release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.md
+          retention-days: 1
+
   build-windows-android:
     name: Build Android & Windows
-    needs: checks
+    needs: [checks, release-notes]
     runs-on: windows-latest
     permissions:
       contents: write
@@ -101,7 +135,7 @@ jobs:
 
   build-linux:
     name: Build Linux (.tar.gz)
-    needs: checks
+    needs: [checks, release-notes]
     runs-on: ubuntu-latest
 
     steps:
@@ -171,8 +205,15 @@ jobs:
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
+          pattern: '*-artifacts'
           path: release-assets
           merge-multiple: true
+
+      - name: Download the release notes
+        uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+          path: notes
 
       # The Windows and Linux updaters refuse a download that doesn't match this file (SEC-03)
       - name: Write SHA256SUMS
@@ -189,7 +230,7 @@ jobs:
         with:
           artifacts: "release-assets/*"
           token: ${{ secrets.GITHUB_TOKEN }}
-          generateReleaseNotes: true
+          bodyFile: notes/release-notes.md
           tag: ${{ github.ref_name }}
           commit: ${{ github.sha }}
 

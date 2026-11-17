@@ -3254,11 +3254,11 @@ abstract class AppLocalizations {
   /// **'Checking for updates...'**
   String get updateChecking;
 
-  /// No description provided for @updateWhatsNewIn.
+  /// No description provided for @updateWhatsNew.
   ///
   /// In en, this message translates to:
-  /// **'What\'s new in {version}'**
-  String updateWhatsNewIn(Object version);
+  /// **'What\'s new'**
+  String get updateWhatsNew;
 
   /// No description provided for @updateNow.
   ///

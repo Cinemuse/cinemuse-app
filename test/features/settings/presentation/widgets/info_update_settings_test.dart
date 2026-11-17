@@ -3,6 +3,7 @@ import 'package:cinemuse_app/core/presentation/theme/app_theme.dart';
 import 'package:cinemuse_app/core/services/system/app_full_screen.dart';
 import 'package:cinemuse_app/features/settings/presentation/widgets/info_update_settings.dart';
 import 'package:cinemuse_app/features/updates/application/update_service.dart';
+import 'package:cinemuse_app/features/updates/domain/release_notes.dart';
 import 'package:cinemuse_app/features/updates/domain/update_state.dart';
 import 'package:cinemuse_app/l10n/app_localizations.dart';
 import 'package:cinemuse_app/l10n/app_localizations_en.dart';
@@ -42,10 +43,15 @@ class _FakeUpdateNotifier extends UpdateNotifier {
   void cancelUpdate() => cancelCalls++;
 }
 
+const _notes193 = ReleaseNotes('1.9.3', {
+  'en': '- Faster Live TV',
+  'it': '- TV in diretta più veloce',
+});
+
 UpdateState _state(
   UpdateStatus status, {
   String? latest,
-  String? notes,
+  List<ReleaseNotes> notes = const [],
   double progress = 0,
   String? errorKey,
 }) => UpdateState(
@@ -133,31 +139,69 @@ void main() {
   ) async {
     final notifier = await pumpPage(
       tester,
-      _state(
-        UpdateStatus.available,
-        latest: 'v1.9.3',
-        notes: '- Faster Live TV',
-      ),
+      _state(UpdateStatus.available, latest: 'v1.9.3', notes: [_notes193]),
     );
 
     expect(find.text(en.updateNewVersion), findsOneWidget);
-    expect(find.text('1.9.3'), findsOneWidget);
-    expect(find.text(en.updateWhatsNewIn('1.9.3')), findsOneWidget);
+    // The new version's row and its notes' title.
+    expect(find.text('1.9.3'), findsNWidgets(2));
+    expect(find.text(en.updateWhatsNew), findsOneWidget);
     expect(find.text('Faster Live TV'), findsOneWidget);
 
     await tester.tap(find.text(en.updateNow));
     expect(notifier.startCalls, 1);
   });
 
-  testWidgets('the remote reaches Update now, Check for updates and the '
-      'notes', (tester) async {
+  testWidgets('several new versions: each one\'s notes, newest first', (
+    tester,
+  ) async {
     await pumpPage(
       tester,
       _state(
         UpdateStatus.available,
-        latest: 'v1.9.3',
-        notes: '- Faster Live TV',
+        latest: 'v1.9.4',
+        notes: [
+          const ReleaseNotes('1.9.4', {'en': '- Smaller guide'}),
+          _notes193,
+        ],
       ),
+    );
+
+    expect(find.text(en.updateWhatsNew), findsOneWidget);
+    final newer = tester.getTopLeft(find.text('Smaller guide')).dy;
+    final older = tester.getTopLeft(find.text('Faster Live TV')).dy;
+    expect(newer, lessThan(older));
+    expect(
+      tester.getTopLeft(find.text('1.9.3')).dy,
+      allOf(greaterThan(newer), lessThan(older)),
+    );
+  });
+
+  testWidgets('new versions without notes: no notes card', (tester) async {
+    await pumpPage(tester, _state(UpdateStatus.available, latest: 'v1.9.3'));
+
+    expect(find.text('1.9.3'), findsOneWidget);
+    expect(find.text(en.updateWhatsNew), findsNothing);
+  });
+
+  testWidgets('the app in Italian: the Italian notes', (tester) async {
+    final it = AppLocalizationsIt();
+    await pumpPage(
+      tester,
+      _state(UpdateStatus.available, latest: 'v1.9.3', notes: [_notes193]),
+      locale: const Locale('it'),
+    );
+
+    expect(find.text(it.updateWhatsNew), findsOneWidget);
+    expect(find.text('TV in diretta più veloce'), findsOneWidget);
+    expect(find.text('Faster Live TV'), findsNothing);
+  });
+
+  testWidgets('the remote reaches Update now, Check for updates and the '
+      'notes', (tester) async {
+    await pumpPage(
+      tester,
+      _state(UpdateStatus.available, latest: 'v1.9.3', notes: [_notes193]),
     );
 
     await tabTo(tester, find.text(en.updateNow));
