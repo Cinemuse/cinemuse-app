@@ -31,22 +31,34 @@ Response<T> _response<T>(
   ],
 );
 
-Map<String, dynamic> _record(int id, String slug, int anilistId) => {
+Map<String, dynamic> _anime(int id, String slug, int anilistId) => {
   'id': id,
   'title': slug,
   'slug': slug,
   'anilist_id': anilistId,
+  'variants': [
+    {'language': 'ita'},
+    {'language': 'jpn'},
+  ],
+};
+
+/// One page of the archive's results, as the site answers it.
+Map<String, dynamic> _page(
+  List<Map<String, dynamic>> results, {
+  int page = 1,
+  int lastPage = 1,
+}) => {
+  'current_page': page,
+  'last_page': lastPage,
+  'per_page': 30,
+  'data': results,
 };
 
 // Fire Force S3 (Kitsu 46119, AniList 149118): Part 2 has its own AniList ID.
-final _fireForceRecords = {
-  'records': [
-    _record(6400, 'fire-force-3', 149118),
-    _record(6401, 'fire-force-3-ita', 149118),
-    _record(7216, 'fire-force-3-part-2', 179062),
-    _record(7217, 'fire-force-3-part-2-ita', 179062),
-  ],
-};
+final _fireForceResults = _page([
+  _anime(6400, 'fire-force-3', 149118),
+  _anime(7216, 'fire-force-3-part-2', 179062),
+]);
 
 void main() {
   late MockDio dio;
@@ -57,23 +69,44 @@ void main() {
     service = BuiltInAnimeLookupService(dio, _sitesWith(_siteAddress));
   });
 
-  group('parseLiveSearch', () {
-    test('keeps only the records of the AniList ID', () {
-      final entries = BuiltInAnimeLookupService.parseLiveSearch(
-        _fireForceRecords,
+  group('parseArchive', () {
+    test('keeps only the results of the AniList ID', () {
+      final entries = BuiltInAnimeLookupService.parseArchive(
+        _fireForceResults,
         149118,
       );
 
-      expect(entries.map((e) => e.id), [6400, 6401]);
-      expect(entries.last.path, '/anime/6401-fire-force-3-ita');
+      expect(entries.map((e) => e.id), [6400]);
+      expect(entries.single.path, '/anime/6400-fire-force-3');
     });
 
-    test('returns nothing when no record has the AniList ID', () {
+    test('returns nothing when no result has the AniList ID', () {
       expect(
-        BuiltInAnimeLookupService.parseLiveSearch(_fireForceRecords, 1),
+        BuiltInAnimeLookupService.parseArchive(_fireForceResults, 1),
         isEmpty,
       );
-      expect(BuiltInAnimeLookupService.parseLiveSearch('<html>', 1), isEmpty);
+      expect(BuiltInAnimeLookupService.parseArchive('<html>', 1), isEmpty);
+      // The old search's answer: its results were under `records`.
+      expect(
+        BuiltInAnimeLookupService.parseArchive({
+          'records': [_anime(6400, 'fire-force-3', 149118)],
+        }, 149118),
+        isEmpty,
+      );
+    });
+  });
+
+  group('hasMorePages', () {
+    test('only while the page is before the last', () {
+      expect(
+        BuiltInAnimeLookupService.hasMorePages(_page([], page: 1, lastPage: 3)),
+        isTrue,
+      );
+      expect(
+        BuiltInAnimeLookupService.hasMorePages(_page([], page: 3, lastPage: 3)),
+        isFalse,
+      );
+      expect(BuiltInAnimeLookupService.hasMorePages('<html>'), isFalse);
     });
   });
 
@@ -135,39 +168,55 @@ void main() {
 
   group('findEntries', () {
     // With no Kitsu row in the list, the app's own copy of its address.
-    void stubKitsuAndHome({String kitsu = 'https://kitsu.app/api/edge'}) {
+    void stubKitsu({
+      String kitsu = 'https://kitsu.app/api/edge',
+      String kitsuId = '46119',
+      String canonical = 'Enen no Shouboutai: San no Shou',
+      String english = 'Fire Force Season 3',
+    }) {
       when(
         () => dio.get(
-          '$kitsu/anime/46119',
+          '$kitsu/anime/$kitsuId',
           queryParameters: any(named: 'queryParameters'),
         ),
       ).thenAnswer(
         (_) async => _response({
           'data': {
             'attributes': {
-              'canonicalTitle': 'Enen no Shouboutai: San no Shou',
-              'titles': {
-                'en': 'Fire Force Season 3',
-                'en_jp': 'Enen no Shouboutai: San no Shou',
-              },
+              'canonicalTitle': canonical,
+              'titles': {'en': english, 'en_jp': canonical},
             },
           },
         }),
       );
-      when(
-        () => dio.get<String>('$_siteAddress/', options: any(named: 'options')),
-      ).thenAnswer(
-        (_) async => _response(
-          '<meta name="csrf-token" content="tok123">',
-          headers: {
-            'set-cookie': [
-              'XSRF-TOKEN=abc; path=/',
-              'site_session=xyz; path=/; httponly',
-            ],
-          },
-        ),
-      );
     }
+
+    /// The archive's answer to [title] on [page] at [site].
+    void stubArchive(
+      Object answer, {
+      String? title,
+      int? page,
+      String site = _siteAddress,
+      String? forwardedTo,
+    }) {
+      when(
+        () => dio.get(
+          '$site/api/archive',
+          queryParameters: title == null && page == null
+              ? any(named: 'queryParameters')
+              : {'query': title, 'page': page ?? 1},
+          options: any(named: 'options'),
+        ),
+      ).thenAnswer((_) async => _response(answer, forwardedTo: forwardedTo));
+    }
+
+    List<Object?> searched({String site = _siteAddress}) => verify(
+      () => dio.get(
+        '$site/api/archive',
+        queryParameters: captureAny(named: 'queryParameters'),
+        options: any(named: 'options'),
+      ),
+    ).captured;
 
     test('no address in the list: finds nothing, asks no site', () async {
       service = BuiltInAnimeLookupService(dio, _sitesWith(null));
@@ -185,20 +234,14 @@ void main() {
         dio,
         _sitesWith(_siteAddress, kitsu: 'https://kitsu.example/api/edge/'),
       );
-      stubKitsuAndHome(kitsu: 'https://kitsu.example/api/edge');
-      when(
-        () => dio.post(
-          any(),
-          data: any(named: 'data'),
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer((_) async => _response(_fireForceRecords));
+      stubKitsu(kitsu: 'https://kitsu.example/api/edge');
+      stubArchive(_fireForceResults);
 
       final found = await service.findEntries(
         AnimeMatch(kitsuId: '46119', absoluteEpisode: 10, anilistId: 149118),
       );
 
-      expect(found!.entries.map((e) => e.id), [6400, 6401]);
+      expect(found!.entries.map((e) => e.id), [6400]);
     });
 
     test('without a Kitsu id it has no titles to search by', () async {
@@ -210,148 +253,129 @@ void main() {
       verifyZeroInteractions(dio);
     });
 
-    test('a site that moved: it searches where the home page landed, '
+    test('a site that moved: it searches on where the first search landed, '
         'and says so', () async {
-      stubKitsuAndHome();
-      when(
-        () => dio.get<String>('$_siteAddress/', options: any(named: 'options')),
-      ).thenAnswer(
-        (_) async => _response(
-          '<meta name="csrf-token" content="tok123">',
-          forwardedTo: 'https://anime-new.example/',
-        ),
+      stubKitsu();
+      // The romaji title lands on the new address and finds only Part 2.
+      stubArchive(
+        _page([_anime(7216, 'fire-force-3-part-2', 179062)]),
+        title: 'Enen no Shouboutai: San no Shou',
+        forwardedTo: 'https://anime-new.example/api/archive',
       );
-      when(
-        () => dio.post(
-          'https://anime-new.example/livesearch',
-          data: any(named: 'data'),
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer((_) async => _response(_fireForceRecords));
+      stubArchive(
+        _fireForceResults,
+        title: 'Fire Force Season 3',
+        site: 'https://anime-new.example',
+      );
 
       final found = await service.findEntries(
         AnimeMatch(kitsuId: '46119', absoluteEpisode: 10, anilistId: 149118),
       );
 
       expect(found!.siteAddress, 'https://anime-new.example');
-      expect(found.entries.map((e) => e.id), [6400, 6401]);
-      final options =
-          verify(
-                () => dio.post(
-                  'https://anime-new.example/livesearch',
-                  data: any(named: 'data'),
-                  options: captureAny(named: 'options'),
-                ),
-              ).captured.single
-              as Options;
-      expect(options.headers?['Referer'], 'https://anime-new.example/');
+      expect(found.entries.map((e) => e.id), [6400]);
+      expect(searched(site: 'https://anime-new.example'), [
+        {'query': 'Fire Force Season 3', 'page': 1},
+      ]);
     });
 
     test('searches the Kitsu titles and matches on the AniList ID', () async {
-      stubKitsuAndHome();
+      stubKitsu();
       // The romaji title only finds other anime; the English one finds it.
-      when(
-        () => dio.post(
-          '$_siteAddress/livesearch',
-          data: {'title': 'Enen no Shouboutai: San no Shou'},
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer(
-        (_) async => _response({
-          'records': [_record(7216, 'fire-force-3-part-2', 179062)],
-        }),
+      stubArchive(
+        _page([_anime(7216, 'fire-force-3-part-2', 179062)]),
+        title: 'Enen no Shouboutai: San no Shou',
       );
-      when(
-        () => dio.post(
-          '$_siteAddress/livesearch',
-          data: {'title': 'Fire Force Season 3'},
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer((_) async => _response(_fireForceRecords));
+      stubArchive(_fireForceResults, title: 'Fire Force Season 3');
 
       final found = await service.findEntries(
         AnimeMatch(kitsuId: '46119', absoluteEpisode: 10, anilistId: 149118),
       );
 
       expect(found!.siteAddress, _siteAddress);
-      expect(found.entries.map((e) => e.id), [6400, 6401]);
-      final options =
-          verify(
-                () => dio.post(
-                  '$_siteAddress/livesearch',
-                  data: {'title': 'Fire Force Season 3'},
-                  options: captureAny(named: 'options'),
-                ),
-              ).captured.single
-              as Options;
-      expect(options.headers?['X-CSRF-TOKEN'], 'tok123');
-      expect(options.headers?['Cookie'], 'XSRF-TOKEN=abc; site_session=xyz');
+      expect(found.entries.map((e) => e.id), [6400]);
+      final [romaji, romajiOptions, english, _] = verify(
+        () => dio.get(
+          '$_siteAddress/api/archive',
+          queryParameters: captureAny(named: 'queryParameters'),
+          options: captureAny(named: 'options'),
+        ),
+      ).captured;
+      expect(romaji, {'query': 'Enen no Shouboutai: San no Shou', 'page': 1});
+      expect(english, {'query': 'Fire Force Season 3', 'page': 1});
+      final options = romajiOptions as Options;
+      expect(options.headers?['Accept'], 'application/json');
+    });
+
+    test('a long franchise: the season on a later page is found', () async {
+      // One Piece has dozens of entries: the series is on page 2.
+      stubKitsu(canonical: 'One Piece', english: 'One Piece');
+      stubArchive(
+        _page([_anime(5000, 'one-piece-film-red', 141902)], lastPage: 3),
+        title: 'One Piece',
+        page: 1,
+      );
+      stubArchive(
+        _page([_anime(12, 'one-piece', 21)], page: 2, lastPage: 3),
+        title: 'One Piece',
+        page: 2,
+      );
+
+      final found = await service.findEntries(
+        AnimeMatch(kitsuId: '46119', absoluteEpisode: 1, anilistId: 21),
+      );
+
+      expect(found!.entries.map((e) => e.id), [12]);
+      expect(searched(), [
+        {'query': 'One Piece', 'page': 1},
+        {'query': 'One Piece', 'page': 2},
+      ]);
+    });
+
+    test('looks through at most ${BuiltInAnimeLookupService.maxPages} '
+        'pages of one title', () async {
+      stubKitsu(canonical: 'One Piece', english: 'One Piece');
+      stubArchive(_page([_anime(1, 'other', 1)], lastPage: 9));
+
+      final found = await service.findEntries(
+        AnimeMatch(kitsuId: '46119', absoluteEpisode: 1, anilistId: 21),
+      );
+
+      expect(found, isNull);
+      expect(searched(), [
+        for (var page = 1; page <= BuiltInAnimeLookupService.maxPages; page++)
+          {'query': 'One Piece', 'page': page},
+      ]);
     });
 
     test('a season numbered otherwise on the site: found by the title '
         'without its season words, still matched on the AniList ID', () async {
-      stubKitsuAndHome();
       // Cyberpunk: Edgerunners 2 (Kitsu 50016, AniList 195539): Kitsu says
       // "II", the site says "2", so only the shorter title finds it, along
       // with the first season.
-      when(
-        () => dio.get(
-          'https://kitsu.app/api/edge/anime/50016',
-          queryParameters: any(named: 'queryParameters'),
-        ),
-      ).thenAnswer(
-        (_) async => _response({
-          'data': {
-            'attributes': {
-              'canonicalTitle': 'Cyberpunk: Edgerunners II',
-              'titles': {
-                'en': 'CYBERPUNK: EDGERUNNERS II',
-                'en_jp': 'Cyberpunk: Edgerunners II',
-              },
-            },
-          },
-        }),
+      stubKitsu(
+        kitsuId: '50016',
+        canonical: 'Cyberpunk: Edgerunners II',
+        english: 'CYBERPUNK: EDGERUNNERS II',
       );
-      when(
-        () => dio.post(
-          '$_siteAddress/livesearch',
-          data: any(named: 'data'),
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer((_) async => _response({'records': []}));
-      when(
-        () => dio.post(
-          '$_siteAddress/livesearch',
-          data: {'title': 'Cyberpunk: Edgerunners'},
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer(
-        (_) async => _response({
-          'records': [
-            _record(4017, 'cyberpunk-edgerunners', 120377),
-            _record(4016, 'cyberpunk-edgerunners-ita', 120377),
-            _record(7803, 'cyberpunk-edgerunners-2', 195539),
-            _record(7869, 'cyberpunk-edgerunners-2-ita', 195539),
-          ],
-        }),
+      stubArchive(_page([]));
+      stubArchive(
+        _page([
+          _anime(4017, 'cyberpunk-edgerunners', 120377),
+          _anime(7803, 'cyberpunk-edgerunners-2', 195539),
+        ]),
+        title: 'Cyberpunk: Edgerunners',
       );
 
       final found = await service.findEntries(
         AnimeMatch(kitsuId: '50016', absoluteEpisode: 1, anilistId: 195539),
       );
 
-      expect(found!.entries.map((e) => e.id), [7803, 7869]);
-      final searched = verify(
-        () => dio.post(
-          '$_siteAddress/livesearch',
-          data: captureAny(named: 'data'),
-          options: any(named: 'options'),
-        ),
-      ).captured;
-      expect(searched, [
-        {'title': 'Cyberpunk: Edgerunners II'},
-        {'title': 'CYBERPUNK: EDGERUNNERS II'},
-        {'title': 'Cyberpunk: Edgerunners'},
+      expect(found!.entries.map((e) => e.id), [7803]);
+      expect(searched(), [
+        {'query': 'Cyberpunk: Edgerunners II', 'page': 1},
+        {'query': 'CYBERPUNK: EDGERUNNERS II', 'page': 1},
+        {'query': 'Cyberpunk: Edgerunners', 'page': 1},
       ]);
     });
 
@@ -362,6 +386,30 @@ void main() {
         DioException(
           requestOptions: RequestOptions(),
           type: DioExceptionType.connectionError,
+        ),
+      );
+
+      expect(
+        () => service.findEntries(
+          AnimeMatch(kitsuId: '46119', anilistId: 149118),
+        ),
+        throwsA(isA<Exception>()),
+      );
+    });
+
+    test('a site error on the search is thrown too', () async {
+      stubKitsu();
+      when(
+        () => dio.get(
+          '$_siteAddress/api/archive',
+          queryParameters: any(named: 'queryParameters'),
+          options: any(named: 'options'),
+        ),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(),
+          response: Response(requestOptions: RequestOptions(), statusCode: 429),
+          type: DioExceptionType.badResponse,
         ),
       );
 

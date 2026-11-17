@@ -44,24 +44,25 @@ class BuiltInAnimeLookupService implements BuiltInAnimeLookup {
       );
       if (titles.isEmpty) return null;
 
-      final session = await _openSession(listed);
-      // Livesearch returns at most 8 results, so the exact season title is
-      // tried first and the others only when it finds nothing. Kitsu and the
-      // site often number a season differently ("Edgerunners II" against
-      // "Edgerunners 2"), so last come the titles without their season
-      // words; the AniList ID still picks the right season among the results.
+      // The exact season title is tried first and the others only when it
+      // finds nothing. Kitsu and the site often number a season differently
+      // ("Edgerunners II" against "Edgerunners 2"), so last come the titles
+      // without their season words; the AniList ID still picks the right
+      // season among the results.
+      var siteAddress = listed;
+      var first = true;
       for (final title in [...titles, ...withoutSeasonWords(titles)]) {
-        final entries = await _search(session, title, anilistId);
-        if (entries.isNotEmpty) {
+        final search = await _search(siteAddress, title, anilistId);
+        // The first search tells where the site answers from today.
+        if (first) siteAddress = search.siteAddress;
+        first = false;
+        if (search.entries.isNotEmpty) {
           AppLogger.debug(
             _logTag,
             'Kitsu $kitsuId (AniList $anilistId) -> '
-            '${entries.map((e) => e.id).join(', ')}',
+            '${search.entries.map((e) => e.id).join(', ')}',
           );
-          return BuiltInAnimeEntries(
-            siteAddress: session.siteAddress,
-            entries: entries,
-          );
+          return search;
         }
       }
       return null;
@@ -123,68 +124,57 @@ class BuiltInAnimeLookupService implements BuiltInAnimeLookup {
     return shorter;
   }
 
-  /// Loads the home page for the CSRF token and session cookies that
-  /// livesearch requires (it answers 419 without them), and for the address
-  /// the site answers from today.
-  Future<_BuiltInAnimeSession> _openSession(String listed) async {
-    final res = await _dio.get<String>(
-      '$listed/',
-      options: Options(responseType: ResponseType.plain),
-    );
-    final token = RegExp(
-      r'''name="csrf-token"\s+content="([^"]+)"''',
-    ).firstMatch(res.data ?? '')?.group(1);
-    if (token == null) {
-      throw const StreamingFailure('Anime site CSRF token not found');
-    }
+  /// How many pages of results (30 each) one title looks through: a long
+  /// franchise has dozens of entries, and the right season isn't always on
+  /// the first page.
+  static const maxPages = 3;
 
-    final cookies = (res.headers.map['set-cookie'] ?? const <String>[])
-        .map((c) => c.split(';').first.trim())
-        .where((c) => c.isNotEmpty)
-        .join('; ');
-    return _BuiltInAnimeSession(
-      siteAddress: addressAfterForward(listed, res),
-      token: token,
-      cookies: cookies,
-    );
-  }
-
-  Future<List<BuiltInAnimeEntry>> _search(
-    _BuiltInAnimeSession session,
+  /// Searches the site's archive for [title] at [siteAddress], keeping the
+  /// results of [anilistId]. The answer's address is where the site answered
+  /// from, followed if it moved.
+  Future<BuiltInAnimeEntries> _search(
+    String siteAddress,
     String title,
     int anilistId,
   ) async {
-    final baseUrl = session.siteAddress;
-    final res = await _dio.post(
-      '$baseUrl/livesearch',
-      data: {'title': title},
-      options: Options(
-        contentType: Headers.formUrlEncodedContentType,
-        headers: {
-          'X-CSRF-TOKEN': session.token,
-          'X-Requested-With': 'XMLHttpRequest',
-          'Referer': '$baseUrl/',
-          if (session.cookies.isNotEmpty) 'Cookie': session.cookies,
-        },
-      ),
-    );
-    return parseLiveSearch(res.data, anilistId);
+    var address = siteAddress;
+    for (var page = 1; page <= maxPages; page++) {
+      final res = await _dio.get(
+        '$address/api/archive',
+        queryParameters: {'query': title, 'page': page},
+        options: Options(headers: {'Accept': 'application/json'}),
+      );
+      if (page == 1) address = addressAfterForward(siteAddress, res);
+      final entries = parseArchive(res.data, anilistId);
+      if (entries.isNotEmpty || !hasMorePages(res.data)) {
+        return BuiltInAnimeEntries(siteAddress: address, entries: entries);
+      }
+    }
+    return BuiltInAnimeEntries(siteAddress: address, entries: const []);
   }
 
-  /// Keeps the livesearch records of [anilistId] (usually the subbed and the
-  /// Italian dub entry). Public for tests.
-  static List<BuiltInAnimeEntry> parseLiveSearch(Object? data, int anilistId) {
-    final records = data is Map ? data['records'] : null;
-    if (records is! List) return [];
+  /// The archive's results of [anilistId] (one entry, which holds both the
+  /// subbed and the Italian dub videos). Public for tests and the daily check.
+  static List<BuiltInAnimeEntry> parseArchive(Object? data, int anilistId) {
+    final results = data is Map ? data['data'] : null;
+    if (results is! List) return [];
 
     final entries = <BuiltInAnimeEntry>[];
-    for (final record in records.whereType<Map>()) {
-      final id = record['id'];
-      if (id is! int || record['anilist_id'] != anilistId) continue;
-      final slug = record['slug']?.toString() ?? '';
+    for (final anime in results.whereType<Map>()) {
+      final id = anime['id'];
+      if (id is! int || anime['anilist_id'] != anilistId) continue;
+      final slug = anime['slug']?.toString() ?? '';
       entries.add(BuiltInAnimeEntry(id: id, path: '/anime/$id-$slug'));
     }
     return entries;
+  }
+
+  /// Whether the archive has another page of results after [data]'s.
+  static bool hasMorePages(Object? data) {
+    if (data is! Map) return false;
+    final current = data['current_page'];
+    final last = data['last_page'];
+    return current is int && last is int && current < last;
   }
 
   AppFailure _failureFromDio(DioException e, StackTrace st) {
@@ -203,16 +193,4 @@ class BuiltInAnimeLookupService implements BuiltInAnimeLookup {
       stackTrace: st,
     );
   }
-}
-
-class _BuiltInAnimeSession {
-  final String siteAddress;
-  final String token;
-  final String cookies;
-
-  _BuiltInAnimeSession({
-    required this.siteAddress,
-    required this.token,
-    required this.cookies,
-  });
 }

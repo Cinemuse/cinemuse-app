@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cinemuse_app/core/data/server_addresses_model.dart';
 import 'package:cinemuse_app/features/streaming/anime/interfaces/builtin_anime_lookup.dart';
 import 'package:cinemuse_app/features/streaming/anime/models/builtin_anime_entry.dart';
@@ -13,268 +15,266 @@ class MockDio extends Mock implements Dio {}
 
 class MockBuiltInAnimeLookup extends Mock implements BuiltInAnimeLookup {}
 
-class MockResponse extends Mock implements Response {}
+const _site = 'https://anime.example';
 
 BuiltInAnimeEntries _entryAt(String siteAddress) => BuiltInAnimeEntries(
   siteAddress: siteAddress,
   entries: [BuiltInAnimeEntry(id: 999, path: '/anime/999-test')],
 );
 
+Response<T> _answer<T>(T data) =>
+    Response<T>(requestOptions: RequestOptions(), statusCode: 200, data: data);
+
+/// An episode of the anime's episode list, with one video per language.
+Map<String, dynamic> _episode(
+  int number,
+  Map<String, int> videos, {
+  bool hidden = false,
+}) => {
+  'id': 5000 + number,
+  'number': '$number',
+  'videos': [
+    for (final MapEntry(key: language, value: id) in videos.entries)
+      {'id': id, 'language': language, 'scws_id': id + 1, 'is_hidden': hidden},
+  ],
+};
+
+/// The site's episode page, its data in the root element as the site writes
+/// it (HTML-escaped).
+String _episodePage(String? embedUrl) {
+  final data = jsonEncode({
+    'component': 'Anime',
+    'props': {'embedUrl': ?embedUrl},
+  });
+  final escaped = const HtmlEscape(HtmlEscapeMode.attribute).convert(data);
+  return '<html><body><div id="app" data-page="$escaped"></div></body></html>';
+}
+
+String _videoPage(String id) =>
+    '''
+  <script>
+    window.video = { id: '$id' };
+    window.masterPlaylist = {
+      params: { 'token': 'tok-$id', 'expires': '123456', 'asn': '' },
+      url: 'https://videos.example/playlist/$id',
+    }
+    window.canPlayFHD = true
+  </script>
+''';
+
+const _masterPlaylist = '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=1200000,RESOLUTION=854x480
+https://videos.example/playlist/1?type=video&rendition=480p
+#EXT-X-STREAM-INF:BANDWIDTH=4500000,RESOLUTION=1920x1080
+https://videos.example/playlist/1?type=video&rendition=1080p
+#EXT-X-STREAM-INF:BANDWIDTH=2150000,RESOLUTION=1280x720
+https://videos.example/playlist/1?type=video&rendition=720p
+''';
+
+StreamSearchContext _anime({int episode = 1}) => StreamSearchContext(
+  tmdbId: '123',
+  type: 'tv',
+  title: 'Test Anime',
+  isAnime: true,
+  episode: episode,
+  season: 1,
+  mapping: AnimeMatch(anilistId: 7, kitsuId: '12', absoluteEpisode: episode),
+);
+
 void main() {
   late BuiltInAnimeSource source;
-  late MockDio mockDio;
-  late MockBuiltInAnimeLookup mockMappingService;
+  late MockDio dio;
+  late MockBuiltInAnimeLookup lookup;
 
   setUp(() {
-    mockDio = MockDio();
-    mockMappingService = MockBuiltInAnimeLookup();
+    dio = MockDio();
+    lookup = MockBuiltInAnimeLookup();
     source = BuiltInAnimeSource(
-      mockDio,
-      mockMappingService,
+      dio,
+      lookup,
       () async => ServerAddresses.fromRows([
-        {
-          'key': ServerAddress.animeSite.key,
-          'address': 'https://anime.example',
-        },
+        {'key': ServerAddress.animeSite.key, 'address': _site},
       ]),
       name: 'Anime Site',
     );
   });
 
+  /// The site at [site] with [episodes] in its list for anime 999; each
+  /// video's episode page leads to the video page `video-<id>`.
+  void stubSite({
+    String site = _site,
+    List<Map<String, dynamic>> episodes = const [],
+    String playlist = _masterPlaylist,
+  }) {
+    when(
+      () => dio.get(
+        '$site/api/anime/999/episodes',
+        queryParameters: any(named: 'queryParameters'),
+        options: any(named: 'options'),
+      ),
+    ).thenAnswer((_) async => _answer({'episodes': episodes}));
+    when(
+      () => dio.get<String>(
+        any(that: startsWith('$site/anime/999-test/')),
+        options: any(named: 'options'),
+      ),
+    ).thenAnswer((invocation) async {
+      final url = invocation.positionalArguments.first as String;
+      final videoId = url.split('/').last;
+      return _answer(
+        _episodePage('https://videos.example/embed/$videoId?token=x&expires=1'),
+      );
+    });
+    when(
+      () => dio.get(
+        any(that: startsWith('https://videos.example/embed/')),
+        options: any(named: 'options'),
+      ),
+    ).thenAnswer((invocation) async {
+      final url = invocation.positionalArguments.first as String;
+      return _answer(_videoPage(Uri.parse(url).pathSegments.last));
+    });
+    when(
+      () => dio.get(
+        any(that: contains('.m3u8')),
+        options: any(named: 'options'),
+      ),
+    ).thenAnswer((_) async => _answer(playlist));
+  }
+
   group('BuiltInAnimeSource', () {
     test('no address in the list: finds nothing (STR-08)', () async {
       source = BuiltInAnimeSource(
-        mockDio,
-        mockMappingService,
+        dio,
+        lookup,
         () async => ServerAddresses.empty,
         name: 'Anime Site',
       );
 
-      final results = await source.search(
-        StreamSearchContext(
-          tmdbId: '123',
-          type: 'tv',
-          title: 'Test Anime',
-          isAnime: true,
-          episode: 1,
-          mapping: AnimeMatch(anilistId: 7, kitsuId: '12', absoluteEpisode: 1),
-        ),
-      );
+      final results = await source.search(_anime());
 
       expect(results, isEmpty);
-      verifyZeroInteractions(mockDio);
-      verifyZeroInteractions(mockMappingService);
+      verifyZeroInteractions(dio);
+      verifyZeroInteractions(lookup);
     });
 
-    test('search should return streams when mapping and API succeed', () async {
-      final context = StreamSearchContext(
-        tmdbId: '123',
-        type: 'tv',
-        title: 'Test Anime',
-        isAnime: true,
-        episode: 1,
-        season: 1,
-        mapping: AnimeMatch(anilistId: 7, kitsuId: '12', absoluteEpisode: 1),
-      );
+    test(
+      'one stream per language of the episode, from its video page',
+      () async {
+        final context = _anime();
+        when(
+          () => lookup.findEntries(context.mapping!),
+        ).thenAnswer((_) async => _entryAt(_site));
+        stubSite(
+          episodes: [
+            _episode(1, {'ita': 63456, 'jpn': 48279}),
+          ],
+        );
 
+        final results = await source.search(context);
+
+        expect(results, hasLength(2));
+        final [dub, sub] = results;
+        expect(dub.provider, 'Anime Site');
+        expect(dub.title, 'Test Anime Ep.1 [ITA] [Anime Site]');
+        expect(dub.metadata?.languages, ['ITA']);
+        expect(sub.title, 'Test Anime Ep.1 [Anime Site]');
+        expect(sub.metadata?.languages, ['JPN']);
+        expect(
+          dub.url,
+          'https://videos.example/playlist/63456.m3u8'
+          '?token=tok-63456&expires=123456&h=1',
+        );
+        expect(dub.metadata?.video.resolution, VideoResolution.r1080p);
+        expect(
+          dub.headers?['Referer'],
+          'https://videos.example/embed/63456?token=x&expires=1',
+        );
+
+        // The episode list starts at the episode asked for.
+        final query =
+            verify(
+                  () => dio.get(
+                    '$_site/api/anime/999/episodes',
+                    queryParameters: captureAny(named: 'queryParameters'),
+                    options: any(named: 'options'),
+                  ),
+                ).captured.single
+                as Map;
+        expect(query['start'], 1);
+        // The video page refuses a visit that doesn't come from the site.
+        final videoPage =
+            verify(
+                  () => dio.get(
+                    'https://videos.example/embed/63456?token=x&expires=1',
+                    options: captureAny(named: 'options'),
+                  ),
+                ).captured.single
+                as Options;
+        expect(videoPage.headers?['Referer'], '$_site/');
+      },
+    );
+
+    test('a video the site hides still plays', () async {
+      final context = _anime();
       when(
-        () => mockMappingService.findEntries(context.mapping!),
-      ).thenAnswer((_) async => _entryAt('https://anime.example'));
-
-      // Mock info_api response
-      final infoResponse = MockResponse();
-      when(() => infoResponse.statusCode).thenReturn(200);
-      when(() => infoResponse.data).thenReturn({
-        'episodes': [
-          {'id': 1000, 'number': 1, 'file_name': 'Test.S01E01.1920x1080.mkv'},
+        () => lookup.findEntries(context.mapping!),
+      ).thenAnswer((_) async => _entryAt(_site));
+      stubSite(
+        episodes: [
+          _episode(1, {'jpn': 50299}, hidden: true),
         ],
-      });
-
-      // Mock embed-url response
-      final embedUrlResponse = MockResponse();
-      when(() => embedUrlResponse.statusCode).thenReturn(200);
-      when(
-        () => embedUrlResponse.data,
-      ).thenReturn('https://videos.example/embed/1234');
-
-      // Mock video page HTML
-      final htmlResponse = MockResponse();
-      when(() => htmlResponse.statusCode).thenReturn(200);
-      when(() => htmlResponse.data).thenReturn('''
-        <script>
-          window.masterPlaylistUrl = 'https://videos.example/playlist/1234';
-          var token = 'test-token';
-          var expires = '123456';
-          window.canPlayFHD = true;
-          window.masterPlaylist = {
-            url: 'https://videos.example/playlist/1234',
-            params: {
-              token: 'test-token',
-              expires: '123456'
-            }
-          };
-        </script>
-      ''');
-
-      // Mock Playlist
-      final playlistResponse = MockResponse();
-      when(() => playlistResponse.statusCode).thenReturn(200);
-      when(() => playlistResponse.data).thenReturn('''
-#EXTM3U
-#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Italiano",LANGUAGE="it"
-#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en"
-      ''');
-
-      when(
-        () => mockDio.get(
-          any(that: contains('info_api/999/1')),
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer((_) async => infoResponse);
-
-      when(
-        () => mockDio.get(
-          any(that: contains('embed-url/1000')),
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer((_) async => embedUrlResponse);
-
-      when(
-        () => mockDio.get(
-          'https://videos.example/embed/1234',
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer((_) async => htmlResponse);
-
-      when(
-        () => mockDio.get(
-          any(that: contains('.m3u8')),
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer((_) async => playlistResponse);
+      );
 
       final results = await source.search(context);
 
-      expect(results.length, 1);
-      final candidate = results.first;
-      expect(candidate.provider, 'Anime Site');
-      expect(candidate.title, contains('Ep.1'));
-      expect(candidate.metadata?.languages, containsAll(['ITA', 'ENG']));
-      expect(candidate.metadata?.video.resolution, VideoResolution.r1080p);
-      expect(candidate.url, contains('token=test-token'));
-      expect(candidate.url, contains('h=1'));
+      expect(results.single.url, contains('/playlist/50299.m3u8'));
     });
 
-    group('a playlist that names no sound language', () {
-      Future<List<String>?> languagesOf(String path) async {
-        final context = StreamSearchContext(
-          tmdbId: '123',
-          type: 'tv',
-          title: 'Test Anime',
-          isAnime: true,
-          episode: 1,
-          mapping: AnimeMatch(anilistId: 7, kitsuId: '12', absoluteEpisode: 1),
-        );
-        when(() => mockMappingService.findEntries(context.mapping!)).thenAnswer(
-          (_) async => BuiltInAnimeEntries(
-            siteAddress: 'https://anime.example',
-            entries: [BuiltInAnimeEntry(id: 999, path: path)],
-          ),
-        );
-        MockResponse answer(Object data) {
-          final response = MockResponse();
-          when(() => response.statusCode).thenReturn(200);
-          when(() => response.data).thenReturn(data);
-          return response;
-        }
-
-        final info = answer({
-          'episodes': [
-            {'id': 1000, 'number': 1, 'file_name': 'Test.S01E01.1080p.mkv'},
-          ],
-        });
-        final embed = answer('https://videos.example/embed/1234');
-        final page = answer('''
-          <script>
-            window.masterPlaylist = {
-              url: 'https://videos.example/playlist/1234',
-              params: { token: 'test-token', expires: '123456' }
-            };
-          </script>
-        ''');
-        final playlist = answer('''
+    test('a playlist that names its sound languages wins', () async {
+      final context = _anime();
+      when(
+        () => lookup.findEntries(context.mapping!),
+      ).thenAnswer((_) async => _entryAt(_site));
+      stubSite(
+        episodes: [
+          _episode(1, {'jpn': 48279}),
+        ],
+        playlist: '''
 #EXTM3U
-#EXT-X-STREAM-INF:BANDWIDTH=1200000,RESOLUTION=1920x1080
-https://videos.example/playlist/1234/1080p.m3u8
-        ''');
-        when(
-          () => mockDio.get(any(), options: any(named: 'options')),
-        ).thenAnswer((invocation) async {
-          final url = invocation.positionalArguments.first as String;
-          if (url.contains('info_api')) return info;
-          if (url.contains('embed-url')) return embed;
-          if (url.contains('.m3u8')) return playlist;
-          return page;
-        });
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Italiano",LANGUAGE="it"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en"
+''',
+      );
 
-        final results = await source.search(context);
-        expect(results, hasLength(1));
-        return results.single.metadata?.languages;
-      }
+      final results = await source.search(context);
 
-      test('the Italian dub entry is ITA', () async {
-        expect(await languagesOf('/anime/4852-frieren-ita'), ['ITA']);
-      });
-
-      test('the subtitled entry is JPN', () async {
-        expect(await languagesOf('/anime/4851-frieren'), ['JPN']);
-      });
+      expect(results.single.metadata?.languages, containsAll(['ITA', 'ENG']));
+      expect(
+        results.single.metadata?.video.resolution,
+        VideoResolution.unknown,
+      );
     });
 
     test('a site that moved: the episodes come from its new address', () async {
-      final context = StreamSearchContext(
-        tmdbId: '123',
-        type: 'tv',
-        title: 'Test Anime',
-        isAnime: true,
-        episode: 1,
-        season: 1,
-        mapping: AnimeMatch(anilistId: 7, kitsuId: '12', absoluteEpisode: 1),
-      );
+      final context = _anime();
       when(
-        () => mockMappingService.findEntries(context.mapping!),
+        () => lookup.findEntries(context.mapping!),
       ).thenAnswer((_) async => _entryAt('https://anime-new.example'));
-
-      final infoResponse = MockResponse();
-      when(() => infoResponse.statusCode).thenReturn(200);
-      when(() => infoResponse.data).thenReturn({
-        'episodes': [
-          {'id': 1000, 'number': 1, 'file_name': 'Test.S01E01.mkv'},
+      stubSite(
+        site: 'https://anime-new.example',
+        episodes: [
+          _episode(1, {'ita': 63456}),
         ],
-      });
-      when(
-        () => mockDio.get(
-          'https://anime-new.example/info_api/999/1?start_range=1&end_range=1',
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer((_) async => infoResponse);
+      );
 
-      final embedResponse = MockResponse();
-      when(() => embedResponse.statusCode).thenReturn(200);
-      when(() => embedResponse.data).thenReturn('not an address');
-      when(() => embedResponse.headers).thenReturn(Headers());
-      when(
-        () => mockDio.get(
-          'https://anime-new.example/embed-url/1000',
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer((_) async => embedResponse);
+      final results = await source.search(context);
 
-      await source.search(context);
-
+      expect(results, hasLength(1));
       verify(
-        () => mockDio.get(
-          'https://anime-new.example/embed-url/1000',
+        () => dio.get<String>(
+          'https://anime-new.example/anime/999-test/63456',
           options: any(named: 'options'),
         ),
       ).called(1);
@@ -290,48 +290,67 @@ https://videos.example/playlist/1234/1080p.m3u8
 
       final results = await source.search(context);
       expect(results, isEmpty);
-      verifyZeroInteractions(mockMappingService);
+      verifyZeroInteractions(lookup);
     });
 
     test(
       'never plays another episode than the one asked for (REV-241)',
       () async {
-        final context = StreamSearchContext(
-          tmdbId: '123',
-          type: 'tv',
-          title: 'Test Anime',
-          isAnime: true,
-          episode: 3,
-          season: 1,
-          mapping: AnimeMatch(anilistId: 7, kitsuId: '12', absoluteEpisode: 3),
-        );
+        final context = _anime(episode: 3);
         when(
-          () => mockMappingService.findEntries(context.mapping!),
-        ).thenAnswer((_) async => _entryAt('https://anime.example'));
-        final infoResponse = MockResponse();
-        when(() => infoResponse.statusCode).thenReturn(200);
-        when(() => infoResponse.data).thenReturn({
-          'episodes': [
-            {'id': 1000, 'number': '2', 'file_name': 'Test.S01E02.mkv'},
+          () => lookup.findEntries(context.mapping!),
+        ).thenAnswer((_) async => _entryAt(_site));
+        stubSite(
+          episodes: [
+            _episode(2, {'ita': 1}),
+            _episode(4, {'ita': 2}),
           ],
-        });
-        when(
-          () => mockDio.get(
-            any(that: contains('info_api/999/1')),
-            options: any(named: 'options'),
-          ),
-        ).thenAnswer((_) async => infoResponse);
+        );
 
         final results = await source.search(context);
 
         expect(results, isEmpty);
         verifyNever(
-          () => mockDio.get(
-            any(that: contains('embed-url')),
+          () => dio.get<String>(
+            any(that: startsWith('$_site/anime/')),
             options: any(named: 'options'),
           ),
         );
       },
     );
+  });
+
+  group('embedUrlOf', () {
+    test("reads the video page's address from the page's data", () {
+      expect(
+        BuiltInAnimeSource.embedUrlOf(
+          _episodePage(
+            'https://videos.example/embed/1?token=a&expires=2&canPlayFHD=1',
+          ),
+        ),
+        'https://videos.example/embed/1?token=a&expires=2&canPlayFHD=1',
+      );
+    });
+
+    test('nothing on a page without it', () {
+      expect(BuiltInAnimeSource.embedUrlOf(_episodePage(null)), isNull);
+      expect(BuiltInAnimeSource.embedUrlOf('<html></html>'), isNull);
+      expect(
+        BuiltInAnimeSource.embedUrlOf('<div data-page="{not json"></div>'),
+        isNull,
+      );
+    });
+  });
+
+  group('findEpisode', () {
+    test('only the episode with that number', () {
+      final episodes = [
+        _episode(1, {'ita': 1}),
+        _episode(2, {'ita': 2}),
+      ];
+      expect(BuiltInAnimeSource.findEpisode(episodes, 2)?['id'], 5002);
+      expect(BuiltInAnimeSource.findEpisode(episodes, 3), isNull);
+      expect(BuiltInAnimeSource.findEpisode('<html>', 1), isNull);
+    });
   });
 }

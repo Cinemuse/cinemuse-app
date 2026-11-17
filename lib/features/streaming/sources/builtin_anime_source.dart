@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cinemuse_app/core/data/server_addresses_model.dart';
 import 'package:cinemuse_app/core/utils/app_logger.dart';
 import 'package:cinemuse_app/features/streaming/anime/interfaces/builtin_anime_lookup.dart';
@@ -10,11 +12,13 @@ import 'package:cinemuse_app/features/streaming/models/stream_search_context.dar
 import 'package:cinemuse_app/features/streaming/sources/base_source.dart';
 import 'package:cinemuse_app/features/streaming/sources/video_page_parser.dart';
 import 'package:dio/dio.dart';
+import 'package:html/parser.dart' as html_parser;
 
 /// The built-in anime source: streams from the anime site's video pages.
 ///
-/// Flow: AnimeMatch → the site's search (matched on AniList ID) → the site's
-/// episode API → video page → HLS
+/// Flow: AnimeMatch → the site's search (matched on AniList ID) → the anime's
+/// episode list (one video per language) → each video's episode page → the
+/// video page → HLS
 class BuiltInAnimeSource extends BaseSource {
   static const String _logTag = 'BuiltInAnimeSource';
 
@@ -59,13 +63,14 @@ class BuiltInAnimeSource extends BaseSource {
 
       final candidates = <StreamCandidate>[];
       for (final entry in found.entries) {
-        final result = await _resolveStream(
-          found.siteAddress,
-          entry,
-          targetEpisode,
-          context,
+        candidates.addAll(
+          await _resolveStreams(
+            found.siteAddress,
+            entry,
+            targetEpisode,
+            context,
+          ),
         );
-        if (result != null) candidates.add(result);
       }
       return candidates;
     } catch (e) {
@@ -74,132 +79,158 @@ class BuiltInAnimeSource extends BaseSource {
     }
   }
 
-  /// Resolves a single entry on the site to a playable stream candidate.
-  Future<StreamCandidate?> _resolveStream(
+  /// One stream per language of [entry]'s episode [targetEpisode].
+  Future<List<StreamCandidate>> _resolveStreams(
     String baseUrl,
     BuiltInAnimeEntry entry,
     int targetEpisode,
     StreamSearchContext context,
   ) async {
     try {
-      final episodeData = await _fetchEpisode(baseUrl, entry.id, targetEpisode);
-      if (episodeData == null) return null;
+      final episode = await _fetchEpisode(baseUrl, entry.id, targetEpisode);
+      if (episode == null) return [];
 
-      final embedUrl = await _fetchEmbedUrl(baseUrl, episodeData['id'] as int);
-      if (embedUrl == null) return null;
-
-      return _extractVideoPageStream(embedUrl, episodeData, context, entry);
+      final candidates = <StreamCandidate>[];
+      // A video the site marks hidden still plays: it is used too.
+      for (final video
+          in (episode['videos'] as List? ?? const []).whereType<Map>()) {
+        final videoId = video['id'];
+        if (videoId is! int) continue;
+        final embedUrl = await _fetchEmbedUrl(baseUrl, entry, videoId);
+        if (embedUrl == null) continue;
+        final candidate = await _extractVideoPageStream(
+          baseUrl,
+          embedUrl,
+          episode,
+          video['language']?.toString(),
+          context,
+        );
+        if (candidate != null) candidates.add(candidate);
+      }
+      return candidates;
     } catch (e) {
       AppLogger.warn(_logTag, 'Failed for entry ${entry.id}', error: e);
-      return null;
+      return [];
     }
   }
 
-  /// Fetches the episode data from the site's info API.
+  /// The episode numbered [episodeNumber] from the anime's episode list.
   Future<Map<String, dynamic>?> _fetchEpisode(
     String baseUrl,
     int animeId,
     int episodeNumber,
   ) async {
-    final url =
-        '$baseUrl/info_api/$animeId/1?start_range=$episodeNumber&end_range=$episodeNumber';
-
-    final res = await _dio.get(url, options: _defaultOptions(baseUrl));
-    if (res.statusCode != 200 || res.data == null) return null;
-
-    final episodes = res.data['episodes'] as List?;
-    if (episodes == null || episodes.isEmpty) return null;
-
-    return _findMatchingEpisode(episodes, episodeNumber);
-  }
-
-  /// Finds the episode numbered [target]. Never falls back to another
-  /// episode: playing the wrong one is worse than finding none (REV-241).
-  Map<String, dynamic>? _findMatchingEpisode(List episodes, int target) {
-    for (final ep in episodes) {
-      final epNum = int.tryParse(ep['number']?.toString() ?? '');
-      if (epNum == target) return ep as Map<String, dynamic>;
-    }
-    return null;
-  }
-
-  /// Fetches the video page's URL for a given episode ID.
-  Future<String?> _fetchEmbedUrl(String baseUrl, int episodeId) async {
-    final url = '$baseUrl/embed-url/$episodeId';
-
+    // The list answers up to 120 episodes from `start` on.
     final res = await _dio.get(
-      url,
-      options: _defaultOptions(baseUrl, followRedirects: false),
+      '$baseUrl/api/anime/$animeId/episodes',
+      queryParameters: {'start': episodeNumber},
+      options: _defaultOptions(baseUrl, json: true),
     );
+    if (res.statusCode != 200 || res.data == null) return null;
+    final data = res.data;
+    return findEpisode(data is Map ? data['episodes'] : null, episodeNumber);
+  }
 
-    if (res.statusCode == 200 && res.data != null) {
-      final body = res.data.toString().trim();
-      if (body.startsWith('http')) return body;
+  /// The episode numbered [target] in [episodes]. Never falls back to another
+  /// episode: playing the wrong one is worse than finding none (REV-241).
+  /// Public for the daily check.
+  static Map<String, dynamic>? findEpisode(Object? episodes, int target) {
+    if (episodes is! List) return null;
+    for (final ep in episodes.whereType<Map<String, dynamic>>()) {
+      final epNum = int.tryParse(ep['number']?.toString() ?? '');
+      if (epNum == target) return ep;
     }
-
-    // Check Location header for redirect-based responses
-    final location = res.headers.value('location');
-    if (location != null && location.startsWith('http')) return location;
-
     return null;
+  }
+
+  /// The video page's address, read from the episode page of [videoId].
+  Future<String?> _fetchEmbedUrl(
+    String baseUrl,
+    BuiltInAnimeEntry entry,
+    int videoId,
+  ) async {
+    final res = await _dio.get<String>(
+      '$baseUrl${entry.path}/$videoId',
+      options: _defaultOptions(
+        baseUrl,
+      ).copyWith(responseType: ResponseType.plain),
+    );
+    if (res.statusCode != 200 || res.data == null) return null;
+    return embedUrlOf(res.data!);
+  }
+
+  /// The video page's address on an episode page: the site writes the page's
+  /// data, `embedUrl` among it, into its root element's `data-page`.
+  /// Public for tests and the daily check.
+  static String? embedUrlOf(String html) {
+    final pageData = html_parser
+        .parse(html)
+        .querySelector('[data-page]')
+        ?.attributes['data-page'];
+    if (pageData == null) return null;
+    try {
+      final page = jsonDecode(pageData);
+      final props = page is Map ? page['props'] : null;
+      final url = props is Map ? props['embedUrl'] : null;
+      return url is String && url.startsWith('http') ? url : null;
+    } on FormatException {
+      return null;
+    }
   }
 
   /// Extracts the HLS stream URL from a video page.
   Future<StreamCandidate?> _extractVideoPageStream(
+    String baseUrl,
     String embedUrl,
-    Map<String, dynamic> episodeData,
+    Map<String, dynamic> episode,
+    String? videoLanguage,
     StreamSearchContext context,
-    BuiltInAnimeEntry entry,
   ) async {
-    final normalizedUrl = embedUrl.startsWith('http')
-        ? embedUrl
-        : 'https:$embedUrl';
-
-    final res = await _dio.get(normalizedUrl, options: _embedOptions());
+    // The video page refuses a visit that doesn't come from the site.
+    final res = await _dio.get(
+      embedUrl,
+      options: _embedOptions(referer: '$baseUrl/'),
+    );
     if (res.statusCode != 200 || res.data == null) return null;
 
-    final html = res.data.toString();
-    final playlist = VideoPageParser.parse(html);
+    final playlist = VideoPageParser.parse(res.data.toString());
     if (playlist == null) {
       AppLogger.warn(_logTag, 'No playlist on the video page');
       return null;
     }
     final playlistUrl = playlist.playlistUrl(addM3u8: true);
+    final master = await _readPlaylist(playlistUrl, embedUrl);
 
-    final languages = await _detectLanguagesFromPlaylist(
-      playlistUrl,
-      normalizedUrl,
-    );
-
-    final langSuffix = _inferLanguageSuffix(entry.path);
-    final episodeNum = episodeData['number']?.toString() ?? '?';
-    final fileName = episodeData['file_name']?.toString() ?? '';
-    final resolution = StreamParser.parse(fileName).video.resolution;
+    final italian = isItalianDub(videoLanguage);
+    final episodeNum = episode['number']?.toString() ?? '?';
 
     return StreamCandidate(
       kind: StreamSourceKind.vod,
-      title: '${context.title} Ep.$episodeNum $langSuffix [$name]',
+      title:
+          '${context.title} Ep.$episodeNum${italian ? ' [ITA]' : ''} [$name]',
       infoHash: '',
       magnet: '',
       provider: name,
       url: playlistUrl,
-      headers: {'Referer': normalizedUrl, 'User-Agent': _userAgent},
+      headers: {'Referer': embedUrl, 'User-Agent': _userAgent},
       metadata: StreamMetadata(
-        video: VideoMetadata(resolution: resolution),
+        video: VideoMetadata(resolution: master.resolution),
         audio: const AudioMetadata(),
-        languages: languages.isNotEmpty
-            ? languages
-            : [_soundLanguage(entry.path)],
+        languages: master.languages.isNotEmpty
+            ? master.languages
+            : [italian ? LanguageCodes.italian : LanguageCodes.japanese],
         quality: ReleaseQuality.webdl,
       ),
     );
   }
 
-  /// Detects audio languages from the HLS master playlist.
-  Future<List<String>> _detectLanguagesFromPlaylist(
+  /// The sound languages and the biggest picture the HLS master playlist
+  /// lists.
+  Future<({List<String> languages, VideoResolution resolution})> _readPlaylist(
     String playlistUrl,
     String referer,
   ) async {
+    const none = (languages: <String>[], resolution: VideoResolution.unknown);
     try {
       final res = await _dio.get(
         playlistUrl,
@@ -207,53 +238,66 @@ class BuiltInAnimeSource extends BaseSource {
           headers: {'Referer': referer, 'User-Agent': _userAgent},
         ),
       );
-      if (res.statusCode != 200 || res.data == null) return [];
-
-      final playlist = res.data.toString();
-      final languages = <String>{};
-      final matches = RegExp(
-        r'#EXT-X-MEDIA:TYPE=AUDIO.*LANGUAGE="([^"]+)"',
-      ).allMatches(playlist);
-      for (final match in matches) {
-        languages.add(LanguageCodes.normalize(match.group(1)!));
-      }
-      return languages.toList();
+      if (res.statusCode != 200 || res.data == null) return none;
+      return readMasterPlaylist(res.data.toString());
     } catch (e) {
-      AppLogger.warn(_logTag, 'Language detection failed', error: e);
-      return [];
+      AppLogger.warn(_logTag, 'Reading the playlist failed', error: e);
+      return none;
     }
   }
 
-  /// The sound's language when the playlist doesn't list it: the site's
-  /// Italian dub entries end in `-ita`, the others are the Japanese original
-  /// with Italian subtitles.
-  static String _soundLanguage(String path) =>
-      path.toLowerCase().endsWith('-ita')
-      ? LanguageCodes.italian
-      : LanguageCodes.japanese;
+  /// [playlist]'s sound languages and its biggest picture. Public for tests.
+  static ({List<String> languages, VideoResolution resolution})
+  readMasterPlaylist(String playlist) {
+    final languages = {
+      for (final match in RegExp(
+        r'#EXT-X-MEDIA:TYPE=AUDIO.*LANGUAGE="([^"]+)"',
+      ).allMatches(playlist))
+        LanguageCodes.normalize(match.group(1)!),
+    }.toList();
 
-  /// Infers language hint from the site's slug (e.g. `-ita` suffix).
-  String _inferLanguageSuffix(String path) {
-    final lower = path.toLowerCase();
-    if (lower.contains('-ita')) return '[ITA]';
-    if (lower.contains('-sub')) return '[SUB-ITA]';
-    return '';
+    String? biggest;
+    var biggestHeight = 0;
+    for (final match in RegExp(
+      r'RESOLUTION=(\d+)x(\d+)',
+    ).allMatches(playlist)) {
+      final height = int.parse(match.group(2)!);
+      if (height > biggestHeight) {
+        biggestHeight = height;
+        biggest = '${match.group(1)}x$height';
+      }
+    }
+    return (
+      languages: languages,
+      resolution: biggest == null
+          ? VideoResolution.unknown
+          : StreamParser.parse(biggest).video.resolution,
+    );
   }
 
-  Options _defaultOptions(String baseUrl, {bool followRedirects = true}) {
+  /// Whether a video is the Italian dub (the site's `ita`); the others are
+  /// the Japanese original with Italian subtitles.
+  static bool isItalianDub(String? videoLanguage) =>
+      videoLanguage?.toLowerCase() == 'ita';
+
+  Options _defaultOptions(String baseUrl, {bool json = false}) {
     return Options(
-      headers: {'User-Agent': _userAgent, 'Referer': baseUrl},
-      followRedirects: followRedirects,
+      headers: {
+        'User-Agent': _userAgent,
+        'Referer': '$baseUrl/',
+        if (json) 'Accept': 'application/json',
+      },
       receiveTimeout: const Duration(seconds: 15),
     );
   }
 
-  Options _embedOptions() {
+  Options _embedOptions({required String referer}) {
     return Options(
       headers: {
         'Accept': '*/*',
         'Connection': 'keep-alive',
         'Cache-Control': 'no-cache',
+        'Referer': referer,
         'User-Agent': _userAgent,
       },
       receiveTimeout: const Duration(seconds: 15),
