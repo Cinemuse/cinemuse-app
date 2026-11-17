@@ -5,6 +5,7 @@ import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
 import 'package:cinemuse_app/features/home/presentation/home_screen.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
+import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/domain/media_details_parts.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
@@ -85,14 +86,28 @@ void main() {
     await lists.close();
   });
 
-  Future<void> pumpHome(WidgetTester tester) async {
+  /// Home offline (no TMDB rows) unless [tmdbRows] gives them.
+  Future<void> pumpHome(
+    WidgetTester tester, {
+    Map<FutureProvider<List<MediaItem>>, List<MediaItem>>? tmdbRows,
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
         retry: noProviderRetry,
         overrides: [
           connectivityProvider.overrideWith(
-            (ref) => Stream.value(ConnectivityResult.none),
+            (ref) => Stream.value(
+              tmdbRows == null
+                  ? ConnectivityResult.none
+                  : ConnectivityResult.wifi,
+            ),
           ),
+          if (tmdbRows != null) ...[
+            for (final MapEntry(key: row, value: titles) in tmdbRows.entries)
+              row.overrideWith((ref) async => titles),
+            sportScheduleProvider.overrideWith((ref) async => []),
+            shownWatchHistoryProvider.overrideWithValue(const AsyncData({})),
+          ],
           continueWatchingProvider.overrideWithValue(const AsyncData([])),
           settingsProvider.overrideWith(_FakeSettingsNotifier.new),
           profileStreamProvider.overrideWith((ref) => profile.stream),
@@ -240,5 +255,33 @@ void main() {
     navigator.pop();
     await tester.pumpAndSettle();
     expect(find.text('Comedy'), findsOneWidget);
+  });
+
+  testWidgets('online, the TMDB rows come in order under their headings', (
+    tester,
+  ) async {
+    await pumpHome(
+      tester,
+      tmdbRows: {
+        trendingProvider: [_movie(1, 'Hero one'), _movie(2, 'Trending two')],
+        moviesInTheatersProvider: [_movie(3, 'In theaters')],
+        newMoviesOnStreamingProvider: [_movie(4, 'On streaming')],
+        newSeriesProvider: [_movie(5, 'New series')],
+        topRatedRecentSeriesProvider: [_movie(6, 'Top rated')],
+      },
+    );
+    await tester.pump();
+
+    final headings = [
+      'Trending Now',
+      'Movies in Theaters',
+      'New Movies on Streaming',
+      'New Series',
+      'Top-Rated Recent Series',
+    ];
+    final tops = [
+      for (final heading in headings) tester.getTopLeft(find.text(heading)).dy,
+    ];
+    expect(tops, orderedEquals([...tops]..sort()));
   });
 }

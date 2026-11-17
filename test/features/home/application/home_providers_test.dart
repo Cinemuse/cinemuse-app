@@ -3,6 +3,9 @@ import 'package:cinemuse_app/core/data/server_addresses_repository.dart';
 import 'package:cinemuse_app/core/error/app_failure.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
 import 'package:cinemuse_app/features/home/domain/sport_tv_event.dart';
+import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/media/domain/watch_history.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cinemuse_app/core/application/provider_retry.dart';
@@ -94,6 +97,61 @@ void main() {
       ], now);
 
       expect(result.map((e) => e.sportName), ['early', 'late', 'no time']);
+    });
+  });
+
+  group('Home rows leave out what was finished or dropped', () {
+    MediaItem title(int id, MediaKind kind) =>
+        MediaItem(tmdbId: id, mediaType: kind, updatedAt: DateTime.utc(2026));
+
+    WatchHistory history(int id, MediaKind kind, WatchStatus? status) =>
+        WatchHistory(
+          userId: 'user-a',
+          tmdbId: id,
+          mediaType: kind,
+          status: status,
+          lastWatchedAt: DateTime.utc(2026),
+        );
+
+    final row = FutureProvider<List<MediaItem>>(
+      (ref) async => [
+        title(1, MediaKind.movie),
+        title(1, MediaKind.tv),
+        title(2, MediaKind.tv),
+        title(3, MediaKind.movie),
+        title(4, MediaKind.tv),
+      ],
+    );
+
+    test('finished and dropped go, watching and untouched stay', () async {
+      final c = ProviderContainer(
+        retry: noProviderRetry,
+        overrides: [
+          shownWatchHistoryProvider.overrideWithValue(
+            AsyncData({
+              for (final h in [
+                history(1, MediaKind.movie, WatchStatus.completed),
+                history(2, MediaKind.tv, WatchStatus.dropped),
+                history(3, MediaKind.movie, WatchStatus.watching),
+                history(4, MediaKind.tv, null),
+              ])
+                h.titleKey: h,
+            }),
+          ),
+        ],
+      );
+      addTearDown(c.dispose);
+      c.listen(unseenHomeTitlesProvider(row), (_, _) {});
+      await c.read(row.future);
+
+      final shown = c.read(unseenHomeTitlesProvider(row)).value!;
+
+      // The series sharing the finished film's id stays.
+      expect(shown.map((t) => '${t.mediaType.name}-${t.tmdbId}'), [
+        'tv-1',
+        'movie-3',
+        'tv-4',
+      ]);
     });
   });
 }

@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:cinemuse_app/core/utils/app_logger.dart';
+import 'package:cinemuse_app/features/profile/application/lists_providers.dart';
 import 'package:cinemuse_app/features/profile/application/profile_providers.dart';
+import 'package:cinemuse_app/features/profile/domain/user_list.dart';
 import 'package:cinemuse_app/features/profile/data/profile_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -30,7 +32,22 @@ class PinnedListIdsNotifier extends Notifier<Set<String>> {
     if (_importStartedFor.add(profile.id)) {
       unawaited(_importLegacyPins(profile.id)); // logs its own failure
     }
-    return const {};
+    return _defaultPins();
+  }
+
+  /// An account that never pinned anything has its Watchlist pinned. The
+  /// first pin or unpin saves the pins, and the default stops applying.
+  Set<String> _defaultPins() {
+    // Only the Watchlist's id: an edit to any list must not rebuild the pins.
+    final watchlistId = ref.watch(
+      userListsProvider.select(
+        (lists) => lists.value
+            ?.where((list) => list.type == ListType.watchlist)
+            .firstOrNull
+            ?.id,
+      ),
+    );
+    return {?watchlistId};
   }
 
   bool isPinned(String listId) => state.contains(listId);

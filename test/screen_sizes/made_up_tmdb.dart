@@ -56,8 +56,8 @@ Map<String, dynamic>? _answer(String path) {
   final parts = path.split('/').where((p) => p.isNotEmpty).toList();
   return switch (parts) {
     ['trending', ...] => _page(_mixed()),
-    ['movie', 'popular'] || ['discover', 'movie'] => _page(_films()),
-    ['tv', 'popular'] || ['discover', 'tv'] => _page(_series()),
+    ['movie', 'now_playing'] || ['discover', 'movie'] => _page(_films()),
+    ['discover', 'tv'] => _page(_series()),
     ['search', 'multi'] => _page([..._mixed(), _personSummary(personId)]),
     ['person', 'popular'] => _page([
       for (var i = 0; i < 12; i++) _personSummary(personId + i),

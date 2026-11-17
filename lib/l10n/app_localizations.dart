@@ -662,17 +662,29 @@ abstract class AppLocalizations {
   /// **'Trending Now'**
   String get homeTrendingNow;
 
-  /// No description provided for @homePopularMovies.
+  /// No description provided for @homeMoviesInTheaters.
   ///
   /// In en, this message translates to:
-  /// **'Popular Movies'**
-  String get homePopularMovies;
+  /// **'Movies in Theaters'**
+  String get homeMoviesInTheaters;
 
-  /// No description provided for @homePopularSeries.
+  /// No description provided for @homeNewMoviesOnStreaming.
   ///
   /// In en, this message translates to:
-  /// **'Popular Series'**
-  String get homePopularSeries;
+  /// **'New Movies on Streaming'**
+  String get homeNewMoviesOnStreaming;
+
+  /// No description provided for @homeNewSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'New Series'**
+  String get homeNewSeries;
+
+  /// No description provided for @homeTopRatedRecentSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'Top-Rated Recent Series'**
+  String get homeTopRatedRecentSeries;
 
   /// No description provided for @homeContinueWatching.
   ///

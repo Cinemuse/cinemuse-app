@@ -223,31 +223,105 @@ class TmdbService {
     return data?['imdb_id'] as String?;
   }
 
-  // Trending & Popular
+  // Home's rows. Each asks for two pages: Home hides the titles already
+  // finished or dropped, and the row should stay full.
+
+  /// TV genres the series rows leave out: talk shows, news, reality, soaps
+  /// and kids' shows.
+  static const _seriesLeftOut = '10767|10763|10764|10766|10762';
+
+  /// This week's most watched films and series.
   Future<List<MediaItem>> getTrending() async {
-    final data = await _get('/trending/all/week', {'language': _language});
-    final results = List<Map<String, dynamic>>.from(data['results']);
+    final results = await _twoPages('/trending/all/week', const {});
     return results
         .where((item) => item['media_type'] != 'person')
         .map(MediaItem.fromTmdbMap)
         .toList();
   }
 
-  Future<List<MediaItem>> getPopularMovies() async {
-    final data = await _get('/movie/popular', {'language': _language});
-    final results = List<Map<String, dynamic>>.from(data['results']);
-    return results
-        .map((item) => MediaItem.fromTmdbMap({...item, 'media_type': 'movie'}))
-        .toList();
+  /// Films showing in cinemas in [region] now, re-releases included.
+  Future<List<MediaItem>> getMoviesInTheaters(String region) =>
+      _homeRow('movie', '/movie/now_playing', {'region': region});
+
+  /// Films out for streaming or digital rental in [region] in the 45 days
+  /// before [now]. Films with fewer than 20 votes are left out: without them
+  /// the row fills with concerts and unknown shorts.
+  Future<List<MediaItem>> getNewMoviesOnStreaming(
+    String region,
+    DateTime now,
+  ) => _homeRow('movie', '/discover/movie', {
+    'region': region,
+    'with_release_type': 4,
+    'release_date.gte': _day(now.subtract(const Duration(days: 45))),
+    'release_date.lte': _day(now),
+    'vote_count.gte': 20,
+    'sort_by': 'popularity.desc',
+  });
+
+  /// Series that started in the 12 months before [now]. Fewer than 20 votes
+  /// is left out, like the streaming row.
+  Future<List<MediaItem>> getNewSeries(DateTime now) =>
+      _homeRow('tv', '/discover/tv', {
+        'first_air_date.gte': _day(now.subtract(const Duration(days: 365))),
+        'first_air_date.lte': _day(now),
+        'without_genres': _seriesLeftOut,
+        'vote_count.gte': 20,
+        'sort_by': 'popularity.desc',
+      });
+
+  /// Series that started in the 3 years before [now], rated 8 or more by at
+  /// least 300 people.
+  Future<List<MediaItem>> getTopRatedRecentSeries(DateTime now) =>
+      _homeRow('tv', '/discover/tv', {
+        'first_air_date.gte': _day(now.subtract(const Duration(days: 3 * 365))),
+        'vote_average.gte': 8,
+        'vote_count.gte': 300,
+        'without_genres': _seriesLeftOut,
+        'sort_by': 'popularity.desc',
+      });
+
+  /// A Home row of [type] titles (movie or tv): [path]'s first two pages.
+  Future<List<MediaItem>> _homeRow(
+    String type,
+    String path,
+    Map<String, dynamic> query,
+  ) async {
+    final results = await _twoPages(path, query);
+    // These lists don't say their kind: it is the one asked for.
+    return [
+      for (final item in results)
+        MediaItem.fromTmdbMap({...item, 'media_type': type}),
+    ];
   }
 
-  Future<List<MediaItem>> getPopularSeries() async {
-    final data = await _get('/tv/popular', {'language': _language});
-    final results = List<Map<String, dynamic>>.from(data['results']);
-    return results
-        .map((item) => MediaItem.fromTmdbMap({...item, 'media_type': 'tv'}))
-        .toList();
+  /// [path]'s first two pages, each title once: a list can move between
+  /// the two requests and repeat a title.
+  Future<List<Map<String, dynamic>>> _twoPages(
+    String path,
+    Map<String, dynamic> query,
+  ) async {
+    final pages = await Future.wait([
+      for (final page in [1, 2])
+        _get(path, {
+          ...query,
+          'language': _language,
+          'include_adult': false,
+          'page': page,
+        }),
+    ]);
+    final ids = <String>{};
+    return [
+      for (final data in pages)
+        for (final item in List<Map<String, dynamic>>.from(data['results']))
+          if (ids.add('${item['media_type']}-${item['id']}')) item,
+    ];
   }
+
+  /// [date] as TMDB's `YYYY-MM-DD`.
+  static String _day(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
 
   /// One page of movies, shows and people matching [query].
   Future<TmdbPage<SearchResult>> searchMulti(

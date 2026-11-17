@@ -314,10 +314,16 @@ class AppLocalizationsIt extends AppLocalizations {
   String get homeTrendingNow => 'Di tendenza';
 
   @override
-  String get homePopularMovies => 'Film Popolari';
+  String get homeMoviesInTheaters => 'Film in sala';
 
   @override
-  String get homePopularSeries => 'Serie Popolari';
+  String get homeNewMoviesOnStreaming => 'Nuovi film in streaming';
+
+  @override
+  String get homeNewSeries => 'Nuove serie TV';
+
+  @override
+  String get homeTopRatedRecentSeries => 'Serie TV recenti più votate';
 
   @override
   String get homeContinueWatching => 'Continua a guardare';

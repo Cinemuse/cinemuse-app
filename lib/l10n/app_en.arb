@@ -94,8 +94,10 @@
   "homeHeroPauseCarousel": "Pause carousel",
   "homeHeroResumeCarousel": "Resume carousel",
   "homeTrendingNow": "Trending Now",
-  "homePopularMovies": "Popular Movies",
-  "homePopularSeries": "Popular Series",
+  "homeMoviesInTheaters": "Movies in Theaters",
+  "homeNewMoviesOnStreaming": "New Movies on Streaming",
+  "homeNewSeries": "New Series",
+  "homeTopRatedRecentSeries": "Top-Rated Recent Series",
   "homeContinueWatching": "Continue Watching",
   "homeTimeLeftMinutes": "{minutes} min left",
   "@homeTimeLeftMinutes": {

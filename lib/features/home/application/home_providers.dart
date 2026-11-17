@@ -10,6 +10,7 @@ import 'package:cinemuse_app/features/media/domain/media_item.dart';
 import 'package:cinemuse_app/core/network/network_providers.dart';
 import 'package:cinemuse_app/features/home/domain/sport_tv_event.dart';
 import 'package:cinemuse_app/features/home/data/sport_schedule_scraper.dart';
+import 'package:cinemuse_app/features/settings/application/watch_region_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// How long after its start an event stays in the schedule. The site gives no
@@ -55,20 +56,63 @@ final sportScheduleProvider = FutureProvider<List<SportTvEvent>>((ref) async {
   return upcomingSportEvents(events, DateTime.now());
 });
 
+// Home's TMDB rows live for the whole session: Home keeps them while the
+// user is on other tabs.
 final trendingProvider = FutureProvider<List<MediaItem>>((ref) async {
   final tmdbService = ref.watch(tmdbServiceProvider);
   return tmdbService.getTrending();
 });
 
-final popularMoviesProvider = FutureProvider<List<MediaItem>>((ref) async {
-  final tmdbService = ref.watch(tmdbServiceProvider);
-  return tmdbService.getPopularMovies();
+final moviesInTheatersProvider = FutureProvider<List<MediaItem>>((ref) {
+  final tmdb = ref.watch(tmdbServiceProvider);
+  return tmdb.getMoviesInTheaters(ref.watch(watchRegionProvider));
 });
 
-final popularSeriesProvider = FutureProvider<List<MediaItem>>((ref) async {
-  final tmdbService = ref.watch(tmdbServiceProvider);
-  return tmdbService.getPopularSeries();
+final newMoviesOnStreamingProvider = FutureProvider<List<MediaItem>>((ref) {
+  final tmdb = ref.watch(tmdbServiceProvider);
+  return tmdb.getNewMoviesOnStreaming(
+    ref.watch(watchRegionProvider),
+    DateTime.now(),
+  );
 });
+
+final newSeriesProvider = FutureProvider<List<MediaItem>>((ref) {
+  return ref.watch(tmdbServiceProvider).getNewSeries(DateTime.now());
+});
+
+final topRatedRecentSeriesProvider = FutureProvider<List<MediaItem>>((ref) {
+  return ref.watch(tmdbServiceProvider).getTopRatedRecentSeries(DateTime.now());
+});
+
+/// The titles finished or dropped (by `titleKey`): Home's TMDB rows and its
+/// slideshow leave them out.
+final seenTitleKeysProvider = Provider.autoDispose<Set<String>>((ref) {
+  final history = ref.watch(shownWatchHistoryProvider).value ?? const {};
+  return {
+    for (final MapEntry(:key, :value) in history.entries)
+      if (value.status == WatchStatus.completed ||
+          value.status == WatchStatus.dropped)
+        key,
+  };
+});
+
+/// A Home row's titles: [source]'s without the ones finished or dropped.
+final unseenHomeTitlesProvider = Provider.autoDispose
+    .family<AsyncValue<List<MediaItem>>, FutureProvider<List<MediaItem>>>((
+      ref,
+      source,
+    ) {
+      final seen = ref.watch(seenTitleKeysProvider);
+      return ref
+          .watch(source)
+          .whenData(
+            (titles) => [
+              for (final title in titles)
+                if (!seen.contains('${title.mediaType.name}-${title.tmdbId}'))
+                  title,
+            ],
+          );
+    });
 
 final continueWatchingProvider = Provider<AsyncValue<List<WatchHistory>>>((
   ref,

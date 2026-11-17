@@ -6,7 +6,7 @@ It runs on **Android phones, Android TV, Windows and Linux**, with one layout th
 
 ## What you can do
 
-- **Find something to watch.** Home shows what you're in the middle of (Continue Watching), popular and new titles, your pinned lists and the sport schedule. Explore browses by genre, year, language and streaming service. Search keeps your recent searches.
+- **Find something to watch.** Home shows what you're in the middle of (Continue Watching), your pinned lists (the Watchlist to start with), the sport schedule, what's trending, movies in theaters and new on streaming, and new and top-rated recent series, leaving out what you've finished or dropped. Explore browses by genre, year, language and streaming service. Search keeps your recent searches.
 - **Read about it.** Every movie, show and person has a page: details, cast, seasons and episodes (specials included), photos, the trailer, and reviews from popular review sites.
 - **Track it.** Tick movies and episodes as watched, log rewatches, drop a show you gave up on. Continue Watching always points at the next episode. The Library page has your stats, your full watch history, your lists, and an agenda of upcoming episodes and releases. Everything is saved on your account and shows on every device.
 - **Play it.** Cinemuse searches your Stremio add-ons (with Real-Debrid or TorBox) and its built-in sources, puts the best stream for your language and quality first, and moves to the next one by itself if a stream fails. Pick the audio track and the subtitles (also from OpenSubtitles), change how subtitles look, and pick up where you left off.

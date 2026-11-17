@@ -23,6 +23,7 @@ import 'package:cinemuse_app/features/profile/presentation/widgets/refresh_user_
 import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_sheet.dart';
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
+import 'package:cinemuse_app/features/media/domain/media_item.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -102,8 +103,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           ref.invalidate(sportScheduleProvider);
           ref.invalidate(trendingProvider);
-          ref.invalidate(popularMoviesProvider);
-          ref.invalidate(popularSeriesProvider);
+          ref.invalidate(moviesInTheatersProvider);
+          ref.invalidate(newMoviesOnStreamingProvider);
+          ref.invalidate(newSeriesProvider);
+          ref.invalidate(topRatedRecentSeriesProvider);
           ref.invalidate(userListsProvider);
           // Small delay to allow animations to complete smoothly
           await Future.delayed(const Duration(milliseconds: 500));
@@ -149,11 +152,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                     if (!isOffline) ...[
                       const SizedBox(height: 10),
-                      const _TrendingMediaRow(),
+                      _TmdbRow(
+                        title: (l10n) => l10n.homeTrendingNow,
+                        source: trendingProvider,
+                        skipFirst: true,
+                      ),
                       const SizedBox(height: 16),
-                      const _PopularMoviesRow(),
+                      _TmdbRow(
+                        title: (l10n) => l10n.homeMoviesInTheaters,
+                        source: moviesInTheatersProvider,
+                      ),
                       const SizedBox(height: 16),
-                      const _PopularSeriesRow(),
+                      _TmdbRow(
+                        title: (l10n) => l10n.homeNewMoviesOnStreaming,
+                        source: newMoviesOnStreamingProvider,
+                      ),
+                      const SizedBox(height: 16),
+                      _TmdbRow(
+                        title: (l10n) => l10n.homeNewSeries,
+                        source: newSeriesProvider,
+                      ),
+                      const SizedBox(height: 16),
+                      _TmdbRow(
+                        title: (l10n) => l10n.homeTopRatedRecentSeries,
+                        source: topRatedRecentSeriesProvider,
+                      ),
                     ],
 
                     const SizedBox(height: 12),
@@ -175,7 +198,7 @@ class _HomeHeroSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final trendingAsync = ref.watch(trendingProvider);
+    final trendingAsync = ref.watch(unseenHomeTitlesProvider(trendingProvider));
 
     return RepaintBoundary(
       child: trendingAsync.when(
@@ -205,53 +228,25 @@ class _HomeHeroSection extends ConsumerWidget {
   }
 }
 
-class _TrendingMediaRow extends ConsumerWidget {
-  const _TrendingMediaRow();
+/// One of Home's TMDB rows.
+class _TmdbRow extends ConsumerWidget {
+  final String Function(AppLocalizations l10n) title;
+  final FutureProvider<List<MediaItem>> source;
+  final bool skipFirst;
+
+  const _TmdbRow({
+    required this.title,
+    required this.source,
+    this.skipFirst = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
-    final trendingAsync = ref.watch(trendingProvider);
-
     return RepaintBoundary(
       child: MediaRow(
-        title: l10n.homeTrendingNow,
-        asyncData: trendingAsync,
-        skipFirst: true,
-      ),
-    );
-  }
-}
-
-class _PopularMoviesRow extends ConsumerWidget {
-  const _PopularMoviesRow();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
-    final popularMoviesAsync = ref.watch(popularMoviesProvider);
-
-    return RepaintBoundary(
-      child: MediaRow(
-        title: l10n.homePopularMovies,
-        asyncData: popularMoviesAsync,
-      ),
-    );
-  }
-}
-
-class _PopularSeriesRow extends ConsumerWidget {
-  const _PopularSeriesRow();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
-    final popularSeriesAsync = ref.watch(popularSeriesProvider);
-
-    return RepaintBoundary(
-      child: MediaRow(
-        title: l10n.homePopularSeries,
-        asyncData: popularSeriesAsync,
+        title: title(AppLocalizations.of(context)!),
+        asyncData: ref.watch(unseenHomeTitlesProvider(source)),
+        skipFirst: skipFirst,
       ),
     );
   }

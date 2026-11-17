@@ -94,8 +94,10 @@
   "homeHeroPauseCarousel": "Metti in pausa carosello",
   "homeHeroResumeCarousel": "Riprendi carosello",
   "homeTrendingNow": "Di tendenza",
-  "homePopularMovies": "Film Popolari",
-  "homePopularSeries": "Serie Popolari",
+  "homeMoviesInTheaters": "Film in sala",
+  "homeNewMoviesOnStreaming": "Nuovi film in streaming",
+  "homeNewSeries": "Nuove serie TV",
+  "homeTopRatedRecentSeries": "Serie TV recenti più votate",
   "homeContinueWatching": "Continua a guardare",
   "homeTimeLeftMinutes": "{minutes} min rimanenti",
   "@homeTimeLeftMinutes": {

@@ -10,14 +10,15 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Answers every request with [statusCode] and [body], or fails like an
-/// offline device when [offline] is set. Remembers the last request.
+/// offline device when [offline] is set. Remembers every request.
 class _FakeAdapter implements HttpClientAdapter {
   _FakeAdapter({this.statusCode = 200, this.body = '{}', this.offline = false});
 
   final int statusCode;
   final String body;
   final bool offline;
-  RequestOptions? lastRequest;
+  final requests = <RequestOptions>[];
+  RequestOptions? get lastRequest => requests.lastOrNull;
 
   @override
   Future<ResponseBody> fetch(
@@ -25,7 +26,7 @@ class _FakeAdapter implements HttpClientAdapter {
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
-    lastRequest = options;
+    requests.add(options);
     if (offline) {
       throw DioException.connectionError(
         requestOptions: options,
@@ -267,7 +268,7 @@ void main() {
     expect(show.tmdbTitle, 'Breaking Bad');
     expect(show.lastAiredEpisode, (season: 5, episode: 16));
     // The second ask is answered from memory: the same title, no request.
-    adapter.lastRequest = null;
+    adapter.requests.clear();
     expect(await service.getMediaDetails('1396', 'series'), same(show));
     expect(adapter.lastRequest, isNull);
   });
@@ -363,6 +364,121 @@ void main() {
 
       expect(await service.getPersonDetails(42), isNull);
       expect(AppLogger.recent, isEmpty);
+    });
+  });
+
+  group('Home rows', () {
+    final now = DateTime(2026, 11, 17, 21);
+    const twoTitles =
+        '{"results": [{"id": 1, "title": "One"}, {"id": 2, "title": "Two"}]}';
+
+    test('each asks for two pages and keeps each title once', () async {
+      // The fake answers both pages alike: the second repeats the first.
+      final adapter = _FakeAdapter(body: twoTitles);
+
+      final titles = await _service(adapter).getNewSeries(now);
+
+      expect(adapter.requests.map((r) => r.queryParameters['page']), [1, 2]);
+      expect(titles.map((t) => t.tmdbId), [1, 2]);
+      expect(titles.map((t) => t.mediaType), everyElement(MediaKind.tv));
+    });
+
+    test('trending leaves out people and keeps each title once', () async {
+      final adapter = _FakeAdapter(
+        body:
+            '{"results": [{"id": 1, "media_type": "movie"}, '
+            '{"id": 1, "media_type": "tv"}, {"id": 5, "media_type": "person"}]}',
+      );
+
+      final titles = await _service(adapter).getTrending();
+
+      expect(titles.map((t) => (t.tmdbId, t.mediaType)), [
+        (1, MediaKind.movie),
+        (1, MediaKind.tv),
+      ]);
+    });
+
+    test(
+      'movies in theaters: the cinemas of the country asked for, re-releases kept',
+      () async {
+        final adapter = _FakeAdapter(body: twoTitles);
+
+        final titles = await _service(adapter).getMoviesInTheaters('IT');
+
+        expect(adapter.lastRequest!.path, endsWith('/movie/now_playing'));
+        final query = adapter.lastRequest!.queryParameters;
+        expect(query['region'], 'IT');
+        expect(query.keys.where((k) => k.contains('date')), isEmpty);
+        expect(titles.first.mediaType, MediaKind.movie);
+      },
+    );
+
+    test('new movies on streaming: digital releases of the last 45 days, '
+        '20 votes or more', () async {
+      final adapter = _FakeAdapter(body: twoTitles);
+
+      await _service(adapter).getNewMoviesOnStreaming('IT', now);
+
+      expect(adapter.lastRequest!.path, endsWith('/discover/movie'));
+      expect(
+        adapter.lastRequest!.queryParameters,
+        containsPair('region', 'IT'),
+      );
+      expect(
+        adapter.lastRequest!.queryParameters,
+        allOf(
+          containsPair('with_release_type', 4),
+          containsPair('release_date.gte', '2026-10-03'),
+          containsPair('release_date.lte', '2026-11-17'),
+          containsPair('vote_count.gte', 20),
+        ),
+      );
+    });
+
+    test(
+      'new series: the last 12 months, talk shows and the like left out',
+      () async {
+        final adapter = _FakeAdapter(body: twoTitles);
+
+        await _service(adapter).getNewSeries(now);
+
+        expect(adapter.lastRequest!.path, endsWith('/discover/tv'));
+        expect(
+          adapter.lastRequest!.queryParameters,
+          allOf(
+            containsPair('first_air_date.gte', '2025-11-17'),
+            containsPair('first_air_date.lte', '2026-11-17'),
+            containsPair('without_genres', '10767|10763|10764|10766|10762'),
+          ),
+        );
+      },
+    );
+
+    test('top-rated recent series: the last 3 years, 8 or more from 300 '
+        'votes', () async {
+      final adapter = _FakeAdapter(body: twoTitles);
+
+      await _service(adapter).getTopRatedRecentSeries(now);
+
+      expect(adapter.lastRequest!.path, endsWith('/discover/tv'));
+      expect(
+        adapter.lastRequest!.queryParameters,
+        allOf(
+          containsPair('first_air_date.gte', '2023-11-18'),
+          containsPair('vote_average.gte', 8),
+          containsPair('vote_count.gte', 300),
+          containsPair('without_genres', '10767|10763|10764|10766|10762'),
+        ),
+      );
+    });
+
+    test('a failed page fails the row instead of showing it half', () async {
+      final service = _service(_FakeAdapter(offline: true));
+
+      await expectLater(
+        service.getMoviesInTheaters('IT'),
+        throwsA(isA<NetworkFailure>()),
+      );
     });
   });
 }

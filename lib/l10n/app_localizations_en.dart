@@ -314,10 +314,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeTrendingNow => 'Trending Now';
 
   @override
-  String get homePopularMovies => 'Popular Movies';
+  String get homeMoviesInTheaters => 'Movies in Theaters';
 
   @override
-  String get homePopularSeries => 'Popular Series';
+  String get homeNewMoviesOnStreaming => 'New Movies on Streaming';
+
+  @override
+  String get homeNewSeries => 'New Series';
+
+  @override
+  String get homeTopRatedRecentSeries => 'Top-Rated Recent Series';
 
   @override
   String get homeContinueWatching => 'Continue Watching';
