@@ -5,6 +5,7 @@ import 'package:cinemuse_app/core/services/system/connectivity_service.dart';
 import 'package:cinemuse_app/features/home/application/home_providers.dart';
 import 'package:cinemuse_app/features/home/presentation/home_screen.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
+import 'package:cinemuse_app/features/media/application/own_reviews_provider.dart';
 import 'package:cinemuse_app/features/media/application/watch_history_store.dart';
 import 'package:cinemuse_app/features/media/domain/media_details_parts.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
@@ -90,6 +91,7 @@ void main() {
   Future<void> pumpHome(
     WidgetTester tester, {
     Map<FutureProvider<List<MediaItem>>, List<MediaItem>>? tmdbRows,
+    Map<MediaKind, List<MediaItem>> lovedSuggestions = const {},
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -107,6 +109,10 @@ void main() {
               row.overrideWith((ref) async => titles),
             sportScheduleProvider.overrideWith((ref) async => []),
             shownWatchHistoryProvider.overrideWithValue(const AsyncData({})),
+            allOwnReviewsProvider.overrideWith((ref) async => const {}),
+            lovedSuggestionsProvider.overrideWith(
+              (ref, kind) async => lovedSuggestions[kind] ?? const [],
+            ),
           ],
           continueWatchingProvider.overrideWithValue(const AsyncData([])),
           settingsProvider.overrideWith(_FakeSettingsNotifier.new),
@@ -283,5 +289,70 @@ void main() {
       for (final heading in headings) tester.getTopLeft(find.text(heading)).dy,
     ];
     expect(tops, orderedEquals([...tops]..sort()));
+  });
+
+  testWidgets('a loved film and a loved series get their "like X" rows after '
+      'Trending; with no loved title there is none', (tester) async {
+    final severance = MediaItem(
+      tmdbId: 95396,
+      mediaType: MediaKind.tv,
+      titleEn: 'Severance',
+      updatedAt: DateTime.utc(2026),
+    );
+    await pumpHome(
+      tester,
+      tmdbRows: {
+        trendingProvider: [_movie(1, 'Hero one'), _movie(2, 'Trending two')],
+        moviesInTheatersProvider: [_movie(3, 'In theaters')],
+      },
+      lovedSuggestions: {
+        MediaKind.movie: [_movie(10, 'Arrival')],
+        MediaKind.tv: [
+          MediaItem(
+            tmdbId: 20,
+            mediaType: MediaKind.tv,
+            titleEn: 'Silo',
+            updatedAt: DateTime.utc(2026),
+          ),
+        ],
+      },
+    );
+    lists.add([]);
+    await tester.pumpAndSettle();
+    expect(find.textContaining(' Like '), findsNothing);
+
+    lists.add([
+      UserList(
+        id: 'fav',
+        userId: 'user-a',
+        name: 'Favorites',
+        type: ListType.favorites,
+        createdAt: DateTime.utc(2026),
+        items: [
+          for (final t in [_movie(438631, 'Dune'), severance])
+            UserListItem(
+              listId: 'fav',
+              mediaType: t.mediaType,
+              tmdbId: t.tmdbId,
+              addedAt: DateTime.utc(2026),
+              media: t,
+            ),
+        ],
+      ),
+    ]);
+    await tester.pumpAndSettle();
+
+    final headings = [
+      'Trending Now',
+      'Movies Like Dune',
+      'Series Like Severance',
+      'Movies in Theaters',
+    ];
+    final tops = [
+      for (final heading in headings) tester.getTopLeft(find.text(heading)).dy,
+    ];
+    expect(tops, orderedEquals([...tops]..sort()));
+    expect(find.text('Arrival'), findsOneWidget);
+    expect(find.text('Silo'), findsOneWidget);
   });
 }

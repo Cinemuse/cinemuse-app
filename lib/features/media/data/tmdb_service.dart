@@ -280,6 +280,22 @@ class TmdbService {
         'sort_by': 'popularity.desc',
       });
 
+  /// TMDB's suggestions for a [type] title: films for a film, series for a
+  /// series. Titles rated by fewer than 100 people are left out: without
+  /// them the row fills with unknown titles (tried on the user's
+  /// Favourites, it keeps 23 to 39 of the 40).
+  Future<List<MediaItem>> getSuggestions(MediaKind type, int tmdbId) async {
+    final results = await _twoPages(
+      '/${type.name}/$tmdbId/recommendations',
+      const {},
+    );
+    return [
+      for (final item in results)
+        if ((item['vote_count'] as num? ?? 0) >= 100)
+          MediaItem.fromTmdbMap({...item, 'media_type': type.name}),
+    ];
+  }
+
   /// A Home row of [type] titles (movie or tv): [path]'s first two pages.
   Future<List<MediaItem>> _homeRow(
     String type,

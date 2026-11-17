@@ -98,6 +98,8 @@
   "homeNewMoviesOnStreaming": "Nuovi film in streaming",
   "homeNewSeries": "Nuove serie TV",
   "homeTopRatedRecentSeries": "Serie TV recenti più votate",
+  "homeMoviesLike": "Film simili a {title}",
+  "homeSeriesLike": "Serie TV simili a {title}",
   "homeContinueWatching": "Continua a guardare",
   "homeTimeLeftMinutes": "{minutes} min rimanenti",
   "@homeTimeLeftMinutes": {

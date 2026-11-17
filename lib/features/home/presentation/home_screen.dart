@@ -24,6 +24,7 @@ import 'package:cinemuse_app/features/profile/presentation/widgets/list_details_
 import 'package:cinemuse_app/features/navigation/application/nav_providers.dart';
 import 'package:cinemuse_app/features/media/application/details_provider.dart';
 import 'package:cinemuse_app/features/media/domain/media_item.dart';
+import 'package:cinemuse_app/features/settings/application/settings_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -107,6 +108,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ref.invalidate(newMoviesOnStreamingProvider);
           ref.invalidate(newSeriesProvider);
           ref.invalidate(topRatedRecentSeriesProvider);
+          ref.read(lovedPicksProvider.notifier).pickAgain();
+          ref.invalidate(lovedSuggestionsProvider);
           ref.invalidate(userListsProvider);
           // Small delay to allow animations to complete smoothly
           await Future.delayed(const Duration(milliseconds: 500));
@@ -157,6 +160,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         source: trendingProvider,
                         skipFirst: true,
                       ),
+                      const _LovedRow(kind: MediaKind.movie),
+                      const _LovedRow(kind: MediaKind.tv),
                       const SizedBox(height: 16),
                       _TmdbRow(
                         title: (l10n) => l10n.homeMoviesInTheaters,
@@ -247,6 +252,44 @@ class _TmdbRow extends ConsumerWidget {
         title: title(AppLocalizations.of(context)!),
         asyncData: ref.watch(unseenHomeTitlesProvider(source)),
         skipFirst: skipFirst,
+      ),
+    );
+  }
+}
+
+/// "Movies like X" ([MediaKind.movie]) or "Series like X" ([MediaKind.tv]):
+/// TMDB's suggestions for a loved title. Hidden with no loved title of that
+/// kind, or nothing left to suggest.
+class _LovedRow extends ConsumerWidget {
+  final MediaKind kind;
+
+  const _LovedRow({required this.kind});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final loved = ref.watch(
+      lovedPicksProvider.select(
+        (p) => kind == MediaKind.movie ? p.film : p.series,
+      ),
+    );
+    if (loved == null) return const SizedBox.shrink();
+    final suggestions = ref.watch(
+      unseenHomeTitlesProvider(lovedSuggestionsProvider(kind)),
+    );
+    if (suggestions.value?.isEmpty ?? false) return const SizedBox.shrink();
+
+    final l10n = AppLocalizations.of(context)!;
+    final language = ref.watch(settingsProvider.select((s) => s.appLanguage));
+    final name = loved.getLocalizedTitle(language) ?? l10n.commonUnknown;
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: RepaintBoundary(
+        child: MediaRow(
+          title: kind == MediaKind.movie
+              ? l10n.homeMoviesLike(name)
+              : l10n.homeSeriesLike(name),
+          asyncData: suggestions,
+        ),
       ),
     );
   }

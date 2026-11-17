@@ -98,6 +98,24 @@
   "homeNewMoviesOnStreaming": "New Movies on Streaming",
   "homeNewSeries": "New Series",
   "homeTopRatedRecentSeries": "Top-Rated Recent Series",
+  "homeMoviesLike": "Movies Like {title}",
+  "@homeMoviesLike": {
+    "description": "Home row heading: TMDB's suggestions for a film the user loves",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "homeSeriesLike": "Series Like {title}",
+  "@homeSeriesLike": {
+    "description": "Home row heading: TMDB's suggestions for a series the user loves",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "homeContinueWatching": "Continue Watching",
   "homeTimeLeftMinutes": "{minutes} min left",
   "@homeTimeLeftMinutes": {

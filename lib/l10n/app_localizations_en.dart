@@ -326,6 +326,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeTopRatedRecentSeries => 'Top-Rated Recent Series';
 
   @override
+  String homeMoviesLike(String title) {
+    return 'Movies Like $title';
+  }
+
+  @override
+  String homeSeriesLike(String title) {
+    return 'Series Like $title';
+  }
+
+  @override
   String get homeContinueWatching => 'Continue Watching';
 
   @override

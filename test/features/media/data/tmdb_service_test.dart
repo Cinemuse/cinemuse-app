@@ -472,6 +472,24 @@ void main() {
       );
     });
 
+    test('suggestions: TMDB\'s for the title, of its kind, 100 votes or '
+        'more', () async {
+      final adapter = _FakeAdapter(
+        body:
+            '{"results": [{"id": 1, "media_type": "tv", "vote_count": 100}, '
+            '{"id": 2, "media_type": "tv", "vote_count": 99}, '
+            '{"id": 3, "media_type": "tv"}]}',
+      );
+
+      final titles = await _service(adapter).getSuggestions(MediaKind.tv, 42);
+
+      expect(adapter.requests.map((r) => r.path), [
+        endsWith('/tv/42/recommendations'),
+        endsWith('/tv/42/recommendations'),
+      ]);
+      expect(titles.map((t) => (t.tmdbId, t.mediaType)), [(1, MediaKind.tv)]);
+    });
+
     test('a failed page fails the row instead of showing it half', () async {
       final service = _service(_FakeAdapter(offline: true));
 

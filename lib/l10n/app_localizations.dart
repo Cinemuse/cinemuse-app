@@ -686,6 +686,18 @@ abstract class AppLocalizations {
   /// **'Top-Rated Recent Series'**
   String get homeTopRatedRecentSeries;
 
+  /// Home row heading: TMDB's suggestions for a film the user loves
+  ///
+  /// In en, this message translates to:
+  /// **'Movies Like {title}'**
+  String homeMoviesLike(String title);
+
+  /// Home row heading: TMDB's suggestions for a series the user loves
+  ///
+  /// In en, this message translates to:
+  /// **'Series Like {title}'**
+  String homeSeriesLike(String title);
+
   /// No description provided for @homeContinueWatching.
   ///
   /// In en, this message translates to:
