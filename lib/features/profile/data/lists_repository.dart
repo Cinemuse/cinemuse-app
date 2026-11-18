@@ -159,8 +159,9 @@ class ListsRepository {
       await _db.syncUserLists(userId, lists, items);
 
       // Remote list items carry no title or poster: fill them in from
-      // media_cache, or a second device shows "Unknown" (REV-88).
-      await _mediaRepo.cacheMissingFromRemote(
+      // media_cache, or a second device shows "Unknown" (REV-88), and take
+      // its newer copies, or a name fixed on one device stays old here.
+      await _mediaRepo.refreshFromRemote(
         items
             .map(
               (i) => (

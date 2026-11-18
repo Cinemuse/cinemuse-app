@@ -99,22 +99,22 @@ class MediaRepository {
     }
   }
 
-  /// Copies the titles in [requests] that the local cache doesn't have yet
-  /// from the shared `media_cache` table, so a second device shows their
-  /// title and poster. Titles missing there too stay missing.
-  /// Throws an [AppFailure].
-  Future<void> cacheMissingFromRemote(
+  /// Copies the titles in [requests] from the shared `media_cache` table when
+  /// the local cache lacks them or has an older copy: a title is saved once
+  /// and only its page fetches it again, so another device's newer fetch
+  /// (e.g. an Italian name TMDB added later) must reach this one. The local
+  /// rating is kept, since `media_cache` has none. Throws an [AppFailure].
+  Future<void> refreshFromRemote(
     List<({int id, MediaKind type})> requests,
   ) async {
+    if (requests.isEmpty) return;
     final local = await _db.getMediaItems(
       requests.map((r) => (id: r.id, type: r.type.name)).toList(),
     );
-    final have = {for (final row in local) '${row.mediaType}-${row.tmdbId}'};
-    final missing = {
-      for (final r in requests)
-        if (!have.contains('${r.type.name}-${r.id}')) '${r.type.name}-${r.id}',
+    final localSavedAt = {
+      for (final row in local) '${row.mediaType}-${row.tmdbId}': row.updatedAt,
     };
-    if (missing.isEmpty) return;
+    final wanted = {for (final r in requests) '${r.type.name}-${r.id}'};
 
     final ids = requests.map((r) => r.id).toSet().toList();
     for (var i = 0; i < ids.length; i += 100) {
@@ -130,9 +130,14 @@ class MediaRepository {
       for (final row in rows) {
         final type = row['media_type'] as String;
         final id = row['tmdb_id'] as int;
-        if (!missing.contains('$type-$id')) continue;
-        final releaseDate = row['release_date'] as String?;
+        if (!wanted.contains('$type-$id')) continue;
         final updatedAt = row['updated_at'] as String?;
+        final serverSavedAt = updatedAt != null
+            ? DateTime.tryParse(updatedAt)
+            : null;
+        final savedAt = localSavedAt['$type-$id'];
+        if (savedAt != null && !_isNewer(serverSavedAt, savedAt)) continue;
+        final releaseDate = row['release_date'] as String?;
         await _db.upsertMediaItem(
           CachedMediaItemsCompanion(
             tmdbId: Value(id),
@@ -148,14 +153,20 @@ class MediaRepository {
             releaseDate: Value(
               releaseDate != null ? DateTime.tryParse(releaseDate) : null,
             ),
-            updatedAt: Value(
-              (updatedAt != null ? DateTime.tryParse(updatedAt) : null) ??
-                  DateTime.now(),
-            ),
+            updatedAt: Value(serverSavedAt ?? DateTime.now()),
           ),
         );
       }
     }
+  }
+
+  /// Whether the server's copy was saved after the local one. The local
+  /// database keeps whole seconds and the server a fraction more, so the
+  /// same save must not count as newer (it would rewrite every title).
+  static bool _isNewer(DateTime? server, DateTime local) {
+    if (server == null) return false;
+    return server.millisecondsSinceEpoch ~/ 1000 >
+        local.millisecondsSinceEpoch ~/ 1000;
   }
 
   /// Ensures a media item exists in the local cache and remote database.

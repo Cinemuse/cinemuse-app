@@ -152,7 +152,7 @@ void main() {
     expect(sent.keys, isNot(contains('crew_members')));
   });
 
-  group('cacheMissingFromRemote', () {
+  group('refreshFromRemote', () {
     test(
       'saves missing titles from media_cache, with the right type',
       () async {
@@ -172,9 +172,7 @@ void main() {
           ]),
         );
 
-        await repository.cacheMissingFromRemote([
-          (id: 1399, type: MediaKind.tv),
-        ]);
+        await repository.refreshFromRemote([(id: 1399, type: MediaKind.tv)]);
 
         final tv = await database.getMediaItem(1399, 'tv');
         expect(tv?.titleEn, 'Game of Thrones');
@@ -184,23 +182,76 @@ void main() {
       },
     );
 
-    test('keeps titles the local cache already has', () async {
-      await database.upsertMediaItem(
-        CachedMediaItemsCompanion.insert(
-          tmdbId: 1399,
-          mediaType: 'tv',
-          titleEn: const Value('Local title'),
-          voteAverage: const Value(8.4),
-          updatedAt: DateTime(2026),
-        ),
+    Future<void> saveLocal(String titleIt, DateTime updatedAt) =>
+        database.upsertMediaItem(
+          CachedMediaItemsCompanion.insert(
+            tmdbId: 1294189,
+            mediaType: 'movie',
+            titleIt: Value(titleIt),
+            titleEn: const Value('The Mongoose'),
+            voteAverage: const Value(6.3),
+            updatedAt: updatedAt,
+          ),
+        );
+
+    void serverHas(String titleIt, String updatedAt) {
+      when(() => mockSupabase.from('media_cache')).thenAnswer(
+        (_) => FakeQueryBuilder(<Map<String, dynamic>>[
+          {
+            'tmdb_id': 1294189,
+            'media_type': 'movie',
+            'title_it': titleIt,
+            'title_en': 'The Mongoose',
+            'updated_at': updatedAt,
+          },
+        ]),
       );
+    }
 
-      await repository.cacheMissingFromRemote([(id: 1399, type: MediaKind.tv)]);
+    test(
+      "takes the server's copy when it is newer, keeping the rating",
+      () async {
+        // Saved before TMDB had the Italian name; another device fetched it.
+        await saveLocal('The Mongoose', DateTime.utc(2026, 11, 5, 23));
+        serverHas("Mongoose - L'ultimo soldato", '2026-11-17T23:52:34.244Z');
 
-      verifyNever(() => mockSupabase.from('media_cache'));
-      final tv = await database.getMediaItem(1399, 'tv');
-      expect(tv?.titleEn, 'Local title');
-      expect(tv?.voteAverage, 8.4);
+        await repository.refreshFromRemote([
+          (id: 1294189, type: MediaKind.movie),
+        ]);
+
+        final movie = await database.getMediaItem(1294189, 'movie');
+        expect(movie?.titleIt, "Mongoose - L'ultimo soldato");
+        expect(movie?.voteAverage, 6.3);
+      },
+    );
+
+    test("keeps the local copy when the server's is older", () async {
+      await saveLocal(
+        "Mongoose - L'ultimo soldato",
+        DateTime.utc(2026, 11, 17),
+      );
+      serverHas('The Mongoose', '2026-11-05T23:00:00Z');
+
+      await repository.refreshFromRemote([
+        (id: 1294189, type: MediaKind.movie),
+      ]);
+
+      final movie = await database.getMediaItem(1294189, 'movie');
+      expect(movie?.titleIt, "Mongoose - L'ultimo soldato");
+    });
+
+    test('keeps the local copy saved in the same second', () async {
+      // The device keeps whole seconds, the server a fraction more: this is
+      // the same save, not a newer one.
+      await saveLocal('Local name', DateTime.utc(2026, 11, 17, 23, 52, 34));
+      serverHas('Server name', '2026-11-17T23:52:34.244Z');
+
+      await repository.refreshFromRemote([
+        (id: 1294189, type: MediaKind.movie),
+      ]);
+
+      final movie = await database.getMediaItem(1294189, 'movie');
+      expect(movie?.titleIt, 'Local name');
     });
   });
 }
