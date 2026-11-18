@@ -102,8 +102,9 @@ async function refreshGuide(deps: Deps) {
  * move to the next stream when one fails. Each line names its source
  * (`provider`); a stream from an "ask" link service gets
  * `cinemuse-ask="<broadcaster>"`: its address answers with the real stream
- * address, which the device asks for at play time. Channels with no stream
- * are in the guide only. */
+ * address, which the device asks for at play time. A service that wants a
+ * given player name gets an `#EXTVLCOPT:http-user-agent` line before the
+ * address. Channels with no stream are in the guide only. */
 export function buildM3u(list: Channel[], supabaseUrl: string): string {
   const lines = ["#EXTM3U"];
   const sorted = list.filter((ch) => ch.streams.length > 0).sort((a, b) =>
@@ -121,10 +122,14 @@ export function buildM3u(list: Channel[], supabaseUrl: string): string {
     }
     if (ch.category !== "") attrs.push(`group-title="${attr(ch.category)}"`);
     for (const stream of ch.streams) {
-      const { url, provider, ask } = streamLine(stream);
+      const { url, provider, ask, userAgent } = streamLine(stream);
       const own = [`provider="${attr(provider)}"`];
       if (ask != null) own.push(`cinemuse-ask="${ask}"`);
-      lines.push(`#EXTINF:-1 ${[...attrs, ...own].join(" ")},${ch.name}`, url);
+      lines.push(`#EXTINF:-1 ${[...attrs, ...own].join(" ")},${ch.name}`);
+      if (userAgent != null) {
+        lines.push(`#EXTVLCOPT:http-user-agent=${userAgent}`);
+      }
+      lines.push(url);
     }
   }
   return lines.join("\n") + "\n";
@@ -132,13 +137,14 @@ export function buildM3u(list: Channel[], supabaseUrl: string): string {
 
 function streamLine(stream: Stream) {
   if (stream[0] === "url") {
-    return { url: stream[1], provider: stream[2], ask: null };
+    return { url: stream[1], provider: stream[2], ask: null, userAgent: null };
   }
   const service = linkServices[stream[0]];
   return {
     url: service.address.replaceAll("{id}", encodeURIComponent(stream[1])),
     provider: service.provider,
     ask: service.ask,
+    userAgent: service.userAgent,
   };
 }
 

@@ -1,6 +1,7 @@
 // Run: deno test supabase/functions/live-tv
 import assert from "node:assert/strict";
 import {
+  browserUserAgent,
   type Channel,
   channels,
   guideSources,
@@ -200,7 +201,7 @@ Deno.test("POST: a bucket that can't be read writes nothing", async () => {
   assert.deepEqual(fake.written, []);
 });
 
-Deno.test("the playlist: by number, one line per stream in order, sources and ask labels, logos in the bucket, guide-only channels left out", () => {
+Deno.test("the playlist: by number, one line per stream in order, sources and ask labels, player names, logos in the bucket, guide-only channels left out", () => {
   const rai1 =
     `#EXTINF:-1 tvg-id="rai1" tvg-chno="1" tvg-name="Rai 1" tvg-logo="${base}/storage/v1/object/public/livetv/logos/rai1.png" group-title="Nazionali"`;
   assert.equal(
@@ -214,6 +215,7 @@ Deno.test("the playlist: by number, one line per stream in order, sources and as
       `${rai1} provider="Relay",Rai 1`,
       "https://relay.test/rai1.m3u8",
       `#EXTINF:-1 tvg-id="c5" tvg-chno="5" tvg-name="Canale '5'" tvg-logo="${base}/storage/v1/object/public/livetv/logos/canale%205.png" provider="Mediaset",Canale "5"`,
+      `#EXTVLCOPT:http-user-agent=${browserUserAgent}`,
       "https://live02-seg.msf.cdn.mediaset.net/live/ch-c5/c5-clr.isml/index.m3u8",
       `#EXTINF:-1 tvg-id="tv2000" tvg-name="TV2000" group-title="Nazionali" provider="TV2000",TV2000`,
       "https://tv2000.test/master.m3u8",
@@ -246,6 +248,11 @@ Deno.test("the channel list: unique keys, none named like the guide's extra entr
     for (const [source] of c.guide) {
       assert.ok(source in guideSources, `${c.key}: ${source}`);
     }
+  }
+  // Mediaset turns the app's VLC name away; no other service needs a name.
+  for (const [key, service] of Object.entries(linkServices)) {
+    const wanted = key.startsWith("mediaset") ? browserUserAgent : null;
+    assert.equal(service.userAgent, wanted, key);
   }
   assert.equal(channels.filter((c) => c.streams.length > 0).length, 63);
   assert.equal(channels.flatMap((c) => c.streams).length, 94);

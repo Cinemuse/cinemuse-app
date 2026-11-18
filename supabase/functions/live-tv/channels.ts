@@ -2,11 +2,19 @@
  * from. A change here reaches the playlist within an hour of the deploy.
  * Never rename a channel's `key`: apps match the guide on it. */
 
+/** A browser's name, for the servers that turn other callers away. */
+export const browserUserAgent =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+  "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+
 /** How a stream's id becomes its address (`{id}`), and the name the
  * player's Source list shows. An "ask" address answers with the real
  * stream address, valid a few minutes and only to Italian devices, so the
  * device asks it at play time: the playlist line says so with
- * `cinemuse-ask="<ask>"`, the broadcaster whose answer it reads. */
+ * `cinemuse-ask="<ask>"`, the broadcaster whose answer it reads. A
+ * `userAgent` is the name the player must give, written in the playlist as
+ * `#EXTVLCOPT:http-user-agent`: without it the app calls itself VLC on any
+ * address with a `live` part, and Mediaset turns VLC away at random. */
 export const linkServices = {
   // Answers JSON, the stream address in `video[0]`.
   rai: {
@@ -14,6 +22,7 @@ export const linkServices = {
       "https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont={id}&output=63&forceUserAgent=raiplayappletv",
     ask: "rai",
     provider: "Rai",
+    userAgent: null,
   },
   // Rai's second link service: same answer, same video servers.
   rai_backup: {
@@ -21,12 +30,14 @@ export const linkServices = {
       "https://mediapolisevent.rai.it/relinker/relinkerServlet.htm?cont={id}&output=63&forceUserAgent=raiplayappletv",
     ask: "rai",
     provider: "Rai (backup)",
+    userAgent: null,
   },
   // TV8, Cielo, Sky TG24: answers JSON, the stream address in `streaming_url`.
   sky: {
     address: "https://video.sky.it/api/v1/getLivestream?id={id}&isMobile=false",
     ask: "sky",
     provider: "Sky",
+    userAgent: null,
   },
   // By call sign.
   mediaset: {
@@ -34,12 +45,14 @@ export const linkServices = {
       "https://live02-seg.msf.cdn.mediaset.net/live/ch-{id}/{id}-clr.isml/index.m3u8",
     ask: null,
     provider: "Mediaset",
+    userAgent: browserUserAgent,
   },
   mediaset_radio: {
     address:
       "https://live02-seg.msr.cdn.mediaset.net/live/ch-{id}/{id}-clr.isml/index.m3u8",
     ask: null,
     provider: "Mediaset",
+    userAgent: browserUserAgent,
   },
   // Warner Bros. Discovery Italy, by name.
   discovery: {
@@ -47,12 +60,14 @@ export const linkServices = {
       "https://streaming.aurora.enhanced.live/live/mpc/enl0eG1mLmVncmVzcy5mZDJ2eHI=/out/v1/IT_SIMULCAST/{id}/CMAF/index.m3u8",
     ask: null,
     provider: "Discovery",
+    userAgent: null,
   },
   // An unofficial copy (owner unknown) of some channels, by name.
   relay: {
     address: "https://d3k8wzt41aflvx.cloudfront.net/{id}/Live.m3u8",
     ask: null,
     provider: "Relay",
+    userAgent: null,
   },
 };
 

@@ -2,6 +2,8 @@
  * addresses come from `guideSources` (`channels.ts`), with `{id}`, `{date}`,
  * `{from}`, `{to}`, `{env}` and `{page}` filled here. */
 
+import { browserUserAgent } from "./channels.ts";
+
 export interface Programme {
   /** The source's own channel id. */
   ref: string;
@@ -37,10 +39,6 @@ export interface ReadResult {
   rows: Programme[];
   failed: string[];
 }
-
-const userAgent =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-  "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 
 /** Calls at once per source: enough to finish well inside a function call,
  * few enough not to look like an attack. */
@@ -348,7 +346,7 @@ async function readXmltv(
   deps: ReadDeps,
 ): Promise<ReadResult> {
   const res = await deps.fetch(source.address, {
-    headers: { "User-Agent": userAgent },
+    headers: { "User-Agent": browserUserAgent },
     signal: AbortSignal.timeout(60_000),
   });
   if (!res.ok || res.body == null) {
@@ -511,7 +509,7 @@ export function romeToUtc(
 
 async function getJson(url: string, deps: ReadDeps): Promise<unknown> {
   const res = await deps.fetch(url, {
-    headers: { "User-Agent": userAgent, Accept: "application/json" },
+    headers: { "User-Agent": browserUserAgent, Accept: "application/json" },
     signal: AbortSignal.timeout(20_000),
   });
   if (!res.ok) {
