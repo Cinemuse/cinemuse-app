@@ -265,7 +265,7 @@ export const channels: Channel[] = [
     guide: [["sky", "462", "DTT"], ["iptv_epg", "DeejayTV.it"], ["open_epg_3", "Deejay TV.it"]] },
   { key: "radioitalia", name: "Radio Italia TV", lcn: 70, category: "Musica", logo: "radioitalia.png", streams: [["url", "https://radioitaliatv.akamaized.net/hls/live/2093117/RadioitaliaTV/master.m3u8", "Radio Italia"]],
     guide: [["sky", "9833", "DTH"], ["iptv_epg", "RadioItaliaTV.it"], ["open_epg_3", "Radio Italia Tv.it"]] },
-  { key: "rai4k", name: "Rai 4K", lcn: 101, category: "Nazionali", logo: "rai4k.png", streams: [["rai", "4465258"], ["rai_backup", "4465258"], ["url", "https://raievent10-elem-live.akamaized.net/hls/live/619189/raievent10/raievent10/playlist.m3u8", "Rai (direct)"]],
+  { key: "rai4k", name: "Rai 4K", lcn: 101, category: "Nazionali", logo: "rai4k.png", streams: [["url", "https://raievent10-elem-live.akamaized.net/hls/live/619189/raievent10/raievent10/playlist.m3u8", "Rai (direct)"]],
     guide: [["rai", "rai-4k"]] },
   { key: "kisskiss", name: "Kiss Kiss TV", lcn: 158, category: "Musica", logo: "kisskiss.png", streams: [["url", "https://58f12ffd2447a.streamlock.net/KKMulti/livestream/playlist.m3u8", "Kiss Kiss"],
       ["url", "https://59253971be783.streamlock.net/KissKissTV/KissKissTV.stream/playlist.m3u8", "Kiss Kiss (backup)"]],

@@ -255,5 +255,5 @@ Deno.test("the channel list: unique keys, none named like the guide's extra entr
     assert.equal(service.userAgent, wanted, key);
   }
   assert.equal(channels.filter((c) => c.streams.length > 0).length, 63);
-  assert.equal(channels.flatMap((c) => c.streams).length, 94);
+  assert.equal(channels.flatMap((c) => c.streams).length, 92);
 });
