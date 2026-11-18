@@ -55,7 +55,8 @@ Services and repositories throw an `AppFailure` (`core/error/app_failure.dart`).
 
 ## UI building blocks
 
-- **Theme:** `AppTheme` (colours, text styles; every warning uses `warning`, and only warnings do). **Sizes:** `Breakpoints`.
+- **Theme:** `AppTheme` (colours, text styles; every warning uses `warning`, and only warnings do). **Sizes:** `Breakpoints`. Colours, see-through whites, text sizes, fonts and corner sizes come from `AppTheme`, never written in a widget: a missing one is added there, and one met written in code being changed moves there.
+- **Reuse:** a piece used twice becomes one shared widget; a new screen first uses the ones listed here.
 - **Remote and keyboard:** `DpadFocusable` makes a control focusable and pressable with Enter. Every text box but the main search is a `DpadTextBox`: the arrows stop on it with no keyboard, Enter starts typing, Enter or Back stops. The focus ring is defined once in `FocusRing`; items get it through `DpadFocusable`, `CardFocusBorder`, `FocusRingFollower` or `AppPopupMenuItem`.
 - **Sheets:** `AppBottomSheet`. **Errors on screen:** `ErrorViewState` (full screen), `ErrorCard` (inline), `AppSnackBar` (short message; `showUndo` after a removal).
 - **Settings rows:** `settings_widgets.dart`. **Scrolling:** `AppScrollBehavior`.
